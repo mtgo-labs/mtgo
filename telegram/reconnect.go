@@ -1,0 +1,252 @@
+package telegram
+
+import (
+	"context"
+	"fmt"
+	"math"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+type backoffConfig struct {
+	BaseDelay   time.Duration
+	MaxDelay    time.Duration
+	MaxAttempts int
+	Jitter      float64
+	Multiplier  float64
+}
+
+var defaultBackoffConfig = backoffConfig{
+	BaseDelay:   1 * time.Second,
+	MaxDelay:    60 * time.Second,
+	MaxAttempts: 0,
+	Jitter:      0.1,
+	Multiplier:  2.0,
+}
+
+func (c backoffConfig) delay(attempt int) time.Duration {
+	if attempt <= 0 {
+		return c.BaseDelay
+	}
+	delay := float64(c.BaseDelay) * math.Pow(c.Multiplier, float64(attempt))
+	if delay > float64(c.MaxDelay) {
+		delay = float64(c.MaxDelay)
+	}
+	return time.Duration(delay)
+}
+
+type reconnectManager struct {
+	client   *Client
+	cfg      backoffConfig
+	mu       sync.Mutex
+	running  atomic.Bool
+	cancel   context.CancelFunc
+	done     chan struct{}
+	attempts int
+}
+
+func newReconnectManager(client *Client, cfg backoffConfig) *reconnectManager {
+	return &reconnectManager{
+		client: client,
+		cfg:    cfg,
+	}
+}
+
+func (c *Client) triggerReconnect(err error) {
+	if c.state.IsClosed() {
+		return
+	}
+	if !c.cfg.ReconnectEnabled {
+		c.state.SetDisconnected(err)
+		return
+	}
+	c.state.SetReconnecting(err)
+
+	c.mu.Lock()
+	sess := c.session
+	c.session = nil
+	c.mu.Unlock()
+	if sess != nil {
+		sess.Stop()
+	}
+
+	if c.reconnectMgr == nil {
+		c.reconnectMgr = newReconnectManager(c, c.backoffConfig())
+	}
+	c.reconnectMgr.Start(context.Background())
+}
+
+func (c *Client) reconnectOnce() error {
+	c.mu.Lock()
+	st := c.storage
+	c.mu.Unlock()
+	if st == nil {
+		return ErrNotConnected
+	}
+
+	dcID, _ := st.DCID()
+	if dcID == 0 {
+		dcID = 2
+	}
+
+	if err := c.state.SetConnecting(dcID); err != nil {
+		return err
+	}
+
+	dc := session.DataCenter{
+		ID:       dcID,
+		TestMode: c.cfg.TestMode,
+		IPv6:     c.cfg.IPv6,
+	}
+	if dc.Address() == "" {
+		return fmt.Errorf("unknown dc_id: %d", dcID)
+	}
+
+	sess, err := session.NewSession(dc, st, c.cfg.Device.DeviceModel, c.cfg.Device.AppVersion, c.cfg.Device.SystemLangCode, c.cfg.Device.LangCode)
+	if err != nil {
+		return fmt.Errorf("create session: %w", err)
+	}
+
+	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
+	d := c.dialer
+	if c.testDialer != nil {
+		d = c.testDialer
+	}
+	conn, err := d.Dial("tcp", addr, 15*time.Second)
+	if err != nil {
+		return fmt.Errorf("dial %s: %w", addr, err)
+	}
+
+	tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+	if err != nil {
+		conn.Close()
+		return err
+	}
+	if err := tp.Connect(); err != nil {
+		conn.Close()
+		return fmt.Errorf("transport handshake: %w", err)
+	}
+	sessionTp := newSessionTransport(tp, conn)
+
+	sess.SetUpdateHandler(func(obj tg.TLObject) {
+		c.processRawUpdate(obj)
+	})
+
+	c.apiInit = false
+	if err := sess.Connect(sessionTp, 30*time.Second); err != nil {
+		sessionTp.Close()
+		return fmt.Errorf("session start: %w", err)
+	}
+
+	c.mu.Lock()
+	c.session = sess
+	c.mu.Unlock()
+
+	c.state.SetConnected()
+	c.state.SetDC(dcID)
+	c.state.ResetReconnectCount()
+
+	if c.updateManager != nil {
+		if err := c.updateManager.OnReconnect(context.Background(), c.Raw()); err != nil {
+			c.Log.Warnf("recover updates after reconnect: %v", err)
+		}
+	}
+
+	if c.healthCheck != nil {
+		c.healthCheck.Stop()
+	}
+	if c.healthCheck == nil {
+		c.healthCheck = newHealthChecker(c, c.healthConfig())
+	}
+	c.healthCheck.Start(context.Background())
+
+	return nil
+}
+
+func (rm *reconnectManager) Start(ctx context.Context) {
+	if !rm.running.CompareAndSwap(false, true) {
+		return
+	}
+	ctx, rm.cancel = context.WithCancel(ctx)
+	rm.done = make(chan struct{})
+	rm.attempts = 0
+	go rm.loop(ctx)
+}
+
+func (rm *reconnectManager) Stop() {
+	if !rm.running.CompareAndSwap(true, false) {
+		return
+	}
+	if rm.cancel != nil {
+		rm.cancel()
+	}
+	if rm.done != nil {
+		<-rm.done
+	}
+}
+
+func (rm *reconnectManager) IsRunning() bool {
+	return rm.running.Load()
+}
+
+func (rm *reconnectManager) Attempts() int {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+	return rm.attempts
+}
+
+func (rm *reconnectManager) loop(ctx context.Context) {
+	defer close(rm.done)
+	for {
+		rm.mu.Lock()
+		rm.attempts++
+		attempt := rm.attempts
+		rm.mu.Unlock()
+
+		if rm.cfg.MaxAttempts > 0 && attempt > rm.cfg.MaxAttempts {
+			rm.client.state.SetDisconnected(&ReconnectError{
+				Attempts: attempt,
+				Err:      ErrReconnectFailed,
+			})
+			rm.running.Store(false)
+			return
+		}
+
+		delay := rm.cfg.delay(attempt)
+		rm.client.Log.Debugf("reconnect attempt %d in %v", attempt, delay)
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(delay):
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if !rm.client.state.CanReconnect() {
+			return
+		}
+
+		err := rm.client.reconnectOnce()
+		if err == nil {
+			rm.client.Log.Info("reconnected successfully")
+			rm.running.Store(false)
+			return
+		}
+
+		rm.client.Log.Warnf("reconnect attempt %d failed: %v", attempt, err)
+		rm.client.state.SetReconnecting(err)
+
+		if ctx.Err() != nil {
+			return
+		}
+	}
+}

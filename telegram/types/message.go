@@ -1,0 +1,1143 @@
+package types
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/mtgo-labs/mtgo/telegram/params"
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+// Message represents a Telegram message, containing text, media, metadata,
+// and optional service action information. When created by a Client, it carries
+// a Binder so that Reply, Edit, Delete, and other convenience methods can
+// operate directly against the API without the caller needing a Client reference.
+//
+// Example:
+//
+//	msg, err := client.SendMessage(ctx, chatID, "Hello!")
+//	fmt.Printf("Sent message ID: %d, Text: %s\n", msg.ID, msg.Text)
+type Message struct {
+	// ID is the unique message identifier within the chat.
+	ID int32
+	// Date is when the message was sent.
+	Date time.Time
+	// Text is the textual content of the message, empty for media-only or service
+	// messages.
+	Text string
+	// FromID is the ID of the sender. Negative for chats/channels, positive for
+	// users.
+	FromID int64
+	// Sender is the resolved user who sent the message, or nil if the sender
+	// was not available in the peer map (e.g. anonymous channel admin).
+	Sender *User
+	// ChatID is the ID of the chat where the message was sent. Negative for groups
+	// and channels.
+	ChatID int64
+	// Chat is the resolved chat where the message was sent, or nil if the chat
+	// was not available in the peer map.
+	Chat *Chat
+	// ReplyToID is the ID of the message this message replies to, or 0 if none.
+	ReplyToID int32
+	// Media holds the parsed media attachment, or nil for text-only messages.
+	Media Media
+	// Entities contains formatting and special entity markers (mentions, URLs,
+	// bold, etc.) found in Text.
+	Entities []*MessageEntity
+	// ReplyMarkup is the inline or reply keyboard attached to the message.
+	ReplyMarkup *ReplyMarkup
+	// Out is true when the message was sent by the current user.
+	Out bool
+	// Mentioned is true when the current user was mentioned in the message.
+	Mentioned bool
+	// Silent is true when the message was sent without triggering a notification.
+	Silent bool
+	// Pinned is true when the message is currently pinned in the chat.
+	Pinned bool
+	// Views is the view count for channel posts; 0 when not applicable.
+	Views int
+	// Forwards is the number of times this message has been forwarded.
+	Forwards int
+	// EditDate is the timestamp of the last edit, or zero if never edited.
+	EditDate time.Time
+	// PostAuthor is the author name displayed on channel posts when signatures
+	// are enabled.
+	PostAuthor string
+	// GroupedID identifies messages that belong to the same album (grouped media).
+	// 0 when not part of a group.
+	GroupedID int64
+	// ViaBotID is the user ID of the inline bot that generated this message, or 0
+	// if not from a bot.
+	ViaBotID int64
+	// FwdFrom contains information about the original source when the message was
+	// forwarded.
+	FwdFrom *ForwardHeader
+	// Reactions lists the emoji reactions currently attached to the message.
+	Reactions []Reaction
+	// TTLPeriod is the auto-delete timer in seconds; 0 means no auto-delete.
+	TTLPeriod int
+	// Service is non-nil when the message is a service/system message (e.g. group
+	// created, member added).
+	Service *ServiceMessage
+	// SenderChatID is the ID of the chat that sent the message on behalf of itself
+	// (used for anonymous admin messages in groups).
+	SenderChatID int64
+	// TopicID is the forum topic ID this message belongs to, or 0 if not in a
+	// forum topic.
+	TopicID int32
+	// IsFromPending is true when the message is a local placeholder not yet
+	// confirmed by the server.
+	IsFromPending bool
+	binder        Binder
+	translate     func(key string, args ...any) string
+}
+
+type TranslatorFunc func(key string, args ...any) string
+
+func (m *Message) SetTranslator(fn TranslatorFunc) {
+	m.translate = fn
+}
+
+func (m *Message) T(key string, args ...any) string {
+	if m.translate == nil {
+		return key
+	}
+	return m.translate(key, args...)
+}
+
+// ForwardHeader contains information about the original source of a forwarded message.
+type ForwardHeader struct {
+	// Date is when the original message was sent.
+	Date time.Time
+	// FromID is the user ID of the original sender.
+	FromID int64
+	// FromName is the display name of the original sender when the sender's account
+	// is hidden.
+	FromName string
+	// ChannelID is the channel ID when the forward originates from a channel post.
+	ChannelID int64
+	// PostID is the message ID within the source channel when forwarded from a post.
+	PostID int32
+}
+
+// Reaction represents a single emoji reaction attached to a message with its count.
+type Reaction struct {
+	// Count is the number of users who used this reaction.
+	Count int
+	// Emoticon is the emoji string representing the reaction (e.g. "👍", "❤️").
+	Emoticon string
+}
+
+// ServiceMessage wraps a service action type for system-generated messages such
+// as group creation, member changes, or pinned message notifications.
+type ServiceMessage struct {
+	// Type identifies the specific kind of service action.
+	Type ServiceActionType
+	// RequestedPeers holds the shared peers when Type is ServiceActionRequestedPeer.
+	// Each entry has a ButtonID matching the button that triggered the share, and
+	// a list of peer IDs (positive for users, negative for chats, -100-prefixed
+	// for channels and supergroups).
+	RequestedPeers *RequestedPeerData
+}
+
+// RequestedPeerData holds the peer IDs returned by a keyboardButtonRequestPeer.
+type RequestedPeerData struct {
+	ButtonID int32
+	// UserIDs contains the shared user IDs (empty for chat/channel shares).
+	UserIDs []int64
+	// ChatIDs contains the shared chat/channel IDs (negative, empty for user shares).
+	ChatIDs []int64
+}
+
+const zeroChannelID = -1000000000000
+
+type peerID int64
+
+func (id *peerID) Channel(p int64) {
+	*id = peerID(zeroChannelID - p)
+}
+
+// ServiceActionType enumerates the kinds of service actions that can appear in a message.
+type ServiceActionType int
+
+const (
+	// ServiceActionGroupCreate indicates the group was created.
+	ServiceActionGroupCreate ServiceActionType = iota
+	// ServiceActionGroupEditTitle indicates the group title was changed.
+	ServiceActionGroupEditTitle
+	// ServiceActionGroupEditPhoto indicates the group photo was changed.
+	ServiceActionGroupEditPhoto
+	// ServiceActionGroupDeletePhoto indicates the group photo was removed.
+	ServiceActionGroupDeletePhoto
+	// ServiceActionGroupAddMembers indicates one or more members were added.
+	ServiceActionGroupAddMembers
+	// ServiceActionGroupRemoveMember indicates a member was removed.
+	ServiceActionGroupRemoveMember
+	// ServiceActionGroupJoinedByLink indicates a user joined via an invite link.
+	ServiceActionGroupJoinedByLink
+	// ServiceActionChannelCreate indicates a channel was created.
+	ServiceActionChannelCreate
+	// ServiceActionGroupMigrateTo indicates the group was upgraded to a
+	// supergroup.
+	ServiceActionGroupMigrateTo
+	// ServiceActionChannelMigrateFrom indicates the supergroup was created from
+	// a basic group.
+	ServiceActionChannelMigrateFrom
+	// ServiceActionPinMessage indicates a message was pinned.
+	ServiceActionPinMessage
+	// ServiceActionHistoryClear indicates the chat history was cleared.
+	ServiceActionHistoryClear
+	// ServiceActionGameScore indicates a game score was updated.
+	ServiceActionGameScore
+	// ServiceActionPhoneCall indicates a phone call event.
+	ServiceActionPhoneCall
+	// ServiceActionScreenshotTaken indicates a user took a screenshot in a
+	// secret chat.
+	ServiceActionScreenshotTaken
+	// ServiceActionContactSignUp indicates a contact registered on Telegram.
+	ServiceActionContactSignUp
+	// ServiceActionGroupCall indicates a group voice chat event.
+	ServiceActionGroupCall
+	// ServiceActionSetTTL indicates the message TTL was changed.
+	ServiceActionSetTTL
+	// ServiceActionTopicCreate indicates a forum topic was created.
+	ServiceActionTopicCreate
+	// ServiceActionTopicEdit indicates a forum topic was edited.
+	ServiceActionTopicEdit
+	// ServiceActionGiftPremium indicates a Telegram Premium gift was sent.
+	ServiceActionGiftPremium
+	// ServiceActionBoostApply indicates a boost was applied to the chat.
+	ServiceActionBoostApply
+	// ServiceActionRequestedPeer indicates the user shared a chat/user via
+	// a keyboardButtonRequestPeer button.
+	ServiceActionRequestedPeer
+	// ServiceActionUnknown represents an unrecognized service action.
+	ServiceActionUnknown
+)
+
+// String returns a human-readable representation of the Message.
+// It returns a truncated text preview, a media type label, or a fallback ID string.
+func (m *Message) String() string {
+	if m.Text != "" {
+		if len(m.Text) > 50 {
+			return m.Text[:50] + "..."
+		}
+		return m.Text
+	}
+	if m.Media != nil {
+		return fmt.Sprintf("[%s]", m.Media.MediaType())
+	}
+	return fmt.Sprintf("msg_%d", m.ID)
+}
+
+// ParseMessage converts a raw MTProto MessageClass into a Message.
+// It dispatches to the appropriate parser based on whether the message
+// is a regular message, a service message, or empty.
+// The PeerMap is used to resolve peer IDs. Returns nil if raw is nil.
+//
+// Example:
+//
+//	msg := types.ParseMessage(update.Message, peerMap)
+//	if msg != nil {
+//	    fmt.Println(msg.Text)
+//	}
+func ParseMessage(raw tg.MessageClass, pm *PeerMap) *Message {
+	if raw == nil {
+		return nil
+	}
+	switch r := raw.(type) {
+	case *tg.MessageEmpty:
+		return &Message{
+			ID: r.ID,
+		}
+	case *tg.Message:
+		return parseRegularMessage(r, pm)
+	case *tg.MessageService:
+		return parseServiceMessage(r, pm)
+	}
+	return nil
+}
+
+func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
+	m := &Message{
+		ID:        raw.ID,
+		Date:      time.Unix(int64(raw.Date), 0),
+		Text:      raw.Message,
+		Out:       raw.Out,
+		Mentioned: raw.Mentioned,
+		Silent:    raw.Silent,
+		Pinned:    raw.Pinned,
+	}
+	if raw.FromID != nil {
+		m.FromID = getPeerID(raw.FromID)
+	}
+	if m.FromID == 0 && !raw.Out && raw.PeerID != nil {
+		if _, ok := raw.PeerID.(*tg.PeerUser); ok {
+			m.FromID = getPeerID(raw.PeerID)
+		}
+	}
+	if pm != nil && m.FromID > 0 {
+		if u, ok := pm.Users[m.FromID]; ok {
+			m.Sender = parseUserTL(u)
+		}
+	}
+	if raw.PeerID != nil {
+		m.ChatID = getBarePeerID(raw.PeerID)
+	}
+	if raw.ReplyTo != nil {
+		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
+			if rt.ReplyToMsgID != 0 {
+				m.ReplyToID = rt.ReplyToMsgID
+			}
+		}
+	}
+	if raw.Media != nil {
+		m.Media = ParseMedia(raw.Media)
+	}
+	if raw.Entities != nil {
+		m.Entities = ParseMessageEntities(raw.Entities)
+	}
+	if raw.ReplyMarkup != nil {
+		m.ReplyMarkup = ParseReplyMarkup(raw.ReplyMarkup)
+	}
+	if raw.Views != 0 {
+		m.Views = int(raw.Views)
+	}
+	if raw.Forwards != 0 {
+		m.Forwards = int(raw.Forwards)
+	}
+	if raw.EditDate != 0 {
+		m.EditDate = time.Unix(int64(raw.EditDate), 0)
+	}
+	if raw.PostAuthor != "" {
+		m.PostAuthor = raw.PostAuthor
+	}
+	if raw.GroupedID != 0 {
+		m.GroupedID = raw.GroupedID
+	}
+	if raw.ViaBotID != 0 {
+		m.ViaBotID = raw.ViaBotID
+	}
+	if raw.FwdFrom != nil {
+		m.FwdFrom = parseForwardHeader(raw.FwdFrom)
+	}
+	if raw.Reactions != nil && raw.Reactions.Results != nil {
+		for _, r := range raw.Reactions.Results {
+			if r != nil {
+				react := Reaction{Count: int(r.Count)}
+				if r.Reaction != nil {
+					if er, ok := r.Reaction.(*tg.ReactionEmoji); ok {
+						react.Emoticon = er.Emoticon
+					}
+				}
+				m.Reactions = append(m.Reactions, react)
+			}
+		}
+	}
+	if raw.TTLPeriod != 0 {
+		m.TTLPeriod = int(raw.TTLPeriod)
+	}
+	return m
+}
+
+func parseServiceMessage(raw *tg.MessageService, pm *PeerMap) *Message {
+	m := &Message{
+		ID:     raw.ID,
+		Date:   time.Unix(int64(raw.Date), 0),
+		Out:    raw.Out,
+		Silent: raw.Silent,
+	}
+	if raw.FromID != nil {
+		m.FromID = getPeerID(raw.FromID)
+	}
+	if m.FromID == 0 && !raw.Out && raw.PeerID != nil {
+		if _, ok := raw.PeerID.(*tg.PeerUser); ok {
+			m.FromID = getPeerID(raw.PeerID)
+		}
+	}
+	if pm != nil && m.FromID > 0 {
+		if u, ok := pm.Users[m.FromID]; ok {
+			m.Sender = parseUserTL(u)
+		}
+	}
+	if raw.PeerID != nil {
+		m.ChatID = getBarePeerID(raw.PeerID)
+	}
+	if raw.ReplyTo != nil {
+		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
+			if rt.ReplyToMsgID != 0 {
+				m.ReplyToID = rt.ReplyToMsgID
+			}
+		}
+	}
+	if raw.Action != nil {
+		m.Service = parseServiceAction(raw.Action)
+	}
+	return m
+}
+
+func parseServiceAction(raw tg.MessageActionClass) *ServiceMessage {
+	switch action := raw.(type) {
+	case *tg.MessageActionChatCreate:
+		return &ServiceMessage{Type: ServiceActionGroupCreate}
+	case *tg.MessageActionChatEditTitle:
+		return &ServiceMessage{Type: ServiceActionGroupEditTitle}
+	case *tg.MessageActionChatEditPhoto:
+		return &ServiceMessage{Type: ServiceActionGroupEditPhoto}
+	case *tg.MessageActionChatDeletePhoto:
+		return &ServiceMessage{Type: ServiceActionGroupDeletePhoto}
+	case *tg.MessageActionChatAddUser:
+		return &ServiceMessage{Type: ServiceActionGroupAddMembers}
+	case *tg.MessageActionChatDeleteUser:
+		return &ServiceMessage{Type: ServiceActionGroupRemoveMember}
+	case *tg.MessageActionChatJoinedByLink:
+		return &ServiceMessage{Type: ServiceActionGroupJoinedByLink}
+	case *tg.MessageActionChannelCreate:
+		return &ServiceMessage{Type: ServiceActionChannelCreate}
+	case *tg.MessageActionChatMigrateTo:
+		return &ServiceMessage{Type: ServiceActionGroupMigrateTo}
+	case *tg.MessageActionChannelMigrateFrom:
+		return &ServiceMessage{Type: ServiceActionChannelMigrateFrom}
+	case *tg.MessageActionPinMessage:
+		return &ServiceMessage{Type: ServiceActionPinMessage}
+	case *tg.MessageActionHistoryClear:
+		return &ServiceMessage{Type: ServiceActionHistoryClear}
+	case *tg.MessageActionGameScore:
+		return &ServiceMessage{Type: ServiceActionGameScore}
+	case *tg.MessageActionPhoneCall:
+		return &ServiceMessage{Type: ServiceActionPhoneCall}
+	case *tg.MessageActionScreenshotTaken:
+		return &ServiceMessage{Type: ServiceActionScreenshotTaken}
+	case *tg.MessageActionContactSignUp:
+		return &ServiceMessage{Type: ServiceActionContactSignUp}
+	case *tg.MessageActionGroupCall:
+		return &ServiceMessage{Type: ServiceActionGroupCall}
+	case *tg.MessageActionSetMessagesTTL:
+		return &ServiceMessage{Type: ServiceActionSetTTL}
+	case *tg.MessageActionTopicCreate:
+		return &ServiceMessage{Type: ServiceActionTopicCreate}
+	case *tg.MessageActionTopicEdit:
+		return &ServiceMessage{Type: ServiceActionTopicEdit}
+	case *tg.MessageActionGiftPremium:
+		return &ServiceMessage{Type: ServiceActionGiftPremium}
+	case *tg.MessageActionBoostApply:
+		return &ServiceMessage{Type: ServiceActionBoostApply}
+	case *tg.MessageActionRequestedPeer:
+		return &ServiceMessage{
+			Type:           ServiceActionRequestedPeer,
+			RequestedPeers: parseRequestedPeers(action.ButtonID, action.Peers),
+		}
+	case *tg.MessageActionRequestedPeerSentMe:
+		return &ServiceMessage{
+			Type:           ServiceActionRequestedPeer,
+			RequestedPeers: parseRequestedPeerSentMe(action.ButtonID, action.Peers),
+		}
+	}
+	return &ServiceMessage{Type: ServiceActionUnknown}
+}
+
+func parseRequestedPeers(buttonID int32, peers []tg.PeerClass) *RequestedPeerData {
+	data := &RequestedPeerData{ButtonID: buttonID}
+	for _, p := range peers {
+		switch peer := p.(type) {
+		case *tg.PeerUser:
+			data.UserIDs = append(data.UserIDs, peer.UserID)
+		case *tg.PeerChat:
+			data.ChatIDs = append(data.ChatIDs, -peer.ChatID)
+		case *tg.PeerChannel:
+			data.ChatIDs = append(data.ChatIDs, channelChatID(peer.ChannelID))
+		}
+	}
+	return data
+}
+
+func parseRequestedPeerSentMe(buttonID int32, peers []tg.RequestedPeerClass) *RequestedPeerData {
+	data := &RequestedPeerData{ButtonID: buttonID}
+	for _, p := range peers {
+		switch peer := p.(type) {
+		case *tg.RequestedPeerUser:
+			data.UserIDs = append(data.UserIDs, peer.UserID)
+		case *tg.RequestedPeerChat:
+			data.ChatIDs = append(data.ChatIDs, -peer.ChatID)
+		case *tg.RequestedPeerChannel:
+			data.ChatIDs = append(data.ChatIDs, channelChatID(peer.ChannelID))
+		}
+	}
+	return data
+}
+
+func channelChatID(channelID int64) int64 {
+	var id peerID
+	id.Channel(channelID)
+	return int64(id)
+}
+
+func parseForwardHeader(raw *tg.MessageFwdHeader) *ForwardHeader {
+	if raw == nil {
+		return nil
+	}
+	h := &ForwardHeader{
+		Date: time.Unix(int64(raw.Date), 0),
+	}
+	if raw.FromID != nil {
+		h.FromID = getPeerID(raw.FromID)
+	}
+	if raw.FromName != "" {
+		h.FromName = raw.FromName
+	}
+	if raw.ChannelPost != 0 {
+		h.PostID = raw.ChannelPost
+	}
+	return h
+}
+
+func getPeerID(peer tg.PeerClass) int64 {
+	if peer == nil {
+		return 0
+	}
+	switch p := peer.(type) {
+	case *tg.PeerUser:
+		return p.UserID
+	case *tg.PeerChat:
+		return -p.ChatID
+	case *tg.PeerChannel:
+		return -p.ChannelID
+	}
+	return 0
+}
+
+func getBarePeerID(peer tg.PeerClass) int64 {
+	if peer == nil {
+		return 0
+	}
+	switch p := peer.(type) {
+	case *tg.PeerUser:
+		return p.UserID
+	case *tg.PeerChat:
+		return -p.ChatID
+	case *tg.PeerChannel:
+		return -p.ChannelID
+	}
+	return 0
+}
+
+// SetBinder injects the Binder that backs all bound convenience methods on this
+// Message. Called internally by the Client after constructing a Message from an
+// update.
+func (m *Message) SetBinder(b Binder) {
+	m.binder = b
+}
+
+// Reply sends a text message in the same chat, quoting this message as a reply.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	reply, err := msg.Reply("Got it!", &params.SendMessage{ParseMode: params.ParseModeHTML})
+func (m *Message) Reply(text string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSend(m.ChatID, text, m.ID, opts...)
+}
+
+// Send sends a text message in the same chat without replying to any message.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) Send(text string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSend(m.ChatID, text, 0, opts...)
+}
+
+// Forward forwards this message to another chat.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	fwd, err := msg.Forward(targetChatID, &params.ForwardMessages{DropAuthor: true})
+//	fmt.Printf("Forwarded as message %d\n", fwd.ID)
+func (m *Message) Forward(chatID int64, opts ...*params.ForwardMessages) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundForward(chatID, m.ChatID, m.ID, opts...)
+}
+
+// Copy copies this message into another chat without the forward header.
+// Returns the new message ID. Returns ErrNoBinder if the message was not created
+// by a client.
+func (m *Message) Copy(chatID int64, opts ...*params.CopyMessage) (int64, error) {
+	if m.binder == nil {
+		return 0, ErrNoBinder
+	}
+	return m.binder.BoundCopy(chatID, m.ChatID, m.ID, opts...)
+}
+
+// Edit modifies the text content of this message.
+// Only possible for messages sent by the current user.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	edited, err := msg.Edit("<i>Updated text</i>", &params.EditMessage{ParseMode: params.ParseModeHTML})
+func (m *Message) Edit(text string, opts ...*params.EditMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundEdit(m.ChatID, m.ID, text, opts...)
+}
+
+// EditCaption changes the caption of this media message.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) EditCaption(caption string, opts ...*params.EditMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundEditCaption(m.ChatID, m.ID, caption, opts...)
+}
+
+// Delete removes this message from the chat.
+// Returns the number of messages deleted. Returns ErrNoBinder if the message was
+// not created by a client.
+//
+// Example:
+//
+//	count, err := msg.Delete(&params.DeleteMessages{Revoke: true})
+//	fmt.Printf("Deleted %d message(s)\n", count)
+func (m *Message) Delete(opts ...*params.DeleteMessages) (int, error) {
+	if m.binder == nil {
+		return 0, ErrNoBinder
+	}
+	return m.binder.BoundDelete(m.ChatID, []int32{m.ID}, opts...)
+}
+
+// React adds one or more emoji reactions to this message.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	err := msg.React("👍", "❤️")
+func (m *Message) React(emojis ...string) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundReact(m.ChatID, m.ID, emojis)
+}
+
+// Pin pins this message in the chat.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	err := msg.Pin(&params.PinMessage{Silent: true})
+func (m *Message) Pin(opts ...*params.PinMessage) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundPin(m.ChatID, m.ID, opts...)
+}
+
+// Unpin removes this message from the pinned list.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) Unpin(opts ...*params.PinMessage) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundUnpin(m.ChatID, m.ID, opts...)
+}
+
+// Read marks this message (and all before it) as read.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) Read() error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundRead(m.ChatID, m.ID)
+}
+
+// Download fetches the media attached to this message as raw bytes.
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	data, err := msg.Download()
+//	if err == nil {
+//	    os.WriteFile("photo.jpg", data, 0644)
+//	}
+func (m *Message) Download(opts ...*params.Download) ([]byte, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundDownload(m.ChatID, m.ID, opts...)
+}
+
+// ReplyMedia sends media to the same chat, quoting this message as a reply.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) ReplyMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendMedia(m.ChatID, media, caption, m.ID, opts...)
+}
+
+// SendMedia sends media to the same chat without replying to any message.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) SendMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendMedia(m.ChatID, media, caption, 0, opts...)
+}
+
+// EditMedia replaces the media content of this message.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) EditMedia(media tg.InputMediaClass) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundEditMedia(m.ChatID, m.ID, media)
+}
+
+// EditReplyMarkup changes only the inline keyboard of this message.
+// Returns ErrNoBinder if the message was not created by a client.
+func (m *Message) EditReplyMarkup(markup tg.ReplyMarkupClass) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundEditReplyMarkup(m.ChatID, m.ID, markup)
+}
+
+func (m *Message) ReplyAnimation(file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyAnimation(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplyAudio(file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyAudio(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplyDocument(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyDocument(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplyPhoto(file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyPhoto(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplyVideo(file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyVideo(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplyVideoNote(file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyVideoNote(m.ChatID, file, m.ID, opts...)
+}
+
+func (m *Message) ReplyVoice(file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyVoice(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) ReplySticker(file *InputFile, opts ...*params.SendSticker) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplySticker(m.ChatID, file, m.ID, opts...)
+}
+
+// ReplyText is an alias for Reply, provided for naming consistency with the
+// other Reply* helpers.
+func (m *Message) ReplyText(text string, opts ...*params.SendMessage) (*Message, error) {
+	return m.Reply(text, opts...)
+}
+
+// Answer sends a text message in the same chat without replying. Semantically
+// equivalent to Send; named for use in callback/query contexts.
+func (m *Message) Answer(text string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSend(m.ChatID, text, 0, opts...)
+}
+
+func (m *Message) AnswerAnimation(file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerAnimation(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerAudio(file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerAudio(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerDocument(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerDocument(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerPhoto(file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerPhoto(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerVideo(file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerVideo(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerVideoNote(file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerVideoNote(m.ChatID, file, opts...)
+}
+
+func (m *Message) AnswerVoice(file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerVoice(m.ChatID, file, caption, opts...)
+}
+
+func (m *Message) AnswerSticker(file *InputFile, opts ...*params.SendSticker) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerSticker(m.ChatID, file, opts...)
+}
+
+// AnswerMedia sends media to the same chat without replying to any message.
+func (m *Message) AnswerMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendMedia(m.ChatID, media, caption, 0, opts...)
+}
+
+// AnswerMediaGroup sends an album of media items to the same chat without
+// replying to any message.
+func (m *Message) AnswerMediaGroup(media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendMediaGroup(m.ChatID, media, 0, opts...)
+}
+
+// ReplyContact sends a contact card as a reply to this message.
+func (m *Message) ReplyContact(phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendContact(m.ChatID, phone, firstName, lastName, m.ID, opts...)
+}
+
+// AnswerContact sends a contact card without replying.
+func (m *Message) AnswerContact(phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendContact(m.ChatID, phone, firstName, lastName, 0, opts...)
+}
+
+// ReplyLocation sends a geographic location as a reply to this message.
+func (m *Message) ReplyLocation(lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendLocation(m.ChatID, lat, lng, m.ID, opts...)
+}
+
+// AnswerLocation sends a geographic location without replying.
+func (m *Message) AnswerLocation(lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendLocation(m.ChatID, lat, lng, 0, opts...)
+}
+
+// ReplyVenue sends a named venue as a reply to this message.
+func (m *Message) ReplyVenue(lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendVenue(m.ChatID, lat, lng, title, address, m.ID, opts...)
+}
+
+// AnswerVenue sends a named venue without replying.
+func (m *Message) AnswerVenue(lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendVenue(m.ChatID, lat, lng, title, address, 0, opts...)
+}
+
+// ReplyPoll sends a poll as a reply to this message.
+func (m *Message) ReplyPoll(question string, options []string, opts ...*params.SendPoll) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendPoll(m.ChatID, question, options, m.ID, opts...)
+}
+
+// AnswerPoll sends a poll without replying.
+func (m *Message) AnswerPoll(question string, options []string, opts ...*params.SendPoll) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendPoll(m.ChatID, question, options, 0, opts...)
+}
+
+// ReplyDice sends a dice roll as a reply to this message.
+func (m *Message) ReplyDice(emoji string, opts ...*params.SendDice) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendDice(m.ChatID, emoji, m.ID, opts...)
+}
+
+// AnswerDice sends a dice roll without replying.
+func (m *Message) AnswerDice(emoji string, opts ...*params.SendDice) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendDice(m.ChatID, emoji, 0, opts...)
+}
+
+// ReplyGame sends a game as a reply to this message.
+func (m *Message) ReplyGame(gameShortName string, opts ...*params.SendGame) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendGame(m.ChatID, gameShortName, m.ID, opts...)
+}
+
+// AnswerGame sends a game without replying.
+func (m *Message) AnswerGame(gameShortName string, opts ...*params.SendGame) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendGame(m.ChatID, gameShortName, 0, opts...)
+}
+
+func (m *Message) ReplyCachedMedia(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyDocument(m.ChatID, file, caption, m.ID, opts...)
+}
+
+func (m *Message) AnswerCachedMedia(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundAnswerDocument(m.ChatID, file, caption, opts...)
+}
+
+// ReplyMediaGroup sends an album of media items as a reply to this message.
+func (m *Message) ReplyMediaGroup(media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendMediaGroup(m.ChatID, media, m.ID, opts...)
+}
+
+// ReplyChatAction sends a chat action indicator (e.g. typing) to the same chat.
+func (m *Message) ReplyChatAction(action tg.SendMessageActionClass) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundSendChatAction(m.ChatID, action)
+}
+
+// ReplyInlineBotResult sends an inline bot result as a reply to this message.
+func (m *Message) ReplyInlineBotResult(queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendInlineBotResult(m.ChatID, queryID, resultID, m.ID, opts...)
+}
+
+// AnswerInlineBotResult sends an inline bot result without replying.
+func (m *Message) AnswerInlineBotResult(queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundSendInlineBotResult(m.ChatID, queryID, resultID, 0, opts...)
+}
+
+// EditText is an alias for Edit, provided for naming consistency.
+func (m *Message) EditText(text string, opts ...*params.EditMessage) (*Message, error) {
+	return m.Edit(text, opts...)
+}
+
+// EditLiveLocation updates the location of a live location message. Not yet
+// implemented.
+func (m *Message) EditLiveLocation(lat, lng float64) (*Message, error) {
+	return nil, m.binder.BoundStub("EditLiveLocation")
+}
+
+// StopLiveLocation stops a live location sharing. Not yet implemented.
+func (m *Message) StopLiveLocation() (*Message, error) {
+	return nil, m.binder.BoundStub("StopLiveLocation")
+}
+
+// CopyMediaGroup copies all messages in this message's album into another chat.
+func (m *Message) CopyMediaGroup(chatID int64) ([]*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundCopyMediaGroup(chatID, m.ChatID, m.ID)
+}
+
+// Vote casts a vote in a poll message using the selected option byte sequences.
+func (m *Message) Vote(options [][]byte) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundVote(m.ChatID, m.ID, options)
+}
+
+// RetractVote withdraws the current user's vote in a poll.
+func (m *Message) RetractVote() error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundRetractVote(m.ChatID, m.ID)
+}
+
+// GetMediaGroup retrieves all messages that belong to the same album as this
+// message.
+func (m *Message) GetMediaGroup() ([]*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundGetMediaGroup(m.ChatID, m.ID)
+}
+
+// View is an alias for Read; marks this message as read.
+func (m *Message) View() error {
+	return m.Read()
+}
+
+// Click simulates a button press on this message. Not yet implemented.
+func (m *Message) Click(buttonIndex int) error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundStub("Click")
+}
+
+// Pay initiates a payment for an invoice message. Not yet implemented.
+func (m *Message) Pay() error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundStub("Pay")
+}
+
+// ReplyPaidMedia sends paid media as a reply. Not yet implemented.
+func (m *Message) ReplyPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return nil, m.binder.BoundStub("ReplyPaidMedia")
+}
+
+// AnswerPaidMedia sends paid media without replying. Not yet implemented.
+func (m *Message) AnswerPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return nil, m.binder.BoundStub("AnswerPaidMedia")
+}
+
+// ReplyInvoice sends an invoice as a reply. Not yet implemented.
+func (m *Message) ReplyInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return nil, m.binder.BoundStub("ReplyInvoice")
+}
+
+// AnswerInvoice sends an invoice without replying. Not yet implemented.
+func (m *Message) AnswerInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return nil, m.binder.BoundStub("AnswerInvoice")
+}
+
+func (m *Message) ReplyChecklist(checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyChecklist(m.ChatID, checklist, m.ID, opts...)
+}
+
+func (m *Message) AnswerChecklist(checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.BoundReplyChecklist(m.ChatID, checklist, 0, opts...)
+}
+
+func (m *Message) EditChecklist(checklist *tg.InputMediaTodo, opts ...*params.EditMessage) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	media := tg.InputMediaClass(checklist)
+	return m.binder.BoundEditMedia(m.ChatID, m.ID, media)
+}
+
+// AcceptGiftPurchaseOffer accepts a gift purchase offer. Not yet implemented.
+func (m *Message) AcceptGiftPurchaseOffer() error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundStub("AcceptGiftPurchaseOffer")
+}
+
+// RejectGiftPurchaseOffer rejects a gift purchase offer. Not yet implemented.
+func (m *Message) RejectGiftPurchaseOffer() error {
+	if m.binder == nil {
+		return ErrNoBinder
+	}
+	return m.binder.BoundStub("RejectGiftPurchaseOffer")
+}
+
+// Summarize generates a summary of the message content. Not yet implemented.
+func (m *Message) Summarize() (string, error) {
+	if m.binder == nil {
+		return "", ErrNoBinder
+	}
+	return "", m.binder.BoundStub("Summarize")
+}
