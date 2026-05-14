@@ -1,0 +1,7 @@
+start: "Privet, {name}! Kak ya mogu pomoch /help?"
+help: "Ya mnogoyazychnyy bot. Otprav mne tekst i ya vernu ego obratno."
+echo: "Ty skazal: {0}"
+items: "U tebya {0} elementov v korzine."
+cart: "Hey {name}, v tvoey korzine {count} elementov!"
+menu_btn: "Menyu"
+language_set: "Yazyk ustanovlen na russkiy!"

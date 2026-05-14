@@ -1,0 +1,7 @@
+start: "Hallo, {name}! Wie kann ich dir /help helfen?"
+help: "Ich bin ein mehrsprachiger Bot. Schick mir einen Text und ich sende ihn zurueck."
+echo: "Du sagtest: {0}"
+items: "Du hast {0} Elemente im Warenkorb."
+cart: "Hey {name}, dein Warenkorb hat {count} Elemente!"
+menu_btn: "Menue"
+language_set: "Sprache auf Deutsch umgestellt!"
