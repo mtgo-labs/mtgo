@@ -1,0 +1,311 @@
+package session
+
+import (
+	"bytes"
+	"crypto/rand"
+	"fmt"
+	"math/big"
+
+	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+// AuthResult holds the output of a successful DH key exchange: the shared
+// authorization key, the server-assigned salt, and the server's reported time.
+type AuthResult struct {
+	// AuthKey is the 256-byte shared authorization key.
+	AuthKey []byte
+	// ServerSalt is the salt value negotiated with the server.
+	ServerSalt int64
+	// ServerTime is the server's current Unix timestamp.
+	ServerTime int32
+}
+
+type authTransport interface {
+	Send(data []byte) error
+	Recv() ([]byte, error)
+}
+
+// Auth performs the full MTProto DH key exchange to establish an authorization
+// key with a Telegram server.
+type Auth struct {
+	// DC is the data center ID being authenticated. The zero value defaults to
+	// DC 2 for compatibility with older callers.
+	DC int
+	// TestMode indicates that the connection is using Telegram test servers.
+	TestMode bool
+}
+
+func (a *Auth) innerDataDC() int32 {
+	dc := a.DC
+	if dc == 0 {
+		dc = 2
+	}
+	if a.TestMode {
+		dc += 10000
+	}
+	return int32(dc)
+}
+
+func (a *Auth) serializeTL(obj tg.TLObject) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := obj.Encode(&buf); err != nil {
+		return nil, fmt.Errorf("serializeTL: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func (a *Auth) deserializeTL(data []byte) (tg.TLObject, error) {
+	obj, err := tg.ReadTLObject(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("deserializeTL: %w", err)
+	}
+	return obj, nil
+}
+
+func (a *Auth) sendUnencrypted(conn authTransport, obj tg.TLObject) error {
+	payload, err := a.serializeTL(obj)
+	if err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	if err := packUnencrypted(&buf, payload); err != nil {
+		return err
+	}
+	return conn.Send(buf.Bytes())
+}
+
+func (a *Auth) recvUnencrypted(conn authTransport) (tg.TLObject, error) {
+	data, err := conn.Recv()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) == 4 {
+		code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
+		return nil, fmt.Errorf("server error code: %d", -code)
+	}
+
+	payload, err := unpackUnencrypted(data)
+	if err != nil {
+		return nil, err
+	}
+	return a.deserializeTL(payload)
+}
+
+func knownFingerprints() []int64 {
+	fps := make([]int64, 0, len(crypto.ServerPublicKeys))
+	for fp := range crypto.ServerPublicKeys {
+		fps = append(fps, fp)
+	}
+	return fps
+}
+
+func (a *Auth) findKeyFingerprint(fingerprints []int64) (int64, bool) {
+	for _, fp := range fingerprints {
+		if _, ok := crypto.GetServerKey(fp); ok {
+			return fp, true
+		}
+	}
+	return 0, false
+}
+
+func (a *Auth) generateRandomBN(bits int) *big.Int {
+	b := make([]byte, bits/8)
+	_, _ = rand.Read(b)
+	b[0] |= 0x80
+	return new(big.Int).SetBytes(b)
+}
+
+// Create performs the complete MTProto key generation handshake over the
+// provided transport: PQ request, DH parameter exchange, and key derivation.
+// Returns an AuthResult with the established key, salt, and server time, or an
+// error describing which step failed.
+func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
+	nonce, err := randomInt128()
+	if err != nil {
+		return nil, fmt.Errorf("step 1: generate nonce: %w", err)
+	}
+
+	if err := a.sendUnencrypted(conn, &tg.ReqPQMultiRequest{Nonce: nonce}); err != nil {
+		return nil, fmt.Errorf("step 2: send ReqPqMulti: %w", err)
+	}
+
+	obj, err := a.recvUnencrypted(conn)
+	if err != nil {
+		return nil, fmt.Errorf("step 3: recv ResPQ: %w", err)
+	}
+	resPQ, ok := obj.(*tg.ResPQ)
+	if !ok {
+		return nil, fmt.Errorf("step 3: expected ResPQ, got %T", obj)
+	}
+	if resPQ.Nonce != nonce {
+		return nil, fmt.Errorf("step 3: nonce mismatch")
+	}
+
+	pqBig := new(big.Int).SetBytes([]byte(resPQ.PQ))
+	pqInt64 := pqBig.Int64()
+	pVal := crypto.Decompose(pqInt64)
+	qVal := pqInt64 / pVal
+	if pVal > qVal {
+		pVal, qVal = qVal, pVal
+	}
+
+	pStr := string(big.NewInt(pVal).Bytes())
+	qStr := string(big.NewInt(qVal).Bytes())
+
+	fp, ok := a.findKeyFingerprint(resPQ.ServerPublicKeyFingerprints)
+	if !ok {
+		return nil, fmt.Errorf("step 5: no matching key fingerprint (server=%v, known=%v)", resPQ.ServerPublicKeyFingerprints, knownFingerprints())
+	}
+
+	newNonce, err := randomInt256()
+	if err != nil {
+		return nil, fmt.Errorf("step 6: generate new_nonce: %w", err)
+	}
+
+	pqInnerData := &tg.PQInnerDataDC{
+		PQ:          resPQ.PQ,
+		P:           pStr,
+		Q:           qStr,
+		Nonce:       nonce,
+		ServerNonce: resPQ.ServerNonce,
+		NewNonce:    newNonce,
+		DC:          a.innerDataDC(),
+	}
+
+	pqInnerBytes, err := a.serializeTL(pqInnerData)
+	if err != nil {
+		return nil, fmt.Errorf("step 6: serialize PQInnerData: %w", err)
+	}
+
+	if len(pqInnerBytes) > 144 {
+		return nil, fmt.Errorf("step 6: PQInnerData too large (%d bytes)", len(pqInnerBytes))
+	}
+
+	encData, err := crypto.RSAEncryptLegacy(pqInnerBytes, fp)
+	if err != nil {
+		return nil, fmt.Errorf("step 6: RSA encrypt: %w", err)
+	}
+
+	if err := a.sendUnencrypted(conn, &tg.ReqDHParamsRequest{
+		Nonce:                nonce,
+		ServerNonce:          resPQ.ServerNonce,
+		P:                    pStr,
+		Q:                    qStr,
+		PublicKeyFingerprint: fp,
+		EncryptedData:        string(encData),
+	}); err != nil {
+		return nil, fmt.Errorf("step 7: send ReqDHParams: %w", err)
+	}
+
+	obj, err = a.recvUnencrypted(conn)
+	if err != nil {
+		return nil, fmt.Errorf("step 8: recv ServerDHParams: %w", err)
+	}
+
+	switch v := obj.(type) {
+	case *tg.ServerDHParamsFail:
+		return nil, fmt.Errorf("step 8: server DH params fail")
+	case *tg.ServerDHParamsOk:
+		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
+		decrypted := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
+
+		serverDHData, err := unwrapDataWithHash(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("step 8: unwrap decrypted DH params: %w", err)
+		}
+
+		serverDHInner, err := a.deserializeTL(serverDHData)
+		if err != nil {
+			return nil, fmt.Errorf("step 8: deserialize ServerDHInnerData: %w", err)
+		}
+		dhInner, ok := serverDHInner.(*tg.ServerDHInnerData)
+		if !ok {
+			return nil, fmt.Errorf("step 8: expected ServerDHInnerData, got %T", serverDHInner)
+		}
+
+		if dhInner.Nonce != nonce {
+			return nil, fmt.Errorf("step 8: nonce mismatch in DH inner data")
+		}
+
+		b := a.generateRandomBN(2048)
+		dhPrime := new(big.Int).SetBytes([]byte(dhInner.DHPrime))
+		g := big.NewInt(int64(dhInner.G))
+		gB := new(big.Int).Exp(g, b, dhPrime)
+
+		gA := new(big.Int).SetBytes([]byte(dhInner.GA))
+		authKey := computeAuthKey(gA, b, dhPrime)
+
+		clientDHInner := &tg.ClientDHInnerData{
+			Nonce:       nonce,
+			ServerNonce: resPQ.ServerNonce,
+			RetryID:     0,
+			GB:          string(gB.Bytes()),
+		}
+
+		clientDHBytes, err := a.serializeTL(clientDHInner)
+		if err != nil {
+			return nil, fmt.Errorf("step 9: serialize ClientDHInnerData: %w", err)
+		}
+
+		clientDHWithHash := sha1Hash(clientDHBytes)
+		clientDHWithHash = append(clientDHWithHash, clientDHBytes...)
+		padLen := 16 - (len(clientDHWithHash) % 16)
+		if padLen < 16 {
+			pad := make([]byte, padLen)
+			clientDHWithHash = append(clientDHWithHash, pad...)
+		}
+
+		encClientDH := crypto.IGEEncrypt(clientDHWithHash, key, iv)
+
+		if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
+			Nonce:         nonce,
+			ServerNonce:   resPQ.ServerNonce,
+			EncryptedData: string(encClientDH),
+		}); err != nil {
+			return nil, fmt.Errorf("step 9: send SetClientDHParams: %w", err)
+		}
+
+		obj, err = a.recvUnencrypted(conn)
+		if err != nil {
+			return nil, fmt.Errorf("step 10: recv DH answer: %w", err)
+		}
+
+		switch v := obj.(type) {
+		case *tg.DHGenOk:
+			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
+			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
+				return nil, fmt.Errorf("step 10: new_nonce_hash1 mismatch")
+			}
+
+			if len(authKey) < 256 {
+				padded := make([]byte, 256)
+				copy(padded[256-len(authKey):], authKey)
+				authKey = padded
+			} else {
+				authKey = authKey[:256]
+			}
+
+			salt := computeServerSalt(newNonce[:], resPQ.ServerNonce[:])
+
+			return &AuthResult{
+				AuthKey:    authKey,
+				ServerSalt: salt,
+				ServerTime: dhInner.ServerTime,
+			}, nil
+
+		case *tg.DHGenRetry:
+			return nil, fmt.Errorf("step 10: dh_gen_retry")
+
+		case *tg.DHGenFail:
+			return nil, fmt.Errorf("step 10: dh_gen_fail")
+
+		default:
+			return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
+		}
+
+	default:
+		return nil, fmt.Errorf("step 8: unexpected ServerDHParams type %T", obj)
+	}
+}
