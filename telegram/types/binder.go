@@ -64,6 +64,9 @@ type Binder interface {
 	// BoundDownload downloads the media attached to a message and returns its raw
 	// bytes.
 	BoundDownload(chatID int64, msgID int32, opts ...*params.Download) ([]byte, error)
+	// BoundDownloadTo downloads the media attached to a message to a file and
+	// returns the absolute file path.
+	BoundDownloadTo(chatID int64, msgID int32, fileName string, progress params.ProgressFunc) (string, error)
 	// BoundSendContact sends a contact card (phone number + name) to a chat.
 	BoundSendContact(chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*Message, error)
 	// BoundSendLocation sends a geographic location point to a chat.

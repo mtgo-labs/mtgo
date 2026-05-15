@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -82,9 +84,17 @@ func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocation
 
 	c.Log.Debugf("DownloadFile size=%d", fileSize)
 
-	rpc := c.Raw()
+	dcID := int32(0)
+	if opts != nil {
+		dcID = opts.DCID
+	}
+	rpc, err := c.dcRPC(ctx, int(dcID))
+	if err != nil {
+		return nil, fmt.Errorf("download: dc rpc: %w", err)
+	}
+
 	var buf memoryBuffer
-	_, err := downloadToFileRPC(ctx, rpc, location, fileSize, &buf, opts)
+	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, &buf, opts)
 	if err != nil {
 		c.Log.Warnf("DownloadFile failed err=%v", err)
 		return nil, err
@@ -132,13 +142,21 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 
 	c.Log.Debugf("DownloadToFile size=%d", fileSize)
 
+	dcID := int32(0)
+	if opts != nil {
+		dcID = opts.DCID
+	}
+	rpc, err := c.dcRPC(ctx, int(dcID))
+	if err != nil {
+		return fmt.Errorf("download: dc rpc: %w", err)
+	}
+
 	f, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("download: create file: %w", err)
 	}
 	defer f.Close()
 
-	rpc := c.Raw()
 	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, f, opts)
 	if err != nil {
 		c.Log.Warnf("DownloadToFile failed err=%v", err)
@@ -183,10 +201,16 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 
 	c.Log.Debug("DownloadMedia")
 
-	location, _, err := GetFileLocation(media, thumbSize)
+	location, dcID, err := GetFileLocation(media, thumbSize)
 	if err != nil {
 		c.Log.Warnf("DownloadMedia failed err=%v", err)
 		return nil, fmt.Errorf("download media: %w", err)
+	}
+
+	if opts == nil {
+		opts = &params.Download{DCID: dcID}
+	} else if opts.DCID == 0 {
+		opts.DCID = dcID
 	}
 
 	return c.DownloadFile(ctx, location, getMediaFileSize(media), opts)
@@ -226,9 +250,15 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 
 	c.Log.Debug("DownloadMediaToFile")
 
-	location, _, err := GetFileLocation(media, thumbSize)
+	location, dcID, err := GetFileLocation(media, thumbSize)
 	if err != nil {
 		return fmt.Errorf("download media: %w", err)
+	}
+
+	if opts == nil {
+		opts = &params.Download{DCID: dcID}
+	} else if opts.DCID == 0 {
+		opts.DCID = dcID
 	}
 
 	return c.DownloadToFile(ctx, location, filePath, fileSize, opts)
@@ -273,7 +303,15 @@ func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationCl
 
 	c.Log.Debugf("StreamFile size=%d", fileSize)
 
-	rpc := c.Raw()
+	dcID := int32(0)
+	if opts != nil {
+		dcID = opts.DCID
+	}
+	rpc, err := c.dcRPC(ctx, int(dcID))
+	if err != nil {
+		return nil, fmt.Errorf("download: dc rpc: %w", err)
+	}
+
 	return streamFileRPC(ctx, rpc, location, fileSize, opts)
 }
 
@@ -504,4 +542,312 @@ func isFileReferenceError(err error) bool {
 	msg := err.Error()
 	return strings.Contains(msg, "FILEREF_") ||
 		strings.Contains(msg, "FILE_REFERENCE_")
+}
+
+const defaultDownloadDir = "downloads"
+
+type downloadInput struct {
+	media    types.Media
+	fileName string
+	fileSize int64
+	mimeType string
+}
+
+func resolveDownloadInput(input interface{}) (*downloadInput, error) {
+	switch v := input.(type) {
+	case *types.Message:
+		if v.Media == nil {
+			return nil, fmt.Errorf("message has no downloadable media")
+		}
+		return resolveMediaInput(v.Media)
+	case types.Media:
+		return resolveMediaInput(v)
+	default:
+		return nil, fmt.Errorf("unsupported input type %T; expected *types.Message or types.Media", input)
+	}
+}
+
+func resolveMediaInput(media types.Media) (*downloadInput, error) {
+	switch m := media.(type) {
+	case *types.PhotoMedia:
+		return &downloadInput{
+			media:    m,
+			fileName: "",
+			fileSize: 0,
+			mimeType: "image/jpeg",
+		}, nil
+	case *types.DocumentMedia:
+		return &downloadInput{
+			media:    m,
+			fileName: m.FileName,
+			fileSize: m.FileSize,
+			mimeType: m.MimeType,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported media type %T", m)
+	}
+}
+
+func guessExtension(mimeType string) string {
+	switch mimeType {
+	case "image/jpeg", "image/jpg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/webp":
+		return ".webp"
+	case "video/mp4":
+		return ".mp4"
+	case "video/webm":
+		return ".webm"
+	case "audio/ogg", "audio/opus":
+		return ".ogg"
+	case "audio/mpeg", "audio/mp3":
+		return ".mp3"
+	case "application/zip":
+		return ".zip"
+	case "application/pdf":
+		return ".pdf"
+	case "application/x-tgsticker":
+		return ".tgs"
+	case "image/gif":
+		return ".gif"
+	default:
+		if strings.HasPrefix(mimeType, "video/") {
+			return ".mp4"
+		}
+		if strings.HasPrefix(mimeType, "audio/") {
+			return ".mp3"
+		}
+		return ".bin"
+	}
+}
+
+func buildDownloadPath(dir string, info *downloadInput) (string, error) {
+	fileName := info.fileName
+
+	if fileName == "" {
+		ext := guessExtension(info.mimeType)
+		ts := time.Now().Format("2006-01-02_15-04-05")
+		fileName = fmt.Sprintf("%s_%s%s", strings.ToLower(info.media.MediaType().String()), ts, ext)
+	}
+
+	if dir == "" {
+		dir = defaultDownloadDir
+	}
+
+	if strings.HasSuffix(dir, "/") || filepath.Base(dir) == dir && !strings.Contains(dir, ".") {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return "", fmt.Errorf("download: create directory: %w", err)
+		}
+		return filepath.Join(dir, fileName), nil
+	}
+
+	parentDir := filepath.Dir(dir)
+	if parentDir != "." && parentDir != "/" {
+		if err := os.MkdirAll(parentDir, 0o755); err != nil {
+			return "", fmt.Errorf("download: create directory: %w", err)
+		}
+	}
+	return dir, nil
+}
+
+func (c *Client) downloadToPath(ctx context.Context, input interface{}, filePath string, progress params.ProgressFunc) (string, error) {
+	if err := c.ensureConnected(); err != nil {
+		return "", err
+	}
+
+	info, err := resolveDownloadInput(input)
+	if err != nil {
+		return "", err
+	}
+
+	if filePath == "" {
+		filePath, err = buildDownloadPath(defaultDownloadDir, info)
+		if err != nil {
+			return "", err
+		}
+	} else if strings.HasSuffix(filePath, "/") {
+		filePath, err = buildDownloadPath(filePath, info)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		dir := filepath.Dir(filePath)
+		if dir != "." && dir != "/" {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return "", fmt.Errorf("download: create directory: %w", err)
+			}
+		}
+	}
+
+	opts := &params.Download{
+		Progress: progress,
+	}
+
+	err = c.DownloadMediaToFile(ctx, info.media, "", filePath, info.fileSize, opts)
+	if err != nil {
+		return "", err
+	}
+
+	abs, err := filepath.Abs(filePath)
+	if err != nil {
+		return filePath, nil
+	}
+	return abs, nil
+}
+
+func (c *Client) downloadBytes(ctx context.Context, input interface{}, progress params.ProgressFunc) ([]byte, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
+
+	info, err := resolveDownloadInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := &params.Download{
+		Progress: progress,
+	}
+
+	return c.DownloadMedia(ctx, info.media, "", opts)
+}
+
+// Download downloads media from a message or media object to a file and returns
+// the absolute file path.
+//
+// The input parameter accepts either a *types.Message (extracts media automatically)
+// or a types.Media value (PhotoMedia, DocumentMedia, etc.).
+//
+// If fileName is empty, files are saved in the "downloads" directory with an
+// auto-generated name based on the media type and timestamp. Paths ending with "/"
+// are treated as directories. Non-existent directories are created automatically.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - input: *types.Message or types.Media to download
+//   - fileName: custom file path or directory (empty for auto-generated)
+//   - progress: optional progress callback
+//
+// Returns the absolute path of the downloaded file.
+func (c *Client) Download(ctx context.Context, input interface{}, fileName string, progress params.ProgressFunc) (string, error) {
+	return c.downloadToPath(ctx, input, fileName, progress)
+}
+
+// DownloadBytes downloads media from a message or media object into memory and
+// returns the raw bytes. This is the in-memory equivalent of [Client.Download].
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - input: *types.Message or types.Media to download
+//   - progress: optional progress callback
+//
+// Returns the raw file contents as a byte slice.
+func (c *Client) DownloadBytes(ctx context.Context, input interface{}, progress params.ProgressFunc) ([]byte, error) {
+	return c.downloadBytes(ctx, input, progress)
+}
+
+// StreamChunk is a single chunk of data yielded by [Client.StreamMedia].
+type StreamChunk struct {
+	Data []byte
+	Err  error
+}
+
+// StreamMedia downloads media from a message or media object chunk by chunk,
+// returning a channel that yields [StreamChunk] values. Each chunk contains up
+// to 1 MiB of data (configurable via ChunkSize in opts).
+//
+// The channel is always closed by the sender. A chunk with a non-nil Err field
+// signals the terminal error. The caller should drain the channel until it closes.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - input: *types.Message or types.Media to stream
+//   - opts: optional download settings (chunk size). May be nil for defaults.
+func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *params.Download) (<-chan StreamChunk, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
+
+	info, err := resolveDownloadInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	location, dcID, err := GetFileLocation(info.media, "")
+	if err != nil {
+		return nil, fmt.Errorf("stream media: %w", err)
+	}
+
+	if opts == nil {
+		opts = &params.Download{DCID: dcID}
+	} else if opts.DCID == 0 {
+		opts.DCID = dcID
+	}
+
+	rpc, err := c.dcRPC(ctx, int(opts.DCID))
+	if err != nil {
+		return nil, fmt.Errorf("stream media: dc rpc: %w", err)
+	}
+
+	chunkSize := int32(downloadChunkSize)
+	if opts != nil && opts.ChunkSize > 0 {
+		chunkSize = opts.ChunkSize
+	}
+
+	ch := make(chan StreamChunk, 2)
+
+	go func() {
+		defer close(ch)
+		offset := int64(0)
+
+		for {
+			select {
+			case <-ctx.Done():
+				ch <- StreamChunk{Err: ctx.Err()}
+				return
+			default:
+			}
+
+			req := &tg.UploadGetFileRequest{
+				Location: location,
+				Offset:   offset,
+				Limit:    chunkSize,
+			}
+
+			result, err := rpc.UploadGetFile(ctx, req)
+			if err != nil {
+				ch <- StreamChunk{Err: fmt.Errorf("stream: get file at offset %d: %w", offset, err)}
+				return
+			}
+
+			file, ok := result.(*tg.UploadFile)
+			if !ok {
+				ch <- StreamChunk{Err: fmt.Errorf("stream: unexpected result type %T", result)}
+				return
+			}
+
+			if len(file.Bytes) == 0 {
+				return
+			}
+
+			ch <- StreamChunk{Data: file.Bytes}
+			offset += int64(len(file.Bytes))
+
+			if opts != nil && opts.Progress != nil {
+				opts.Progress(params.ProgressInfo{
+					TotalBytes:      info.fileSize,
+					DownloadedBytes: offset,
+					IsUpload:        false,
+				})
+			}
+
+			if info.fileSize > 0 && offset >= info.fileSize {
+				return
+			}
+		}
+	}()
+
+	return ch, nil
 }
