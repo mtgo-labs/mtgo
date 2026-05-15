@@ -198,6 +198,12 @@ func (cs *connStateManager) SetDC(dcID int) {
 	cs.mu.Unlock()
 }
 
+func (cs *connStateManager) DC() int {
+	cs.mu.RLock()
+	defer cs.mu.RUnlock()
+	return cs.currentDC
+}
+
 func (cs *connStateManager) IsConnected() bool {
 	cs.mu.RLock()
 	defer cs.mu.RUnlock()
