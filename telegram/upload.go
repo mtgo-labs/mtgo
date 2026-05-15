@@ -47,27 +47,36 @@ type UploadResult struct {
 
 // UploadFile uploads a file to Telegram servers by splitting it into parts and sending them concurrently.
 //
-// The entire file is read into memory and split into fixed-size parts (uploadPartSize, 512 KB).
-// Parts are uploaded in parallel using up to opts.Workers goroutines. For files at or above
-// bigFileThreshold (10 MB), the big-file upload path is used which skips MD5 hashing.
+// When fileSize is known (> 0), the entire file is read into memory and split into fixed-size parts
+// (uploadPartSize, 512 KB). Parts are uploaded in parallel using up to opts.Workers goroutines.
+// For files at or above bigFileThreshold (10 MB), the big-file upload path is used which skips MD5 hashing.
+//
+// When fileSize is 0, a streamed upload is performed. The file is read part-by-part and each part is
+// uploaded immediately. This is useful when the total size is unknown beforehand (e.g. piping from an
+// encoder). Streamed uploads always use upload.saveBigFilePart with file_total_parts=-1 until the last
+// part, as described in https://core.telegram.org/api/files#streamed-uploads.
+// Streamed uploads cannot be used for photos (inputMediaUploadedPhoto).
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout. When cancelled, in-flight uploads are abandoned
 //     and the first context error encountered is returned.
 //   - reader: source of the file content. The caller is responsible for closing it.
 //   - fileName: name reported to Telegram for the uploaded file. Must not be empty.
-//   - fileSize: total size in bytes; must be positive and not exceed maxFileSize (2 GB).
+//   - fileSize: total size in bytes; pass 0 for streamed (unknown size) uploads. Must be non-negative
+//     and not exceed maxFileSize (2 GB) when > 0.
 //   - opts: optional upload settings (worker count, progress callback). May be nil for defaults.
 //
 // Returns:
 //   - *UploadResult: metadata about the uploaded file including its handle.
+//     For streamed uploads, Size reflects the actual bytes read from the stream.
 //   - error: non-nil if the client is disconnected, the file size is invalid, any part fails,
 //     or the context is cancelled.
 //
 // Errors:
 //   - client disconnected (from state.requireConnected).
-//   - "upload: file size must be positive" — when fileSize <= 0.
+//   - "upload: file size must be non-negative" — when fileSize < 0.
 //   - "upload: file size %d exceeds maximum" — when fileSize > 2 GB.
+//   - "upload: streamed upload produced no data" — when fileSize == 0 and the reader yields nothing.
 //   - "upload: generate file id" — when the random file ID cannot be generated.
 //   - "upload: read part %d" — when reading from the source fails.
 //   - "upload: part %d: ..." — when any individual part upload RPC fails.
@@ -89,29 +98,39 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	}
 	c.Log.Debugf("UploadFile size=%d", fileSize)
 	rpc := c.Raw()
-	inputFile, err := uploadFileRPC(ctx, rpc, reader, fileName, fileSize, opts)
+	inputFile, actualSize, err := uploadFileRPC(ctx, rpc, reader, fileName, fileSize, opts)
 	if err != nil {
 		c.Log.Warnf("UploadFile failed err=%v", err)
 		return nil, err
 	}
 
+	resultSize := fileSize
+	if fileSize == 0 {
+		resultSize = actualSize
+	}
 	_, isBig := inputFile.(*tg.InputFileBig)
 	return &UploadResult{
 		File:  inputFile,
-		Size:  fileSize,
+		Size:  resultSize,
 		Name:  fileName,
 		IsBig: isBig,
 	}, nil
 }
 
-func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, error) {
-	if fileSize <= 0 {
-		return nil, fmt.Errorf("upload: file size must be positive, got %d", fileSize)
+func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
+	if fileSize < 0 {
+		return nil, 0, fmt.Errorf("upload: file size must be non-negative, got %d", fileSize)
 	}
 	if fileSize > maxFileSize {
-		return nil, fmt.Errorf("upload: file size %d exceeds maximum %d", fileSize, maxFileSize)
+		return nil, 0, fmt.Errorf("upload: file size %d exceeds maximum %d", fileSize, maxFileSize)
 	}
+	if fileSize == 0 {
+		return uploadFileStreamRPC(ctx, rpc, reader, fileName, opts)
+	}
+	return uploadFileKnownRPC(ctx, rpc, reader, fileName, fileSize, opts)
+}
 
+func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, opts *UploadOptions) (tg.InputFileClass, int64, error) {
 	workers := 1
 	if opts != nil && opts.Workers > 0 {
 		workers = opts.Workers
@@ -122,7 +141,158 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 
 	fileID, err := generateFileID()
 	if err != nil {
-		return nil, fmt.Errorf("upload: generate file id: %w", err)
+		return nil, 0, fmt.Errorf("upload: generate file id: %w", err)
+	}
+
+	type streamPart struct {
+		idx       int32
+		data      []byte
+		totalSize int64
+		isLast    bool
+	}
+	type partResult struct {
+		idx int32
+		err error
+	}
+
+	jobs := make(chan streamPart)
+	var results []partResult
+	var resultsMu sync.Mutex
+	var wg sync.WaitGroup
+	var hasErr atomic.Bool
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobs {
+				if hasErr.Load() {
+					resultsMu.Lock()
+					results = append(results, partResult{idx: job.idx})
+					resultsMu.Unlock()
+					continue
+				}
+
+				select {
+				case <-ctx.Done():
+					resultsMu.Lock()
+					results = append(results, partResult{idx: job.idx, err: ctx.Err()})
+					resultsMu.Unlock()
+					hasErr.Store(true)
+					continue
+				default:
+				}
+
+				totalParts := int32(-1)
+				if job.isLast {
+					totalParts = int32((job.totalSize + int64(uploadPartSize) - 1) / int64(uploadPartSize))
+				}
+
+				_, uploadErr := rpc.UploadSaveBigFilePart(ctx, &tg.UploadSaveBigFilePartRequest{
+					FileID:         fileID,
+					FilePart:       job.idx,
+					FileTotalParts: totalParts,
+					Bytes:          job.data,
+				})
+
+				if uploadErr != nil {
+					resultsMu.Lock()
+					results = append(results, partResult{idx: job.idx, err: uploadErr})
+					resultsMu.Unlock()
+					hasErr.Store(true)
+					continue
+				}
+
+				if opts != nil && opts.Progress != nil {
+					opts.Progress(params.ProgressInfo{
+						FileName:      fileName,
+						TotalBytes:    0,
+						UploadedBytes: job.totalSize,
+						IsUpload:      true,
+					})
+				}
+			}
+		}()
+	}
+
+	buf := make([]byte, uploadPartSize)
+	var totalStreamSize int64
+	partIdx := int32(0)
+
+	for {
+		if hasErr.Load() {
+			break
+		}
+
+		n, readErr := io.ReadFull(reader, buf)
+
+		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
+			close(jobs)
+			wg.Wait()
+			return nil, 0, fmt.Errorf("upload: read part %d: %w", partIdx, readErr)
+		}
+
+		isEOF := readErr == io.EOF || readErr == io.ErrUnexpectedEOF
+
+		if n > 0 {
+			chunk := make([]byte, n)
+			copy(chunk, buf[:n])
+			totalStreamSize += int64(n)
+
+			jobs <- streamPart{
+				idx:       partIdx,
+				data:      chunk,
+				totalSize: totalStreamSize,
+				isLast:    isEOF,
+			}
+			partIdx++
+		} else if isEOF {
+			jobs <- streamPart{
+				idx:       partIdx,
+				data:      []byte{},
+				totalSize: totalStreamSize,
+				isLast:    true,
+			}
+			partIdx++
+		}
+
+		if isEOF {
+			break
+		}
+	}
+
+	close(jobs)
+	wg.Wait()
+
+	if totalStreamSize == 0 {
+		return nil, 0, fmt.Errorf("upload: streamed upload produced no data")
+	}
+
+	for _, r := range results {
+		if r.err != nil {
+			return nil, 0, fmt.Errorf("upload: part %d: %w", r.idx, r.err)
+		}
+	}
+
+	return &tg.InputFileBig{
+		ID:    fileID,
+		Parts: partIdx,
+		Name:  fileName,
+	}, totalStreamSize, nil
+}
+
+func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
+	workers := 1
+	if opts != nil && opts.Workers > 0 {
+		workers = opts.Workers
+	}
+	if workers > 8 {
+		workers = 8
+	}
+
+	fileID, err := generateFileID()
+	if err != nil {
+		return nil, 0, fmt.Errorf("upload: generate file id: %w", err)
 	}
 
 	totalParts := int32(fileSize / uploadPartSize)
@@ -142,7 +312,7 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 	for i := int32(0); i < totalParts; i++ {
 		n, err := io.ReadFull(reader, buf)
 		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
-			return nil, fmt.Errorf("upload: read part %d: %w", i, err)
+			return nil, 0, fmt.Errorf("upload: read part %d: %w", i, err)
 		}
 		if n == 0 {
 			break
@@ -229,7 +399,7 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 
 	for _, r := range results {
 		if r.err != nil {
-			return nil, fmt.Errorf("upload: part %d: %w", r.index, r.err)
+			return nil, 0, fmt.Errorf("upload: part %d: %w", r.index, r.err)
 		}
 	}
 
@@ -238,7 +408,7 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 			ID:    fileID,
 			Parts: totalParts,
 			Name:  fileName,
-		}, nil
+		}, fileSize, nil
 	}
 
 	var md5Str string
@@ -251,7 +421,7 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 		Parts:       totalParts,
 		Name:        fileName,
 		MD5Checksum: md5Str,
-	}, nil
+	}, fileSize, nil
 }
 
 func generateFileID() (int64, error) {
