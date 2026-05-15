@@ -373,6 +373,12 @@ func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) 
 			}
 			continue
 		}
+
+		if rpcErr, ok := obj.(*tg.RPCError); ok {
+			lastErr = fmt.Errorf("rpc error code %d: %s", rpcErr.ErrorCode, rpcErr.ErrorMessage)
+			continue
+		}
+
 		return obj, nil
 	}
 	return nil, fmt.Errorf("session: invoke: retries exhausted: %w", lastErr)
