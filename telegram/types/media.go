@@ -62,6 +62,8 @@ type DocumentMedia struct {
 	MimeType string
 	// FileSize is the file size in bytes.
 	FileSize int64
+	// DCID is the data center ID where the file is stored.
+	DCID int32
 	// IsSpoiler is true when the document is hidden behind a spoiler animation.
 	IsSpoiler bool
 	// IsVoice is true when the document is a voice message.
@@ -350,10 +352,12 @@ func parsePhotoMedia(raw *tg.MessageMediaPhoto) *PhotoMedia {
 
 func parsePhoto(raw *tg.Photo) *Photo {
 	p := &Photo{
-		ID:         raw.ID,
-		AccessHash: raw.AccessHash,
-		Date:       int(raw.Date),
-		SizeCount:  len(raw.Sizes),
+		ID:            raw.ID,
+		AccessHash:    raw.AccessHash,
+		FileReference: raw.FileReference,
+		Date:          int(raw.Date),
+		DCID:          raw.DCID,
+		SizeCount:     len(raw.Sizes),
 	}
 	for _, s := range raw.Sizes {
 		if ps := parsePhotoSize(s); ps != nil {
@@ -378,6 +382,7 @@ func parseDocumentMedia(raw *tg.MessageMediaDocument) *DocumentMedia {
 			m.FileID = fmt.Sprintf("%d_%d", doc.ID, doc.AccessHash)
 			m.FileSize = doc.Size
 			m.MimeType = doc.MimeType
+			m.DCID = doc.DCID
 			m.RawDocument = doc
 			for _, attr := range doc.Attributes {
 				if a, ok := attr.(*tg.DocumentAttributeFilename); ok {
@@ -520,8 +525,12 @@ type Photo struct {
 	ID int64
 	// AccessHash is required to access the photo file.
 	AccessHash int64
+	// FileReference is an opaque byte string needed to access the file.
+	FileReference []byte
 	// Date is the Unix timestamp when the photo was uploaded.
 	Date int
+	// DCID is the data center ID where the photo file is stored.
+	DCID int32
 	// Sizes contains all available size variants of the photo.
 	Sizes []PhotoSize
 	// SizeCount is the number of available sizes, cached for quick access.
