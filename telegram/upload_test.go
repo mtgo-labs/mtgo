@@ -16,14 +16,15 @@ import (
 )
 
 type mockRPCInvoker struct {
-	mu         sync.Mutex
-	savedParts map[int32][]byte
-	bigParts   map[int32][]byte
-	totalParts int32
-	err        error
-	errPart    int32
-	fileID     int64
-	invokes    atomic.Int32
+	mu                sync.Mutex
+	savedParts        map[int32][]byte
+	bigParts          map[int32][]byte
+	bigFileTotalParts int32
+	totalParts        int32
+	err               error
+	errPart           int32
+	fileID            int64
+	invokes           atomic.Int32
 }
 
 func newMockRPCInvoker() *mockRPCInvoker {
@@ -66,6 +67,7 @@ func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		cp := make([]byte, len(req.Bytes))
 		copy(cp, req.Bytes)
 		m.bigParts[req.FilePart] = cp
+		m.bigFileTotalParts = req.FileTotalParts
 		if req.FilePart+1 > m.totalParts {
 			m.totalParts = req.FilePart + 1
 		}
@@ -83,7 +85,7 @@ func TestUploadFile_SmallFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "test.bin", int64(len(data)), nil)
+	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "test.bin", int64(len(data)), nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -114,7 +116,7 @@ func TestUploadFile_BigFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "big.bin", size, nil)
+	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "big.bin", size, nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -145,7 +147,7 @@ func TestUploadFile_MultipleParts(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "multi.bin", size, nil)
+	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "multi.bin", size, nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -183,7 +185,7 @@ func TestUploadFile_EmptyFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, err := uploadFileRPC(ctx, rpc, bytes.NewReader(nil), "empty.txt", 0, nil)
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(nil), "empty.txt", 0, nil)
 	if err == nil {
 		t.Fatal("expected error for empty file")
 	}
@@ -194,7 +196,7 @@ func TestUploadFile_TooLarge(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, err := uploadFileRPC(ctx, rpc, bytes.NewReader(make([]byte, 100)), "big.txt", maxFileSize+1, nil)
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(make([]byte, 100)), "big.txt", maxFileSize+1, nil)
 	if err == nil {
 		t.Fatal("expected error for file exceeding max size")
 	}
@@ -219,7 +221,7 @@ func TestUploadFile_ProgressCallback(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "progress.bin", int64(len(data)), &UploadOptions{Progress: progress})
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "progress.bin", int64(len(data)), &UploadOptions{Progress: progress})
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -237,7 +239,7 @@ func TestUploadFile_PartRetry(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "retry.bin", int64(len(data)), &UploadOptions{Workers: 1})
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "retry.bin", int64(len(data)), &UploadOptions{Workers: 1})
 	if err == nil {
 		t.Fatal("expected error when part 1 fails")
 	}
@@ -253,7 +255,7 @@ func TestUploadFile_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "cancel.bin", int64(len(data)), nil)
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "cancel.bin", int64(len(data)), nil)
 	if err == nil {
 		t.Fatal("expected error for cancelled context")
 	}
@@ -268,7 +270,7 @@ func TestUploadFile_ConcurrentWorkers(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "concurrent.bin", size, &UploadOptions{Workers: 3})
+	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "concurrent.bin", size, &UploadOptions{Workers: 3})
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -295,5 +297,176 @@ func TestUploadFile_ConcurrentWorkers(t *testing.T) {
 	}
 	if !bytes.Equal(reassembled, data) {
 		t.Error("reassembled data does not match original")
+	}
+}
+
+func TestUploadFile_StreamSmallFile(t *testing.T) {
+	data := make([]byte, 1024)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream.bin", 0, nil)
+	if err != nil {
+		t.Fatalf("streamed upload error: %v", err)
+	}
+
+	big, ok := result.(*tg.InputFileBig)
+	if !ok {
+		t.Fatalf("expected *tg.InputFileBig for streamed upload, got %T", result)
+	}
+	if big.Parts != 1 {
+		t.Errorf("Parts = %d, want 1", big.Parts)
+	}
+	if actualSize != int64(len(data)) {
+		t.Errorf("actualSize = %d, want %d", actualSize, len(data))
+	}
+
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+	if len(mock.bigParts) != 1 {
+		t.Fatalf("saved %d big parts, want 1", len(mock.bigParts))
+	}
+	if !bytes.Equal(mock.bigParts[0], data) {
+		t.Error("part data does not match original")
+	}
+	if mock.bigFileTotalParts != 1 {
+		t.Errorf("file_total_parts = %d, want 1", mock.bigFileTotalParts)
+	}
+}
+
+func TestUploadFile_StreamMultipleParts(t *testing.T) {
+	size := int64(uploadPartSize*2 + 100)
+	data := make([]byte, size)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_multi.bin", 0, nil)
+	if err != nil {
+		t.Fatalf("streamed upload error: %v", err)
+	}
+
+	big, ok := result.(*tg.InputFileBig)
+	if !ok {
+		t.Fatalf("expected *tg.InputFileBig, got %T", result)
+	}
+	if big.Parts != 3 {
+		t.Errorf("Parts = %d, want 3", big.Parts)
+	}
+	if actualSize != size {
+		t.Errorf("actualSize = %d, want %d", actualSize, size)
+	}
+
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	var reassembled []byte
+	for i := int32(0); i < 3; i++ {
+		part, ok := mock.bigParts[i]
+		if !ok {
+			t.Errorf("missing part %d", i)
+			continue
+		}
+		reassembled = append(reassembled, part...)
+	}
+	if !bytes.Equal(reassembled, data) {
+		t.Errorf("reassembled data does not match original (len=%d vs %d)", len(reassembled), len(data))
+	}
+	if mock.bigFileTotalParts != 3 {
+		t.Errorf("file_total_parts = %d, want 3", mock.bigFileTotalParts)
+	}
+}
+
+func TestUploadFile_StreamExactPartBoundary(t *testing.T) {
+	size := int64(uploadPartSize * 3)
+	data := make([]byte, size)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_exact.bin", 0, nil)
+	if err != nil {
+		t.Fatalf("streamed upload error: %v", err)
+	}
+
+	big := result.(*tg.InputFileBig)
+	if big.Parts != 4 {
+		t.Errorf("Parts = %d, want 4 (3 data + 1 empty terminator)", big.Parts)
+	}
+	if actualSize != size {
+		t.Errorf("actualSize = %d, want %d", actualSize, size)
+	}
+
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	if len(mock.bigParts) != 4 {
+		t.Fatalf("saved %d big parts, want 4", len(mock.bigParts))
+	}
+	lastPart := mock.bigParts[3]
+	if len(lastPart) != 0 {
+		t.Errorf("last (terminator) part has %d bytes, want 0", len(lastPart))
+	}
+	if mock.bigFileTotalParts != 3 {
+		t.Errorf("file_total_parts = %d, want 3", mock.bigFileTotalParts)
+	}
+}
+
+func TestUploadFile_StreamEmptyReader(t *testing.T) {
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(nil), "empty.bin", 0, nil)
+	if err == nil {
+		t.Fatal("expected error for empty streamed reader")
+	}
+}
+
+func TestUploadFile_StreamNegativeSize(t *testing.T) {
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader([]byte{1}), "neg.bin", -1, nil)
+	if err == nil {
+		t.Fatal("expected error for negative file size")
+	}
+}
+
+func TestUploadFile_StreamProgressCallback(t *testing.T) {
+	data := make([]byte, uploadPartSize+100)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	rpc := tg.NewRPCClient(mock)
+
+	var lastUploaded int64
+	var callCount int32
+	progress := func(info params.ProgressInfo) {
+		if info.UploadedBytes < lastUploaded {
+			t.Errorf("uploaded bytes went backwards: %d -> %d", lastUploaded, info.UploadedBytes)
+		}
+		lastUploaded = info.UploadedBytes
+		callCount++
+	}
+
+	ctx := context.Background()
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_progress.bin", 0, &UploadOptions{Progress: progress})
+	if err != nil {
+		t.Fatalf("streamed upload error: %v", err)
+	}
+	if callCount == 0 {
+		t.Error("progress callback was never called")
+	}
+	if lastUploaded != int64(len(data)) {
+		t.Errorf("final uploaded = %d, want %d", lastUploaded, len(data))
 	}
 }
