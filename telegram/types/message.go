@@ -672,6 +672,30 @@ func (m *Message) Download(opts ...*params.Download) ([]byte, error) {
 	return m.binder.BoundDownload(m.ChatID, m.ID, opts...)
 }
 
+// DownloadTo downloads the media attached to this message to a file and returns
+// the absolute file path. If fileName is empty, the file is saved in the
+// "downloads" directory with an auto-generated name. Paths ending with "/" are
+// treated as directories. Non-existent directories are created automatically.
+//
+// Returns ErrNoBinder if the message was not created by a client.
+//
+// Example:
+//
+//	// Auto-generated path in ./downloads/
+//	path, err := msg.DownloadTo("")
+//
+//	// Custom path
+//	path, err := msg.DownloadTo("/tmp/photo.jpg")
+//
+//	// Custom directory (auto-generates filename)
+//	path, err := msg.DownloadTo("/tmp/media/")
+func (m *Message) DownloadTo(fileName string, progress params.ProgressFunc) (string, error) {
+	if m.binder == nil {
+		return "", ErrNoBinder
+	}
+	return m.binder.BoundDownloadTo(m.ChatID, m.ID, fileName, progress)
+}
+
 // ReplyMedia sends media to the same chat, quoting this message as a reply.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) ReplyMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {

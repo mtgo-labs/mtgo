@@ -111,6 +111,10 @@ func (m *mockBinder) BoundDownload(chatID int64, msgID int32, opts ...*params.Do
 	return nil, nil
 }
 
+func (m *mockBinder) BoundDownloadTo(chatID int64, msgID int32, fileName string, progress params.ProgressFunc) (string, error) {
+	return "", nil
+}
+
 func (m *mockBinder) BoundSendContact(chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo

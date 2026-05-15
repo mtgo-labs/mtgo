@@ -275,6 +275,18 @@ func (c *Client) BoundDownload(chatID int64, msgID int32, opts ...*params.Downlo
 	return c.DownloadMedia(ctx, msgs[0].Media, "", opt)
 }
 
+func (c *Client) BoundDownloadTo(chatID int64, msgID int32, fileName string, progress params.ProgressFunc) (string, error) {
+	ctx := context.Background()
+	msgs, err := c.GetMessages(ctx, chatID, []int32{msgID})
+	if err != nil {
+		return "", err
+	}
+	if len(msgs) == 0 || msgs[0].Media == nil {
+		return "", fmt.Errorf("message has no downloadable media")
+	}
+	return c.downloadToPath(ctx, msgs[0].Media, fileName, progress)
+}
+
 // BoundSendContact sends a contact card to the specified chat. This is a
 // bound-method convenience wrapper around [Client.SendContact].
 //
