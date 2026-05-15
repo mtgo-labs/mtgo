@@ -114,6 +114,9 @@ type Client struct {
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
 
+	dcSessions  *dcSessions
+	dcMigrateMu sync.Mutex
+
 	testStorage  storage.Storage
 	testSession  *session.Session
 	testAuthFunc func() (*session.AuthResult, error)
@@ -392,6 +395,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		peerCache:         make(map[int64]tg.InputPeerClass),
 		usernameCache:     make(map[string]int64),
 		handlerDispatcher: NewHandlerDispatcher(),
+		dcSessions:        newDCSessions(),
 		Log:               logger,
 	}
 
@@ -1186,6 +1190,10 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	}
 	c.sessionsMu.Unlock()
 
+	if c.dcSessions != nil {
+		c.dcSessions.cleanup()
+	}
+
 	c.mu.Lock()
 	sess := c.session
 	c.session = nil
@@ -1306,37 +1314,16 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 }
 
 func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, st storage.Storage) (tg.TLObject, error) {
-	dcAuthStore, ok := st.(storage.DCAuthStore)
-	if !ok {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("storage does not implement DCAuthStore")}
-	}
-
 	ctx := context.Background()
-	rpc := c.Raw()
 
-	exportResult, err := rpc.AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
-		DCID: int32(targetDC),
-	})
+	rpc, err := c.dcRPC(ctx, targetDC)
 	if err != nil {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("export auth: %w", err)}
+		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
 
-	authKey, _ := st.AuthKey()
-	_ = dcAuthStore.SaveDCAuth(storage.DCAuthEntry{
-		DCID:    targetDC,
-		AuthKey: authKey,
-	})
+	c.Log.Infof("DC migration to DC %d complete via dcRPC", targetDC)
 
-	_, err = rpc.AuthImportAuthorization(ctx, &tg.AuthImportAuthorizationRequest{
-		ID:    exportResult.ID,
-		Bytes: exportResult.Bytes,
-	})
-	if err != nil {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("import auth: %w", err)}
-	}
-
-	c.Log.Infof("DC migration to DC %d complete (export/import)", targetDC)
-	return c.Invoke(query, 1, 30*time.Second)
+	return rpc.Invoke(ctx, query, nil)
 }
 
 // Invoke sends a TLObject query through the primary session with the given retry count and timeout.
