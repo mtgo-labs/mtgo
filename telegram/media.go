@@ -68,24 +68,27 @@ func getPhotoFileLocation(m *types.PhotoMedia, thumbSize string) (tg.InputFileLo
 	return &tg.InputPhotoFileLocation{
 		ID:            m.Photo.ID,
 		AccessHash:    m.Photo.AccessHash,
-		FileReference: nil,
+		FileReference: m.Photo.FileReference,
 		ThumbSize:     size.Type,
-	}, 0, nil
+	}, m.Photo.DCID, nil
 }
 
 func getDocumentFileLocation(m *types.DocumentMedia, thumbSize string) (tg.InputFileLocationClass, int32, error) {
 	var id, accessHash int64
 	var fileRef []byte
+	var dcID int32
 
 	if m.RawDocument != nil {
 		id = m.RawDocument.ID
 		accessHash = m.RawDocument.AccessHash
 		fileRef = m.RawDocument.FileReference
+		dcID = m.RawDocument.DCID
 	} else {
 		_, err := fmt.Sscanf(m.FileID, "%d_%d", &id, &accessHash)
 		if err != nil {
 			return nil, 0, fmt.Errorf("media: cannot parse document file_id %q: %w", m.FileID, err)
 		}
+		dcID = m.DCID
 	}
 
 	return &tg.InputDocumentFileLocation{
@@ -93,7 +96,7 @@ func getDocumentFileLocation(m *types.DocumentMedia, thumbSize string) (tg.Input
 		AccessHash:    accessHash,
 		FileReference: fileRef,
 		ThumbSize:     thumbSize,
-	}, 0, nil
+	}, dcID, nil
 }
 
 func getPhotoSize(sizes []types.PhotoSize, thumbSize string) *types.PhotoSize {
