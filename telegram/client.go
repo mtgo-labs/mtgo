@@ -1098,10 +1098,15 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		rpc := c.Raw()
 		_, err := rpc.UpdatesGetState(context.Background())
 		if err != nil {
-			c.cleanupSessions()
-			return fmt.Errorf("get state: %w", err)
+			if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 401 {
+				c.Log.Debug("updates state fetch skipped: not authorized (", rpcErr.Type, ")")
+			} else {
+				c.cleanupSessions()
+				return fmt.Errorf("get state: %w", err)
+			}
+		} else {
+			c.Log.Info("updates state fetched")
 		}
-		c.Log.Info("updates state fetched")
 	}
 
 	if err := c.startPlugins(context.Background()); err != nil {
