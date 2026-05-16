@@ -7,6 +7,8 @@
 ## Table of Contents
 
 - [Packages](#packages)
+- [Plugins](#plugins)
+- [Middlewares](#middlewares)
 - [telegram — High-Level Client](#telegram--high-level-client)
   - [Client](#client)
   - [Configuration](#configuration)
