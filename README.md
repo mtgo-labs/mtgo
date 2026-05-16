@@ -284,12 +284,48 @@ Backends: [SQLite](https://github.com/mtgo-labs/storage/sqlite), [PostgreSQL](ht
 
 ## Multi-Client
 
-```go
-bot1, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{BotToken: token1})
-bot2, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{BotToken: token2})
+Each `telegram.NewClient()` call creates a separate MTGO client instance. Run multiple
+bots, user accounts, or a mix of both in a single process and block until all stop:
 
-// Block until both stop
-telegram.Compose(bot1, bot2)
+```go
+// Create independent MTGO client instances
+bot1, err := telegram.NewClient(apiID, apiHash, &telegram.Config{
+    BotToken:    token1,
+    SessionName: "bot1",
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+bot2, err := telegram.NewClient(apiID, apiHash, &telegram.Config{
+    BotToken:    token2,
+    SessionName: "bot2",
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+// Register handlers per client
+bot1.OnMessage(func(ctx *telegram.Context) {
+    ctx.Reply("Bot 1 here!")
+}, telegram.Private)
+
+bot2.OnMessage(func(ctx *telegram.Context) {
+    ctx.Reply("Bot 2 here!")
+}, telegram.Private)
+
+// Connect both clients
+bot1.Connect(0)
+bot2.Connect(0)
+
+// Compose starts all clients in goroutines and blocks until any stops.
+// It returns an error if any client fails to start.
+if err := telegram.Compose(bot1, bot2); err != nil {
+    log.Fatal(err)
+}
+
+// Alternatively, call telegram.Idle() to block until ALL registered
+// clients stop (every NewClient auto-registers).
 ```
 
 ## Project Structure
