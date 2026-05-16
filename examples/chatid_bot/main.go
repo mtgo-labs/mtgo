@@ -9,7 +9,6 @@ import (
 	telegram "github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func main() {
@@ -34,11 +33,11 @@ func main() {
 			fmt.Sprintf("Your ID: <code>%d</code>\nPick a chat type below to get its ID.", msg.Sender.ID),
 			&params.SendMessage{
 				ReplyMarkup: telegram.Keyboard().
-					RequestPeer("Channel", 1, &tg.RequestPeerTypeBroadcast{}, 1).
-					RequestPeer("Group", 2, &tg.RequestPeerTypeChat{}, 1).
+					RequestChannel("Channel", 1).
+					RequestGroup("Group", 2).
 					Next().
-					RequestPeer("User", 3, &tg.RequestPeerTypeUser{}, 1).
-					RequestPeer("Bot", 4, &tg.RequestPeerTypeUser{Bot: true}, 1).
+					RequestUser("User", 3, 1).
+					RequestUser("Bot", 4, 1, telegram.PeerUserOpts{Bot: true}).
 					BuildReply(telegram.ReplyOpts{
 						Resize:      true,
 						OneTime:     true,

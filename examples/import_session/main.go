@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/mtgo-labs/mtgo/session"
 	tg "github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
@@ -31,13 +30,8 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	sessionStr := mustEnv("SESSION")
 
-	sess, err := session.StringSession(sessionStr)
-	if err != nil {
-		log.Fatalf("decode session: %v", err)
-	}
-
 	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
-		SessionString: sess,
+		SessionString: sessionStr,
 		InMemory:      true,
 		SavePeers:     true,
 	})

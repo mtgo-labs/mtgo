@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/mtgo-labs/mtgo/session"
 	"github.com/mtgo-labs/mtgo/session/tdesktop"
 	tg "github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -40,14 +39,8 @@ func main() {
 	acc := accounts[0]
 	fmt.Printf("=== Account (UserID=%d, MainDC=%d) ===\n", acc.UserID, acc.MainDC)
 
-	// Convert tdata account to a Session for Config.SessionString.
-	sess, err := session.TelethonSession(acc.String())
-	if err != nil {
-		log.Fatalf("convert session: %v", err)
-	}
-
 	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
-		SessionString: sess,
+		SessionString: acc.String(),
 		InMemory:      true,
 		SavePeers:     true,
 	})
