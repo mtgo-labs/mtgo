@@ -27,4 +27,5 @@ omp-session-*.html
 
 # Worktrees
 .worktrees/
+chatid_bot/
 chatid_bot

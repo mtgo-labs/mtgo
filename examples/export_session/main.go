@@ -60,7 +60,6 @@ func main() {
 	fmt.Println()
 	fmt.Println("Use with:")
 	fmt.Println("  Config.SessionString: sessionStr")
-	fmt.Println("  Config.Storage:       session.TelethonSession(sessionStr)")
 
 	client.OnMessage(func(client *tg.Client, msg *types.Message) {
 		if msg.Text == "/exportsession" {

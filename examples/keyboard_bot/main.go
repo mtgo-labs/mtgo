@@ -30,6 +30,7 @@ func main() {
 		text := "Here is some bot commands:\n\n"
 		text += "- /keyboard - show keyboard\n"
 		text += "- /inline - show inline keyboard\n"
+		text += "- /entities - show formatted text\n"
 		text += "- /remove - remove keyboard\n"
 		text += "- /force - force reply"
 
@@ -46,6 +47,8 @@ func main() {
 			ReplyMarkup: tg.Keyboard().
 				Callback("OwO", "OwO").
 				Callback("UwU", "UwU").
+				Next().
+				URL("Docs", "https://example.com").
 				Build(),
 		})
 	}, tg.Command("inline"))
@@ -59,6 +62,33 @@ func main() {
 				BuildReply(tg.ReplyOpts{Resize: true, OneTime: true}),
 		})
 	}, tg.Command("keyboard"))
+
+	// /entities — demonstrate formatted text using params.Entities.
+	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+		text := "Hello World"
+		_, _ = ctx.Reply(text, &params.SendMessage{
+			Entities: params.Entities(
+				params.Bold(0, 5),
+				params.Italic(6, 5),
+			),
+		})
+	}, tg.Command("entities"))
+
+	// /formatted — more advanced entity formatting example.
+	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+		text := "Bold Italic Code Pre Underline Strike Spoiler"
+		_, _ = ctx.Reply(text, &params.SendMessage{
+			Entities: params.Entities(
+				params.Bold(0, 4),
+				params.Italic(5, 6),
+				params.Code(12, 4),
+				params.Pre(17, 3, "go"),
+				params.Underline(21, 9),
+				params.Strikethrough(31, 6),
+				params.Spoiler(38, 7),
+			),
+		})
+	}, tg.Command("formatted"))
 
 	// /remove — remove reply keyboard.
 	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
