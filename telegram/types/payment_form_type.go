@@ -11,6 +11,11 @@ const (
 	// PaymentFormTypeRegular indicates a regular payment form used for standard
 	// checkout flows.
 	PaymentFormTypeRegular PaymentFormType = "regular"
+	// PaymentFormTypeStars indicates a payment form for Telegram Stars payments.
+	PaymentFormTypeStars PaymentFormType = "stars"
+	// PaymentFormTypeStarSubscription indicates a payment form for Telegram Stars
+	// subscription payments.
+	PaymentFormTypeStarSubscription PaymentFormType = "star_subscription"
 )
 
 // String returns the string representation of the PaymentFormType.

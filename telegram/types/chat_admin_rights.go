@@ -2,107 +2,101 @@ package types
 
 import "github.com/mtgo-labs/mtgo/tg"
 
-// ChatAdminRights represents the set of administrative privileges granted to a
-// user in a chat. Used when promoting a member to admin.
+// ChatAdministratorRights represents the granular permissions granted to an
+// administrator in a chat or channel.
 //
 // Example:
 //
-//	rights := &types.ChatAdminRights{
-//	    CanDeleteMessages: true,
-//	    CanBanUsers:       true,
-//	    CanPinMessages:    true,
-//	}
-//	_ = rights
-type ChatAdminRights struct {
-	// CanChangeInfo allows changing the chat title, photo, and description.
-	CanChangeInfo bool
-	// CanPostMessages allows posting messages in channels.
-	CanPostMessages bool
-	// CanEditMessages allows editing messages sent by other members.
-	CanEditMessages bool
-	// CanDeleteMessages allows deleting messages sent by any member.
-	CanDeleteMessages bool
-	// CanBanUsers allows banning and kicking members.
-	CanBanUsers bool
-	// CanInviteUsers allows inviting new members via invite link.
-	CanInviteUsers bool
-	// CanPinMessages allows pinning messages.
-	CanPinMessages bool
-	// CanAddAdmins allows promoting other members to admin.
-	CanAddAdmins bool
-	// IsAnonymous hides the admin's identity when sending messages (messages
-	// appear as sent by the chat itself).
-	IsAnonymous bool
-	// CanManageVideoChats allows managing group voice/video calls.
-	CanManageVideoChats bool
-	// CanManageChat grants general chat management permissions (the "Other"
-	// flag in MTProto).
-	CanManageChat bool
-	// CanManageTopics allows creating, editing, and deleting forum topics.
-	CanManageTopics bool
-	// CanPostStories allows posting stories on behalf of the channel.
-	CanPostStories bool
-	// CanEditStories allows editing stories on behalf of the channel.
-	CanEditStories bool
-	// CanDeleteStories allows deleting stories on behalf of the channel.
-	CanDeleteStories bool
+//	rights := types.ParseChatAdministratorRights(rawAdminRights)
+//	fmt.Printf("Can post: %v, Can delete: %v\n", rights.CanPostMessages, rights.CanDeleteMessages)
+type ChatAdministratorRights struct {
+	IsAnonymous             bool
+	CanManageChat           bool
+	CanDeleteMessages       bool
+	CanManageVideoChats     bool
+	CanRestrictMembers      bool
+	CanPromoteMembers       bool
+	CanChangeInfo           bool
+	CanInviteUsers          bool
+	CanPostStories          bool
+	CanEditStories          bool
+	CanDeleteStories        bool
+	CanPostMessages         bool
+	CanEditMessages         bool
+	CanPinMessages          bool
+	CanManageTopics         bool
+	CanManageDirectMessages bool
+	CanManageTags           bool
 }
 
-// ParseChatAdminRights converts an MTProto ChatAdminRights to the domain type.
+// ParseChatAdministratorRights converts a TL ChatAdminRights into a ChatAdministratorRights.
 // Returns nil if raw is nil.
-func ParseChatAdminRights(raw *tg.ChatAdminRights) *ChatAdminRights {
+//
+// Example:
+//
+//	rights := types.ParseChatAdministratorRights(rawRights)
+//	if rights != nil && rights.CanManageChat {
+//	    fmt.Println("User can manage this chat")
+//	}
+func ParseChatAdministratorRights(raw *tg.ChatAdminRights) *ChatAdministratorRights {
 	if raw == nil {
 		return nil
 	}
-	return &ChatAdminRights{
-		CanChangeInfo:       raw.ChangeInfo,
-		CanPostMessages:     raw.PostMessages,
-		CanEditMessages:     raw.EditMessages,
-		CanDeleteMessages:   raw.DeleteMessages,
-		CanBanUsers:         raw.BanUsers,
-		CanInviteUsers:      raw.InviteUsers,
-		CanPinMessages:      raw.PinMessages,
-		CanAddAdmins:        raw.AddAdmins,
-		IsAnonymous:         raw.Anonymous,
-		CanManageVideoChats: raw.ManageCall,
-		CanManageChat:       raw.Other,
-		CanManageTopics:     raw.ManageTopics,
-		CanPostStories:      raw.PostStories,
-		CanEditStories:      raw.EditStories,
-		CanDeleteStories:    raw.DeleteStories,
+	return &ChatAdministratorRights{
+		IsAnonymous:             raw.Anonymous,
+		CanManageChat:           raw.Other,
+		CanDeleteMessages:       raw.DeleteMessages,
+		CanManageVideoChats:     raw.ManageCall,
+		CanRestrictMembers:      raw.BanUsers,
+		CanPromoteMembers:       raw.AddAdmins,
+		CanChangeInfo:           raw.ChangeInfo,
+		CanInviteUsers:          raw.InviteUsers,
+		CanPostStories:          raw.PostStories,
+		CanEditStories:          raw.EditStories,
+		CanDeleteStories:        raw.DeleteStories,
+		CanPostMessages:         raw.PostMessages,
+		CanEditMessages:         raw.EditMessages,
+		CanPinMessages:          raw.PinMessages,
+		CanManageTopics:         raw.ManageTopics,
+		CanManageDirectMessages: raw.ManageDirectMessages,
+		CanManageTags:           raw.ManageRanks,
 	}
 }
 
-// ChatBannedRights represents the set of restrictions applied to a user in a
-// chat. Unlike ChatPermissions (which inverts the semantics), this type
-// preserves the "true = restricted" convention from the MTProto layer so it can
-// be passed directly back to the API.
+// ChatAdminRights is an alias for ChatAdministratorRights.
+type ChatAdminRights = ChatAdministratorRights
+
+// ParseChatAdminRights is an alias for ParseChatAdministratorRights.
+var ParseChatAdminRights = ParseChatAdministratorRights
+
+// ChatBannedRights represents the set of actions a restricted user is allowed or
+// denied, along with an expiration date.
+//
+// Example:
+//
+//	banned := types.ParseChatBannedRights(rawBannedRights)
+//	fmt.Printf("Can send messages: %v, until: %d\n", banned.CanSendMessages, banned.UntilDate)
 type ChatBannedRights struct {
-	// CanSendMessages is true when sending text messages is restricted.
-	CanSendMessages bool
-	// CanSendMedia is true when sending media (photos, videos, etc.) is
-	// restricted.
-	CanSendMedia bool
-	// CanSendPolls is true when creating polls is restricted.
-	CanSendPolls bool
-	// CanSendOtherMessages is true when sending inline/sticker messages is
-	// restricted.
-	CanSendOtherMessages bool
-	// CanAddWebPagePreviews is true when link previews are restricted.
+	CanSendMessages       bool
+	CanSendMedia          bool
+	CanSendPolls          bool
+	CanSendOtherMessages  bool
 	CanAddWebPagePreviews bool
-	// CanChangeInfo is true when changing chat info is restricted.
-	CanChangeInfo bool
-	// CanInviteUsers is true when inviting users is restricted.
-	CanInviteUsers bool
-	// CanPinMessages is true when pinning messages is restricted.
-	CanPinMessages bool
-	// UntilDate is the Unix timestamp when the restriction expires, or 0 for
-	// permanent restrictions and forever bans.
-	UntilDate int32
+	CanChangeInfo         bool
+	CanInviteUsers        bool
+	CanPinMessages        bool
+	UntilDate             int32
 }
 
-// ParseChatBannedRights converts an MTProto ChatBannedRights to the domain type.
+// ParseChatBannedRights converts a TL ChatBannedRights into a ChatBannedRights.
 // Returns nil if raw is nil.
+//
+// Example:
+//
+//	rights := types.ParseChatBannedRights(rawRights)
+//	if rights != nil && !rights.CanSendMessages {
+//	    fmt.Println("User is muted")
+//	}
 func ParseChatBannedRights(raw *tg.ChatBannedRights) *ChatBannedRights {
 	if raw == nil {
 		return nil

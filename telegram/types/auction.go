@@ -4,12 +4,10 @@ import "github.com/mtgo-labs/mtgo/tg"
 
 // AuctionRound describes a single round within a gift auction.
 type AuctionRound struct {
-	// RoundNumber is the sequential number of the auction round.
-	RoundNumber int32
-	// StartDate is the Unix timestamp when the round starts.
-	StartDate int32
-	// EndDate is the Unix timestamp when the round ends.
-	EndDate int32
+	Number         int32
+	Duration       int32
+	ExtendTime     int32
+	TopWinnerCount int32
 }
 
 // ParseAuctionRound converts a tg.StarGiftAuctionRoundClass into an AuctionRound.
@@ -21,13 +19,15 @@ func ParseAuctionRound(raw tg.StarGiftAuctionRoundClass) *AuctionRound {
 	switch r := raw.(type) {
 	case *tg.StarGiftAuctionRound:
 		return &AuctionRound{
-			RoundNumber: r.Num,
-			EndDate:     r.Duration,
+			Number:   r.Num,
+			Duration: r.Duration,
 		}
 	case *tg.StarGiftAuctionRoundExtendable:
 		return &AuctionRound{
-			RoundNumber: r.Num,
-			EndDate:     r.Duration,
+			Number:         r.Num,
+			Duration:       r.Duration,
+			ExtendTime:     r.ExtendWindow,
+			TopWinnerCount: r.ExtendTop,
 		}
 	}
 	return nil

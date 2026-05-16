@@ -18,21 +18,44 @@ func TestParseChatPermissions_Nil(t *testing.T) {
 
 func TestParseChatPermissions_Full(t *testing.T) {
 	raw := &tl.ChatBannedRights{
-		SendMessages: true,
-		SendMedia:    true,
-		SendPolls:    true,
-		SendInline:   true,
-		EmbedLinks:   true,
-		ChangeInfo:   true,
-		InviteUsers:  true,
-		PinMessages:  true,
+		SendMessages:    true,
+		SendAudios:      true,
+		SendDocs:        true,
+		SendPhotos:      true,
+		SendVideos:      true,
+		SendRoundvideos: true,
+		SendVoices:      true,
+		SendPolls:       true,
+		SendInline:      true,
+		EmbedLinks:      true,
+		ChangeInfo:      true,
+		InviteUsers:     true,
+		PinMessages:     true,
+		ManageTopics:    true,
+		SendReactions:   true,
+		EditRank:        true,
 	}
 	p := ParseChatPermissions(raw)
 	if p.CanSendMessages {
 		t.Error("CanSendMessages should be false when banned")
 	}
-	if p.CanSendMedia {
-		t.Error("CanSendMedia should be false when banned")
+	if p.CanSendAudios {
+		t.Error("CanSendAudios should be false when banned")
+	}
+	if p.CanSendDocuments {
+		t.Error("CanSendDocuments should be false when banned")
+	}
+	if p.CanSendPhotos {
+		t.Error("CanSendPhotos should be false when banned")
+	}
+	if p.CanSendVideos {
+		t.Error("CanSendVideos should be false when banned")
+	}
+	if p.CanSendVideoNotes {
+		t.Error("CanSendVideoNotes should be false when banned")
+	}
+	if p.CanSendVoiceNotes {
+		t.Error("CanSendVoiceNotes should be false when banned")
 	}
 }
 

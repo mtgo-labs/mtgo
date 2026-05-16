@@ -38,7 +38,12 @@ type CallbackQuery struct {
 	// GameShortName is the short name of the game when the callback was triggered
 	// by a game button, or empty otherwise.
 	GameShortName string
-	binder        Binder
+	// FromUser is the resolved user who triggered the callback.
+	FromUser *User
+	// InlineMessageID is the inline message identifier, set when the callback
+	// originates from an inline message.
+	InlineMessageID tg.InputBotInlineMessageIDClass
+	binder          Binder
 }
 
 // InlineQuery represents an incoming inline query from a user typing a query in
@@ -80,11 +85,12 @@ func ParseCallbackQuery(raw tg.UpdateClass) *CallbackQuery {
 		return q
 	case *tg.UpdateInlineBotCallbackQuery:
 		q := &CallbackQuery{
-			ID:            r.QueryID,
-			UserID:        r.UserID,
-			InlineMessage: true,
-			ChatInstance:  r.ChatInstance,
-			Data:          r.Data,
+			ID:              r.QueryID,
+			UserID:          r.UserID,
+			InlineMessage:   true,
+			InlineMessageID: r.MsgID,
+			ChatInstance:    r.ChatInstance,
+			Data:            r.Data,
 		}
 		if r.GameShortName != "" {
 			q.GameShortName = r.GameShortName
@@ -111,7 +117,7 @@ func (c *CallbackQuery) Answer(text string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, text, false, "", 0)
+	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{Text: text})
 }
 
 // AnswerAlert shows a pop-up alert dialog to the user who pressed the button.
@@ -120,7 +126,7 @@ func (c *CallbackQuery) AnswerAlert(text string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, text, true, "", 0)
+	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{Text: text, ShowAlert: true})
 }
 
 // AnswerURL opens a URL in the user's browser (or the Telegram in-app browser).
@@ -129,7 +135,7 @@ func (c *CallbackQuery) AnswerURL(url string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, "", false, url, 0)
+	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{URL: url})
 }
 
 // Reply sends a text message in the chat where the callback button was pressed.
@@ -140,39 +146,71 @@ func (c *CallbackQuery) Reply(text string) (*Message, error) {
 	return c.binder.BoundSend(c.ChatID, text, 0)
 }
 
-// EditMessage edits the text of the message that originated this callback query.
-func (c *CallbackQuery) EditMessage(text string, opts ...*params.EditMessage) (*Message, error) {
+func (c *CallbackQuery) EditMessageText(text string, opts ...*params.EditMessage) (*Message, bool, error) {
 	if c.binder == nil {
-		return nil, ErrNoBinder
+		return nil, false, ErrNoBinder
 	}
-	return c.binder.BoundEdit(c.ChatID, c.MessageID, text, opts...)
+	if c.InlineMessageID != nil {
+		ok, err := c.binder.BoundEditInline(c.InlineMessageID, text, opts...)
+		return nil, ok, err
+	}
+	msg, err := c.binder.BoundEdit(c.ChatID, c.MessageID, text, opts...)
+	return msg, false, err
 }
 
-// EditCaption edits the caption of the media message that originated this callback
-// query.
+func (c *CallbackQuery) EditMessage(text string, opts ...*params.EditMessage) (*Message, bool, error) {
+	return c.EditMessageText(text, opts...)
+}
+
+func (c *CallbackQuery) EditMessageCaption(caption string, opts ...*params.EditMessage) (*Message, bool, error) {
+	if c.binder == nil {
+		return nil, false, ErrNoBinder
+	}
+	if c.InlineMessageID != nil {
+		ok, err := c.binder.BoundEditInlineCaption(c.InlineMessageID, caption, opts...)
+		return nil, ok, err
+	}
+	msg, err := c.binder.BoundEditCaption(c.ChatID, c.MessageID, caption, opts...)
+	return msg, false, err
+}
+
 func (c *CallbackQuery) EditCaption(caption string, opts ...*params.EditMessage) (*Message, error) {
-	if c.binder == nil {
-		return nil, ErrNoBinder
-	}
-	return c.binder.BoundEditCaption(c.ChatID, c.MessageID, caption, opts...)
+	msg, _, err := c.EditMessageCaption(caption, opts...)
+	return msg, err
 }
 
-// EditMedia replaces the media content of the message that originated this
-// callback query.
+func (c *CallbackQuery) EditMessageMedia(media tg.InputMediaClass) (*Message, bool, error) {
+	if c.binder == nil {
+		return nil, false, ErrNoBinder
+	}
+	if c.InlineMessageID != nil {
+		ok, err := c.binder.BoundEditInlineMedia(c.InlineMessageID, media)
+		return nil, ok, err
+	}
+	msg, err := c.binder.BoundEditMedia(c.ChatID, c.MessageID, media)
+	return msg, false, err
+}
+
 func (c *CallbackQuery) EditMedia(media tg.InputMediaClass) (*Message, error) {
-	if c.binder == nil {
-		return nil, ErrNoBinder
-	}
-	return c.binder.BoundEditMedia(c.ChatID, c.MessageID, media)
+	msg, _, err := c.EditMessageMedia(media)
+	return msg, err
 }
 
-// EditReplyMarkup changes only the inline keyboard of the message that originated
-// this callback query.
-func (c *CallbackQuery) EditReplyMarkup(markup tg.ReplyMarkupClass) (*Message, error) {
+func (c *CallbackQuery) EditMessageReplyMarkup(markup tg.ReplyMarkupClass) (*Message, bool, error) {
 	if c.binder == nil {
-		return nil, ErrNoBinder
+		return nil, false, ErrNoBinder
 	}
-	return c.binder.BoundEditReplyMarkup(c.ChatID, c.MessageID, markup)
+	if c.InlineMessageID != nil {
+		ok, err := c.binder.BoundEditInlineReplyMarkup(c.InlineMessageID, markup)
+		return nil, ok, err
+	}
+	msg, err := c.binder.BoundEditReplyMarkup(c.ChatID, c.MessageID, markup)
+	return msg, false, err
+}
+
+func (c *CallbackQuery) EditReplyMarkup(markup tg.ReplyMarkupClass) (*Message, error) {
+	msg, _, err := c.EditMessageReplyMarkup(markup)
+	return msg, err
 }
 
 // Delete removes the message that originated this callback query.
@@ -214,10 +252,57 @@ func (iq *InlineQuery) Answer(results []tg.InputBotInlineResultClass, opts ...*p
 	if iq.binder == nil {
 		return ErrNoInlineBinder
 	}
-	opt := params.GetOptDef(&params.InlineQuery{}, opts...)
-	return iq.binder.BoundAnswerInline(
-		iq.ID, results,
-		opt.CacheTime, opt.Gallery, opt.Private,
-		opt.NextOffset, opt.SwitchPM, opt.SwitchPMText,
-	)
+	return iq.binder.BoundAnswerInline(iq.ID, results, opts...)
+}
+
+func (iq *InlineQuery) AnswerResults(results []InlineResultBuilder, opts ...*params.InlineQuery) error {
+	return iq.Answer(buildInlineResults(results), opts...)
+}
+
+func (iq *InlineQuery) AnswerArticle(id, title, text string, opts ...*params.InlineQuery) error {
+	return iq.AnswerResults([]InlineResultBuilder{
+		&InlineArticle{ID: id, Title: title, Text: text},
+	}, opts...)
+}
+
+func (iq *InlineQuery) AnswerArticles(articles []*InlineArticle, opts ...*params.InlineQuery) error {
+	results := make([]InlineResultBuilder, len(articles))
+	for i, a := range articles {
+		results[i] = a
+	}
+	return iq.AnswerResults(results, opts...)
+}
+
+func (iq *InlineQuery) AnswerPhoto(id string, photoID, accessHash int64, text string, opts ...*params.InlineQuery) error {
+	return iq.AnswerResults([]InlineResultBuilder{
+		&InlinePhoto{ID: id, PhotoID: photoID, AccessHash: accessHash, Text: text},
+	}, opts...)
+}
+
+func (iq *InlineQuery) AnswerPhotos(photos []*InlinePhoto, opts ...*params.InlineQuery) error {
+	results := make([]InlineResultBuilder, len(photos))
+	for i, p := range photos {
+		results[i] = p
+	}
+	return iq.AnswerResults(results, opts...)
+}
+
+func (iq *InlineQuery) AnswerDocument(id string, docID, accessHash int64, text string, opts ...*params.InlineQuery) error {
+	return iq.AnswerResults([]InlineResultBuilder{
+		&InlineDocument{ID: id, DocumentID: docID, AccessHash: accessHash, Text: text},
+	}, opts...)
+}
+
+func (iq *InlineQuery) AnswerDocuments(docs []*InlineDocument, opts ...*params.InlineQuery) error {
+	results := make([]InlineResultBuilder, len(docs))
+	for i, d := range docs {
+		results[i] = d
+	}
+	return iq.AnswerResults(results, opts...)
+}
+
+func (iq *InlineQuery) AnswerGame(id, shortName string, opts ...*params.InlineQuery) error {
+	return iq.AnswerResults([]InlineResultBuilder{
+		&InlineGame{ID: id, ShortName: shortName},
+	}, opts...)
 }

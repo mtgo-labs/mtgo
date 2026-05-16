@@ -5,10 +5,10 @@ type MaskPointType string
 
 // Mask point type constants representing the facial positions for mask sticker placement.
 const (
-	MaskPointTypeForehead MaskPointType = "forehead"
-	MaskPointTypeEyes     MaskPointType = "eyes"
-	MaskPointTypeMouth    MaskPointType = "mouth"
-	MaskPointTypeChin     MaskPointType = "chin"
+	MaskPointForehead MaskPointType = "forehead"
+	MaskPointEyes     MaskPointType = "eyes"
+	MaskPointMouth    MaskPointType = "mouth"
+	MaskPointChin     MaskPointType = "chin"
 )
 
 // String returns the string representation of the MaskPointType.

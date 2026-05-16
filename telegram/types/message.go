@@ -31,14 +31,36 @@ type Message struct {
 	// Sender is the resolved user who sent the message, or nil if the sender
 	// was not available in the peer map (e.g. anonymous channel admin).
 	Sender *User
+	// FromUser is an alias for Sender matching Pyrogram naming.
+	FromUser *User
+	// SenderChat is the resolved chat that sent the message on behalf of itself.
+	SenderChat *Chat
+	// SenderBoostCount is the number of boosts applied by the sender.
+	SenderBoostCount int32
+	// SenderBusinessBot is the business bot that sent this outgoing message.
+	SenderBusinessBot *User
+	// SenderTag is the sender rank or custom title in supergroups.
+	SenderTag string
 	// ChatID is the ID of the chat where the message was sent. Negative for groups
 	// and channels.
 	ChatID int64
 	// Chat is the resolved chat where the message was sent, or nil if the chat
 	// was not available in the peer map.
 	Chat *Chat
+	// AutomaticForward is true for automatically forwarded channel posts.
+	AutomaticForward bool
+	// FromOffline is true when sent by an implicit offline action.
+	FromOffline bool
 	// ReplyToID is the ID of the message this message replies to, or 0 if none.
 	ReplyToID int32
+	// ReplyToMessageID is an alias for ReplyToID matching Pyrogram naming.
+	ReplyToMessageID int32
+	// ReplyToTopMessageID is the first message that started the thread.
+	ReplyToTopMessageID int32
+	// ReplyToChecklistTaskID is the checklist task ID being replied to.
+	ReplyToChecklistTaskID int32
+	// ReplyToPollOptionID is the poll option ID being replied to.
+	ReplyToPollOptionID string
 	// Media holds the parsed media attachment, or nil for text-only messages.
 	Media Media
 	// Entities contains formatting and special entity markers (mentions, URLs,
@@ -48,6 +70,10 @@ type Message struct {
 	ReplyMarkup *ReplyMarkup
 	// Out is true when the message was sent by the current user.
 	Out bool
+	// Outgoing is an alias for Out matching Pyrogram naming.
+	Outgoing bool
+	// Empty is true for messageEmpty objects.
+	Empty bool
 	// Mentioned is true when the current user was mentioned in the message.
 	Mentioned bool
 	// Silent is true when the message was sent without triggering a notification.
@@ -60,22 +86,46 @@ type Message struct {
 	Forwards int
 	// EditDate is the timestamp of the last edit, or zero if never edited.
 	EditDate time.Time
+	// EditHidden is true when the edit is hidden by Telegram.
+	EditHidden bool
 	// PostAuthor is the author name displayed on channel posts when signatures
 	// are enabled.
 	PostAuthor string
+	// AuthorSignature is an alias for PostAuthor matching Pyrogram naming.
+	AuthorSignature string
 	// GroupedID identifies messages that belong to the same album (grouped media).
 	// 0 when not part of a group.
 	GroupedID int64
+	// MediaGroupID is an alias for GroupedID matching Pyrogram naming.
+	MediaGroupID int64
 	// ViaBotID is the user ID of the inline bot that generated this message, or 0
 	// if not from a bot.
 	ViaBotID int64
+	// ViaBot is the resolved inline bot that generated this message.
+	ViaBot *User
 	// FwdFrom contains information about the original source when the message was
 	// forwarded.
 	FwdFrom *ForwardHeader
+	// ForwardOrigin describes the Pyrogram-style origin of a forwarded message.
+	ForwardOrigin *MessageOrigin
 	// Reactions lists the emoji reactions currently attached to the message.
 	Reactions []Reaction
 	// TTLPeriod is the auto-delete timer in seconds; 0 means no auto-delete.
 	TTLPeriod int
+	// EffectID is the unique message effect identifier.
+	EffectID int64
+	// IsPaidPost is true when this is a paid suggested post.
+	IsPaidPost bool
+	// HasProtectedContent is true when forwarding is disabled.
+	HasProtectedContent bool
+	// VideoProcessingPending is true while video media is still processing.
+	VideoProcessingPending bool
+	// SendPaidMessagesStars is the number of stars paid to send the message.
+	SendPaidMessagesStars int64
+	// RepeatPeriod is the repeat period in seconds for scheduled messages.
+	RepeatPeriod int32
+	// SummaryLanguageCode is the language code available for message summaries.
+	SummaryLanguageCode string
 	// Service is non-nil when the message is a service/system message (e.g. group
 	// created, member added).
 	Service *ServiceMessage
@@ -88,10 +138,16 @@ type Message struct {
 	// IsFromPending is true when the message is a local placeholder not yet
 	// confirmed by the server.
 	IsFromPending bool
-	binder        Binder
-	translate     func(key string, args ...any) string
+	// Raw is the original MTProto MessageClass (*tg.Message or *tg.MessageService),
+	// preserved for advanced use cases that need access to the full TL object.
+	Raw                  tg.MessageClass
+	BusinessConnectionID string
+	binder               Binder
+	translate            func(key string, args ...any) string
 }
 
+// TranslatorFunc is the signature for a message-local translation function used
+// to localize user-facing text via Message.T.
 type TranslatorFunc func(key string, args ...any) string
 
 func (m *Message) SetTranslator(fn TranslatorFunc) {
@@ -122,10 +178,35 @@ type ForwardHeader struct {
 
 // Reaction represents a single emoji reaction attached to a message with its count.
 type Reaction struct {
-	// Count is the number of users who used this reaction.
-	Count int
-	// Emoticon is the emoji string representing the reaction (e.g. "👍", "❤️").
-	Emoticon string
+	Emoji         string
+	CustomEmojiID string
+	Count         int
+	ChosenOrder   int
+	IsPaid        bool
+}
+
+// ParseReaction converts a TL ReactionClass into a Reaction.
+// Returns nil if raw is nil.
+//
+// Example:
+//
+//	react := types.ParseReaction(rawReaction)
+//	if react != nil {
+//	    fmt.Printf("Emoji: %s, count: %d\n", react.Emoji, react.Count)
+//	}
+func ParseReaction(raw tg.ReactionClass) *Reaction {
+	if raw == nil {
+		return nil
+	}
+	switch v := raw.(type) {
+	case *tg.ReactionEmoji:
+		return &Reaction{Emoji: v.Emoticon}
+	case *tg.ReactionCustomEmoji:
+		return &Reaction{CustomEmojiID: fmt.Sprintf("%d", v.DocumentID)}
+	case *tg.ReactionPaid:
+		return &Reaction{IsPaid: true}
+	}
+	return nil
 }
 
 // ServiceMessage wraps a service action type for system-generated messages such
@@ -247,9 +328,16 @@ func ParseMessage(raw tg.MessageClass, pm *PeerMap) *Message {
 	}
 	switch r := raw.(type) {
 	case *tg.MessageEmpty:
-		return &Message{
-			ID: r.ID,
+		m := &Message{
+			ID:    r.ID,
+			Empty: true,
+			Raw:   r,
 		}
+		if r.PeerID != nil {
+			m.ChatID = getBarePeerID(r.PeerID)
+			m.Chat = ParseChatFromPeer(r.PeerID, pm)
+		}
+		return m
 	case *tg.Message:
 		return parseRegularMessage(r, pm)
 	case *tg.MessageService:
@@ -264,9 +352,11 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 		Date:      time.Unix(int64(raw.Date), 0),
 		Text:      raw.Message,
 		Out:       raw.Out,
+		Outgoing:  raw.Out,
 		Mentioned: raw.Mentioned,
 		Silent:    raw.Silent,
 		Pinned:    raw.Pinned,
+		Raw:       raw,
 	}
 	if raw.FromID != nil {
 		m.FromID = getPeerID(raw.FromID)
@@ -279,15 +369,31 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 	if pm != nil && m.FromID > 0 {
 		if u, ok := pm.Users[m.FromID]; ok {
 			m.Sender = parseUserTL(u)
+			m.FromUser = m.Sender
 		}
+	}
+	if pm != nil && m.FromID < 0 && raw.FromID != nil {
+		m.SenderChatID = m.FromID
+		m.SenderChat = ParseChatFromPeer(raw.FromID, pm)
 	}
 	if raw.PeerID != nil {
 		m.ChatID = getBarePeerID(raw.PeerID)
+		m.Chat = ParseChatFromPeer(raw.PeerID, pm)
 	}
 	if raw.ReplyTo != nil {
 		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
 			if rt.ReplyToMsgID != 0 {
 				m.ReplyToID = rt.ReplyToMsgID
+				m.ReplyToMessageID = rt.ReplyToMsgID
+			}
+			if rt.ReplyToTopID != 0 {
+				m.ReplyToTopMessageID = rt.ReplyToTopID
+			}
+			if rt.TodoItemID != 0 {
+				m.ReplyToChecklistTaskID = rt.TodoItemID
+			}
+			if rt.PollOption != nil {
+				m.ReplyToPollOptionID = string(rt.PollOption)
 			}
 		}
 	}
@@ -295,7 +401,11 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 		m.Media = ParseMedia(raw.Media)
 	}
 	if raw.Entities != nil {
-		m.Entities = ParseMessageEntities(raw.Entities)
+		var users map[int64]*tg.User
+		if pm != nil {
+			users = pm.Users
+		}
+		m.Entities = ParseMessageEntitiesWithUsers(raw.Entities, users)
 	}
 	if raw.ReplyMarkup != nil {
 		m.ReplyMarkup = ParseReplyMarkup(raw.ReplyMarkup)
@@ -309,17 +419,31 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 	if raw.EditDate != 0 {
 		m.EditDate = time.Unix(int64(raw.EditDate), 0)
 	}
+	m.EditHidden = raw.EditHide
 	if raw.PostAuthor != "" {
 		m.PostAuthor = raw.PostAuthor
+		m.AuthorSignature = raw.PostAuthor
 	}
 	if raw.GroupedID != 0 {
 		m.GroupedID = raw.GroupedID
+		m.MediaGroupID = raw.GroupedID
 	}
 	if raw.ViaBotID != 0 {
 		m.ViaBotID = raw.ViaBotID
+		if pm != nil {
+			if u, ok := pm.Users[raw.ViaBotID]; ok {
+				m.ViaBot = parseUserTL(u)
+			}
+		}
+	}
+	if raw.ViaBusinessBotID != 0 && pm != nil {
+		if u, ok := pm.Users[raw.ViaBusinessBotID]; ok {
+			m.SenderBusinessBot = parseUserTL(u)
+		}
 	}
 	if raw.FwdFrom != nil {
 		m.FwdFrom = parseForwardHeader(raw.FwdFrom)
+		m.ForwardOrigin = parseMessageOrigin(raw.FwdFrom, pm)
 	}
 	if raw.Reactions != nil && raw.Reactions.Results != nil {
 		for _, r := range raw.Reactions.Results {
@@ -327,7 +451,13 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 				react := Reaction{Count: int(r.Count)}
 				if r.Reaction != nil {
 					if er, ok := r.Reaction.(*tg.ReactionEmoji); ok {
-						react.Emoticon = er.Emoticon
+						react.Emoji = er.Emoticon
+					}
+					if cr, ok := r.Reaction.(*tg.ReactionCustomEmoji); ok {
+						react.CustomEmojiID = fmt.Sprintf("%d", cr.DocumentID)
+					}
+					if _, ok := r.Reaction.(*tg.ReactionPaid); ok {
+						react.IsPaid = true
 					}
 				}
 				m.Reactions = append(m.Reactions, react)
@@ -337,15 +467,39 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 	if raw.TTLPeriod != 0 {
 		m.TTLPeriod = int(raw.TTLPeriod)
 	}
+	if raw.FromBoostsApplied != 0 {
+		m.SenderBoostCount = raw.FromBoostsApplied
+	}
+	if raw.FromRank != "" {
+		m.SenderTag = raw.FromRank
+	}
+	m.FromOffline = raw.Offline
+	m.HasProtectedContent = raw.Noforwards
+	m.VideoProcessingPending = raw.VideoProcessingPending
+	m.IsPaidPost = raw.PaidSuggestedPostStars || raw.PaidSuggestedPostTon
+	if raw.Effect != 0 {
+		m.EffectID = raw.Effect
+	}
+	if raw.PaidMessageStars != 0 {
+		m.SendPaidMessagesStars = raw.PaidMessageStars
+	}
+	if raw.ScheduleRepeatPeriod != 0 {
+		m.RepeatPeriod = raw.ScheduleRepeatPeriod
+	}
+	if raw.SummaryFromLanguage != "" {
+		m.SummaryLanguageCode = raw.SummaryFromLanguage
+	}
 	return m
 }
 
 func parseServiceMessage(raw *tg.MessageService, pm *PeerMap) *Message {
 	m := &Message{
-		ID:     raw.ID,
-		Date:   time.Unix(int64(raw.Date), 0),
-		Out:    raw.Out,
-		Silent: raw.Silent,
+		ID:       raw.ID,
+		Date:     time.Unix(int64(raw.Date), 0),
+		Out:      raw.Out,
+		Outgoing: raw.Out,
+		Silent:   raw.Silent,
+		Raw:      raw,
 	}
 	if raw.FromID != nil {
 		m.FromID = getPeerID(raw.FromID)
@@ -358,15 +512,31 @@ func parseServiceMessage(raw *tg.MessageService, pm *PeerMap) *Message {
 	if pm != nil && m.FromID > 0 {
 		if u, ok := pm.Users[m.FromID]; ok {
 			m.Sender = parseUserTL(u)
+			m.FromUser = m.Sender
 		}
+	}
+	if pm != nil && m.FromID < 0 && raw.FromID != nil {
+		m.SenderChatID = m.FromID
+		m.SenderChat = ParseChatFromPeer(raw.FromID, pm)
 	}
 	if raw.PeerID != nil {
 		m.ChatID = getBarePeerID(raw.PeerID)
+		m.Chat = ParseChatFromPeer(raw.PeerID, pm)
 	}
 	if raw.ReplyTo != nil {
 		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
 			if rt.ReplyToMsgID != 0 {
 				m.ReplyToID = rt.ReplyToMsgID
+				m.ReplyToMessageID = rt.ReplyToMsgID
+			}
+			if rt.ReplyToTopID != 0 {
+				m.ReplyToTopMessageID = rt.ReplyToTopID
+			}
+			if rt.TodoItemID != 0 {
+				m.ReplyToChecklistTaskID = rt.TodoItemID
+			}
+			if rt.PollOption != nil {
+				m.ReplyToPollOptionID = string(rt.PollOption)
 			}
 		}
 	}
@@ -481,6 +651,9 @@ func parseForwardHeader(raw *tg.MessageFwdHeader) *ForwardHeader {
 	}
 	if raw.FromID != nil {
 		h.FromID = getPeerID(raw.FromID)
+		if channelID, ok := raw.FromID.(*tg.PeerChannel); ok {
+			h.ChannelID = channelID.ChannelID
+		}
 	}
 	if raw.FromName != "" {
 		h.FromName = raw.FromName
@@ -489,6 +662,55 @@ func parseForwardHeader(raw *tg.MessageFwdHeader) *ForwardHeader {
 		h.PostID = raw.ChannelPost
 	}
 	return h
+}
+
+func parseMessageOrigin(raw *tg.MessageFwdHeader, pm *PeerMap) *MessageOrigin {
+	if raw == nil {
+		return nil
+	}
+	origin := &MessageOrigin{
+		Date:     time.Unix(int64(raw.Date), 0),
+		Imported: raw.Imported,
+	}
+	if raw.Imported {
+		origin.Type = MessageOriginTypeImport
+		return origin
+	}
+	if raw.FromName != "" {
+		origin.Type = MessageOriginTypeHiddenUser
+		origin.SenderUserName = raw.FromName
+		return origin
+	}
+	if raw.FromID == nil {
+		return origin
+	}
+
+	switch peer := raw.FromID.(type) {
+	case *tg.PeerUser:
+		origin.Type = MessageOriginTypeUser
+		origin.SenderUserID = peer.UserID
+		if pm != nil {
+			if user, ok := pm.Users[peer.UserID]; ok {
+				origin.SenderUser = parseUserTL(user)
+			}
+		}
+	case *tg.PeerChat:
+		origin.Type = MessageOriginTypeChat
+		origin.SenderChatID = peer.ChatID
+		origin.AuthorSignature = raw.PostAuthor
+		if pm != nil {
+			origin.SenderChat = ParseChatFromPeer(peer, pm)
+		}
+	case *tg.PeerChannel:
+		origin.Type = MessageOriginTypeChannel
+		origin.ChatID = peer.ChannelID
+		origin.MessageID = raw.ChannelPost
+		origin.AuthorSignature = raw.PostAuthor
+		if pm != nil {
+			origin.Chat = ParseChatFromPeer(peer, pm)
+		}
+	}
+	return origin
 }
 
 func getPeerID(peer tg.PeerClass) int64 {
@@ -622,7 +844,11 @@ func (m *Message) React(emojis ...string) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundReact(m.ChatID, m.ID, emojis)
+	var opts []*params.React
+	for _, e := range emojis {
+		opts = append(opts, &params.React{Emoji: e})
+	}
+	return m.binder.BoundReact(m.ChatID, m.ID, opts...)
 }
 
 // Pin pins this message in the chat.
@@ -693,7 +919,7 @@ func (m *Message) DownloadTo(fileName string, progress params.ProgressFunc) (str
 	if m.binder == nil {
 		return "", ErrNoBinder
 	}
-	return m.binder.BoundDownloadTo(m.ChatID, m.ID, fileName, progress)
+	return m.binder.BoundDownloadTo(m.ChatID, m.ID, fileName, &params.Download{FileName: fileName, Progress: progress})
 }
 
 // ReplyMedia sends media to the same chat, quoting this message as a reply.

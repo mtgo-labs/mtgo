@@ -18,28 +18,20 @@ import (
 //	}
 //	_ = btn
 type InlineKeyboardButton struct {
-	// Text is the visible label shown to the user on the button.
-	Text string
-	// URL is the HTTP or tg:// URL opened when the button is pressed.
-	URL string
-	// CallbackData is the opaque payload delivered to the bot when the user
-	// presses a callback button. Use this for stateful button interactions.
-	CallbackData []byte
-	// SwitchInline asks the client to open an inline query in the current chat
-	// or a selected chat, pre-filled with this value.
-	SwitchInline string
-	// SamePeer indicates that the inline query triggered by SwitchInline should
-	// remain in the same peer context rather than prompting the user to pick a chat.
-	SamePeer bool
-	// LoginURL describes a URL-based Telegram login flow triggered by this button,
-	// used for third-party account linking.
-	LoginURL *LoginURL
-	// WebApp holds the URL of a Telegram Web App launched when the button is pressed.
-	WebApp *WebAppInfo
-	// Game indicates that this button launches a Telegram game when pressed.
-	Game bool
-	// Pay indicates that this button triggers a payment flow when pressed.
-	Pay bool
+	Text                         string
+	URL                          string
+	CallbackData                 []byte
+	SwitchInlineQuery            string
+	SwitchInlineQueryCurrentChat string
+	LoginURL                     *LoginURL
+	WebApp                       *WebAppInfo
+	CallbackGame                 *CallbackGame
+	UserID                       int64
+	IsRequiresPassword           bool
+	Pay                          bool
+	CopyText                     string
+	IconCustomEmojiID            string
+	Style                        ButtonStyle
 }
 
 // LoginURL describes a direct URL-based login flow triggered from an inline
@@ -50,6 +42,14 @@ type LoginURL struct {
 	URL string
 	// Domain is the domain of the website the user is logging into.
 	Domain string
+	// ForwardText is the new text of the button in forwarded messages.
+	ForwardText string
+	// BotUsername is the username of a bot used for user authorization.
+	BotUsername string
+	// RequestWriteAccess indicates the bot requests permission to send messages to the user.
+	RequestWriteAccess bool
+	// ButtonID is the identifier of the button.
+	ButtonID int
 }
 
 // WebAppInfo holds the URL of a Telegram Web App opened by a keyboard button.
@@ -71,48 +71,49 @@ type WebAppInfo struct {
 //	}
 //	_ = btn
 type KeyboardButton struct {
-	// Text is the visible label shown to the user on the button.
-	Text string
-	// RequestChat carries parameters for a button that asks the user to select
-	// a chat or channel to share with the bot.
-	RequestChat *KeyboardButtonRequestChat
-	// RequestUsers carries parameters for a button that asks the user to select
-	// one or more users to share with the bot.
-	RequestUsers *KeyboardButtonRequestUsers
-	// RequestPoll qualifies what kind of poll the button should request the user
-	// to create (quiz or regular).
-	RequestPoll *KeyboardButtonPollType
-	// WebApp holds the URL of a Telegram Web App launched when the button is pressed.
-	WebApp *WebAppInfo
-	// RequestLocation indicates that the button requests the user to share their
-	// current location when pressed.
-	RequestLocation bool
-	// RequestContact indicates that the button requests the user to share their
-	// phone number when pressed.
-	RequestContact bool
+	Text              string
+	RequestChat       *KeyboardButtonRequestChat
+	RequestUsers      *KeyboardButtonRequestUsers
+	RequestPoll       *KeyboardButtonPollType
+	RequestManagedBot *KeyboardButtonRequestManagedBot
+	WebApp            *WebAppInfo
+	RequestLocation   bool
+	RequestContact    bool
+	IconCustomEmojiID string
+	Style             ButtonStyle
 }
 
 // KeyboardButtonRequestChat carries parameters for a button that asks the user
 // to select a chat or channel. Returned via a ChatShared service message.
 type KeyboardButtonRequestChat struct {
-	// RequestID is a unique identifier for this request, used to correlate the
-	// resulting ChatShared service message with this button press.
-	RequestID int64
-	// ChatIsChannel indicates that only channels should be selectable, not groups.
-	ChatIsChannel bool
-	// BotChatRights specifies the admin rights the bot requests in the selected chat,
-	// if any.
-	BotChatRights *ChatAdminRights
+	RequestID               int64
+	ChatIsChannel           bool
+	IsChatForum             bool
+	IsChatHasUsername       bool
+	IsChatCreated           bool
+	IsBotMember             bool
+	ButtonID                int
+	BotChatRights           *ChatAdminRights
+	UserAdministratorRights *ChatAdministratorRights
+	BotAdministratorRights  *ChatAdministratorRights
+	IsRequestTitle          bool
+	IsRequestUsername       bool
+	IsRequestPhoto          bool
+	MaxQuantity             int
 }
 
 // KeyboardButtonRequestUsers carries parameters for a button that asks the user
 // to select one or more users. Returned via a UsersShared service message.
 type KeyboardButtonRequestUsers struct {
-	// RequestID is a unique identifier for this request, used to correlate the
-	// resulting UsersShared service message with this button press.
-	RequestID int64
-	// Max is the maximum number of users that can be selected simultaneously.
-	Max int32
+	RequestID         int64
+	Max               int32
+	ButtonID          int
+	IsUserBot         bool
+	IsUserPremium     bool
+	MaxQuantity       int
+	IsRequestName     bool
+	IsRequestUsername bool
+	IsRequestPhoto    bool
 }
 
 // KeyboardButtonPollType qualifies what kind of poll the button should request.
@@ -143,11 +144,9 @@ type ForceReply struct {
 // GameHighScore represents a single entry in a game's high-score table. Used to
 // display rankings across players for a Telegram game.
 type GameHighScore struct {
-	// UserID is the Telegram user ID of the player.
-	UserID int64
-	// Score is the player's numeric score in the game.
-	Score int32
-	// Position is the player's rank in the global high-score table (1-based).
+	User     *User
+	UserID   int64
+	Score    int32
 	Position int32
 }
 
@@ -161,15 +160,19 @@ type SentWebAppMessage struct {
 
 // ParseGameHighScore converts an MTProto HighScore to a GameHighScore.
 // Returns nil if raw is nil.
-func ParseGameHighScore(raw *tg.HighScore) *GameHighScore {
+func ParseGameHighScore(raw *tg.HighScore, users map[int64]tg.UserClass) *GameHighScore {
 	if raw == nil {
 		return nil
 	}
-	return &GameHighScore{
+	hs := &GameHighScore{
 		Position: raw.Pos,
 		UserID:   raw.UserID,
 		Score:    raw.Score,
 	}
+	if users != nil {
+		hs.User = getUser(users, raw.UserID)
+	}
+	return hs
 }
 
 // ParseSentWebAppMessage converts an MTProto WebViewMessageSent to a

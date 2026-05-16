@@ -6,42 +6,38 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// ChatMember represents a member of a chat with their role, join metadata, and
-// the user who invited, promoted, or restricted them.
+// ChatMember represents a participant in a chat or channel with their role,
+// join date, permissions, and user information.
 //
 // Example:
 //
-//	members, _ := chat.GetMembers(10, 0)
-//	for _, m := range members {
-//	    fmt.Printf("%s — %s (rank: %s)\n", m.User.String(), m.Status, m.Rank)
-//	}
+//	member, _ := client.GetChatMember(ctx, chatID, userID)
+//	fmt.Printf("%s joined at %s (status: %s)\n", member.User.FirstName, member.JoinedDate, member.Status)
 type ChatMember struct {
-	// User is the Telegram user who is a member of the chat.
-	User *User
-	// Status is the member's role in the chat (owner, administrator, member,
-	// restricted, left, or banned).
-	Status ChatMemberStatus
-	// JoinedDate is when the user joined or was promoted. Zero value when not
-	// available.
-	JoinedDate time.Time
-	// InvitedBy is the user who invited this member, or nil if not applicable.
-	InvitedBy *User
-	// PromotedBy is the user who promoted this member to admin, or nil if not
-	// applicable.
-	PromotedBy *User
-	// RestrictedBy is the user who applied restrictions to this member, or nil
-	// if not applicable.
-	RestrictedBy *User
-	// Permissions describes the restrictions applied to this member when their
-	// status is restricted or banned.
-	Permissions *ChatPermissions
-	// Rank is the custom admin title displayed in the chat for admins and owners,
-	// or empty for regular members.
-	Rank string
+	Status                ChatMemberStatus
+	Tag                   string
+	User                  *User
+	Chat                  *Chat
+	JoinedDate            time.Time
+	CustomTitle           string
+	UntilDate             time.Time
+	InvitedBy             *User
+	PromotedBy            *User
+	RestrictedBy          *User
+	IsMember              bool
+	CanBeEdited           bool
+	Permissions           *ChatPermissions
+	Privileges            *ChatAdminRights
+	SubscriptionUntilDate time.Time
 }
 
-// ParseChatParticipant converts an MTProto chat participant to a ChatMember.
-// The users map is used to resolve user references. Returns nil if raw is nil.
+// ParseChatParticipant converts a TL ChatParticipantClass (basic group member)
+// into a ChatMember. Returns nil if raw is nil.
+//
+// Example:
+//
+//	member := types.ParseChatParticipant(rawParticipant, users)
+//	fmt.Printf("%s is %s\n", member.User.FirstName, member.Status)
 func ParseChatParticipant(raw tg.ChatParticipantClass, users map[int64]tg.UserClass) *ChatMember {
 	if raw == nil {
 		return nil
@@ -52,7 +48,7 @@ func ParseChatParticipant(raw tg.ChatParticipantClass, users map[int64]tg.UserCl
 		m.User = getUser(users, p.UserID)
 		m.Status = ChatMemberStatusOwner
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	case *tg.ChatParticipantAdmin:
 		m.User = getUser(users, p.UserID)
@@ -62,7 +58,7 @@ func ParseChatParticipant(raw tg.ChatParticipantClass, users map[int64]tg.UserCl
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	case *tg.ChatParticipant:
 		m.User = getUser(users, p.UserID)
@@ -72,15 +68,21 @@ func ParseChatParticipant(raw tg.ChatParticipantClass, users map[int64]tg.UserCl
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	}
 	return m
 }
 
-// ParseChannelParticipant converts an MTProto channel participant to a
-// ChatMember. The users map is used to resolve user references. Returns nil if
-// raw is nil.
+// ParseChannelParticipant converts a TL ChannelParticipantClass (supergroup/channel member)
+// into a ChatMember with admin privileges or ban status. Returns nil if raw is nil.
+//
+// Example:
+//
+//	member := types.ParseChannelParticipant(rawParticipant, users)
+//	if member.Status == types.ChatMemberStatusBanned {
+//	    fmt.Printf("User %s is banned\n", member.User.FirstName)
+//	}
 func ParseChannelParticipant(raw tg.ChannelParticipantClass, users map[int64]tg.UserClass) *ChatMember {
 	if raw == nil {
 		return nil
@@ -88,51 +90,62 @@ func ParseChannelParticipant(raw tg.ChannelParticipantClass, users map[int64]tg.
 	m := &ChatMember{}
 	switch p := raw.(type) {
 	case *tg.ChannelParticipantCreator:
-		m.User = getUserFromPeer(users, p.UserID)
+		m.User = getUser(users, p.UserID)
 		m.Status = ChatMemberStatusOwner
+		m.Privileges = ParseChatAdminRights(p.AdminRights)
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	case *tg.ChannelParticipantAdmin:
-		m.User = getUserFromPeer(users, p.UserID)
+		m.User = getUser(users, p.UserID)
 		m.Status = ChatMemberStatusAdministrator
+		m.CanBeEdited = p.CanEdit
+		m.InvitedBy = getUser(users, p.InviterID)
 		if p.PromotedBy != 0 {
-			m.PromotedBy = getUserFromPeer(users, p.PromotedBy)
+			m.PromotedBy = getUser(users, p.PromotedBy)
 		}
 		if p.Date != 0 {
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
+		m.Privileges = ParseChatAdminRights(p.AdminRights)
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	case *tg.ChannelParticipant:
-		m.User = getUserFromPeer(users, p.UserID)
+		m.User = getUser(users, p.UserID)
 		m.Status = ChatMemberStatusMember
 		if p.Date != 0 {
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
+		if p.SubscriptionUntilDate != 0 {
+			m.SubscriptionUntilDate = time.Unix(int64(p.SubscriptionUntilDate), 0)
+		}
 		if p.Rank != "" {
-			m.Rank = p.Rank
+			m.CustomTitle = p.Rank
 		}
 	case *tg.ChannelParticipantSelf:
-		m.User = getUserFromPeer(users, p.UserID)
+		m.User = getUser(users, p.UserID)
 		m.Status = ChatMemberStatusMember
-		m.InvitedBy = getUserFromPeer(users, p.InviterID)
+		m.InvitedBy = getUser(users, p.InviterID)
 		if p.Date != 0 {
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
 	case *tg.ChannelParticipantBanned:
 		userID := getPeerUserID(p.Peer)
-		m.User = getUserFromPeer(users, userID)
-		m.RestrictedBy = getUserFromPeer(users, p.KickedBy)
+		m.User = getUser(users, userID)
+		m.RestrictedBy = getUser(users, p.KickedBy)
 		m.Status = ChatMemberStatusBanned
+		m.IsMember = !p.Left
 		m.Permissions = ParseChatPermissions(p.BannedRights)
 		if p.Date != 0 {
 			m.JoinedDate = time.Unix(int64(p.Date), 0)
 		}
+		if p.Rank != "" {
+			m.CustomTitle = p.Rank
+		}
 	case *tg.ChannelParticipantLeft:
 		peerID := getPeerUserID(p.Peer)
-		m.User = getUserFromPeer(users, peerID)
+		m.User = getUser(users, peerID)
 		m.Status = ChatMemberStatusLeft
 	}
 	return m
@@ -146,10 +159,6 @@ func getUser(users map[int64]tg.UserClass, id int64) *User {
 		return ParseUser(u)
 	}
 	return nil
-}
-
-func getUserFromPeer(users map[int64]tg.UserClass, id int64) *User {
-	return getUser(users, id)
 }
 
 func getPeerUserID(peer tg.PeerClass) int64 {

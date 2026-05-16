@@ -16,18 +16,23 @@ type InputChatPhoto struct {
 
 // MediaArea represents an interactive area positioned on a media item such as a story.
 type MediaArea struct {
-	// Type classifies the kind of interactive area.
-	Type MediaAreaType
-	// X is the horizontal position as a percentage of the media width (0–100).
-	X float64
-	// Y is the vertical position as a percentage of the media height (0–100).
-	Y float64
-	// W is the width as a percentage of the media width (0–100).
-	W float64
-	// H is the height as a percentage of the media height (0–100).
-	H float64
-	// Rotation is the clockwise rotation angle in degrees.
-	Rotation float64
-	// Color is the 24-bit RGB fill color of the area, or zero for no fill.
-	Color int32
+	Type        MediaAreaType
+	X           float64
+	Y           float64
+	Width       float64
+	Height      float64
+	Rotation    float64
+	Radius      float64
+	Color       int32
+	SenderChat  *Chat
+	MessageID   int32
+	Message     *Message
+	Location    *LocationMedia
+	Reaction    *Reaction
+	IsDark      bool
+	IsFlipped   bool
+	URL         string
+	Emoji       string
+	Temperature float64
+	Gift        *Gift
 }
