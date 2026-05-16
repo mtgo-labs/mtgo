@@ -85,7 +85,7 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 		}
 		return scr, nil
 	case *tg.AuthSentCodeSuccess:
-		return nil, fmt.Errorf("already authenticated")
+		return nil, ErrAlreadyAuthed
 	default:
 		return nil, fmt.Errorf("unexpected send code result type %T", result)
 	}
@@ -120,7 +120,7 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 	if err != nil {
 		if tgerr.Is(err, tgerr.ErrSessionPasswordNeeded) {
 			c.Log.Debug("auth: 2FA required")
-			return nil, fmt.Errorf("2FA is enabled: use CheckPassword instead")
+			return nil, Err2FARequired
 		}
 		c.Log.Warnf("auth: SignIn failed err=%v", err)
 		return nil, err
@@ -130,7 +130,7 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 		c.Log.Info("auth: SignIn successful")
 		return types.ParseUser(v.User), nil
 	case *tg.AuthAuthorizationSignUpRequired:
-		return nil, fmt.Errorf("sign up required: use SignUp method")
+		return nil, ErrSignUpRequired
 	default:
 		return nil, fmt.Errorf("unexpected sign in result type %T", result)
 	}

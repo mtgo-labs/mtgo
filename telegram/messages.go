@@ -622,7 +622,7 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 		}
 		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
 		_ = pm
-		return nil, fmt.Errorf("no message found in UpdatesTL")
+		return nil, ErrNoMessageUpdates
 	case *tg.UpdateShort:
 		pm := &types.PeerMap{
 			Users:    make(map[int64]*tg.User),
@@ -636,7 +636,7 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 			}
 			return m, nil
 		}
-		return nil, fmt.Errorf("no message found in UpdateShort")
+		return nil, ErrNoMessageShort
 	case *tg.UpdateShortSentMessage:
 		return &types.Message{ID: v.ID}, nil
 	default:
@@ -732,7 +732,7 @@ func (c *Client) GetMediaGroup(ctx context.Context, chatID int64, messageID int3
 		return nil, err
 	}
 	if len(msgs) == 0 {
-		return nil, fmt.Errorf("message not found")
+		return nil, ErrNoMessage
 	}
 	groupedID := msgs[0].GroupedID
 	if groupedID == 0 {

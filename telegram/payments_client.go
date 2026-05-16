@@ -66,7 +66,7 @@ func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int
 func (c *Client) SendPaymentForm(ctx context.Context, formID int64, chatID int64, messageID int32, creds tg.InputPaymentCredentialsClass, opts ...*SendPaymentFormOption) (tg.PaymentResultClass, error) {
 	c.Log.Debugf("SendPaymentForm form_id=%d chat_id=%d msg_id=%d", formID, chatID, messageID)
 	if creds == nil {
-		return nil, fmt.Errorf("send payment form: credentials required")
+		return nil, ErrPaymentsCredentialsRequired
 	}
 	opt := params.GetOptDef(&SendPaymentFormOption{}, opts...)
 
@@ -125,38 +125,6 @@ func (c *Client) GetStarsBalance(ctx context.Context, chatID int64) (int64, erro
 		return amt.Amount, nil
 	}
 	return 0, nil
-}
-
-// SendGift sends a star gift to the specified user with an optional attached message.
-// The giftID identifies the gift to send and is deducted from the sender's Stars balance.
-//
-// Example:
-//
-//	err := client.SendGift(ctx, userID, giftID, "Happy Birthday!")
-//	if err != nil {
-//	    log.Fatal(err)
-//	}
-func (c *Client) SendGift(ctx context.Context, userID int64, giftID int64, message string) error {
-	c.Log.Debugf("SendGift user_id=%d gift_id=%d", userID, giftID)
-	peer, err := resolvePeer(c, userID)
-	if err != nil {
-		return fmt.Errorf("resolve peer: %w", err)
-	}
-
-	invoice := &tg.InputInvoiceStarGift{
-		Peer:   peer,
-		GiftID: giftID,
-	}
-	if message != "" {
-		invoice.Message = &tg.TextWithEntities{Text: message}
-	}
-
-	rpc := c.Raw()
-	_, err = rpc.PaymentsSendStarsForm(ctx, &tg.PaymentsSendStarsFormRequest{
-		FormID:  giftID,
-		Invoice: invoice,
-	})
-	return err
 }
 
 // AnswerPreCheckoutQuery responds to a pre-checkout query, approving or rejecting the payment.

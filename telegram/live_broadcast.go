@@ -3,7 +3,6 @@ package telegram
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -166,10 +165,10 @@ func (s *BroadcastStream) SetFullURL(fullURL string) error {
 	defer s.mu.Unlock()
 
 	if fullURL == "" {
-		return fmt.Errorf("rtmp url cannot be empty")
+		return ErrRTMPURLRequired
 	}
 	if !strings.HasPrefix(fullURL, "rtmp://") && !strings.HasPrefix(fullURL, "rtmps://") {
-		return fmt.Errorf("invalid rtmp url: must start with rtmp:// or rtmps://")
+		return ErrRTMPURLInvalid
 	}
 
 	parts := strings.SplitN(fullURL, "/s/", 2)
@@ -181,7 +180,7 @@ func (s *BroadcastStream) SetFullURL(fullURL string) error {
 
 	idx := strings.LastIndex(fullURL, "/")
 	if idx < 0 {
-		return fmt.Errorf("invalid rtmp url format")
+		return ErrRTMPURLBadFormat
 	}
 	s.url = fullURL[:idx+1]
 	s.key = fullURL[idx+1:]
@@ -274,7 +273,7 @@ func (s *BroadcastStream) Play(source interface{}) error {
 	case []byte:
 		if len(src) == 0 {
 			s.mu.Unlock()
-			return errors.New("play: empty byte input")
+			return ErrPlayEmptyInput
 		}
 		s.src.data = src
 		s.src.filePath = ""
@@ -326,7 +325,7 @@ func (s *BroadcastStream) PlayAudioWithImage(audioSource interface{}, imageFile 
 	case []byte:
 		if len(src) == 0 {
 			s.mu.Unlock()
-			return errors.New("play audio with image: empty byte input")
+			return ErrPlayAudioEmptyInput
 		}
 		s.src.data = src
 		s.src.filePath = ""
@@ -379,11 +378,11 @@ func (s *BroadcastStream) Seek(position time.Duration) error {
 	s.mu.Lock()
 	if s.src.filePath == "" {
 		s.mu.Unlock()
-		return errors.New("seek: only supported for file input")
+		return ErrSeekFileOnly
 	}
 	if position < 0 {
 		s.mu.Unlock()
-		return errors.New("seek: position cannot be negative")
+		return ErrSeekNegativePos
 	}
 	wasPlaying := s.state == BroadcastPlaying
 	s.src.seekPos = position

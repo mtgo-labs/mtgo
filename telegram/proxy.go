@@ -92,7 +92,7 @@ func parseMTProxy(u *url.URL) (*MTProxyConfig, error) {
 		}
 	}
 	if secret == "" {
-		return nil, fmt.Errorf("telegram: mtproxy: secret is required")
+		return nil, ErrMTProxySecretRequired
 	}
 	host := u.Hostname()
 	port := u.Port()
@@ -114,7 +114,7 @@ func parseTgProxy(raw string) (*MTProxyConfig, error) {
 	portStr := u.Query().Get("port")
 	secret := u.Query().Get("secret")
 	if server == "" || portStr == "" || secret == "" {
-		return nil, fmt.Errorf("telegram: tg://proxy requires server, port, and secret")
+		return nil, ErrProxyParamsRequired
 	}
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -268,12 +268,12 @@ func (d *socksDialer) socks4Handshake(conn net.Conn, address string) (net.Conn, 
 	ip := net.ParseIP(host)
 	if ip == nil {
 		conn.Close()
-		return nil, fmt.Errorf("socks4: domain not supported, need IP")
+		return nil, ErrSocks4Domain
 	}
 	ip4 := ip.To4()
 	if ip4 == nil {
 		conn.Close()
-		return nil, fmt.Errorf("socks4: IPv6 not supported")
+		return nil, ErrSocks4IPv6
 	}
 	req := []byte{0x04, 0x01, byte(port >> 8), byte(port)}
 	req = append(req, ip4...)
@@ -356,7 +356,7 @@ func readUntil(conn net.Conn, buf []byte, delimiter []byte) (int, error) {
 			return total, nil
 		}
 	}
-	return total, fmt.Errorf("response too large")
+	return total, ErrProxyResponseTooLarge
 }
 
 func bytesEndsWith(data, suffix []byte) bool {

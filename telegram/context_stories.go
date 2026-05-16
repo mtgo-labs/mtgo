@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"fmt"
-
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -20,7 +18,7 @@ import (
 //   - error: non-nil if the context has no client, the chat cannot post stories, or the upload fails
 func (c *Context) SendStory(chatID int64, media tg.InputMediaClass, opts ...*SendStoryOption) (*types.Story, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.SendStory(c.Ctx, chatID, media, opts...)
 }
@@ -37,7 +35,7 @@ func (c *Context) SendStory(chatID int64, media tg.InputMediaClass, opts ...*Sen
 //   - error: non-nil if the context has no client, the story does not exist, or the edit fails
 func (c *Context) EditStoryCaption(chatID int64, storyID int32, caption string) (*types.Story, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.EditStoryCaption(c.Ctx, chatID, storyID, caption)
 }
@@ -54,7 +52,7 @@ func (c *Context) EditStoryCaption(chatID int64, storyID int32, caption string) 
 //   - error: non-nil if the context has no client, the story does not exist, or the upload fails
 func (c *Context) EditStoryMedia(chatID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.EditStoryMedia(c.Ctx, chatID, storyID, media)
 }
@@ -69,7 +67,7 @@ func (c *Context) EditStoryMedia(chatID int64, storyID int32, media tg.InputMedi
 //   - error: non-nil if the context has no client or the deletion fails
 func (c *Context) DeleteStories(chatID int64, storyIDs []int32) error {
 	if c.Client == nil {
-		return fmt.Errorf("context: no client")
+		return ErrContextNoClient
 	}
 	return c.Client.DeleteStories(c.Ctx, chatID, storyIDs)
 }
@@ -85,7 +83,7 @@ func (c *Context) DeleteStories(chatID int64, storyIDs []int32) error {
 //   - error: non-nil if the context has no client, the stories cannot be found, or the request fails
 func (c *Context) GetStories(userID int64, storyIDs []int32) ([]*types.Story, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetStories(c.Ctx, userID, storyIDs)
 }
@@ -100,7 +98,7 @@ func (c *Context) GetStories(userID int64, storyIDs []int32) ([]*types.Story, er
 //   - error: non-nil if the context has no client or the request fails
 func (c *Context) GetChatStories(chatID int64) ([]*types.Story, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetChatStories(c.Ctx, chatID)
 }
@@ -112,11 +110,11 @@ func (c *Context) GetChatStories(chatID int64) ([]*types.Story, error) {
 //   - storyIDs: slice of story IDs to retrieve views for
 //
 // Returns:
-//   	- []*tg.StoryViews: view information for each requested story
+//   - []*tg.StoryViews: view information for each requested story
 //   - error: non-nil if the context has no client or the request fails
 func (c *Context) GetStoryViews(chatID int64, storyIDs []int32) ([]*tg.StoryViews, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetStoryViews(c.Ctx, chatID, storyIDs)
 }
@@ -133,7 +131,7 @@ func (c *Context) GetStoryViews(chatID int64, storyIDs []int32) ([]*tg.StoryView
 //   - error: non-nil if the context has no client, the story cannot be found, or the forward fails
 func (c *Context) ForwardStory(target int64, source int64, storyID int32) (*types.Message, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.ForwardStory(c.Ctx, target, source, storyID)
 }
@@ -148,7 +146,7 @@ func (c *Context) ForwardStory(target int64, source int64, storyID int32) (*type
 //   - error: non-nil if the context has no client or the operation fails
 func (c *Context) ReadChatStories(chatID int64, storyIDs []int32) error {
 	if c.Client == nil {
-		return fmt.Errorf("context: no client")
+		return ErrContextNoClient
 	}
 	return c.Client.ReadChatStories(c.Ctx, chatID, storyIDs)
 }

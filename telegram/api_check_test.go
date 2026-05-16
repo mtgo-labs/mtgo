@@ -53,7 +53,7 @@ func TestAPISurface_Payments(t *testing.T) {
 	_, _ = c.GetPaymentForm(context.Background(), peer, 1, nil)
 	_, _ = c.SendPaymentForm(context.Background(), 1, peer, 1, creds, nil)
 	_, _ = c.GetStarsBalance(context.Background(), peer)
-	_ = c.SendGift(context.Background(), user, 1, "hello")
+	_, _ = c.SendGift(context.Background(), user, 1, "hello")
 }
 
 func TestAPISurface_Business(t *testing.T) {

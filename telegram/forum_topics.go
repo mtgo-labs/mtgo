@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -159,7 +160,7 @@ func extractForumTopicFromUpdates(result tg.UpdatesClass) (*types.ForumTopic, er
 					if action, ok := msg.Action.(*tg.MessageActionTopicCreate); ok {
 						return &types.ForumTopic{
 							ID:        msg.ID,
-							Date:      msg.Date,
+							Date:      time.Unix(int64(msg.Date), 0),
 							Title:     action.Title,
 							IconColor: action.IconColor,
 						}, nil
@@ -167,7 +168,7 @@ func extractForumTopicFromUpdates(result tg.UpdatesClass) (*types.ForumTopic, er
 				}
 			}
 		}
-		return nil, fmt.Errorf("forum topic not found in updates")
+		return nil, ErrForumTopicNotFound
 	default:
 		return nil, fmt.Errorf("unexpected updates type %T", result)
 	}

@@ -26,6 +26,8 @@ import (
 
 	"github.com/mtgo-labs/storage"
 
+	sessions "github.com/mtgo-labs/mtgo/session"
+
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
@@ -73,16 +75,15 @@ type Dispatcher interface {
 // Use the accessor methods (Me, Session, Storage, Config) to inspect client state,
 // and the RPC methods (Invoke, Raw) to make arbitrary API calls.
 type Client struct {
-	cfg      Config
-	mu       sync.RWMutex
-	state    *connStateManager
-	storage  storage.Storage
-	session  *session.Session
-	me       *types.User
-	apiInit  bool
-	initOnce sync.Once
-	dialer   transport.Dialer
-	Log      *Logger
+	cfg     Config
+	mu      sync.RWMutex
+	state   *connStateManager
+	storage storage.Storage
+	session *session.Session
+	me      *types.User
+	apiInit bool
+	dialer  transport.Dialer
+	Log     *Logger
 
 	sessions           map[sessionKey]*session.Session
 	sessionsMu         sync.Mutex
@@ -101,7 +102,6 @@ type Client struct {
 
 	stopCh chan struct{}
 
-	sessionPath string
 	migratingDC bool
 
 	reconnectMgr  *reconnectManager
@@ -119,7 +119,6 @@ type Client struct {
 
 	testStorage  storage.Storage
 	testSession  *session.Session
-	testAuthFunc func() (*session.AuthResult, error)
 	testSessionF func(ctx context.Context, dcID int, addr string, port int, authKey []byte) (*session.Session, error)
 	testInvoker  tg.Invoker
 	testDialer   transport.Dialer
@@ -142,10 +141,10 @@ type Client struct {
 //	defer client.Disconnect()
 func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	if apiID == 0 {
-		return nil, fmt.Errorf("telegram: apiID is required")
+		return nil, ErrAPIIDRequired
 	}
 	if apiHash == "" {
-		return nil, fmt.Errorf("telegram: apiHash is required")
+		return nil, ErrAPIHashRequired
 	}
 
 	c := DefaultConfig
@@ -301,7 +300,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.Storage != nil {
 			c.Storage = cfg.Storage
 		}
-		if cfg.SessionString != nil {
+		if cfg.SessionString != "" {
 			c.SessionString = cfg.SessionString
 		}
 		if cfg.MTProxy != nil {
@@ -854,7 +853,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			}
 			st = s
 		} else {
-			return fmt.Errorf("telegram: no storage configured; set Storage, SessionName, or enable InMemory")
+			return ErrNoStorage
 		}
 	}
 	c.storage = st
@@ -865,9 +864,12 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}
 
-	// If SessionString is set, copy session fields into storage.
-	if c.cfg.SessionString != nil {
-		src := c.cfg.SessionString
+	// If SessionString is set, decode and copy session fields into storage.
+	if c.cfg.SessionString != "" {
+		src, err := sessions.StringSession(c.cfg.SessionString)
+		if err != nil {
+			return fmt.Errorf("telegram: decode session string: %w", err)
+		}
 		if dc, _ := src.DCID(); dc > 0 {
 			_ = st.SetDCID(dc)
 		}
@@ -1313,7 +1315,7 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 	return c.Invoke(query, 1, 30*time.Second)
 }
 
-func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, st storage.Storage) (tg.TLObject, error) {
+func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {
 	ctx := context.Background()
 
 	rpc, err := c.dcRPC(ctx, targetDC)
@@ -1571,7 +1573,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 	case *tg.UpdateChannelParticipant:
 		upd.ChatMember = &types.ChatMemberUpdated{}
 	case *tg.UpdateMessageReactions:
-		upd.MessageReaction = &types.MessageReactions{MessageID: 0}
+		upd.MessageReaction = &types.MessageReactions{}
 	case *tg.UpdateMessagePoll:
 		upd.Poll = &types.PollUpdate{PollID: v.PollID}
 	case *tg.UpdateBotPrecheckoutQuery:
@@ -1625,17 +1627,10 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		}
 		upd.ShippingQuery.SetBinder(c)
 	case *tg.UpdateBotChatInviteRequester:
-		chatID := peerIDFromPeer(v.Peer)
-		upd.ChatJoinRequest = &types.ChatJoinRequest{
-			ChatID: chatID,
-			UserID: v.UserID,
-			Date:   v.Date,
-			Bio:    v.About,
+		upd.ChatJoinRequest = types.ParseChatJoinRequest(v, users, chats)
+		if upd.ChatJoinRequest != nil {
+			upd.ChatJoinRequest.SetBinder(c)
 		}
-		if inv, ok := v.Invite.(*tg.ChatInviteExported); ok {
-			upd.ChatJoinRequest.InviteLink = types.ParseChatInviteLink(inv, nil)
-		}
-		upd.ChatJoinRequest.SetBinder(c)
 	case *tg.UpdateStory:
 		story := types.ParseStory(v.Story, pm)
 		if story != nil {
@@ -1654,21 +1649,6 @@ func bindMessage(msg *types.Message, binder types.Binder) {
 	if msg != nil {
 		msg.SetBinder(binder)
 	}
-}
-
-func peerIDFromPeer(p tg.PeerClass) int64 {
-	if p == nil {
-		return 0
-	}
-	switch v := p.(type) {
-	case *tg.PeerUser:
-		return v.UserID
-	case *tg.PeerChat:
-		return v.ChatID
-	case *tg.PeerChannel:
-		return v.ChannelID
-	}
-	return 0
 }
 
 func (c *Client) resolveMessagePeers(msg *types.Message, users map[int64]*types.User, chats map[int64]*types.Chat) {

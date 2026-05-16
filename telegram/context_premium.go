@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"fmt"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -18,7 +16,7 @@ import (
 //   - error: non-nil if the context has no client, the user has no Premium, or the boost fails
 func (c *Context) ApplyBoost(chatID int64, opts ...*ApplyBoostOption) ([]*tg.MyBoost, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.ApplyBoost(c.Ctx, chatID, opts...)
 }
@@ -34,7 +32,7 @@ func (c *Context) ApplyBoost(chatID int64, opts ...*ApplyBoostOption) ([]*tg.MyB
 //   - error: non-nil if the context has no client or the request fails
 func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetBoostsStatus(c.Ctx, chatID)
 }
@@ -49,7 +47,7 @@ func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error)
 //   - error: non-nil if the context has no client or the request fails
 func (c *Context) GetBoosts(opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetBoosts(c.Ctx, opts...)
 }

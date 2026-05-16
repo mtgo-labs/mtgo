@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"fmt"
-
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -27,7 +25,7 @@ import (
 //	})
 func (c *Context) Reply(text string, opts ...*params.SendMessage) (*types.Message, error) {
 	if c.Message == nil {
-		return nil, fmt.Errorf("context: no message to reply to")
+		return nil, ErrContextNoReply
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -68,7 +66,7 @@ func (c *Context) Reply(text string, opts ...*params.SendMessage) (*types.Messag
 //	})
 func (c *Context) Edit(text string, opts ...*params.EditMessage) (*types.Message, error) {
 	if c.Message == nil && c.EditedMessage == nil {
-		return nil, fmt.Errorf("context: no message to edit")
+		return nil, ErrContextNoEdit
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -195,7 +193,7 @@ func (c *Context) Delete(opts ...*params.DeleteMessages) (int, error) {
 //	})
 func (c *Context) Forward(chatID int64, opts ...*params.ForwardMessages) (*types.Message, error) {
 	if c.Message == nil {
-		return nil, fmt.Errorf("context: no message to forward")
+		return nil, ErrContextNoForward
 	}
 	fromChatID, err := c.chatID()
 	if err != nil {
@@ -206,7 +204,7 @@ func (c *Context) Forward(chatID int64, opts ...*params.ForwardMessages) (*types
 		return nil, err
 	}
 	if len(msgs) == 0 {
-		return nil, fmt.Errorf("context: no forwarded message returned")
+		return nil, ErrContextNoForwardResult
 	}
 	return msgs[0], nil
 }
@@ -224,7 +222,7 @@ func (c *Context) Forward(chatID int64, opts ...*params.ForwardMessages) (*types
 //   - error: non-nil if there is no message to copy, the chat ID cannot be resolved, or the copy fails
 func (c *Context) Copy(chatID int64, opts ...*params.CopyMessage) (int64, error) {
 	if c.Message == nil {
-		return 0, fmt.Errorf("context: no message to copy")
+		return 0, ErrContextNoCopy
 	}
 	fromChatID, err := c.chatID()
 	if err != nil {
@@ -252,7 +250,7 @@ func (c *Context) Copy(chatID int64, opts ...*params.CopyMessage) (int64, error)
 //	})
 func (c *Context) Send(chatID int64, text string, opts ...*params.SendMessage) (*types.Message, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.SendMessage(c.Ctx, chatID, text, opts...)
 }
@@ -271,7 +269,7 @@ func (c *Context) Send(chatID int64, text string, opts ...*params.SendMessage) (
 //   - error: non-nil if the context has no client or the send fails
 func (c *Context) SendMedia(chatID int64, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.SendMedia(c.Ctx, chatID, media, caption, opts...)
 }
@@ -291,7 +289,7 @@ func (c *Context) SendMedia(chatID int64, media tg.InputMediaClass, caption stri
 //	})
 func (c *Context) React(reaction ...tg.ReactionClass) error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message to react to")
+		return ErrContextNoReact
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -325,10 +323,10 @@ func (c *Context) Read() error {
 //   - error: non-nil if there is no message, the message has no media, or the download fails
 func (c *Context) DownloadMedia() ([]byte, error) {
 	if c.Message == nil {
-		return nil, fmt.Errorf("context: no message")
+		return nil, ErrContextNoMessage
 	}
 	if c.Message.Media == nil {
-		return nil, fmt.Errorf("context: message has no media")
+		return nil, ErrContextNoMedia
 	}
 	return c.Client.DownloadMedia(c.Ctx, c.Message.Media, "", nil)
 }
@@ -344,10 +342,10 @@ func (c *Context) DownloadMedia() ([]byte, error) {
 //   - error: non-nil if there is no message, the message has no media, or the download fails
 func (c *Context) DownloadMediaToFile(filePath string, fileSize int64) error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message")
+		return ErrContextNoMessage
 	}
 	if c.Message.Media == nil {
-		return fmt.Errorf("context: message has no media")
+		return ErrContextNoMedia
 	}
 	return c.Client.DownloadMediaToFile(c.Ctx, c.Message.Media, "", filePath, fileSize, nil)
 }
@@ -414,10 +412,10 @@ func (c *Context) SendChatAction(action tg.SendMessageActionClass) error {
 //   - error: non-nil if there is no message, the message is not part of a media group, or the request fails
 func (c *Context) GetMediaGroup() ([]*types.Message, error) {
 	if c.Message == nil {
-		return nil, fmt.Errorf("context: no message")
+		return nil, ErrContextNoMessage
 	}
 	if c.Message.GroupedID == 0 {
-		return nil, fmt.Errorf("context: message is not part of a media group")
+		return nil, ErrContextNotMediaGroup
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -435,7 +433,7 @@ func (c *Context) GetMediaGroup() ([]*types.Message, error) {
 //   - error: non-nil if there is no message, the chat ID cannot be resolved, or the vote fails
 func (c *Context) Vote(options [][]byte) error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message")
+		return ErrContextNoMessage
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -451,7 +449,7 @@ func (c *Context) Vote(options [][]byte) error {
 //   - error: non-nil if there is no message, the chat ID cannot be resolved, or the stop fails
 func (c *Context) StopPoll() error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message")
+		return ErrContextNoMessage
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -466,7 +464,7 @@ func (c *Context) StopPoll() error {
 //   - error: non-nil if there is no message, the chat ID cannot be resolved, or the retraction fails
 func (c *Context) RetractVote() error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message")
+		return ErrContextNoMessage
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -485,7 +483,7 @@ func (c *Context) RetractVote() error {
 //   - error: non-nil if there is no message, the chat ID cannot be resolved, or the reaction fails
 func (c *Context) SendPaidReaction(amount int64) error {
 	if c.Message == nil {
-		return fmt.Errorf("context: no message")
+		return ErrContextNoMessage
 	}
 	chatID, err := c.chatID()
 	if err != nil {
@@ -547,7 +545,7 @@ func (c *Context) GetChatHistoryCount() (int, error) {
 //   - error: non-nil if there is no message, the chat ID cannot be resolved, or the forward fails
 func (c *Context) ForwardMediaGroup(chatID int64, opts ...*params.ForwardMessages) ([]*types.Message, error) {
 	if c.Message == nil {
-		return nil, fmt.Errorf("context: no message")
+		return nil, ErrContextNoMessage
 	}
 	fromChatID, err := c.chatID()
 	if err != nil {
@@ -569,7 +567,7 @@ func (c *Context) ForwardMediaGroup(chatID int64, opts ...*params.ForwardMessage
 //   - error: non-nil if the context has no client or the send fails
 func (c *Context) SendGame(chatID int64, gameShortName string, opts ...*params.SendMessage) (*types.Message, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.SendGame(c.Ctx, chatID, gameShortName, opts...)
 }

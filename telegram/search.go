@@ -123,7 +123,7 @@ func (c *Client) GetUser(ctx context.Context, userID int64) (*types.User, error)
 		if len(v.Users) > 0 {
 			return types.ParseUser(v.Users[0]), nil
 		}
-		return nil, fmt.Errorf("no user in response")
+		return nil, ErrNoUserInResponse
 	default:
 		return nil, fmt.Errorf("unexpected result type %T", result)
 	}

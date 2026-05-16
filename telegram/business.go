@@ -21,7 +21,7 @@ import (
 //	fmt.Printf("Business connection: %+v\n", conn)
 func (c *Client) GetBusinessConnection(ctx context.Context, connectionID string) (*tg.BotBusinessConnection, error) {
 	if connectionID == "" {
-		return nil, fmt.Errorf("business: connection ID is required")
+		return nil, ErrBusinessConnIDRequired
 	}
 
 	c.Log.Debugf("GetBusinessConnection id=%s", connectionID)
@@ -42,7 +42,7 @@ func (c *Client) GetBusinessConnection(ctx context.Context, connectionID string)
 				return upd.Connection, nil
 			}
 		}
-		return nil, fmt.Errorf("business: no business connection found in update")
+		return nil, ErrNoBusinessConnection
 	default:
 		return nil, fmt.Errorf("business: unexpected updates type %T", result)
 	}

@@ -287,3 +287,97 @@ func TestKeyboardRequestPeerEncodesInputButtonAndBoolFilter(t *testing.T) {
 		t.Fatal("expected requestPeerTypeUser Bot filter to encode boolTrue")
 	}
 }
+
+func TestKeyboardRequestUser(t *testing.T) {
+	markup := Keyboard().
+		RequestUser("Pick User", 1, 5).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	pt, ok := peer.PeerType.(*tg.RequestPeerTypeUser)
+	if !ok {
+		t.Fatal("expected RequestPeerTypeUser")
+	}
+	if pt.Bot {
+		t.Error("RequestUser should not set Bot=true by default")
+	}
+	if peer.MaxQuantity != 5 {
+		t.Errorf("MaxQuantity = %d, want 5", peer.MaxQuantity)
+	}
+}
+
+func TestKeyboardRequestUserBot(t *testing.T) {
+	markup := Keyboard().
+		RequestUser("Pick Bot", 2, 1, PeerUserOpts{Bot: true, Premium: true}).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	pt, ok := peer.PeerType.(*tg.RequestPeerTypeUser)
+	if !ok {
+		t.Fatal("expected RequestPeerTypeUser")
+	}
+	if !pt.Bot {
+		t.Error("expected Bot=true")
+	}
+	if !pt.Premium {
+		t.Error("expected Premium=true")
+	}
+}
+
+func TestKeyboardRequestGroup(t *testing.T) {
+	markup := Keyboard().
+		RequestGroup("Pick Group", 3).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	if _, ok := peer.PeerType.(*tg.RequestPeerTypeChat); !ok {
+		t.Fatal("expected RequestPeerTypeChat")
+	}
+}
+
+func TestKeyboardRequestGroupWithOptions(t *testing.T) {
+	markup := Keyboard().
+		RequestGroup("Pick Forum", 3, PeerGroupOpts{Creator: true, Forum: true, HasUsername: true}).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	pt, ok := peer.PeerType.(*tg.RequestPeerTypeChat)
+	if !ok {
+		t.Fatal("expected RequestPeerTypeChat")
+	}
+	if !pt.Creator || !pt.Forum || !pt.HasUsername {
+		t.Errorf("got creator=%v forum=%v hasUsername=%v", pt.Creator, pt.Forum, pt.HasUsername)
+	}
+}
+
+func TestKeyboardRequestChannel(t *testing.T) {
+	markup := Keyboard().
+		RequestChannel("Pick Channel", 4).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	if _, ok := peer.PeerType.(*tg.RequestPeerTypeBroadcast); !ok {
+		t.Fatal("expected RequestPeerTypeBroadcast")
+	}
+}
+
+func TestKeyboardRequestChannelWithOptions(t *testing.T) {
+	markup := Keyboard().
+		RequestChannel("Pick Channel", 4, PeerChannelOpts{Creator: true}).
+		BuildReply()
+
+	btn := markup.(*tg.ReplyKeyboardMarkup).Rows[0].Buttons[0]
+	peer := btn.(*tg.InputKeyboardButtonRequestPeer)
+	pt, ok := peer.PeerType.(*tg.RequestPeerTypeBroadcast)
+	if !ok {
+		t.Fatal("expected RequestPeerTypeBroadcast")
+	}
+	if !pt.Creator {
+		t.Error("expected Creator=true")
+	}
+}

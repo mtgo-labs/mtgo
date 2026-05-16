@@ -2,10 +2,9 @@ package telegram
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/mtgo-labs/mtgo/tg/e2e"
 	"github.com/mtgo-labs/mtgo/telegram/types"
+	"github.com/mtgo-labs/mtgo/tg/e2e"
 )
 
 // Context represents the environment surrounding a single Telegram update event.
@@ -239,7 +238,7 @@ func (c *Context) chatID() (int64, error) {
 	if c.CallbackQuery != nil && c.CallbackQuery.ChatID != 0 {
 		return c.CallbackQuery.ChatID, nil
 	}
-	return 0, fmt.Errorf("context: no chat available")
+	return 0, ErrContextNoChat
 }
 
 func (c *Context) messageID() (int32, error) {
@@ -255,7 +254,7 @@ func (c *Context) messageID() (int32, error) {
 	if c.EditedBusinessMessage != nil {
 		return c.EditedBusinessMessage.ID, nil
 	}
-	return 0, fmt.Errorf("context: no message available")
+	return 0, ErrContextNoMessage
 }
 
 // TranslatorFunc is the signature for a localization translation function.

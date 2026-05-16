@@ -42,7 +42,7 @@ import (
 //	data, _ := client.DownloadFile(ctx, location, 0, nil)
 func GetFileLocation(media types.Media, thumbSize string) (tg.InputFileLocationClass, int32, error) {
 	if media == nil {
-		return nil, 0, fmt.Errorf("media: nil media")
+		return nil, 0, ErrMediaNil
 	}
 
 	switch m := media.(type) {
@@ -57,12 +57,12 @@ func GetFileLocation(media types.Media, thumbSize string) (tg.InputFileLocationC
 
 func getPhotoFileLocation(m *types.PhotoMedia, thumbSize string) (tg.InputFileLocationClass, int32, error) {
 	if m.Photo == nil {
-		return nil, 0, fmt.Errorf("media: photo has no photo data")
+		return nil, 0, ErrPhotoNoData
 	}
 
 	size := getPhotoSize(m.Photo.Sizes, thumbSize)
 	if size == nil {
-		return nil, 0, fmt.Errorf("media: no photo sizes available")
+		return nil, 0, ErrPhotoNoSizes
 	}
 
 	return &tg.InputPhotoFileLocation{
@@ -125,7 +125,7 @@ func getFileLocationFromTL(media tg.MessageMediaClass, thumbSize string) (tg.Inp
 	switch m := media.(type) {
 	case *tg.MessageMediaPhoto:
 		if m.Photo == nil {
-			return nil, 0, fmt.Errorf("media: photo is nil")
+			return nil, 0, ErrPhotoNil
 		}
 		photo, ok := m.Photo.(*tg.Photo)
 		if !ok {
@@ -143,7 +143,7 @@ func getFileLocationFromTL(media tg.MessageMediaClass, thumbSize string) (tg.Inp
 
 	case *tg.MessageMediaDocument:
 		if m.Document == nil {
-			return nil, 0, fmt.Errorf("media: document is nil")
+			return nil, 0, ErrDocumentNil
 		}
 		doc, ok := m.Document.(*tg.Document)
 		if !ok {

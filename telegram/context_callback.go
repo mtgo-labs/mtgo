@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"fmt"
-
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -61,10 +59,10 @@ func (c *Context) AnswerCallback(text string, showAlert bool) error {
 //   - error: non-nil if there is no callback query, the message is inline, or the edit fails
 func (c *Context) CallbackEditText(text string, opts ...*params.EditMessage) (*types.Message, error) {
 	if c.CallbackQuery == nil {
-		return nil, fmt.Errorf("context: no callback query")
+		return nil, ErrContextNoCallback
 	}
 	if c.CallbackQuery.InlineMessage {
-		return nil, fmt.Errorf("context: cannot edit inline message by ID")
+		return nil, ErrContextEditInline
 	}
 	chatID := c.CallbackQuery.ChatID
 	return c.Client.EditMessageText(c.Ctx, chatID, c.CallbackQuery.MessageID, text, opts...)
@@ -82,10 +80,10 @@ func (c *Context) CallbackEditText(text string, opts ...*params.EditMessage) (*t
 //   - error: non-nil if there is no callback query, the message is inline, or the edit fails
 func (c *Context) CallbackEditCaption(caption string, opts ...*params.EditMessage) (*types.Message, error) {
 	if c.CallbackQuery == nil {
-		return nil, fmt.Errorf("context: no callback query")
+		return nil, ErrContextNoCallback
 	}
 	if c.CallbackQuery.InlineMessage {
-		return nil, fmt.Errorf("context: cannot edit inline message by ID")
+		return nil, ErrContextEditInline
 	}
 	chatID := c.CallbackQuery.ChatID
 	return c.Client.EditMessageCaption(c.Ctx, chatID, c.CallbackQuery.MessageID, caption, opts...)
@@ -103,10 +101,10 @@ func (c *Context) CallbackEditCaption(caption string, opts ...*params.EditMessag
 //   - error: non-nil if there is no callback query, the message is inline, or the edit fails
 func (c *Context) CallbackEditMedia(media tg.InputMediaClass, opts ...*params.EditMessage) (*types.Message, error) {
 	if c.CallbackQuery == nil {
-		return nil, fmt.Errorf("context: no callback query")
+		return nil, ErrContextNoCallback
 	}
 	if c.CallbackQuery.InlineMessage {
-		return nil, fmt.Errorf("context: cannot edit inline message by ID")
+		return nil, ErrContextEditInline
 	}
 	chatID := c.CallbackQuery.ChatID
 	return c.Client.EditMessageMedia(c.Ctx, chatID, c.CallbackQuery.MessageID, media, opts...)
@@ -124,10 +122,10 @@ func (c *Context) CallbackEditMedia(media tg.InputMediaClass, opts ...*params.Ed
 //   - error: non-nil if there is no callback query, the message is inline, or the edit fails
 func (c *Context) CallbackEditReplyMarkup(replyMarkup tg.ReplyMarkupClass) (*types.Message, error) {
 	if c.CallbackQuery == nil {
-		return nil, fmt.Errorf("context: no callback query")
+		return nil, ErrContextNoCallback
 	}
 	if c.CallbackQuery.InlineMessage {
-		return nil, fmt.Errorf("context: cannot edit inline message by ID")
+		return nil, ErrContextEditInline
 	}
 	chatID := c.CallbackQuery.ChatID
 	return c.Client.EditMessageReplyMarkup(c.Ctx, chatID, c.CallbackQuery.MessageID, replyMarkup)

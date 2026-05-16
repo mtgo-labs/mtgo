@@ -557,7 +557,7 @@ func resolveDownloadInput(input interface{}) (*downloadInput, error) {
 	switch v := input.(type) {
 	case *types.Message:
 		if v.Media == nil {
-			return nil, fmt.Errorf("message has no downloadable media")
+			return nil, ErrNoDownloadableMedia
 		}
 		return resolveMediaInput(v.Media)
 	case types.Media:

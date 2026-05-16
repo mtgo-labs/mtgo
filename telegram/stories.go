@@ -47,7 +47,7 @@ type SendStoryOption struct {
 func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMediaClass, opts ...*SendStoryOption) (*types.Story, error) {
 	c.Log.Debugf("SendStory chat_id=%d", chatID)
 	if media == nil {
-		return nil, fmt.Errorf("media is required")
+		return nil, ErrMediaRequired
 	}
 
 	peer, err := resolvePeer(c.clientPeerResolver(), chatID)
@@ -107,7 +107,7 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int32, caption string) (*types.Story, error) {
 	c.Log.Debugf("EditStoryCaption chat_id=%d story_id=%d", chatID, storyID)
 	if caption == "" {
-		return nil, fmt.Errorf("caption is required")
+		return nil, ErrCaptionRequired
 	}
 
 	peer, err := resolvePeer(c.clientPeerResolver(), chatID)
@@ -143,7 +143,7 @@ func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int
 func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
 	c.Log.Debugf("EditStoryMedia chat_id=%d story_id=%d", chatID, storyID)
 	if media == nil {
-		return nil, fmt.Errorf("media is required")
+		return nil, ErrMediaRequired
 	}
 
 	peer, err := resolvePeer(c.clientPeerResolver(), chatID)
@@ -173,7 +173,7 @@ func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32
 
 // DeleteStories is not yet available in the current TL schema and always returns an error.
 func (c *Client) DeleteStories(_ context.Context, _ int64, _ []int32) error {
-	return fmt.Errorf("not available in current TL schema")
+	return ErrStorySchema
 }
 
 // GetStories retrieves one or more stories by ID from the specified user.
@@ -194,7 +194,7 @@ func (c *Client) DeleteStories(_ context.Context, _ int64, _ []int32) error {
 func (c *Client) GetStories(ctx context.Context, userID int64, storyIDs []int32) ([]*types.Story, error) {
 	c.Log.Debugf("GetStories user_id=%d count=%d", userID, len(storyIDs))
 	if len(storyIDs) == 0 {
-		return nil, fmt.Errorf("story IDs are required")
+		return nil, ErrStoryIDsRequired
 	}
 
 	user, err := resolveUserID(c.clientPeerResolver(), userID)
@@ -290,7 +290,7 @@ func (c *Client) GetChatStories(ctx context.Context, chatID int64) ([]*types.Sto
 func (c *Client) GetStoryViews(ctx context.Context, chatID int64, storyIDs []int32) ([]*tg.StoryViews, error) {
 	c.Log.Debugf("GetStoryViews chat_id=%d count=%d", chatID, len(storyIDs))
 	if len(storyIDs) == 0 {
-		return nil, fmt.Errorf("story IDs are required")
+		return nil, ErrStoryIDsRequired
 	}
 
 	peer, err := resolvePeer(c.clientPeerResolver(), chatID)
@@ -407,12 +407,12 @@ func extractStoryFromUpdates(result tg.UpdatesClass) (*types.Story, error) {
 				return types.ParseStory(upd.Story, pm), nil
 			}
 		}
-		return nil, fmt.Errorf("no story found in Updates")
+		return nil, ErrStoryNotInUpdates
 	case *tg.UpdateShort:
 		if upd, ok := v.Update.(*tg.UpdateStory); ok {
 			return types.ParseStory(upd.Story, nil), nil
 		}
-		return nil, fmt.Errorf("no story found in UpdateShort")
+		return nil, ErrStoryNotInShort
 	default:
 		return nil, fmt.Errorf("unexpected updates type %T", result)
 	}

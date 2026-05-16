@@ -58,7 +58,7 @@ func TestGetStarsBalance_PeerResolveError(t *testing.T) {
 
 func TestSendGift_PeerResolveError(t *testing.T) {
 	c := &Client{testResolver: &mockPeerResolver{}}
-	err := c.SendGift(context.TODO(), 999, 1, "hello")
+	_, err := c.SendGift(context.TODO(), 999, 1, "hello")
 	if err == nil {
 		t.Fatal("expected error for unresolvable user")
 	}

@@ -103,7 +103,7 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 
 func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretChat, error) {
 	if c.secretChats == nil {
-		return nil, fmt.Errorf("telegram: no pending secret chats")
+		return nil, ErrNoSecretChats
 	}
 
 	chat, ok := c.secretChats.Get(chatID)

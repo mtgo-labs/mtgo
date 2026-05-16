@@ -3,7 +3,6 @@ package telegram
 import (
 	"time"
 
-	"github.com/mtgo-labs/mtgo/session"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/storage"
@@ -119,14 +118,15 @@ type Config struct {
 	// BotToken is the Telegram Bot API token. Set this instead of
 	// PhoneNumber when authenticating as a bot.
 	BotToken string
-	// SessionString is a pre-built session that encodes the authorization key
-	// and DC information. Create with session constructors:
+	// SessionString is a string-encoded session (Telethon, Pyrogram, GramJS,
+	// mtcute, or auto-detected format). The client decodes it internally
+	// during initialization; errors are returned from Connect/Start.
 	//
 	//   session.StringSession("auto_detect")
 	//   session.TelethonSession("1abc...")
 	//   session.PyrogramSession("base64...")
 	//
-	SessionString *session.Session
+	SessionString string
 	// PhoneNumber is the phone number of the Telegram account to authorize,
 	// in international format (e.g. "+1234567890").
 	PhoneNumber string
@@ -314,15 +314,15 @@ type Config struct {
 	//
 	//	cfg.LocalAddr = "192.168.1.100:0"
 	LocalAddr string
-	Log          LogConfig
+	Log       LogConfig
 
-	ReconnectEnabled  bool
-	ReconnectBaseDelay time.Duration
-	ReconnectMaxDelay  time.Duration
+	ReconnectEnabled     bool
+	ReconnectBaseDelay   time.Duration
+	ReconnectMaxDelay    time.Duration
 	ReconnectMaxAttempts int
-	HealthEnabled     bool
-	HealthPingInterval time.Duration
-	HealthPongTimeout  time.Duration
+	HealthEnabled        bool
+	HealthPingInterval   time.Duration
+	HealthPongTimeout    time.Duration
 
 	UpdateQueueSize       int
 	DurableUpdateQueue    bool

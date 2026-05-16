@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -34,7 +33,7 @@ func (s *BroadcastStream) FeedChunk(data []byte) error {
 	}
 	if s.stdin == nil {
 		s.mu.Unlock()
-		return errors.New("feed chunk: stdin not initialized; call StartPipe first")
+		return ErrStdinNotInit
 	}
 	s.mu.Unlock()
 
@@ -53,7 +52,7 @@ func (s *BroadcastStream) FeedReader(r io.Reader) error {
 	}
 	if s.stdin == nil {
 		s.mu.Unlock()
-		return errors.New("feed reader: stdin not initialized; call StartPipe first")
+		return ErrStdinNotInit
 	}
 	s.mu.Unlock()
 

@@ -180,12 +180,12 @@ func (r *CallReader) SelectChannel(idx int32) {
 // NextChunk fetches the next audio/video chunk from the selected stream channel.
 func (r *CallReader) NextChunk(ctx context.Context) ([]byte, error) {
 	if r.selectedCh < 0 || int(r.selectedCh) >= len(r.channels) {
-		return nil, fmt.Errorf("call reader: no channel selected")
+		return nil, ErrCallNoChannel
 	}
 
 	ch := r.SelectedChannel()
 	if ch == nil {
-		return nil, fmt.Errorf("call reader: channel is nil")
+		return nil, ErrCallChannelNil
 	}
 
 	vch := ch.Channel
@@ -213,7 +213,7 @@ func (r *CallReader) NextChunk(ctx context.Context) ([]byte, error) {
 		r.currentTS += 1000 >> r.scale
 		return f.Bytes, nil
 	case *tg.UploadFileCDNRedirect:
-		return nil, fmt.Errorf("call reader: cdn redirect not supported")
+		return nil, ErrCallCDNNotSupported
 	default:
 		return nil, fmt.Errorf("call reader: unexpected result type %T", result)
 	}
@@ -253,7 +253,7 @@ func (c *Client) NewCallReader(ctx context.Context, chatID int64) (*CallReader, 
 	}
 
 	if len(stream.Channels) == 0 {
-		return nil, fmt.Errorf("call reader: no stream channels available")
+		return nil, ErrCallNoStreams
 	}
 
 	return &CallReader{
@@ -278,5 +278,5 @@ func extractPhoneCall(updates tg.UpdatesClass) (tg.PhoneCallClass, error) {
 			return pc.PhoneCall, nil
 		}
 	}
-	return nil, fmt.Errorf("create call: phone call not found in updates")
+	return nil, ErrCallNotFound
 }

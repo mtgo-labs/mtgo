@@ -121,6 +121,26 @@ func (b *KeyboardBuilder) RequestPhone(text string) *KeyboardBuilder {
 // peerType is one of &tg.RequestPeerTypeUser{}, &tg.RequestPeerTypeChat{},
 // or &tg.RequestPeerTypeBroadcast{}.
 // maxQuantity controls how many peers the user can share (for users only).
+// PeerUserOpts controls optional filters when requesting a user peer.
+type PeerUserOpts struct {
+	Bot     bool
+	Premium bool
+}
+
+// PeerGroupOpts controls optional filters when requesting a group peer.
+type PeerGroupOpts struct {
+	Creator        bool
+	BotParticipant bool
+	HasUsername    bool
+	Forum          bool
+}
+
+// PeerChannelOpts controls optional filters when requesting a channel peer.
+type PeerChannelOpts struct {
+	Creator     bool
+	HasUsername bool
+}
+
 func (b *KeyboardBuilder) RequestPeer(text string, buttonID int32, peerType tg.RequestPeerTypeClass, maxQuantity int32) *KeyboardBuilder {
 	return b.add(&tg.InputKeyboardButtonRequestPeer{
 		Text:        text,
@@ -128,6 +148,32 @@ func (b *KeyboardBuilder) RequestPeer(text string, buttonID int32, peerType tg.R
 		PeerType:    peerType,
 		MaxQuantity: maxQuantity,
 	})
+}
+
+func (b *KeyboardBuilder) RequestUser(text string, buttonID int32, maxQuantity int32, opts ...PeerUserOpts) *KeyboardBuilder {
+	o := getOptDef(PeerUserOpts{}, opts...)
+	return b.RequestPeer(text, buttonID, &tg.RequestPeerTypeUser{
+		Bot:     o.Bot,
+		Premium: o.Premium,
+	}, maxQuantity)
+}
+
+func (b *KeyboardBuilder) RequestGroup(text string, buttonID int32, opts ...PeerGroupOpts) *KeyboardBuilder {
+	o := getOptDef(PeerGroupOpts{}, opts...)
+	return b.RequestPeer(text, buttonID, &tg.RequestPeerTypeChat{
+		Creator:        o.Creator,
+		BotParticipant: o.BotParticipant,
+		HasUsername:    o.HasUsername,
+		Forum:          o.Forum,
+	}, 1)
+}
+
+func (b *KeyboardBuilder) RequestChannel(text string, buttonID int32, opts ...PeerChannelOpts) *KeyboardBuilder {
+	o := getOptDef(PeerChannelOpts{}, opts...)
+	return b.RequestPeer(text, buttonID, &tg.RequestPeerTypeBroadcast{
+		Creator:     o.Creator,
+		HasUsername: o.HasUsername,
+	}, 1)
 }
 
 // RequestGeo adds a button that requests the user's location.

@@ -219,10 +219,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 	var totalStreamSize int64
 	partIdx := int32(0)
 
-	for {
-		if hasErr.Load() {
-			break
-		}
+	for !hasErr.Load() {
 
 		n, readErr := io.ReadFull(reader, buf)
 
@@ -265,7 +262,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 	wg.Wait()
 
 	if totalStreamSize == 0 {
-		return nil, 0, fmt.Errorf("upload: streamed upload produced no data")
+		return nil, 0, ErrUploadNoData
 	}
 
 	for _, r := range results {

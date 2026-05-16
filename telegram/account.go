@@ -91,7 +91,7 @@ func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.Glob
 	c.Log.Debug("SetGlobalPrivacySettings")
 
 	if settings == nil {
-		return fmt.Errorf("set global privacy settings: settings is required")
+		return ErrPrivacySettingsRequired
 	}
 
 	rpc := c.Raw()

@@ -14,8 +14,20 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
+
+// ErrDataTooShort is returned when decoding a file_id string that contains
+// fewer bytes than required for the minimum valid file_id structure.
+//
+// Example:
+//
+//	id, err := fileid.DecodeString("tooShort")
+//	if errors.Is(err, fileid.ErrDataTooShort) {
+//		log.Println("file_id is truncated or corrupt")
+//	}
+var ErrDataTooShort = errors.New("fileid: data too short")
 
 const (
 	fileIDMajor = 4
@@ -179,7 +191,7 @@ func Decode(s string) (FileID, error) {
 
 	data := rleDecode(decoded)
 	if len(data) < 2 {
-		return FileID{}, fmt.Errorf("fileid: data too short")
+		return FileID{}, ErrDataTooShort
 	}
 
 	major := data[len(data)-1]

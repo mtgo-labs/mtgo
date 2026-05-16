@@ -1,8 +1,8 @@
 package telegram
 
 import (
-	"fmt"
-
+	"github.com/mtgo-labs/mtgo/telegram/params"
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -26,7 +26,7 @@ import (
 //	}
 func (c *Context) GetPaymentForm(chatID int64, messageID int32, opts ...*GetPaymentFormOption) (tg.PaymentFormClass, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetPaymentForm(c.Ctx, chatID, messageID, opts...)
 }
@@ -53,7 +53,7 @@ func (c *Context) GetPaymentForm(chatID int64, messageID int32, opts ...*GetPaym
 //	}
 func (c *Context) SendPaymentForm(formID int64, chatID int64, messageID int32, creds tg.InputPaymentCredentialsClass, opts ...*SendPaymentFormOption) (tg.PaymentResultClass, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.SendPaymentForm(c.Ctx, formID, chatID, messageID, creds, opts...)
 }
@@ -77,7 +77,7 @@ func (c *Context) SendPaymentForm(formID int64, chatID int64, messageID int32, c
 //	log.Printf("Stars balance: %d", balance)
 func (c *Context) GetStarsBalance(chatID int64) (int64, error) {
 	if c.Client == nil {
-		return 0, fmt.Errorf("context: no client")
+		return 0, ErrContextNoClient
 	}
 	return c.Client.GetStarsBalance(c.Ctx, chatID)
 }
@@ -99,9 +99,9 @@ func (c *Context) GetStarsBalance(chatID int64) (int64, error) {
 //	if err != nil {
 //	    log.Printf("failed to send gift: %v", err)
 //	}
-func (c *Context) SendGift(userID int64, giftID int64, message string) error {
+func (c *Context) SendGift(userID int64, giftID int64, message string, opts ...*params.GiftSend) (*types.Message, error) {
 	if c.Client == nil {
-		return fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
-	return c.Client.SendGift(c.Ctx, userID, giftID, message)
+	return c.Client.SendGift(c.Ctx, userID, giftID, message, opts...)
 }

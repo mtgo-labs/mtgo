@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	tg "github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/telegram/types"
+	tg "github.com/mtgo-labs/mtgo/tg"
 )
 
 // InputFile represents a file input for uploading or referencing media on Telegram.
@@ -115,7 +115,7 @@ func resolveFile(f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, e
 	if f.GetReader() != nil {
 		return resolveUpload(f, c, kind)
 	}
-	return nil, fmt.Errorf("input_file: empty input")
+	return nil, ErrInputFileEmpty
 }
 
 func resolveFromIDs(f *InputFile, kind mediaKind) (tg.InputMediaClass, error) {

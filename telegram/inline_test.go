@@ -101,6 +101,66 @@ func TestAnswerInlineQuery_RPCError(t *testing.T) {
 	}
 }
 
+func TestAnswerGuestQuery(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+
+	mock.setResult(tg.MessagesSetBotGuestChatResultTypeID, &tg.InputBotInlineMessageID{
+		DCID:       4,
+		ID:         123,
+		AccessHash: 456,
+	})
+
+	result, err := c.AnswerGuestQuery(context.Background(), "98765", &tg.InputBotInlineResultGame{
+		ID:        "game1",
+		ShortName: "mygame",
+	})
+	if err != nil {
+		t.Fatalf("AnswerGuestQuery() error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.InlineMessageID != "4:123:456" {
+		t.Errorf("InlineMessageID = %q, want %q", result.InlineMessageID, "4:123:456")
+	}
+	req, ok := mock.lastCall().(*tg.MessagesSetBotGuestChatResultRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSetBotGuestChatResultRequest, got %T", mock.lastCall())
+	}
+	if req.QueryID != 98765 {
+		t.Errorf("QueryID = %d, want 98765", req.QueryID)
+	}
+}
+
+func TestAnswerGuestQuery_InvalidQueryID(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+
+	_, err := c.AnswerGuestQuery(context.Background(), "not-a-number", &tg.InputBotInlineResultGame{
+		ID:        "game1",
+		ShortName: "mygame",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if mock.callCount() != 0 {
+		t.Fatalf("expected no RPC calls, got %d", mock.callCount())
+	}
+}
+
+func TestAnswerGuestQuery_RPCError(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+
+	mock.setError(tg.MessagesSetBotGuestChatResultTypeID, errors.New("rpc error"))
+
+	_, err := c.AnswerGuestQuery(context.Background(), "98765", &tg.InputBotInlineResultGame{
+		ID:        "game1",
+		ShortName: "mygame",
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestGetInlineBotResults(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})

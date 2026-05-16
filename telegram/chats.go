@@ -50,7 +50,7 @@ func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error)
 		}
 		return extractChatFromFull(result)
 	case *tg.InputPeerUser, *tg.InputPeerSelf:
-		return nil, fmt.Errorf("GetChat: peer is a user, not a chat")
+		return nil, ErrGetChatNotChat
 	default:
 		return nil, fmt.Errorf("GetChat: unsupported peer type %T", peer)
 	}
@@ -106,7 +106,7 @@ func (c *Client) JoinChat(ctx context.Context, inviteHash string) (*types.Chat, 
 				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, pm), nil
 			}
 		}
-		return nil, fmt.Errorf("joined chat but could not extract chat info")
+		return nil, ErrJoinNoInfo
 	default:
 		return nil, fmt.Errorf("unexpected join result type %T", result)
 	}
@@ -204,7 +204,7 @@ func (c *Client) CreateChannel(ctx context.Context, title, about string, megagro
 				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, pm), nil
 			}
 		}
-		return nil, fmt.Errorf("created channel but could not extract info")
+		return nil, ErrChannelNoInfo
 	default:
 		return nil, fmt.Errorf("unexpected create channel result type %T", result)
 	}
@@ -352,7 +352,7 @@ func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) 
 
 	ch, ok := peer.(*tg.InputPeerChannel)
 	if !ok {
-		return fmt.Errorf("BanChatMember: only channels/supergroups are supported")
+		return ErrBanSupergroupOnly
 	}
 
 	user, err := resolveUserID(c, userID)
@@ -393,7 +393,7 @@ func (c *Client) UnbanChatMember(ctx context.Context, chatID int64, userID int64
 
 	ch, ok := peer.(*tg.InputPeerChannel)
 	if !ok {
-		return fmt.Errorf("UnbanChatMember: only channels/supergroups are supported")
+		return ErrUnbanSupergroupOnly
 	}
 
 	user, err := resolveUserID(c, userID)
@@ -657,7 +657,7 @@ func (c *Client) RestrictChatMember(ctx context.Context, chatID int64, userID in
 	}
 	ch, ok := peer.(*tg.InputPeerChannel)
 	if !ok {
-		return fmt.Errorf("RestrictChatMember: only channels/supergroups supported")
+		return ErrRestrictSupergroupOnly
 	}
 	user, err := resolveUserID(c, userID)
 	if err != nil {
@@ -900,7 +900,7 @@ func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64)
 		return types.ParseChatFromChat(chat), nil
 	}
 	_ = pm
-	return nil, fmt.Errorf("created group but could not extract info")
+	return nil, ErrGroupNoInfo
 }
 
 // CreateSupergroup creates a new supergroup (megagroup) with the given title and
@@ -972,9 +972,16 @@ func (c *Client) GetChatEventLog(ctx context.Context, chatID int64, query string
 	if err != nil {
 		return nil, err
 	}
+	users := make(map[int64]tg.UserClass, len(result.Users))
+	for _, u := range result.Users {
+		if user, ok := u.(*tg.User); ok {
+			users[user.ID] = u
+		}
+	}
+	pm := types.NewPeerMapFromClasses(result.Users, result.Chats)
 	events := make([]*types.ChatEvent, 0, len(result.Events))
 	for _, e := range result.Events {
-		if parsed := types.ParseChatEvent(e); parsed != nil {
+		if parsed := types.ParseChatEvent(e, users, pm); parsed != nil {
 			events = append(events, parsed)
 		}
 	}

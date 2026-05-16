@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -99,6 +100,35 @@ func (c *Client) AnswerInlineQuery(ctx context.Context, queryID int64, results [
 
 	_, err := c.Raw().MessagesSetInlineBotResults(ctx, req)
 	return err
+}
+
+// AnswerGuestQuery sends an inline result as a reply to a received guest
+// message. guestQueryID is the string identifier from Message.GuestQueryID.
+//
+// Returns the sent guest message or an error if the query ID is invalid, the
+// RPC call fails, or Telegram returns an unexpected result type.
+func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, result tg.InputBotInlineResultClass) (*types.SentGuestMessage, error) {
+	c.Log.Debugf("AnswerGuestQuery query_id=%s", guestQueryID)
+
+	queryID, err := strconv.ParseInt(guestQueryID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("parse guest query ID: %w", err)
+	}
+
+	raw, err := c.Raw().Invoke(ctx, &tg.MessagesSetBotGuestChatResultRequest{
+		QueryID: queryID,
+		Result:  result,
+	}, tg.ReadTLObject)
+	if err != nil {
+		return nil, fmt.Errorf("answer guest query: %w", err)
+	}
+
+	inlineMessageID, ok := raw.(tg.InputBotInlineMessageIDClass)
+	if !ok {
+		return nil, fmt.Errorf("answer guest query: unexpected result type %T", raw)
+	}
+
+	return types.ParseSentGuestMessage(inlineMessageID), nil
 }
 
 // GetInlineBotResults requests inline results from a bot for the given query.

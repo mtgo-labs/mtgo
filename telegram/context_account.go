@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"fmt"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -18,7 +16,7 @@ import (
 //   - error: non-nil if the context has no client or the connection cannot be found
 func (c *Context) GetBusinessConnection(connectionID string) (*tg.BotBusinessConnection, error) {
 	if c.Client == nil {
-		return nil, fmt.Errorf("context: no client")
+		return nil, ErrContextNoClient
 	}
 	return c.Client.GetBusinessConnection(c.Ctx, connectionID)
 }

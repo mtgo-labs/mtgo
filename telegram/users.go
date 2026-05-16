@@ -109,7 +109,7 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 			return user, nil
 		}
 	}
-	return nil, fmt.Errorf("GetMe: no user in response")
+	return nil, ErrNoUserInResponse
 }
 
 // GetCommonChats retrieves the list of chats (groups, channels, supergroups)
