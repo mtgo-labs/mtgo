@@ -38,9 +38,6 @@ func (v *StatsGetBroadcastStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StatsGetBroadcastStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	EncodeTLObject(b, v.Channel)
 	return nil
 }
@@ -150,9 +147,6 @@ func (v *StatsGetMegagroupStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StatsGetMegagroupStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	EncodeTLObject(b, v.Channel)
 	return nil
 }
@@ -255,9 +249,6 @@ func (v *StatsGetMessageStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StatsGetMessageStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	EncodeTLObject(b, v.Channel)
 	WriteInt(b, uint32(v.MsgID))
 	return nil
@@ -313,9 +304,6 @@ func (v *StatsGetStoryStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StatsGetStoryStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.ID))
 	return nil
@@ -419,9 +407,6 @@ func (v *StatsGetPollStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StatsGetPollStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.MsgID))
 	return nil

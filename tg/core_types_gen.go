@@ -556,12 +556,6 @@ func (v *InputMediaUploadedPhoto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaUploadedPhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Spoiler)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.LivePhoto)
-	}
 	EncodeTLObject(b, v.File)
 	if v.Flags.Has(0) {
 		WriteInt(b, 0x1cb5c415)
@@ -654,12 +648,6 @@ func (v *InputMediaPhoto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaPhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Spoiler)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.LivePhoto)
-	}
 	EncodeTLObject(b, v.ID)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TTLSeconds))
@@ -828,15 +816,6 @@ func (v *InputMediaUploadedDocument) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaUploadedDocumentTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NosoundVideo)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ForceFile)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Spoiler)
-	}
 	EncodeTLObject(b, v.File)
 	if v.Flags.Has(2) {
 		EncodeTLObject(b, v.Thumb)
@@ -961,9 +940,6 @@ func (v *InputMediaDocument) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaDocumentTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Spoiler)
-	}
 	EncodeTLObject(b, v.ID)
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.VideoCover)
@@ -1091,9 +1067,6 @@ func (v *InputMediaPhotoExternal) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaPhotoExternalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Spoiler)
-	}
 	WriteString(b, v.URL)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TTLSeconds))
@@ -1161,9 +1134,6 @@ func (v *InputMediaDocumentExternal) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaDocumentExternalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Spoiler)
-	}
 	WriteString(b, v.URL)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TTLSeconds))
@@ -1377,9 +1347,6 @@ func (v *InputMediaGeoLive) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaGeoLiveTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Stopped)
-	}
 	EncodeTLObject(b, v.GeoPoint)
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.Heading))
@@ -1631,15 +1598,6 @@ func (v *InputMediaWebPage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMediaWebPageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ForceLargeMedia)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForceSmallMedia)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Optional)
-	}
 	WriteString(b, v.URL)
 	return nil
 }
@@ -2216,24 +2174,6 @@ func (v *DCOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DCOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.IPv6)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.MediaOnly)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.TcpoOnly)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.CDN)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Static)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ThisPortOnly)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteString(b, v.IpAddress)
 	WriteInt(b, uint32(v.Port))
@@ -2391,21 +2331,6 @@ func (v *Config) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ConfigTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.DefaultP2pContacts)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.PreloadFeaturedStickers)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.RevokePmInbox)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.BlockedMode)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.ForceTryIPv6)
-	}
 	WriteInt(b, uint32(v.Date))
 	WriteInt(b, uint32(v.Expires))
 	WriteBool(b, v.TestMode)
@@ -2668,9 +2593,6 @@ func (v *ReplyKeyboardHide) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ReplyKeyboardHideTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Selective)
-	}
 	return nil
 }
 
@@ -2725,12 +2647,6 @@ func (v *ReplyKeyboardForceReply) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ReplyKeyboardForceReplyTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SingleUse)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Selective)
-	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.Placeholder)
 	}
@@ -2801,18 +2717,6 @@ func (v *ReplyKeyboardMarkup) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ReplyKeyboardMarkupTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Resize)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SingleUse)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Selective)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Persistent)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rows)))
 	for _, _item := range v.Rows {
@@ -3381,15 +3285,6 @@ func (v *LangPackLanguage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, LangPackLanguageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Official)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Rtl)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Beta)
-	}
 	WriteString(b, v.Name)
 	WriteString(b, v.NativeName)
 	WriteString(b, v.LangCode)
@@ -5424,15 +5319,6 @@ func (v *SecureRequiredType) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SecureRequiredTypeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NativeNames)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SelfieRequired)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.TranslationRequired)
-	}
 	EncodeTLObject(b, v.Type)
 	return nil
 }
@@ -5933,24 +5819,6 @@ func (v *CodeSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, CodeSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AllowFlashcall)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CurrentNumber)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.AllowAppHash)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.AllowMissedCall)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.AllowFirebase)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.UnknownNumber)
-	}
 	if v.Flags.Has(6) {
 		WriteVectorBytes(b, v.LogoutTokens)
 	}
@@ -6179,15 +6047,6 @@ func (v *Theme) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Default)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ForChat)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteString(b, v.Slug)
@@ -6483,9 +6342,6 @@ func (v *InputThemeSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputThemeSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MessageColorsAnimated)
-	}
 	EncodeTLObject(b, v.BaseTheme)
 	WriteInt(b, uint32(v.AccentColor))
 	if v.Flags.Has(3) {
@@ -6580,9 +6436,6 @@ func (v *ThemeSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ThemeSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MessageColorsAnimated)
-	}
 	EncodeTLObject(b, v.BaseTheme)
 	WriteInt(b, uint32(v.AccentColor))
 	if v.Flags.Has(3) {
@@ -8003,12 +7856,6 @@ func (v *MediaAreaSuggestedReaction) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MediaAreaSuggestedReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Flipped)
-	}
 	EncodeTLObject(b, v.Coordinates)
 	EncodeTLObject(b, v.Reaction)
 	return nil
@@ -8621,9 +8468,6 @@ func (v *AvailableEffect) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AvailableEffectTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.PremiumRequired)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.Emoticon)
 	if v.Flags.Has(0) {
@@ -8700,9 +8544,6 @@ func (v *FactCheck) Encode(b *bytes.Buffer) error {
 	WriteInt(b, FactCheckTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NeedCheck)
-	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Country)
 	}
@@ -8836,9 +8677,6 @@ func (v *ReportResultAddComment) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ReportResultAddCommentTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Optional)
-	}
 	WriteBytes(b, v.Option)
 	return nil
 }
@@ -8935,21 +8773,6 @@ func (v *DisallowedGiftsSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DisallowedGiftsSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.DisallowUnlimitedStargifts)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.DisallowLimitedStargifts)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.DisallowUniqueStargifts)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.DisallowPremiumGifts)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.DisallowStargiftsFromChannels)
-	}
 	return nil
 }
 
@@ -9061,12 +8884,6 @@ func (v *SuggestedPost) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SuggestedPostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Accepted)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Rejected)
-	}
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.Price)
 	}
@@ -9137,9 +8954,6 @@ func (v *SearchPostsFlood) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SearchPostsFloodTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.QueryIsFree)
-	}
 	WriteInt(b, uint32(v.TotalDaily))
 	WriteInt(b, uint32(v.Remains))
 	if v.Flags.Has(1) {

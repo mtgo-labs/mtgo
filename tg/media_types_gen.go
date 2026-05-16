@@ -768,9 +768,6 @@ func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DocumentAttributeStickerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Mask)
-	}
 	WriteString(b, v.Alt)
 	EncodeTLObject(b, v.Stickerset)
 	if v.Flags.Has(0) {
@@ -852,15 +849,6 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DocumentAttributeVideoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RoundMessage)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SupportsStreaming)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Nosound)
-	}
 	WriteDouble(b, v.Duration)
 	WriteInt(b, uint32(v.W))
 	WriteInt(b, uint32(v.H))
@@ -946,9 +934,6 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DocumentAttributeAudioTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Voice)
-	}
 	WriteInt(b, uint32(v.Duration))
 	if v.Flags.Has(0) {
 		WriteString(b, v.Title)
@@ -1082,12 +1067,6 @@ func (v *DocumentAttributeCustomEmoji) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DocumentAttributeCustomEmojiTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Free)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.TextColor)
-	}
 	WriteString(b, v.Alt)
 	EncodeTLObject(b, v.Stickerset)
 	return nil
@@ -1549,12 +1528,6 @@ func (v *WebPageAttributeStickerSet) Encode(b *bytes.Buffer) error {
 	WriteInt(b, WebPageAttributeStickerSetTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Emojis)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.TextColor)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stickers)))
 	for _, _item := range v.Stickers {

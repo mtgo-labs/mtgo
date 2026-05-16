@@ -4,8 +4,6 @@ package tg
 
 // ConstructorMapGeo maps constructor IDs to factory functions.
 var ConstructorMapGeo = map[uint32]func() TLObject{
-	0xe4c123d6: func() TLObject { return &InputGeoPointEmpty{} },
-	0x48222faf: func() TLObject { return &InputGeoPoint{} },
 	0xde4c5d93: func() TLObject { return &GeoPointAddress{} },
 	0xdfdaabe1: func() TLObject { return &InputFileLocation{} },
 	0xf5235d55: func() TLObject { return &InputEncryptedFileLocation{} },
@@ -17,6 +15,8 @@ var ConstructorMapGeo = map[uint32]func() TLObject{
 	0x37257e99: func() TLObject { return &InputPeerPhotoFileLocation{} },
 	0x9d84f3db: func() TLObject { return &InputStickerSetThumb{} },
 	0x0598a92a: func() TLObject { return &InputGroupCallStream{} },
+	0xe4c123d6: func() TLObject { return &InputGeoPointEmpty{} },
+	0x48222faf: func() TLObject { return &InputGeoPoint{} },
 	0xc239d686: func() TLObject { return &InputWebFileLocation{} },
 	0x9f2221c9: func() TLObject { return &InputWebFileGeoPointLocation{} },
 	0xf46fe924: func() TLObject { return &InputWebFileAudioAlbumThumbLocation{} },

@@ -213,9 +213,6 @@ func (v *PremiumBoostsStatus) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PremiumBoostsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MyBoost)
-	}
 	WriteInt(b, uint32(v.Level))
 	WriteInt(b, uint32(v.CurrentLevelBoosts))
 	WriteInt(b, uint32(v.Boosts))

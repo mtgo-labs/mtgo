@@ -384,7 +384,7 @@ func GenerateGroupedTypes(outDir string, combos []Combinator, layer int) error {
 					}
 				}
 				for _, wl := range td.WriteLines {
-					if wl.IsFlags {
+					if wl.IsFlags || wl.Code == "" {
 						continue
 					}
 					if wl.IsGuarded {
@@ -513,7 +513,7 @@ func GenerateGroupedFunctions(outDir string, combos []Combinator, layer int) err
 				}
 			}
 			for _, wl := range td.WriteLines {
-				if wl.IsFlags {
+				if wl.IsFlags || wl.Code == "" {
 					continue
 				}
 				if wl.IsGuarded {
@@ -767,7 +767,7 @@ func GenerateE2EPackage(outDir string, combos []Combinator, layer int) error {
 				}
 			}
 			for _, wl := range td.WriteLines {
-				if wl.IsFlags {
+				if wl.IsFlags || wl.Code == "" {
 					continue
 				}
 				code := wl.Code

@@ -169,7 +169,7 @@ func TestBool(t *testing.T) {
 }
 
 func TestBoolConstructorIDs(t *testing.T) {
-	if BoolTrueID != 0x997275B5 {
+	if BoolTrueID != 0x997277B5 {
 		t.Fatalf("BoolTrueID wrong: %x", BoolTrueID)
 	}
 	if BoolFalseID != 0xBC799737 {

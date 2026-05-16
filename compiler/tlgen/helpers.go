@@ -569,7 +569,9 @@ func writeExpr(arg Arg, goType string, receiver string) string {
 		return fmt.Sprintf("WriteString(b, %s)", deref)
 	case "bytes":
 		return fmt.Sprintf("WriteBytes(b, %s)", deref)
-	case "Bool", "true":
+	case "true":
+		return ""
+	case "Bool":
 		return fmt.Sprintf("WriteBool(b, %s)", deref)
 	}
 

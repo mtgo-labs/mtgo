@@ -477,9 +477,6 @@ func (v *InputPeerPhotoFileLocation) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputPeerPhotoFileLocationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Big)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteLong(b, v.PhotoID)
 	return nil
@@ -868,9 +865,6 @@ func (v *InputWebFileAudioAlbumThumbLocation) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputWebFileAudioAlbumThumbLocationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Small)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Document)
 	}

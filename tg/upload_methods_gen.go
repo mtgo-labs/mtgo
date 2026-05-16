@@ -88,12 +88,6 @@ func (v *UploadGetFileRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UploadGetFileTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Precise)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CDNSupported)
-	}
 	EncodeTLObject(b, v.Location)
 	WriteLong(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))

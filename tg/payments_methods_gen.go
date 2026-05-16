@@ -139,9 +139,6 @@ func (v *PaymentsValidateRequestedInfoRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsValidateRequestedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Save)
-	}
 	EncodeTLObject(b, v.Invoice)
 	EncodeTLObject(b, v.Info)
 	return nil
@@ -313,12 +310,6 @@ func (v *PaymentsClearSavedInfoRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsClearSavedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Credentials)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Info)
-	}
 	return nil
 }
 
@@ -805,9 +796,6 @@ func (v *PaymentsGetStarsStatusRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetStarsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Ton)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -879,18 +867,6 @@ func (v *PaymentsGetStarsTransactionsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetStarsTransactionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Inbound)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Outbound)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Ascending)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Ton)
-	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.SubscriptionID)
 	}
@@ -1041,12 +1017,6 @@ func (v *PaymentsGetStarsRevenueStatsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetStarsRevenueStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Ton)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -1105,9 +1075,6 @@ func (v *PaymentsGetStarsRevenueWithdrawalURLRequest) Encode(b *bytes.Buffer) er
 	WriteInt(b, PaymentsGetStarsRevenueWithdrawalURLTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Ton)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(1) {
 		WriteLong(b, v.Amount)
@@ -1208,9 +1175,6 @@ func (v *PaymentsGetStarsTransactionsByIDRequest) Encode(b *bytes.Buffer) error 
 	WriteInt(b, PaymentsGetStarsTransactionsByIDTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Ton)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
@@ -1322,9 +1286,6 @@ func (v *PaymentsGetStarsSubscriptionsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetStarsSubscriptionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.MissingBalance)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteString(b, v.Offset)
 	return nil
@@ -1557,9 +1518,6 @@ func (v *PaymentsSaveStarGiftRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsSaveStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Unsave)
-	}
 	EncodeTLObject(b, v.Stargift)
 	return nil
 }
@@ -1652,9 +1610,6 @@ func (v *PaymentsBotCancelStarsSubscriptionRequest) Encode(b *bytes.Buffer) erro
 	WriteInt(b, PaymentsBotCancelStarsSubscriptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Restore)
-	}
 	EncodeTLObject(b, v.UserID)
 	WriteString(b, v.ChargeID)
 	return nil
@@ -1822,12 +1777,6 @@ func (v *PaymentsGetSuggestedStarRefBotsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetSuggestedStarRefBotsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OrderByRevenue)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.OrderByDate)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
@@ -1928,9 +1877,6 @@ func (v *PaymentsEditConnectedStarRefBotRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsEditConnectedStarRefBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Revoked)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteString(b, v.Link)
 	return nil
@@ -2027,9 +1973,6 @@ func (v *PaymentsUpgradeStarGiftRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsUpgradeStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.KeepOriginalDetails)
-	}
 	EncodeTLObject(b, v.Stargift)
 	return nil
 }
@@ -2207,33 +2150,6 @@ func (v *PaymentsGetSavedStarGiftsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetSavedStarGiftsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ExcludeUnsaved)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ExcludeSaved)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ExcludeUnlimited)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ExcludeUnique)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.SortByValue)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.ExcludeUpgradable)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.ExcludeUnupgradable)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.PeerColorAvailable)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.ExcludeHosted)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(6) {
 		WriteInt(b, uint32(v.CollectionID))
@@ -2382,9 +2298,6 @@ func (v *PaymentsToggleChatStarGiftNotificationsRequest) Encode(b *bytes.Buffer)
 	WriteInt(b, PaymentsToggleChatStarGiftNotificationsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Enabled)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -2544,18 +2457,6 @@ func (v *PaymentsGetResaleStarGiftsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGetResaleStarGiftsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SortByPrice)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.SortByNum)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ForCraft)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.StarsOnly)
-	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.AttributesHash)
 	}
@@ -3146,9 +3047,6 @@ func (v *PaymentsResolveStarGiftOfferRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsResolveStarGiftOfferTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Decline)
-	}
 	WriteInt(b, uint32(v.OfferMsgID))
 	return nil
 }

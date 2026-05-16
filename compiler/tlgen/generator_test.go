@@ -126,7 +126,7 @@ func TestWriteExpr(t *testing.T) {
 		{Arg{Name: "n", Type: "int128"}, "[16]byte", "WriteInt128(b, v.N)"},
 		{Arg{Name: "n", Type: "int256"}, "[32]byte", "WriteInt256(b, v.N)"},
 		{Arg{Name: "ok", Type: "Bool"}, "bool", "WriteBool(b, v.Ok)"},
-		{Arg{Name: "ok", Type: "true"}, "bool", "WriteBool(b, v.Ok)"},
+		{Arg{Name: "ok", Type: "true"}, "bool", ""},
 		{Arg{Name: "items", Type: "Vector<int>"}, "[]int32", "WriteVectorInt(b, v.Items)"},
 	}
 

@@ -290,9 +290,6 @@ func (v *ContactsBlockRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsBlockTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.MyStoriesFrom)
-	}
 	EncodeTLObject(b, v.ID)
 	return nil
 }
@@ -344,9 +341,6 @@ func (v *ContactsUnblockRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsUnblockTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.MyStoriesFrom)
-	}
 	EncodeTLObject(b, v.ID)
 	return nil
 }
@@ -399,9 +393,6 @@ func (v *ContactsGetBlockedRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsGetBlockedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.MyStoriesFrom)
-	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -594,36 +585,6 @@ func (v *ContactsGetTopPeersRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsGetTopPeersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Correspondents)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BotsPm)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.BotsInline)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.PhoneCalls)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ForwardUsers)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ForwardChats)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Groups)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.Channels)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.BotsApp)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.BotsGuestchat)
-	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
@@ -844,9 +805,6 @@ func (v *ContactsAddContactRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsAddContactTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AddPhonePrivacyException)
-	}
 	EncodeTLObject(b, v.ID)
 	WriteString(b, v.FirstName)
 	WriteString(b, v.LastName)
@@ -952,9 +910,6 @@ func (v *ContactsGetLocatedRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsGetLocatedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Background)
-	}
 	EncodeTLObject(b, v.GeoPoint)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.SelfExpires))
@@ -1019,15 +974,6 @@ func (v *ContactsBlockFromRepliesRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsBlockFromRepliesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.DeleteMessage)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.DeleteHistory)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ReportSpam)
-	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -1246,9 +1192,6 @@ func (v *ContactsSetBlockedRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsSetBlockedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.MyStoriesFrom)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {

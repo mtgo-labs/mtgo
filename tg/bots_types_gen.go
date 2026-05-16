@@ -126,9 +126,6 @@ func (v *BotInfo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(6) {
-		WriteBool(b, v.HasPreviewMedias)
-	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.UserID)
 	}
@@ -517,9 +514,6 @@ func (v *KeyboardButtonCallback) Encode(b *bytes.Buffer) error {
 	WriteInt(b, KeyboardButtonCallbackTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RequiresPassword)
-	}
 	if v.Flags.Has(10) {
 		EncodeTLObject(b, v.Style)
 	}
@@ -697,9 +691,6 @@ func (v *KeyboardButtonSwitchInline) Encode(b *bytes.Buffer) error {
 	WriteInt(b, KeyboardButtonSwitchInlineTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.SamePeer)
-	}
 	if v.Flags.Has(10) {
 		EncodeTLObject(b, v.Style)
 	}
@@ -965,9 +956,6 @@ func (v *InputKeyboardButtonURLAuth) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputKeyboardButtonURLAuthTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RequestWriteAccess)
-	}
 	if v.Flags.Has(10) {
 		EncodeTLObject(b, v.Style)
 	}
@@ -1386,15 +1374,6 @@ func (v *InputKeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputKeyboardButtonRequestPeerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NameRequested)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.UsernameRequested)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.PhotoRequested)
-	}
 	WriteString(b, v.Text)
 	WriteInt(b, uint32(v.ButtonID))
 	EncodeTLObject(b, v.PeerType)
@@ -2674,24 +2653,6 @@ func (v *AttachMenuBot) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AttachMenuBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Inactive)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.HasSettings)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.RequestWriteAccess)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ShowInAttachMenu)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ShowInSideMenu)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.SideMenuDisclaimerNeeded)
-	}
 	WriteLong(b, v.BotID)
 	WriteString(b, v.ShortName)
 	if v.Flags.Has(3) {
@@ -2943,12 +2904,6 @@ func (v *WebViewResultURL) Encode(b *bytes.Buffer) error {
 	WriteInt(b, WebViewResultURLTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Fullsize)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Fullscreen)
-	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.QueryID)
 	}
@@ -3509,9 +3464,6 @@ func (v *BotVerifierSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotVerifierSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CanModifyCustomDescription)
-	}
 	WriteLong(b, v.Icon)
 	WriteString(b, v.Company)
 	if v.Flags.Has(0) {
@@ -3624,15 +3576,6 @@ func (v *KeyboardButtonStyle) Encode(b *bytes.Buffer) error {
 	WriteInt(b, KeyboardButtonStyleTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.BgPrimary)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BgDanger)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.BgSuccess)
-	}
 	if v.Flags.Has(3) {
 		WriteLong(b, v.Icon)
 	}
@@ -3764,9 +3707,6 @@ func (v *BotsAccessSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotsAccessSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Restricted)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.AddUsers)))

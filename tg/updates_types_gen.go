@@ -1319,9 +1319,6 @@ func (v *UpdateNewAuthorization) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateNewAuthorizationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Unconfirmed)
-	}
 	WriteLong(b, v.Hash)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.Date))
@@ -1703,12 +1700,6 @@ func (v *UpdateServiceNotification) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateServiceNotificationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Popup)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.InvertMedia)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.InboxDate))
 	}
@@ -2426,12 +2417,6 @@ func (v *UpdateStickerSetsOrder) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateStickerSetsOrderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Masks)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Emojis)
-	}
 	WriteVectorLong(b, v.Order)
 	return nil
 }
@@ -2485,12 +2470,6 @@ func (v *UpdateStickerSets) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateStickerSetsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Masks)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Emojis)
-	}
 	return nil
 }
 
@@ -3211,9 +3190,6 @@ func (v *UpdateDialogPinned) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateDialogPinnedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pinned)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.FolderID))
 	}
@@ -3795,9 +3771,6 @@ func (v *UpdateDialogUnreadMark) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateDialogUnreadMarkTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Unread)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.SavedPeerID)
@@ -4647,12 +4620,6 @@ func (v *UpdatePeerBlocked) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatePeerBlockedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BlockedMyStoriesFrom)
-	}
 	EncodeTLObject(b, v.PeerID)
 	return nil
 }
@@ -4769,9 +4736,6 @@ func (v *UpdatePinnedMessages) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatePinnedMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pinned)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteVectorInt(b, v.Messages)
 	WriteInt(b, uint32(v.PTS))
@@ -4831,9 +4795,6 @@ func (v *UpdatePinnedChannelMessages) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatePinnedChannelMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pinned)
-	}
 	WriteLong(b, v.ChannelID)
 	WriteVectorInt(b, v.Messages)
 	WriteInt(b, uint32(v.PTS))
@@ -4974,9 +4935,6 @@ func (v *UpdateGroupCall) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateGroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.LiveStory)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.Peer)
 	}
@@ -5194,9 +5152,6 @@ func (v *UpdateChannelParticipant) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateChannelParticipantTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ViaChatlist)
-	}
 	WriteLong(b, v.ChannelID)
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.ActorID)
@@ -5316,9 +5271,6 @@ func (v *UpdateGroupCallConnection) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateGroupCallConnectionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Presentation)
-	}
 	EncodeTLObject(b, v.Params)
 	return nil
 }
@@ -5708,9 +5660,6 @@ func (v *UpdateTranscribedAudio) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateTranscribedAudioTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pending)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.MsgID))
 	WriteLong(b, v.TranscriptionID)
@@ -5894,12 +5843,6 @@ func (v *UpdateMoveStickerSetToTop) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateMoveStickerSetToTopTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Masks)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Emojis)
-	}
 	WriteLong(b, v.Stickerset)
 	return nil
 }
@@ -6320,9 +6263,6 @@ func (v *UpdatePeerWallpaper) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatePeerWallpaperTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.WallpaperOverridden)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Wallpaper)
@@ -6507,9 +6447,6 @@ func (v *UpdateSavedDialogPinned) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateSavedDialogPinnedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pinned)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -7472,9 +7409,6 @@ func (v *UpdateMonoForumNoPaidException) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateMonoForumNoPaidExceptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Exception)
-	}
 	WriteLong(b, v.ChannelID)
 	EncodeTLObject(b, v.SavedPeerID)
 	return nil
@@ -7605,9 +7539,6 @@ func (v *UpdatePinnedForumTopic) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatePinnedForumTopicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pinned)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.TopicID))
 	return nil
@@ -8522,18 +8453,6 @@ func (v *UpdateShortMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateShortMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Out)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Mentioned)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.MediaUnread)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Silent)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteLong(b, v.UserID)
 	WriteString(b, v.Message)
@@ -8676,18 +8595,6 @@ func (v *UpdateShortChatMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateShortChatMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Out)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Mentioned)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.MediaUnread)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Silent)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteLong(b, v.FromID)
 	WriteLong(b, v.ChatID)
@@ -8996,9 +8903,6 @@ func (v *UpdateShortSentMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateShortSentMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Out)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteInt(b, uint32(v.PTS))
 	WriteInt(b, uint32(v.PTSCount))
@@ -9113,9 +9017,6 @@ func (v *UpdatesChannelDifferenceEmpty) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatesChannelDifferenceEmptyTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Final)
-	}
 	WriteInt(b, uint32(v.PTS))
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.Timeout))
@@ -9178,9 +9079,6 @@ func (v *UpdatesChannelDifferenceTooLong) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatesChannelDifferenceTooLongTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Final)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.Timeout))
 	}
@@ -9281,9 +9179,6 @@ func (v *UpdatesChannelDifference) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdatesChannelDifferenceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Final)
-	}
 	WriteInt(b, uint32(v.PTS))
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.Timeout))

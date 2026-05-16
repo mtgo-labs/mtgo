@@ -57,15 +57,6 @@ func (v *StickersCreateStickerSetRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StickersCreateStickerSetTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Masks)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Emojis)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.TextColor)
-	}
 	EncodeTLObject(b, v.UserID)
 	WriteString(b, v.Title)
 	WriteString(b, v.ShortName)

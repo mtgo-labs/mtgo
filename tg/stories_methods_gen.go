@@ -123,15 +123,6 @@ func (v *StoriesSendStoryRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesSendStoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Noforwards)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.FwdModified)
-	}
 	EncodeTLObject(b, v.Peer)
 	EncodeTLObject(b, v.Media)
 	if v.Flags.Has(5) {
@@ -422,12 +413,6 @@ func (v *StoriesGetAllStoriesRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesGetAllStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Next)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Hidden)
-	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.State)
 	}
@@ -758,15 +743,6 @@ func (v *StoriesGetStoryViewsListRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesGetStoryViewsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.JustContacts)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ReactionsFirst)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ForwardsFirst)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(1) {
 		WriteString(b, v.Q)
@@ -965,12 +941,6 @@ func (v *StoriesActivateStealthModeRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesActivateStealthModeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Past)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Future)
-	}
 	return nil
 }
 
@@ -1025,9 +995,6 @@ func (v *StoriesSendReactionRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesSendReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AddToRecent)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.StoryID))
 	EncodeTLObject(b, v.Reaction)
@@ -1301,9 +1268,6 @@ func (v *StoriesGetStoryReactionsListRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesGetStoryReactionsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ForwardsFirst)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
@@ -1806,15 +1770,6 @@ func (v *StoriesStartLiveRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesStartLiveTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Noforwards)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.RtmpStream)
-	}
 	EncodeTLObject(b, v.Peer)
 	if v.Flags.Has(0) {
 		WriteString(b, v.Caption)

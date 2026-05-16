@@ -201,9 +201,6 @@ func (v *AiComposeTone) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AiComposeToneTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteString(b, v.Slug)

@@ -42,9 +42,6 @@ func (v *PhotosUpdateProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhotosUpdateProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Fallback)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.Bot)
 	}
@@ -120,9 +117,6 @@ func (v *PhotosUploadProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhotosUploadProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Fallback)
-	}
 	if v.Flags.Has(5) {
 		EncodeTLObject(b, v.Bot)
 	}
@@ -302,12 +296,6 @@ func (v *PhotosUploadContactProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhotosUploadContactProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Suggest)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Save)
-	}
 	EncodeTLObject(b, v.UserID)
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.File)

@@ -49,15 +49,6 @@ func (v *Folder) Encode(b *bytes.Buffer) error {
 	WriteInt(b, FolderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AutofillNewBroadcasts)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.AutofillPublicGroups)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.AutofillNewCorrespondents)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteString(b, v.Title)
 	if v.Flags.Has(3) {
@@ -417,9 +408,6 @@ func (v *ChatlistsChatlistInvite) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatlistsChatlistInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.TitleNoanimate)
-	}
 	EncodeTLObject(b, v.Title)
 	if v.Flags.Has(0) {
 		WriteString(b, v.Emoticon)

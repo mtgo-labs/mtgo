@@ -1088,93 +1088,6 @@ func (v *User) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Flags2))
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Self)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Contact)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.MutualContact)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Deleted)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.Bot)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.BotChatHistory)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.BotNochats)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.Verified)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.Restricted)
-	}
-	if v.Flags.Has(20) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(21) {
-		WriteBool(b, v.BotInlineGeo)
-	}
-	if v.Flags.Has(23) {
-		WriteBool(b, v.Support)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.Scam)
-	}
-	if v.Flags.Has(25) {
-		WriteBool(b, v.ApplyMinPhoto)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.Fake)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.BotAttachMenu)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.Premium)
-	}
-	if v.Flags.Has(29) {
-		WriteBool(b, v.AttachMenuEnabled)
-	}
-	if v.Flags2.Has(1) {
-		WriteBool(b, v.BotCanEdit)
-	}
-	if v.Flags2.Has(2) {
-		WriteBool(b, v.CloseFriend)
-	}
-	if v.Flags2.Has(3) {
-		WriteBool(b, v.StoriesHidden)
-	}
-	if v.Flags2.Has(4) {
-		WriteBool(b, v.StoriesUnavailable)
-	}
-	if v.Flags2.Has(10) {
-		WriteBool(b, v.ContactRequirePremium)
-	}
-	if v.Flags2.Has(11) {
-		WriteBool(b, v.BotBusiness)
-	}
-	if v.Flags2.Has(13) {
-		WriteBool(b, v.BotHasMainApp)
-	}
-	if v.Flags2.Has(16) {
-		WriteBool(b, v.BotForumView)
-	}
-	if v.Flags2.Has(17) {
-		WriteBool(b, v.BotForumCanManageTopics)
-	}
-	if v.Flags2.Has(18) {
-		WriteBool(b, v.BotCanManageBots)
-	}
-	if v.Flags2.Has(19) {
-		WriteBool(b, v.BotGuestchat)
-	}
 	WriteLong(b, v.ID)
 	if v.Flags.Has(0) {
 		WriteLong(b, v.AccessHash)
@@ -1455,12 +1368,6 @@ func (v *UserProfilePhoto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UserProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HasVideo)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Personal)
-	}
 	WriteLong(b, v.PhotoID)
 	if v.Flags.Has(1) {
 		WriteBytes(b, v.StrippedThumb)
@@ -1655,9 +1562,6 @@ func (v *UserStatusRecently) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UserStatusRecentlyTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ByMe)
-	}
 	return nil
 }
 
@@ -1704,9 +1608,6 @@ func (v *UserStatusLastWeek) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UserStatusLastWeekTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ByMe)
-	}
 	return nil
 }
 
@@ -1753,9 +1654,6 @@ func (v *UserStatusLastMonth) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UserStatusLastMonthTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ByMe)
-	}
 	return nil
 }
 
@@ -1910,24 +1808,6 @@ func (v *Chat) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Left)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Deactivated)
-	}
-	if v.Flags.Has(23) {
-		WriteBool(b, v.CallActive)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.CallNotEmpty)
-	}
-	if v.Flags.Has(25) {
-		WriteBool(b, v.Noforwards)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.Title)
 	EncodeTLObject(b, v.Photo)
@@ -2230,90 +2110,6 @@ func (v *Channel) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Flags2))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Left)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Broadcast)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Verified)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Megagroup)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Restricted)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Signatures)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.Scam)
-	}
-	if v.Flags.Has(20) {
-		WriteBool(b, v.HasLink)
-	}
-	if v.Flags.Has(21) {
-		WriteBool(b, v.HasGeo)
-	}
-	if v.Flags.Has(22) {
-		WriteBool(b, v.SlowmodeEnabled)
-	}
-	if v.Flags.Has(23) {
-		WriteBool(b, v.CallActive)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.CallNotEmpty)
-	}
-	if v.Flags.Has(25) {
-		WriteBool(b, v.Fake)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.Gigagroup)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.Noforwards)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.JoinToSend)
-	}
-	if v.Flags.Has(29) {
-		WriteBool(b, v.JoinRequest)
-	}
-	if v.Flags.Has(30) {
-		WriteBool(b, v.Forum)
-	}
-	if v.Flags2.Has(1) {
-		WriteBool(b, v.StoriesHidden)
-	}
-	if v.Flags2.Has(2) {
-		WriteBool(b, v.StoriesHiddenMin)
-	}
-	if v.Flags2.Has(3) {
-		WriteBool(b, v.StoriesUnavailable)
-	}
-	if v.Flags2.Has(12) {
-		WriteBool(b, v.SignatureProfiles)
-	}
-	if v.Flags2.Has(15) {
-		WriteBool(b, v.Autotranslation)
-	}
-	if v.Flags2.Has(16) {
-		WriteBool(b, v.BroadcastMessagesAllowed)
-	}
-	if v.Flags2.Has(17) {
-		WriteBool(b, v.Monoforum)
-	}
-	if v.Flags2.Has(19) {
-		WriteBool(b, v.ForumTabs)
-	}
 	WriteLong(b, v.ID)
 	if v.Flags.Has(13) {
 		WriteLong(b, v.AccessHash)
@@ -2545,15 +2341,6 @@ func (v *ChannelForbidden) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelForbiddenTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Broadcast)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Megagroup)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Monoforum)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteString(b, v.Title)
@@ -2992,9 +2779,6 @@ func (v *ChatPhoto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatPhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HasVideo)
-	}
 	WriteLong(b, v.PhotoID)
 	if v.Flags.Has(1) {
 		WriteBytes(b, v.StrippedThumb)
@@ -3870,9 +3654,6 @@ func (v *EncryptedChatDiscarded) Encode(b *bytes.Buffer) error {
 	WriteInt(b, EncryptedChatDiscardedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HistoryDeleted)
-	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -4268,33 +4049,6 @@ func (v *ChatInvite) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Channel)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Broadcast)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Public)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Megagroup)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.RequestNeeded)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Verified)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Scam)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Fake)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.CanRefulfillSubscription)
-	}
 	WriteString(b, v.Title)
 	if v.Flags.Has(5) {
 		WriteString(b, v.About)
@@ -6551,9 +6305,6 @@ func (v *ChannelAdminLogEventActionParticipantJoinByInvite) Encode(b *bytes.Buff
 	WriteInt(b, ChannelAdminLogEventActionParticipantJoinByInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ViaChatlist)
-	}
 	EncodeTLObject(b, v.Invite)
 	return nil
 }
@@ -7625,66 +7376,6 @@ func (v *ChannelAdminLogEventsFilter) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelAdminLogEventsFilterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Join)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Leave)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Invite)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Ban)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Unban)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Kick)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Unkick)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Promote)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Demote)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Info)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Settings)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.Edit)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Delete)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.GroupCall)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.Invites)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.Send)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.Forums)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.SubExtend)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.EditRank)
-	}
 	return nil
 }
 
@@ -7934,57 +7625,6 @@ func (v *ChatAdminRights) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatAdminRightsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ChangeInfo)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.PostMessages)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.EditMessages)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.DeleteMessages)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.BanUsers)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.InviteUsers)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.PinMessages)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.AddAdmins)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Anonymous)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.ManageCall)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.Other)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.ManageTopics)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.PostStories)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.EditStories)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.DeleteStories)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.ManageDirectMessages)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.ManageRanks)
-	}
 	return nil
 }
 
@@ -8135,72 +7775,6 @@ func (v *ChatBannedRights) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatBannedRightsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ViewMessages)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SendMessages)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.SendMedia)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.SendStickers)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.SendGifs)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.SendGames)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.SendInline)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.EmbedLinks)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.SendPolls)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.ChangeInfo)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.InviteUsers)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.PinMessages)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.ManageTopics)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.SendPhotos)
-	}
-	if v.Flags.Has(20) {
-		WriteBool(b, v.SendVideos)
-	}
-	if v.Flags.Has(21) {
-		WriteBool(b, v.SendRoundvideos)
-	}
-	if v.Flags.Has(22) {
-		WriteBool(b, v.SendAudios)
-	}
-	if v.Flags.Has(23) {
-		WriteBool(b, v.SendVoices)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.SendDocs)
-	}
-	if v.Flags.Has(25) {
-		WriteBool(b, v.SendPlain)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.EditRank)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.SendReactions)
-	}
 	WriteInt(b, uint32(v.UntilDate))
 	return nil
 }
@@ -8715,36 +8289,6 @@ func (v *GroupCallParticipant) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GroupCallParticipantTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Muted)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Left)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CanSelfUnmute)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.JustJoined)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Versioned)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.MutedByYou)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.VolumeByAdmin)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.Self)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.VideoJoined)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(3) {
@@ -9086,12 +8630,6 @@ func (v *ChatInviteImporter) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatInviteImporterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Requested)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ViaChatlist)
-	}
 	WriteLong(b, v.UserID)
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(2) {
@@ -9243,9 +8781,6 @@ func (v *GroupCallParticipantVideo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GroupCallParticipantVideoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Paused)
-	}
 	WriteString(b, v.Endpoint)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.SourceGroups)))
@@ -9638,9 +9173,6 @@ func (v *SendAsPeer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SendAsPeerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.PremiumRequired)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -9698,12 +9230,6 @@ func (v *Username) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UsernameTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Editable)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Active)
-	}
 	WriteString(b, v.Username)
 	return nil
 }
@@ -9904,12 +9430,6 @@ func (v *RequestPeerTypeChat) Encode(b *bytes.Buffer) error {
 	WriteInt(b, RequestPeerTypeChatTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.BotParticipant)
-	}
 	if v.Flags.Has(3) {
 		WriteBool(b, v.HasUsername)
 	}
@@ -9995,9 +9515,6 @@ func (v *RequestPeerTypeBroadcast) Encode(b *bytes.Buffer) error {
 	WriteInt(b, RequestPeerTypeBroadcastTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
 	if v.Flags.Has(3) {
 		WriteBool(b, v.HasUsername)
 	}
@@ -10072,9 +9589,6 @@ func (v *RequestPeerTypeCreateBot) Encode(b *bytes.Buffer) error {
 	WriteInt(b, RequestPeerTypeCreateBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.BotManaged)
-	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.SuggestedName)
 	}
@@ -10448,12 +9962,6 @@ func (v *MissingInvitee) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MissingInviteeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.PremiumWouldAllowInvite)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.PremiumRequiredForPm)
-	}
 	WriteLong(b, v.UserID)
 	return nil
 }
@@ -11461,9 +10969,6 @@ func (v *StarGiftAuctionUserState) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarGiftAuctionUserStateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Returned)
-	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.BidAmount)
 	}

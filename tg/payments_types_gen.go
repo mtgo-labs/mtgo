@@ -85,33 +85,6 @@ func (v *Invoice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InvoiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Test)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NameRequested)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.PhoneRequested)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.EmailRequested)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ShippingAddressRequested)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Flexible)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.PhoneToProvider)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.EmailToProvider)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Recurring)
-	}
 	WriteString(b, v.Currency)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Prices)))
@@ -427,12 +400,6 @@ func (v *PaymentsPaymentForm) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsPaymentFormTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CanSaveCredentials)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.PasswordMissing)
-	}
 	WriteLong(b, v.FormID)
 	WriteLong(b, v.BotID)
 	WriteString(b, v.Title)
@@ -1084,9 +1051,6 @@ func (v *PaymentsSavedInfo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsSavedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.HasSavedCredentials)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.SavedInfo)
 	}
@@ -1208,9 +1172,6 @@ func (v *InputPaymentCredentials) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputPaymentCredentialsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Save)
-	}
 	EncodeTLObject(b, v.Data)
 	return nil
 }
@@ -1741,12 +1702,6 @@ func (v *InputInvoiceStarGift) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputInvoiceStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HideName)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.IncludeUpgrade)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteLong(b, v.GiftID)
 	if v.Flags.Has(1) {
@@ -1807,9 +1762,6 @@ func (v *InputInvoiceStarGiftUpgrade) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputInvoiceStarGiftUpgradeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.KeepOriginalDetails)
-	}
 	EncodeTLObject(b, v.Stargift)
 	return nil
 }
@@ -1993,9 +1945,6 @@ func (v *InputInvoiceStarGiftResale) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputInvoiceStarGiftResaleTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Ton)
-	}
 	WriteString(b, v.Slug)
 	EncodeTLObject(b, v.ToID)
 	return nil
@@ -2163,12 +2112,6 @@ func (v *InputInvoiceStarGiftAuctionBid) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputInvoiceStarGiftAuctionBidTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HideName)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.UpdateBid)
-	}
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.Peer)
 	}
@@ -2329,12 +2272,6 @@ func (v *InputStorePaymentPremiumSubscription) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputStorePaymentPremiumSubscriptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Restore)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Upgrade)
-	}
 	return nil
 }
 
@@ -2524,12 +2461,6 @@ func (v *InputStorePaymentPremiumGiveaway) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputStorePaymentPremiumGiveawayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OnlyNewSubscribers)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.WinnersAreVisible)
-	}
 	EncodeTLObject(b, v.BoostPeer)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -2742,12 +2673,6 @@ func (v *InputStorePaymentStarsGiveaway) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputStorePaymentStarsGiveawayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OnlyNewSubscribers)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.WinnersAreVisible)
-	}
 	WriteLong(b, v.Stars)
 	EncodeTLObject(b, v.BoostPeer)
 	if v.Flags.Has(1) {
@@ -2843,9 +2768,6 @@ func (v *InputStorePaymentAuthCode) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputStorePaymentAuthCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Restore)
-	}
 	WriteString(b, v.PhoneNumber)
 	WriteString(b, v.PhoneCodeHash)
 	WriteInt(b, uint32(v.PremiumDays))
@@ -2959,12 +2881,6 @@ func (v *PremiumSubscriptionOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PremiumSubscriptionOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Current)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CanPurchaseUpgrade)
-	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.Transaction)
 	}
@@ -3131,9 +3047,6 @@ func (v *PaymentsCheckedGiftCode) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsCheckedGiftCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ViaGiveaway)
-	}
 	if v.Flags.Has(4) {
 		EncodeTLObject(b, v.FromID)
 	}
@@ -3270,12 +3183,6 @@ func (v *PaymentsGiveawayInfo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGiveawayInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Participating)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.PreparingResults)
-	}
 	WriteInt(b, uint32(v.StartDate))
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.JoinedTooEarlyDate))
@@ -3362,12 +3269,6 @@ func (v *PaymentsGiveawayInfoResults) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsGiveawayInfoResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Winner)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Refunded)
-	}
 	WriteInt(b, uint32(v.StartDate))
 	if v.Flags.Has(3) {
 		WriteString(b, v.GiftCodeSlug)
@@ -3578,15 +3479,6 @@ func (v *Boost) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BoostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Gift)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Giveaway)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Unclaimed)
-	}
 	WriteString(b, v.ID)
 	if v.Flags.Has(0) {
 		WriteLong(b, v.UserID)
@@ -3755,9 +3647,6 @@ func (v *StarsTopupOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsTopupOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Extended)
-	}
 	WriteLong(b, v.Stars)
 	if v.Flags.Has(0) {
 		WriteString(b, v.StoreProduct)
@@ -3951,48 +3840,6 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsTransactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Refund)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Pending)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Failed)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Gift)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Reaction)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.StargiftUpgrade)
-	}
-	if v.Flags.Has(21) {
-		WriteBool(b, v.BusinessTransfer)
-	}
-	if v.Flags.Has(22) {
-		WriteBool(b, v.StargiftResale)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.PostsSearch)
-	}
-	if v.Flags.Has(25) {
-		WriteBool(b, v.StargiftPrepaidUpgrade)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.StargiftDropOriginalDetails)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.PhonegroupMessage)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.StargiftAuctionBid)
-	}
-	if v.Flags.Has(29) {
-		WriteBool(b, v.Offer)
-	}
 	WriteString(b, v.ID)
 	EncodeTLObject(b, v.Amount)
 	WriteInt(b, uint32(v.Date))
@@ -4344,9 +4191,6 @@ func (v *StarsRevenueStatus) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsRevenueStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.WithdrawalEnabled)
-	}
 	EncodeTLObject(b, v.CurrentBalance)
 	EncodeTLObject(b, v.AvailableBalance)
 	EncodeTLObject(b, v.OverallRevenue)
@@ -4548,9 +4392,6 @@ func (v *InputStarsTransaction) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputStarsTransactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Refund)
-	}
 	WriteString(b, v.ID)
 	return nil
 }
@@ -4609,9 +4450,6 @@ func (v *StarsGiftOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsGiftOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Extended)
-	}
 	WriteLong(b, v.Stars)
 	if v.Flags.Has(0) {
 		WriteString(b, v.StoreProduct)
@@ -4743,18 +4581,6 @@ func (v *StarsSubscription) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsSubscriptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Canceled)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CanRefulfill)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MissingBalance)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.BotCanceled)
-	}
 	WriteString(b, v.ID)
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.UntilDate))
@@ -4855,12 +4681,6 @@ func (v *StarsGiveawayOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsGiveawayOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Extended)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Default)
-	}
 	WriteLong(b, v.Stars)
 	WriteInt(b, uint32(v.YearlyBoosts))
 	if v.Flags.Has(2) {
@@ -4939,9 +4759,6 @@ func (v *StarsGiveawayWinnersOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarsGiveawayWinnersOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Default)
-	}
 	WriteInt(b, uint32(v.Users))
 	WriteLong(b, v.PerUserStars)
 	return nil
@@ -5108,27 +4925,6 @@ func (v *StarGift) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Limited)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SoldOut)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Birthday)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.RequirePremium)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.LimitedPerUser)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.PeerColorAvailable)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Auction)
-	}
 	WriteLong(b, v.ID)
 	EncodeTLObject(b, v.Sticker)
 	WriteLong(b, v.Stars)
@@ -5374,21 +5170,6 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarGiftUniqueTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(6) {
-		WriteBool(b, v.RequirePremium)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.ResaleTonOnly)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.ThemeAvailable)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.Burned)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.Crafted)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.GiftID)
 	WriteString(b, v.Title)
@@ -6031,9 +5812,6 @@ func (v *StarGiftAttributeModel) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarGiftAttributeModelTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Crafted)
-	}
 	WriteString(b, v.Name)
 	EncodeTLObject(b, v.Document)
 	EncodeTLObject(b, v.Rarity)
@@ -6467,24 +6245,6 @@ func (v *SavedStarGift) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SavedStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NameHidden)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Unsaved)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Refunded)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.CanUpgrade)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.PinnedToTop)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.UpgradeSeparate)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.FromID)
 	}
@@ -7468,12 +7228,6 @@ func (v *PaymentsUniqueStarGiftValueInfo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PaymentsUniqueStarGiftValueInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.LastSaleOnFragment)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.ValueIsAverage)
-	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.Value)
 	WriteInt(b, uint32(v.InitialSaleDate))
@@ -8005,9 +7759,6 @@ func (v *StarGiftAuctionAcquiredGift) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StarGiftAuctionAcquiredGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NameHidden)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.BidAmount)

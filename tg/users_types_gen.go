@@ -270,66 +270,6 @@ func (v *UserFull) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Flags2))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.PhoneCallsAvailable)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.PhoneCallsPrivate)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.CanPinMessage)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.HasScheduled)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.VideoCallsAvailable)
-	}
-	if v.Flags.Has(20) {
-		WriteBool(b, v.VoiceMessagesForbidden)
-	}
-	if v.Flags.Has(23) {
-		WriteBool(b, v.TranslationsDisabled)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.StoriesPinnedAvailable)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.BlockedMyStoriesFrom)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.WallpaperOverridden)
-	}
-	if v.Flags.Has(29) {
-		WriteBool(b, v.ContactRequirePremium)
-	}
-	if v.Flags.Has(30) {
-		WriteBool(b, v.ReadDatesPrivate)
-	}
-	if v.Flags2.Has(7) {
-		WriteBool(b, v.SponsoredEnabled)
-	}
-	if v.Flags2.Has(9) {
-		WriteBool(b, v.CanViewRevenue)
-	}
-	if v.Flags2.Has(10) {
-		WriteBool(b, v.BotCanManageEmojiStatus)
-	}
-	if v.Flags2.Has(16) {
-		WriteBool(b, v.DisplayGiftsButton)
-	}
-	if v.Flags2.Has(23) {
-		WriteBool(b, v.NoforwardsMyEnabled)
-	}
-	if v.Flags2.Has(24) {
-		WriteBool(b, v.NoforwardsPeerEnabled)
-	}
-	if v.Flags2.Has(26) {
-		WriteBool(b, v.UnofficialSecurityRisk)
-	}
 	WriteLong(b, v.ID)
 	if v.Flags.Has(1) {
 		WriteString(b, v.About)

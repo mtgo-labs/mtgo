@@ -205,9 +205,6 @@ func (v *StoryViews) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryViewsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.HasViewers)
-	}
 	WriteInt(b, uint32(v.ViewsCount))
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.ForwardsCount))
@@ -410,12 +407,6 @@ func (v *StoryItemSkipped) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryItemSkippedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(8) {
-		WriteBool(b, v.CloseFriends)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Live)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteInt(b, uint32(v.Date))
 	WriteInt(b, uint32(v.ExpireDate))
@@ -545,33 +536,6 @@ func (v *StoryItem) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryItemTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Public)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.CloseFriends)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Noforwards)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Edited)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.SelectedContacts)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.Out)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(18) {
@@ -804,9 +768,6 @@ func (v *StoriesAllStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoriesAllStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HasMore)
-	}
 	WriteInt(b, uint32(v.Count))
 	WriteString(b, v.State)
 	WriteInt(b, 0x1cb5c415)
@@ -1028,12 +989,6 @@ func (v *StoryView) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BlockedMyStoriesFrom)
-	}
 	WriteLong(b, v.UserID)
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(2) {
@@ -1097,12 +1052,6 @@ func (v *StoryViewPublicForward) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryViewPublicForwardTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BlockedMyStoriesFrom)
-	}
 	EncodeTLObject(b, v.Message)
 	return nil
 }
@@ -1159,12 +1108,6 @@ func (v *StoryViewPublicRepost) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryViewPublicRepostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BlockedMyStoriesFrom)
-	}
 	EncodeTLObject(b, v.PeerID)
 	EncodeTLObject(b, v.Story)
 	return nil
@@ -1584,9 +1527,6 @@ func (v *StoryFwdHeader) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StoryFwdHeaderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Modified)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.From)
 	}
@@ -2092,9 +2032,6 @@ func (v *RecentStory) Encode(b *bytes.Buffer) error {
 	WriteInt(b, RecentStoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Live)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.MaxID))
 	}

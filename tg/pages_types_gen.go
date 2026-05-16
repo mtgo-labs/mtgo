@@ -1420,12 +1420,6 @@ func (v *PageBlockVideo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageBlockVideoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Autoplay)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Loop)
-	}
 	WriteLong(b, v.VideoID)
 	EncodeTLObject(b, v.Caption)
 	return nil
@@ -1536,12 +1530,6 @@ func (v *PageBlockEmbed) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageBlockEmbedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.FullWidth)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.AllowScrolling)
-	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.URL)
 	}
@@ -1883,12 +1871,6 @@ func (v *PageBlockTable) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageBlockTableTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Bordered)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Striped)
-	}
 	EncodeTLObject(b, v.Title)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rows)))
@@ -1995,9 +1977,6 @@ func (v *PageBlockDetails) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageBlockDetailsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Open)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
@@ -2182,21 +2161,6 @@ func (v *PageTableCell) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageTableCellTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Header)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.AlignCenter)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.AlignRight)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ValignMiddle)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.ValignBottom)
-	}
 	if v.Flags.Has(7) {
 		EncodeTLObject(b, v.Text)
 	}
@@ -2565,15 +2529,6 @@ func (v *Page) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Part)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Rtl)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.V2)
-	}
 	WriteString(b, v.URL)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))

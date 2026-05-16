@@ -100,9 +100,6 @@ func (v *Photo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HasStickers)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteBytes(b, v.FileReference)
