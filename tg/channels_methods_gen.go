@@ -423,18 +423,6 @@ func (v *ChannelsCreateChannelRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsCreateChannelTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Broadcast)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Megagroup)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ForImport)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Forum)
-	}
 	WriteString(b, v.Title)
 	WriteString(b, v.About)
 	if v.Flags.Has(2) {
@@ -909,12 +897,6 @@ func (v *ChannelsExportMessageLinkRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsExportMessageLinkTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Grouped)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Thread)
-	}
 	EncodeTLObject(b, v.Channel)
 	WriteInt(b, uint32(v.ID))
 	return nil
@@ -973,12 +955,6 @@ func (v *ChannelsToggleSignaturesRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsToggleSignaturesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.SignaturesEnabled)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ProfilesEnabled)
-	}
 	EncodeTLObject(b, v.Channel)
 	return nil
 }
@@ -1039,15 +1015,6 @@ func (v *ChannelsGetAdminedPublicChannelsRequest) Encode(b *bytes.Buffer) error 
 	WriteInt(b, ChannelsGetAdminedPublicChannelsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ByLocation)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CheckLimit)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ForPersonal)
-	}
 	return nil
 }
 
@@ -1306,9 +1273,6 @@ func (v *ChannelsDeleteHistoryRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsDeleteHistoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ForEveryone)
-	}
 	EncodeTLObject(b, v.Channel)
 	WriteInt(b, uint32(v.MaxID))
 	return nil
@@ -1705,12 +1669,6 @@ func (v *ChannelsGetSendAsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsGetSendAsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ForPaidReactions)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForLiveStories)
-	}
 	EncodeTLObject(b, v.Peer)
 	return nil
 }
@@ -2206,9 +2164,6 @@ func (v *ChannelsUpdateColorRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsUpdateColorTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForProfile)
-	}
 	EncodeTLObject(b, v.Channel)
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.Color))
@@ -2617,9 +2572,6 @@ func (v *ChannelsUpdatePaidMessagesPriceRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsUpdatePaidMessagesPriceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.BroadcastMessagesAllowed)
-	}
 	EncodeTLObject(b, v.Channel)
 	WriteLong(b, v.SendPaidMessagesStars)
 	return nil

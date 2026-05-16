@@ -89,9 +89,6 @@ func (v *AuthSignUpRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AuthSignUpTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NoJoinedNotifications)
-	}
 	WriteString(b, v.PhoneNumber)
 	WriteString(b, v.PhoneCodeHash)
 	WriteString(b, v.FirstName)

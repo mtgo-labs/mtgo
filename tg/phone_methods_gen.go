@@ -81,9 +81,6 @@ func (v *PhoneRequestCallRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneRequestCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Video)
-	}
 	EncodeTLObject(b, v.UserID)
 	WriteInt(b, uint32(v.RandomID))
 	WriteBytes(b, v.GAHash)
@@ -277,9 +274,6 @@ func (v *PhoneDiscardCallRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneDiscardCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Video)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.Duration))
 	EncodeTLObject(b, v.Reason)
@@ -338,9 +332,6 @@ func (v *PhoneSetCallRatingRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneSetCallRatingTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.UserInitiative)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.Rating))
 	WriteString(b, v.Comment)
@@ -489,9 +480,6 @@ func (v *PhoneCreateGroupCallRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCreateGroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.RtmpStream)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.RandomID))
 	if v.Flags.Has(0) {
@@ -570,12 +558,6 @@ func (v *PhoneJoinGroupCallRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneJoinGroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Muted)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.VideoStopped)
-	}
 	EncodeTLObject(b, v.Call)
 	EncodeTLObject(b, v.JoinAs)
 	if v.Flags.Has(1) {
@@ -786,9 +768,6 @@ func (v *PhoneToggleGroupCallSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneToggleGroupCallSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ResetInviteHash)
-	}
 	EncodeTLObject(b, v.Call)
 	if v.Flags.Has(0) {
 		WriteBool(b, v.JoinMuted)
@@ -1003,12 +982,6 @@ func (v *PhoneToggleGroupCallRecordRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneToggleGroupCallRecordTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Start)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Video)
-	}
 	EncodeTLObject(b, v.Call)
 	if v.Flags.Has(1) {
 		WriteString(b, v.Title)
@@ -1247,9 +1220,6 @@ func (v *PhoneExportGroupCallInviteRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneExportGroupCallInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.CanSelfUnmute)
-	}
 	EncodeTLObject(b, v.Call)
 	return nil
 }
@@ -1560,9 +1530,6 @@ func (v *PhoneGetGroupCallStreamRtmpURLRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneGetGroupCallStreamRtmpURLTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.LiveStory)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteBool(b, v.Revoke)
 	return nil
@@ -1679,15 +1646,6 @@ func (v *PhoneCreateConferenceCallRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCreateConferenceCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Muted)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.VideoStopped)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Join)
-	}
 	WriteInt(b, uint32(v.RandomID))
 	if v.Flags.Has(3) {
 		WriteInt256(b, *v.PublicKey)
@@ -1756,12 +1714,6 @@ func (v *PhoneDeleteConferenceCallParticipantsRequest) Encode(b *bytes.Buffer) e
 	WriteInt(b, PhoneDeleteConferenceCallParticipantsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OnlyLeft)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Kick)
-	}
 	EncodeTLObject(b, v.Call)
 	WriteVectorLong(b, v.Ids)
 	WriteBytes(b, v.Block)
@@ -1862,9 +1814,6 @@ func (v *PhoneInviteConferenceCallParticipantRequest) Encode(b *bytes.Buffer) er
 	WriteInt(b, PhoneInviteConferenceCallParticipantTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Video)
-	}
 	EncodeTLObject(b, v.Call)
 	EncodeTLObject(b, v.UserID)
 	return nil
@@ -2119,9 +2068,6 @@ func (v *PhoneDeleteGroupCallMessagesRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneDeleteGroupCallMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ReportSpam)
-	}
 	EncodeTLObject(b, v.Call)
 	WriteVectorInt(b, v.Messages)
 	return nil
@@ -2177,9 +2123,6 @@ func (v *PhoneDeleteGroupCallParticipantMessagesRequest) Encode(b *bytes.Buffer)
 	WriteInt(b, PhoneDeleteGroupCallParticipantMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ReportSpam)
-	}
 	EncodeTLObject(b, v.Call)
 	EncodeTLObject(b, v.Participant)
 	return nil

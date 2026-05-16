@@ -40,9 +40,6 @@ func (v *AicomposeCreateToneRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AicomposeCreateToneTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.DisplayAuthor)
-	}
 	WriteLong(b, v.EmojiID)
 	WriteString(b, v.Title)
 	WriteString(b, v.Prompt)

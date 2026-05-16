@@ -122,15 +122,6 @@ func (v *ChatFull) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatFullTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(7) {
-		WriteBool(b, v.CanSetUsername)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.HasScheduled)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.TranslationsDisabled)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.About)
 	EncodeTLObject(b, v.Participants)
@@ -517,69 +508,6 @@ func (v *ChannelFull) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Flags2))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.CanViewParticipants)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.CanSetUsername)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.CanSetStickers)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.HiddenPrehistory)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.CanSetLocation)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.HasScheduled)
-	}
-	if v.Flags.Has(20) {
-		WriteBool(b, v.CanViewStats)
-	}
-	if v.Flags.Has(22) {
-		WriteBool(b, v.Blocked)
-	}
-	if v.Flags2.Has(0) {
-		WriteBool(b, v.CanDeleteChannel)
-	}
-	if v.Flags2.Has(1) {
-		WriteBool(b, v.Antispam)
-	}
-	if v.Flags2.Has(2) {
-		WriteBool(b, v.ParticipantsHidden)
-	}
-	if v.Flags2.Has(3) {
-		WriteBool(b, v.TranslationsDisabled)
-	}
-	if v.Flags2.Has(5) {
-		WriteBool(b, v.StoriesPinnedAvailable)
-	}
-	if v.Flags2.Has(6) {
-		WriteBool(b, v.ViewForumAsMessages)
-	}
-	if v.Flags2.Has(11) {
-		WriteBool(b, v.RestrictedSponsored)
-	}
-	if v.Flags2.Has(12) {
-		WriteBool(b, v.CanViewRevenue)
-	}
-	if v.Flags2.Has(14) {
-		WriteBool(b, v.PaidMediaAllowed)
-	}
-	if v.Flags2.Has(15) {
-		WriteBool(b, v.CanViewStarsRevenue)
-	}
-	if v.Flags2.Has(16) {
-		WriteBool(b, v.PaidReactionsAvailable)
-	}
-	if v.Flags2.Has(19) {
-		WriteBool(b, v.StargiftsAvailable)
-	}
-	if v.Flags2.Has(20) {
-		WriteBool(b, v.PaidMessagesAvailable)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.About)
 	if v.Flags.Has(0) {
@@ -1227,51 +1155,6 @@ func (v *Message) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Flags2))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Out)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Mentioned)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.MediaUnread)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Silent)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.Post)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.FromScheduled)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.Legacy)
-	}
-	if v.Flags.Has(21) {
-		WriteBool(b, v.EditHide)
-	}
-	if v.Flags.Has(24) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(26) {
-		WriteBool(b, v.Noforwards)
-	}
-	if v.Flags.Has(27) {
-		WriteBool(b, v.InvertMedia)
-	}
-	if v.Flags2.Has(1) {
-		WriteBool(b, v.Offline)
-	}
-	if v.Flags2.Has(4) {
-		WriteBool(b, v.VideoProcessingPending)
-	}
-	if v.Flags2.Has(8) {
-		WriteBool(b, v.PaidSuggestedPostStars)
-	}
-	if v.Flags2.Has(9) {
-		WriteBool(b, v.PaidSuggestedPostTon)
-	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(8) {
 		EncodeTLObject(b, v.FromID)
@@ -1599,27 +1482,6 @@ func (v *MessageService) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageServiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Out)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Mentioned)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.MediaUnread)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.ReactionsArePossible)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Silent)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.Post)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.Legacy)
-	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(8) {
 		EncodeTLObject(b, v.FromID)
@@ -1883,12 +1745,6 @@ func (v *MessageMediaPhoto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaPhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Spoiler)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.LivePhoto)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Photo)
 	}
@@ -2098,21 +1954,6 @@ func (v *MessageMediaDocument) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaDocumentTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Nopremium)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Spoiler)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Round)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Voice)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Document)
 	}
@@ -2218,18 +2059,6 @@ func (v *MessageMediaWebPage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaWebPageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ForceLargeMedia)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForceSmallMedia)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Manual)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Safe)
-	}
 	EncodeTLObject(b, v.Webpage)
 	return nil
 }
@@ -2384,12 +2213,6 @@ func (v *MessageMediaInvoice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaInvoiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ShippingAddressRequested)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Test)
-	}
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(0) {
@@ -2659,9 +2482,6 @@ func (v *MessageMediaStory) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaStoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ViaMention)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
@@ -2743,12 +2563,6 @@ func (v *MessageMediaGiveaway) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaGiveawayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OnlyNewSubscribers)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.WinnersAreVisible)
-	}
 	WriteVectorLong(b, v.Channels)
 	if v.Flags.Has(1) {
 		WriteVectorString(b, v.CountriesIso2)
@@ -2852,12 +2666,6 @@ func (v *MessageMediaGiveawayResults) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaGiveawayResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OnlyNewSubscribers)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Refunded)
-	}
 	WriteLong(b, v.ChannelID)
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.AdditionalPeersCount))
@@ -3052,9 +2860,6 @@ func (v *MessageMediaVideoStream) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageMediaVideoStreamTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RtmpStream)
-	}
 	EncodeTLObject(b, v.Call)
 	return nil
 }
@@ -3980,12 +3785,6 @@ func (v *MessageActionPaymentSentMe) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionPaymentSentMeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.RecurringInit)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.RecurringUsed)
-	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.TotalAmount)
 	WriteBytes(b, v.Payload)
@@ -4075,12 +3874,6 @@ func (v *MessageActionPaymentSent) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionPaymentSentTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.RecurringInit)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.RecurringUsed)
-	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.TotalAmount)
 	if v.Flags.Has(0) {
@@ -4153,9 +3946,6 @@ func (v *MessageActionPhoneCall) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionPhoneCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.CallID)
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Reason)
@@ -4290,12 +4080,6 @@ func (v *MessageActionBotAllowed) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionBotAllowedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.AttachMenu)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.FromRequest)
-	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Domain)
 	}
@@ -4910,9 +4694,6 @@ func (v *MessageActionTopicCreate) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionTopicCreateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.TitleMissing)
-	}
 	WriteString(b, v.Title)
 	WriteInt(b, uint32(v.IconColor))
 	if v.Flags.Has(0) {
@@ -5133,12 +4914,6 @@ func (v *MessageActionSetChatWallPaper) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionSetChatWallPaperTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Same)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForBoth)
-	}
 	EncodeTLObject(b, v.Wallpaper)
 	return nil
 }
@@ -5219,12 +4994,6 @@ func (v *MessageActionGiftCode) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionGiftCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ViaGiveaway)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Unclaimed)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.BoostPeer)
 	}
@@ -5367,9 +5136,6 @@ func (v *MessageActionGiveawayResults) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionGiveawayResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Stars)
-	}
 	WriteInt(b, uint32(v.WinnersCount))
 	WriteInt(b, uint32(v.UnclaimedCount))
 	return nil
@@ -5646,9 +5412,6 @@ func (v *MessageActionPrizeStars) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionPrizeStarsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Unclaimed)
-	}
 	WriteLong(b, v.Stars)
 	WriteString(b, v.TransactionID)
 	EncodeTLObject(b, v.BoostPeer)
@@ -5781,33 +5544,6 @@ func (v *MessageActionStarGift) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NameHidden)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Saved)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Converted)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Upgraded)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Refunded)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.CanUpgrade)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.PrepaidUpgrade)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.UpgradeSeparate)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.AuctionAcquired)
-	}
 	EncodeTLObject(b, v.Gift)
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.Message)
@@ -6004,30 +5740,6 @@ func (v *MessageActionStarGiftUnique) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionStarGiftUniqueTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Upgrade)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Transferred)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Saved)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Refunded)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.PrepaidUpgrade)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.Assigned)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.FromOffer)
-	}
-	if v.Flags.Has(16) {
-		WriteBool(b, v.Craft)
-	}
 	EncodeTLObject(b, v.Gift)
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.CanExportAt))
@@ -6183,9 +5895,6 @@ func (v *MessageActionPaidMessagesPrice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionPaidMessagesPriceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.BroadcastMessagesAllowed)
-	}
 	WriteLong(b, v.Stars)
 	return nil
 }
@@ -6251,15 +5960,6 @@ func (v *MessageActionConferenceCall) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionConferenceCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Missed)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Active)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.CallID)
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.Duration))
@@ -6425,12 +6125,6 @@ func (v *MessageActionSuggestedPostApproval) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionSuggestedPostApprovalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Rejected)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.BalanceTooLow)
-	}
 	if v.Flags.Has(2) {
 		WriteString(b, v.RejectComment)
 	}
@@ -6530,9 +6224,6 @@ func (v *MessageActionSuggestedPostRefund) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionSuggestedPostRefundTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.PayerInitiated)
-	}
 	return nil
 }
 
@@ -6682,12 +6373,6 @@ func (v *MessageActionStarGiftPurchaseOffer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionStarGiftPurchaseOfferTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Accepted)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Declined)
-	}
 	EncodeTLObject(b, v.Gift)
 	EncodeTLObject(b, v.Price)
 	WriteInt(b, uint32(v.ExpiresAt))
@@ -6745,9 +6430,6 @@ func (v *MessageActionStarGiftPurchaseOfferDeclined) Encode(b *bytes.Buffer) err
 	WriteInt(b, MessageActionStarGiftPurchaseOfferDeclinedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Expired)
-	}
 	EncodeTLObject(b, v.Gift)
 	EncodeTLObject(b, v.Price)
 	return nil
@@ -6901,9 +6583,6 @@ func (v *MessageActionNoForwardsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageActionNoForwardsRequestTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Expired)
-	}
 	WriteBool(b, v.PrevValue)
 	WriteBool(b, v.NewValue)
 	return nil
@@ -7105,15 +6784,6 @@ func (v *Dialog) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DialogTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.UnreadMark)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.ViewForumAsMessages)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.TopMessage))
 	WriteInt(b, uint32(v.ReadInboxMaxID))
@@ -7214,9 +6884,6 @@ func (v *DialogFolder) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DialogFolderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Pinned)
-	}
 	EncodeTLObject(b, v.Folder)
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.TopMessage))
@@ -7379,39 +7046,6 @@ func (v *PeerSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PeerSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ReportSpam)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.AddContact)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.BlockContact)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ShareContact)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.NeedContactsException)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ReportGeo)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Autoarchived)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.InviteMembers)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.RequestChatBroadcast)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.BusinessBotPaused)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.BusinessBotCanReply)
-	}
 	if v.Flags.Has(6) {
 		WriteInt(b, uint32(v.GeoDistance))
 	}
@@ -7940,9 +7574,6 @@ func (v *MessagesMessagesSlice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesMessagesSliceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Inexact)
-	}
 	WriteInt(b, uint32(v.Count))
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.NextRate))
@@ -8068,9 +7699,6 @@ func (v *MessagesChannelMessages) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesChannelMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Inexact)
-	}
 	WriteInt(b, uint32(v.PTS))
 	WriteInt(b, uint32(v.Count))
 	if v.Flags.Has(2) {
@@ -8761,9 +8389,6 @@ func (v *InputMessagesFilterPhoneCalls) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputMessagesFilterPhoneCallsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Missed)
-	}
 	return nil
 }
 
@@ -10488,12 +10113,6 @@ func (v *WebPage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, WebPageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(13) {
-		WriteBool(b, v.HasLargeMedia)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.VideoCoverPhoto)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.URL)
 	WriteString(b, v.DisplayURL)
@@ -10869,15 +10488,6 @@ func (v *ChatInviteExported) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatInviteExportedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Revoked)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Permanent)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.RequestNeeded)
-	}
 	WriteString(b, v.Link)
 	WriteLong(b, v.AdminID)
 	WriteInt(b, uint32(v.Date))
@@ -11622,27 +11232,6 @@ func (v *StickerSet) Encode(b *bytes.Buffer) error {
 	WriteInt(b, StickerSetTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Archived)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Official)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Masks)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Emojis)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.TextColor)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.ChannelEmojiStatus)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.Creator)
-	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.InstalledDate))
 	}
@@ -12724,9 +12313,6 @@ func (v *MessageEntityBlockquote) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageEntityBlockquoteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Collapsed)
-	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Length))
 	return nil
@@ -12800,24 +12386,6 @@ func (v *MessageEntityFormattedDate) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageEntityFormattedDateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Relative)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ShortTime)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.LongTime)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ShortDate)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.LongDate)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.DayOfWeek)
-	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Length))
 	WriteInt(b, uint32(v.Date))
@@ -13071,9 +12639,6 @@ func (v *ChannelMessagesFilter) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelMessagesFilterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ExcludeNewMessages)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Ranges)))
 	for _, _item := range v.Ranges {
@@ -13291,9 +12856,6 @@ func (v *InputBotInlineMessageMediaAuto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBotInlineMessageMediaAutoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -13378,12 +12940,6 @@ func (v *InputBotInlineMessageText) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBotInlineMessageTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NoWebpage)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -13834,18 +13390,6 @@ func (v *InputBotInlineMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBotInlineMessageMediaWebPageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ForceLargeMedia)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ForceSmallMedia)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Optional)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -13981,9 +13525,6 @@ func (v *BotInlineMessageMediaAuto) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotInlineMessageMediaAutoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -14068,12 +13609,6 @@ func (v *BotInlineMessageText) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotInlineMessageTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NoWebpage)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -14383,12 +13918,6 @@ func (v *BotInlineMessageMediaInvoice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotInlineMessageMediaInvoiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ShippingAddressRequested)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Test)
-	}
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(0) {
@@ -14484,21 +14013,6 @@ func (v *BotInlineMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotInlineMessageMediaWebPageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.InvertMedia)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.ForceLargeMedia)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ForceSmallMedia)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Manual)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.Safe)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -14595,9 +14109,6 @@ func (v *MessagesBotResults) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesBotResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Gallery)
-	}
 	WriteLong(b, v.QueryID)
 	if v.Flags.Has(1) {
 		WriteString(b, v.NextOffset)
@@ -14778,12 +14289,6 @@ func (v *MessageFwdHeader) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageFwdHeaderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(7) {
-		WriteBool(b, v.Imported)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.SavedOut)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.FromID)
 	}
@@ -14916,15 +14421,6 @@ func (v *MessagesBotCallbackAnswer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesBotCallbackAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Alert)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.HasURL)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.NativeUi)
-	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Message)
 	}
@@ -14990,9 +14486,6 @@ func (v *MessagesMessageEditData) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesMessageEditDataTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Caption)
-	}
 	return nil
 }
 
@@ -15323,12 +14816,6 @@ func (v *DraftMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DraftMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NoWebpage)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.InvertMedia)
-	}
 	if v.Flags.Has(4) {
 		EncodeTLObject(b, v.ReplyTo)
 	}
@@ -15479,9 +14966,6 @@ func (v *MessagesFeaturedStickers) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesFeaturedStickersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Premium)
-	}
 	WriteLong(b, v.Hash)
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, 0x1cb5c415)
@@ -16981,9 +16465,6 @@ func (v *MessagesSearchCounter) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesSearchCounterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Inexact)
-	}
 	EncodeTLObject(b, v.Filter)
 	WriteInt(b, uint32(v.Count))
 	return nil
@@ -17263,33 +16744,6 @@ func (v *DialogFilter) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DialogFilterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NonContacts)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Groups)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Broadcasts)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Bots)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.ExcludeMuted)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.ExcludeRead)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.ExcludeArchived)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.TitleNoanimate)
-	}
 	WriteInt(b, uint32(v.ID))
 	EncodeTLObject(b, v.Title)
 	if v.Flags.Has(25) {
@@ -17442,12 +16896,6 @@ func (v *DialogFilterChatlist) Encode(b *bytes.Buffer) error {
 	WriteInt(b, DialogFilterChatlistTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(26) {
-		WriteBool(b, v.HasMyInvites)
-	}
-	if v.Flags.Has(28) {
-		WriteBool(b, v.TitleNoanimate)
-	}
 	WriteInt(b, uint32(v.ID))
 	EncodeTLObject(b, v.Title)
 	if v.Flags.Has(25) {
@@ -17919,15 +17367,6 @@ func (v *MessageReplyHeader) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageReplyHeaderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.ReplyToScheduled)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ForumTopic)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.Quote)
-	}
 	if v.Flags.Has(4) {
 		WriteInt(b, uint32(v.ReplyToMsgID))
 	}
@@ -18106,9 +17545,6 @@ func (v *MessageReplies) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageRepliesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Comments)
-	}
 	WriteInt(b, uint32(v.Replies))
 	WriteInt(b, uint32(v.RepliesPTS))
 	if v.Flags.Has(1) {
@@ -18239,12 +17675,6 @@ func (v *MessagesHistoryImportParsed) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesHistoryImportParsedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pm)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Group)
-	}
 	if v.Flags.Has(2) {
 		WriteString(b, v.Title)
 	}
@@ -18601,12 +18031,6 @@ func (v *SponsoredMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SponsoredMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Recommended)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.CanReport)
-	}
 	WriteBytes(b, v.RandomID)
 	WriteString(b, v.URL)
 	WriteString(b, v.Title)
@@ -18898,9 +18322,6 @@ func (v *MessagesSearchResultsCalendar) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesSearchResultsCalendarTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Inexact)
-	}
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, uint32(v.MinDate))
 	WriteInt(b, uint32(v.MinMsgID))
@@ -19136,15 +18557,6 @@ func (v *MessageReactions) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageReactionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CanSeeList)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.ReactionsAsTags)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Results)))
 	for _, _item := range v.Results {
@@ -19355,12 +18767,6 @@ func (v *AvailableReaction) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AvailableReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Inactive)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Premium)
-	}
 	WriteString(b, v.Reaction)
 	WriteString(b, v.Title)
 	EncodeTLObject(b, v.StaticIcon)
@@ -19549,15 +18955,6 @@ func (v *MessagePeerReaction) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagePeerReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Big)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Unread)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.My)
-	}
 	EncodeTLObject(b, v.PeerID)
 	WriteInt(b, uint32(v.Date))
 	EncodeTLObject(b, v.Reaction)
@@ -19682,9 +19079,6 @@ func (v *MessagesTranscribedAudio) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesTranscribedAudioTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Pending)
-	}
 	WriteLong(b, v.TranscriptionID)
 	WriteString(b, v.Text)
 	if v.Flags.Has(1) {
@@ -20203,9 +19597,6 @@ func (v *ChatReactionsAll) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChatReactionsAllTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AllowCustom)
-	}
 	return nil
 }
 
@@ -20655,24 +20046,6 @@ func (v *ForumTopic) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ForumTopicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.My)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Closed)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Pinned)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Short)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Hidden)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.TitleMissing)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteInt(b, uint32(v.Date))
 	EncodeTLObject(b, v.Peer)
@@ -20777,9 +20150,6 @@ func (v *MessagesForumTopics) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesForumTopicsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OrderByCreateDate)
-	}
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Topics)))
@@ -21376,15 +20746,6 @@ func (v *MessagesBotApp) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesBotAppTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Inactive)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.RequestWriteAccess)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.HasSettings)
-	}
 	EncodeTLObject(b, v.App)
 	return nil
 }
@@ -21734,9 +21095,6 @@ func (v *SavedDialog) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SavedDialogTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Pinned)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.TopMessage))
 	return nil
@@ -21802,12 +21160,6 @@ func (v *MonoForumDialog) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MonoForumDialogTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.UnreadMark)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.NopaidMessagesException)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.TopMessage))
 	WriteInt(b, uint32(v.ReadInboxMaxID))
@@ -22462,9 +21814,6 @@ func (v *InputBusinessAwayMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBusinessAwayMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OfflineOnly)
-	}
 	WriteInt(b, uint32(v.ShortcutID))
 	EncodeTLObject(b, v.Schedule)
 	EncodeTLObject(b, v.Recipients)
@@ -22525,9 +21874,6 @@ func (v *BusinessAwayMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BusinessAwayMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OfflineOnly)
-	}
 	WriteInt(b, uint32(v.ShortcutID))
 	EncodeTLObject(b, v.Schedule)
 	EncodeTLObject(b, v.Recipients)
@@ -22844,9 +22190,6 @@ func (v *MessagesDialogFilters) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessagesDialogFiltersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.TagsEnabled)
-	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Filters)))
 	for _, _item := range v.Filters {
@@ -23325,15 +22668,6 @@ func (v *MessageReactor) Encode(b *bytes.Buffer) error {
 	WriteInt(b, MessageReactorTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Top)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.My)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Anonymous)
-	}
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.PeerID)
 	}
@@ -23971,12 +23305,6 @@ func (v *TodoList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, TodoListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OthersCanAppend)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.OthersCanComplete)
-	}
 	EncodeTLObject(b, v.Title)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.List)))
@@ -24092,9 +23420,6 @@ func (v *GroupCallMessage) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GroupCallMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.FromAdmin)
-	}
 	WriteInt(b, uint32(v.ID))
 	EncodeTLObject(b, v.FromID)
 	WriteInt(b, uint32(v.Date))

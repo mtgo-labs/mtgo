@@ -40,9 +40,6 @@ func (v *PremiumGetBoostsListRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PremiumGetBoostsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Gifts)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))

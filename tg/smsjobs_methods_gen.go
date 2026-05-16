@@ -153,9 +153,6 @@ func (v *SmsjobsUpdateSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SmsjobsUpdateSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AllowInternational)
-	}
 	return nil
 }
 

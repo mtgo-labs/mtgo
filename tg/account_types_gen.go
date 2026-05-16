@@ -73,18 +73,6 @@ func (v *WallPaper) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ID)
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Default)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Pattern)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Dark)
-	}
 	WriteLong(b, v.AccessHash)
 	WriteString(b, v.Slug)
 	EncodeTLObject(b, v.Document)
@@ -159,12 +147,6 @@ func (v *WallPaperNoFile) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ID)
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Default)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.Dark)
-	}
 	if v.Flags.Has(2) {
 		EncodeTLObject(b, v.Settings)
 	}
@@ -2312,15 +2294,6 @@ func (v *AccountPassword) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountPasswordTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.HasRecovery)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.HasSecureValues)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.HasPassword)
-	}
 	if v.Flags.Has(2) {
 		EncodeTLObject(b, v.CurrentAlgo)
 	}
@@ -3110,12 +3083,6 @@ func (v *WallPaperSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, WallPaperSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Blur)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Motion)
-	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.BackgroundColor))
 	}
@@ -3247,21 +3214,6 @@ func (v *AutoDownloadSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AutoDownloadSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Disabled)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.VideoPreloadLarge)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.AudioPreloadNext)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.PhonecallsLessData)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.StoriesPreload)
-	}
 	WriteInt(b, uint32(v.PhotoSizeMax))
 	WriteLong(b, v.VideoSizeMax)
 	WriteLong(b, v.FileSizeMax)
@@ -3466,12 +3418,6 @@ func (v *AccountContentSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountContentSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.SensitiveEnabled)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.SensitiveCanChange)
-	}
 	return nil
 }
 
@@ -3550,24 +3496,6 @@ func (v *GlobalPrivacySettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GlobalPrivacySettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ArchiveAndMuteNewNoncontactPeers)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.KeepArchivedUnmuted)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.KeepArchivedFolders)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.HideReadMarks)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.NewNoncontactPeersRequirePremium)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.DisplayGiftsButton)
-	}
 	if v.Flags.Has(5) {
 		WriteLong(b, v.NoncontactPeersPaidStars)
 	}
@@ -4279,12 +4207,6 @@ func (v *AutoSaveSettings) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AutoSaveSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Photos)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Videos)
-	}
 	if v.Flags.Has(2) {
 		WriteLong(b, v.VideoMaxSize)
 	}
@@ -4501,9 +4423,6 @@ func (v *BusinessWorkHours) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BusinessWorkHoursTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.OpenNow)
-	}
 	WriteString(b, v.TimezoneID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.WeeklyOpen)))
@@ -4645,21 +4564,6 @@ func (v *InputBusinessRecipients) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBusinessRecipientsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ExistingChats)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NewChats)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NonContacts)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ExcludeSelected)
-	}
 	if v.Flags.Has(4) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Users)))
@@ -4749,21 +4653,6 @@ func (v *BusinessRecipients) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BusinessRecipientsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ExistingChats)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NewChats)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NonContacts)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ExcludeSelected)
-	}
 	if v.Flags.Has(4) {
 		WriteVectorLong(b, v.Users)
 	}
@@ -5004,9 +4893,6 @@ func (v *BotBusinessConnection) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotBusinessConnectionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Disabled)
-	}
 	WriteString(b, v.ConnectionID)
 	WriteLong(b, v.UserID)
 	WriteInt(b, uint32(v.DCID))
@@ -5217,21 +5103,6 @@ func (v *InputBusinessBotRecipients) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputBusinessBotRecipientsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ExistingChats)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NewChats)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NonContacts)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ExcludeSelected)
-	}
 	if v.Flags.Has(4) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Users)))
@@ -5341,21 +5212,6 @@ func (v *BusinessBotRecipients) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BusinessBotRecipientsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ExistingChats)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.NewChats)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NonContacts)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.ExcludeSelected)
-	}
 	if v.Flags.Has(4) {
 		WriteVectorLong(b, v.Users)
 	}
@@ -5599,9 +5455,6 @@ func (v *ConnectedBotStarRef) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ConnectedBotStarRefTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Revoked)
-	}
 	WriteString(b, v.URL)
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.BotID)
@@ -5756,48 +5609,6 @@ func (v *BusinessBotRights) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BusinessBotRightsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Reply)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ReadMessages)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.DeleteSentMessages)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.DeleteReceivedMessages)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.EditName)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.EditBio)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.EditProfilePhoto)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.EditUsername)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.ViewGifts)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.SellGifts)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.ChangeGiftSettings)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.TransferAndUpgradeGifts)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.TransferStars)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.ManageStories)
-	}
 	return nil
 }
 

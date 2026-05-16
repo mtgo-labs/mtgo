@@ -83,9 +83,6 @@ func (v *SmsjobsStatus) Encode(b *bytes.Buffer) error {
 	WriteInt(b, SmsjobsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AllowInternational)
-	}
 	WriteInt(b, uint32(v.RecentSent))
 	WriteInt(b, uint32(v.RecentSince))
 	WriteInt(b, uint32(v.RecentRemains))

@@ -250,9 +250,6 @@ func (v *AuthAuthorization) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		WriteBool(b, v.SetupPasswordRequired)
-	}
-	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.OtherwiseReloginDays))
 	}
 	if v.Flags.Has(0) {
@@ -403,24 +400,6 @@ func (v *Authorization) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AuthorizationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Current)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.OfficialApp)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.PasswordPending)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.EncryptedRequestsDisabled)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.CallRequestsDisabled)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Unconfirmed)
-	}
 	WriteLong(b, v.Hash)
 	WriteString(b, v.DeviceModel)
 	WriteString(b, v.Platform)
@@ -1003,12 +982,6 @@ func (v *AuthSentCodeTypeEmailCode) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AuthSentCodeTypeEmailCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AppleSigninAllowed)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.GoogleSigninAllowed)
-	}
 	WriteString(b, v.EmailPattern)
 	WriteInt(b, uint32(v.Length))
 	if v.Flags.Has(3) {
@@ -1076,12 +1049,6 @@ func (v *AuthSentCodeTypeSetUpEmailRequired) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AuthSentCodeTypeSetUpEmailRequiredTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.AppleSigninAllowed)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.GoogleSigninAllowed)
-	}
 	return nil
 }
 
@@ -1783,18 +1750,6 @@ func (v *URLAuthResultRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, URLAuthResultRequestTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RequestWriteAccess)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.RequestPhoneNumber)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.MatchCodesFirst)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.IsApp)
-	}
 	EncodeTLObject(b, v.Bot)
 	WriteString(b, v.Domain)
 	if v.Flags.Has(2) {

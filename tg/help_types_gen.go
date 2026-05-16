@@ -68,9 +68,6 @@ func (v *HelpAppUpdate) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpAppUpdateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.CanNotSkip)
-	}
 	WriteInt(b, uint32(v.ID))
 	WriteString(b, v.Version)
 	WriteString(b, v.Text)
@@ -268,9 +265,6 @@ func (v *HelpTermsOfService) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpTermsOfServiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Popup)
-	}
 	EncodeTLObject(b, v.ID)
 	WriteString(b, v.Text)
 	WriteInt(b, 0x1cb5c415)
@@ -553,9 +547,6 @@ func (v *HelpDeepLinkInfo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpDeepLinkInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.UpdateApp)
-	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
@@ -913,9 +904,6 @@ func (v *HelpPromoData) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpPromoDataTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Proxy)
-	}
 	WriteInt(b, uint32(v.Expires))
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.Peer)
@@ -1095,9 +1083,6 @@ func (v *HelpCountry) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpCountryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Hidden)
-	}
 	WriteString(b, v.Iso2)
 	WriteString(b, v.DefaultName)
 	if v.Flags.Has(1) {
@@ -1545,9 +1530,6 @@ func (v *HelpPeerColorOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpPeerColorOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Hidden)
-	}
 	WriteInt(b, uint32(v.ColorID))
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.Colors)

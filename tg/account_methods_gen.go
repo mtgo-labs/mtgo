@@ -42,9 +42,6 @@ func (v *AccountRegisterDeviceRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountRegisterDeviceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.NoMuted)
-	}
 	WriteInt(b, uint32(v.TokenType))
 	WriteString(b, v.Token)
 	WriteBool(b, v.AppSandbox)
@@ -1815,24 +1812,6 @@ func (v *AccountInitTakeoutSessionRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountInitTakeoutSessionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Contacts)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.MessageUsers)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MessageChats)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.MessageMegagroups)
-	}
-	if v.Flags.Has(4) {
-		WriteBool(b, v.MessageChannels)
-	}
-	if v.Flags.Has(5) {
-		WriteBool(b, v.Files)
-	}
 	if v.Flags.Has(5) {
 		WriteLong(b, v.FileMaxSize)
 	}
@@ -1887,9 +1866,6 @@ func (v *AccountFinishTakeoutSessionRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountFinishTakeoutSessionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Success)
-	}
 	return nil
 }
 
@@ -2141,12 +2117,6 @@ func (v *AccountGetNotifyExceptionsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountGetNotifyExceptionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.CompareSound)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CompareStories)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Peer)
 	}
@@ -2246,9 +2216,6 @@ func (v *AccountUploadWallPaperRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountUploadWallPaperTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ForChat)
-	}
 	EncodeTLObject(b, v.File)
 	WriteString(b, v.MimeType)
 	EncodeTLObject(b, v.Settings)
@@ -2472,12 +2439,6 @@ func (v *AccountSaveAutoDownloadSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountSaveAutoDownloadSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Low)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.High)
-	}
 	EncodeTLObject(b, v.Settings)
 	return nil
 }
@@ -2794,9 +2755,6 @@ func (v *AccountInstallThemeRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountInstallThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Dark)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.Theme)
 	}
@@ -2943,9 +2901,6 @@ func (v *AccountSetContentSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountSetContentSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.SensitiveEnabled)
-	}
 	return nil
 }
 
@@ -3376,9 +3331,6 @@ func (v *AccountChangeAuthorizationSettingsRequest) Encode(b *bytes.Buffer) erro
 	WriteInt(b, AccountChangeAuthorizationSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Confirmed)
-	}
 	WriteLong(b, v.Hash)
 	if v.Flags.Has(0) {
 		WriteBool(b, v.EncryptedRequestsDisabled)
@@ -3948,15 +3900,6 @@ func (v *AccountSaveAutoSaveSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountSaveAutoSaveSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Users)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Chats)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.Broadcasts)
-	}
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.Peer)
 	}
@@ -4092,9 +4035,6 @@ func (v *AccountUpdateColorRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountUpdateColorTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.ForProfile)
-	}
 	if v.Flags.Has(2) {
 		EncodeTLObject(b, v.Color)
 	}
@@ -4494,9 +4434,6 @@ func (v *AccountUpdateConnectedBotRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountUpdateConnectedBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Deleted)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Rights)
 	}
@@ -5298,12 +5235,6 @@ func (v *AccountToggleNoPaidMessagesExceptionRequest) Encode(b *bytes.Buffer) er
 	WriteInt(b, AccountToggleNoPaidMessagesExceptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.RefundCharged)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.RequirePayment)
-	}
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.ParentPeer)
 	}
@@ -5402,9 +5333,6 @@ func (v *AccountSaveMusicRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccountSaveMusicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Unsave)
-	}
 	EncodeTLObject(b, v.ID)
 	if v.Flags.Has(1) {
 		EncodeTLObject(b, v.AfterID)

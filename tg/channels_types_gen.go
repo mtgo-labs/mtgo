@@ -160,9 +160,6 @@ func (v *ChannelParticipantSelf) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelParticipantSelfTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ViaRequest)
-	}
 	WriteLong(b, v.UserID)
 	WriteLong(b, v.InviterID)
 	WriteInt(b, uint32(v.Date))
@@ -301,12 +298,6 @@ func (v *ChannelParticipantAdmin) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelParticipantAdminTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.CanEdit)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Self)
-	}
 	WriteLong(b, v.UserID)
 	if v.Flags.Has(1) {
 		WriteLong(b, v.InviterID)
@@ -383,9 +374,6 @@ func (v *ChannelParticipantBanned) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelParticipantBannedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Left)
-	}
 	EncodeTLObject(b, v.Peer)
 	WriteLong(b, v.KickedBy)
 	WriteInt(b, uint32(v.Date))

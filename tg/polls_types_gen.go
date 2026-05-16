@@ -244,36 +244,6 @@ func (v *Poll) Encode(b *bytes.Buffer) error {
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ID)
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Closed)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.PublicVoters)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.MultipleChoice)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.Quiz)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.OpenAnswers)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.RevotingDisabled)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.ShuffleAnswers)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.HideResultsUntilClose)
-	}
-	if v.Flags.Has(10) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.SubscribersOnly)
-	}
 	EncodeTLObject(b, v.Question)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Answers)))
@@ -381,12 +351,6 @@ func (v *PollAnswerVoters) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PollAnswerVotersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Chosen)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Correct)
-	}
 	WriteBytes(b, v.Option)
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.Voters))
@@ -493,15 +457,6 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PollResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Min)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.HasUnreadVotes)
-	}
-	if v.Flags.Has(7) {
-		WriteBool(b, v.CanViewStats)
-	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Results)))

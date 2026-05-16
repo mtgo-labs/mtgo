@@ -1315,9 +1315,6 @@ func (v *BotsSetCustomVerificationRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotsSetCustomVerificationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Enabled)
-	}
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Bot)
 	}
@@ -1459,9 +1456,6 @@ func (v *BotsCreateBotRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotsCreateBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.ViaDeeplink)
-	}
 	WriteString(b, v.Name)
 	WriteString(b, v.Username)
 	EncodeTLObject(b, v.ManagerID)
@@ -1695,9 +1689,6 @@ func (v *BotsEditAccessSettingsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotsEditAccessSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Restricted)
-	}
 	EncodeTLObject(b, v.Bot)
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)

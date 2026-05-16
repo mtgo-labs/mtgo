@@ -4,11 +4,11 @@ package tg
 
 // ConstructorMapChatlists maps constructor IDs to factory functions.
 var ConstructorMapChatlists = map[uint32]func() TLObject{
+	0xff544e65: func() TLObject { return &Folder{} },
 	0x93bd878d: func() TLObject { return &ChatlistsChatlistUpdates{} },
 	0x0c5181ac: func() TLObject { return &ExportedChatlistInvite{} },
 	0x10e6e3a6: func() TLObject { return &ChatlistsExportedChatlistInvite{} },
+	0x10ab6dc7: func() TLObject { return &ChatlistsExportedInvites{} },
 	0xfa87f659: func() TLObject { return &ChatlistsChatlistInviteAlready{} },
 	0xf10ece2f: func() TLObject { return &ChatlistsChatlistInvite{} },
-	0x10ab6dc7: func() TLObject { return &ChatlistsExportedInvites{} },
-	0xff544e65: func() TLObject { return &Folder{} },
 }

@@ -348,9 +348,6 @@ func (v *PhoneCallWaiting) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallWaitingTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.Date))
@@ -423,9 +420,6 @@ func (v *PhoneCallRequested) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallRequestedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.Date))
@@ -494,9 +488,6 @@ func (v *PhoneCallAccepted) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallAcceptedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.Date))
@@ -580,15 +571,6 @@ func (v *PhoneCall) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(5) {
-		WriteBool(b, v.P2pAllowed)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.ConferenceSupported)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.Date))
@@ -692,15 +674,6 @@ func (v *PhoneCallDiscarded) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallDiscardedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(2) {
-		WriteBool(b, v.NeedRating)
-	}
-	if v.Flags.Has(3) {
-		WriteBool(b, v.NeedDebug)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.Video)
-	}
 	WriteLong(b, v.ID)
 	if v.Flags.Has(0) {
 		EncodeTLObject(b, v.Reason)
@@ -835,9 +808,6 @@ func (v *PhoneConnection) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneConnectionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.TCP)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.Ip)
 	WriteString(b, v.IPv6)
@@ -904,12 +874,6 @@ func (v *PhoneConnectionWebrtc) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneConnectionWebrtcTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Turn)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.Stun)
-	}
 	WriteLong(b, v.ID)
 	WriteString(b, v.Ip)
 	WriteString(b, v.IPv6)
@@ -979,12 +943,6 @@ func (v *PhoneCallProtocol) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PhoneCallProtocolTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.UDPP2p)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.UDPReflector)
-	}
 	WriteInt(b, uint32(v.MinLayer))
 	WriteInt(b, uint32(v.MaxLayer))
 	WriteVectorString(b, v.LibraryVersions)
@@ -1187,45 +1145,6 @@ func (v *GroupCall) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(1) {
-		WriteBool(b, v.JoinMuted)
-	}
-	if v.Flags.Has(2) {
-		WriteBool(b, v.CanChangeJoinMuted)
-	}
-	if v.Flags.Has(6) {
-		WriteBool(b, v.JoinDateAsc)
-	}
-	if v.Flags.Has(8) {
-		WriteBool(b, v.ScheduleStartSubscribed)
-	}
-	if v.Flags.Has(9) {
-		WriteBool(b, v.CanStartVideo)
-	}
-	if v.Flags.Has(11) {
-		WriteBool(b, v.RecordVideoActive)
-	}
-	if v.Flags.Has(12) {
-		WriteBool(b, v.RtmpStream)
-	}
-	if v.Flags.Has(13) {
-		WriteBool(b, v.ListenersHidden)
-	}
-	if v.Flags.Has(14) {
-		WriteBool(b, v.Conference)
-	}
-	if v.Flags.Has(15) {
-		WriteBool(b, v.Creator)
-	}
-	if v.Flags.Has(17) {
-		WriteBool(b, v.MessagesEnabled)
-	}
-	if v.Flags.Has(18) {
-		WriteBool(b, v.CanChangeMessagesEnabled)
-	}
-	if v.Flags.Has(19) {
-		WriteBool(b, v.Min)
-	}
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.ParticipantsCount))
@@ -1824,12 +1743,6 @@ func (v *GroupCallDonor) Encode(b *bytes.Buffer) error {
 	WriteInt(b, GroupCallDonorTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	if v.Flags.Has(0) {
-		WriteBool(b, v.Top)
-	}
-	if v.Flags.Has(1) {
-		WriteBool(b, v.My)
-	}
 	if v.Flags.Has(3) {
 		EncodeTLObject(b, v.PeerID)
 	}
