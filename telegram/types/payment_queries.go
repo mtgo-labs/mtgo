@@ -1,17 +1,23 @@
 package types
 
+import (
+	"github.com/mtgo-labs/mtgo/telegram/params"
+)
+
 // PreCheckoutQuery is sent to the bot when a user confirms a payment but before
 // the charge is finalized. The bot must respond within 10 seconds to approve or
 // reject the payment.
 type PreCheckoutQuery struct {
-	ID              int64
-	UserID          int64
-	Currency        string
-	TotalAmount     int64
-	InvoiceSlug     string
+	ID               int64
+	UserID           int64
+	FromUser         *User
+	Currency         string
+	TotalAmount      int64
+	InvoicePayload   string
+	InvoiceSlug      string
 	ShippingOptionID string
-	OrderInfo       *OrderInfo
-	binder          Binder
+	OrderInfo        *OrderInfo
+	binder           Binder
 }
 
 func (q *PreCheckoutQuery) SetBinder(b Binder) {
@@ -22,17 +28,19 @@ func (q *PreCheckoutQuery) Answer(ok bool, errorMsg string) error {
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerPreCheckout(q.ID, ok, errorMsg)
+	return q.binder.BoundAnswerPreCheckout(q.ID, &params.AnswerPreCheckout{Ok: ok, ErrorMsg: errorMsg})
 }
 
 // ShippingQuery is sent to the bot when a user selects a shipping address during
 // checkout so the bot can return available shipping options.
 type ShippingQuery struct {
-	ID          int64
-	UserID      int64
-	InvoiceSlug string
-	Address     *ShippingAddress
-	binder      Binder
+	ID             int64
+	UserID         int64
+	FromUser       *User
+	InvoicePayload string
+	InvoiceSlug    string
+	Address        *ShippingAddress
+	binder         Binder
 }
 
 func (q *ShippingQuery) SetBinder(b Binder) {
@@ -43,7 +51,7 @@ func (q *ShippingQuery) Answer(ok bool, errorMsg string) error {
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerShipping(q.ID, ok, errorMsg)
+	return q.binder.BoundAnswerShipping(q.ID, &params.AnswerShipping{Ok: ok, ErrorMsg: errorMsg})
 }
 
 // OrderInfo contains the contact and shipping details provided by the buyer
@@ -79,19 +87,16 @@ type ShippingAddress struct {
 // ShippingOption represents a single shipping option presented to the user
 // during checkout. The bot returns a list of these in response to a ShippingQuery.
 type ShippingOption struct {
-	// ID is the unique identifier of the shipping option, used by the bot
-	// to identify the selected option in later payment stages.
-	ID string
-	// Title is the human-readable display name of the shipping option.
-	Title string
+	ID     string
+	Title  string
+	Prices []*LabeledPrice
 }
 
 // PurchasedPaidMedia is sent when a user purchases access to paid media
 // attached to a message. Use it to verify and fulfill the media purchase.
 type PurchasedPaidMedia struct {
-	// UserID is the user who purchased the paid media.
-	UserID int64
-	// PaidMediaID is the unique identifier of the paid media purchase event,
-	// used to correlate with the specific media item purchased.
+	FromUser    *User
+	Payload     string
+	UserID      int64
 	PaidMediaID string
 }

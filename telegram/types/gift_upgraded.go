@@ -1,13 +1,27 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"time"
+
+	"github.com/mtgo-labs/mtgo/tg"
+)
 
 // UpgradedGiftValueInfo holds market and valuation data for a unique upgraded star gift.
 type UpgradedGiftValueInfo struct {
-	// GiftID is the unique identifier of the upgraded gift.
-	GiftID int64
-	// Stars is the estimated value in Telegram Stars.
-	Stars int64
+	Currency                string
+	Value                   int64
+	IsValueAverage          bool
+	InitialSaleDate         time.Time
+	InitialSaleStarCount    int64
+	InitialSalePrice        int64
+	LastSaleDate            time.Time
+	LastSalePrice           int64
+	IsLastSaleOnFragment    bool
+	MinimumPrice            int64
+	AverageSalePrice        int64
+	TelegramListedGiftCount int32
+	FragmentListedGiftCount int32
+	FragmentURL             string
 }
 
 // ParseUpgradedGiftValueInfo converts a tg.PaymentsUniqueStarGiftValueInfo into an UpgradedGiftValueInfo.
@@ -16,9 +30,26 @@ func ParseUpgradedGiftValueInfo(raw *tg.PaymentsUniqueStarGiftValueInfo) *Upgrad
 	if raw == nil {
 		return nil
 	}
-	return &UpgradedGiftValueInfo{
-		Stars: raw.InitialSaleStars,
+	info := &UpgradedGiftValueInfo{
+		Currency:                raw.Currency,
+		Value:                   raw.Value,
+		IsValueAverage:          raw.ValueIsAverage,
+		InitialSaleStarCount:    raw.InitialSaleStars,
+		InitialSalePrice:        raw.InitialSalePrice,
+		IsLastSaleOnFragment:    raw.LastSaleOnFragment,
+		MinimumPrice:            raw.FloorPrice,
+		AverageSalePrice:        raw.AveragePrice,
+		TelegramListedGiftCount: raw.ListedCount,
+		FragmentListedGiftCount: raw.FragmentListedCount,
+		FragmentURL:             raw.FragmentListedURL,
 	}
+	if raw.InitialSaleDate != 0 {
+		info.InitialSaleDate = time.Unix(int64(raw.InitialSaleDate), 0)
+	}
+	if raw.LastSaleDate != 0 {
+		info.LastSaleDate = time.Unix(int64(raw.LastSaleDate), 0)
+	}
+	return info
 }
 
 // UpgradedGiftAttribute describes a single attribute on an upgraded star gift
@@ -82,12 +113,10 @@ func ParseUpgradedGiftAttribute(attr tg.StarGiftAttributeClass) *UpgradedGiftAtt
 
 // UpgradedGiftOriginalDetails records the original sender and recipient of an upgraded gift.
 type UpgradedGiftOriginalDetails struct {
-	// SenderID is the user ID of the original sender, or zero if hidden.
-	SenderID int64
-	// RecipientID is the user ID of the original recipient.
-	RecipientID int64
-	// Date is the Unix timestamp when the gift was originally sent.
-	Date int32
+	Sender   *Chat
+	Receiver *Chat
+	Text     *FormattedText
+	Date     time.Time
 }
 
 // ParseUpgradedGiftOriginalDetails converts a tg.StarGiftAttributeOriginalDetails into
@@ -96,35 +125,35 @@ func ParseUpgradedGiftOriginalDetails(raw *tg.StarGiftAttributeOriginalDetails) 
 	if raw == nil {
 		return nil
 	}
-	d := &UpgradedGiftOriginalDetails{
-		Date: raw.Date,
+	d := &UpgradedGiftOriginalDetails{}
+	if raw.Date != 0 {
+		d.Date = time.Unix(int64(raw.Date), 0)
 	}
 	if raw.SenderID != nil {
-		d.SenderID = peerUserID(raw.SenderID)
+		if p, ok := raw.SenderID.(*tg.PeerUser); ok {
+			d.Sender = &Chat{ID: p.UserID}
+		}
 	}
 	if raw.RecipientID != nil {
-		d.RecipientID = peerUserID(raw.RecipientID)
+		if p, ok := raw.RecipientID.(*tg.PeerUser); ok {
+			d.Receiver = &Chat{ID: p.UserID}
+		}
+	}
+	if raw.Message != nil {
+		d.Text = &FormattedText{Text: raw.Message.Text}
+		for _, e := range raw.Message.Entities {
+			if me := ParseMessageEntity(e); me != nil {
+				d.Text.Entities = append(d.Text.Entities, me)
+			}
+		}
 	}
 	return d
 }
 
 // UpgradedGiftPurchaseOffer describes an offer to purchase an upgraded gift.
 type UpgradedGiftPurchaseOffer struct {
-	// GiftID is the unique identifier of the upgraded gift being offered.
-	GiftID int64
-	// Stars is the asking price in Telegram Stars.
-	Stars int64
-	// UntilDate is the Unix timestamp when the offer expires, or zero.
-	UntilDate int32
-}
-
-// peerUserID extracts a user ID from a PeerClass, returning 0 if not a user peer.
-func peerUserID(peer tg.PeerClass) int64 {
-	if peer == nil {
-		return 0
-	}
-	if p, ok := peer.(*tg.PeerUser); ok {
-		return p.UserID
-	}
-	return 0
+	Gift           *Gift
+	State          GiftPurchaseOfferState
+	Price          *GiftResalePrice
+	ExpirationDate time.Time
 }

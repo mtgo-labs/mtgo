@@ -2,111 +2,469 @@ package types
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// Chat represents a Telegram chat, which may be a private conversation, bot,
-// group, supergroup, or channel. When created by a Client, it carries a
-// ChatBinder so that Archive, SetTitle, BanMember, and other convenience methods
-// can operate directly against the API.
+// Chat represents any Telegram chat (private, bot, group, supergroup, channel, or forum).
+// It merges fields from the base TL object (User/Chat/Channel) and the corresponding Full
+// object (UserFull/ChatFull/ChannelFull) into a single flat struct following the Kurigram pattern.
 //
-// Example:
-//
-//	chats, err := client.GetDialogs(ctx, 0, 10)
-//	for _, c := range chats {
-//	    fmt.Printf("%s (%s) — %d members\n", c.Title, c.Type, c.MembersCount)
-//	}
+// Base fields are populated by ParseChatFromUser, ParseChatFromChat, or ParseChatFromPeer.
+// Full fields are merged in by EnrichChatFull.
 type Chat struct {
-	// ID is the unique chat identifier. Negative for groups and channels, positive
-	// for users (private chats).
-	ID int64
-	// Type classifies the chat as private, bot, group, supergroup, channel, or
-	// forum.
+	ID   int64
 	Type ChatType
-	// IsVerified is true when the chat (channel or bot) is verified by Telegram.
-	IsVerified bool
-	// IsScam is true when the chat has been flagged as a scam by Telegram.
-	IsScam bool
-	// IsRestricted is true when the chat is geo-restricted or otherwise restricted
-	// by Telegram.
-	IsRestricted bool
-	// IsCreator is true when the current user is the creator/owner of the chat.
-	IsCreator bool
-	// IsForum is true when the supergroup has forum (topics) enabled.
-	IsForum bool
-	// Title is the display title of the chat (empty for private users).
-	Title string
-	// FirstName is the first name of the user (only set for private chats and
-	// bots).
-	FirstName string
-	// LastName is the last name of the user (only set for private chats and bots).
-	LastName string
-	// Username is the public username of the chat, without the "@" prefix.
-	Username string
-	// Photo contains the chat's profile photo variants.
-	Photo *ChatPhoto
-	// Description is the chat's about text (groups, supergroups, channels).
-	Description string
-	// Permissions describes the default actions non-admin members can perform.
-	Permissions *ChatPermissions
-	// AdminRights lists the administrative privileges of the current user in this
-	// chat.
-	AdminRights *ChatAdminRights
-	// BannedRights lists the restrictions applied to the current user in this
-	// chat.
-	BannedRights *ChatBannedRights
-	// MembersCount is the number of members in the chat, or 0 when not available.
-	MembersCount int
-	// AccessHash is required to access channels or users that the client has not
-	// cached locally.
-	AccessHash int64
-	binder     ChatBinder
+	Raw  any
+
+	IsVerified               bool
+	IsScam                   bool
+	IsFake                   bool
+	IsRestricted             bool
+	IsCreator                bool
+	IsLeft                   bool
+	IsAdmin                  bool
+	IsForum                  bool
+	IsMin                    bool
+	IsPublic                 bool
+	IsDeactivated            bool
+	IsCallActive             bool
+	IsCallNotEmpty           bool
+	IsSlowMode               bool
+	IsNoforwards             bool
+	IsJoinToSend             bool
+	IsJoinRequest            bool
+	IsGigagroup              bool
+	IsMonoforum              bool
+	IsDirectMessages         bool
+	IsStoriesHidden          bool
+	IsStoriesUnavailable     bool
+	IsSupport                bool
+	IsBusinessBot            bool
+	IsBanned                 bool
+	IsMembersHidden          bool
+	IsPreview                bool
+	IsContactRequirePremium  bool
+	HasForumTabs             bool
+	HasLink                  bool
+	HasGeo                   bool
+	SignMessages             bool
+	ShowMessageSenderName    bool
+	HasProtectedContent      bool
+	HasAutoTranslation       bool
+	HasVisibleHistory        bool
+	HasAggressiveAntiSpam    bool
+	HasDirectMessagesGroup   bool
+	IsPaidReactionsAvailable bool
+
+	IsBlocked                bool
+	IsPhoneCallsAvailable    bool
+	IsPhoneCallsPrivate      bool
+	IsVideoCallsAvailable    bool
+	IsWallpaperOverridden    bool
+	IsTranslationsDisabled   bool
+	IsPinnedStoriesAvailable bool
+	IsBlockedMyStoriesFrom   bool
+	IsReadDatesAvailable     bool
+	IsAdsEnabled             bool
+	IsAdsRestricted          bool
+	IsPaidMessagesAvailable  bool
+	UsesUnofficialApp        bool
+	CanPinMessage            bool
+	CanScheduleMessages      bool
+	CanSendVoiceMessages     bool
+	CanViewRevenue           bool
+	CanViewStarsRevenue      bool
+	CanViewStats             bool
+	CanViewParticipants      bool
+	CanDeleteChannel         bool
+	CanSetUsername           bool
+	CanSetStickerSet         bool
+	CanSetLocation           bool
+	CanSendPaidMedia         bool
+	CanSendGift              bool
+	BotCanManageEmojiStatus  bool
+	DisplayGiftsButton       bool
+
+	Title                  string
+	FirstName              string
+	LastName               string
+	Username               string
+	Description            string
+	Bio                    string
+	Phone                  string
+	Language               string
+	PrivateForwardName     string
+	InviteLink             string
+	StickerSetName         string
+	CustomEmojiStickerSet  string
+	ThemeEmoticon          string
+	InlineQueryPlaceholder string
+
+	Photo           *ChatPhoto
+	PersonalPhoto   *ChatPhoto
+	PublicPhoto     *ChatPhoto
+	Restrictions    []*Restriction
+	Usernames       []*Username
+	EmojiStatus     *EmojiStatus
+	ReplyColor      *ChatColor
+	ProfileColor    *ChatColor
+	Birthday        *Birthday
+	BotVerification *BotVerification
+
+	AccessHash            int64
+	MembersCount          int
+	Date                  int32
+	Level                 int32
+	SubscriptionUntilDate time.Time
+	BotVerificationIcon   int64
+	PaidMessageStarCount  int64
+
+	CommonChats          int32
+	FolderID             int32
+	MessageAutoDelete    int32
+	GiftCount            int32
+	PinnedMessageID      int32
+	PersonalChannelID    int64
+	PersonalChannelMsg   int32
+	LinkedChatID         int64
+	DirectMessagesChatID int64
+	MigratedFromChatID   int64
+	MigratedFromMaxID    int32
+	UnreadCount          int32
+	ReadInboxMaxID       int32
+	ReadOutboxMaxID      int32
+	OnlineCount          int32
+	AdminsCount          int32
+	KickedCount          int32
+	BannedCount          int32
+	AvailableMinID       int32
+	SlowModeDelay        int32
+	SlowmodeNextSendDate time.Time
+	JoinRequestsCount    int32
+	BoostsApplied        int32
+	BoostsUnrestrict     int32
+	ReactionsLimit       int32
+	StatsDC              int32
+	AdminRights          *ChatAdminRights
+	BannedRights         *ChatBannedRights
+	Permissions          *ChatPermissions
+	BotGroupRights       *ChatAdminRights
+	BotBroadcastRights   *ChatAdminRights
+	AvailableReactions   tg.ChatReactionsClass
+
+	VerificationStatus     *VerificationStatus
+	Stories                []*Story
+	ChatBackground         *ChatBackground
+	PinnedMessage          *Message
+	Members                []*User
+	PersonalChannel        *Chat
+	PersonalChannelMessage *Message
+	ParentChat             *Chat
+	LinkedChat             *Chat
+	SendAsChat             *Chat
+
+	BusinessAwayMessage     *BusinessMessage
+	BusinessGreetingMessage *BusinessMessage
+	BusinessWorkHours       *BusinessWorkingHours
+	BusinessLocation        *LocationMedia
+	BusinessIntro           *BusinessIntro
+
+	IsJoinByRequest       bool
+	IsViewForumAsMessages bool
+	BannedUntilDate       time.Time
+	CanManageBots         bool
+
+	MainProfileTab    ProfileTab
+	FirstProfileAudio *DocumentMedia
+	Rating            *UserRating
+	PendingRating     *UserRating
+	PendingRatingDate time.Time
+	Settings          *ChatSettings
+
+	ChannelAdminRights *ChatAdministratorRights
+	ChatAdminRights    *ChatAdministratorRights
+	Theme              string
+	AcceptedGiftTypes  *AcceptedGiftTypes
+	Note               *FormattedText
+
+	binder ChatBinder
 }
 
-// ChatPreview contains a minimal subset of chat information used for link
-// previews and search results where full chat details are not needed.
+// ChatPreview represents a partial view of a chat obtained from an invite link,
+// without requiring the user to join.
 type ChatPreview struct {
-	// ID is the unique chat identifier.
-	ID int64
-	// Type classifies the chat.
-	Type ChatType
-	// Title is the display title of the chat.
-	Title string
-	// Username is the public username, without the "@" prefix.
-	Username string
-	// Photo contains the chat's profile photo.
-	Photo *ChatPhoto
-	// MembersCount is the number of members in the chat.
+	ID           int64
+	Type         ChatType
+	Title        string
+	Username     string
+	Photo        *ChatPhoto
 	MembersCount int
+	IsVerified   bool
+	IsScam       bool
+	IsFake       bool
 }
 
-// String returns a human-readable identifier for the chat, preferring username,
-// then title, then first/last name, and finally a fallback "chat_<id>" format.
+// SetBinder injects the ChatBinder that backs bound convenience methods on this Chat.
+func (c *Chat) SetBinder(b ChatBinder) {
+	c.binder = b
+}
+
+// String returns the chat's title, full name (for private/bot), or a fallback "chat_<id>" string.
 func (c *Chat) String() string {
-	if c.Username != "" {
-		return c.Username
+	if c.Type == ChatTypePrivate || c.Type == ChatTypeBot {
+		name := c.FirstName
+		if c.LastName != "" {
+			name += " " + c.LastName
+		}
+		if name != "" {
+			return name
+		}
 	}
 	if c.Title != "" {
 		return c.Title
 	}
-	name := c.FirstName
-	if c.LastName != "" {
-		name += " " + c.LastName
-	}
-	if name == "" {
-		return fmt.Sprintf("chat_%d", c.ID)
-	}
-	return name
+	return fmt.Sprintf("chat_%d", c.ID)
 }
 
-// ParseChatFromUser converts an MTProto User to a Chat.
+// MentionName returns "@username" if set, otherwise falls back to String().
+func (c *Chat) MentionName() string {
+	if c.Username != "" {
+		return "@" + c.Username
+	}
+	return c.String()
+}
+
+// FullName returns the display name for the chat: full name for private/bot chats,
+// title for groups/channels.
+func (c *Chat) FullName() string {
+	if c.Type == ChatTypePrivate || c.Type == ChatTypeBot {
+		if c.LastName != "" {
+			return c.FirstName + " " + c.LastName
+		}
+		return c.FirstName
+	}
+	return c.Title
+}
+
+func (c *Chat) requireBinder() error {
+	if c.binder == nil {
+		return ErrNoChatBinder
+	}
+	return nil
+}
+
+func (c *Chat) Archive() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundArchive(c.ID)
+}
+
+func (c *Chat) Unarchive() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundUnarchive(c.ID)
+}
+
+func (c *Chat) SetTitle(title string) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetTitle(c.ID, title)
+}
+
+func (c *Chat) SetDescription(description string) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetDescription(c.ID, description)
+}
+
+func (c *Chat) SetPhoto(photo tg.InputChatPhotoClass) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetPhoto(c.ID, photo)
+}
+
+func (c *Chat) DeletePhoto() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundDeletePhoto(c.ID)
+}
+
+func (c *Chat) SetUsername(username string) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetUsername(c.ID, username)
+}
+
+func (c *Chat) BanMember(userID int64) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundBanMember(c.ID, userID)
+}
+
+func (c *Chat) UnbanMember(userID int64) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundUnbanMember(c.ID, userID)
+}
+
+func (c *Chat) RestrictMember(userID int64, bannedRights *tg.ChatBannedRights) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundRestrictMember(c.ID, userID, bannedRights)
+}
+
+func (c *Chat) PromoteMember(userID int64, adminRights *tg.ChatAdminRights) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundPromoteMember(c.ID, userID, adminRights)
+}
+
+func (c *Chat) Join(username string) (*Chat, error) {
+	if err := c.requireBinder(); err != nil {
+		return nil, err
+	}
+	return c.binder.BoundJoinChat(c.ID, username)
+}
+
+func (c *Chat) Leave() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundLeaveChat(c.ID)
+}
+
+func (c *Chat) ExportInviteLink() (string, error) {
+	if err := c.requireBinder(); err != nil {
+		return "", err
+	}
+	return c.binder.BoundExportInviteLink(c.ID)
+}
+
+func (c *Chat) GetMember(userID int64) (*ChatMember, error) {
+	if err := c.requireBinder(); err != nil {
+		return nil, err
+	}
+	return c.binder.BoundGetMember(c.ID, userID)
+}
+
+func (c *Chat) GetMembers(limit int, offset int) ([]*ChatMember, error) {
+	if err := c.requireBinder(); err != nil {
+		return nil, err
+	}
+	return c.binder.BoundGetMembers(c.ID, limit, offset)
+}
+
+func (c *Chat) AddMembers(userID int64) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundAddMembers(c.ID, userID)
+}
+
+func (c *Chat) MarkUnread(unread bool) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundMarkUnread(c.ID, unread)
+}
+
+func (c *Chat) SetProtectedContent(enabled bool) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetProtectedContent(c.ID, enabled)
+}
+
+func (c *Chat) SetTTL(ttl int) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetTTL(c.ID, ttl)
+}
+
+func (c *Chat) SetPermissions(permissions *tg.ChatBannedRights) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetPermissions(c.ID, permissions)
+}
+
+func (c *Chat) SetAdminTitle(userID int64, title string) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetAdminTitle(c.ID, userID, title)
+}
+
+func (c *Chat) SetSlowMode(seconds int) error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundSetSlowMode(c.ID, seconds)
+}
+
+func (c *Chat) Mute() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundMute(c.ID)
+}
+
+func (c *Chat) Unmute() error {
+	if err := c.requireBinder(); err != nil {
+		return err
+	}
+	return c.binder.BoundUnmute(c.ID)
+}
+
+func (c *Chat) UnpinAll() (int, error) {
+	if err := c.requireBinder(); err != nil {
+		return 0, err
+	}
+	return c.binder.BoundUnpinAll(c.ID)
+}
+
+func (c *Chat) UnpinAllMessages() (int, error) {
+	return c.UnpinAll()
+}
+
+func (c *Chat) GetChat() (*Chat, error) {
+	if err := c.requireBinder(); err != nil {
+		return nil, err
+	}
+	return c.binder.BoundGetChat(c.ID)
+}
+
+func (c *Chat) GetEventLog(query string, limit int) ([]*ChatEvent, error) {
+	if err := c.requireBinder(); err != nil {
+		return nil, err
+	}
+	return c.binder.BoundGetEventLog(c.ID, query, limit)
+}
+
+// DC returns the data center ID where the chat's photo is stored, or 0 if no photo.
+func (c *Chat) DC() int {
+	if c.Photo == nil {
+		return 0
+	}
+	return int(c.Photo.DcID)
+}
+
+// ParseChatFromUser creates a Chat from a TL UserClass (private chat or bot).
 // Returns nil if raw is nil.
-//
-// Example:
-//
-//	chat := types.ParseChatFromUser(userTL)
-//	fmt.Println(chat.Username)
 func ParseChatFromUser(raw tg.UserClass) *Chat {
 	if raw == nil {
 		return nil
@@ -120,11 +478,27 @@ func ParseChatFromUser(raw tg.UserClass) *Chat {
 			chatType = ChatTypeBot
 		}
 		c := &Chat{
-			ID:         r.ID,
-			Type:       chatType,
-			IsVerified: r.Verified,
-			IsScam:     r.Scam,
-			Photo:      parseUserProfilePhoto(r.Photo),
+			ID:                      r.ID,
+			Type:                    chatType,
+			IsVerified:              r.Verified,
+			IsScam:                  r.Scam,
+			IsFake:                  r.Fake,
+			IsRestricted:            r.Restricted,
+			IsSupport:               r.Support,
+			IsStoriesHidden:         r.StoriesHidden,
+			IsStoriesUnavailable:    r.StoriesUnavailable,
+			IsContactRequirePremium: r.ContactRequirePremium,
+			IsBusinessBot:           r.BotBusiness,
+			Photo:                   parseUserProfilePhoto(r.Photo),
+			EmojiStatus:             ParseEmojiStatus(r.EmojiStatus),
+			ReplyColor:              ParseChatColorFromPeer(r.Color),
+			ProfileColor:            ParseChatColorFromPeer(r.ProfileColor),
+			Restrictions:            parseRestrictions(r.RestrictionReason),
+			Usernames:               parseUsernames(r.Usernames),
+			BotVerificationIcon:     r.BotVerificationIcon,
+			PaidMessageStarCount:    r.SendPaidMessagesStars,
+			Date:                    0,
+			Raw:                     r,
 		}
 		if r.FirstName != "" {
 			c.FirstName = r.FirstName
@@ -138,6 +512,15 @@ func ParseChatFromUser(raw tg.UserClass) *Chat {
 		if r.AccessHash != 0 {
 			c.AccessHash = r.AccessHash
 		}
+		if r.LangCode != "" {
+			c.Language = r.LangCode
+		}
+		if r.Phone != "" {
+			c.Phone = r.Phone
+		}
+		if r.BotInlinePlaceholder != "" {
+			c.InlineQueryPlaceholder = r.BotInlinePlaceholder
+		}
 		if r.Deleted {
 			c.FirstName = "Deleted Account"
 			c.LastName = ""
@@ -148,14 +531,8 @@ func ParseChatFromUser(raw tg.UserClass) *Chat {
 	return nil
 }
 
-// ParseChatFromChat converts an MTProto Chat or Channel to a Chat.
-// Handles basic groups, supergroups, and channels, including forbidden variants.
-// Returns nil if raw is nil or represents an empty chat.
-//
-// Example:
-//
-//	chat := types.ParseChatFromChat(channelTL)
-//	fmt.Printf("Channel: %s (ID: %d)\n", chat.Title, chat.ID)
+// ParseChatFromChat creates a Chat from a TL ChatClass (group, channel, supergroup, or forum).
+// Returns nil if raw is nil.
 func ParseChatFromChat(raw tg.ChatClass) *Chat {
 	if raw == nil {
 		return nil
@@ -164,39 +541,89 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 	case *tg.ChatEmpty:
 		return nil
 	case *tg.Chat:
-		return &Chat{
-			ID:           -r.ID,
-			Type:         ChatTypeGroup,
-			Title:        r.Title,
-			IsCreator:    r.Creator,
-			Permissions:  ParseChatPermissions(r.DefaultBannedRights),
-			MembersCount: int(r.ParticipantsCount),
-			Photo:        parseChatPhoto(r.Photo),
-			AdminRights:  ParseChatAdminRights(r.AdminRights),
+		c := &Chat{
+			ID:                  -r.ID,
+			Type:                ChatTypeGroup,
+			Title:               r.Title,
+			IsCreator:           r.Creator,
+			IsLeft:              r.Left,
+			IsAdmin:             r.AdminRights != nil,
+			IsDeactivated:       r.Deactivated,
+			IsCallActive:        r.CallActive,
+			IsCallNotEmpty:      r.CallNotEmpty,
+			IsNoforwards:        r.Noforwards,
+			HasProtectedContent: r.Noforwards,
+			Photo:               parseChatPhoto(r.Photo),
+			Permissions:         ParseChatPermissions(r.DefaultBannedRights),
+			AdminRights:         ParseChatAdminRights(r.AdminRights),
+			Date:                r.Date,
+			Raw:                 r,
 		}
+		if r.ParticipantsCount != 0 {
+			c.MembersCount = int(r.ParticipantsCount)
+		}
+		return c
 	case *tg.ChatForbidden:
 		return &Chat{
-			ID:    -r.ID,
-			Type:  ChatTypeGroup,
-			Title: r.Title,
+			ID:       -r.ID,
+			Type:     ChatTypeGroup,
+			Title:    r.Title,
+			IsBanned: true,
+			Raw:      r,
 		}
 	case *tg.Channel:
 		chatType := ChatTypeChannel
 		if r.Megagroup {
 			chatType = ChatTypeSupergroup
 		}
+		if r.Forum {
+			chatType = ChatTypeForum
+		}
 		c := &Chat{
-			ID:           -r.ID,
-			Type:         chatType,
-			Title:        r.Title,
-			IsVerified:   r.Verified,
-			IsRestricted: r.Restricted,
-			IsCreator:    r.Creator,
-			IsForum:      r.Forum,
-			Photo:        parseChatPhoto(r.Photo),
-			Permissions:  ParseChatPermissions(r.DefaultBannedRights),
-			AdminRights:  ParseChatAdminRights(r.AdminRights),
-			BannedRights: ParseChatBannedRights(r.BannedRights),
+			ID:                     -r.ID,
+			Type:                   chatType,
+			Title:                  r.Title,
+			IsVerified:             r.Verified,
+			IsScam:                 r.Scam,
+			IsFake:                 r.Fake,
+			IsRestricted:           r.Restricted,
+			IsCreator:              r.Creator,
+			IsLeft:                 r.Left,
+			IsAdmin:                r.AdminRights != nil,
+			IsForum:                r.Forum,
+			IsMin:                  r.Min,
+			IsPublic:               r.HasLink,
+			IsGigagroup:            r.Gigagroup,
+			IsMonoforum:            r.Monoforum,
+			IsCallActive:           r.CallActive,
+			IsCallNotEmpty:         r.CallNotEmpty,
+			IsSlowMode:             r.SlowmodeEnabled,
+			IsNoforwards:           r.Noforwards,
+			IsJoinToSend:           r.JoinToSend,
+			IsJoinRequest:          r.JoinRequest,
+			IsStoriesHidden:        r.StoriesHidden,
+			IsStoriesUnavailable:   r.StoriesUnavailable,
+			SignMessages:           r.Signatures,
+			ShowMessageSenderName:  r.SignatureProfiles,
+			HasProtectedContent:    r.Noforwards,
+			HasAutoTranslation:     r.Autotranslation,
+			HasDirectMessagesGroup: r.BroadcastMessagesAllowed,
+			HasForumTabs:           r.ForumTabs,
+			Photo:                  parseChatPhoto(r.Photo),
+			Permissions:            ParseChatPermissions(r.DefaultBannedRights),
+			AdminRights:            ParseChatAdminRights(r.AdminRights),
+			BannedRights:           ParseChatBannedRights(r.BannedRights),
+			Restrictions:           parseRestrictions(r.RestrictionReason),
+			Usernames:              parseUsernames(r.Usernames),
+			EmojiStatus:            ParseEmojiStatus(r.EmojiStatus),
+			ReplyColor:             ParseChatColorFromPeer(r.Color),
+			ProfileColor:           ParseChatColorFromPeer(r.ProfileColor),
+			Date:                   r.Date,
+			Level:                  r.Level,
+			SubscriptionUntilDate:  time.Unix(int64(r.SubscriptionUntilDate), 0),
+			BotVerificationIcon:    r.BotVerificationIcon,
+			PaidMessageStarCount:   r.SendPaidMessagesStars,
+			Raw:                    r,
 		}
 		if r.Username != "" {
 			c.Username = r.Username
@@ -214,18 +641,18 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 			chatType = ChatTypeSupergroup
 		}
 		return &Chat{
-			ID:         -r.ID,
-			Type:       chatType,
-			Title:      r.Title,
-			AccessHash: r.AccessHash,
+			ID:       -r.ID,
+			Type:     chatType,
+			Title:    r.Title,
+			IsBanned: true,
+			Raw:      r,
 		}
 	}
 	return nil
 }
 
-// ParseChatFromPeer resolves a Peer using the provided PeerMap and converts
-// the result to a Chat. Falls back to a minimal Chat with just ID and Type
-// when the peer is not found in the map. Returns nil if either peer or pm is nil.
+// ParseChatFromPeer resolves a PeerClass using the PeerMap and returns a Chat.
+// Falls back to a minimal Chat with just ID and Type if the peer is not found in the map.
 func ParseChatFromPeer(peer tg.PeerClass, pm *PeerMap) *Chat {
 	if peer == nil || pm == nil {
 		return nil
@@ -250,283 +677,190 @@ func ParseChatFromPeer(peer tg.PeerClass, pm *PeerMap) *Chat {
 	return nil
 }
 
-// Archive moves the chat to the archived folder.
-// Returns ErrNoChatBinder if the chat was not created by a client.
+// ParseChatPreview converts a TL ChatInvite into a ChatPreview showing the chat's
+// public metadata without requiring the caller to join. Returns nil if chatInvite is nil.
 //
 // Example:
 //
-//	err := chat.Archive()
-func (c *Chat) Archive() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+//	preview := types.ParseChatPreview(invite)
+//	fmt.Printf("Preview: %s (%d members, type=%s)\n", preview.Title, preview.MembersCount, preview.Type)
+func ParseChatPreview(chatInvite *tg.ChatInvite) *ChatPreview {
+	if chatInvite == nil {
+		return nil
 	}
-	return c.binder.BoundArchive(c.ID)
+	c := &ChatPreview{
+		Title:      chatInvite.Title,
+		IsVerified: chatInvite.Verified,
+		IsScam:     chatInvite.Scam,
+		IsFake:     chatInvite.Fake,
+	}
+	if chatInvite.Channel {
+		c.Type = ChatTypeChannel
+		if chatInvite.Megagroup {
+			c.Type = ChatTypeSupergroup
+		}
+	} else {
+		c.Type = ChatTypeGroup
+	}
+	if chatInvite.ParticipantsCount != 0 {
+		c.MembersCount = int(chatInvite.ParticipantsCount)
+	}
+	return c
 }
 
-// Unarchive moves the chat back to the main chat list.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) Unarchive() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+// EnrichChatFull merges fields from a Full TL object (ChatFull, ChannelFull, or UserFull)
+// into an existing Chat. Does nothing if either argument is nil.
+func EnrichChatFull(c *Chat, full any) {
+	if c == nil || full == nil {
+		return
 	}
-	return c.binder.BoundUnarchive(c.ID)
+	switch f := full.(type) {
+	case *tg.ChatFull:
+		enrichChatFromChatFull(c, f)
+	case *tg.ChannelFull:
+		enrichChatFromChannelFull(c, f)
+	case *tg.UserFull:
+		enrichChatFromUserFull(c, f)
+	}
 }
 
-// SetTitle changes the chat's display title.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-//
-// Example:
-//
-//	err := chat.SetTitle("New Group Name")
-func (c *Chat) SetTitle(title string) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+func enrichChatFromChatFull(c *Chat, f *tg.ChatFull) {
+	if f.About != "" {
+		c.Description = f.About
 	}
-	return c.binder.BoundSetTitle(c.ID, title)
+	c.CanSetUsername = f.CanSetUsername
+	c.CanScheduleMessages = f.HasScheduled
+	c.IsTranslationsDisabled = f.TranslationsDisabled
+	c.FolderID = f.FolderID
+	c.MessageAutoDelete = f.TTLPeriod
+	c.PinnedMessageID = f.PinnedMsgID
+	c.ThemeEmoticon = f.ThemeEmoticon
+	c.JoinRequestsCount = f.RequestsPending
+	c.AvailableReactions = f.AvailableReactions
+	c.ReactionsLimit = f.ReactionsLimit
+	if f.ExportedInvite != nil {
+		if ei, ok := f.ExportedInvite.(*tg.ChatInviteExported); ok {
+			c.InviteLink = ei.Link
+		}
+	}
 }
 
-// SetDescription updates the chat's about/description text.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetDescription(description string) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+func enrichChatFromChannelFull(c *Chat, f *tg.ChannelFull) {
+	if f.About != "" {
+		c.Description = f.About
 	}
-	return c.binder.BoundSetDescription(c.ID, description)
+	c.CanViewParticipants = f.CanViewParticipants
+	c.CanSetUsername = f.CanSetUsername
+	c.CanSetStickerSet = f.CanSetStickers
+	c.HasVisibleHistory = f.HiddenPrehistory
+	c.CanSetLocation = f.CanSetLocation
+	c.CanScheduleMessages = f.HasScheduled
+	c.CanViewStats = f.CanViewStats
+	c.IsBlocked = f.Blocked
+	c.CanDeleteChannel = f.CanDeleteChannel
+	c.HasAggressiveAntiSpam = f.Antispam
+	c.IsMembersHidden = f.ParticipantsHidden
+	c.IsTranslationsDisabled = f.TranslationsDisabled
+	c.IsPinnedStoriesAvailable = f.StoriesPinnedAvailable
+	c.IsAdsRestricted = f.RestrictedSponsored
+	c.CanViewRevenue = f.CanViewRevenue
+	c.CanSendPaidMedia = f.PaidMediaAllowed
+	c.CanViewStarsRevenue = f.CanViewStarsRevenue
+	c.IsPaidReactionsAvailable = f.PaidReactionsAvailable
+	c.CanSendGift = f.StargiftsAvailable
+	c.IsPaidMessagesAvailable = f.PaidMessagesAvailable
+	c.FolderID = f.FolderID
+	c.MessageAutoDelete = f.TTLPeriod
+	c.PinnedMessageID = f.PinnedMsgID
+	c.MigratedFromChatID = f.MigratedFromChatID
+	c.MigratedFromMaxID = f.MigratedFromMaxID
+	c.AvailableMinID = f.AvailableMinID
+	c.LinkedChatID = f.LinkedChatID
+	c.SlowModeDelay = f.SlowmodeSeconds
+	c.SlowmodeNextSendDate = time.Unix(int64(f.SlowmodeNextSendDate), 0)
+	c.StatsDC = f.StatsDC
+	c.ThemeEmoticon = f.ThemeEmoticon
+	c.JoinRequestsCount = f.RequestsPending
+	c.AvailableReactions = f.AvailableReactions
+	c.ReactionsLimit = f.ReactionsLimit
+	c.BoostsApplied = f.BoostsApplied
+	c.BoostsUnrestrict = f.BoostsUnrestrict
+	c.GiftCount = f.StargiftsCount
+	c.PaidMessageStarCount = f.SendPaidMessagesStars
+	c.UnreadCount = f.UnreadCount
+	c.ReadInboxMaxID = f.ReadInboxMaxID
+	c.ReadOutboxMaxID = f.ReadOutboxMaxID
+	c.OnlineCount = f.OnlineCount
+	c.AdminsCount = f.AdminsCount
+	c.KickedCount = f.KickedCount
+	c.BannedCount = f.BannedCount
+	if f.ParticipantsCount != 0 {
+		c.MembersCount = int(f.ParticipantsCount)
+	}
+	if f.BotVerification != nil {
+		c.BotVerification = &BotVerification{
+			CustomEmojiID: fmt.Sprintf("%d", f.BotVerification.Icon),
+			Description:   f.BotVerification.Description,
+		}
+	}
+	if f.ExportedInvite != nil {
+		if ei, ok := f.ExportedInvite.(*tg.ChatInviteExported); ok {
+			c.InviteLink = ei.Link
+		}
+	}
+	if f.Stickerset != nil {
+		if ss, ok := f.Stickerset.(*tg.StickerSet); ok {
+			c.StickerSetName = ss.ShortName
+		}
+	}
+	if f.Emojiset != nil {
+		if es, ok := f.Emojiset.(*tg.StickerSet); ok {
+			c.CustomEmojiStickerSet = es.ShortName
+		}
+	}
 }
 
-// SetPhoto changes the chat's profile photo.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetPhoto(photo tg.InputChatPhotoClass) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+func enrichChatFromUserFull(c *Chat, f *tg.UserFull) {
+	c.IsBlocked = f.Blocked
+	c.IsPhoneCallsAvailable = f.PhoneCallsAvailable
+	c.IsPhoneCallsPrivate = f.PhoneCallsPrivate
+	c.IsVideoCallsAvailable = f.VideoCallsAvailable
+	c.IsWallpaperOverridden = f.WallpaperOverridden
+	c.IsTranslationsDisabled = f.TranslationsDisabled
+	c.IsPinnedStoriesAvailable = f.StoriesPinnedAvailable
+	c.IsBlockedMyStoriesFrom = f.BlockedMyStoriesFrom
+	c.IsReadDatesAvailable = !f.ReadDatesPrivate
+	c.IsAdsEnabled = f.SponsoredEnabled
+	c.CanPinMessage = f.CanPinMessage
+	c.CanScheduleMessages = f.HasScheduled
+	c.CanSendVoiceMessages = !f.VoiceMessagesForbidden
+	c.CanViewRevenue = f.CanViewRevenue
+	c.BotCanManageEmojiStatus = f.BotCanManageEmojiStatus
+	c.DisplayGiftsButton = f.DisplayGiftsButton
+	c.UsesUnofficialApp = f.UnofficialSecurityRisk
+	c.CommonChats = f.CommonChatsCount
+	c.FolderID = f.FolderID
+	c.MessageAutoDelete = f.TTLPeriod
+	c.GiftCount = f.StargiftsCount
+	c.PinnedMessageID = f.PinnedMsgID
+	c.PersonalChannelID = f.PersonalChannelID
+	c.PersonalChannelMsg = f.PersonalChannelMessage
+	c.PaidMessageStarCount = f.SendPaidMessagesStars
+	c.BotGroupRights = ParseChatAdminRights(f.BotGroupAdminRights)
+	c.BotBroadcastRights = ParseChatAdminRights(f.BotBroadcastAdminRights)
+	if f.About != "" {
+		c.Bio = f.About
 	}
-	return c.binder.BoundSetPhoto(c.ID, photo)
-}
-
-// DeletePhoto removes the chat's profile photo.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) DeletePhoto() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+	if f.PrivateForwardName != "" {
+		c.PrivateForwardName = f.PrivateForwardName
 	}
-	return c.binder.BoundDeletePhoto(c.ID)
-}
-
-// SetUsername changes the public username of the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetUsername(username string) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+	if f.Birthday != nil {
+		c.Birthday = ParseBirthday(f.Birthday)
 	}
-	return c.binder.BoundSetUsername(c.ID, username)
-}
-
-// BanMember bans a user from the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-//
-// Example:
-//
-//	err := chat.BanMember(spammerID)
-func (c *Chat) BanMember(userID int64) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
+	if f.BotVerification != nil {
+		c.BotVerification = &BotVerification{
+			CustomEmojiID: fmt.Sprintf("%d", f.BotVerification.Icon),
+			Description:   f.BotVerification.Description,
+		}
 	}
-	return c.binder.BoundBanMember(c.ID, userID)
-}
-
-// UnbanMember removes a ban, allowing the user to rejoin the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) UnbanMember(userID int64) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundUnbanMember(c.ID, userID)
-}
-
-// RestrictMember applies the given banned rights to restrict a user's
-// capabilities in the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) RestrictMember(userID int64, bannedRights *tg.ChatBannedRights) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundRestrictMember(c.ID, userID, bannedRights)
-}
-
-// PromoteMember grants the given admin rights to a user in the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) PromoteMember(userID int64, adminRights *tg.ChatAdminRights) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundPromoteMember(c.ID, userID, adminRights)
-}
-
-// Join makes the current user join the chat using its username.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) Join() (*Chat, error) {
-	if c.binder == nil {
-		return nil, ErrNoChatBinder
-	}
-	return c.binder.BoundJoinChat(c.ID, c.Username)
-}
-
-// Leave removes the current user from the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-//
-// Example:
-//
-//	err := chat.Leave()
-func (c *Chat) Leave() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundLeaveChat(c.ID)
-}
-
-// ExportInviteLink generates a new primary invite link for the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) ExportInviteLink() (string, error) {
-	if c.binder == nil {
-		return "", ErrNoChatBinder
-	}
-	return c.binder.BoundExportInviteLink(c.ID)
-}
-
-// GetMember retrieves a single chat member by their user ID.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) GetMember(userID int64) (*ChatMember, error) {
-	if c.binder == nil {
-		return nil, ErrNoChatBinder
-	}
-	return c.binder.BoundGetMember(c.ID, userID)
-}
-
-// GetMembers retrieves a page of chat members with the given limit and offset.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-//
-// Example:
-//
-//	members, err := chat.GetMembers(50, 0)
-//	for _, m := range members {
-//	    fmt.Printf("%s — %s\n", m.User.String(), m.Status)
-//	}
-func (c *Chat) GetMembers(limit int, offset int) ([]*ChatMember, error) {
-	if c.binder == nil {
-		return nil, ErrNoChatBinder
-	}
-	return c.binder.BoundGetMembers(c.ID, limit, offset)
-}
-
-// AddMembers adds a user to the chat by their user ID.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) AddMembers(userID int64) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundAddMembers(c.ID, userID)
-}
-
-// MarkUnread toggles the unread marker on the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) MarkUnread(unread bool) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundMarkUnread(c.ID, unread)
-}
-
-// SetProtectedContent enables or disables content protection (no-forward
-// restriction) on the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetProtectedContent(enabled bool) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundSetProtectedContent(c.ID, enabled)
-}
-
-// SetTTL sets the auto-delete TTL (Time-To-Live) for messages in the chat, in
-// seconds. Pass 0 to disable auto-deletion.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetTTL(ttl int) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundSetTTL(c.ID, ttl)
-}
-
-// SetPermissions applies the given default permissions for non-admin members.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetPermissions(permissions *tg.ChatBannedRights) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundSetPermissions(c.ID, permissions)
-}
-
-// SetAdminTitle assigns a custom title to an admin in a supergroup.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetAdminTitle(userID int64, title string) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundSetAdminTitle(c.ID, userID, title)
-}
-
-// SetSlowMode enables slow mode with the given cooldown in seconds. Pass 0 to
-// disable.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) SetSlowMode(seconds int) error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundSetSlowMode(c.ID, seconds)
-}
-
-// Mute disables notifications for the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) Mute() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundMute(c.ID)
-}
-
-// Unmute re-enables notifications for the chat.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) Unmute() error {
-	if c.binder == nil {
-		return ErrNoChatBinder
-	}
-	return c.binder.BoundUnmute(c.ID)
-}
-
-// UnpinAll removes all pinned messages from the chat and returns the count of
-// unpinned messages.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) UnpinAll() (int, error) {
-	if c.binder == nil {
-		return 0, ErrNoChatBinder
-	}
-	return c.binder.BoundUnpinAll(c.ID)
-}
-
-// GetChat fetches the latest full chat information from the server.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) GetChat() (*Chat, error) {
-	if c.binder == nil {
-		return nil, ErrNoChatBinder
-	}
-	return c.binder.BoundGetChat(c.ID)
-}
-
-// GetEventLog retrieves recent admin log events matching the query, up to limit
-// entries.
-// Returns ErrNoChatBinder if the chat was not created by a client.
-func (c *Chat) GetEventLog(query string, limit int) ([]*ChatEvent, error) {
-	if c.binder == nil {
-		return nil, ErrNoChatBinder
-	}
-	return c.binder.BoundGetEventLog(c.ID, query, limit)
 }

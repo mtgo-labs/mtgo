@@ -1,35 +1,47 @@
 package types
 
-// ChatEventAction represents the type of action recorded in a chat admin event
-// log. It is a string-based enum for easy comparison and logging.
+// ChatEventAction enumerates the kinds of changes recorded in a chat's admin log
+// (e.g., title changed, message pinned, member promoted).
+//
+// Example:
+//
+//	switch event.Action {
+//	case types.ChatEventActionTitleChanged:
+//	    fmt.Printf("Title: %s -> %s\n", event.OldTitle, event.NewTitle)
+//	case types.ChatEventActionMessageDeleted:
+//	    fmt.Printf("Deleted message: %s\n", event.DeletedMessage.Text)
+//	}
 type ChatEventAction string
 
 const (
-	// ChatEventActionTitleChanged indicates the chat title was modified.
-	ChatEventActionTitleChanged ChatEventAction = "title_changed"
-	// ChatEventActionPhotoChanged indicates the chat photo was changed.
-	ChatEventActionPhotoChanged ChatEventAction = "photo_changed"
-	// ChatEventActionDescriptionChanged indicates the chat description/about
-	// text was modified.
-	ChatEventActionDescriptionChanged ChatEventAction = "description_changed"
-	// ChatEventActionUsernameChanged indicates the chat's public username was
-	// changed.
-	ChatEventActionUsernameChanged ChatEventAction = "username_changed"
-	// ChatEventActionStickersetChanged indicates the group sticker pack was
-	// changed.
-	ChatEventActionStickersetChanged ChatEventAction = "stickerset_changed"
-	// ChatEventActionLinkedChatChanged indicates the linked chat was changed.
-	ChatEventActionLinkedChatChanged ChatEventAction = "linked_chat_changed"
-	// ChatEventActionDefaultBannedRightsChanged indicates the default
-	// permissions for non-admin members were updated.
-	ChatEventActionDefaultBannedRightsChanged ChatEventAction = "default_banned_rights_changed"
-	// ChatEventActionSignMessagesChanged indicates the message signature
-	// setting was toggled.
-	ChatEventActionSignMessagesChanged ChatEventAction = "sign_messages_changed"
-	// ChatEventActionInvitesToggled indicates the invite link setting was
-	// enabled or disabled.
-	ChatEventActionInvitesToggled ChatEventAction = "invites_toggled"
+	ChatEventActionTitleChanged                   ChatEventAction = "title_changed"
+	ChatEventActionPhotoChanged                   ChatEventAction = "photo_changed"
+	ChatEventActionDescriptionChanged             ChatEventAction = "description_changed"
+	ChatEventActionUsernameChanged                ChatEventAction = "username_changed"
+	ChatEventActionHistoryTTLChanged              ChatEventAction = "history_ttl_changed"
+	ChatEventActionLinkedChatChanged              ChatEventAction = "linked_chat_changed"
+	ChatEventActionChatPermissionsChanged         ChatEventAction = "chat_permissions_changed"
+	ChatEventActionSignaturesEnabled              ChatEventAction = "signatures_enabled"
+	ChatEventActionInvitesEnabled                 ChatEventAction = "invites_enabled"
+	ChatEventActionHistoryHidden                  ChatEventAction = "history_hidden"
+	ChatEventActionSlowModeChanged                ChatEventAction = "slow_mode_changed"
+	ChatEventActionStickersetChanged              ChatEventAction = "stickerset_changed"
+	ChatEventActionMessageDeleted                 ChatEventAction = "message_deleted"
+	ChatEventActionMessageEdited                  ChatEventAction = "message_edited"
+	ChatEventActionMessagePinned                  ChatEventAction = "message_pinned"
+	ChatEventActionMessageUnpinned                ChatEventAction = "message_unpinned"
+	ChatEventActionMemberInvited                  ChatEventAction = "member_invited"
+	ChatEventActionMemberJoined                   ChatEventAction = "member_joined"
+	ChatEventActionMemberLeft                     ChatEventAction = "member_left"
+	ChatEventActionAdministratorPrivilegesChanged ChatEventAction = "administrator_privileges_changed"
+	ChatEventActionMemberPermissionsChanged       ChatEventAction = "member_permissions_changed"
+	ChatEventActionPollStopped                    ChatEventAction = "poll_stopped"
+	ChatEventActionInviteLinkEdited               ChatEventAction = "invite_link_edited"
+	ChatEventActionInviteLinkRevoked              ChatEventAction = "invite_link_revoked"
+	ChatEventActionInviteLinkDeleted              ChatEventAction = "invite_link_deleted"
+	ChatEventActionCreatedForumTopic              ChatEventAction = "created_forum_topic"
+	ChatEventActionEditedForumTopic               ChatEventAction = "edited_forum_topic"
+	ChatEventActionDeletedForumTopic              ChatEventAction = "deleted_forum_topic"
 )
 
-// String returns the string representation of the ChatEventAction.
 func (c ChatEventAction) String() string { return string(c) }

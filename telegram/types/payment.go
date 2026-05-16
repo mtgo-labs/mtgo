@@ -1,6 +1,10 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"time"
+
+	"github.com/mtgo-labs/mtgo/tg"
+)
 
 // LabeledPrice represents a portion of an invoice price with a label.
 //
@@ -20,32 +24,25 @@ type LabeledPrice struct {
 
 // Invoice represents a payment invoice attached to a message.
 type Invoice struct {
-	// Currency is the three-letter ISO 4217 currency code.
-	Currency string
-	// Prices is the list of priced portions of the total amount.
-	Prices []*LabeledPrice
-	// Test indicates whether this is a test payment.
-	Test bool
-	// NameRequested indicates whether the buyer's name is requested.
-	NameRequested bool
-	// PhoneRequested indicates whether the buyer's phone number is requested.
-	PhoneRequested bool
-	// EmailRequested indicates whether the buyer's email is requested.
-	EmailRequested bool
-	// ShippingAddressRequested indicates whether a shipping address is requested.
-	ShippingAddressRequested bool
-	// Flexible indicates whether the total amount is flexible.
-	Flexible bool
-	// PhoneToProvider indicates whether the phone is sent to the payment provider.
-	PhoneToProvider bool
-	// EmailToProvider indicates whether the email is sent to the payment provider.
-	EmailToProvider bool
-	// Recurring indicates whether this is a recurring payment.
-	Recurring bool
-	// MaxTipAmount is the maximum accepted tip amount.
-	MaxTipAmount int64
-	// SubscriptionPeriod is the period in seconds between recurring payments.
-	SubscriptionPeriod int32
+	Currency                   string
+	IsTest                     bool
+	Title                      string
+	Description                string
+	TotalAmount                int64
+	StartParameter             string
+	Prices                     []*LabeledPrice
+	IsNameRequested            bool
+	IsPhoneRequested           bool
+	IsEmailRequested           bool
+	IsShippingAddressRequested bool
+	IsFlexible                 bool
+	IsPhoneToProvider          bool
+	IsEmailToProvider          bool
+	IsRecurring                bool
+	MaxTipAmount               int64
+	SuggestedTipAmounts        []int64
+	TermsURL                   string
+	SubscriptionPeriod         int32
 }
 
 // SuccessfulPayment represents a confirmation of a successful payment.
@@ -62,37 +59,40 @@ type SuccessfulPayment struct {
 	ShippingOptionID string
 	// ProviderPaymentChargeID is the charge ID from the payment provider.
 	ProviderPaymentChargeID string
+	// OrderInfo is the payment information provided by the user.
+	OrderInfo *OrderInfo
+	// InvoiceSlug is the name of the invoice.
+	InvoiceSlug string
+	// SubscriptionExpirationDate is the expiration date of the subscription for recurring payments.
+	SubscriptionExpirationDate time.Time
+	// IsRecurring is true if the payment is a recurring payment for a subscription.
+	IsRecurring bool
+	// IsFirstRecurring is true if the payment is the first payment for a subscription.
+	IsFirstRecurring bool
 }
 
 // LinkPreviewOptions controls how link previews are generated for a message.
 type LinkPreviewOptions struct {
-	// Disabled indicates whether link previews are disabled.
-	Disabled bool
-	// URL is the URL to use for the link preview.
-	URL string
-	// SmallMedia requests a small-sized media preview.
-	SmallMedia bool
-	// LargeMedia requests a large-sized media preview.
-	LargeMedia bool
-	// PreferSmall indicates a preference for small media previews.
-	PreferSmall bool
-	// PreferLarge indicates a preference for large media previews.
-	PreferLarge bool
+	IsDisabled       bool
+	URL              string
+	PreferSmallMedia bool
+	PreferLargeMedia bool
+	ShowAboveText    bool
 }
 
 // ReplyParameters describes how a message replies to another message.
 type ReplyParameters struct {
-	// MessageID is the ID of the message being replied to.
-	MessageID int32
-	// ChatID is the ID of the chat containing the message being replied to.
-	ChatID int64
-	// AllowSendingWithoutReply indicates the reply can be sent even if the
-	// referenced message does not exist.
+	MessageID                int32
+	ChatID                   int64
+	StoryID                  int32
 	AllowSendingWithoutReply bool
-	// Quote indicates whether the reply quotes a portion of the original message.
-	Quote bool
-	// QuoteText is the quoted text from the original message.
-	QuoteText string
+	Quote                    bool
+	QuoteText                string
+	QuoteParseMode           string
+	QuoteEntities            []*MessageEntity
+	QuotePosition            int32
+	ChecklistTaskID          int32
+	PollOptionID             string
 }
 
 // ParseInvoice converts a TL Invoice into an Invoice.
@@ -101,16 +101,16 @@ func ParseInvoice(raw *tg.Invoice) *Invoice {
 		return nil
 	}
 	out := &Invoice{
-		Currency:                 raw.Currency,
-		Test:                     raw.Test,
-		NameRequested:            raw.NameRequested,
-		PhoneRequested:           raw.PhoneRequested,
-		EmailRequested:           raw.EmailRequested,
-		ShippingAddressRequested: raw.ShippingAddressRequested,
-		Flexible:                 raw.Flexible,
-		PhoneToProvider:          raw.PhoneToProvider,
-		EmailToProvider:          raw.EmailToProvider,
-		Recurring:                raw.Recurring,
+		Currency:                   raw.Currency,
+		IsTest:                     raw.Test,
+		IsNameRequested:            raw.NameRequested,
+		IsPhoneRequested:           raw.PhoneRequested,
+		IsEmailRequested:           raw.EmailRequested,
+		IsShippingAddressRequested: raw.ShippingAddressRequested,
+		IsFlexible:                 raw.Flexible,
+		IsPhoneToProvider:          raw.PhoneToProvider,
+		IsEmailToProvider:          raw.EmailToProvider,
+		IsRecurring:                raw.Recurring,
 	}
 	for _, p := range raw.Prices {
 		if p != nil {
@@ -122,6 +122,12 @@ func ParseInvoice(raw *tg.Invoice) *Invoice {
 	}
 	if raw.MaxTipAmount != 0 {
 		out.MaxTipAmount = raw.MaxTipAmount
+	}
+	if len(raw.SuggestedTipAmounts) > 0 {
+		out.SuggestedTipAmounts = raw.SuggestedTipAmounts
+	}
+	if raw.TermsURL != "" {
+		out.TermsURL = raw.TermsURL
 	}
 	if raw.SubscriptionPeriod != 0 {
 		out.SubscriptionPeriod = raw.SubscriptionPeriod

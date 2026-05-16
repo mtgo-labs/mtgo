@@ -54,8 +54,8 @@ func TestParseStory_BasicFields(t *testing.T) {
 	if s.Caption != "Hello world" {
 		t.Errorf("Caption = %q, want %q", s.Caption, "Hello world")
 	}
-	if s.Out != true {
-		t.Error("Out = false, want true")
+	if s.Outgoing != true {
+		t.Error("Outgoing = false, want true")
 	}
 	if s.Pinned != true {
 		t.Error("Pinned = false, want true")
@@ -140,8 +140,8 @@ func TestParseStory_BoolFlags(t *testing.T) {
 	if s.Edited != true {
 		t.Error("Edited = false, want true")
 	}
-	if s.Noforwards != true {
-		t.Error("Noforwards = false, want true")
+	if s.HasProtectedContent != true {
+		t.Error("HasProtectedContent = false, want true")
 	}
 }
 

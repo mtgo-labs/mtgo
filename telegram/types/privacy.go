@@ -8,59 +8,35 @@ import (
 // a specific privacy-controlled feature (e.g., who can see the user's phone
 // number). Rules are ordered; the first matching rule determines the outcome.
 type PrivacyRule struct {
-	// Type identifies the category of subjects this rule applies to, such as
-	// "allow_all", "allow_contacts", "disallow_users", etc.
-	Type PrivacyRuleType
-	// UserIDs lists the specific user IDs the rule applies to when Type is
-	// PrivacyRuleTypeAllowUsers or PrivacyRuleTypeDisallowUsers. Empty for
-	// rules that target broad categories.
-	UserIDs []int64
-	// ChatIDs lists the specific chat IDs the rule applies to when Type is
-	// PrivacyRuleTypeAllowChatParticipants or PrivacyRuleTypeDisallowChatParticipants.
-	// Empty for rules that target broad categories.
-	ChatIDs []int64
+	Type  PrivacyRuleType
+	Users []*User
+	Chats []*Chat
 }
 
-// GlobalPrivacySettings holds account-wide privacy preferences that are not tied
-// to a single PrivacyKey. These settings control behavior for archiving, read
-// receipts, and non-contact interactions.
-type GlobalPrivacySettings struct {
-	// ArchiveAndMuteNonContacts indicates whether new messages from non-contacts
-	// are automatically archived and muted.
-	ArchiveAndMuteNonContacts bool
-	// KeepArchivedUnmuted indicates whether chats that were archived remain in
-	// the archive even when the user unmutes them.
-	KeepArchivedUnmuted bool
-	// KeepArchivedFolders indicates whether chats that were archived remain in
-	// the archive even when moved to a different folder.
-	KeepArchivedFolders bool
-	// HideReadMarks indicates whether the user's read receipts are hidden
-	// globally, preventing others from seeing when messages were read.
-	HideReadMarks bool
-	// NonContactsRequirePremium indicates whether only Premium users can
-	// initiate direct messages with non-contacts.
-	NonContactsRequirePremium bool
-	// DisplayGiftsButton indicates whether the gifts button is visible on the
-	// user's profile page.
-	DisplayGiftsButton bool
-}
-
-// ParsePrivacyRules converts a slice of TL PrivacyRuleClass values into a slice
-// of PrivacyRule. Returns nil if the input is empty.
-func ParsePrivacyRules(raw []tg.PrivacyRuleClass) []PrivacyRule {
+// ParsePrivacyRules converts a slice of TL PrivacyRuleClass into typed PrivacyRule
+// entries, resolving user and chat references from the provided maps.
+// Returns nil if raw is empty.
+//
+// Example:
+//
+//	rules := types.ParsePrivacyRules(rawRules, users, peerMap)
+//	for _, r := range rules {
+//	    fmt.Printf("Rule: %s (users: %d, chats: %d)\n", r.Type, len(r.Users), len(r.Chats))
+//	}
+func ParsePrivacyRules(raw []tg.PrivacyRuleClass, users map[int64]tg.UserClass, chats *PeerMap) []PrivacyRule {
 	if len(raw) == 0 {
 		return nil
 	}
 	var rules []PrivacyRule
 	for _, r := range raw {
-		if rule := parsePrivacyRule(r); rule != nil {
+		if rule := parsePrivacyRule(r, users, chats); rule != nil {
 			rules = append(rules, *rule)
 		}
 	}
 	return rules
 }
 
-func parsePrivacyRule(raw tg.PrivacyRuleClass) *PrivacyRule {
+func parsePrivacyRule(raw tg.PrivacyRuleClass, users map[int64]tg.UserClass, chats *PeerMap) *PrivacyRule {
 	if raw == nil {
 		return nil
 	}
@@ -74,19 +50,61 @@ func parsePrivacyRule(raw tg.PrivacyRuleClass) *PrivacyRule {
 	case *tg.PrivacyValueAllowPremium:
 		return &PrivacyRule{Type: PrivacyRuleTypeAllowPremium}
 	case *tg.PrivacyValueAllowUsers:
-		return &PrivacyRule{Type: PrivacyRuleTypeAllowUsers, UserIDs: r.Users}
+		return &PrivacyRule{Type: PrivacyRuleTypeAllowUsers, Users: resolveUsers(r.Users, users)}
 	case *tg.PrivacyValueAllowChatParticipants:
-		return &PrivacyRule{Type: PrivacyRuleTypeAllowChatParticipants, ChatIDs: r.Chats}
+		return &PrivacyRule{Type: PrivacyRuleTypeAllowChatParticipants, Chats: resolveChats(r.Chats, chats)}
 	case *tg.PrivacyValueDisallowAll:
 		return &PrivacyRule{Type: PrivacyRuleTypeDisallowAll}
 	case *tg.PrivacyValueDisallowContacts:
 		return &PrivacyRule{Type: PrivacyRuleTypeDisallowContacts}
 	case *tg.PrivacyValueDisallowUsers:
-		return &PrivacyRule{Type: PrivacyRuleTypeDisallowUsers, UserIDs: r.Users}
+		return &PrivacyRule{Type: PrivacyRuleTypeDisallowUsers, Users: resolveUsers(r.Users, users)}
 	case *tg.PrivacyValueDisallowChatParticipants:
-		return &PrivacyRule{Type: PrivacyRuleTypeDisallowChatParticipants, ChatIDs: r.Chats}
+		return &PrivacyRule{Type: PrivacyRuleTypeDisallowChatParticipants, Chats: resolveChats(r.Chats, chats)}
 	}
 	return nil
+}
+
+func resolveUsers(ids []int64, users map[int64]tg.UserClass) []*User {
+	if len(ids) == 0 {
+		return nil
+	}
+	out := make([]*User, 0, len(ids))
+	for _, id := range ids {
+		if u := getUser(users, id); u != nil {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+func resolveChats(ids []int64, pm *PeerMap) []*Chat {
+	if len(ids) == 0 || pm == nil {
+		return nil
+	}
+	out := make([]*Chat, 0, len(ids))
+	for _, id := range ids {
+		if c, ok := pm.Chats[id]; ok {
+			out = append(out, ParseChatFromChat(c))
+		} else if c, ok := pm.Channels[id]; ok {
+			out = append(out, ParseChatFromChat(c))
+		}
+	}
+	return out
+}
+
+// GlobalPrivacySettings holds account-wide privacy preferences that are not tied
+// to a single PrivacyKey. These settings control behavior for archiving, read
+// receipts, and non-contact interactions.
+type GlobalPrivacySettings struct {
+	ArchiveAndMuteNewChats        bool
+	KeepUnmutedChatsArchived      bool
+	KeepChatsFromFoldersArchived  bool
+	ShowReadDate                  bool
+	AllowNewChatsFromUnknownUsers bool
+	IncomingPaidMessageStarCount  int64
+	ShowGiftButton                bool
+	AcceptedGiftTypes             *AcceptedGiftTypes
 }
 
 // ParseGlobalPrivacySettings converts a TL GlobalPrivacySettings into a
@@ -96,11 +114,13 @@ func ParseGlobalPrivacySettings(raw *tg.GlobalPrivacySettings) *GlobalPrivacySet
 		return nil
 	}
 	return &GlobalPrivacySettings{
-		ArchiveAndMuteNonContacts: raw.ArchiveAndMuteNewNoncontactPeers,
-		KeepArchivedUnmuted:       raw.KeepArchivedUnmuted,
-		KeepArchivedFolders:       raw.KeepArchivedFolders,
-		HideReadMarks:             raw.HideReadMarks,
-		NonContactsRequirePremium: raw.NewNoncontactPeersRequirePremium,
-		DisplayGiftsButton:        raw.DisplayGiftsButton,
+		ArchiveAndMuteNewChats:        raw.ArchiveAndMuteNewNoncontactPeers,
+		KeepUnmutedChatsArchived:      raw.KeepArchivedUnmuted,
+		KeepChatsFromFoldersArchived:  raw.KeepArchivedFolders,
+		ShowReadDate:                  !raw.HideReadMarks,
+		AllowNewChatsFromUnknownUsers: !raw.NewNoncontactPeersRequirePremium,
+		IncomingPaidMessageStarCount:  raw.NoncontactPeersPaidStars,
+		ShowGiftButton:                raw.DisplayGiftsButton,
+		AcceptedGiftTypes:             ParseAcceptedGiftTypes(raw.DisallowedGifts),
 	}
 }

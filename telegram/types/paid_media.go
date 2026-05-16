@@ -1,53 +1,72 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"time"
 
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+// PaidMediaInfo describes paid media attached to a message, including the star
+// price and the unlocked media items.
+//
+// Example:
+//
+//	info := media.(*types.PaidMediaInfo)
+//	fmt.Printf("Paid media: %d stars, %d items\n", info.StarsAmount, info.MediaCount)
 type PaidMediaInfo struct {
 	StarsAmount int64
 	MediaCount  int32
+	Media       []Media
 }
 
+// PaidReactor represents a user who reacted with a paid star reaction.
 type PaidReactor struct {
-	UserID int64
-	Stars  int64
+	Sender      *Chat
+	StarCount   int64
+	IsTop       bool
+	IsMe        bool
+	IsAnonymous bool
 }
 
+// MyBoost represents a single boost slot applied by the current user to a chat.
+//
+// Example:
+//
+//	b := types.ParseMyBoost(rawBoost, peerMap)
+//	fmt.Printf("Boost slot %d on %s, expires %s\n", b.Slot, b.Chat.Title, b.ExpireDate)
 type MyBoost struct {
-	ID       int64
-	Date     int32
-	Expires  int32
-	ChatID   int64
-	Slot     int32
-	Cooldown int32
+	Slot              int32
+	Date              time.Time
+	ExpireDate        time.Time
+	Chat              *Chat
+	CooldownUntilDate time.Time
 }
 
-func ParseMyBoost(raw *tg.MyBoost) *MyBoost {
+// ParseMyBoost converts a TL MyBoost into a MyBoost, resolving the target chat.
+// Returns nil if raw is nil.
+//
+// Example:
+//
+//	boost := types.ParseMyBoost(rawMyBoost, peerMap)
+//	if boost != nil {
+//	    fmt.Println("Boosted:", boost.Chat.Title)
+//	}
+func ParseMyBoost(raw *tg.MyBoost, pm *PeerMap) *MyBoost {
 	if raw == nil {
 		return nil
 	}
 	b := &MyBoost{
-		Date:    raw.Date,
-		Expires: raw.Expires,
-		Slot:    raw.Slot,
+		Slot: raw.Slot,
+		Date: time.Unix(int64(raw.Date), 0),
 	}
-	if raw.Peer != nil {
-		b.ChatID = peerToChatID(raw.Peer)
+	if raw.Expires != 0 {
+		b.ExpireDate = time.Unix(int64(raw.Expires), 0)
 	}
 	if raw.CooldownUntilDate != 0 {
-		b.Cooldown = raw.CooldownUntilDate
+		b.CooldownUntilDate = time.Unix(int64(raw.CooldownUntilDate), 0)
+	}
+	if raw.Peer != nil {
+		b.Chat = ParseChatFromPeer(raw.Peer, pm)
 	}
 	return b
-}
-
-func peerToChatID(peer tg.PeerClass) int64 {
-	if peer == nil {
-		return 0
-	}
-	switch p := peer.(type) {
-	case *tg.PeerChat:
-		return -p.ChatID
-	case *tg.PeerChannel:
-		return -p.ChannelID
-	}
-	return 0
 }

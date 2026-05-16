@@ -14,18 +14,18 @@ func TestParseChatAdminRights_Nil(t *testing.T) {
 
 func TestParseChatAdminRights_Full(t *testing.T) {
 	raw := &tl.ChatAdminRights{
-		ChangeInfo:   true,
-		PostMessages: true,
-		EditMessages: true,
+		ChangeInfo:     true,
+		PostMessages:   true,
+		EditMessages:   true,
 		DeleteMessages: true,
-		BanUsers:     true,
-		InviteUsers:  true,
-		PinMessages:  true,
-		AddAdmins:    true,
-		Anonymous:    true,
-		ManageCall:   true,
-		Other:        true,
-		ManageTopics: true,
+		BanUsers:       true,
+		InviteUsers:    true,
+		PinMessages:    true,
+		AddAdmins:      true,
+		Anonymous:      true,
+		ManageCall:     true,
+		Other:          true,
+		ManageTopics:   true,
 	}
 	r := ParseChatAdminRights(raw)
 	if r == nil {
@@ -34,10 +34,10 @@ func TestParseChatAdminRights_Full(t *testing.T) {
 	if !r.CanChangeInfo || !r.CanPostMessages || !r.CanDeleteMessages {
 		t.Error("expected admin rights to be true")
 	}
-	if !r.CanBanUsers || !r.CanInviteUsers || !r.CanPinMessages {
+	if !r.CanRestrictMembers || !r.CanInviteUsers || !r.CanPinMessages {
 		t.Error("expected admin rights to be true")
 	}
-	if !r.CanAddAdmins || !r.IsAnonymous || !r.CanManageVideoChats {
+	if !r.CanPromoteMembers || !r.IsAnonymous || !r.CanManageVideoChats {
 		t.Error("expected admin rights to be true")
 	}
 	if !r.CanManageChat || !r.CanManageTopics {
