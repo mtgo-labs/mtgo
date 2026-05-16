@@ -29,3 +29,5 @@ omp-session-*.html
 .worktrees/
 chatid_bot/
 chatid_bot
+conversations
+examples/conversations/**/conversations
