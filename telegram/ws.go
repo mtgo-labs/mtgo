@@ -38,11 +38,6 @@ func useWebSocket(cfg Config) bool {
 	return cfg.WebSocket || cfg.WebSocketTLS
 }
 
-func dialerCtx(timeout time.Duration) context.Context {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	go func() {
-		<-ctx.Done()
-		cancel()
-	}()
-	return ctx
+func dialerCtx(timeout time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), timeout)
 }

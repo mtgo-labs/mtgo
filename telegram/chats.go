@@ -88,7 +88,6 @@ func (c *Client) JoinChat(ctx context.Context, inviteHash string) (*types.Chat, 
 	rpc := c.Raw()
 	result, err := rpc.MessagesImportChatInvite(ctx, &tg.MessagesImportChatInviteRequest{Hash: inviteHash})
 	if err != nil {
-		c.Log.Warnf("JoinChat failed err=%v", err)
 		return nil, err
 	}
 
@@ -192,7 +191,6 @@ func (c *Client) CreateChannel(ctx context.Context, title, about string, megagro
 		About: about,
 	})
 	if err != nil {
-		c.Log.Warnf("CreateChannel failed err=%v", err)
 		return nil, err
 	}
 
@@ -888,7 +886,6 @@ func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64)
 		Title: title,
 	})
 	if err != nil {
-		c.Log.Warnf("CreateGroup failed err=%v", err)
 		return nil, err
 	}
 	upd, ok := result.Updates.(*tg.Updates)

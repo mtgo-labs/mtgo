@@ -169,7 +169,6 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SendMessage failed err=%v", err)
 		return nil, err
 	}
 
@@ -254,7 +253,6 @@ func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID i
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
 	if err != nil {
-		c.Log.Warnf("ForwardMessages failed err=%v", err)
 		return nil, err
 	}
 	return extractMessages(result, c)
@@ -300,7 +298,6 @@ func (c *Client) DeleteMessages(ctx context.Context, chatID int64, messageIDs []
 		ID:     messageIDs,
 	})
 	if err != nil {
-		c.Log.Warnf("DeleteMessages failed err=%v", err)
 		return 0, err
 	}
 	return int(affected.PTSCount), nil
@@ -389,7 +386,6 @@ func (c *Client) EditMessageText(ctx context.Context, chatID int64, messageID in
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditMessageText failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -589,7 +585,6 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMedia(ctx, req)
 	if err != nil {
-		c.Log.Warnf("sendMediaInternal failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)

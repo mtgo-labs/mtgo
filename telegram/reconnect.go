@@ -74,9 +74,6 @@ func (c *Client) triggerReconnect(err error) {
 		sess.Stop()
 	}
 
-	if c.reconnectMgr == nil {
-		c.reconnectMgr = newReconnectManager(c, c.backoffConfig())
-	}
 	c.reconnectMgr.Start(context.Background())
 }
 
@@ -134,6 +131,15 @@ func (c *Client) reconnectOnce() error {
 
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
+	})
+	sess.SetOnDisconnect(func(err error) {
+		c.Log.Warnf("session transport error: %v", err)
+		if c.state.IsConnected() {
+			c.triggerReconnect(err)
+		}
+	})
+	sess.SetOnPanic(func(r any) {
+		c.Log.Errorf("session dispatch panic: %v", r)
 	})
 
 	c.apiInit = false

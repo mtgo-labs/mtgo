@@ -8,6 +8,11 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+var (
+	htmlTagRe  = regexp.MustCompile(`<(/?)(\w+)([^>]*)>`)
+	htmlAttrRe = regexp.MustCompile(`(\w+)="([^"]*)"`)
+)
+
 // HTMLParser parses Telegram HTML markup into plain text and message entities.
 type HTMLParser struct{}
 
@@ -30,12 +35,10 @@ func (p *HTMLParser) Parse(html string) (string, []tg.MessageEntityClass, error)
 	var entities []tg.MessageEntityClass
 	var stack []htmlTag
 
-	tagRe := regexp.MustCompile(`<(/?)(\w+)([^>]*)>`)
-
 	var result strings.Builder
 	lastIdx := 0
 
-	matches := tagRe.FindAllStringSubmatchIndex(text, -1)
+	matches := htmlTagRe.FindAllStringSubmatchIndex(text, -1)
 	for _, loc := range matches {
 		fullStart, fullEnd := loc[0], loc[1]
 		result.WriteString(text[lastIdx:fullStart])
@@ -125,8 +128,7 @@ func (p *HTMLParser) createEntity(tag htmlTag, endOffset int) tg.MessageEntityCl
 
 func parseAttrs(s string) map[string]string {
 	attrs := make(map[string]string)
-	re := regexp.MustCompile(`(\w+)="([^"]*)"`)
-	matches := re.FindAllStringSubmatch(s, -1)
+	matches := htmlAttrRe.FindAllStringSubmatch(s, -1)
 	for _, m := range matches {
 		attrs[strings.ToLower(m[1])] = m[2]
 	}

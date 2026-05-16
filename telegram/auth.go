@@ -68,7 +68,6 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 		Settings:    &tg.CodeSettings{},
 	})
 	if err != nil {
-		c.Log.Warnf("auth: SendCode failed err=%v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -122,7 +121,6 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 			c.Log.Debug("auth: 2FA required")
 			return nil, Err2FARequired
 		}
-		c.Log.Warnf("auth: SignIn failed err=%v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -171,7 +169,6 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 		LastName:      ln,
 	})
 	if err != nil {
-		c.Log.Warnf("auth: SignUp failed err=%v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -208,7 +205,6 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 	rpc := c.Raw()
 	_, err := rpc.AuthLogOut(ctx)
 	if err != nil {
-		c.Log.Warnf("auth: SignOut failed err=%v", err)
 		return false, err
 	}
 	c.Log.Info("auth: signed out successfully")
@@ -260,7 +256,6 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 		Password: srp,
 	})
 	if err != nil {
-		c.Log.Warnf("auth: CheckPassword failed err=%v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -292,7 +287,6 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 		Code: code,
 	})
 	if err != nil {
-		c.Log.Warnf("auth: RecoverPassword failed err=%v", err)
 		return nil, err
 	}
 	switch v := result.(type) {

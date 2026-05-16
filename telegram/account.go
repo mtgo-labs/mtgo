@@ -34,7 +34,6 @@ func (c *Client) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, ru
 		Rules: rules,
 	})
 	if err != nil {
-		c.Log.Warnf("SetPrivacy failed err=%v", err)
 		return fmt.Errorf("set privacy: %w", err)
 	}
 	return nil
@@ -65,7 +64,6 @@ func (c *Client) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([
 		Key: key,
 	})
 	if err != nil {
-		c.Log.Warnf("GetPrivacy failed err=%v", err)
 		return nil, fmt.Errorf("get privacy: %w", err)
 	}
 	return result.Rules, nil
@@ -99,7 +97,6 @@ func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.Glob
 		Settings: settings,
 	})
 	if err != nil {
-		c.Log.Warnf("SetGlobalPrivacySettings failed err=%v", err)
 		return fmt.Errorf("set global privacy settings: %w", err)
 	}
 	return nil
@@ -126,7 +123,6 @@ func (c *Client) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivac
 	rpc := c.Raw()
 	result, err := rpc.AccountGetGlobalPrivacySettings(ctx)
 	if err != nil {
-		c.Log.Warnf("GetGlobalPrivacySettings failed err=%v", err)
 		return nil, fmt.Errorf("get global privacy settings: %w", err)
 	}
 	return result, nil
@@ -154,7 +150,6 @@ func (c *Client) SetAccountTTL(ctx context.Context, days int32) error {
 		TTL: &tg.AccountDaysTTL{Days: days},
 	})
 	if err != nil {
-		c.Log.Warnf("SetAccountTTL failed err=%v", err)
 		return fmt.Errorf("set account ttl: %w", err)
 	}
 	return nil
@@ -181,7 +176,6 @@ func (c *Client) GetAccountTTL(ctx context.Context) (int32, error) {
 	rpc := c.Raw()
 	result, err := rpc.AccountGetAccountTTL(ctx)
 	if err != nil {
-		c.Log.Warnf("GetAccountTTL failed err=%v", err)
 		return 0, fmt.Errorf("get account ttl: %w", err)
 	}
 	return result.Days, nil

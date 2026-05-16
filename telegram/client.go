@@ -399,6 +399,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	}
 
 	client.initSecretChats()
+	client.reconnectMgr = newReconnectManager(client, client.backoffConfig())
 	registerClient(client)
 
 	return client, nil
@@ -924,7 +925,9 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 
 	if useWebSocket(c.cfg) {
 		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.cfg.WebSocketTLS)
-		wsConn, err := transport.DialWebsocket(dialerCtx(timeout), wsAddr)
+		wsCtx, wsCancel := dialerCtx(timeout)
+		defer wsCancel()
+		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
 		if err != nil {
 			return fmt.Errorf("ws dial %s: %w", wsAddr, err)
 		}
@@ -981,12 +984,15 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			DC:       dc.ID,
 			TestMode: dc.TestMode,
 		}
+		c.mu.Unlock()
+		locked = false
 		result, err := auth.Create(sessionTp)
 		if err != nil {
 			sessionTp.Close()
-			c.Log.Errorf("DH key exchange failed for DC %d: %v", dc.ID, err)
 			return fmt.Errorf("DH key exchange: %w", err)
 		}
+		c.mu.Lock()
+		locked = true
 		sess.SetAuthKey(result.AuthKey)
 		sess.SetServerSalt(result.ServerSalt)
 		sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
@@ -1016,6 +1022,15 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
 	})
+	sess.SetOnDisconnect(func(err error) {
+		c.Log.Warnf("session transport error: %v", err)
+		if c.state.IsConnected() {
+			c.triggerReconnect(err)
+		}
+	})
+	sess.SetOnPanic(func(r any) {
+		c.Log.Errorf("session dispatch panic: %v", r)
+	})
 
 	c.apiInit = false
 	c.Log.Debug("starting encrypted session")
@@ -1035,29 +1050,31 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 
 	if botToken := c.cfg.BotToken; botToken != "" {
 		alreadyAuthorized := false
+		isUserAccount := false
 		if st != nil {
 			if uid, err := st.UserID(); err == nil && uid != 0 {
 				if isBot, err := st.IsBot(); err == nil && isBot {
 					alreadyAuthorized = true
+				} else {
+					isUserAccount = true
 				}
 			}
 		}
 
-		if alreadyAuthorized {
-			c.Log.Debug("session already authorized; skipping bot auth import")
+		if isUserAccount {
+			c.Log.Debug("session is a user account; skipping bot auth import (remove BOT_TOKEN for userbots)")
 			if uid, _ := st.UserID(); uid != 0 {
 				c.me = &types.User{
 					ID:        uid,
-					IsBot:     true,
 					FirstName: func() string { v, _ := st.FirstName(); return v }(),
 					LastName:  func() string { v, _ := st.LastName(); return v }(),
 					Username:  func() string { v, _ := st.Username(); return v }(),
 				}
-				c.Log.Debug("bot user restored: id=", c.me.ID, " username=", c.me.Username)
+				c.Log.Debug("user account restored: id=", c.me.ID, " username=", c.me.Username)
 			}
 		}
 
-		if !alreadyAuthorized {
+		if !alreadyAuthorized && !isUserAccount {
 			c.Log.Info("importing bot authorization")
 			rpc := c.Raw()
 			authResult, err := rpc.AuthImportBotAuthorization(context.Background(), &tg.AuthImportBotAuthorizationRequest{
@@ -1433,7 +1450,9 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 				Users:  userMap,
 				Chats:  chatMap,
 			}
-			_ = disp.Enqueue(pkt)
+			if err := disp.Enqueue(pkt); err != nil {
+				c.Log.Warnf("enqueue update: %v", err)
+			}
 		}
 
 		if hdisp != nil {
@@ -1450,7 +1469,9 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 		upd.Users = userMap
 		upd.Chats = chatMap
 		if disp != nil {
-			_ = disp.Enqueue(UpdatePacket{Update: updates, Users: userMap, Chats: chatMap})
+			if err := disp.Enqueue(UpdatePacket{Update: updates, Users: userMap, Chats: chatMap}); err != nil {
+				c.Log.Warnf("enqueue update: %v", err)
+			}
 		}
 		if hdisp != nil {
 			c.dispatchUpdate(hdisp, upd)

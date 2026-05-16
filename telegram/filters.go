@@ -1154,11 +1154,7 @@ func (cf *CommandFilter) Check(ctx *Context) bool {
 		text = text[:idx]
 	}
 	for _, cmd := range cf.commands {
-		c := cmd
-		if !cf.caseSensitive {
-			c = strings.ToLower(c)
-		}
-		if text == c {
+		if text == cmd {
 			return true
 		}
 	}
@@ -1185,10 +1181,17 @@ func (cf *CommandFilter) Check(ctx *Context) bool {
 //	    false,
 //	))
 func NewCommand(commands []string, prefixes []string, caseSensitive bool) Filter {
+	cmds := commands
+	if !caseSensitive {
+		cmds = make([]string, len(commands))
+		for i, c := range commands {
+			cmds[i] = strings.ToLower(c)
+		}
+	}
 	cf := &CommandFilter{
 		prefixes:      prefixes,
 		caseSensitive: caseSensitive,
-		commands:      commands,
+		commands:      cmds,
 	}
 	if len(cf.prefixes) == 0 {
 		cf.prefixes = []string{"/"}

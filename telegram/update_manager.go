@@ -175,6 +175,11 @@ func (m *updateManager) Health() UpdateHealth {
 
 func (m *updateManager) run(ctx context.Context) {
 	defer close(m.done)
+	defer func() {
+		if r := recover(); r != nil {
+			m.client.Log.Errorf("update manager panic: %v", r)
+		}
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -186,15 +191,18 @@ func (m *updateManager) run(ctx context.Context) {
 }
 
 func (m *updateManager) processUpdates(ctx context.Context, updates tg.UpdatesClass) {
-	_, _, rawUpdates := m.client.flattenUpdates(updates)
+	parsedUsers, parsedChats, rawUpdates := m.client.flattenUpdates(updates)
+	userMap := buildUserMap(parsedUsers)
+	chatMap := buildChatMap(parsedChats)
+	pm := buildPeerMapFromClasses(parsedUsers, parsedChats)
 	for _, raw := range rawUpdates {
-		if err := m.applyUpdate(ctx, raw, updates); err != nil {
+		if err := m.applyUpdate(ctx, raw, updates, userMap, chatMap, pm); err != nil {
 			m.client.Log.Warnf("apply update: %v", err)
 		}
 	}
 }
 
-func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, container tg.UpdatesClass) error {
+func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, container tg.UpdatesClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	meta := extractUpdateMeta(raw)
 
 	if _, ok := raw.(*tg.UpdateChannelTooLong); ok {
@@ -208,7 +216,7 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 	}
 
 	if meta.IsChannel {
-		return m.applyChannelUpdate(ctx, raw, meta, container)
+		return m.applyChannelUpdate(ctx, raw, meta, container, userMap, chatMap, pm)
 	}
 
 	kind := m.classifyUpdate(meta)
@@ -234,7 +242,7 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 				return nil
 			}
 			if retryKind == noGap {
-				return m.deliverUpdate(container, raw, meta)
+				return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
 			}
 		}
 		return nil
@@ -250,10 +258,10 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 		}
 	}
 
-	return m.deliverUpdate(container, raw, meta)
+	return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
 }
 
-func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateClass, meta updateMeta, container tg.UpdatesClass) error {
+func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateClass, meta updateMeta, container tg.UpdatesClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	m.mu.Lock()
 	ch, ok := m.channels[meta.ChannelID]
 	m.mu.Unlock()
@@ -289,14 +297,14 @@ func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateCla
 				return nil
 			}
 			if retryKind == noGap {
-				return m.deliverUpdate(container, raw, meta)
+				return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
 			}
 		}
 		return nil
 	case noGap:
 	}
 
-	return m.deliverUpdate(container, raw, meta)
+	return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
 }
 
 func (m *updateManager) classifyUpdate(meta updateMeta) gapKind {
@@ -305,7 +313,7 @@ func (m *updateManager) classifyUpdate(meta updateMeta) gapKind {
 	return classifyAccountUpdate(m.state, meta)
 }
 
-func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta) error {
+func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	if m.cfg.DurableQueue && meta.Key != "" {
 		record := &storage.DurableUpdate{
 			SessionID: m.sessionID,
@@ -319,10 +327,6 @@ func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateCl
 		}
 	}
 
-	parsedUsers, parsedChats, _ := m.client.flattenUpdates(container)
-	userMap := buildUserMap(parsedUsers)
-	chatMap := buildChatMap(parsedChats)
-	pm := buildPeerMapFromClasses(parsedUsers, parsedChats)
 	upd := m.client.toUpdate(raw, userMap, chatMap, pm)
 
 	var lastErr error
@@ -332,7 +336,9 @@ func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateCl
 			upd.reset()
 			updatePool.Put(upd)
 			if m.cfg.DurableQueue && meta.Key != "" {
-				_ = m.store.DeleteDurableUpdate(m.sessionID, meta.Key)
+				if err := m.store.DeleteDurableUpdate(m.sessionID, meta.Key); err != nil {
+					m.client.Log.Warnf("delete durable update: %v", err)
+				}
 			}
 			m.advanceState(meta)
 			return nil
@@ -348,7 +354,9 @@ func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateCl
 	m.mu.Unlock()
 
 	if m.cfg.DurableQueue && meta.Key != "" {
-		_ = m.store.MarkDurableUpdateFailed(m.sessionID, meta.Key, m.cfg.MaxHandlerRetry+1, lastErr.Error())
+		if err := m.store.MarkDurableUpdateFailed(m.sessionID, meta.Key, m.cfg.MaxHandlerRetry+1, lastErr.Error()); err != nil {
+			m.client.Log.Warnf("mark durable update failed: %v", err)
+		}
 	}
 
 	return fmt.Errorf("%w: %v", ErrUpdateHandlerFailed, lastErr)
@@ -360,7 +368,9 @@ func (m *updateManager) replayDurableQueue() error {
 		return err
 	}
 	for _, item := range items {
-		_ = m.store.DeleteDurableUpdate(m.sessionID, item.ID)
+		if err := m.store.DeleteDurableUpdate(m.sessionID, item.ID); err != nil {
+			m.client.Log.Warnf("delete durable update replay: %v", err)
+		}
 	}
 	return nil
 }
@@ -388,20 +398,24 @@ func (m *updateManager) advanceState(meta updateMeta) {
 		}
 		ch.Pts = meta.ChannelPts
 		m.channels[meta.ChannelID] = ch
-		_ = m.store.SaveChannelUpdateState(&storage.ChannelUpdateState{
+		if err := m.store.SaveChannelUpdateState(&storage.ChannelUpdateState{
 			SessionID: m.sessionID,
 			ChannelID: meta.ChannelID,
 			Pts:       meta.ChannelPts,
-		})
+		}); err != nil {
+			m.client.Log.Warnf("save channel update state: %v", err)
+		}
 	}
 
-	_ = m.store.SaveUpdateState(&storage.UpdateState{
+	if err := m.store.SaveUpdateState(&storage.UpdateState{
 		SessionID: m.sessionID,
 		Pts:       m.state.Pts,
 		Qts:       m.state.Qts,
 		Date:      m.state.Date,
 		Seq:       m.state.Seq,
-	})
+	}); err != nil {
+		m.client.Log.Warnf("save update state: %v", err)
+	}
 }
 
 func classifyAccountUpdate(state updateState, meta updateMeta) gapKind {

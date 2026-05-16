@@ -98,23 +98,26 @@ func (e *Error) extractArgument() {
 	if len(parts) < 2 {
 		return
 	}
-	var nonDigit []string
-Parts:
+	var typeParts []string
 	for _, part := range parts {
+		isDigit := true
 		for _, r := range part {
-			if unicode.IsDigit(r) {
-				continue
+			if !unicode.IsDigit(r) {
+				isDigit = false
+				break
 			}
-			nonDigit = append(nonDigit, part)
-			continue Parts
 		}
-		argument, err := strconv.Atoi(part)
-		if err != nil {
-			return
+		if isDigit {
+			argument, err := strconv.Atoi(part)
+			if err != nil {
+				return
+			}
+			e.Argument = argument
+		} else {
+			typeParts = append(typeParts, part)
 		}
-		e.Argument = argument
 	}
-	e.Type = strings.Join(nonDigit, "_")
+	e.Type = strings.Join(typeParts, "_")
 }
 
 // AsType uses errors.As to extract an *Error from err and reports whether its

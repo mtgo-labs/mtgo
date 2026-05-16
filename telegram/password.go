@@ -82,7 +82,6 @@ func (c *Client) EnableCloudPassword(ctx context.Context, password, hint string)
 		},
 	})
 	if err != nil {
-		c.Log.Warnf("password: enable cloud password failed err=%v", err)
 		return err
 	}
 	c.Log.Info("password: cloud password enabled")
@@ -141,7 +140,6 @@ func (c *Client) ChangeCloudPassword(ctx context.Context, currentPassword, newPa
 		},
 	})
 	if err != nil {
-		c.Log.Warnf("password: change cloud password failed err=%v", err)
 		return err
 	}
 	c.Log.Info("password: cloud password changed")
@@ -186,7 +184,6 @@ func (c *Client) RemoveCloudPassword(ctx context.Context, password string) error
 		NewSettings: &tg.AccountPasswordInputSettings{},
 	})
 	if err != nil {
-		c.Log.Warnf("password: remove cloud password failed err=%v", err)
 		return err
 	}
 	c.Log.Info("password: cloud password removed")

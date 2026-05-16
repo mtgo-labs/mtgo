@@ -47,7 +47,6 @@ func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBot
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditInlineText failed err=%v", err)
 		return false, err
 	}
 	return result, nil
@@ -82,7 +81,6 @@ func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.Input
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditInlineCaption failed err=%v", err)
 		return false, err
 	}
 	return result, nil
@@ -118,7 +116,6 @@ func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBo
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditInlineMedia failed err=%v", err)
 		return false, err
 	}
 	return result, nil
@@ -145,7 +142,6 @@ func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.I
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditInlineReplyMarkup failed err=%v", err)
 		return false, err
 	}
 	return result, nil

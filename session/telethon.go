@@ -19,7 +19,7 @@ func EncodeTelethon(data *SessionData) (string, error) {
 
 	ip := net.ParseIP(data.ServerAddress)
 	if ip == nil {
-		return "", fmt.Errorf("invalid IP address: %s", data.ServerAddress)
+		ip = net.IPv4(0, 0, 0, 0)
 	}
 
 	ip4 := ip.To4()

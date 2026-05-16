@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -105,9 +106,16 @@ func channelIDFromMessage(msg tg.MessageClass) int64 {
 }
 
 func int32ListKey(values []int32) string {
-	parts := make([]string, len(values))
-	for i, value := range values {
-		parts[i] = fmt.Sprint(value)
+	if len(values) == 0 {
+		return ""
 	}
-	return strings.Join(parts, ",")
+	var b strings.Builder
+	b.Grow(len(values) * 6)
+	for i, v := range values {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(strconv.FormatInt(int64(v), 10))
+	}
+	return b.String()
 }

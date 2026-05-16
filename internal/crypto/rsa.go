@@ -45,36 +45,37 @@ func rsapad(data []byte, n *big.Int) ([]byte, error) {
 
 	zeroIV := make([]byte, 32)
 
+	var tempKey [tempKeyLen]byte
+	var hashInput [tempKeyLen + dataWithPaddingLen]byte
+	var dataWithHash [dataWithHashLen]byte
+	var tempKeyXor [tempKeyLen]byte
+	var result [rsaEncryptedLen]byte
+
 	for {
-		tempKey := make([]byte, tempKeyLen)
-		if _, err := cryptorand.Read(tempKey); err != nil {
+		if _, err := cryptorand.Read(tempKey[:]); err != nil {
 			return nil, err
 		}
 
-		hashInput := make([]byte, tempKeyLen+dataWithPaddingLen)
-		copy(hashInput, tempKey)
+		copy(hashInput[:], tempKey[:])
 		copy(hashInput[tempKeyLen:], dataWithPadding)
-		hash := sha256.Sum256(hashInput)
+		hash := sha256.Sum256(hashInput[:])
 
-		dataWithHash := make([]byte, dataWithHashLen)
-		copy(dataWithHash, dataPadReversed)
+		copy(dataWithHash[:], dataPadReversed)
 		copy(dataWithHash[dataWithPaddingLen:], hash[:])
 
-		aesEncrypted := IGEEncrypt(dataWithHash, tempKey, zeroIV)
+		aesEncrypted := IGEEncrypt(dataWithHash[:], tempKey[:], zeroIV)
 
-		tempKeyXor := make([]byte, tempKeyLen)
 		aesHash := sha256.Sum256(aesEncrypted)
 		for i := 0; i < tempKeyLen; i++ {
 			tempKeyXor[i] = tempKey[i] ^ aesHash[i]
 		}
 
-		result := make([]byte, rsaEncryptedLen)
-		copy(result, tempKeyXor)
+		copy(result[:], tempKeyXor[:])
 		copy(result[tempKeyLen:], aesEncrypted)
 
-		resultInt := new(big.Int).SetBytes(result)
+		resultInt := new(big.Int).SetBytes(result[:])
 		if resultInt.Cmp(n) < 0 {
-			return result, nil
+			return result[:], nil
 		}
 	}
 }

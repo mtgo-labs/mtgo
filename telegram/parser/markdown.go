@@ -38,18 +38,23 @@ func mdToHTML(md string) string {
 }
 
 func replaceDelimited(s, delim, openTag, closeTag string) string {
+	var b strings.Builder
+	b.Grow(len(s))
 	open := true
 	for {
 		idx := strings.Index(s, delim)
 		if idx == -1 {
+			b.WriteString(s)
 			break
 		}
-		tag := openTag
-		if !open {
-			tag = closeTag
+		b.WriteString(s[:idx])
+		if open {
+			b.WriteString(openTag)
+		} else {
+			b.WriteString(closeTag)
 		}
-		s = s[:idx] + tag + s[idx+len(delim):]
+		s = s[idx+len(delim):]
 		open = !open
 	}
-	return s
+	return b.String()
 }

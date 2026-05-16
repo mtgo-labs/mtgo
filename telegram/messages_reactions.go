@@ -46,7 +46,6 @@ func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32
 		Reaction: reaction,
 	})
 	if err != nil {
-		c.Log.Warnf("SendReaction failed err=%v", err)
 	}
 	return err
 }
@@ -81,7 +80,6 @@ func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID i
 		RandomID: generateRandomID(),
 	})
 	if err != nil {
-		c.Log.Warnf("SendPaidReaction failed err=%v", err)
 	}
 	return err
 }
@@ -123,7 +121,6 @@ func (c *Client) VotePoll(ctx context.Context, chatID int64, messageID int32, op
 		Options: options,
 	})
 	if err != nil {
-		c.Log.Warnf("VotePoll failed err=%v", err)
 	}
 	return err
 }
@@ -164,7 +161,6 @@ func (c *Client) StopPoll(ctx context.Context, chatID int64, messageID int32) er
 		},
 	})
 	if err != nil {
-		c.Log.Warnf("StopPoll failed err=%v", err)
 	}
 	return err
 }
@@ -194,7 +190,6 @@ func (c *Client) RetractVote(ctx context.Context, chatID int64, messageID int32)
 		Options: nil,
 	})
 	if err != nil {
-		c.Log.Warnf("RetractVote failed err=%v", err)
 	}
 	return err
 }

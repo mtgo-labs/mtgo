@@ -65,7 +65,6 @@ func (c *Client) EditMessageCaption(ctx context.Context, chatID int64, messageID
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditMessageCaption failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -129,7 +128,6 @@ func (c *Client) EditMessageMedia(ctx context.Context, chatID int64, messageID i
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditMessageMedia failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -182,7 +180,6 @@ func (c *Client) EditMessageReplyMarkup(ctx context.Context, chatID int64, messa
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditMessageReplyMarkup failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)

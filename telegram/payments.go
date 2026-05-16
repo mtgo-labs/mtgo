@@ -63,7 +63,6 @@ func (c *Client) SendInvoice(ctx context.Context, chatID int64, invoice *tg.Inpu
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMedia(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SendInvoice failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)

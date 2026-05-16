@@ -85,14 +85,21 @@ type baseHandler struct {
 }
 
 func mergeFilters(filters []Filter) Filter {
-	if len(filters) == 0 {
+	switch len(filters) {
+	case 0:
 		return nil
+	case 1:
+		return filters[0]
+	default:
+		return func(ctx *Context) bool {
+			for _, f := range filters {
+				if !f(ctx) {
+					return false
+				}
+			}
+			return true
+		}
 	}
-	f := filters[0]
-	for i := 1; i < len(filters); i++ {
-		f = f.And(filters[i])
-	}
-	return f
 }
 
 // FuncHandler wraps a function as a Handler. Check always returns true.

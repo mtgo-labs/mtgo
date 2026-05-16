@@ -83,22 +83,22 @@ func (t *TCPObfuscated) Connect() error {
 	nonce[58] = t.marker
 	nonce[59] = t.marker
 
-	encKey := make([]byte, 32)
-	encIV := make([]byte, 16)
-	copy(encKey, nonce[8:40])
-	copy(encIV, nonce[40:56])
+	var encKey [32]byte
+	var encIV [16]byte
+	var decKey [32]byte
+	var decIV [16]byte
+	copy(encKey[:], nonce[8:40])
+	copy(encIV[:], nonce[40:56])
 
-	reversed := make([]byte, 48)
+	var reversed [48]byte
 	for i := 0; i < 48; i++ {
 		reversed[i] = nonce[55-i]
 	}
-	decKey := make([]byte, 32)
-	decIV := make([]byte, 16)
-	copy(decKey, reversed[0:32])
-	copy(decIV, reversed[32:48])
+	copy(decKey[:], reversed[0:32])
+	copy(decIV[:], reversed[32:48])
 
-	t.enc = crypto.NewCTRCipher(encKey, encIV)
-	t.dec = crypto.NewCTRCipher(decKey, decIV)
+	t.enc = crypto.NewCTRCipher(encKey[:], encIV[:])
+	t.dec = crypto.NewCTRCipher(decKey[:], decIV[:])
 
 	encrypted := t.enc.Process(nonce)
 	copy(nonce[56:64], encrypted[56:64])
@@ -117,23 +117,20 @@ func (t *TCPObfuscated) Connect() error {
 func (t *TCPObfuscated) connectReverse() error {
 	nonce := t.nonce
 
-	// Reverse: use A's decrypt keys as B's encrypt keys and vice versa
-	reversed := make([]byte, 48)
+	var reversed [48]byte
 	for i := 0; i < 48; i++ {
 		reversed[i] = nonce[55-i]
 	}
-	encKey := make([]byte, 32)
-	encIV := make([]byte, 16)
-	copy(encKey, reversed[0:32])
-	copy(encIV, reversed[32:48])
+	var encKey, decKey [32]byte
+	var encIV, decIV [16]byte
+	copy(encKey[:], reversed[0:32])
+	copy(encIV[:], reversed[32:48])
 
-	decKey := make([]byte, 32)
-	decIV := make([]byte, 16)
-	copy(decKey, nonce[8:40])
-	copy(decIV, nonce[40:56])
+	copy(decKey[:], nonce[8:40])
+	copy(decIV[:], nonce[40:56])
 
-	t.enc = crypto.NewCTRCipher(encKey, encIV)
-	t.dec = crypto.NewCTRCipher(decKey, decIV)
+	t.enc = crypto.NewCTRCipher(encKey[:], encIV[:])
+	t.dec = crypto.NewCTRCipher(decKey[:], decIV[:])
 
 	t.dec.Process(make([]byte, 64))
 

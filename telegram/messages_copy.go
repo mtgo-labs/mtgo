@@ -84,7 +84,6 @@ func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
 	if err != nil {
-		c.Log.Warnf("CopyMessage failed err=%v", err)
 		return 0, err
 	}
 
@@ -167,7 +166,6 @@ func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID in
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
 	if err != nil {
-		c.Log.Warnf("CopyMediaGroup failed err=%v", err)
 		return nil, err
 	}
 	return extractMessages(result, c)

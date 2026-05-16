@@ -31,7 +31,6 @@ func (c *Client) GetBusinessConnection(ctx context.Context, connectionID string)
 		ConnectionID: connectionID,
 	})
 	if err != nil {
-		c.Log.Warnf("GetBusinessConnection failed err=%v", err)
 		return nil, err
 	}
 

@@ -32,7 +32,6 @@ func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) err
 		MaxID: maxID,
 	})
 	if err != nil {
-		c.Log.Warnf("ReadHistory failed err=%v", err)
 	}
 	return err
 }
@@ -59,7 +58,6 @@ func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
 		Peer: peer,
 	})
 	if err != nil {
-		c.Log.Warnf("ReadMentions failed err=%v", err)
 	}
 	return err
 }
@@ -86,7 +84,6 @@ func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 		Peer: peer,
 	})
 	if err != nil {
-		c.Log.Warnf("ReadReactions failed err=%v", err)
 	}
 	return err
 }

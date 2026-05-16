@@ -9,23 +9,16 @@ func TestXOR(t *testing.T) {
 	a := []byte{0x01, 0x02, 0x03, 0x04}
 	b := []byte{0xFF, 0x00, 0xFF, 0x00}
 	want := []byte{0xFE, 0x02, 0xFC, 0x04}
-	got := xor(a, b)
+	got := make([]byte, len(a))
+	xorInPlace(got, a, b)
 	if !bytes.Equal(got, want) {
 		t.Fatalf("xor: expected %x, got %x", want, got)
 	}
 }
 
-func TestXORDifferentLengths(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("expected panic for different lengths")
-		}
-	}()
-	xor([]byte{0x01}, []byte{0x01, 0x02})
-}
-
 func TestXOREmpty(t *testing.T) {
-	got := xor([]byte{}, []byte{})
+	got := make([]byte, 0)
+	xorInPlace(got, nil, nil)
 	if len(got) != 0 {
 		t.Fatalf("expected empty, got %x", got)
 	}

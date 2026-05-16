@@ -5,11 +5,13 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 	"github.com/mtgo-labs/storage"
 )
 
@@ -25,6 +27,8 @@ type Transport interface {
 	Close() error
 	// IsConnected reports whether the transport is currently connected.
 	IsConnected() bool
+	// SetWriteDeadline sets the write deadline on the underlying connection.
+	SetWriteDeadline(t time.Time) error
 }
 
 // AuthFunc is a function that performs key generation/authentication against
@@ -86,8 +90,22 @@ type Session struct {
 	pingInterval time.Duration
 	// onUpdate is called when the server pushes unsolicited updates.
 	onUpdate func(tg.TLObject)
+	// onDisconnect is called when the transport connection dies (recv error or write failure).
+	onDisconnect func(error)
 	// updateSem bounds the number of concurrent update dispatch goroutines.
 	updateSem chan struct{}
+	// onPanic is called (if non-nil) when a dispatchUpdate goroutine panics.
+	onPanic func(panicValue any)
+}
+
+// SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
+func (s *Session) SetOnPanic(fn func(panicValue any)) {
+	s.onPanic = fn
+}
+
+// SetOnDisconnect sets a callback invoked when the transport connection dies.
+func (s *Session) SetOnDisconnect(fn func(error)) {
+	s.onDisconnect = fn
 }
 
 func computeAuthKeyID(authKey []byte) []byte {
@@ -254,10 +272,15 @@ func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time
 	ch := s.registerResult(msgID)
 
 	s.sendMu.Lock()
+	_ = s.transport.SetWriteDeadline(time.Now().Add(timeout))
 	err := s.transport.Send(encrypted)
+	_ = s.transport.SetWriteDeadline(time.Time{})
 	s.sendMu.Unlock()
 	if err != nil {
 		s.unregisterResult(msgID)
+		if s.onDisconnect != nil {
+			s.onDisconnect(err)
+		}
 		return nil, fmt.Errorf("session: send: %w", err)
 	}
 
@@ -327,11 +350,23 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 // bounded by the updateSem semaphore. If 64 dispatches are already in
 // flight, this blocks until one completes, providing backpressure.
 func (s *Session) dispatchUpdate(obj tg.TLObject) {
-	s.updateSem <- struct{}{}
-	go func() {
-		defer func() { <-s.updateSem }()
-		s.onUpdate(obj)
-	}()
+	select {
+	case s.updateSem <- struct{}{}:
+		go func() {
+			defer func() { <-s.updateSem }()
+			defer func() {
+				if r := recover(); r != nil {
+					if s.onPanic != nil {
+						s.onPanic(r)
+					} else {
+						log.Printf("session: dispatchUpdate panic: %v", r)
+					}
+				}
+			}()
+			s.onUpdate(obj)
+		}()
+	default:
+	}
 }
 
 func unpackIncomingMessage(data, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessage, []byte, error) {
@@ -374,7 +409,20 @@ func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) 
 		}
 
 		if rpcErr, ok := obj.(*tg.RPCError); ok {
-			lastErr = fmt.Errorf("rpc error code %d: %s", rpcErr.ErrorCode, rpcErr.ErrorMessage)
+			if rpcErr.ErrorCode == 303 {
+				return obj, nil
+			}
+			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+			if d, ok := tgerr.AsFloodWait(parsed); ok {
+				time.Sleep(d + time.Second)
+				retries++
+				continue
+			}
+			// Non-retryable errors (auth, permission, bad request) fail immediately.
+			if rpcErr.ErrorCode == 401 || rpcErr.ErrorCode == 400 || rpcErr.ErrorCode == 403 {
+				return nil, parsed
+			}
+			lastErr = parsed
 			continue
 		}
 
@@ -418,6 +466,7 @@ func (s *Session) Stop() {
 }
 
 func (s *Session) recvWorker() {
+	var lastDisconnect time.Time
 	for {
 		select {
 		case <-s.cancel:
@@ -429,6 +478,10 @@ func (s *Session) recvWorker() {
 		if err != nil {
 			if !s.connected {
 				return
+			}
+			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
+				s.onDisconnect(err)
+				lastDisconnect = time.Now()
 			}
 			select {
 			case <-s.cancel:
@@ -483,9 +536,14 @@ func (s *Session) pingWorker() {
 			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
 
 			s.sendMu.Lock()
+			_ = s.transport.SetWriteDeadline(time.Now().Add(30 * time.Second))
 			err := s.transport.Send(encrypted)
+			_ = s.transport.SetWriteDeadline(time.Time{})
 			s.sendMu.Unlock()
 			if err != nil {
+				if s.onDisconnect != nil {
+					s.onDisconnect(err)
+				}
 				continue
 			}
 		}

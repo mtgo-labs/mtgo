@@ -66,7 +66,7 @@ func TestUpdateManagerHandlerPanicDoesNotAdvanceState(t *testing.T) {
 	err := mgr.deliverUpdate(&tg.Updates{Updates: []tg.UpdateClass{
 		&tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 1, PTSCount: 1},
 	}}, &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 1, PTSCount: 1},
-		updateMeta{Pts: 1, PtsCount: 1})
+		updateMeta{Pts: 1, PtsCount: 1}, nil, nil, nil)
 	if !errors.Is(err, ErrUpdateHandlerFailed) {
 		t.Fatalf("deliverUpdate error = %v", err)
 	}
@@ -96,7 +96,7 @@ func TestUpdateManagerSeqGap(t *testing.T) {
 func TestUpdateManagerDuplicateIgnored(t *testing.T) {
 	mgr := testUpdateManager(t)
 	mgr.state.Pts = 10
-	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 9, PTSCount: 1}, nil)
+	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 9, PTSCount: 1}, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("duplicate apply error = %v", err)
 	}
@@ -109,7 +109,7 @@ func TestLiveUpdateArrivingWhileRecoveryRunningDoesNotStartDuplicateRecovery(t *
 	mgr := testUpdateManager(t)
 	mgr.state.Pts = 10
 	mgr.recovering = true
-	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 12, PTSCount: 1}, nil)
+	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 12, PTSCount: 1}, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("applyUpdate while recovery running: %v", err)
 	}
@@ -145,7 +145,7 @@ func TestLiveGapRecoveryTriggersGetDifference(t *testing.T) {
 	}}
 	mgr.SetRPC(rpc)
 
-	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 13, PTSCount: 1}, nil)
+	err := mgr.applyUpdate(context.Background(), &tg.UpdateDeleteMessages{Messages: []int32{1}, PTS: 13, PTSCount: 1}, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("applyUpdate: %v", err)
 	}
@@ -278,7 +278,7 @@ func TestUpdateChannelTooLongTriggersRecovery(t *testing.T) {
 	rpc := &fakeChannelDifferenceRPC{result: &tg.UpdatesChannelDifference{Final: true, PTS: 50}}
 	mgr.SetRPC(rpc)
 
-	err := mgr.applyUpdate(context.Background(), &tg.UpdateChannelTooLong{ChannelID: 100}, nil)
+	err := mgr.applyUpdate(context.Background(), &tg.UpdateChannelTooLong{ChannelID: 100}, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("applyUpdate ChannelTooLong: %v", err)
 	}
