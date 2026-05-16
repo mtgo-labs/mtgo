@@ -19,6 +19,7 @@ type TLObject interface {
 func EncodeTLObject(b *bytes.Buffer, obj TLObject) error {
 	return obj.Encode(b)
 }
+
 // Registry maps TL constructor IDs to factory functions that decode the
 // corresponding TLObject from a reader. Generated types register themselves
 // during init.

@@ -63,12 +63,12 @@ func DecodePyrogram(s string) (*SessionData, error) {
 	isBot := payload[270] != 0
 
 	return &SessionData{
-		DCID:    dcID,
-		AppID:   appID,
+		DCID:     dcID,
+		AppID:    appID,
 		TestMode: testMode,
-		AuthKey: authKey,
-		UserID:  userID,
-		IsBot:   isBot,
+		AuthKey:  authKey,
+		UserID:   userID,
+		IsBot:    isBot,
 	}, nil
 }
 

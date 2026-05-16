@@ -592,25 +592,6 @@ func writeExpr(arg Arg, goType string, receiver string) string {
 	return fmt.Sprintf("EncodeTLObject(b, %s)", access)
 }
 
-func readCallReturnsError(tlType string, section string, baseTypes map[string]bool) bool {
-	tlType = normalizeVectorType(tlType)
-	tlType = stripNamespace(tlType)
-	switch tlType {
-	case "int", "long", "int128", "int256", "double", "string", "bytes", "Bool", "true", "#":
-		return false
-	}
-	if strings.HasPrefix(tlType, "Vector<") {
-		inner := strings.TrimSuffix(strings.TrimPrefix(tlType, "Vector<"), ">")
-		switch stripNamespace(inner) {
-		case "int", "long", "string", "bytes":
-			return false
-		default:
-			return true
-		}
-	}
-	return true
-}
-
 func buildReadLine(arg Arg, fd fieldData, section string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator) readLine {
 	fieldName := fieldNameFromTL(arg.Name)
 	assign := fmt.Sprintf("v.%s", fieldName)

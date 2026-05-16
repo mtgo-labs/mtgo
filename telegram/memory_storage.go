@@ -66,12 +66,12 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-func (m *MemoryStorage) SessionID() (string, error)            { return m.sessionID, nil }
-func (m *MemoryStorage) SetSessionID(v string) error          { m.sessionID = v; return nil }
-func (m *MemoryStorage) DCID() (int, error)                   { return m.dcID, nil }
+func (m *MemoryStorage) SessionID() (string, error)      { return m.sessionID, nil }
+func (m *MemoryStorage) SetSessionID(v string) error     { m.sessionID = v; return nil }
+func (m *MemoryStorage) DCID() (int, error)              { return m.dcID, nil }
 func (m *MemoryStorage) SetDCID(v int) error             { m.dcID = v; return nil }
-func (m *MemoryStorage) APIID() (int32, error)            { return m.apiID, nil }
-func (m *MemoryStorage) SetAPIID(v int32) error           { m.apiID = v; return nil }
+func (m *MemoryStorage) APIID() (int32, error)           { return m.apiID, nil }
+func (m *MemoryStorage) SetAPIID(v int32) error          { m.apiID = v; return nil }
 func (m *MemoryStorage) TestMode() (bool, error)         { return m.testMode, nil }
 func (m *MemoryStorage) SetTestMode(v bool) error        { m.testMode = v; return nil }
 func (m *MemoryStorage) AuthKey() ([]byte, error)        { return append([]byte(nil), m.authKey...), nil }
