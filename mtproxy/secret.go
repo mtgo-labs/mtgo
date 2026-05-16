@@ -2,23 +2,22 @@ package mtproxy
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 )
 
 type SecretType int
 
 const (
-	SecretSimple    SecretType = iota
-	SecretSecured              // dd-prefix: tag(1) + secret(16)
-	SecretTLS                  // ee-prefix: tag(1) + secret(16) + domain
+	SecretSimple  SecretType = iota
+	SecretSecured            // dd-prefix: tag(1) + secret(16)
+	SecretTLS                // ee-prefix: tag(1) + secret(16) + domain
 )
 
 type Secret struct {
-	Type     SecretType
-	Secret   []byte // 16-byte secret
-	Tag      byte   // protocol tag (0xdd, 0xee, 0xef)
-	Domain   string // SNI domain (ee-secrets only)
+	Type   SecretType
+	Secret []byte // 16-byte secret
+	Tag    byte   // protocol tag (0xdd, 0xee, 0xef)
+	Domain string // SNI domain (ee-secrets only)
 }
 
 func ParseSecret(s string) (Secret, error) {
@@ -48,7 +47,7 @@ func ParseSecretBytes(raw []byte) (Secret, error) {
 		return Secret{Type: SecretTLS, Secret: secret, Tag: tag, Domain: domain}, nil
 
 	default:
-		return Secret{}, errors.New("mtproxy: secret must be 16, 17, or 18+ bytes")
+		return Secret{}, ErrInvalidSecretLen
 	}
 }
 

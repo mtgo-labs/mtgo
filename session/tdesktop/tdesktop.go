@@ -22,6 +22,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -133,10 +134,17 @@ func ReadFS(root fs.FS, passcode []byte) ([]Account, error) {
 }
 
 var (
-	// ErrNoAccounts means tdata contains no accounts.
-	ErrNoAccounts = fmt.Errorf("tdesktop: no accounts found")
-	// ErrKeyDecrypt means the passcode is wrong or data is corrupt.
-	ErrKeyDecrypt = fmt.Errorf("tdesktop: key data decrypt failed (wrong passcode?)")
+	errChecksumMismatch  = errors.New("checksum mismatch")
+	errDataNotAligned    = errors.New("data not aligned to block size")
+	errKeyInnerTooShort  = errors.New("key inner too short")
+	errKeyInnerTruncated = errors.New("key inner truncated")
+	errInfoTooShort      = errors.New("info too short")
+	errDecryptedTooShort = errors.New("decrypted too short")
+)
+
+var (
+	ErrNoAccounts = errors.New("tdesktop: no accounts found")
+	ErrKeyDecrypt = errors.New("tdesktop: key data decrypt failed (wrong passcode?)")
 )
 
 // ---------- internal types ----------
@@ -220,7 +228,7 @@ func fromReader(r io.Reader) (*tdesktopFile, error) {
 
 	computed := computeFileHash(data, version)
 	if !bytes.Equal(computed[:], storedHash) {
-		return nil, fmt.Errorf("checksum mismatch")
+		return nil, errChecksumMismatch
 	}
 
 	return &tdesktopFile{data: data, version: version}, nil
@@ -317,7 +325,7 @@ func igeDecrypt(key [32]byte, iv [32]byte, data []byte) ([]byte, error) {
 		return nil, err
 	}
 	if len(data)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf("data not aligned to block size")
+		return nil, errDataNotAligned
 	}
 
 	bs := aes.BlockSize
@@ -397,11 +405,11 @@ func readKeyData(tgf *tdesktopFile, passcode []byte) (keyData, error) {
 
 	// The decrypted key is a Qt-style byte array (4-byte BE length + data).
 	if len(keyInner) < 4 {
-		return keyData{}, fmt.Errorf("key inner too short")
+		return keyData{}, errKeyInnerTooShort
 	}
 	keyLen := int(binary.BigEndian.Uint32(keyInner))
 	if 4+keyLen > len(keyInner) {
-		return keyData{}, fmt.Errorf("key inner truncated")
+		return keyData{}, errKeyInnerTruncated
 	}
 	keyBytes := keyInner[4 : 4+keyLen]
 
@@ -422,7 +430,7 @@ func readKeyData(tgf *tdesktopFile, passcode []byte) (keyData, error) {
 
 	// Skip length prefix, read account count.
 	if len(infoDecrypted) < 8 {
-		return keyData{}, fmt.Errorf("info too short")
+		return keyData{}, errInfoTooShort
 	}
 	infoDecrypted = infoDecrypted[4:] // skip uint32 length
 	count := int(binary.BigEndian.Uint32(infoDecrypted))
@@ -451,7 +459,7 @@ func readMTPAuthorization(tgf *tdesktopFile, localKey [256]byte) (mtpAuthorizati
 
 	// Skip uint32 length prefix.
 	if len(decrypted) < 4 {
-		return mtpAuthorization{}, fmt.Errorf("decrypted too short")
+		return mtpAuthorization{}, errDecryptedTooShort
 	}
 	decrypted = decrypted[4:]
 

@@ -7,16 +7,26 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 )
 
+var (
+	errEmptyPlaintext     = errors.New("crypto/secret: empty plaintext")
+	errCiphertextTooShort = errors.New("crypto/secret: ciphertext too short")
+	errMsgKeyMismatch     = errors.New("crypto/secret: msg_key mismatch")
+	errDecryptedTooShort  = errors.New("crypto/secret: decrypted too short")
+	errInvalidMsgLen      = errors.New("crypto/secret: invalid message length")
+	errFileNotAligned     = errors.New("crypto/secret: encrypted file not aligned to 16")
+)
+
 const (
-	SecretChatKeyLen      = 256
-	SecretChatMinGA       = 2048 - 64
-	SecretChatLayer       = 46
-	SecretChatMaxPadding  = 1024
-	SecretChatMinPadding  = 12
+	SecretChatKeyLen     = 256
+	SecretChatMinGA      = 2048 - 64
+	SecretChatLayer      = 46
+	SecretChatMaxPadding = 1024
+	SecretChatMinPadding = 12
 )
 
 var one = big.NewInt(1)
@@ -97,7 +107,7 @@ func ValidateGA(ga *big.Int, dhPrime *big.Int) bool {
 
 func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	if len(plaintext) == 0 {
-		return nil, fmt.Errorf("crypto/secret: empty plaintext")
+		return nil, errEmptyPlaintext
 	}
 
 	var buf bytes.Buffer
@@ -106,7 +116,7 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	buf.Write(lenBytes)
 	buf.Write(plaintext)
 
-	paddingLen := SecretChatMinPadding + (SecretChatMaxPadding-SecretChatMinPadding)
+	paddingLen := SecretChatMinPadding + (SecretChatMaxPadding - SecretChatMinPadding)
 	if buf.Len()+paddingLen < 16 || (buf.Len()+paddingLen)%16 != 0 {
 		needed := 16 - (buf.Len() % 16)
 		if needed < SecretChatMinPadding {
@@ -142,7 +152,7 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 
 func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	if len(ciphertext) < 16+16 {
-		return nil, fmt.Errorf("crypto/secret: ciphertext too short")
+		return nil, errCiphertextTooShort
 	}
 
 	msgKey := ciphertext[:16]
@@ -161,15 +171,15 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	copy(msgKeyLargeInput[32:], decrypted)
 	msgKeyCheck := sha256.Sum256(msgKeyLargeInput)
 	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
-		return nil, fmt.Errorf("crypto/secret: msg_key mismatch")
+		return nil, errMsgKeyMismatch
 	}
 
 	if len(decrypted) < 4 {
-		return nil, fmt.Errorf("crypto/secret: decrypted too short")
+		return nil, errDecryptedTooShort
 	}
 	msgLen := int(binary.LittleEndian.Uint32(decrypted[:4]))
 	if msgLen < 0 || msgLen+4 > len(decrypted) {
-		return nil, fmt.Errorf("crypto/secret: invalid message length")
+		return nil, errInvalidMsgLen
 	}
 	paddingLen := len(decrypted) - 4 - msgLen
 	if paddingLen < SecretChatMinPadding || paddingLen > SecretChatMaxPadding {
@@ -209,7 +219,7 @@ func EncryptFile(data, fileKey, fileIV []byte) []byte {
 
 func DecryptFile(data, fileKey, fileIV []byte) ([]byte, error) {
 	if len(data)%16 != 0 {
-		return nil, fmt.Errorf("crypto/secret: encrypted file not aligned to 16")
+		return nil, errFileNotAligned
 	}
 	return IGEDecrypt(data, fileKey, fileIV), nil
 }

@@ -187,7 +187,7 @@ func (t *TCPObfuscated) Send(buf *bytes.Buffer) error {
 		}
 	default:
 		_ = inner
-		return fmt.Errorf("tcp_obfuscated: unsupported inner transport type")
+		return ErrUnsupportedTransport
 	}
 	return nil
 }
@@ -238,6 +238,6 @@ func (t *TCPObfuscated) Recv() ([]byte, error) {
 		return t.dec.Process(data), nil
 
 	default:
-		return nil, fmt.Errorf("tcp_obfuscated: unsupported inner transport type")
+		return nil, ErrUnsupportedTransport
 	}
 }

@@ -146,7 +146,7 @@ func verifyServerHello(secret, clientRandom, response []byte) error {
 	expected := mac.Sum(nil)
 
 	if !hmac.Equal(serverRandom, expected) {
-		return fmt.Errorf("mtproxy: server hello verification failed")
+		return ErrServerHelloFailed
 	}
 
 	return nil

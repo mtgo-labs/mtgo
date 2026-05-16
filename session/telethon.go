@@ -3,9 +3,12 @@ package session
 import (
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 )
+
+var errNotTelethon = errors.New("not a Telethon session string")
 
 // EncodeTelethon encodes session data in Telethon string session format:
 // "1" + base64url(dc_id[1B] + ip[4B|16B] + port[2B BE] + auth_key[256B])
@@ -41,7 +44,7 @@ func EncodeTelethon(data *SessionData) (string, error) {
 // DecodeTelethon decodes a Telethon string session.
 func DecodeTelethon(s string) (*SessionData, error) {
 	if len(s) < 2 || s[0] != '1' {
-		return nil, fmt.Errorf("not a Telethon session string")
+		return nil, errNotTelethon
 	}
 
 	payload, err := base64.URLEncoding.DecodeString(padBase64(s[1:]))

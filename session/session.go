@@ -98,7 +98,6 @@ type Session struct {
 	serverAddress string
 	port          int
 	state         []byte
-	sessionName   string
 
 	// Format is the detected source format (set by constructors).
 	Format Format
@@ -175,8 +174,8 @@ func dataToSession(d *SessionData, f Format) *Session {
 
 func (s *Session) DCID() (int, error)              { return s.dcID, nil }
 func (s *Session) SetDCID(v int) error             { s.dcID = v; return nil }
-func (s *Session) APIID() (int32, error)            { return s.apiID, nil }
-func (s *Session) SetAPIID(v int32) error           { s.apiID = v; return nil }
+func (s *Session) APIID() (int32, error)           { return s.apiID, nil }
+func (s *Session) SetAPIID(v int32) error          { s.apiID = v; return nil }
 func (s *Session) APIHash() (string, error)        { return s.apiHash, nil }
 func (s *Session) SetAPIHash(v string) error       { s.apiHash = v; return nil }
 func (s *Session) TestMode() (bool, error)         { return s.testMode, nil }
@@ -319,7 +318,7 @@ type SessionData struct {
 // Decode auto-detects the format of the string session and decodes it.
 func Decode(s string) (*SessionData, Format, error) {
 	if s == "" {
-		return nil, FormatUnknown, fmt.Errorf("empty session string")
+		return nil, FormatUnknown, ErrEmptySession
 	}
 
 	f := DetectFormat(s)
@@ -337,7 +336,7 @@ func Decode(s string) (*SessionData, Format, error) {
 		}
 	}
 
-	return nil, FormatUnknown, fmt.Errorf("unable to detect session format")
+	return nil, FormatUnknown, ErrUnknownFormat
 }
 
 // Encode encodes SessionData into the specified format.

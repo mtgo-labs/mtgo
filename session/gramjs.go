@@ -3,8 +3,11 @@ package session
 import (
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
+
+var errNotGramJS = errors.New("not a GramJS session string")
 
 // EncodeGramjs encodes session data in GramJS string session format:
 // "1" + base64_std(dc_id[1B] + addr_len[2B BE] + addr_bytes[variable] + port[2B BE] + auth_key[256B])
@@ -38,7 +41,7 @@ func EncodeGramjs(data *SessionData) (string, error) {
 // DecodeGramjs decodes a GramJS string session.
 func DecodeGramjs(s string) (*SessionData, error) {
 	if len(s) < 2 || s[0] != '1' {
-		return nil, fmt.Errorf("not a GramJS session string")
+		return nil, errNotGramJS
 	}
 
 	payload, err := base64.StdEncoding.DecodeString(s[1:])
