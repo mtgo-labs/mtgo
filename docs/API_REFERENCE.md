@@ -1,6 +1,8 @@
-# gogram API Reference
+# mtgo *(MTProto Go)* API Reference
 
-> Complete API reference for gogram — a Go Telegram MTProto client library.
+> Complete API reference for mtgo — a Go Telegram MTProto client library.
+>
+> mtgo stands for **MTProto Go**. It is a Telegram client library and has no relation to Magic: The Gathering Online.
 
 ---
 
