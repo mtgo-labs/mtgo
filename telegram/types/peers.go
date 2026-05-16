@@ -103,9 +103,19 @@ func GetPeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerUser:
 		return p.UserID
 	case *tg.PeerChat:
-		return p.ChatID
+		return -p.ChatID
 	case *tg.PeerChannel:
-		return p.ChannelID
+		return -p.ChannelID
 	}
 	return 0
+}
+
+func getUserFromPM(pm *PeerMap, id int64) *User {
+	if pm == nil || pm.Users == nil {
+		return &User{ID: id}
+	}
+	if u, ok := pm.Users[id]; ok && u != nil {
+		return ParseUser(u)
+	}
+	return &User{ID: id}
 }

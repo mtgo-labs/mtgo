@@ -1,39 +1,33 @@
 package types
 
 import (
+	"time"
+
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
 // Dialog represents a single conversation entry in the user's chat list,
-// including unread counts, pin state, and the associated peer.
+// including unread counts, pin state, and the associated chat.
 //
 // Example:
 //
 //	dialogs, _ := client.GetDialogs(ctx, 0, 20)
 //	for _, d := range dialogs {
-//	    fmt.Printf("Peer %d: %d unread, pinned=%v\n", d.Peer.ID, d.UnreadCount, d.Pinned)
+//	    fmt.Printf("Chat %d: %d unread, pinned=%v\n", d.Chat.ID, d.UnreadMessagesCount, d.IsPinned)
 //	}
 type Dialog struct {
-	// Peer identifies the chat, user, or channel this dialog represents.
-	Peer *PeerInfo
-	// TopMessage is the ID of the most recent message in this dialog.
-	TopMessage int32
-	// ReadInboxMaxID is the message ID up to which all incoming messages have been read.
-	ReadInboxMaxID int32
-	// ReadOutboxMaxID is the message ID up to which all outgoing messages have been read by the peer.
-	ReadOutboxMaxID int32
-	// UnreadCount is the number of unread incoming messages in this dialog.
-	UnreadCount int32
-	// UnreadMentionsCount is the number of unread messages that mention the current user.
-	UnreadMentionsCount int32
-	// UnreadReactionsCount is the number of unread reactions on the current user's messages.
-	UnreadReactionsCount int32
-	// Pinned indicates whether this dialog is pinned to the top of the chat list.
-	Pinned bool
-	// UnreadMark indicates the user has manually marked this dialog as unread.
-	UnreadMark bool
-	// FolderID is the chat folder this dialog belongs to, or zero for the main list.
-	FolderID int32
+	Chat                    *Chat
+	TopMessage              *Message
+	LastReadInboxMessageID  int32
+	LastReadOutboxMessageID int32
+	UnreadMessagesCount     int32
+	UnreadMentionsCount     int32
+	UnreadReactionsCount    int32
+	UnreadPollVoteCount     int32
+	UnreadMark              bool
+	IsPinned                bool
+	FolderID                int32
+	TTLPeriod               int32
 }
 
 // PeerInfo holds the identity and type of a Telegram peer (user, group, or channel).
@@ -58,23 +52,35 @@ type FolderBinder interface {
 	BoundRemoveChatFromFolder(folderID int32, chatID int64) error
 }
 
+// Folder represents a chat folder (dialog filter) with inclusion/exclusion rules,
+// pinned chats, and management methods via a FolderBinder.
+//
+// Example:
+//
+//	folders, _ := client.GetFolders(ctx)
+//	for _, f := range folders {
+//	    fmt.Printf("Folder: %s (icon: %s, included: %d chats)\n", f.Name, f.Icon, len(f.IncludedChats))
+//	}
 type Folder struct {
-	ID              int32
-	Title           string
-	Emoticon        string
-	Color           int32
-	Contacts        bool
-	NonContacts     bool
-	Groups          bool
-	Broadcasts      bool
-	Bots            bool
-	ExcludeMuted    bool
-	ExcludeRead     bool
-	ExcludeArchived bool
-	PinnedPeers     []*PeerInfo
-	IncludePeers    []*PeerInfo
-	ExcludePeers    []*PeerInfo
-	binder          FolderBinder
+	ID                 int32
+	Name               string
+	Entities           []*MessageEntity
+	AnimateCustomEmoji bool
+	Icon               string
+	Color              int32
+	IsShareable        bool
+	PinnedChats        []*Chat
+	IncludedChats      []*Chat
+	ExcludedChats      []*Chat
+	ExcludeMuted       bool
+	ExcludeRead        bool
+	ExcludeArchived    bool
+	IncludeContacts    bool
+	IncludeNonContacts bool
+	IncludeBots        bool
+	IncludeGroups      bool
+	IncludeChannels    bool
+	binder             FolderBinder
 }
 
 func (f *Folder) SetBinder(b FolderBinder) {
@@ -88,7 +94,7 @@ func (f *Folder) Delete() error {
 	return f.binder.BoundDeleteFolder(f.ID)
 }
 
-func (f *Folder) Edit(title string, emoticon string) error {
+func (f *Folder) Edit(name string, icon string) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
@@ -96,15 +102,15 @@ func (f *Folder) Edit(title string, emoticon string) error {
 	if err != nil {
 		return err
 	}
-	if title != "" {
-		f.Title = title
+	if name != "" {
+		f.Name = name
 	}
-	if emoticon != "" {
-		f.Emoticon = emoticon
+	if icon != "" {
+		f.Icon = icon
 	}
-	raw.Title.Text = f.Title
-	if f.Emoticon != "" {
-		raw.Emoticon = f.Emoticon
+	raw.Title.Text = f.Name
+	if f.Icon != "" {
+		raw.Emoticon = f.Icon
 	}
 	return f.binder.BoundEditFolder(raw)
 }
@@ -147,18 +153,18 @@ func (f *Folder) RemoveChat(chatID int64) error {
 func (f *Folder) toDialogFilter() (*tg.DialogFilter, error) {
 	df := &tg.DialogFilter{
 		ID:              f.ID,
-		Contacts:        f.Contacts,
-		NonContacts:     f.NonContacts,
-		Groups:          f.Groups,
-		Broadcasts:      f.Broadcasts,
-		Bots:            f.Bots,
+		Contacts:        f.IncludeContacts,
+		NonContacts:     f.IncludeNonContacts,
+		Groups:          f.IncludeGroups,
+		Broadcasts:      f.IncludeChannels,
+		Bots:            f.IncludeBots,
 		ExcludeMuted:    f.ExcludeMuted,
 		ExcludeRead:     f.ExcludeRead,
 		ExcludeArchived: f.ExcludeArchived,
 	}
-	df.Title.Text = f.Title
-	if f.Emoticon != "" {
-		df.Emoticon = f.Emoticon
+	df.Title.Text = f.Name
+	if f.Icon != "" {
+		df.Emoticon = f.Icon
 	}
 	if f.Color != 0 {
 		df.Color = f.Color
@@ -169,18 +175,15 @@ func (f *Folder) toDialogFilter() (*tg.DialogFilter, error) {
 // EmojiStatus represents a custom emoji status displayed next to a user's name,
 // such as a Premium or collectible emoji. May be time-limited.
 type EmojiStatus struct {
-	// DocumentID is the custom emoji sticker document ID for the status.
-	DocumentID int64
-	// Until is the Unix timestamp when the status expires, or zero for permanent.
-	Until int32
-	// CollectibleID is the unique ID of the collectible emoji, if this is a collectible status.
-	CollectibleID int64
-	// Title is the display title of the collectible emoji status.
-	Title string
-	// Slug is the URL slug of the collectible emoji status.
-	Slug string
-	// IsCollectible indicates whether this emoji status is a collectible item.
-	IsCollectible bool
+	CustomEmojiID        int64
+	UntilDate            time.Time
+	Title                string
+	GiftID               int64
+	PatternCustomEmojiID int64
+	CenterColor          int32
+	EdgeColor            int32
+	PatternColor         int32
+	TextColor            int32
 }
 
 // ChatColor represents the accent color and background emoji chosen for a chat.
@@ -204,24 +207,27 @@ type Restriction struct {
 
 // ParseDialog converts an MTProto DialogTL into a Dialog.
 // Returns nil if raw is nil.
-func ParseDialog(raw *tg.Dialog) *Dialog {
+func ParseDialog(raw *tg.Dialog, users map[int64]tg.UserClass, chats *PeerMap) *Dialog {
 	if raw == nil {
 		return nil
 	}
 	d := &Dialog{
-		TopMessage:           raw.TopMessage,
-		ReadInboxMaxID:       raw.ReadInboxMaxID,
-		ReadOutboxMaxID:      raw.ReadOutboxMaxID,
-		UnreadCount:          raw.UnreadCount,
-		UnreadMentionsCount:  raw.UnreadMentionsCount,
-		UnreadReactionsCount: raw.UnreadReactionsCount,
-		Pinned:               raw.Pinned,
-		UnreadMark:           raw.UnreadMark,
+		LastReadInboxMessageID:  raw.ReadInboxMaxID,
+		LastReadOutboxMessageID: raw.ReadOutboxMaxID,
+		UnreadMessagesCount:     raw.UnreadCount,
+		UnreadMentionsCount:     raw.UnreadMentionsCount,
+		UnreadReactionsCount:    raw.UnreadReactionsCount,
+		UnreadPollVoteCount:     raw.UnreadPollVotesCount,
+		UnreadMark:              raw.UnreadMark,
+		IsPinned:                raw.Pinned,
 	}
-	d.Peer = parsePeerInfo(raw.Peer)
 	if raw.FolderID != 0 {
 		d.FolderID = raw.FolderID
 	}
+	if raw.TTLPeriod != 0 {
+		d.TTLPeriod = raw.TTLPeriod
+	}
+	d.Chat = ParseChatFromPeer(raw.Peer, chats)
 	return d
 }
 
@@ -232,33 +238,47 @@ func ParseFolder(raw *tg.DialogFilter) *Folder {
 		return nil
 	}
 	f := &Folder{
-		ID:              raw.ID,
-		Contacts:        raw.Contacts,
-		NonContacts:     raw.NonContacts,
-		Groups:          raw.Groups,
-		Broadcasts:      raw.Broadcasts,
-		Bots:            raw.Bots,
-		ExcludeMuted:    raw.ExcludeMuted,
-		ExcludeRead:     raw.ExcludeRead,
-		ExcludeArchived: raw.ExcludeArchived,
+		ID:                 raw.ID,
+		IncludeContacts:    raw.Contacts,
+		IncludeNonContacts: raw.NonContacts,
+		IncludeGroups:      raw.Groups,
+		IncludeChannels:    raw.Broadcasts,
+		IncludeBots:        raw.Bots,
+		ExcludeMuted:       raw.ExcludeMuted,
+		ExcludeRead:        raw.ExcludeRead,
+		ExcludeArchived:    raw.ExcludeArchived,
 	}
 	if raw.Title != nil {
-		f.Title = raw.Title.Text
+		f.Name = raw.Title.Text
+		for _, ent := range raw.Title.Entities {
+			if e := ParseMessageEntity(ent); e != nil {
+				f.Entities = append(f.Entities, e)
+			}
+		}
+	}
+	if !raw.TitleNoanimate {
+		f.AnimateCustomEmoji = true
 	}
 	if raw.Emoticon != "" {
-		f.Emoticon = raw.Emoticon
+		f.Icon = raw.Emoticon
 	}
 	if raw.Color != 0 {
 		f.Color = raw.Color
 	}
 	for _, p := range raw.PinnedPeers {
-		f.PinnedPeers = append(f.PinnedPeers, parseInputPeerInfo(p))
+		if c := chatFromInputPeer(p); c != nil {
+			f.PinnedChats = append(f.PinnedChats, c)
+		}
 	}
 	for _, p := range raw.IncludePeers {
-		f.IncludePeers = append(f.IncludePeers, parseInputPeerInfo(p))
+		if c := chatFromInputPeer(p); c != nil {
+			f.IncludedChats = append(f.IncludedChats, c)
+		}
 	}
 	for _, p := range raw.ExcludePeers {
-		f.ExcludePeers = append(f.ExcludePeers, parseInputPeerInfo(p))
+		if c := chatFromInputPeer(p); c != nil {
+			f.ExcludedChats = append(f.ExcludedChats, c)
+		}
 	}
 	return f
 }
@@ -271,21 +291,24 @@ func ParseEmojiStatus(raw tg.EmojiStatusClass) *EmojiStatus {
 	}
 	switch s := raw.(type) {
 	case *tg.EmojiStatus:
-		e := &EmojiStatus{DocumentID: s.DocumentID}
+		e := &EmojiStatus{CustomEmojiID: s.DocumentID}
 		if s.Until != 0 {
-			e.Until = s.Until
+			e.UntilDate = time.Unix(int64(s.Until), 0)
 		}
 		return e
 	case *tg.EmojiStatusCollectible:
 		e := &EmojiStatus{
-			CollectibleID: s.CollectibleID,
-			DocumentID:    s.DocumentID,
-			Title:         s.Title,
-			Slug:          s.Slug,
-			IsCollectible: true,
+			GiftID:               s.CollectibleID,
+			CustomEmojiID:        s.DocumentID,
+			Title:                s.Title,
+			PatternCustomEmojiID: s.PatternDocumentID,
+			CenterColor:          s.CenterColor,
+			EdgeColor:            s.EdgeColor,
+			PatternColor:         s.PatternColor,
+			TextColor:            s.TextColor,
 		}
 		if s.Until != 0 {
-			e.Until = s.Until
+			e.UntilDate = time.Unix(int64(s.Until), 0)
 		}
 		return e
 	}
@@ -308,6 +331,18 @@ func ParseChatColor(raw *tg.PeerColor) *ChatColor {
 	return c
 }
 
+// ParseChatColorFromPeer converts an MTProto PeerColorClass into a ChatColor.
+// Returns nil if raw is nil.
+func ParseChatColorFromPeer(raw tg.PeerColorClass) *ChatColor {
+	if raw == nil {
+		return nil
+	}
+	if pc, ok := raw.(*tg.PeerColor); ok {
+		return ParseChatColor(pc)
+	}
+	return nil
+}
+
 // ParseRestriction converts an MTProto RestrictionReason into a Restriction.
 // Returns nil if raw is nil.
 func ParseRestriction(raw *tg.RestrictionReason) *Restriction {
@@ -321,32 +356,30 @@ func ParseRestriction(raw *tg.RestrictionReason) *Restriction {
 	}
 }
 
-func parsePeerInfo(peer tg.PeerClass) *PeerInfo {
-	if peer == nil {
+func parseRestrictions(raw []*tg.RestrictionReason) []*Restriction {
+	if raw == nil {
 		return nil
 	}
-	switch p := peer.(type) {
-	case *tg.PeerUser:
-		return &PeerInfo{ID: p.UserID, Type: ChatTypePrivate}
-	case *tg.PeerChat:
-		return &PeerInfo{ID: -p.ChatID, Type: ChatTypeGroup}
-	case *tg.PeerChannel:
-		return &PeerInfo{ID: -p.ChannelID, Type: ChatTypeChannel}
+	out := make([]*Restriction, 0, len(raw))
+	for _, r := range raw {
+		if v := ParseRestriction(r); v != nil {
+			out = append(out, v)
+		}
 	}
-	return nil
+	return out
 }
 
-func parseInputPeerInfo(peer tg.InputPeerClass) *PeerInfo {
+func chatFromInputPeer(peer tg.InputPeerClass) *Chat {
 	if peer == nil {
 		return nil
 	}
 	switch p := peer.(type) {
 	case *tg.InputPeerUser:
-		return &PeerInfo{ID: p.UserID, Type: ChatTypePrivate, AccessHash: p.AccessHash}
+		return &Chat{ID: p.UserID, Type: ChatTypePrivate, AccessHash: p.AccessHash}
 	case *tg.InputPeerChat:
-		return &PeerInfo{ID: -p.ChatID, Type: ChatTypeGroup}
+		return &Chat{ID: -p.ChatID, Type: ChatTypeGroup}
 	case *tg.InputPeerChannel:
-		return &PeerInfo{ID: -p.ChannelID, Type: ChatTypeChannel, AccessHash: p.AccessHash}
+		return &Chat{ID: -p.ChannelID, Type: ChatTypeChannel, AccessHash: p.AccessHash}
 	}
 	return nil
 }

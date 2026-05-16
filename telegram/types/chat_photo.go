@@ -1,28 +1,28 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"fmt"
+
+	"github.com/mtgo-labs/mtgo/tg"
+)
 
 // ChatPhoto represents a chat or user profile photo with small and big variants,
-// an optional stripped thumbnail, and the DC (data center) where the photo is
-// stored.
+// stripped thumbnail, and data center information.
+//
+// Example:
+//
+//	if chat.Photo != nil {
+//	    fmt.Printf("Photo DC: %d, animated: %v\n", chat.Photo.DcID, chat.Photo.HasAnimation)
+//	}
 type ChatPhoto struct {
-	// SmallFileID is the file reference for the 160×160 px variant.
-	SmallFileID string
-	// SmallPhotoUniqueID is a stable unique identifier for deduplication of the
-	// small variant.
+	SmallFileID        string
 	SmallPhotoUniqueID string
-	// BigFileID is the file reference for the 640×640 px variant.
-	BigFileID string
-	// BigPhotoUniqueID is a stable unique identifier for deduplication of the big
-	// variant.
-	BigPhotoUniqueID string
-	// StrippedThumb is a JPEG thumbnail stripped of metadata, used for inline
-	// previews without downloading the full photo.
-	StrippedThumb []byte
-	// HasVideo is true when the profile photo is an animated video.
-	HasVideo bool
-	// DcID is the data center ID where the photo file is stored.
-	DcID int32
+	BigFileID          string
+	BigPhotoUniqueID   string
+	HasAnimation       bool
+	IsPersonal         bool
+	StrippedThumb      []byte
+	DcID               int32
 }
 
 func parseUserProfilePhoto(photo tg.UserProfilePhotoClass) *ChatPhoto {
@@ -33,11 +33,15 @@ func parseUserProfilePhoto(photo tg.UserProfilePhotoClass) *ChatPhoto {
 	case *tg.UserProfilePhotoEmpty:
 		return nil
 	case *tg.UserProfilePhoto:
-		return &ChatPhoto{
+		cp := &ChatPhoto{
+			HasAnimation:  p.HasVideo,
+			IsPersonal:    p.Personal,
 			StrippedThumb: p.StrippedThumb,
-			HasVideo:      p.HasVideo,
 			DcID:          p.DCID,
 		}
+		cp.SmallPhotoUniqueID = fmt.Sprintf("%d", p.PhotoID)
+		cp.BigPhotoUniqueID = fmt.Sprintf("%d", p.PhotoID)
+		return cp
 	}
 	return nil
 }
@@ -50,11 +54,31 @@ func parseChatPhoto(photo tg.ChatPhotoClass) *ChatPhoto {
 	case *tg.ChatPhotoEmpty:
 		return nil
 	case *tg.ChatPhoto:
-		return &ChatPhoto{
+		cp := &ChatPhoto{
+			HasAnimation:  p.HasVideo,
 			StrippedThumb: p.StrippedThumb,
-			HasVideo:      p.HasVideo,
 			DcID:          p.DCID,
 		}
+		cp.SmallPhotoUniqueID = fmt.Sprintf("%d", p.PhotoID)
+		cp.BigPhotoUniqueID = fmt.Sprintf("%d", p.PhotoID)
+		return cp
 	}
 	return nil
+}
+
+// InputChatPhotoPrevious references a previously used chat photo.
+type InputChatPhotoPrevious struct {
+	PhotoID int64
+}
+
+// InputChatPhotoStatic references a static image file for a chat photo.
+type InputChatPhotoStatic struct {
+	FileID     int64
+	AccessHash int64
+}
+
+// InputChatPhotoAnimation references an animated file for a chat photo.
+type InputChatPhotoAnimation struct {
+	FileID     int64
+	AccessHash int64
 }

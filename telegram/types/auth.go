@@ -1,13 +1,27 @@
 package types
 
 import (
+	"time"
+
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+// SessionBinder provides the ability to terminate an active session through
+// a bound client. Injected into ActiveSession instances so they can self-reset.
 type SessionBinder interface {
 	BoundResetSession(hash int64) error
 }
 
+// ActiveSession represents an authenticated session on a specific device,
+// including device model, platform, app version, IP, and location info.
+// Call Reset to terminate the session.
+//
+// Example:
+//
+//	sessions, _ := client.GetActiveSessions(ctx)
+//	for _, s := range sessions {
+//	    fmt.Printf("%s on %s (last active: %s)\n", s.ApplicationName, s.DeviceModel, s.DateActive)
+//	}
 type ActiveSession struct {
 	Hash               int64
 	DeviceModel        string
@@ -15,8 +29,8 @@ type ActiveSession struct {
 	SystemVersion      string
 	ApplicationName    string
 	ApplicationVersion string
-	DateCreated        int32
-	DateActive         int32
+	DateCreated        time.Time
+	DateActive         time.Time
 	IP                 string
 	Country            string
 	Region             string
@@ -47,8 +61,8 @@ func ParseActiveSession(raw *tg.Authorization) *ActiveSession {
 		SystemVersion:      raw.SystemVersion,
 		ApplicationName:    raw.AppName,
 		ApplicationVersion: raw.AppVersion,
-		DateCreated:        raw.DateCreated,
-		DateActive:         raw.DateActive,
+		DateCreated:        time.Unix(int64(raw.DateCreated), 0),
+		DateActive:         time.Unix(int64(raw.DateActive), 0),
 		IP:                 raw.Ip,
 		Country:            raw.Country,
 		Region:             raw.Region,
@@ -62,6 +76,9 @@ type ActiveSessions struct {
 	Sessions []*ActiveSession
 	// WebSessions is the list of active web (browser) sessions.
 	WebSessions []*ActiveSession
+	// InactiveSessionTtlDays is the number of days after which inactive
+	// sessions are automatically terminated.
+	InactiveSessionTTLDays int32
 }
 
 // SentCodeInfo describes the result of a send-code request during
@@ -190,4 +207,24 @@ func ParseTermsOfService(raw *tg.HelpTermsOfService) *TermsOfService {
 		tos.MinAgeConfirm = raw.MinAgeConfirm
 	}
 	return tos
+}
+
+// FirebaseAuthenticationSettings represents Firebase authentication settings.
+type FirebaseAuthenticationSettings struct {
+	Platform string
+}
+
+// FirebaseAuthenticationSettingsAndroid represents Firebase settings for Android.
+type FirebaseAuthenticationSettingsAndroid struct{}
+
+// FirebaseAuthenticationSettingsIos represents Firebase settings for iOS.
+type FirebaseAuthenticationSettingsIos struct{}
+
+// PhoneNumberAuthenticationSettings controls how phone number verification is performed.
+type PhoneNumberAuthenticationSettings struct {
+	AllowFlashcall  bool
+	CurrentNumber   bool
+	AllowAppHash    bool
+	AllowMissedCall bool
+	AllowFirebase   bool
 }

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"fmt"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -9,29 +9,20 @@ import (
 // BusinessIntro represents the introductory text and sticker shown on a
 // Telegram business account's profile page.
 type BusinessIntro struct {
-	// Title is the heading text of the business introduction.
-	Title string
-	// Description is the body text of the business introduction.
-	Description string
-	// Sticker is the optional sticker displayed alongside the introduction, if set.
-	Sticker *DocumentMedia
+	Title   string
+	Text    string
+	Sticker *Sticker
 }
 
 // BusinessRecipients defines which chats a business feature (such as intro or
 // away message) applies to, based on chat type and explicit user inclusion/exclusion.
 type BusinessRecipients struct {
-	// ExistingChats applies the feature to all existing chats when true.
-	ExistingChats bool
-	// NewChats applies the feature to all new chats when true.
-	NewChats bool
-	// Contacts applies the feature to all chats with contacts when true.
-	Contacts bool
-	// NonContacts applies the feature to all chats with non-contacts when true.
-	NonContacts bool
-	// ExcludeSelected inverts the Users list to exclude rather than include when true.
+	ExistingChats   bool
+	NewChats        bool
+	Contacts        bool
+	NonContacts     bool
 	ExcludeSelected bool
-	// Users is the list of specific user IDs the feature applies to or is excluded from.
-	Users []int64
+	Users           []*User
 }
 
 // BusinessWorkingHours represents the weekly operating schedule for a Telegram
@@ -57,36 +48,20 @@ type BusinessWeeklyOpen struct {
 // BusinessBotRights enumerates the granular permissions a business account has
 // granted to a connected bot. Each field corresponds to an independent capability.
 type BusinessBotRights struct {
-	// Reply allows the bot to send replies in connected chats.
-	Reply bool
-	// ReadMessages allows the bot to read messages in connected chats.
-	ReadMessages bool
-	// DeleteSentMessages allows the bot to delete messages it has sent.
-	DeleteSentMessages bool
-	// DeleteReceivedMessages allows the bot to delete messages sent by the user.
-	DeleteReceivedMessages bool
-	// DeleteMessages allows the bot to delete any message in connected chats.
-	DeleteMessages bool
-	// EditName allows the bot to change the business account's display name.
-	EditName bool
-	// EditBio allows the bot to change the business account's bio.
-	EditBio bool
-	// EditProfilePhoto allows the bot to change the business account's profile photo.
-	EditProfilePhoto bool
-	// EditUsername allows the bot to change the business account's username.
-	EditUsername bool
-	// ViewGifts allows the bot to view gifts received by the business account.
-	ViewGifts bool
-	// SellGifts allows the bot to sell gifts owned by the business account.
-	SellGifts bool
-	// ChangeGiftSettings allows the bot to modify gift-related settings.
-	ChangeGiftSettings bool
-	// TransferAndUpgradeGifts allows the bot to transfer and upgrade owned gifts.
-	TransferAndUpgradeGifts bool
-	// TransferStars allows the bot to transfer Telegram Stars from the account.
-	TransferStars bool
-	// ManageStories allows the bot to post and manage stories on behalf of the account.
-	ManageStories bool
+	CanReply                   bool
+	CanReadMessages            bool
+	CanDeleteSentMessages      bool
+	CanDeleteAllMessages       bool
+	CanEditName                bool
+	CanEditBio                 bool
+	CanEditProfilePhoto        bool
+	CanEditUsername            bool
+	CanViewGiftsAndStars       bool
+	CanSellGifts               bool
+	CanChangeGiftSettings      bool
+	CanTransferAndUpgradeGifts bool
+	CanTransferStars           bool
+	CanManageStories           bool
 }
 
 // ParseBusinessIntro converts an MTProto BusinessIntro into a BusinessIntro.
@@ -96,47 +71,34 @@ func ParseBusinessIntro(raw *tg.BusinessIntro) *BusinessIntro {
 		return nil
 	}
 	ni := &BusinessIntro{
-		Title:       raw.Title,
-		Description: raw.Description,
+		Title: raw.Title,
+		Text:  raw.Description,
 	}
 	if doc, ok := raw.Sticker.(*tg.Document); ok {
-		ni.Sticker = parseDocumentFromTL(doc)
+		ni.Sticker = ParseSticker(doc)
 	}
 	return ni
 }
 
-func parseDocumentFromTL(doc *tg.Document) *DocumentMedia {
-	if doc == nil {
-		return nil
-	}
-	m := &DocumentMedia{
-		FileSize:     doc.Size,
-		MimeType:     doc.MimeType,
-		RawDocument:  doc,
-	}
-	m.FileID = fmt.Sprintf("%d_%d", doc.ID, doc.AccessHash)
-	for _, attr := range doc.Attributes {
-		if a, ok := attr.(*tg.DocumentAttributeFilename); ok {
-			m.FileName = a.FileName
-		}
-	}
-	return m
-}
-
 // ParseBusinessRecipients converts an MTProto BusinessRecipients into a BusinessRecipients.
 // Returns nil if raw is nil.
-func ParseBusinessRecipients(raw *tg.BusinessRecipients) *BusinessRecipients {
+func ParseBusinessRecipients(raw *tg.BusinessRecipients, users map[int64]tg.UserClass) *BusinessRecipients {
 	if raw == nil {
 		return nil
 	}
-	return &BusinessRecipients{
+	r := &BusinessRecipients{
 		ExistingChats:   raw.ExistingChats,
 		NewChats:        raw.NewChats,
 		Contacts:        raw.Contacts,
 		NonContacts:     raw.NonContacts,
 		ExcludeSelected: raw.ExcludeSelected,
-		Users:           raw.Users,
 	}
+	for _, id := range raw.Users {
+		if u := getUser(users, id); u != nil {
+			r.Users = append(r.Users, u)
+		}
+	}
+	return r
 }
 
 // ParseBusinessWorkingHours converts an MTProto BusinessWorkHours into a BusinessWorkingHours.
@@ -167,19 +129,92 @@ func ParseBusinessBotRights(raw *tg.BusinessBotRights) *BusinessBotRights {
 		return nil
 	}
 	return &BusinessBotRights{
-		Reply:                   raw.Reply,
-		ReadMessages:            raw.ReadMessages,
-		DeleteSentMessages:      raw.DeleteSentMessages,
-		DeleteReceivedMessages:  raw.DeleteReceivedMessages,
-		EditName:                raw.EditName,
-		EditBio:                 raw.EditBio,
-		EditProfilePhoto:        raw.EditProfilePhoto,
-		EditUsername:            raw.EditUsername,
-		ViewGifts:               raw.ViewGifts,
-		SellGifts:               raw.SellGifts,
-		ChangeGiftSettings:      raw.ChangeGiftSettings,
-		TransferAndUpgradeGifts: raw.TransferAndUpgradeGifts,
-		TransferStars:           raw.TransferStars,
-		ManageStories:           raw.ManageStories,
+		CanReply:                   raw.Reply,
+		CanReadMessages:            raw.ReadMessages,
+		CanDeleteSentMessages:      raw.DeleteSentMessages,
+		CanDeleteAllMessages:       raw.DeleteReceivedMessages,
+		CanEditName:                raw.EditName,
+		CanEditBio:                 raw.EditBio,
+		CanEditProfilePhoto:        raw.EditProfilePhoto,
+		CanEditUsername:            raw.EditUsername,
+		CanViewGiftsAndStars:       raw.ViewGifts,
+		CanSellGifts:               raw.SellGifts,
+		CanChangeGiftSettings:      raw.ChangeGiftSettings,
+		CanTransferAndUpgradeGifts: raw.TransferAndUpgradeGifts,
+		CanTransferStars:           raw.TransferStars,
+		CanManageStories:           raw.ManageStories,
 	}
+}
+
+// BusinessMessage represents a message sent through a business connection.
+type BusinessMessage struct {
+	ShortcutID     int32
+	IsGreeting     bool
+	IsAway         bool
+	NoActivityDays int32
+	OfflineOnly    bool
+	Recipients     []*User
+	Schedule       BusinessSchedule
+	StartDate      time.Time
+	EndDate        time.Time
+}
+
+// ParseBusinessMessage converts a TL BusinessGreetingMessage or BusinessAwayMessage
+// into a BusinessMessage, resolving recipients from the user map. Returns nil if raw is nil.
+//
+// Example:
+//
+//	msg := types.ParseBusinessMessage(rawGreeting, users)
+//	if msg != nil && msg.IsGreeting {
+//	    fmt.Printf("Greeting shortcut: %d, no-activity days: %d\n", msg.ShortcutID, msg.NoActivityDays)
+//	}
+func ParseBusinessMessage(raw any, users map[int64]tg.UserClass) *BusinessMessage {
+	if raw == nil {
+		return nil
+	}
+	switch v := raw.(type) {
+	case *tg.BusinessGreetingMessage:
+		recipients := ParseBusinessRecipients(v.Recipients, users)
+		message := &BusinessMessage{
+			ShortcutID:     v.ShortcutID,
+			IsGreeting:     true,
+			NoActivityDays: v.NoActivityDays,
+		}
+		if recipients != nil {
+			message.Recipients = recipients.Users
+		}
+		return message
+	case *tg.BusinessAwayMessage:
+		recipients := ParseBusinessRecipients(v.Recipients, users)
+		message := &BusinessMessage{
+			ShortcutID:  v.ShortcutID,
+			IsAway:      true,
+			OfflineOnly: v.OfflineOnly,
+		}
+		if recipients != nil {
+			message.Recipients = recipients.Users
+		}
+		applyBusinessSchedule(message, v.Schedule)
+		return message
+	default:
+		return nil
+	}
+}
+
+func applyBusinessSchedule(message *BusinessMessage, raw tg.BusinessAwayMessageScheduleClass) {
+	switch v := raw.(type) {
+	case *tg.BusinessAwayMessageScheduleAlways:
+		message.Schedule = BusinessScheduleAlwaysOpen
+	case *tg.BusinessAwayMessageScheduleOutsideWorkHours:
+		message.Schedule = BusinessScheduleOutside
+	case *tg.BusinessAwayMessageScheduleCustom:
+		message.Schedule = BusinessScheduleCustom
+		message.StartDate = time.Unix(int64(v.StartDate), 0)
+		message.EndDate = time.Unix(int64(v.EndDate), 0)
+	}
+}
+
+// MessageContent is the interface for typed message content payloads.
+type MessageContent interface {
+	ContentType() string
 }
