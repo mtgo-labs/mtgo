@@ -246,10 +246,10 @@ func (c *Client) BoundReplyChatAction(chatID int64, action tg.SendMessageActionC
 func (c *Client) BoundReplyInlineBotResult(chatID int64, queryID int64, resultID string, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := sendReplyOpt(replyTo, opts...)
 	inlineOpt := &SendInlineBotResultOption{
-		ReplyTo:     int64(opt.ReplyToMessageID),
-		Silent:      opt.DisableNotification || opt.Silent,
+		ReplyTo:      int64(opt.ReplyToMessageID),
+		Silent:       opt.DisableNotification || opt.Silent,
 		ScheduleDate: opt.ScheduleDate,
-		ClearDraft:  opt.ClearDraft,
+		ClearDraft:   opt.ClearDraft,
 	}
 	return c.SendInlineBotResult(context.Background(), chatID, queryID, resultID, inlineOpt)
 }
@@ -403,5 +403,3 @@ func (c *Client) BoundReplyChecklist(chatID int64, checklist *tg.InputMediaTodo,
 func (c *Client) BoundEditChecklist(chatID int64, msgID int32, media tg.InputMediaClass, opts ...*params.EditMessage) (*types.Message, error) {
 	return c.EditMessageMedia(context.Background(), chatID, msgID, media, opts...)
 }
-
-

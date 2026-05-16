@@ -39,11 +39,11 @@ func main() {
 
 	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
 		ctx.Reply(
-			"<b>MongoDB Bot</b>\n\n"+
-				"Commands:\n"+
-				"• /note &lt;text&gt; — save a note\n"+
-				"• /notes — list your notes\n"+
-				"• /peers — show cached peers\n"+
+			"<b>MongoDB Bot</b>\n\n" +
+				"Commands:\n" +
+				"• /note &lt;text&gt; — save a note\n" +
+				"• /notes — list your notes\n" +
+				"• /peers — show cached peers\n" +
 				"• /clear — delete your notes",
 		)
 	}, tg.Command("start"))

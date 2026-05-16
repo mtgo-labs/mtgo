@@ -6,35 +6,35 @@ type FileType byte
 
 const (
 	// FileTypeThumbnail represents a thumbnail or preview image.
-	FileTypeThumbnail      FileType = 0
+	FileTypeThumbnail FileType = 0
 	// FileTypePhoto represents a full-size photo.
-	FileTypePhoto          FileType = 1
+	FileTypePhoto FileType = 1
 	// FileTypeVoice represents a voice message.
-	FileTypeVoice          FileType = 2
+	FileTypeVoice FileType = 2
 	// FileTypeVideo represents a video file.
-	FileTypeVideo          FileType = 3
+	FileTypeVideo FileType = 3
 	// FileTypeDocument represents a generic document file.
-	FileTypeDocument       FileType = 4
+	FileTypeDocument FileType = 4
 	// FileTypeEncrypted represents an end-to-end encrypted file.
-	FileTypeEncrypted      FileType = 5
+	FileTypeEncrypted FileType = 5
 	// FileTypeTemp represents a temporary file.
-	FileTypeTemp           FileType = 6
+	FileTypeTemp FileType = 6
 	// FileTypeSticker represents a sticker image.
-	FileTypeSticker        FileType = 7
+	FileTypeSticker FileType = 7
 	// FileTypeAudio represents an audio file.
-	FileTypeAudio          FileType = 8
+	FileTypeAudio FileType = 8
 	// FileTypeAnimation represents a GIF or other animation.
-	FileTypeAnimation      FileType = 9
+	FileTypeAnimation FileType = 9
 	// FileTypeVideoNote represents a round video note.
-	FileTypeVideoNote      FileType = 10
+	FileTypeVideoNote FileType = 10
 	// FileTypeSecureRaw represents a raw secure file upload.
-	FileTypeSecureRaw      FileType = 11
+	FileTypeSecureRaw FileType = 11
 	// FileTypeSecureDocument represents a processed secure document.
 	FileTypeSecureDocument FileType = 12
 	// FileTypeBackground represents a chat background image.
-	FileTypeBackground     FileType = 13
+	FileTypeBackground FileType = 13
 	// FileTypeDocumentPhoto represents a photo sent as a document.
-	FileTypeDocumentPhoto  FileType = 14
+	FileTypeDocumentPhoto FileType = 14
 )
 
 // IsPhoto reports whether the FileType represents a photo-like file that
@@ -50,15 +50,15 @@ type ThumbnailSource byte
 
 const (
 	// ThumbnailSourceLegacy represents a legacy thumbnail sourced by secret and local_id.
-	ThumbnailSourceLegacy           ThumbnailSource = 0
+	ThumbnailSourceLegacy ThumbnailSource = 0
 	// ThumbnailSourceThumbnail represents a standard thumbnail with explicit file type and size.
-	ThumbnailSourceThumbnail        ThumbnailSource = 1
+	ThumbnailSourceThumbnail ThumbnailSource = 1
 	// ThumbnailSourceDialogPhotoSmall represents a small dialog (chat/user) photo.
 	ThumbnailSourceDialogPhotoSmall ThumbnailSource = 2
 	// ThumbnailSourceDialogPhotoBig represents a big dialog (chat/user) photo.
-	ThumbnailSourceDialogPhotoBig   ThumbnailSource = 3
+	ThumbnailSourceDialogPhotoBig ThumbnailSource = 3
 	// ThumbnailSourceStickerSetThumb represents a thumbnail for a sticker set.
-	ThumbnailSourceStickerSetThumb  ThumbnailSource = 4
+	ThumbnailSourceStickerSetThumb ThumbnailSource = 4
 )
 
 // FileUniqueType enumerates the kinds of unique file identifiers used by
@@ -67,15 +67,15 @@ type FileUniqueType byte
 
 const (
 	// FileUniqueTypeWeb represents a file unique to a web location.
-	FileUniqueTypeWeb       FileUniqueType = 0
+	FileUniqueTypeWeb FileUniqueType = 0
 	// FileUniqueTypePhoto represents a file unique to a photo.
-	FileUniqueTypePhoto     FileUniqueType = 1
+	FileUniqueTypePhoto FileUniqueType = 1
 	// FileUniqueTypeDocument represents a file unique to a document.
-	FileUniqueTypeDocument  FileUniqueType = 2
+	FileUniqueTypeDocument FileUniqueType = 2
 	// FileUniqueTypeSecure represents a file unique to a secure upload.
-	FileUniqueTypeSecure    FileUniqueType = 3
+	FileUniqueTypeSecure FileUniqueType = 3
 	// FileUniqueTypeEncrypted represents a file unique to an encrypted upload.
 	FileUniqueTypeEncrypted FileUniqueType = 4
 	// FileUniqueTypeTemp represents a file unique to a temporary upload.
-	FileUniqueTypeTemp      FileUniqueType = 5
+	FileUniqueTypeTemp FileUniqueType = 5
 )

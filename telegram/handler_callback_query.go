@@ -9,10 +9,10 @@ import (
 // attached to messages sent by the bot.
 type CallbackQueryHandler struct {
 	baseHandler
-	callbackCtx func(*Context)
+	callbackCtx    func(*Context)
 	callbackClient func(*Client, *types.CallbackQuery)
-	callbackFull func(*Context, *types.CallbackQuery)
-	callbackAll  func(*Context, *Client, *types.CallbackQuery)
+	callbackFull   func(*Context, *types.CallbackQuery)
+	callbackAll    func(*Context, *Client, *types.CallbackQuery)
 }
 
 // NewCallbackQueryHandler creates a new CallbackQueryHandler with the given callback
