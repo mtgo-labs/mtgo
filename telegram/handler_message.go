@@ -9,10 +9,10 @@ import (
 // and other text-based interactions.
 type MessageHandler struct {
 	baseHandler
-	callbackCtx func(*Context)
+	callbackCtx    func(*Context)
 	callbackClient func(*Client, *types.Message)
-	callbackFull func(*Context, *types.Message)
-	callbackAll  func(*Context, *Client, *types.Message)
+	callbackFull   func(*Context, *types.Message)
+	callbackAll    func(*Context, *Client, *types.Message)
 }
 
 // NewMessageHandler creates a new MessageHandler with the given callback function
