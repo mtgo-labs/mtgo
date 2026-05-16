@@ -245,7 +245,7 @@ func TestOpenFileNotFound(t *testing.T) {
 
 func TestFromReaderWrongMagic(t *testing.T) {
 	data := []byte("XXXX")
-	data = append(data, 0, 0, 0, 0) // version
+	data = append(data, 0, 0, 0, 0)          // version
 	data = append(data, make([]byte, 16)...) // fake checksum
 	_, err := fromReader(bytes.NewReader(data))
 	if err == nil {

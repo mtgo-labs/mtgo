@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -18,9 +17,8 @@ var defaultHealthCheckConfig = healthCheckConfig{
 }
 
 type healthChecker struct {
-	client *Client
-	cfg    healthCheckConfig
-	mu     sync.Mutex
+	client  *Client
+	cfg     healthCheckConfig
 	running atomic.Bool
 	cancel  context.CancelFunc
 	done    chan struct{}

@@ -1,9 +1,9 @@
 package telegram
 
 import (
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tg/e2e"
-	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
 // Update represents a single event dispatched from the Telegram update loop to

@@ -23,8 +23,8 @@ func newTestStorage() *testStorage {
 
 func (t *testStorage) DCID() (int, error)                   { return t.dcID, nil }
 func (t *testStorage) SetDCID(v int) error                  { t.dcID = v; return nil }
-func (t *testStorage) APIID() (int32, error)                 { return t.apiID, nil }
-func (t *testStorage) SetAPIID(v int32) error                { t.apiID = v; return nil }
+func (t *testStorage) APIID() (int32, error)                { return t.apiID, nil }
+func (t *testStorage) SetAPIID(v int32) error               { t.apiID = v; return nil }
 func (t *testStorage) APIHash() (string, error)             { return "", nil }
 func (t *testStorage) SetAPIHash(string) error              { return nil }
 func (t *testStorage) TestMode() (bool, error)              { return false, nil }

@@ -65,28 +65,28 @@ func (s ConnState) String() string {
 //		log.Println("last error:", health.LastError)
 //	}
 type HealthStatus struct {
-	State           ConnState
-	CurrentDC       int
-	LastReadTime    time.Time
-	LastWriteTime   time.Time
-	LastPingTime    time.Time
-	LastPongTime    time.Time
-	ReconnectCount  int
-	LastError       error
-	ConnectedSince  time.Time
+	State          ConnState
+	CurrentDC      int
+	LastReadTime   time.Time
+	LastWriteTime  time.Time
+	LastPingTime   time.Time
+	LastPongTime   time.Time
+	ReconnectCount int
+	LastError      error
+	ConnectedSince time.Time
 }
 
 type connStateManager struct {
-	mu              sync.RWMutex
-	state           ConnState
-	currentDC       int
-	lastRead        time.Time
-	lastWrite       time.Time
-	lastPing        time.Time
-	lastPong        time.Time
-	reconnectCount  int
-	lastErr         error
-	connectedSince  time.Time
+	mu             sync.RWMutex
+	state          ConnState
+	currentDC      int
+	lastRead       time.Time
+	lastWrite      time.Time
+	lastPing       time.Time
+	lastPong       time.Time
+	reconnectCount int
+	lastErr        error
+	connectedSince time.Time
 }
 
 func newConnStateManager() *connStateManager {
