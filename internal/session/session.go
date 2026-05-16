@@ -31,6 +31,13 @@ type Transport interface {
 	SetWriteDeadline(t time.Time) error
 }
 
+// sendJob is a unit of work for the writer goroutine.
+type sendJob struct {
+	encrypted []byte
+	deadline  time.Time
+	done      chan error
+}
+
 // AuthFunc is a function that performs key generation/authentication against
 // the server using the provided transport. It returns an AuthResult containing
 // the established auth key, server salt, and server time.
@@ -84,8 +91,10 @@ type Session struct {
 
 	// transport is the underlying network transport for sending/receiving data.
 	transport Transport
-	// sendMu serializes writes to the transport.
-	sendMu sync.Mutex
+	// sendCh is the queue for outgoing encrypted payloads, consumed by the
+	// dedicated writer goroutine. Using a channel instead of a mutex ensures
+	// that a blocked write to a dead connection never blocks RPC senders.
+	sendCh chan *sendJob
 	// pingInterval controls how often keep-alive pings are sent.
 	pingInterval time.Duration
 	// onUpdate is called when the server pushes unsolicited updates.
@@ -271,12 +280,18 @@ func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time
 
 	ch := s.registerResult(msgID)
 
-	s.sendMu.Lock()
-	_ = s.transport.SetWriteDeadline(time.Now().Add(timeout))
-	err := s.transport.Send(encrypted)
-	_ = s.transport.SetWriteDeadline(time.Time{})
-	s.sendMu.Unlock()
-	if err != nil {
+	job := &sendJob{
+		encrypted: encrypted,
+		deadline:  time.Now().Add(timeout),
+		done:      make(chan error, 1),
+	}
+	select {
+	case s.sendCh <- job:
+	case <-time.After(timeout):
+		s.unregisterResult(msgID)
+		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
+	}
+	if err := <-job.done; err != nil {
 		s.unregisterResult(msgID)
 		if s.onDisconnect != nil {
 			s.onDisconnect(err)
@@ -431,13 +446,15 @@ func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) 
 	return nil, fmt.Errorf("session: invoke: retries exhausted: %w", lastErr)
 }
 
-// Start launches the receive and keep-alive ping background workers and
+// Start launches the receive, writer, and keep-alive ping background workers and
 // performs an initial ping to verify connectivity. Returns an error if the
 // initial ping fails, in which case the session is stopped automatically.
 func (s *Session) Start(timeout time.Duration) error {
 	s.cancel = make(chan struct{})
+	s.sendCh = make(chan *sendJob, 64)
 	s.connected = true
 
+	go s.writer()
 	go s.recvWorker()
 	go s.pingWorker()
 
@@ -462,6 +479,20 @@ func (s *Session) Stop() {
 	}
 	if s.transport != nil {
 		s.transport.Close()
+	}
+}
+
+func (s *Session) writer() {
+	for {
+		select {
+		case <-s.cancel:
+			return
+		case job := <-s.sendCh:
+			s.transport.SetWriteDeadline(job.deadline)
+			err := s.transport.Send(job.encrypted)
+			s.transport.SetWriteDeadline(time.Time{})
+			job.done <- err
+		}
 	}
 }
 
@@ -535,12 +566,17 @@ func (s *Session) pingWorker() {
 
 			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
 
-			s.sendMu.Lock()
-			_ = s.transport.SetWriteDeadline(time.Now().Add(30 * time.Second))
-			err := s.transport.Send(encrypted)
-			_ = s.transport.SetWriteDeadline(time.Time{})
-			s.sendMu.Unlock()
-			if err != nil {
+			job := &sendJob{
+				encrypted: encrypted,
+				deadline:  time.Now().Add(30 * time.Second),
+				done:      make(chan error, 1),
+			}
+			select {
+			case s.sendCh <- job:
+			default:
+				continue
+			}
+			if err := <-job.done; err != nil {
 				if s.onDisconnect != nil {
 					s.onDisconnect(err)
 				}

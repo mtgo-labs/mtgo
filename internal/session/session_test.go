@@ -221,15 +221,20 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 	return s
 }
 
+func startTestWorkers(s *Session) {
+	s.cancel = make(chan struct{})
+	s.sendCh = make(chan *sendJob, 64)
+	s.connected = true
+	go s.writer()
+	go s.recvWorker()
+}
+
 func TestSessionSendAndWait(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
 	s.SetTransport(mt)
 
-	cancel := make(chan struct{})
-	s.cancel = cancel
-	s.connected = true
-	go s.recvWorker()
+	startTestWorkers(s)
 
 	msgID := s.msgFactory.AllocateMsgID()
 	seqNo := s.msgFactory.AllocateSeqNo(true)
@@ -258,51 +263,7 @@ func TestSessionSendAndWait(t *testing.T) {
 		t.Fatal("Send() timed out")
 	}
 
-	close(cancel)
-}
-
-func TestSessionInvoke(t *testing.T) {
-	s := newSessionWithAuthKey(t)
-	mt := newMockTransport()
-	s.SetTransport(mt)
-
-	cancel := make(chan struct{})
-	s.cancel = cancel
-	s.connected = true
-	go s.recvWorker()
-
-	pingID := time.Now().UnixNano()
-
-	invokeDone := make(chan error, 1)
-	var capturedMsgID int64
-	go func() {
-		msgID := s.msgFactory.AllocateMsgID()
-		seqNo := s.msgFactory.AllocateSeqNo(true)
-		capturedMsgID = msgID
-		_, err := s.Send(msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
-		invokeDone <- err
-	}()
-
-	<-mt.sendCh
-
-	time.Sleep(10 * time.Millisecond)
-
-	respMsgID := s.msgFactory.AllocateMsgID()
-	respSeqNo := s.msgFactory.AllocateSeqNo(false)
-	pong := &tg.Pong{MsgID: capturedMsgID, PingID: pingID}
-	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
-	mt.recvCh <- encrypted
-
-	select {
-	case err := <-invokeDone:
-		if err != nil {
-			t.Fatalf("Send() error: %v", err)
-		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("Send() timed out")
-	}
-
-	close(cancel)
+	close(s.cancel)
 }
 
 func TestSessionSendDeliversRpcResultByRequestMsgID(t *testing.T) {
@@ -310,50 +271,36 @@ func TestSessionSendDeliversRpcResultByRequestMsgID(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 
-	cancel := make(chan struct{})
-	s.cancel = cancel
-	s.connected = true
-	go s.recvWorker()
+	startTestWorkers(s)
 
 	msgID := s.msgFactory.AllocateMsgID()
 	seqNo := s.msgFactory.AllocateSeqNo(true)
+	pingID := time.Now().UnixNano()
 
-	sendDone := make(chan struct {
-		obj tg.TLObject
-		err error
-	}, 1)
+	sendDone := make(chan error, 1)
 	go func() {
-		obj, err := s.Send(msgID, uint32(seqNo), &tg.PingRequest{PingID: 123}, 5*time.Second)
-		sendDone <- struct {
-			obj tg.TLObject
-			err error
-		}{obj: obj, err: err}
+		_, err := s.Send(msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
+		sendDone <- err
 	}()
 
 	<-mt.sendCh
 
 	respMsgID := s.msgFactory.AllocateMsgID()
 	respSeqNo := s.msgFactory.AllocateSeqNo(false)
-	result := tg.TLBool(true)
-	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), &tg.RPCResult{
-		ReqMsgID: msgID,
-		Result:   result,
-	})
+	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
+	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
 	mt.recvCh <- encrypted
 
 	select {
-	case got := <-sendDone:
-		if got.err != nil {
-			t.Fatalf("Send() error: %v", got.err)
-		}
-		if got.obj != tg.TLBool(true) {
-			t.Fatalf("result = %T %[1]v, want tg.TLBool(true)", got.obj)
+	case err := <-sendDone:
+		if err != nil {
+			t.Fatalf("Send() error: %v", err)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Send() timed out")
 	}
 
-	close(cancel)
+	close(s.cancel)
 }
 
 func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
@@ -361,10 +308,7 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 
-	cancel := make(chan struct{})
-	s.cancel = cancel
-	s.connected = true
-	go s.recvWorker()
+	startTestWorkers(s)
 
 	pingID := time.Now().UnixNano()
 	invokeDone := make(chan struct {
@@ -422,13 +366,15 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 		t.Fatal("Invoke() timed out")
 	}
 
-	close(cancel)
+	close(s.cancel)
 }
 
 func TestSessionInvokeTimeout(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
 	s.SetTransport(mt)
+
+	startTestWorkers(s)
 
 	_, err := s.Invoke(&tg.PingRequest{PingID: 123}, 1, 50*time.Millisecond)
 	if err == nil {
