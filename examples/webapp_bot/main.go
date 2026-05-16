@@ -57,13 +57,13 @@ func main() {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"user_id":       data.User.ID,
-			"first_name":    data.User.FirstName,
-			"username":      data.User.Username,
-			"auth_date":     data.AuthDate,
-			"query_id":      data.QueryID,
-			"chat_type":     data.ChatType,
-			"start_param":   data.StartParam,
+			"user_id":     data.User.ID,
+			"first_name":  data.User.FirstName,
+			"username":    data.User.Username,
+			"auth_date":   data.AuthDate,
+			"query_id":    data.QueryID,
+			"chat_type":   data.ChatType,
+			"start_param": data.StartParam,
 		})
 	})
 

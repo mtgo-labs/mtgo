@@ -9,10 +9,10 @@ import (
 // such as updating locally cached message content.
 type EditedMessageHandler struct {
 	baseHandler
-	callbackCtx func(*Context)
+	callbackCtx    func(*Context)
 	callbackClient func(*Client, *types.Message)
-	callbackFull func(*Context, *types.Message)
-	callbackAll  func(*Context, *Client, *types.Message)
+	callbackFull   func(*Context, *types.Message)
+	callbackAll    func(*Context, *Client, *types.Message)
 }
 
 // NewEditedMessageHandler creates a new EditedMessageHandler with the given callback
