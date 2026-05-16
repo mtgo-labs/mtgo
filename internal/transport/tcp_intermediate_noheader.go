@@ -3,7 +3,6 @@ package transport
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"net"
 )
 
@@ -44,7 +43,7 @@ func (t *TCPIntermediateNoHeader) Recv() ([]byte, error) {
 
 	length := binary.LittleEndian.Uint32(t.buf[:4])
 	if length > maxPayloadLen {
-		return nil, errors.New("transport: payload exceeds maximum size")
+		return nil, ErrPayloadTooLarge
 	}
 
 	needed := 4 + int(length)

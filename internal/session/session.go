@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -238,10 +237,10 @@ func (s *Session) sessionIDBytes() []byte {
 // the transport is unset, the send fails, or the timeout is exceeded.
 func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) (tg.TLObject, error) {
 	if len(s.authKey) == 0 {
-		return nil, errors.New("session: auth key not set")
+		return nil, ErrAuthKeyNotSet
 	}
 	if s.transport == nil {
-		return nil, errors.New("session: transport not set")
+		return nil, ErrTransportNotSet
 	}
 
 	message := &tg.MTProtoMessage{
@@ -268,7 +267,7 @@ func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time
 		return obj, nil
 	case <-time.After(timeout):
 		s.unregisterResult(msgID)
-		return nil, errors.New("session: send timeout")
+		return nil, ErrSendTimeout
 	}
 }
 
@@ -511,7 +510,7 @@ func (s *Session) Connect(transport Transport, timeout time.Duration) error {
 		s.transport = transport
 	}
 	if len(s.authKey) == 0 {
-		return errors.New("session: connect: no auth key")
+		return ErrConnectNoAuthKey
 	}
 	return s.Start(timeout)
 }

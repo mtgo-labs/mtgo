@@ -9,14 +9,6 @@ import (
 	"net"
 )
 
-// ErrCRCMismatch is returned by [TCPFull.Recv] when the CRC32 checksum
-// embedded in an incoming packet does not match the computed value.
-var ErrCRCMismatch = fmt.Errorf("tcp_full: CRC32 checksum mismatch")
-
-// TCPFull implements the MTProto "full" transport which prefixes each payload
-// with a 12-byte header (length, sequence number) and appends a CRC32
-// checksum. It is the most verbose transport but provides integrity
-// verification of every packet.
 type TCPFull struct {
 	conn  net.Conn
 	seqNo uint32
@@ -54,7 +46,7 @@ func (t *TCPFull) Send(buf *bytes.Buffer) error {
 
 // Recv reads the next full-transport framed message from the connection. It
 // verifies the CRC32 checksum and returns the payload bytes without the
-// header and checksum. Returns [ErrCRCMismatch] on checksum failure.
+// header and checksum. Returns [ErrCRC32Mismatch] on checksum failure.
 func (t *TCPFull) Recv() ([]byte, error) {
 	lenBytes := make([]byte, 4)
 	if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
@@ -75,7 +67,7 @@ func (t *TCPFull) Recv() ([]byte, error) {
 	checksum := binary.LittleEndian.Uint32(packet[len(packet)-4:])
 	computed := crc32.ChecksumIEEE(packet[:len(packet)-4])
 	if checksum != computed {
-		return nil, ErrCRCMismatch
+		return nil, ErrCRC32Mismatch
 	}
 
 	return rest[4 : len(rest)-4], nil

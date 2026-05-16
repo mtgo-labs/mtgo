@@ -81,7 +81,7 @@ func unwrapDataWithHash(dataWithHash []byte) ([]byte, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("SHA1 hash mismatch")
+	return nil, ErrSHA1Mismatch
 }
 
 func computeAuthKey(gA, b, dhPrime *big.Int) []byte {

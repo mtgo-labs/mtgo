@@ -3,7 +3,6 @@ package transport
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"net"
 )
@@ -54,7 +53,7 @@ func (t *TCPIntermediate) Recv() ([]byte, error) {
 
 	length := binary.LittleEndian.Uint32(lenBytes)
 	if length > maxPayloadLen {
-		return nil, errors.New("transport: payload exceeds maximum size")
+		return nil, ErrPayloadTooLarge
 	}
 
 	data := make([]byte, length)

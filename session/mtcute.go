@@ -3,16 +3,24 @@ package session
 import (
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
+)
+
+var (
+	errPayloadTooShortForUserID = errors.New("payload too short for user_id")
+	errPayloadTooShortForIsBot  = errors.New("payload too short for is_bot")
+	errDCOptionTooShortForPort  = errors.New("DC option too short for port")
+	errNotEnoughBytesForTLLen   = errors.New("not enough bytes for TL length prefix")
 )
 
 // mtcute format uses TL serialization primitives.
 
 const (
-	mtcuteVersion        = 3
+	mtcuteVersion         = 3
 	mtcuteDCOptionVersion = 2
 
-	mtcuteFlagHasSelf = 1 << 0
+	mtcuteFlagHasSelf  = 1 << 0
 	mtcuteFlagHasMedia = 1 << 2
 
 	mtcuteDCFlagIPv6      = 1 << 0
@@ -118,13 +126,13 @@ func DecodeMtcute(s string) (*SessionData, error) {
 
 	if hasSelf {
 		if off+8 > len(payload) {
-			return nil, fmt.Errorf("payload too short for user_id")
+			return nil, errPayloadTooShortForUserID
 		}
 		userID = int64(binary.LittleEndian.Uint64(payload[off : off+8]))
 		off += 8
 
 		if off+4 > len(payload) {
-			return nil, fmt.Errorf("payload too short for is_bot")
+			return nil, errPayloadTooShortForIsBot
 		}
 		isBot = readTLBool(payload[off : off+4])
 		off += 4
@@ -158,8 +166,8 @@ func DecodeMtcute(s string) (*SessionData, error) {
 // [version=2][dcId][flags] + TL_bytes(ipString) + port[4B LE]
 func serializeDCOption(dcID int, ip string, port int, ipv6, mediaOnly, testMode bool) []byte {
 	buf := make([]byte, 0, 64)
-	buf = append(buf, mtcuteDCOptionVersion)  // version
-	buf = append(buf, byte(dcID))              // dcId
+	buf = append(buf, mtcuteDCOptionVersion) // version
+	buf = append(buf, byte(dcID))            // dcId
 
 	var dcFlags byte
 	if ipv6 {
@@ -176,7 +184,7 @@ func serializeDCOption(dcID int, ip string, port int, ipv6, mediaOnly, testMode 
 
 	portBuf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(portBuf, uint32(port))
-	buf = append(buf, portBuf...)             // port
+	buf = append(buf, portBuf...) // port
 
 	return buf
 }
@@ -209,7 +217,7 @@ func parseDCOption(data []byte) (dcID int, addr string, port int, testMode bool,
 	off = n
 
 	if off+4 > len(data) {
-		return 0, "", 0, false, fmt.Errorf("DC option too short for port")
+		return 0, "", 0, false, errDCOptionTooShortForPort
 	}
 	port = int(binary.LittleEndian.Uint32(data[off : off+4]))
 
@@ -260,7 +268,7 @@ func readTLByteSlice(data []byte, off int) ([]byte, int, error) {
 	} else {
 		off++
 		if off+3 > len(data) {
-			return nil, 0, fmt.Errorf("not enough bytes for TL length prefix")
+			return nil, 0, errNotEnoughBytesForTLLen
 		}
 		length = int(data[off]) | int(data[off+1])<<8 | int(data[off+2])<<16
 		off += 3

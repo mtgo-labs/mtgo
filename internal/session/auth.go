@@ -140,7 +140,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		return nil, fmt.Errorf("step 3: expected ResPQ, got %T", obj)
 	}
 	if resPQ.Nonce != nonce {
-		return nil, fmt.Errorf("step 3: nonce mismatch")
+		return nil, ErrNonceMismatch
 	}
 
 	pqBig := new(big.Int).SetBytes([]byte(resPQ.PQ))
@@ -206,7 +206,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 
 	switch v := obj.(type) {
 	case *tg.ServerDHParamsFail:
-		return nil, fmt.Errorf("step 8: server DH params fail")
+		return nil, ErrDHParamsFail
 	case *tg.ServerDHParamsOk:
 		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
 		decrypted := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
@@ -226,7 +226,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		}
 
 		if dhInner.Nonce != nonce {
-			return nil, fmt.Errorf("step 8: nonce mismatch in DH inner data")
+			return nil, ErrDHNonceMismatch
 		}
 
 		b := a.generateRandomBN(2048)
@@ -276,7 +276,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		case *tg.DHGenOk:
 			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
 			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
-				return nil, fmt.Errorf("step 10: new_nonce_hash1 mismatch")
+				return nil, ErrNewNonceHashMismatch
 			}
 
 			if len(authKey) < 256 {
@@ -296,10 +296,10 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			}, nil
 
 		case *tg.DHGenRetry:
-			return nil, fmt.Errorf("step 10: dh_gen_retry")
+			return nil, ErrDHGenRetry
 
 		case *tg.DHGenFail:
-			return nil, fmt.Errorf("step 10: dh_gen_fail")
+			return nil, ErrDHGenFail
 
 		default:
 			return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
