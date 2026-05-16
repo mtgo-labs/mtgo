@@ -267,12 +267,10 @@ func TestMiddlewareCacheInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var sortCount int
 	mw := func(next Handler) Handler { return next }
 
 	client.UseMiddleware(mw, 0)
 	_ = client.sortedMiddlewares()
-	sortCount++
 
 	_ = client.sortedMiddlewares()
 	// Cache hit — sortCount stays the same since we just check the field directly.

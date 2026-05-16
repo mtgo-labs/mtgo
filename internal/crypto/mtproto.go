@@ -6,8 +6,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	tgerr "github.com/mtgo-labs/mtgo/tgerr"
 	"github.com/mtgo-labs/mtgo/tg"
+	tgerr "github.com/mtgo-labs/mtgo/tgerr"
 )
 
 // KDF derives the AES key and IV used for message encryption from the
@@ -64,7 +64,7 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	}
 	dataBuf.Write(msgBuf.Bytes())
 
-	paddingLen := (-(len(dataBuf.Bytes()) + 12) % 16 + 12)
+	paddingLen := (-(len(dataBuf.Bytes())+12)%16 + 12)
 	if paddingLen < 12 {
 		paddingLen += 16
 	}
