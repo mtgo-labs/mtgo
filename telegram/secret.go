@@ -417,7 +417,9 @@ func (h *encryptionUpdateHandler) handleEncryptionUpdate(c *Client, ctx *Context
 
 		gb := new(big.Int).SetBytes(chat.GAOrB)
 		if !crypto.ValidateGA(gb, sc.DHPrime) {
-			_ = c.DiscardSecretChat(context.Background(), chat.ID, false)
+			if err := c.DiscardSecretChat(context.Background(), chat.ID, false); err != nil {
+				c.Log.Warnf("discard secret chat on GA validation failure: %v", err)
+			}
 			return
 		}
 
@@ -425,7 +427,9 @@ func (h *encryptionUpdateHandler) handleEncryptionUpdate(c *Client, ctx *Context
 		fp := crypto.KeyFingerprint(authKey)
 
 		if fp != chat.KeyFingerprint {
-			_ = c.DiscardSecretChat(context.Background(), chat.ID, false)
+			if err := c.DiscardSecretChat(context.Background(), chat.ID, false); err != nil {
+				c.Log.Warnf("discard secret chat on fingerprint mismatch: %v", err)
+			}
 			return
 		}
 
@@ -470,9 +474,6 @@ func (h *encryptionUpdateHandler) handleEncryptedMessage(c *Client, ctx *Context
 
 	layer, err := c.DecryptSecretMessage(chatID, ciphertext)
 	if err != nil {
-		if c.Log != nil {
-			c.Log.Errorf("decrypt secret message from chat %d: %v", chatID, err)
-		}
 		return
 	}
 

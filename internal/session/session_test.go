@@ -191,6 +191,10 @@ func (m *mockTransport) IsConnected() bool {
 	return !m.closed
 }
 
+func (m *mockTransport) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
 func makeAuthKey() []byte {
 	return make([]byte, 256)
 }

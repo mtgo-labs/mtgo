@@ -86,7 +86,6 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 		ID: &tg.InputUserSelf{},
 	})
 	if err != nil {
-		c.Log.Warnf("GetMe failed err=%v", err)
 		return nil, err
 	}
 

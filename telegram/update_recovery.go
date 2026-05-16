@@ -117,12 +117,12 @@ func (m *updateManager) applyDifferenceUpdates(ctx context.Context, messages []t
 			PTS:      0,
 			PTSCount: 0,
 		}
-		if err := m.applyUpdate(ctx, upd, nil); err != nil {
+		if err := m.applyUpdate(ctx, upd, nil, nil, nil, nil); err != nil {
 			m.client.Log.Warnf("apply difference update: %v", err)
 		}
 	}
 	for _, upd := range updates {
-		if err := m.applyUpdate(ctx, upd, nil); err != nil {
+		if err := m.applyUpdate(ctx, upd, nil, nil, nil, nil); err != nil {
 			m.client.Log.Warnf("apply difference update: %v", err)
 		}
 	}
@@ -210,12 +210,12 @@ func (m *updateManager) applyChannelDifferenceUpdates(ctx context.Context, messa
 			PTS:      0,
 			PTSCount: 0,
 		}
-		if err := m.applyUpdate(ctx, upd, nil); err != nil {
+		if err := m.applyUpdate(ctx, upd, nil, nil, nil, nil); err != nil {
 			m.client.Log.Warnf("apply channel difference update: %v", err)
 		}
 	}
 	for _, upd := range updates {
-		if err := m.applyUpdate(ctx, upd, nil); err != nil {
+		if err := m.applyUpdate(ctx, upd, nil, nil, nil, nil); err != nil {
 			m.client.Log.Warnf("apply channel difference update: %v", err)
 		}
 	}

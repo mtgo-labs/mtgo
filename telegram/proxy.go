@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"net/url"
@@ -345,13 +346,15 @@ func readFull(conn net.Conn, buf []byte) (int, error) {
 }
 
 func readUntil(conn net.Conn, buf []byte, delimiter []byte) (int, error) {
+	br := bufio.NewReader(conn)
 	total := 0
 	for total < len(buf) {
-		n, err := conn.Read(buf[total : total+1])
+		b, err := br.ReadByte()
 		if err != nil {
 			return total, err
 		}
-		total += n
+		buf[total] = b
+		total++
 		if total >= len(delimiter) && bytesEndsWith(buf[:total], delimiter) {
 			return total, nil
 		}

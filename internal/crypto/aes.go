@@ -5,15 +5,10 @@ import (
 	"crypto/cipher"
 )
 
-func xor(a, b []byte) []byte {
-	if len(a) != len(b) {
-		panic("xor: length mismatch")
-	}
-	out := make([]byte, len(a))
+func xorInPlace(dst, a, b []byte) {
 	for i := range a {
-		out[i] = a[i] ^ b[i]
+		dst[i] = a[i] ^ b[i]
 	}
-	return out
 }
 
 func newAESBlock(key []byte) cipher.Block {
@@ -44,12 +39,12 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 	copy(iv2, iv[16:])
 
 	result := make([]byte, len(data))
+	var xored, encrypted [16]byte
 	for i := 0; i < len(data); i += 16 {
 		chunk := data[i : i+16]
-		xored := xor(chunk, iv1)
-		encrypted := make([]byte, 16)
-		block.Encrypt(encrypted, xored)
-		copy(result[i:i+16], xor(encrypted, iv2))
+		xorInPlace(xored[:], chunk, iv1)
+		block.Encrypt(encrypted[:], xored[:])
+		xorInPlace(result[i:i+16], encrypted[:], iv2)
 		iv1 = result[i : i+16]
 		iv2 = chunk
 	}
@@ -76,12 +71,12 @@ func IGEDecrypt(data, key, iv []byte) []byte {
 	copy(iv2, iv[16:])
 
 	result := make([]byte, len(data))
+	var xored, decrypted [16]byte
 	for i := 0; i < len(data); i += 16 {
 		chunk := data[i : i+16]
-		xored := xor(chunk, iv2)
-		decrypted := make([]byte, 16)
-		block.Decrypt(decrypted, xored)
-		copy(result[i:i+16], xor(decrypted, iv1))
+		xorInPlace(xored[:], chunk, iv2)
+		block.Decrypt(decrypted[:], xored[:])
+		xorInPlace(result[i:i+16], decrypted[:], iv1)
 		iv1 = chunk
 		iv2 = result[i : i+16]
 	}

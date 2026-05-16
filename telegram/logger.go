@@ -294,6 +294,9 @@ func (l *Logger) Debug(v ...any) {
 //   - format: fmt.Sprintf format string.
 //   - v: format arguments.
 func (l *Logger) Debugf(format string, v ...any) {
+	if !l.enabled(DebugLevel) {
+		return
+	}
 	l.log(DebugLevel, logColorPurple, "DEBUG", fmt.Sprintf(format, v...))
 }
 
@@ -311,6 +314,9 @@ func (l *Logger) Info(v ...any) {
 //   - format: fmt.Sprintf format string.
 //   - v: format arguments.
 func (l *Logger) Infof(format string, v ...any) {
+	if !l.enabled(InfoLevel) {
+		return
+	}
 	l.log(InfoLevel, logColorGreen, "INFO", fmt.Sprintf(format, v...))
 }
 
@@ -328,6 +334,9 @@ func (l *Logger) Warn(v ...any) {
 //   - format: fmt.Sprintf format string.
 //   - v: format arguments.
 func (l *Logger) Warnf(format string, v ...any) {
+	if !l.enabled(WarnLevel) {
+		return
+	}
 	l.log(WarnLevel, logColorYellow, "WARN", fmt.Sprintf(format, v...))
 }
 
@@ -345,6 +354,9 @@ func (l *Logger) Error(v ...any) {
 //   - format: fmt.Sprintf format string.
 //   - v: format arguments.
 func (l *Logger) Errorf(format string, v ...any) {
+	if !l.enabled(ErrorLevel) {
+		return
+	}
 	l.log(ErrorLevel, logColorRed, "ERROR", fmt.Sprintf(format, v...))
 }
 
@@ -363,6 +375,9 @@ func (l *Logger) Trace(v ...any) {
 //   - format: fmt.Sprintf format string.
 //   - v: format arguments.
 func (l *Logger) Tracef(format string, v ...any) {
+	if !l.enabled(TraceLevel) {
+		return
+	}
 	l.log(TraceLevel, logColorCyan, "TRACE", fmt.Sprintf(format, v...))
 }
 

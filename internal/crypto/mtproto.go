@@ -24,15 +24,15 @@ func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV []byte) {
 		x = 8
 	}
 
-	tmpA := make([]byte, len(msgKey)+36)
-	copy(tmpA, msgKey)
+	var tmpA [52]byte
+	copy(tmpA[:], msgKey)
 	copy(tmpA[len(msgKey):], authKey[x:x+36])
-	sha256A := sha256.Sum256(tmpA)
+	sha256A := sha256.Sum256(tmpA[:])
 
-	tmpB := make([]byte, 36+len(msgKey))
-	copy(tmpB, authKey[x+40:x+76])
+	var tmpB [52]byte
+	copy(tmpB[:], authKey[x+40:x+76])
 	copy(tmpB[36:], msgKey)
-	sha256B := sha256.Sum256(tmpB)
+	sha256B := sha256.Sum256(tmpB[:])
 
 	aesKey = make([]byte, 0, 32)
 	aesKey = append(aesKey, sha256A[:8]...)
@@ -74,10 +74,11 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 
 	data := dataBuf.Bytes()
 
-	tmpKey := make([]byte, 32+len(data))
-	copy(tmpKey, authKey[88:120])
-	copy(tmpKey[32:], data)
-	msgKeyLarge := sha256.Sum256(tmpKey)
+	hk := sha256.New()
+	hk.Write(authKey[88:120])
+	hk.Write(data)
+	var msgKeyLarge [32]byte
+	hk.Sum(msgKeyLarge[:0])
 	msgKey := msgKeyLarge[8:24]
 
 	aesKey, aesIV := KDF(authKey, msgKey, true)
@@ -124,10 +125,11 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}
 	}
 
-	tmpChk := make([]byte, 32+len(decrypted))
-	copy(tmpChk, authKey[96:128])
-	copy(tmpChk[32:], decrypted)
-	msgKeyCheck := sha256.Sum256(tmpChk)
+	hc := sha256.New()
+	hc.Write(authKey[96:128])
+	hc.Write(decrypted)
+	var msgKeyCheck [32]byte
+	hc.Sum(msgKeyCheck[:0])
 	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key == sha256(auth_key[96:128] + data)[8:24]"}
 	}

@@ -55,15 +55,15 @@ func (t *TCPAbridged) Send(buf *bytes.Buffer) error {
 // Recv reads the next abridged-transport framed message from the connection.
 // It decodes the variable-length prefix and returns the payload bytes.
 func (t *TCPAbridged) Recv() ([]byte, error) {
-	lengthByte := make([]byte, 1)
-	if _, err := io.ReadFull(t.conn, lengthByte); err != nil {
+	var lengthByte [1]byte
+	if _, err := io.ReadFull(t.conn, lengthByte[:]); err != nil {
 		return nil, err
 	}
 
 	var length int
 	if lengthByte[0] == 0x7f {
-		lenBytes := make([]byte, 3)
-		if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
+		var lenBytes [3]byte
+		if _, err := io.ReadFull(t.conn, lenBytes[:]); err != nil {
 			return nil, err
 		}
 		length = int(lenBytes[0]) | int(lenBytes[1])<<8 | int(lenBytes[2])<<16

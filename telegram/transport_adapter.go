@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/transport"
 )
@@ -58,4 +59,11 @@ func (s *sessionTransport) IsConnected() bool {
 		return false
 	}
 	return s.conn.RemoteAddr() != nil
+}
+
+func (s *sessionTransport) SetWriteDeadline(t time.Time) error {
+	if s.conn != nil {
+		return s.conn.SetWriteDeadline(t)
+	}
+	return nil
 }

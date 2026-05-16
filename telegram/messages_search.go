@@ -82,7 +82,6 @@ func (c *Client) SearchMessages(ctx context.Context, chatID int64, query string,
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearch(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SearchMessages failed err=%v", err)
 		return nil, err
 	}
 	return extractMessagesFromMessagesClass(result, c)
@@ -160,7 +159,6 @@ func (c *Client) SearchGlobal(ctx context.Context, query string, opts ...*Search
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearchGlobal(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SearchGlobal failed err=%v", err)
 		return nil, err
 	}
 	return extractMessagesFromMessagesClass(result, c)
@@ -197,7 +195,6 @@ func (c *Client) SearchMessagesCount(ctx context.Context, chatID int64, query st
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearch(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SearchMessagesCount failed err=%v", err)
 		return 0, err
 	}
 	return extractMessagesCount(result)
@@ -227,7 +224,6 @@ func (c *Client) SearchGlobalCount(ctx context.Context, query string) (int32, er
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearchGlobal(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SearchGlobalCount failed err=%v", err)
 		return 0, err
 	}
 	return extractMessagesCount(result)

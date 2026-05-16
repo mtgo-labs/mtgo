@@ -44,7 +44,6 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 	result, err := ci.client.Invoke(query, retries, timeout)
 	if err != nil {
-		ci.client.Log.Warnf("RPC invoke failed method=%T err=%v", input, err)
 		return nil, err
 	}
 	if rpcErr, ok := result.(*tg.RPCError); ok {

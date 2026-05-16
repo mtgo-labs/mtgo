@@ -196,7 +196,7 @@ func (c *Client) dispatchUpdate(d *HandlerDispatcher, update *Update) {
 	mws := c.sortedMiddlewares()
 
 	if len(mws) == 0 {
-		d.Dispatch(c, update)
+		d.DispatchSafe(c, update)
 		return
 	}
 
@@ -220,5 +220,5 @@ func (h *dispatchAllHandler) Check(update *Update) bool {
 }
 
 func (h *dispatchAllHandler) Handle(ctx *Context) {
-	h.d.Dispatch(h.c, h.update)
+	h.d.DispatchSafe(h.c, h.update)
 }

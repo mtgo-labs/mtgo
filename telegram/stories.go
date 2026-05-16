@@ -83,7 +83,6 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 	rpc := c.Raw()
 	result, err := rpc.StoriesSendStory(ctx, req)
 	if err != nil {
-		c.Log.Warnf("SendStory failed err=%v", err)
 		return nil, err
 	}
 
@@ -128,7 +127,6 @@ func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int
 	rpc := c.Raw()
 	result, err := rpc.StoriesEditStory(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditStoryCaption failed err=%v", err)
 		return nil, err
 	}
 
@@ -164,7 +162,6 @@ func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32
 	rpc := c.Raw()
 	result, err := rpc.StoriesEditStory(ctx, req)
 	if err != nil {
-		c.Log.Warnf("EditStoryMedia failed err=%v", err)
 		return nil, err
 	}
 
@@ -220,7 +217,6 @@ func (c *Client) GetStories(ctx context.Context, userID int64, storyIDs []int32)
 	rpc := c.Raw()
 	result, err := rpc.StoriesGetStoriesByID(ctx, req)
 	if err != nil {
-		c.Log.Warnf("GetStories failed err=%v", err)
 		return nil, err
 	}
 
@@ -260,7 +256,6 @@ func (c *Client) GetChatStories(ctx context.Context, chatID int64) ([]*types.Sto
 	rpc := c.Raw()
 	result, err := rpc.StoriesGetPeerStories(ctx, req)
 	if err != nil {
-		c.Log.Warnf("GetChatStories failed err=%v", err)
 		return nil, err
 	}
 

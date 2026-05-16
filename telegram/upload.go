@@ -100,7 +100,6 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	rpc := c.Raw()
 	inputFile, actualSize, err := uploadFileRPC(ctx, rpc, reader, fileName, fileSize, opts)
 	if err != nil {
-		c.Log.Warnf("UploadFile failed err=%v", err)
 		return nil, err
 	}
 
@@ -165,6 +164,14 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					resultsMu.Lock()
+					results = append(results, partResult{err: fmt.Errorf("upload worker panic: %v", r)})
+					resultsMu.Unlock()
+					hasErr.Store(true)
+				}
+			}()
 			for job := range jobs {
 				if hasErr.Load() {
 					resultsMu.Lock()
@@ -303,46 +310,50 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 		md5Hash = md5.New()
 	}
 
-	buf := make([]byte, uploadPartSize)
-	partData := make([][]byte, totalParts)
-
-	for i := int32(0); i < totalParts; i++ {
-		n, err := io.ReadFull(reader, buf)
-		if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
-			return nil, 0, fmt.Errorf("upload: read part %d: %w", i, err)
-		}
-		if n == 0 {
-			break
-		}
-		chunk := make([]byte, n)
-		copy(chunk, buf[:n])
-		partData[i] = chunk
-		if md5Hash != nil {
-			md5Hash.Write(chunk)
-		}
-	}
-
 	type partResult struct {
 		index int32
 		err   error
 	}
 
 	sem := make(chan struct{}, workers)
-	results := make([]partResult, totalParts)
+	results := make(chan partResult, totalParts)
 	var wg sync.WaitGroup
 	var hasErr atomic.Bool
 
+	buf := make([]byte, uploadPartSize)
 	for i := int32(0); i < totalParts; i++ {
 		if hasErr.Load() {
 			break
 		}
 
-		sem <- struct{}{}
+		n, readErr := io.ReadFull(reader, buf)
+		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
+			close(sem)
+			wg.Wait()
+			return nil, 0, fmt.Errorf("upload: read part %d: %w", i, readErr)
+		}
+		if n == 0 {
+			break
+		}
+
+		chunk := make([]byte, n)
+		copy(chunk, buf[:n])
+		if md5Hash != nil {
+			md5Hash.Write(chunk)
+		}
+
 		wg.Add(1)
+		sem <- struct{}{}
 
 		go func(partIdx int32, data []byte) {
 			defer wg.Done()
 			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					results <- partResult{index: partIdx, err: fmt.Errorf("upload part panic: %v", r)}
+					hasErr.Store(true)
+				}
+			}()
 
 			if hasErr.Load() {
 				return
@@ -350,7 +361,7 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 
 			select {
 			case <-ctx.Done():
-				results[partIdx] = partResult{index: partIdx, err: ctx.Err()}
+				results <- partResult{index: partIdx, err: ctx.Err()}
 				hasErr.Store(true)
 				return
 			default:
@@ -373,12 +384,12 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 			}
 
 			if uploadErr != nil {
-				results[partIdx] = partResult{index: partIdx, err: uploadErr}
+				results <- partResult{index: partIdx, err: uploadErr}
 				hasErr.Store(true)
 				return
 			}
 
-			results[partIdx] = partResult{index: partIdx}
+			results <- partResult{index: partIdx}
 
 			if opts != nil && opts.Progress != nil {
 				done := min(int64(partIdx+1)*uploadPartSize, fileSize)
@@ -389,14 +400,28 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 					IsUpload:      true,
 				})
 			}
-		}(i, partData[i])
+		}(i, chunk)
 	}
 
 	wg.Wait()
+	close(results)
 
-	for _, r := range results {
+	var firstErr error
+	for r := range results {
 		if r.err != nil {
-			return nil, 0, fmt.Errorf("upload: part %d: %w", r.index, r.err)
+			firstErr = fmt.Errorf("upload: part %d: %w", r.index, r.err)
+		}
+	}
+	if firstErr != nil {
+		return nil, 0, firstErr
+	}
+
+	if hasErr.Load() {
+		select {
+		case <-ctx.Done():
+			return nil, 0, ctx.Err()
+		default:
+			return nil, 0, fmt.Errorf("upload: parts failed")
 		}
 	}
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync/atomic"
 	"time"
+
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 type healthCheckConfig struct {
@@ -86,20 +88,23 @@ func (hc *healthChecker) loop(ctx context.Context) {
 }
 
 func (hc *healthChecker) sendPing(ctx context.Context) error {
+	c := hc.client
+	c.mu.RLock()
+	sess := c.session
+	c.mu.RUnlock()
+	if sess == nil {
+		return ErrNotConnected
+	}
+
 	pingCtx, cancel := context.WithTimeout(ctx, hc.cfg.PongTimeout)
 	defer cancel()
 
 	done := make(chan error, 1)
 	go func() {
-		c := hc.client
-		c.mu.RLock()
-		sess := c.session
-		c.mu.RUnlock()
-		if sess == nil {
-			done <- ErrNotConnected
-			return
-		}
-		_, err := sess.Invoke(nil, 1, hc.cfg.PongTimeout)
+		_, err := sess.Invoke(&tg.PingDelayDisconnectRequest{
+			PingID:          time.Now().UnixNano(),
+			DisconnectDelay: 65,
+		}, 1, hc.cfg.PongTimeout)
 		done <- err
 	}()
 

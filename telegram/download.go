@@ -94,9 +94,11 @@ func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocation
 	}
 
 	var buf memoryBuffer
+	if fileSize > 0 {
+		buf.data = make([]byte, 0, fileSize)
+	}
 	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, &buf, opts)
 	if err != nil {
-		c.Log.Warnf("DownloadFile failed err=%v", err)
 		return nil, err
 	}
 	return buf.Bytes(), nil
@@ -159,7 +161,6 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 
 	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, f, opts)
 	if err != nil {
-		c.Log.Warnf("DownloadToFile failed err=%v", err)
 		os.Remove(filePath)
 		return err
 	}
@@ -203,7 +204,6 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 
 	location, dcID, err := GetFileLocation(media, thumbSize)
 	if err != nil {
-		c.Log.Warnf("DownloadMedia failed err=%v", err)
 		return nil, fmt.Errorf("download media: %w", err)
 	}
 
@@ -399,6 +399,11 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 
 	go func() {
 		defer close(ch)
+		defer func() {
+			if r := recover(); r != nil {
+				ch <- FileChunk{Err: fmt.Errorf("download: stream panic: %v", r)}
+			}
+		}()
 		offset := int64(0)
 		var totalWritten int64
 
@@ -475,7 +480,7 @@ func cdnDecryptChunk(data, key, iv []byte, offset int64) []byte {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil
+		return data
 	}
 
 	chunkIV := make([]byte, 16)
@@ -800,6 +805,11 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 
 	go func() {
 		defer close(ch)
+		defer func() {
+			if r := recover(); r != nil {
+				ch <- StreamChunk{Err: fmt.Errorf("stream media: panic: %v", r)}
+			}
+		}()
 		offset := int64(0)
 
 		for {

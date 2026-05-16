@@ -59,7 +59,6 @@ func (c *Client) PinMessage(ctx context.Context, chatID int64, messageID int32, 
 		ID:     messageID,
 	})
 	if err != nil {
-		c.Log.Warnf("PinMessage failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -104,7 +103,6 @@ func (c *Client) UnpinMessage(ctx context.Context, chatID int64, messageID int32
 		ID:    messageID,
 	})
 	if err != nil {
-		c.Log.Warnf("UnpinMessage failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -144,7 +142,6 @@ func (c *Client) UnpinAllMessages(ctx context.Context, chatID int64) (int, error
 		Peer: peer,
 	})
 	if err != nil {
-		c.Log.Warnf("UnpinAllMessages failed err=%v", err)
 		return 0, err
 	}
 	return int(result.PTSCount), nil

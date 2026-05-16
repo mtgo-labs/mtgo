@@ -46,7 +46,6 @@ func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64
 		Score:       int32(score),
 	})
 	if err != nil {
-		c.Log.Warnf("SetGameScore failed err=%v", err)
 		return nil, err
 	}
 	return extractSingleMessage(result, c)
@@ -75,7 +74,6 @@ func (c *Client) GetGameHighScores(ctx context.Context, chatID int64, messageID 
 		UserID: user,
 	})
 	if err != nil {
-		c.Log.Warnf("GetGameHighScores failed err=%v", err)
 		return nil, err
 	}
 	return result.Scores, nil
