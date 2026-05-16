@@ -29,7 +29,10 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		}
 	}
 
-	retries := 1
+	retries := ci.client.cfg.Retries
+	if retries < 1 {
+		retries = 1
+	}
 	ci.client.mu.RLock()
 	apiInit := ci.client.apiInit
 	cfg := ci.client.cfg

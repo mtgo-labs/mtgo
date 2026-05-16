@@ -1353,7 +1353,11 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
 
-	return c.Invoke(query, 1, 30*time.Second)
+	retries := c.cfg.Retries
+	if retries < 1 {
+		retries = 1
+	}
+	return c.Invoke(query, retries, 30*time.Second)
 }
 
 func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {

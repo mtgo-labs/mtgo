@@ -194,6 +194,11 @@ type Config struct {
 	// ReqTimeout is the default timeout applied to RPC requests when no deadline
 	// is set on the context. Defaults to 60 seconds.
 	ReqTimeout time.Duration
+	// Retries is the number of retries for RPC calls on transient errors
+	// (timeouts, connection resets, 500s). Non-retryable errors (401, 400, 403)
+	// fail immediately regardless of this setting. Defaults to 1.
+	// The send timeout per attempt is controlled by ReqTimeout.
+	Retries int
 	// MaxConcurrentTrans limits how many file transfers may run in parallel.
 	// Keep low on bandwidth-constrained networks to avoid throttling.
 	MaxConcurrentTrans int
