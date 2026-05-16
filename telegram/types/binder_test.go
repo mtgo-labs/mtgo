@@ -57,8 +57,16 @@ func (m *mockBinder) BoundEdit(chatID int64, msgID int32, text string, opts ...*
 	return nil, nil
 }
 
+func (m *mockBinder) BoundEditInline(inlineMessageID tl.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error) {
+	return true, nil
+}
+
 func (m *mockBinder) BoundEditCaption(chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*Message, error) {
 	return nil, nil
+}
+
+func (m *mockBinder) BoundEditInlineCaption(inlineMessageID tl.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error) {
+	return true, nil
 }
 
 func (m *mockBinder) BoundEditMedia(chatID int64, msgID int32, media tl.InputMediaClass) (*Message, error) {
@@ -69,8 +77,16 @@ func (m *mockBinder) BoundEditMedia(chatID int64, msgID int32, media tl.InputMed
 	return &Message{ID: msgID, ChatID: chatID}, nil
 }
 
+func (m *mockBinder) BoundEditInlineMedia(inlineMessageID tl.InputBotInlineMessageIDClass, media tl.InputMediaClass) (bool, error) {
+	return true, nil
+}
+
 func (m *mockBinder) BoundEditReplyMarkup(chatID int64, msgID int32, markup tl.ReplyMarkupClass) (*Message, error) {
 	return nil, nil
+}
+
+func (m *mockBinder) BoundEditInlineReplyMarkup(inlineMessageID tl.InputBotInlineMessageIDClass, markup tl.ReplyMarkupClass) (bool, error) {
+	return true, nil
 }
 
 func (m *mockBinder) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error) {
@@ -82,7 +98,7 @@ func (m *mockBinder) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.D
 	return len(msgIDs), nil
 }
 
-func (m *mockBinder) BoundReact(chatID int64, msgID int32, emojis []string) error {
+func (m *mockBinder) BoundReact(chatID int64, msgID int32, opts ...*params.React) error {
 	return nil
 }
 
@@ -100,10 +116,11 @@ func (m *mockBinder) BoundRead(chatID int64, msgID int32) error {
 	return nil
 }
 
-func (m *mockBinder) BoundAnswerCallback(queryID int64, text string, showAlert bool, url string, cacheTime int32) error {
+func (m *mockBinder) BoundAnswerCallback(queryID int64, opts ...*params.AnswerCallback) error {
+	o := params.GetOptDef(&params.AnswerCallback{}, opts...)
 	m.answerID = queryID
-	m.answerText = text
-	m.answerAlert = showAlert
+	m.answerText = o.Text
+	m.answerAlert = o.ShowAlert
 	return m.err
 }
 
@@ -111,7 +128,7 @@ func (m *mockBinder) BoundDownload(chatID int64, msgID int32, opts ...*params.Do
 	return nil, nil
 }
 
-func (m *mockBinder) BoundDownloadTo(chatID int64, msgID int32, fileName string, progress params.ProgressFunc) (string, error) {
+func (m *mockBinder) BoundDownloadTo(chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error) {
 	return "", nil
 }
 
@@ -187,7 +204,7 @@ func (m *mockBinder) BoundStub(method string) error {
 	return errors.New("stub: " + method)
 }
 
-func (m *mockBinder) BoundAnswerInline(queryID int64, results []tl.InputBotInlineResultClass, cacheTime int, gallery bool, private bool, nextOffset string, switchPM string, switchPMText string) error {
+func (m *mockBinder) BoundAnswerInline(queryID int64, results []tl.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
 	return m.err
 }
 
@@ -214,11 +231,11 @@ func (m *mockBinder) BoundUnarchiveUser(chatID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundAnswerPreCheckout(queryID int64, ok bool, errorMsg string) error {
+func (m *mockBinder) BoundAnswerPreCheckout(queryID int64, opts ...*params.AnswerPreCheckout) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundAnswerShipping(queryID int64, ok bool, errorMsg string) error {
+func (m *mockBinder) BoundAnswerShipping(queryID int64, opts ...*params.AnswerShipping) error {
 	return m.err
 }
 
@@ -238,7 +255,7 @@ func (m *mockBinder) BoundStoryReplyMedia(peerID int64, storyID int32, media tl.
 	return &Message{ID: 201}, m.err
 }
 
-func (m *mockBinder) BoundStoryForward(peerID int64, storyID int32, toChatID int64) (*Message, error) {
+func (m *mockBinder) BoundStoryForward(fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*Message, error) {
 	return &Message{ID: 202}, m.err
 }
 
@@ -250,7 +267,7 @@ func (m *mockBinder) BoundStoryDelete(peerID int64, storyID int32) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundStoryEditCaption(peerID int64, storyID int32, caption string) (*Story, error) {
+func (m *mockBinder) BoundStoryEditCaption(peerID int64, storyID int32, opts ...*params.EditCaption) (*Story, error) {
 	return nil, m.err
 }
 
@@ -258,11 +275,11 @@ func (m *mockBinder) BoundStoryEditMedia(peerID int64, storyID int32, media tl.I
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundStoryEditPrivacy(peerID int64, storyID int32) (*Story, error) {
+func (m *mockBinder) BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*params.EditPrivacy) (*Story, error) {
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundStoryReact(peerID int64, storyID int32, emoji string) error {
+func (m *mockBinder) BoundStoryReact(peerID int64, storyID int32, opts ...*params.React) error {
 	return m.err
 }
 

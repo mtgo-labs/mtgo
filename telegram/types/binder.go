@@ -42,16 +42,24 @@ type Binder interface {
 	BoundCopy(chatID int64, fromChatID int64, msgID int32, opts ...*params.CopyMessage) (int64, error)
 	// BoundEdit modifies the text of an existing message.
 	BoundEdit(chatID int64, msgID int32, text string, opts ...*params.EditMessage) (*Message, error)
+	// BoundEditInline modifies the text of an inline message.
+	BoundEditInline(inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error)
 	// BoundEditCaption changes the caption of a media message.
 	BoundEditCaption(chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*Message, error)
+	// BoundEditInlineCaption changes the caption of an inline media message.
+	BoundEditInlineCaption(inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error)
 	// BoundEditMedia replaces the media content of an existing message.
 	BoundEditMedia(chatID int64, msgID int32, media tg.InputMediaClass) (*Message, error)
+	// BoundEditInlineMedia replaces the media content of an inline message.
+	BoundEditInlineMedia(inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass) (bool, error)
 	// BoundEditReplyMarkup changes only the inline keyboard of an existing message.
 	BoundEditReplyMarkup(chatID int64, msgID int32, markup tg.ReplyMarkupClass) (*Message, error)
+	// BoundEditInlineReplyMarkup changes only the inline keyboard of an inline message.
+	BoundEditInlineReplyMarkup(inlineMessageID tg.InputBotInlineMessageIDClass, markup tg.ReplyMarkupClass) (bool, error)
 	// BoundDelete removes one or more messages by their IDs.
 	BoundDelete(chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error)
 	// BoundReact adds an emoji reaction to a message.
-	BoundReact(chatID int64, msgID int32, emojis []string) error
+	BoundReact(chatID int64, msgID int32, opts ...*params.React) error
 	// BoundPin pins a message in the chat.
 	BoundPin(chatID int64, msgID int32, opts ...*params.PinMessage) error
 	// BoundUnpin removes a message from the pinned list.
@@ -60,13 +68,13 @@ type Binder interface {
 	BoundRead(chatID int64, msgID int32) error
 	// BoundAnswerCallback sends an answer to a callback query originated from a
 	// button press.
-	BoundAnswerCallback(queryID int64, text string, showAlert bool, url string, cacheTime int32) error
+	BoundAnswerCallback(queryID int64, opts ...*params.AnswerCallback) error
 	// BoundDownload downloads the media attached to a message and returns its raw
 	// bytes.
 	BoundDownload(chatID int64, msgID int32, opts ...*params.Download) ([]byte, error)
 	// BoundDownloadTo downloads the media attached to a message to a file and
 	// returns the absolute file path.
-	BoundDownloadTo(chatID int64, msgID int32, fileName string, progress params.ProgressFunc) (string, error)
+	BoundDownloadTo(chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error)
 	// BoundSendContact sends a contact card (phone number + name) to a chat.
 	BoundSendContact(chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*Message, error)
 	// BoundSendLocation sends a geographic location point to a chat.
@@ -100,7 +108,7 @@ type Binder interface {
 	// It always returns an error identifying the unimplemented method name.
 	BoundStub(method string) error
 	// BoundAnswerInline sends inline query results to answer an inline query.
-	BoundAnswerInline(queryID int64, results []tg.InputBotInlineResultClass, cacheTime int, gallery bool, private bool, nextOffset string, switchPM string, switchPMText string) error
+	BoundAnswerInline(queryID int64, results []tg.InputBotInlineResultClass, opts ...*params.InlineQuery) error
 	// BoundBlock blocks a user.
 	BoundBlock(userID int64) error
 	// BoundUnblock removes a user from the block list.
@@ -112,9 +120,9 @@ type Binder interface {
 	// BoundUnarchiveUser unarchives a user chat.
 	BoundUnarchiveUser(chatID int64) error
 	// BoundAnswerPreCheckout approves or rejects a pre-checkout query.
-	BoundAnswerPreCheckout(queryID int64, ok bool, errorMsg string) error
+	BoundAnswerPreCheckout(queryID int64, opts ...*params.AnswerPreCheckout) error
 	// BoundAnswerShipping returns shipping options or an error for a shipping query.
-	BoundAnswerShipping(queryID int64, ok bool, errorMsg string) error
+	BoundAnswerShipping(queryID int64, opts ...*params.AnswerShipping) error
 	// BoundApproveJoinRequest approves a chat join request.
 	BoundApproveJoinRequest(chatID int64, userID int64) error
 	// BoundDeclineJoinRequest declines a chat join request.
@@ -124,19 +132,19 @@ type Binder interface {
 	// BoundStoryReplyMedia sends media as a reply to a story.
 	BoundStoryReplyMedia(peerID int64, storyID int32, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error)
 	// BoundStoryForward forwards a story to another chat.
-	BoundStoryForward(peerID int64, storyID int32, toChatID int64) (*Message, error)
+	BoundStoryForward(fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*Message, error)
 	// BoundStoryRead marks a story as read.
 	BoundStoryRead(peerID int64, storyID int32) error
 	// BoundStoryDelete deletes a story.
 	BoundStoryDelete(peerID int64, storyID int32) error
 	// BoundStoryEditCaption edits the caption of a story.
-	BoundStoryEditCaption(peerID int64, storyID int32, caption string) (*Story, error)
+	BoundStoryEditCaption(peerID int64, storyID int32, opts ...*params.EditCaption) (*Story, error)
 	// BoundStoryEditMedia edits the media of a story.
 	BoundStoryEditMedia(peerID int64, storyID int32, media tg.InputMediaClass) (*Story, error)
 	// BoundStoryEditPrivacy edits the privacy of a story.
-	BoundStoryEditPrivacy(peerID int64, storyID int32) (*Story, error)
+	BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*params.EditPrivacy) (*Story, error)
 	// BoundStoryReact adds a reaction to a story.
-	BoundStoryReact(peerID int64, storyID int32, emoji string) error
+	BoundStoryReact(peerID int64, storyID int32, opts ...*params.React) error
 	// BoundStoryDownload downloads the media of a story.
 	BoundStoryDownload(peerID int64, storyID int32, opts ...*params.Download) ([]byte, error)
 	BoundReplyChecklist(chatID int64, checklist *tg.InputMediaTodo, replyTo int32, opts ...*params.SendChecklist) (*Message, error)

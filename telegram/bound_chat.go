@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -160,7 +159,7 @@ func (c *Client) BoundJoinChat(chatID int64, username string) (*types.Chat, erro
 	if username != "" {
 		return c.JoinChat(context.Background(), username)
 	}
-	return nil, fmt.Errorf("join requires a username or invite hash")
+	return nil, ErrJoinRequiresInvite
 }
 
 // BoundLeaveChat leaves the specified group or channel. This is a bound-method
