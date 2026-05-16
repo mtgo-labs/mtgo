@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
@@ -30,7 +30,7 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	sessionStr := mustEnv("SESSION")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		SessionString: sessionStr,
 		InMemory:      true,
 		SavePeers:     true,
@@ -56,11 +56,11 @@ func main() {
 		fmt.Printf("  Username: @%s\n", me.Username)
 	}
 
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg.Text == "/ping" {
 			msg.Reply("pong")
 		}
-	}, tg.Private)
+	}, telegram.Private)
 
 	fmt.Println("import_session is running. Press Ctrl+C to stop.")
 	client.Idle()

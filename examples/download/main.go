@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
@@ -26,7 +26,7 @@ func main() {
 		log.Fatalf("create output dir: %v", err)
 	}
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "download_bot",
 		SavePeers:   true,
@@ -35,7 +35,7 @@ func main() {
 		log.Fatalf("new client: %v", err)
 	}
 
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg == nil || msg.Media == nil {
 			return
 		}
@@ -77,7 +77,7 @@ func main() {
 			}
 			fmt.Printf("  saved: %s\n", destPath)
 		}
-	}, tg.Media)
+	}, telegram.Media)
 
 	if err := client.Connect(0); err != nil {
 		log.Fatalf("connect: %v", err)

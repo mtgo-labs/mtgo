@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/mtgo-labs/mtgo/session/tdesktop"
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
@@ -39,7 +39,7 @@ func main() {
 	acc := accounts[0]
 	fmt.Printf("=== Account (UserID=%d, MainDC=%d) ===\n", acc.UserID, acc.MainDC)
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		SessionString: acc.String(),
 		InMemory:      true,
 		SavePeers:     true,
@@ -63,11 +63,11 @@ func main() {
 		fmt.Printf("  Username: @%s\n", me.Username)
 	}
 
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg.Text == "/ping" {
 			msg.Reply("pong")
 		}
-	}, tg.Private)
+	}, telegram.Private)
 
 	fmt.Println("import_tdata is running. Press Ctrl+C to stop.")
 	client.Idle()

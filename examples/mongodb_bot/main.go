@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/storage"
 	extmongodb "github.com/mtgo-labs/storage/mongodb"
@@ -27,7 +27,7 @@ func main() {
 		mongoDB = "mtgo"
 	}
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "mongodb_bot",
 		SavePeers:   true,
@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("new client: %v", err)
 	}
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		ctx.Reply(
 			"<b>MongoDB Bot</b>\n\n" +
 				"Commands:\n" +
@@ -46,9 +46,9 @@ func main() {
 				"• /peers — show cached peers\n" +
 				"• /clear — delete your notes",
 		)
-	}, tg.Command("start"))
+	}, telegram.Command("start"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		text := msg.Text
 		if len(text) <= 5 {
 			ctx.Reply("Usage: /note <text>")
@@ -67,9 +67,9 @@ func main() {
 			return
 		}
 		ctx.Reply("Note saved!")
-	}, tg.Command("note"))
+	}, telegram.Command("note"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		conv, err := client.LoadConversation(msg.ChatID, msg.FromID)
 		if err != nil {
 			ctx.Reply(fmt.Sprintf("error: %v", err))
@@ -80,17 +80,17 @@ func main() {
 			return
 		}
 		ctx.Reply(fmt.Sprintf("Your note: %s", conv.Name))
-	}, tg.Command("notes"))
+	}, telegram.Command("notes"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		if err := client.DeleteConversation(msg.ChatID, msg.FromID); err != nil {
 			ctx.Reply(fmt.Sprintf("error: %v", err))
 			return
 		}
 		ctx.Reply("Notes cleared!")
-	}, tg.Command("clear"))
+	}, telegram.Command("clear"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		peers, err := client.LoadPeers()
 		if err != nil {
 			ctx.Reply(fmt.Sprintf("error: %v", err))
@@ -114,9 +114,9 @@ func main() {
 			fmt.Fprintf(&text, "• %s (id=%d, %s)\n", name, p.ID, p.Type)
 		}
 		ctx.Reply(text.String())
-	}, tg.Command("peers"))
+	}, telegram.Command("peers"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		if msg.FromID == 0 {
 			return
 		}

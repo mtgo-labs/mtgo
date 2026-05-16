@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
@@ -19,7 +19,7 @@ func main() {
 	botToken := mustEnv("BOT_TOKEN")
 	chatID := mustAtoi64(mustEnv("CHAT_ID"))
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "upload_bot",
 		SavePeers:   true,
@@ -37,7 +37,7 @@ func main() {
 	// ── Upload + SendDocument ─────────────────────────────────
 
 	msg, err := client.SendDocument(ctx, chatID,
-		tg.Path("report.pdf"),
+		telegram.Path("report.pdf"),
 		"uploaded document from disk",
 		&params.SendDocument{
 			MimeType: "application/pdf",
@@ -48,7 +48,7 @@ func main() {
 	// ── Upload + SendPhoto ────────────────────────────────────
 
 	msg, err = client.SendPhoto(ctx, chatID,
-		tg.Path("photo.jpg"),
+		telegram.Path("photo.jpg"),
 		"uploaded photo from disk",
 	)
 	printResult("SendPhoto (path)", msg, err)
@@ -56,7 +56,7 @@ func main() {
 	// ── Upload + SendVideo ────────────────────────────────────
 
 	msg, err = client.SendVideo(ctx, chatID,
-		tg.Path("clip.mp4"),
+		telegram.Path("clip.mp4"),
 		"uploaded video from disk",
 		&params.SendVideo{
 			Duration: 12.5,
@@ -70,7 +70,7 @@ func main() {
 	// ── Upload + SendAudio ────────────────────────────────────
 
 	msg, err = client.SendAudio(ctx, chatID,
-		tg.Path("song.mp3"),
+		telegram.Path("song.mp3"),
 		"uploaded audio from disk",
 		&params.SendAudio{
 			Duration:  245,
@@ -83,7 +83,7 @@ func main() {
 	// ── Upload + SendAnimation ────────────────────────────────
 
 	msg, err = client.SendAnimation(ctx, chatID,
-		tg.Path("meme.gif"),
+		telegram.Path("meme.gif"),
 		"uploaded gif from disk",
 	)
 	printResult("SendAnimation (path)", msg, err)
@@ -91,7 +91,7 @@ func main() {
 	// ── Upload from URL ───────────────────────────────────────
 
 	msg, err = client.SendPhoto(ctx, chatID,
-		tg.URL("https://example.com/photo.jpg"),
+		telegram.URL("https://example.com/photo.jpg"),
 		"photo from URL",
 	)
 	printResult("SendPhoto (url)", msg, err)
@@ -99,7 +99,7 @@ func main() {
 	// ── Upload from bytes ─────────────────────────────────────
 
 	msg, err = client.SendDocument(ctx, chatID,
-		tg.FromBytes([]byte("hello world"), "hello.txt"),
+		telegram.FromBytes([]byte("hello world"), "hello.txt"),
 		"document from bytes",
 	)
 	printResult("SendDocument (bytes)", msg, err)
@@ -118,7 +118,7 @@ func main() {
 		log.Fatalf("stat file: %v", err)
 	}
 
-	result, err := client.UploadFile(ctx, f2, filepath.Base(uploadPath), info2.Size(), &tg.UploadOptions{
+	result, err := client.UploadFile(ctx, f2, filepath.Base(uploadPath), info2.Size(), &telegram.UploadOptions{
 		Workers: 4,
 		Progress: func(info params.ProgressInfo) {
 			fmt.Printf("  upload progress: %d / %d bytes\n", info.UploadedBytes, info.TotalBytes)

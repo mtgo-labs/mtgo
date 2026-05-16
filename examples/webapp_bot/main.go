@@ -9,10 +9,10 @@ import (
 	"os"
 	"time"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 )
 
-var client *tg.Client
+var client *telegram.Client
 
 func main() {
 	apiID := mustEnv("API_ID")
@@ -21,7 +21,7 @@ func main() {
 	port := envOrDefault("PORT", "8080")
 
 	var err error
-	client, err = tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err = telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "webapp_bot",
 	})
@@ -40,7 +40,7 @@ func main() {
 	}
 	fmt.Printf("bot @%s connected\n", bot.Username)
 
-	secretKey := tg.CreateWebAppSecretKey(botToken)
+	secretKey := telegram.CreateWebAppSecretKey(botToken)
 
 	http.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
 		initData := r.URL.Query().Get("init_data")
@@ -49,7 +49,7 @@ func main() {
 			return
 		}
 
-		data, err := tg.ParseWebAppData(secretKey, initData, 5*time.Minute)
+		data, err := telegram.ParseWebAppData(secretKey, initData, 5*time.Minute)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("validation failed: %v", err), http.StatusUnauthorized)
 			return
@@ -74,7 +74,7 @@ func main() {
 			return
 		}
 
-		data, err := tg.ValidateWebAppData(botToken, initData, 5*time.Minute)
+		data, err := telegram.ValidateWebAppData(botToken, initData, 5*time.Minute)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("validation failed: %v", err), http.StatusUnauthorized)
 			return

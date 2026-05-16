@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/plugins/i18n"
 	"golang.org/x/text/language"
@@ -21,7 +21,7 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	botToken := mustEnv("BOT_TOKEN")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "i18n_bot",
 		SavePeers:   true,
@@ -35,7 +35,7 @@ func main() {
 		Format:      i18n.FormatYAML,
 		EmbedFS:     locales,
 		LocaleDir:   "locales",
-		GlobalContext: func(ctx *tg.Context) map[string]any {
+		GlobalContext: func(ctx *telegram.Context) map[string]any {
 			name := ""
 			if sender := ctx.Sender(); sender != nil {
 				name = sender.FirstName
@@ -52,21 +52,21 @@ func main() {
 	client.Use(tr)
 
 	// {name} is auto-filled from GlobalContext — no need to pass it
-	client.OnMessage(func(c *tg.Client, msg *types.Message) {
+	client.OnMessage(func(c *telegram.Client, msg *types.Message) {
 		msg.Reply(msg.T("start"))
-	}, tg.Command("start"))
+	}, telegram.Command("start"))
 
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		msg.Reply(msg.T("help"))
-	}, tg.Command("help"))
+	}, telegram.Command("help"))
 
-	client.OnMessage(func(c *tg.Client, msg *types.Message) {
+	client.OnMessage(func(c *telegram.Client, msg *types.Message) {
 		msg.Reply(msg.T("items", 5))
-	}, tg.Command("items"))
+	}, telegram.Command("items"))
 
-	client.OnMessage(func(ctx *tg.Context, c *tg.Client, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, c *telegram.Client, msg *types.Message) {
 		msg.Reply(msg.T("cart"))
-	}, tg.Command("cart"))
+	}, telegram.Command("cart"))
 
 	if err := client.Connect(0); err != nil {
 		log.Fatalf("connect: %v", err)

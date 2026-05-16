@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
@@ -23,7 +23,7 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	botToken := mustEnv("BOT_TOKEN")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "export_session",
 		SavePeers:   true,
@@ -61,12 +61,12 @@ func main() {
 	fmt.Println("Use with:")
 	fmt.Println("  Config.SessionString: sessionStr")
 
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg.Text == "/exportsession" {
 			s, _ := client.ExportSessionString()
 			msg.Reply("Session string:\n" + s)
 		}
-	}, tg.Private)
+	}, telegram.Private)
 
 	fmt.Println("export_session is running. Press Ctrl+C to stop.")
 	client.Idle()

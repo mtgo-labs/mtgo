@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 )
 
@@ -15,11 +15,11 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	botToken := mustEnv("BOT_TOKEN")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "handler_groups_bot",
 		SavePeers:   true,
-		ParseMode:   tg.HTML,
+		ParseMode:   telegram.HTML,
 	})
 	if err != nil {
 		log.Fatalf("new client: %v", err)
@@ -27,7 +27,7 @@ func main() {
 	// ── Group -10: logging (runs first) ──────────────────────────────
 	// Handlers in lower-numbered groups execute before higher-numbered ones.
 	// Use this for cross-cutting concerns like logging or metrics.
-	loggingHandler := tg.NewMessageHandler(func(ctx *tg.Context) {
+	loggingHandler := telegram.NewMessageHandler(func(ctx *telegram.Context) {
 		if ctx.Message != nil {
 			log.Printf("[log] chat=%d text=%q", ctx.Message.ChatID, ctx.Message.Text)
 		}
@@ -43,7 +43,7 @@ func main() {
 		adminID = mustAtoi64(envAdmin)
 	}
 	if adminID != 0 {
-		authHandler := tg.NewMessageHandler(func(ctx *tg.Context) {
+		authHandler := telegram.NewMessageHandler(func(ctx *telegram.Context) {
 			if ctx.Message != nil && ctx.Message.FromID != adminID {
 				ctx.Reply("⛔ Unauthorized")
 				ctx.StopPropagation()
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	// ── Group 10: business logic (runs after logging & auth) ─────────
-	startHandler := tg.NewMessageHandler(func(ctx *tg.Context) {
+	startHandler := telegram.NewMessageHandler(func(ctx *telegram.Context) {
 		ctx.Reply(
 			"<b>Handler Groups Bot</b>\n\n"+
 				"This bot demonstrates handler groups:\n"+
@@ -65,17 +65,17 @@ func main() {
 				"Commands: /start /ping",
 			&params.SendMessage{ParseMode: params.ParseModeHTML},
 		)
-	}, tg.Command("start"))
+	}, telegram.Command("start"))
 	client.AddHandler(startHandler, 10)
 
-	pingHandler := tg.NewMessageHandler(func(ctx *tg.Context) {
+	pingHandler := telegram.NewMessageHandler(func(ctx *telegram.Context) {
 		ctx.Reply("pong")
-	}, tg.Command("ping"))
+	}, telegram.Command("ping"))
 	client.AddHandler(pingHandler, 10)
 
 	// ── Group 20: fallback (runs last) ───────────────────────────────
 	// Catches any message that wasn't handled by earlier groups.
-	fallbackHandler := tg.NewMessageHandler(func(ctx *tg.Context) {
+	fallbackHandler := telegram.NewMessageHandler(func(ctx *telegram.Context) {
 		if ctx.Message != nil && ctx.Message.Text != "" {
 			ctx.Reply("Unknown command. Try /start")
 		}

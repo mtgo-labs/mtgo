@@ -25,7 +25,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
@@ -36,11 +36,11 @@ func main() {
 	proxyAddr := mustEnv("MTPROXY_ADDR")
 	proxySecret := mustEnv("MTPROXY_SECRET")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "mtproxy_bot",
 		InMemory:    true,
-		MTProxy: &tg.MTProxyConfig{
+		MTProxy: &telegram.MTProxyConfig{
 			Addr:   proxyAddr,
 			Secret: proxySecret,
 		},
@@ -49,7 +49,7 @@ func main() {
 		log.Fatalf("new client: %v", err)
 	}
 
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg == nil || msg.Text == "" {
 			return
 		}
@@ -58,7 +58,7 @@ func main() {
 		if err != nil {
 			log.Printf("reply error: %v", err)
 		}
-	}, tg.Private)
+	}, telegram.Private)
 
 	if err := client.Connect(0); err != nil {
 		log.Fatalf("connect via mtproxy: %v", err)

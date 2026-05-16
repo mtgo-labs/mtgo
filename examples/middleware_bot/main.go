@@ -9,7 +9,7 @@ import (
 
 	"github.com/mtgo-labs/middlewares/floodwait"
 	"github.com/mtgo-labs/middlewares/ratelimit"
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
@@ -19,11 +19,11 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	botToken := mustEnv("BOT_TOKEN")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "middleware_bot",
 		SavePeers:   true,
-		ParseMode:   tg.HTML,
+		ParseMode:   telegram.HTML,
 	})
 	if err != nil {
 		log.Fatalf("new client: %v", err)
@@ -45,8 +45,8 @@ func main() {
 	client.UseInvokerMiddleware(waiter.Middleware())
 
 	// ── Handler middleware: logging (priority -10, runs first) ─────
-	client.UseMiddleware(func(next tg.Handler) tg.Handler {
-		return &tg.FuncHandler{Fn: func(ctx *tg.Context) {
+	client.UseMiddleware(func(next telegram.Handler) telegram.Handler {
+		return &telegram.FuncHandler{Fn: func(ctx *telegram.Context) {
 			if ctx.Message != nil {
 				from := ctx.Message.ChatID
 				text := ctx.Message.Text
@@ -62,8 +62,8 @@ func main() {
 		adminID = mustAtoi64(envAdmin)
 	}
 	if adminID != 0 {
-		client.UseMiddleware(func(next tg.Handler) tg.Handler {
-			return &tg.FuncHandler{Fn: func(ctx *tg.Context) {
+		client.UseMiddleware(func(next telegram.Handler) telegram.Handler {
+			return &telegram.FuncHandler{Fn: func(ctx *telegram.Context) {
 				if ctx.Message != nil && ctx.Message.FromID != adminID {
 					ctx.Reply("Unauthorized")
 					ctx.Stopped = true
@@ -75,7 +75,7 @@ func main() {
 	}
 
 	// ── Handlers ───────────────────────────────────────────────────
-	client.OnMessage(func(client *tg.Client, msg *types.Message) {
+	client.OnMessage(func(client *telegram.Client, msg *types.Message) {
 		if msg == nil || msg.Text == "" {
 			return
 		}
@@ -103,7 +103,7 @@ func main() {
 			)
 			msg.Reply(info)
 		}
-	}, tg.Private)
+	}, telegram.Private)
 
 	if err := client.Connect(0); err != nil {
 		log.Fatalf("connect: %v", err)

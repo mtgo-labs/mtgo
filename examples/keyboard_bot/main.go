@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	tg "github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
@@ -16,7 +16,7 @@ func main() {
 	apiHash := mustEnv("API_HASH")
 	botToken := mustEnv("BOT_TOKEN")
 
-	client, err := tg.NewClient(mustAtoi(apiID), apiHash, &tg.Config{
+	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "keyboard_bot",
 		SavePeers:   true,
@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// /start — welcome with inline URL button.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		text := "Here is some bot commands:\n\n"
 		text += "- /keyboard - show keyboard\n"
 		text += "- /inline - show inline keyboard\n"
@@ -35,36 +35,36 @@ func main() {
 		text += "- /force - force reply"
 
 		_, _ = ctx.Reply(text, &params.SendMessage{
-			ReplyMarkup: tg.Keyboard().
+			ReplyMarkup: telegram.Keyboard().
 				URL("GitHub", "https://github.com/mtgo-labs/mtgo").
 				Build(),
 		})
-	}, tg.Command("start"))
+	}, telegram.Command("start"))
 
 	// /inline — inline keyboard with callback buttons.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		_, _ = ctx.Reply("This is an inline keyboard", &params.SendMessage{
-			ReplyMarkup: tg.Keyboard().
+			ReplyMarkup: telegram.Keyboard().
 				Callback("OwO", "OwO").
 				Callback("UwU", "UwU").
 				Next().
 				URL("Docs", "https://example.com").
 				Build(),
 		})
-	}, tg.Command("inline"))
+	}, telegram.Command("inline"))
 
 	// /keyboard — reply keyboard.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		_, _ = ctx.Reply("This is a keyboard", &params.SendMessage{
-			ReplyMarkup: tg.Keyboard().
+			ReplyMarkup: telegram.Keyboard().
 				Text("OwO").
 				Text("UwU").
-				BuildReply(tg.ReplyOpts{Resize: true, OneTime: true}),
+				BuildReply(telegram.ReplyOpts{Resize: true, OneTime: true}),
 		})
-	}, tg.Command("keyboard"))
+	}, telegram.Command("keyboard"))
 
 	// /entities — demonstrate formatted text using params.Entities.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		text := "Hello World"
 		_, _ = ctx.Reply(text, &params.SendMessage{
 			Entities: params.Entities(
@@ -72,10 +72,10 @@ func main() {
 				params.Italic(6, 5),
 			),
 		})
-	}, tg.Command("entities"))
+	}, telegram.Command("entities"))
 
 	// /formatted — more advanced entity formatting example.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		text := "Bold Italic Code Pre Underline Strike Spoiler"
 		_, _ = ctx.Reply(text, &params.SendMessage{
 			Entities: params.Entities(
@@ -88,34 +88,34 @@ func main() {
 				params.Spoiler(38, 7),
 			),
 		})
-	}, tg.Command("formatted"))
+	}, telegram.Command("formatted"))
 
 	// /remove — remove reply keyboard.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		_, _ = ctx.Reply("Keyboards removed", &params.SendMessage{
-			ReplyMarkup: tg.RemoveKeyboard(),
+			ReplyMarkup: telegram.RemoveKeyboard(),
 		})
-	}, tg.Command("remove"))
+	}, telegram.Command("remove"))
 
 	// /force — force reply.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		_, _ = ctx.Reply("This is a force reply", &params.SendMessage{
-			ReplyMarkup: tg.ForceReplyMarkup(),
+			ReplyMarkup: telegram.ForceReplyMarkup(),
 		})
-	}, tg.Command("force"))
+	}, telegram.Command("force"))
 
 	// Echo any other text.
-	client.OnMessage(func(ctx *tg.Context, msg *types.Message) {
+	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		_, _ = ctx.Reply(fmt.Sprintf("You said %q", msg.Text))
 	})
 
 	// Handle inline keyboard button presses.
-	client.OnCallbackQuery(func(ctx *tg.Context) {
+	client.OnCallbackQuery(func(ctx *telegram.Context) {
 		data := string(ctx.CallbackQuery.Data)
 		_, _ = ctx.CallbackEditText(
 			fmt.Sprintf("You pressed %s", data),
 			&params.EditMessage{
-				ReplyMarkup: tg.Keyboard().
+				ReplyMarkup: telegram.Keyboard().
 					URL("GitHub", "https://github.com/mtgo-labs/mtgo").
 					Build(),
 			},
