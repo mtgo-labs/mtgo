@@ -1,67 +1,68 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"fmt"
+	"time"
 
-// ForumTopic represents a forum topic in a Telegram supergroup.
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+// ForumTopic represents a forum topic with its ID, title, icon, unread counts,
+// and state flags (pinned, closed, hidden, etc.).
+//
+// Example:
+//
+//	topic := types.ParseForumTopic(rawTopic)
+//	fmt.Printf("Topic: %s (ID: %d, pinned: %v)\n", topic.Title, topic.ID, topic.IsPinned)
 type ForumTopic struct {
-	// ID is the unique identifier of the forum topic.
-	ID int32
-	// Date when the topic was created (Unix timestamp).
-	Date int32
-	// Title is the name of the forum topic.
-	Title string
-	// IconColor is the color of the topic icon in RGB format.
-	IconColor int32
-	// IconEmojiID is the custom emoji sticker used as the topic icon.
-	IconEmojiID int64
-	// TopMessage is the ID of the last message in the topic.
-	TopMessage int32
-	// ReadInboxMaxID is the ID up to which all messages have been read incoming.
-	ReadInboxMaxID int32
-	// ReadOutboxMaxID is the ID up to which all messages have been read outgoing.
-	ReadOutboxMaxID int32
-	// UnreadCount is the number of unread messages in the topic.
-	UnreadCount int32
-	// UnreadMentionsCount is the number of unread mention messages.
-	UnreadMentionsCount int32
-	// UnreadReactionsCount is the number of unread reaction messages.
+	ID                   int32
+	Title                string
+	Date                 time.Time
+	IconColor            int32
+	IconEmojiID          string
+	Creator              *Chat
+	TopMessage           *Message
+	UnreadCount          int32
+	UnreadMentionsCount  int32
 	UnreadReactionsCount int32
-	// Closed indicates whether the topic is closed for new messages.
-	Closed bool
-	// Pinned indicates whether the topic is pinned in the forum.
-	Pinned bool
-	// Short indicates whether the topic info is abbreviated.
-	Short bool
-	// Hidden indicates whether the topic is hidden from the forum list.
-	Hidden bool
-	// My indicates whether the current user created this topic.
-	My bool
+	UnreadPollVoteCount  int32
+	IsMy                 bool
+	IsClosed             bool
+	IsPinned             bool
+	IsShort              bool
+	IsHidden             bool
+	IsDeleted            bool
+	ReadInboxMaxID       int32
+	ReadOutboxMaxID      int32
 }
 
-// ForumTopicCreated represents the initial creation data of a forum topic.
+// ForumTopicCreated represents the payload delivered when a new forum topic is created.
 type ForumTopicCreated struct {
-	// Title is the name of the created forum topic.
-	Title string
-	// IconColor is the color of the topic icon in RGB format.
-	IconColor int32
-	// IconEmojiID is the custom emoji sticker used as the topic icon.
-	IconEmojiID int64
+	ID            int32
+	Title         string
+	IconColor     int32
+	CustomEmojiID string
 }
 
-// ForumTopicEdited represents changes made to an existing forum topic.
+// ForumTopicEdited represents the changes applied when a forum topic is edited,
+// such as title, icon, or closed/hidden state.
 type ForumTopicEdited struct {
-	// Title is the updated name of the forum topic.
-	Title string
-	// IconEmojiID is the updated custom emoji sticker for the topic icon.
-	IconEmojiID int64
-	// Closed indicates whether the topic was closed.
-	Closed bool
-	// Hidden indicates whether the topic was hidden.
-	Hidden bool
+	Title         string
+	IconColor     int32
+	CustomEmojiID string
+	IsClosed      bool
+	IsHidden      bool
 }
 
 // ParseForumTopic converts a TL ForumTopicClass into a ForumTopic.
-// Returns nil if the raw value is not a *tg.ForumTopic.
+// Returns nil if raw is nil or not a *tg.ForumTopic.
+//
+// Example:
+//
+//	topic := types.ParseForumTopic(rawTopic)
+//	if topic != nil {
+//	    fmt.Println(topic.Title, topic.ID)
+//	}
 func ParseForumTopic(raw tg.ForumTopicClass) *ForumTopic {
 	if raw == nil {
 		return nil
@@ -72,23 +73,35 @@ func ParseForumTopic(raw tg.ForumTopicClass) *ForumTopic {
 	}
 	out := &ForumTopic{
 		ID:                   v.ID,
-		Date:                 v.Date,
+		Date:                 time.Unix(int64(v.Date), 0),
 		Title:                v.Title,
 		IconColor:            v.IconColor,
-		TopMessage:           v.TopMessage,
+		TopMessage:           &Message{ID: v.TopMessage},
 		ReadInboxMaxID:       v.ReadInboxMaxID,
 		ReadOutboxMaxID:      v.ReadOutboxMaxID,
 		UnreadCount:          v.UnreadCount,
 		UnreadMentionsCount:  v.UnreadMentionsCount,
 		UnreadReactionsCount: v.UnreadReactionsCount,
-		Closed:               v.Closed,
-		Pinned:               v.Pinned,
-		Short:                v.Short,
-		Hidden:               v.Hidden,
-		My:                   v.My,
+		IsClosed:             v.Closed,
+		IsPinned:             v.Pinned,
+		IsShort:              v.Short,
+		IsHidden:             v.Hidden,
+		IsMy:                 v.My,
 	}
 	if v.IconEmojiID != 0 {
-		out.IconEmojiID = v.IconEmojiID
+		out.IconEmojiID = fmt.Sprintf("%d", v.IconEmojiID)
 	}
 	return out
 }
+
+// ForumTopicClosed indicates that a forum topic was closed.
+type ForumTopicClosed struct{}
+
+// ForumTopicReopened indicates that a forum topic was reopened.
+type ForumTopicReopened struct{}
+
+// GeneralForumTopicHidden indicates that the general forum topic was hidden.
+type GeneralForumTopicHidden struct{}
+
+// GeneralForumTopicUnhidden indicates that the general forum topic was unhidden.
+type GeneralForumTopicUnhidden struct{}

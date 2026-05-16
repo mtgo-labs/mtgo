@@ -17,18 +17,42 @@ import (
 //	    fmt.Printf("Story %d by user %d: %s\n", story.ID, story.FromID, story.Caption)
 //	}
 type Story struct {
-	ID         int32
-	Date       time.Time
-	ExpireDate time.Time
-	Caption    string
-	FromID     int64
-	Out        bool
-	Pinned     bool
-	Public     bool
-	Edited     bool
-	Noforwards bool
-	Media      Media
-	binder     Binder
+	ID                  int32
+	FromUser            *User
+	SenderChat          *Chat
+	Date                time.Time
+	Chat                *Chat
+	ForwardFrom         *User
+	ForwardSenderName   string
+	ForwardFromChat     *Chat
+	ForwardFromStoryID  int32
+	ExpireDate          time.Time
+	Media               Media
+	HasProtectedContent bool
+	Photo               *Photo
+	Video               *DocumentMedia
+	Edited              bool
+	Pinned              bool
+	Public              bool
+	CloseFriends        bool
+	Contacts            bool
+	SelectedContacts    bool
+	Caption             string
+	CaptionEntities     []*MessageEntity
+	Views               int32
+	Forwards            int32
+	Outgoing            bool
+	Reactions           []Reaction
+	ReactionsCount      int32
+	Skipped             bool
+	Deleted             bool
+	MediaAreas          []*MediaArea
+	Privacy             StoriesPrivacyRules
+	AllowedUsers        []*User
+	DisallowedUsers     []*User
+	Raw                 tg.StoryItemClass
+	FromID              int64
+	binder              Binder
 }
 
 func (s *Story) SetBinder(b Binder) {
@@ -92,15 +116,15 @@ func (s *Story) ReplyMediaGroup(media []tg.InputMediaClass, opts ...*params.Send
 	return nil, s.binder.BoundStub("Story.ReplyMediaGroup")
 }
 
-func (s *Story) Forward(toChatID int64) (*Message, error) {
+func (s *Story) Forward(chatID int64, opts ...*params.StoryForward) (*Message, error) {
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryForward(s.FromID, s.ID, toChatID)
+	return s.binder.BoundStoryForward(s.FromID, s.ID, chatID, opts...)
 }
 
-func (s *Story) Copy(toChatID int64) (*Message, error) {
-	return s.Forward(toChatID)
+func (s *Story) Copy(chatID int64, opts ...*params.StoryForward) (*Message, error) {
+	return s.Forward(chatID, opts...)
 }
 
 func (s *Story) Delete() error {
@@ -114,7 +138,7 @@ func (s *Story) EditCaption(caption string) (*Story, error) {
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryEditCaption(s.FromID, s.ID, caption)
+	return s.binder.BoundStoryEditCaption(s.FromID, s.ID, &params.EditCaption{Caption: caption})
 }
 
 func (s *Story) EditMedia(media tg.InputMediaClass) (*Story, error) {
@@ -124,18 +148,18 @@ func (s *Story) EditMedia(media tg.InputMediaClass) (*Story, error) {
 	return s.binder.BoundStoryEditMedia(s.FromID, s.ID, media)
 }
 
-func (s *Story) EditPrivacy() (*Story, error) {
+func (s *Story) EditPrivacy(opts ...*params.EditPrivacy) (*Story, error) {
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryEditPrivacy(s.FromID, s.ID)
+	return s.binder.BoundStoryEditPrivacy(s.FromID, s.ID, opts...)
 }
 
 func (s *Story) React(emoji string) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundStoryReact(s.FromID, s.ID, emoji)
+	return s.binder.BoundStoryReact(s.FromID, s.ID, &params.React{Emoji: emoji})
 }
 
 func (s *Story) Download(opts ...*params.Download) ([]byte, error) {
@@ -169,14 +193,15 @@ func ParseStory(raw tg.StoryItemClass, _ *PeerMap) *Story {
 		return nil
 	case *tg.StoryItem:
 		s := &Story{
-			ID:         v.ID,
-			Date:       time.Unix(int64(v.Date), 0),
-			Out:        v.Out,
-			Pinned:     v.Pinned,
-			Public:     v.Public,
-			Edited:     v.Edited,
-			Noforwards: v.Noforwards,
-			Media:      ParseMedia(v.Media),
+			ID:                  v.ID,
+			Date:                time.Unix(int64(v.Date), 0),
+			Outgoing:            v.Out,
+			Pinned:              v.Pinned,
+			Public:              v.Public,
+			Edited:              v.Edited,
+			HasProtectedContent: v.Noforwards,
+			Media:               ParseMedia(v.Media),
+			Raw:                 raw,
 		}
 		if v.ExpireDate != 0 {
 			s.ExpireDate = time.Unix(int64(v.ExpireDate), 0)
@@ -192,4 +217,39 @@ func ParseStory(raw tg.StoryItemClass, _ *PeerMap) *Story {
 		return s
 	}
 	return nil
+}
+
+// StoriesStealthMode represents the temporary stealth mode state for stories,
+// indicating when stealth is active and when the cooldown expires.
+//
+// Example:
+//
+//	mode := types.ParseStoriesStealthMode(rawMode)
+//	fmt.Printf("Stealth active until: %s\n", mode.ActiveUntilDate)
+type StoriesStealthMode struct {
+	ActiveUntilDate   time.Time
+	CooldownUntilDate time.Time
+}
+
+// ParseStoriesStealthMode converts a TL StoriesStealthMode into a StoriesStealthMode.
+// Returns nil if raw is nil.
+//
+// Example:
+//
+//	mode := types.ParseStoriesStealthMode(rawMode)
+//	if mode != nil && !mode.ActiveUntilDate.IsZero() {
+//	    fmt.Println("Stealth mode is currently active")
+//	}
+func ParseStoriesStealthMode(raw *tg.StoriesStealthMode) *StoriesStealthMode {
+	if raw == nil {
+		return nil
+	}
+	m := &StoriesStealthMode{}
+	if raw.ActiveUntilDate != 0 {
+		m.ActiveUntilDate = time.Unix(int64(raw.ActiveUntilDate), 0)
+	}
+	if raw.CooldownUntilDate != 0 {
+		m.CooldownUntilDate = time.Unix(int64(raw.CooldownUntilDate), 0)
+	}
+	return m
 }
