@@ -40,12 +40,12 @@ import (
     "log"
     "os"
 
-    tg "github.com/mtgo-labs/mtgo/telegram"
+    "github.com/mtgo-labs/mtgo/telegram"
     "github.com/mtgo-labs/mtgo/telegram/types"
 )
 
 func main() {
-    client, err := tg.NewClient(apiID, apiHash, &tg.Config{
+    client, err := telegram.NewClient(apiID, apiHash, &telegram.Config{
         BotToken:    os.Getenv("BOT_TOKEN"),
         SessionName: "my_bot",
         SavePeers:   true,
@@ -54,9 +54,9 @@ func main() {
         log.Fatal(err)
     }
 
-    client.OnMessage(func(client *tg.Client, msg *types.Message) {
+    client.OnMessage(func(client *telegram.Client, msg *types.Message) {
         msg.Reply(msg.Text)
-    }, tg.Private)
+    }, telegram.Private)
 
     if err := client.Connect(0); err != nil {
         log.Fatal(err)
@@ -75,7 +75,7 @@ See [`examples/`](examples/) for more: middleware, conversations, SQLite, MongoD
 ### Bot
 
 ```go
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
     BotToken: "123456:ABC-DEF",
 })
 ```
@@ -83,7 +83,7 @@ client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
 ### User (Phone Number)
 
 ```go
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
     PhoneNumber: "+1234567890",
 })
 client.Connect(0)
@@ -93,7 +93,7 @@ client.Connect(0)
 ### QR Login
 
 ```go
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{})
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{})
 client.QRLogin(context.Background())
 // Displays QR code link for Telegram mobile scanning
 ```
@@ -106,12 +106,12 @@ Import existing sessions from other frameworks:
 import "github.com/mtgo-labs/mtgo/session"
 
 // From Telethon
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
     SessionString: session.MustTelethon("1BVusO..."),
 })
 
 // From Pyrogram
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
     SessionString: session.MustPyrogram("BAAJbwI..."),
 })
 ```
@@ -120,20 +120,20 @@ client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
 
 ```go
 // Command handler
-client.OnMessage(func(client *tg.Client, msg *types.Message) {
+client.OnMessage(func(client *telegram.Client, msg *types.Message) {
     msg.Reply("Welcome!")
-}, tg.Command("start"))
+}, telegram.Command("start"))
 
 // Regex filter
-client.OnMessage(func(client *tg.Client, msg *types.Message) {
+client.OnMessage(func(client *telegram.Client, msg *types.Message) {
     msg.Reply("Got a number!")
 }, telegram.Regex(`\d+`))
 
 // Combined filters
-client.OnMessage(handlePrivate, tg.Private.And(tg.HasText))
+client.OnMessage(handlePrivate, telegram.Private.And(telegram.HasText))
 
 // Callback queries
-client.OnCallbackQuery(func(client *tg.Client, cb *types.CallbackQuery) {
+client.OnCallbackQuery(func(client *telegram.Client, cb *types.CallbackQuery) {
     cb.Answer("Pressed!", false)
 })
 ```
@@ -159,14 +159,75 @@ client.UseMiddleware(authMiddleware, -10) // lower priority = outermost
 client.UseMiddleware(loggingMiddleware, 0)
 ```
 
+### Writing a Custom Invoker Middleware
+
+An invoker middleware wraps `tg.Invoker` to intercept, inspect, and modify RPC calls:
+
+```go
+import (
+    "context"
+    "io"
+
+    "github.com/mtgo-labs/mtgo/tg"
+)
+
+// SilentMiddleware forces all outgoing messages to be silent.
+func SilentMiddleware() telegram.InvokerMiddleware {
+    return func(next tg.Invoker) tg.Invoker {
+        return tg.InvokerFunc(func(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+            // Type-assert and modify request parameters before the call
+            if req, ok := input.(*tg.MessagesSendMessageRequest); ok {
+                req.Silent = true
+                req.SetFlags() // required after modifying flag-controlled fields
+            }
+            return next.RPCInvoke(ctx, input, decode)
+        })
+    }
+}
+
+// Register it (first = outermost)
+client.UseInvokerMiddleware(SilentMiddleware())
+```
+
 Ready-made middlewares: [`floodwait`](https://github.com/mtgo-labs/middlewares/floodwait), [`ratelimit`](https://github.com/mtgo-labs/middlewares/ratelimit).
 
 ## Plugins
+
+Plugins implement the `Plugin` interface to add lifecycle-aware, modular functionality:
+
+```go
+import (
+    "context"
+    "log"
+
+    "github.com/mtgo-labs/mtgo/telegram"
+)
+
+// MetricsPlugin tracks bot usage.
+type MetricsPlugin struct {
+    client      *telegram.Client
+    messageCount int64
+}
+
+func (p *MetricsPlugin) Name() string { return "metrics" }
+
+func (p *MetricsPlugin) Start(ctx context.Context, client *telegram.Client) error {
+    p.client = client
+    log.Printf("[%s] started", p.Name())
+    return nil
+}
+
+func (p *MetricsPlugin) Stop(ctx context.Context) error {
+    log.Printf("[%s] stopped — processed %d messages", p.Name(), p.messageCount)
+    return nil
+}
+```
 
 ```go
 // Register plugins before connecting
 client.Use(i18nPlugin)
 client.Use(conversationsPlugin)
+client.Use(&MetricsPlugin{})
 
 // Plugins start/stop automatically with the client
 client.Connect(0)
@@ -175,6 +236,8 @@ client.Connect(0)
 Available plugins: [`conversations`](https://github.com/mtgo-labs/plugins/conversations), [`i18n`](https://github.com/mtgo-labs/plugins/i18n).
 
 ## Storage
+
+### SQLite
 
 ```go
 import (
@@ -185,7 +248,32 @@ import (
 ext, _ := sqlite.Open("session.db")
 defer ext.Close()
 
-client, _ := tg.NewClient(apiID, apiHash, &tg.Config{
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
+    BotToken:    botToken,
+    SessionName: "my_bot",
+    Storage:     storage.NewAdapter(ext),
+})
+```
+
+### PostgreSQL
+
+```go
+import (
+    "github.com/mtgo-labs/storage"
+    "github.com/mtgo-labs/storage/postgres"
+)
+
+ext, _ := postgres.Open(postgres.Config{
+    Host:     "localhost",
+    Port:     5432,
+    User:     "postgres",
+    Password: os.Getenv("PG_PASSWORD"),
+    Database: "mtgo_sessions",
+    SSLMode:  "disable",
+})
+defer ext.Close()
+
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
     BotToken:    botToken,
     SessionName: "my_bot",
     Storage:     storage.NewAdapter(ext),
@@ -197,8 +285,8 @@ Backends: [SQLite](https://github.com/mtgo-labs/storage/sqlite), [PostgreSQL](ht
 ## Multi-Client
 
 ```go
-bot1, _ := tg.NewClient(apiID, apiHash, &tg.Config{BotToken: token1})
-bot2, _ := tg.NewClient(apiID, apiHash, &tg.Config{BotToken: token2})
+bot1, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{BotToken: token1})
+bot2, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{BotToken: token2})
 
 // Block until both stop
 telegram.Compose(bot1, bot2)
