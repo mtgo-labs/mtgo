@@ -97,6 +97,7 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 	if len(uf.Users) > 0 {
 		user := types.ParseUser(uf.Users[0])
 		c.SetMe(user)
+		c.saveMeToStorage(user)
 		return user, nil
 	}
 	if uf.FullUser != nil {

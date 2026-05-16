@@ -434,11 +434,21 @@ func (c *Client) IsConnected() bool {
 	return c.state.isConnected()
 }
 
-// Me returns the currently authenticated user, or nil if not authenticated.
+// Me returns the currently authenticated user. If the user has not been cached yet
+// and the client is connected, it fetches the user from the server. Returns nil if
+// not connected or if the fetch fails.
 func (c *Client) Me() *types.User {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.me
+	me := c.me
+	c.mu.RUnlock()
+	if me != nil {
+		return me
+	}
+	if !c.IsConnected() {
+		return nil
+	}
+	me, _ = c.GetMe(context.Background())
+	return me
 }
 
 // Session returns the primary MTProto session, or nil if not connected.
@@ -1096,6 +1106,20 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 				}
 			}
 			c.Log.Info("bot authorization imported")
+		}
+	}
+
+	if c.me == nil && st != nil {
+		if uid, err := st.UserID(); err == nil && uid != 0 {
+			isBot, _ := st.IsBot()
+			c.me = &types.User{
+				ID:        uid,
+				IsBot:     isBot,
+				FirstName: func() string { v, _ := st.FirstName(); return v }(),
+				LastName:  func() string { v, _ := st.LastName(); return v }(),
+				Username:  func() string { v, _ := st.Username(); return v }(),
+			}
+			c.Log.Debug("user restored from storage: id=", c.me.ID, " username=", c.me.Username)
 		}
 	}
 
@@ -1835,6 +1859,23 @@ func (c *Client) SetMe(user *types.User) {
 	c.mu.Lock()
 	c.me = user
 	c.mu.Unlock()
+}
+
+func (c *Client) saveMeToStorage(user *types.User) {
+	if user == nil {
+		return
+	}
+	c.mu.RLock()
+	st := c.storage
+	c.mu.RUnlock()
+	if st == nil {
+		return
+	}
+	_ = st.SetUserID(user.ID)
+	_ = st.SetIsBot(user.IsBot)
+	_ = st.SetFirstName(user.FirstName)
+	_ = st.SetLastName(user.LastName)
+	_ = st.SetUsername(user.Username)
 }
 
 // ServerTime returns the current estimated server time adjusted by the configured timezone offset.

@@ -128,7 +128,10 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
 		c.Log.Info("auth: SignIn successful")
-		return types.ParseUser(v.User), nil
+		user := types.ParseUser(v.User)
+		c.SetMe(user)
+		c.saveMeToStorage(user)
+		return user, nil
 	case *tg.AuthAuthorizationSignUpRequired:
 		return nil, ErrSignUpRequired
 	default:
@@ -174,7 +177,10 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
 		c.Log.Info("auth: SignUp successful")
-		return types.ParseUser(v.User), nil
+		user := types.ParseUser(v.User)
+		c.SetMe(user)
+		c.saveMeToStorage(user)
+		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected sign up result type %T", result)
 	}
@@ -260,7 +266,10 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
 		c.Log.Info("auth: CheckPassword successful")
-		return types.ParseUser(v.User), nil
+		user := types.ParseUser(v.User)
+		c.SetMe(user)
+		c.saveMeToStorage(user)
+		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected check password result type %T", result)
 	}
@@ -289,7 +298,10 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
 		c.Log.Info("auth: RecoverPassword successful")
-		return types.ParseUser(v.User), nil
+		user := types.ParseUser(v.User)
+		c.SetMe(user)
+		c.saveMeToStorage(user)
+		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected recover password result type %T", result)
 	}
