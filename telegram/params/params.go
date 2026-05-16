@@ -90,64 +90,29 @@ func validOpt[T comparable](opt T) bool {
 //	}
 //	msg, err := client.SendMessage(ctx, chatID, "<b>Hello</b>", opt)
 type SendMessage struct {
-	// DisableWebPagePreview suppresses link previews in the sent message.
 	DisableWebPagePreview bool
-
-	// DisableNotification silently delivers the message without triggering
-	// a push notification on the recipient's device.
-	DisableNotification bool
-
-	// Silent is an alias for DisableNotification kept for backwards
-	// compatibility with earlier API versions.
-	Silent bool
-
-	// Background sends the message as a background action, avoiding
-	// generation of a notification on the sender's side.
-	Background bool
-
-	// ClearDraft clears the current text draft in the chat after the
-	// message is sent successfully.
-	ClearDraft bool
-
-	// NoForwards disables forwarding of the sent message by recipients
-	// (also known as "forwards banned").
-	NoForwards bool
-
-	// InvertMedia moves the media preview above the caption text instead
-	// of below it.
-	InvertMedia bool
-
-	// ReplyToMessageID is the ID of a message to reply to. A value of 0
-	// means no reply.
-	ReplyToMessageID int32
-
-	// ReplyTo is an explicit reply target (message, story, mono-forum).
-	// When set, it overrides ReplyToMessageID.
-	ReplyTo tl.InputReplyToClass
-
-	// ReplyMarkup provides an inline or reply keyboard to attach to the
-	// message. Nil means no markup.
-	ReplyMarkup tl.ReplyMarkupClass
-
-	// Entities supplies pre-formatted message entities. When non-empty,
-	// the API uses these entities directly instead of parsing the text.
-	Entities []tl.MessageEntityClass
-
-	// ParseMode determines how the message text is parsed (Markdown, HTML,
-	// etc.). See the ParseMode constants for available values.
-	ParseMode ParseMode
-
-	// ScheduleDate is an optional Unix timestamp at which the message
-	// should be delivered. Nil sends immediately.
-	ScheduleDate *int32
-
-	// EffectID is an optional message-effect identifier applied to the
-	// message for visual effects in supported clients.
-	EffectID *int64
-
-	// SendAs specifies the peer (channel, group) from which the message
-	// should appear to be sent. Nil means send as the current user.
-	SendAs tl.InputPeerClass
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	InvertMedia           bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	Entities              []tl.MessageEntityClass
+	ParseMode             ParseMode
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	RepeatPeriod          *int32
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	ShowCaptionAboveMedia bool
+	MessageThreadID       int32
+	DirectMessagesTopicID int64
+	ProtectContent        bool
 }
 
 // EditMessage holds all configurable options for the edit-message Telegram
@@ -160,27 +125,14 @@ type SendMessage struct {
 //	}
 //	edited, err := msg.Edit("<i>Updated</i>", opt)
 type EditMessage struct {
-	// DisableWebPagePreview suppresses link previews in the edited message.
 	DisableWebPagePreview bool
-
-	// InvertMedia moves the media preview above the caption text instead
-	// of below it.
-	InvertMedia bool
-
-	// ReplyMarkup updates the inline or reply keyboard attached to the
-	// message. Nil leaves the existing markup unchanged.
-	ReplyMarkup tl.ReplyMarkupClass
-
-	// ParseMode determines how the updated message text is parsed.
-	ParseMode ParseMode
-
-	// Entities supplies pre-formatted message entities for the updated
-	// text. When non-empty, the API uses these entities directly.
-	Entities []tl.MessageEntityClass
-
-	// ScheduleDate is an optional Unix timestamp to reschedule the
-	// message. Nil keeps the current schedule.
-	ScheduleDate *int32
+	InvertMedia           bool
+	ReplyMarkup           tl.ReplyMarkupClass
+	ParseMode             ParseMode
+	Entities              []tl.MessageEntityClass
+	ScheduleDate          *int32
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
 }
 
 // ForwardMessages holds all configurable options for the forward-messages
@@ -194,25 +146,18 @@ type EditMessage struct {
 //	}
 //	fwd, err := msg.Forward(targetChatID, opt)
 type ForwardMessages struct {
-	// DisableNotification silently delivers the forwarded messages without
-	// triggering push notifications on the recipients' devices.
-	DisableNotification bool
-
-	// NoForwards disables further forwarding of the forwarded messages by
-	// recipients.
-	NoForwards bool
-
-	// DropAuthor removes the original author attribution from the
-	// forwarded messages, making them appear as if sent by the forwarder.
-	DropAuthor bool
-
-	// DropMediaCaptions strips captions from media in the forwarded
-	// messages.
-	DropMediaCaptions bool
-
-	// ScheduleDate is an optional Unix timestamp at which the forwarded
-	// messages should be delivered. Nil forwards immediately.
-	ScheduleDate *int32
+	DisableNotification  bool
+	NoForwards           bool
+	DropAuthor           bool
+	DropMediaCaptions    bool
+	ScheduleDate         *int32
+	RepeatPeriod         *int32
+	HideSenderName       bool
+	HideCaptions         bool
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+	ProtectContent       bool
 }
 
 // CopyMessage holds all configurable options for the copy-message Telegram
@@ -227,28 +172,22 @@ type ForwardMessages struct {
 //	}
 //	newID, err := msg.Copy(targetChatID, opt)
 type CopyMessage struct {
-	// Caption overrides the media caption on the copied message. An empty
-	// string preserves the original caption.
-	Caption string
-
-	// DisableNotification silently delivers the copied message without
-	// triggering a push notification.
-	DisableNotification bool
-
-	// ReplyToMessageID is the ID of a message to reply to. A value of 0
-	// means no reply.
-	ReplyToMessageID int32
-
-	// ReplyMarkup provides an inline or reply keyboard to attach to the
-	// copied message. Nil means no markup.
-	ReplyMarkup tl.ReplyMarkupClass
-
-	// ScheduleDate is an optional Unix timestamp at which the copied
-	// message should be delivered. Nil sends immediately.
-	ScheduleDate *int32
-
-	// DropAuthor removes the original author attribution when copying.
-	DropAuthor bool
+	Caption               string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	DisableNotification   bool
+	ReplyToMessageID      int32
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	DropAuthor            bool
+	HasSpoiler            bool
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	ProtectContent        bool
+	NoForwards            bool
 }
 
 // DeleteMessages holds options for the delete-messages Telegram API call.
@@ -337,6 +276,9 @@ type ProgressFunc func(info ProgressInfo)
 //	    },
 //	})
 type Download struct {
+	// FileName is the target file path for file-based downloads.
+	FileName string
+
 	// ChunkSize is the maximum number of bytes to request per chunk. Larger
 	// values reduce round-trips but increase memory usage. A value of 0
 	// lets the client choose a sensible default.
@@ -355,25 +297,38 @@ type Download struct {
 // Fields map to optional filter flags on the request.
 type GetGifts struct {
 	ExcludeUnsaved      bool
-	ExcludeSaved         bool
-	ExcludeUnlimited     bool
-	ExcludeUnique        bool
-	SortByValue          bool
-	ExcludeUpgradable    bool
-	ExcludeUnupgradable  bool
-	PeerColorAvailable   bool
-	ExcludeHosted        bool
-	CollectionID         int32
-	Offset               string
-	Limit                int32
+	ExcludeSaved        bool
+	ExcludeUnlimited    bool
+	ExcludeUnique       bool
+	SortByValue         bool
+	ExcludeUpgradable   bool
+	ExcludeUnupgradable bool
+	PeerColorAvailable  bool
+	ExcludeHosted       bool
+	CollectionID        int32
+	Offset              string
+	Limit               int32
 }
 
+// SendPoll holds all configurable options for the send-poll Telegram API call.
+// Fields that map to optional API flags default to their zero values; the
+// caller only needs to set the ones they care about.
+//
+// Example:
+//
+//	opt := &params.SendPoll{
+//	    DisableNotification: true,
+//	    MultipleChoice:      true,
+//	    ClosePeriod:         ptr.Int32(300),
+//	}
+//	msg, err := client.SendPoll(ctx, chatID, "Pick one", []string{"A", "B", "C"}, opt)
 type SendPoll struct {
 	DisableNotification   bool
 	Silent                bool
 	Background            bool
 	ClearDraft            bool
 	NoForwards            bool
+	ProtectContent        bool
 	ReplyToMessageID      int32
 	ReplyTo               tl.InputReplyToClass
 	ReplyMarkup           tl.ReplyMarkupClass
@@ -389,118 +344,240 @@ type SendPoll struct {
 	HideResultsUntilClose bool
 	SubscribersOnly       bool
 	OpenAnswers           bool
+	AllowAddingOptions    bool
 	ClosePeriod           *int32
 	CloseDate             *int32
 	CorrectAnswers        [][]byte
 	Solution              *string
 	SolutionEntities      []tl.MessageEntityClass
+	Description           string
+	DescriptionMedia      tl.InputMediaClass
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
+// SendVenue holds all configurable options for the send-venue Telegram API call.
+// Fields that map to optional API flags default to their zero values; the
+// caller only needs to set the ones they care about.
+//
+// Example:
+//
+//	opt := &params.SendVenue{
+//	    DisableNotification: true,
+//	    FoursquareID:        "4b8e3f56f964a520c3e432e3",
+//	}
+//	msg, err := client.SendVenue(ctx, chatID, 40.7128, -74.0060, "HQ", "123 Main St", opt)
 type SendVenue struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Provider            string
-	VenueID             string
-	VenueType           string
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	Provider             string
+	VenueID              string
+	VenueType            string
+	FoursquareID         string
+	FoursquareType       string
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
+// SendContact holds all configurable options for the send-contact Telegram API
+// call. Fields that map to optional API flags default to their zero values; the
+// caller only needs to set the ones they care about.
+//
+// Example:
+//
+//	opt := &params.SendContact{
+//	    DisableNotification: true,
+//	    Vcard:               "BEGIN:VCARD\nVERSION:3.0\nFN:Alice\nEND:VCARD",
+//	}
+//	msg, err := client.SendContact(ctx, chatID, "Alice", "Smith", "15551234567", opt)
 type SendContact struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Vcard               string
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	Vcard                string
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
+// SendLocation holds all configurable options for the send-location Telegram
+// API call. Supports live locations via LivePeriod and heading/proximity
+// alerts. Fields that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendLocation{
+//	    LivePeriod:  ptr.Int32(3600),
+//	    Heading:     ptr.Int32(90),
+//	}
+//	msg, err := client.SendLocation(ctx, chatID, 40.7128, -74.0060, opt)
 type SendLocation struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	AccuracyRadius      *int32
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	AccuracyRadius       *int32
+	Heading              *int32
+	ProximityAlertRadius *int32
+	LivePeriod           *int32
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
+// SendDice holds all configurable options for the send-dice Telegram API call.
+// The Emoticon field selects the dice type (e.g. "🎲", "🎯", "🏀"). Fields
+// that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendDice{
+//	    Emoticon: "🎲",
+//	}
+//	msg, err := client.SendDice(ctx, chatID, opt)
 type SendDice struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Emoticon            string
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	Emoticon             string
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
+// SendGame holds all configurable options for the send-game Telegram API call.
+// Fields that map to optional API flags default to their zero values; the
+// caller only needs to set the ones they care about.
+//
+// Example:
+//
+//	opt := &params.SendGame{
+//	    DisableNotification: true,
+//	}
+//	msg, err := client.SendGame(ctx, chatID, "my_short_name", opt)
 type SendGame struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
+// SendMediaGroup holds all configurable options for the send-media-group
+// Telegram API call, used to send an album of photos, videos, or documents as
+// a single grouped message. Fields that map to optional API flags default to
+// their zero values.
+//
+// Example:
+//
+//	opt := &params.SendMediaGroup{
+//	    DisableNotification: true,
+//	}
+//	msgs, err := client.SendMediaGroup(ctx, chatID, mediaItems, opt)
 type SendMediaGroup struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
 }
 
+// SendChecklist holds all configurable options for the send-checklist Telegram
+// API call. Checklists are interactive to-do lists with tasks that users can
+// complete. Fields that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendChecklist{
+//	    OthersCanAppend:   true,
+//	    OthersCanComplete: true,
+//	}
+//	msg, err := client.SendChecklist(ctx, chatID, "Shopping list", tasks, opt)
 type SendChecklist struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	OthersCanAppend     bool
-	OthersCanComplete   bool
-	RepeatPeriod        *int32
-	PaidMessageStars    *int64
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	OthersCanAppend      bool
+	OthersCanComplete    bool
+	RepeatPeriod         *int32
+	PaidMessageStars     *int64
+	BusinessConnectionID string
+	MessageThreadID      int32
 }
 
 func (s *SendChecklist) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -508,20 +585,36 @@ func (s *SendChecklist) getFlatSendFields() (bool, bool, bool, bool, bool, int32
 }
 func (s *SendChecklist) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendInlineBotResult holds all configurable options for sending an inline bot
+// result to a chat. Fields that map to optional API flags default to their
+// zero values; the caller only needs to set the ones they care about.
+//
+// Example:
+//
+//	opt := &params.SendInlineBotResult{
+//	    DisableNotification: true,
+//	    HideVia:             true,
+//	}
+//	msg, err := client.SendInlineBotResult(ctx, chatID, queryID, resultID, opt)
 type SendInlineBotResult struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	HideVia             bool
-	AllowPaidStars      *int64
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	HideVia              bool
+	AllowPaidStars       *int64
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
 }
 
 func flatToSendMsg(s interface {
@@ -601,23 +694,45 @@ type InlineQuery struct {
 	SwitchPMText string
 }
 
+// SendAudio holds all configurable options for the send-audio Telegram API call.
+// Audio files are displayed as music players in the chat. Fields that map to
+// optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendAudio{
+//	    Performer:           "Daft Punk",
+//	    Title:               "Around the World",
+//	    ParseMode:           params.ParseModeHTML,
+//	    ShowCaptionAboveMedia: true,
+//	}
+//	msg, err := client.SendAudio(ctx, chatID, file, "<b>New track!</b>", opt)
 type SendAudio struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Duration            int32
-	Performer           string
-	Title               string
-	FileName            string
-	Thumb               string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	Duration              int32
+	Performer             string
+	Title                 string
+	FileName              string
+	Thumb                 string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
 func (s *SendAudio) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -625,24 +740,53 @@ func (s *SendAudio) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl
 }
 func (s *SendAudio) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendVideo holds all configurable options for the send-video Telegram API
+// call. Video files are streamed directly in the chat. Fields that map to
+// optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendVideo{
+//	    Duration:            120.5,
+//	    Width:               1920,
+//	    Height:              1080,
+//	    SupportsStreaming:   true,
+//	    ParseMode:           params.ParseModeHTML,
+//	}
+//	msg, err := client.SendVideo(ctx, chatID, file, "<b>Check this out</b>", opt)
 type SendVideo struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Duration            float64
-	Width               int32
-	Height              int32
-	SupportsStreaming   bool
-	FileName            string
-	Thumb               string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	Duration              float64
+	Width                 int32
+	Height                int32
+	SupportsStreaming     bool
+	FileName              string
+	Thumb                 string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	HasSpoiler            bool
+	TTLSeconds            *int32
+	ViewOnce              bool
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
+	NoSound               bool
+	VideoStartTimestamp   *int32
+	VideoCover            tl.InputDocumentClass
 }
 
 func (s *SendVideo) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -650,21 +794,43 @@ func (s *SendVideo) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl
 }
 func (s *SendVideo) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendDocument holds all configurable options for the send-document Telegram
+// API call. Documents are general-purpose file attachments. Fields that map to
+// optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendDocument{
+//	    FileName:     "report.pdf",
+//	    ForceDocument: true,
+//	    ParseMode:    params.ParseModeHTML,
+//	}
+//	msg, err := client.SendDocument(ctx, chatID, file, "Q4 <b>report</b>", opt)
 type SendDocument struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	FileName            string
-	Thumb               string
-	MimeType            string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	FileName              string
+	Thumb                 string
+	MimeType              string
+	ForceDocument         bool
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
 func (s *SendDocument) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -672,19 +838,43 @@ func (s *SendDocument) getFlatSendFields() (bool, bool, bool, bool, bool, int32,
 }
 func (s *SendDocument) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendPhoto holds all configurable options for the send-photo Telegram API
+// call. Photos are displayed inline in the chat with optional captions. Fields
+// that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendPhoto{
+//	    HasSpoiler:  true,
+//	    ParseMode:   params.ParseModeHTML,
+//	    TTLSeconds:  ptr.Int32(60),
+//	}
+//	msg, err := client.SendPhoto(ctx, chatID, file, "<i>Disappearing</i>", opt)
 type SendPhoto struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	FileName            string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	FileName              string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	HasSpoiler            bool
+	TTLSeconds            *int32
+	ViewOnce              bool
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
 func (s *SendPhoto) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -692,20 +882,48 @@ func (s *SendPhoto) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl
 }
 func (s *SendPhoto) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendAnimation holds all configurable options for the send-animation Telegram
+// API call. Animations are square-cropped video-like content (GIFs or MP4s
+// without sound). Fields that map to optional API flags default to their zero
+// values.
+//
+// Example:
+//
+//	opt := &params.SendAnimation{
+//	    Width:       320,
+//	    Height:      240,
+//	    HasSpoiler:  true,
+//	    ParseMode:   params.ParseModeHTML,
+//	}
+//	msg, err := client.SendAnimation(ctx, chatID, file, "<b>funny</b>", opt)
 type SendAnimation struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	FileName            string
-	Thumb               string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	FileName              string
+	Thumb                 string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	HasSpoiler            bool
+	Duration              float64
+	Width                 int32
+	Height                int32
+	Unsave                bool
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
 func (s *SendAnimation) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -713,20 +931,41 @@ func (s *SendAnimation) getFlatSendFields() (bool, bool, bool, bool, bool, int32
 }
 func (s *SendAnimation) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendVoice holds all configurable options for the send-voice Telegram API call.
+// Voice messages are displayed as waveform audio players in the chat. Fields
+// that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendVoice{
+//	    Duration:  15,
+//	    ParseMode: params.ParseModeHTML,
+//	}
+//	msg, err := client.SendVoice(ctx, chatID, file, "<b>Voice note</b>", opt)
 type SendVoice struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Duration            int32
-	FileName            string
+	DisableNotification   bool
+	Silent                bool
+	Background            bool
+	ClearDraft            bool
+	NoForwards            bool
+	ProtectContent        bool
+	ReplyToMessageID      int32
+	ReplyTo               tl.InputReplyToClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ScheduleDate          *int32
+	EffectID              *int64
+	SendAs                tl.InputPeerClass
+	Duration              int32
+	FileName              string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	ViewOnce              bool
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	AllowPaidBroadcast    bool
+	PaidMessageStarCount  *int64
+	MessageThreadID       int32
+	RepeatPeriod          *int32
 }
 
 func (s *SendVoice) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -734,21 +973,41 @@ func (s *SendVoice) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl
 }
 func (s *SendVoice) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendVideoNote holds all configurable options for the send-video-note Telegram
+// API call. Video notes are round-formatted video messages displayed inline in
+// the chat. Fields that map to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.SendVideoNote{
+//	    Duration: 10.0,
+//	    Length:   240,
+//	    ViewOnce: true,
+//	}
+//	msg, err := client.SendVideoNote(ctx, chatID, file, opt)
 type SendVideoNote struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	Duration            float64
-	FileName            string
-	Thumb               string
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	Duration             float64
+	FileName             string
+	Thumb                string
+	Length               int32
+	ViewOnce             bool
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+	RepeatPeriod         *int32
 }
 
 func (s *SendVideoNote) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
@@ -756,22 +1015,234 @@ func (s *SendVideoNote) getFlatSendFields() (bool, bool, bool, bool, bool, int32
 }
 func (s *SendVideoNote) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
 
+// SendSticker holds all configurable options for the send-sticker Telegram API
+// call. Stickers are special image objects displayed at a fixed size with
+// optional associated emoji. Fields that map to optional API flags default to
+// their zero values.
+//
+// Example:
+//
+//	opt := &params.SendSticker{
+//	    Emoji: "🎉",
+//	}
+//	msg, err := client.SendSticker(ctx, chatID, stickerFile, opt)
 type SendSticker struct {
-	DisableNotification bool
-	Silent              bool
-	Background          bool
-	ClearDraft          bool
-	NoForwards          bool
-	ReplyToMessageID    int32
-	ReplyTo             tl.InputReplyToClass
-	ReplyMarkup         tl.ReplyMarkupClass
-	ScheduleDate        *int32
-	EffectID            *int64
-	SendAs              tl.InputPeerClass
-	FileName            string
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	FileName             string
+	Emoji                string
+	ParseMode            ParseMode
+	CaptionEntities      []tl.MessageEntityClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+	RepeatPeriod         *int32
 }
 
 func (s *SendSticker) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass) {
 	return s.DisableNotification, s.Silent, s.Background, s.ClearDraft, s.NoForwards, s.ReplyToMessageID, s.ReplyTo, s.ReplyMarkup, s.ScheduleDate, s.EffectID, s.SendAs
 }
 func (s *SendSticker) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
+
+// AnswerCallback holds options for answering a callback query from an inline
+// button press. Text is shown as a toast notification; ShowAlert promotes it
+// to a full alert dialog.
+//
+// Example:
+//
+//	opt := &params.AnswerCallback{
+//	    Text:      "Saved!",
+//	    ShowAlert: false,
+//	}
+//	err := callback.Answer(opt)
+type AnswerCallback struct {
+	Text      string
+	ShowAlert bool
+	URL       string
+	CacheTime int32
+}
+
+// AnswerShipping holds options for answering a shipping query in a payment
+// flow. Set Ok to true with ShippingOptions to accept, or false with ErrorMsg
+// to reject.
+//
+// Example:
+//
+//	opt := &params.AnswerShipping{
+//	    Ok:              true,
+//	    ShippingOptions: shippingOpts,
+//	}
+//	err := shippingQuery.Answer(opt)
+type AnswerShipping struct {
+	Ok              bool
+	ShippingOptions interface{}
+	ErrorMsg        string
+}
+
+// AnswerPreCheckout holds options for answering a pre-checkout query in a
+// payment flow. Set Ok to true to confirm, or false with ErrorMsg to decline.
+//
+// Example:
+//
+//	opt := &params.AnswerPreCheckout{
+//	    Ok: true,
+//	}
+//	err := preCheckoutQuery.Answer(opt)
+type AnswerPreCheckout struct {
+	Ok       bool
+	ErrorMsg string
+}
+
+// EditCaption holds options for editing the caption of a previously sent
+// media message. Fields that map to optional API flags default to their zero
+// values.
+//
+// Example:
+//
+//	opt := &params.EditCaption{
+//	    Caption:   "Updated caption",
+//	    ParseMode: params.ParseModeHTML,
+//	}
+//	err := msg.EditCaption("<b>New caption</b>", opt)
+type EditCaption struct {
+	Caption               string
+	ParseMode             ParseMode
+	CaptionEntities       []tl.MessageEntityClass
+	ReplyMarkup           tl.ReplyMarkupClass
+	ShowCaptionAboveMedia bool
+	BusinessConnectionID  string
+	ScheduleDate          *int32
+}
+
+// StoryForward holds options for forwarding a story to a chat. Fields that map
+// to optional API flags default to their zero values.
+//
+// Example:
+//
+//	opt := &params.StoryForward{
+//	    DisableNotification: true,
+//	}
+//	err := client.ForwardStory(ctx, chatID, fromPeer, storyID, opt)
+type StoryForward struct {
+	DisableNotification  bool
+	MessageThreadID      int32
+	ScheduleDate         *int32
+	RepeatPeriod         *int32
+	PaidMessageStarCount *int64
+	ProtectContent       bool
+	AllowPaidBroadcast   bool
+	ReplyParameters      interface{}
+	ReplyMarkup          tl.ReplyMarkupClass
+	MessageEffectID      *int64
+}
+
+// StoryCopy holds options for copying a story with optional modifications to
+// caption, privacy, and media areas. Fields that map to optional API flags
+// default to their zero values.
+//
+// Example:
+//
+//	opt := &params.StoryCopy{
+//	    Caption:   "Re-shared story",
+//	    ParseMode: params.ParseModeHTML,
+//	}
+//	err := client.CopyStory(ctx, fromPeer, storyID, opt)
+type StoryCopy struct {
+	Caption         string
+	ParseMode       ParseMode
+	CaptionEntities []tl.MessageEntityClass
+	Period          *int32
+	MediaAreas      interface{}
+	Privacy         string
+	AllowedUsers    []int64
+	DisallowedUsers []int64
+	ProtectContent  bool
+}
+
+// EditPrivacy holds options for editing the privacy settings of a story.
+// Use AllowedUsers and DisallowedUsers to control who can see the story.
+//
+// Example:
+//
+//	opt := &params.EditPrivacy{
+//	    Privacy:        "contacts",
+//	    AllowedUsers:   []int64{12345},
+//	}
+//	err := client.EditStoryPrivacy(ctx, storyID, opt)
+type EditPrivacy struct {
+	Privacy         string
+	AllowedUsers    []int64
+	DisallowedUsers []int64
+}
+
+// React holds options for reacting to a message with an emoji. Set Big to
+// true to display a large animation.
+//
+// Example:
+//
+//	opt := &params.React{
+//	    Emoji: "🔥",
+//	    Big:   true,
+//	}
+//	err := msg.React(opt)
+type React struct {
+	Emoji string
+	Big   bool
+}
+
+// GiftSend holds options for sending a star gift to a user. Text and
+// ParseMode control the attached message.
+//
+// Example:
+//
+//	opt := &params.GiftSend{
+//	    Text:      "Happy birthday!",
+//	    ParseMode: params.ParseModeHTML,
+//	    IsPrivate: true,
+//	}
+//	err := client.SendGift(ctx, userID, giftID, opt)
+type GiftSend struct {
+	Text          string
+	ParseMode     ParseMode
+	Entities      []tl.MessageEntityClass
+	IsPrivate     bool
+	PayForUpgrade bool
+}
+
+// BuyGift holds options for purchasing a gift. Set Ton to true to pay with
+// TON instead of Telegram Stars.
+//
+// Example:
+//
+//	opt := &params.BuyGift{Ton: true}
+//	err := client.BuyGift(ctx, giftID, opt)
+type BuyGift struct {
+	Ton bool
+}
+
+// GiftPurchaseOffer holds options for creating a gift purchase offer. Price
+// and Duration control the offer terms.
+//
+// Example:
+//
+//	opt := &params.GiftPurchaseOffer{
+//	    Price:    500,
+//	    Duration: 30,
+//	}
+//	err := client.CreateGiftPurchaseOffer(ctx, opt)
+type GiftPurchaseOffer struct {
+	Price                int64
+	Duration             int32
+	PaidMessageStarCount *int64
+}
