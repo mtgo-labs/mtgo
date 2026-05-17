@@ -12,11 +12,12 @@ import (
 type Format string
 
 const (
-	FormatTelethon Format = "telethon"
-	FormatPyrogram Format = "pyrogram"
-	FormatGramJS   Format = "gramjs"
-	FormatMtcute   Format = "mtcute"
-	FormatUnknown  Format = ""
+	FormatTelethon    Format = "telethon"
+	FormatPyrogram    Format = "pyrogram"
+	FormatGramJS      Format = "gramjs"
+	FormatMtcute      Format = "mtcute"
+	FormatGotgExtended Format = "gotg_extended"
+	FormatUnknown     Format = ""
 )
 
 // -------------------------------------------------------------------
@@ -290,10 +291,11 @@ func DetectFormat(s string) Format {
 			}
 		}
 
-		if payload, err := base64.URLEncoding.DecodeString(padBase64(s)); err == nil {
-			if len(payload) == 271 {
-				return FormatPyrogram
-			}
+		if payload, err := base64.URLEncoding.DecodeString(padBase64(s)); err == nil && len(payload) == 271 {
+			return FormatPyrogram
+		}
+		if payload, err := base64.URLEncoding.DecodeString(padBase64(s)); err == nil && len(payload) > 27 && payload[0] <= 5 && len(payload) >= 27+256 {
+			return FormatGotgExtended
 		}
 	}
 
@@ -329,7 +331,7 @@ func Decode(s string) (*SessionData, Format, error) {
 		}
 	}
 
-	for _, f := range []Format{FormatTelethon, FormatGramJS, FormatPyrogram, FormatMtcute} {
+	for _, f := range []Format{FormatTelethon, FormatGramJS, FormatPyrogram, FormatMtcute, FormatGotgExtended} {
 		data, err := decodeFormat(s, f)
 		if err == nil {
 			return data, f, nil
@@ -367,6 +369,8 @@ func decodeFormat(s string, f Format) (*SessionData, error) {
 		return DecodeGramjs(s)
 	case FormatMtcute:
 		return DecodeMtcute(s)
+	case FormatGotgExtended:
+		return DecodeGotgExtended(s)
 	default:
 		return nil, fmt.Errorf("unknown format: %s", f)
 	}
@@ -381,4 +385,45 @@ func padBase64(s string) string {
 	default:
 		return s
 	}
+}
+
+// DecodeGotgExtended decodes the gotg extended session format.
+// Format: dc(4 LE) + ver(4 LE) + ip_len(1) + ip(var) + null_pad(var) + port(2 BE) + auth_key(256)
+// Uses URL-safe base64 encoding.
+func DecodeGotgExtended(s string) (*SessionData, error) {
+	payload, err := base64.URLEncoding.DecodeString(padBase64(s))
+	if err != nil {
+		return nil, fmt.Errorf("gotg_extended: base64 decode: %w", err)
+	}
+	if len(payload) < 27+256 {
+		return nil, fmt.Errorf("gotg_extended: payload too short: %d", len(payload))
+	}
+
+	dc := int(int32(binary.LittleEndian.Uint32(payload[0:4])))
+	_ = int32(binary.LittleEndian.Uint32(payload[4:8])) // version
+	ipLen := int(payload[8])
+	if 8+1+ipLen > len(payload) {
+		return nil, fmt.Errorf("gotg_extended: ip length %d exceeds payload", ipLen)
+	}
+	ip := string(payload[9 : 9+ipLen])
+
+	pos := 9 + ipLen
+	for pos < len(payload) && payload[pos] == 0 {
+		pos++
+	}
+	if pos+2 > len(payload) {
+		return nil, fmt.Errorf("gotg_extended: port out of range")
+	}
+	port := int(binary.BigEndian.Uint16(payload[pos : pos+2]))
+	pos += 2
+
+	authKey := make([]byte, 256)
+	copy(authKey, payload[pos:pos+256])
+
+	return &SessionData{
+		DCID:          dc,
+		ServerAddress: ip,
+		Port:          port,
+		AuthKey:       authKey,
+	}, nil
 }

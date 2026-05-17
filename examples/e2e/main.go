@@ -49,7 +49,7 @@ func main() {
 
 	client.OnSecretMessage(func(chat *telegram.SecretChat, layer *e2e.DecryptedMessageLayer) {
 		switch msg := layer.Message.(type) {
-		case *e2e.DecryptedMessageTL:
+		case *e2e.DecryptedMessage:
 			fmt.Printf("[secret:%d] %s\n", chat.ID, msg.Message)
 		case *e2e.DecryptedMessageService:
 			fmt.Printf("[secret:%d] (service message)\n", chat.ID)

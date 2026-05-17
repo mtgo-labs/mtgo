@@ -32,8 +32,8 @@ const DecryptedMessageServiceTypeID = 0x73164160
 // DecryptedMessage46TypeID is the constructor ID for TL type decryptedMessage46.
 const DecryptedMessage46TypeID = 0x36b091de
 
-// DecryptedMessageTLTypeID is the constructor ID for TL type decryptedMessage.
-const DecryptedMessageTLTypeID = 0x91cc4674
+// DecryptedMessageTypeID is the constructor ID for TL type decryptedMessage.
+const DecryptedMessageTypeID = 0x91cc4674
 
 // isDecryptedMessage marks DecryptedMessage8 as implementing the DecryptedMessageClass interface.
 func (*DecryptedMessage8) isDecryptedMessage() {}
@@ -50,8 +50,8 @@ func (*DecryptedMessageService) isDecryptedMessage() {}
 // isDecryptedMessage marks DecryptedMessage46 as implementing the DecryptedMessageClass interface.
 func (*DecryptedMessage46) isDecryptedMessage() {}
 
-// isDecryptedMessage marks DecryptedMessageTL as implementing the DecryptedMessageClass interface.
-func (*DecryptedMessageTL) isDecryptedMessage() {}
+// isDecryptedMessage marks DecryptedMessage as implementing the DecryptedMessageClass interface.
+func (*DecryptedMessage) isDecryptedMessage() {}
 
 // DecryptedMessage8 represents the TL constructor decryptedMessage8 (0x1f814f1f).
 type DecryptedMessage8 struct {
@@ -82,13 +82,8 @@ func DecodeDecryptedMessage8(r io.Reader) (*DecryptedMessage8, error) {
 	v.RandomID = tg.ReadLong(r)
 	v.RandomBytes = tg.ReadBytes(r)
 	v.Message = tg.ReadString(r)
-	_objMedia, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cMedia, _ok := _objMedia.(DecryptedMessageMediaClass); _ok {
-		v.Media = _cMedia
-	}
+	_objMedia, _ := ReadE2ETLObject(r)
+	v.Media = _objMedia.(DecryptedMessageMediaClass)
 	return v, nil
 }
 
@@ -124,13 +119,8 @@ func DecodeDecryptedMessageService8(r io.Reader) (*DecryptedMessageService8, err
 	v := &DecryptedMessageService8{}
 	v.RandomID = tg.ReadLong(r)
 	v.RandomBytes = tg.ReadBytes(r)
-	_objAction, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cAction, _ok := _objAction.(DecryptedMessageActionClass); _ok {
-		v.Action = _cAction
-	}
+	_objAction, _ := ReadE2ETLObject(r)
+	v.Action = _objAction.(DecryptedMessageActionClass)
 	return v, nil
 }
 
@@ -169,13 +159,8 @@ func DecodeDecryptedMessage23(r io.Reader) (*DecryptedMessage23, error) {
 	v.RandomID = tg.ReadLong(r)
 	v.TTL = int32(tg.ReadInt(r))
 	v.Message = tg.ReadString(r)
-	_objMedia, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cMedia, _ok := _objMedia.(DecryptedMessageMediaClass); _ok {
-		v.Media = _cMedia
-	}
+	_objMedia, _ := ReadE2ETLObject(r)
+	v.Media = _objMedia.(DecryptedMessageMediaClass)
 	return v, nil
 }
 
@@ -208,13 +193,8 @@ func (v *DecryptedMessageService) Encode(b *bytes.Buffer) error {
 func DecodeDecryptedMessageService(r io.Reader) (*DecryptedMessageService, error) {
 	v := &DecryptedMessageService{}
 	v.RandomID = tg.ReadLong(r)
-	_objAction, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cAction, _ok := _objAction.(DecryptedMessageActionClass); _ok {
-		v.Action = _cAction
-	}
+	_objAction, _ := ReadE2ETLObject(r)
+	v.Action = _objAction.(DecryptedMessageActionClass)
 	return v, nil
 }
 
@@ -226,14 +206,30 @@ func init() {
 
 // DecryptedMessage46 represents the TL constructor decryptedMessage46 (0x36b091de).
 type DecryptedMessage46 struct {
-	Flags           uint32                     `json:"-"`
+	Flags           tg.Fields                  `json:"-"`
 	RandomID        int64                      `json:"random_id,omitempty"`
 	TTL             int32                      `json:"ttl,omitempty"`
 	Message         string                     `json:"message,omitempty"`
 	Media           DecryptedMessageMediaClass `json:"media,omitempty"`
 	Entities        []MessageEntityClass       `json:"entities,omitempty"`
-	ViaBotName      *string                    `json:"via_bot_name,omitempty"`
-	ReplyToRandomID *int64                     `json:"reply_to_random_id,omitempty"`
+	ViaBotName      string                     `json:"via_bot_name,omitempty"`
+	ReplyToRandomID int64                      `json:"reply_to_random_id,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *DecryptedMessage46) SetFlags() {
+	if v.Media != nil {
+		v.Flags.Set(9)
+	}
+	if v.Entities != nil {
+		v.Flags.Set(7)
+	}
+	if v.ViaBotName != "" {
+		v.Flags.Set(11)
+	}
+	if v.ReplyToRandomID != 0 {
+		v.Flags.Set(3)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x36b091de.
@@ -244,25 +240,26 @@ func (v *DecryptedMessage46) ConstructorID() uint32 {
 // Encode serializes DecryptedMessage46 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, DecryptedMessage46TypeID)
-	tg.WriteInt(b, v.Flags)
+	v.SetFlags()
+	tg.WriteInt(b, uint32(v.Flags))
 	tg.WriteLong(b, v.RandomID)
 	tg.WriteInt(b, uint32(v.TTL))
 	tg.WriteString(b, v.Message)
-	if v.Flags&(1<<9) != 0 {
+	if v.Flags.Has(9) {
 		tg.EncodeTLObject(b, v.Media)
 	}
-	if v.Flags&(1<<7) != 0 {
-		tg.WriteInt(b, vectorBareID)
+	if v.Flags.Has(7) {
+		tg.WriteInt(b, 0x1cb5c415)
 		tg.WriteInt(b, uint32(len(v.Entities)))
-		for _, _el := range v.Entities {
-			tg.EncodeTLObject(b, _el)
+		for _, _item := range v.Entities {
+			tg.EncodeTLObject(b, _item)
 		}
 	}
-	if v.Flags&(1<<11) != 0 {
-		tg.WriteString(b, *v.ViaBotName)
+	if v.Flags.Has(11) {
+		tg.WriteString(b, v.ViaBotName)
 	}
-	if v.Flags&(1<<3) != 0 {
-		tg.WriteLong(b, *v.ReplyToRandomID)
+	if v.Flags.Has(3) {
+		tg.WriteLong(b, v.ReplyToRandomID)
 	}
 	return nil
 }
@@ -270,43 +267,32 @@ func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
 // DecodeDecryptedMessage46 deserializes a DecryptedMessage46 from a reader using the TL binary protocol.
 func DecodeDecryptedMessage46(r io.Reader) (*DecryptedMessage46, error) {
 	v := &DecryptedMessage46{}
-	v.Flags = tg.ReadInt(r)
+	{
+		var _f uint32
+		_f, _ = tg.ReadIntErr(r)
+		v.Flags = tg.Fields(_f)
+	}
 	v.RandomID = tg.ReadLong(r)
 	v.TTL = int32(tg.ReadInt(r))
 	v.Message = tg.ReadString(r)
-	if v.Flags&(1<<9) != 0 {
-		_obj, _err := ReadE2ETLObject(r)
-		if _err != nil {
-			return nil, _err
-		}
-		if _c, _ok := _obj.(DecryptedMessageMediaClass); _ok {
-			v.Media = _c
-		}
+	if v.Flags.Has(9) {
+		_objMedia, _ := ReadE2ETLObject(r)
+		v.Media = _objMedia.(DecryptedMessageMediaClass)
 	}
-	if v.Flags&(1<<7) != 0 {
+	if v.Flags.Has(7) {
 		tg.ReadInt(r)
-		count, _err := tg.ReadIntErr(r)
-		if _err != nil {
-			return nil, _err
-		}
-		v.Entities = make([]MessageEntityClass, count)
-		for i := range v.Entities {
-			_obj, _err := ReadE2ETLObject(r)
-			if _err != nil {
-				return nil, _err
-			}
-			if _c, _ok := _obj.(MessageEntityClass); _ok {
-				v.Entities[i] = _c
-			}
+		_cntEntities := tg.ReadInt(r)
+		v.Entities = make([]MessageEntityClass, _cntEntities)
+		for _iEntities := range v.Entities {
+			_objEntities, _ := ReadE2ETLObject(r)
+			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
 	}
-	if v.Flags&(1<<11) != 0 {
-		val := tg.ReadString(r)
-		v.ViaBotName = &val
+	if v.Flags.Has(11) {
+		v.ViaBotName = tg.ReadString(r)
 	}
-	if v.Flags&(1<<3) != 0 {
-		val := tg.ReadLong(r)
-		v.ReplyToRandomID = &val
+	if v.Flags.Has(3) {
+		v.ReplyToRandomID = tg.ReadLong(r)
 	}
 	return v, nil
 }
@@ -317,105 +303,116 @@ func init() {
 	}
 }
 
-// DecryptedMessageTL represents the TL constructor decryptedMessage (0x91cc4674).
-type DecryptedMessageTL struct {
-	Flags           uint32                     `json:"-"`
+// DecryptedMessage represents the TL constructor decryptedMessage (0x91cc4674).
+type DecryptedMessage struct {
+	Flags           tg.Fields                  `json:"-"`
 	Silent          bool                       `json:"silent,omitempty"`
 	RandomID        int64                      `json:"random_id,omitempty"`
 	TTL             int32                      `json:"ttl,omitempty"`
 	Message         string                     `json:"message,omitempty"`
 	Media           DecryptedMessageMediaClass `json:"media,omitempty"`
 	Entities        []MessageEntityClass       `json:"entities,omitempty"`
-	ViaBotName      *string                    `json:"via_bot_name,omitempty"`
-	ReplyToRandomID *int64                     `json:"reply_to_random_id,omitempty"`
-	GroupedID       *int64                     `json:"grouped_id,omitempty"`
+	ViaBotName      string                     `json:"via_bot_name,omitempty"`
+	ReplyToRandomID int64                      `json:"reply_to_random_id,omitempty"`
+	GroupedID       int64                      `json:"grouped_id,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *DecryptedMessage) SetFlags() {
+	if v.Silent {
+		v.Flags.Set(5)
+	}
+	if v.Media != nil {
+		v.Flags.Set(9)
+	}
+	if v.Entities != nil {
+		v.Flags.Set(7)
+	}
+	if v.ViaBotName != "" {
+		v.Flags.Set(11)
+	}
+	if v.ReplyToRandomID != 0 {
+		v.Flags.Set(3)
+	}
+	if v.GroupedID != 0 {
+		v.Flags.Set(17)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x91cc4674.
-func (v *DecryptedMessageTL) ConstructorID() uint32 {
-	return DecryptedMessageTLTypeID
+func (v *DecryptedMessage) ConstructorID() uint32 {
+	return DecryptedMessageTypeID
 }
 
-// Encode serializes DecryptedMessageTL to a bytes.Buffer using the TL binary protocol.
-func (v *DecryptedMessageTL) Encode(b *bytes.Buffer) error {
-	tg.WriteInt(b, DecryptedMessageTLTypeID)
-	tg.WriteInt(b, v.Flags)
+// Encode serializes DecryptedMessage to a bytes.Buffer using the TL binary protocol.
+func (v *DecryptedMessage) Encode(b *bytes.Buffer) error {
+	tg.WriteInt(b, DecryptedMessageTypeID)
+	v.SetFlags()
+	tg.WriteInt(b, uint32(v.Flags))
 	tg.WriteLong(b, v.RandomID)
 	tg.WriteInt(b, uint32(v.TTL))
 	tg.WriteString(b, v.Message)
-	if v.Flags&(1<<9) != 0 {
+	if v.Flags.Has(9) {
 		tg.EncodeTLObject(b, v.Media)
 	}
-	if v.Flags&(1<<7) != 0 {
-		tg.WriteInt(b, vectorBareID)
+	if v.Flags.Has(7) {
+		tg.WriteInt(b, 0x1cb5c415)
 		tg.WriteInt(b, uint32(len(v.Entities)))
-		for _, _el := range v.Entities {
-			tg.EncodeTLObject(b, _el)
+		for _, _item := range v.Entities {
+			tg.EncodeTLObject(b, _item)
 		}
 	}
-	if v.Flags&(1<<11) != 0 {
-		tg.WriteString(b, *v.ViaBotName)
+	if v.Flags.Has(11) {
+		tg.WriteString(b, v.ViaBotName)
 	}
-	if v.Flags&(1<<3) != 0 {
-		tg.WriteLong(b, *v.ReplyToRandomID)
+	if v.Flags.Has(3) {
+		tg.WriteLong(b, v.ReplyToRandomID)
 	}
-	if v.Flags&(1<<17) != 0 {
-		tg.WriteLong(b, *v.GroupedID)
+	if v.Flags.Has(17) {
+		tg.WriteLong(b, v.GroupedID)
 	}
 	return nil
 }
 
-// DecodeDecryptedMessageTL deserializes a DecryptedMessageTL from a reader using the TL binary protocol.
-func DecodeDecryptedMessageTL(r io.Reader) (*DecryptedMessageTL, error) {
-	v := &DecryptedMessageTL{}
-	v.Flags = tg.ReadInt(r)
-	v.Silent = v.Flags&(1<<5) != 0
+// DecodeDecryptedMessage deserializes a DecryptedMessage from a reader using the TL binary protocol.
+func DecodeDecryptedMessage(r io.Reader) (*DecryptedMessage, error) {
+	v := &DecryptedMessage{}
+	{
+		var _f uint32
+		_f, _ = tg.ReadIntErr(r)
+		v.Flags = tg.Fields(_f)
+	}
+	v.Silent = v.Flags.Has(5)
 	v.RandomID = tg.ReadLong(r)
 	v.TTL = int32(tg.ReadInt(r))
 	v.Message = tg.ReadString(r)
-	if v.Flags&(1<<9) != 0 {
-		_obj, _err := ReadE2ETLObject(r)
-		if _err != nil {
-			return nil, _err
-		}
-		if _c, _ok := _obj.(DecryptedMessageMediaClass); _ok {
-			v.Media = _c
-		}
+	if v.Flags.Has(9) {
+		_objMedia, _ := ReadE2ETLObject(r)
+		v.Media = _objMedia.(DecryptedMessageMediaClass)
 	}
-	if v.Flags&(1<<7) != 0 {
+	if v.Flags.Has(7) {
 		tg.ReadInt(r)
-		count, _err := tg.ReadIntErr(r)
-		if _err != nil {
-			return nil, _err
-		}
-		v.Entities = make([]MessageEntityClass, count)
-		for i := range v.Entities {
-			_obj, _err := ReadE2ETLObject(r)
-			if _err != nil {
-				return nil, _err
-			}
-			if _c, _ok := _obj.(MessageEntityClass); _ok {
-				v.Entities[i] = _c
-			}
+		_cntEntities := tg.ReadInt(r)
+		v.Entities = make([]MessageEntityClass, _cntEntities)
+		for _iEntities := range v.Entities {
+			_objEntities, _ := ReadE2ETLObject(r)
+			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
 	}
-	if v.Flags&(1<<11) != 0 {
-		val := tg.ReadString(r)
-		v.ViaBotName = &val
+	if v.Flags.Has(11) {
+		v.ViaBotName = tg.ReadString(r)
 	}
-	if v.Flags&(1<<3) != 0 {
-		val := tg.ReadLong(r)
-		v.ReplyToRandomID = &val
+	if v.Flags.Has(3) {
+		v.ReplyToRandomID = tg.ReadLong(r)
 	}
-	if v.Flags&(1<<17) != 0 {
-		val := tg.ReadLong(r)
-		v.GroupedID = &val
+	if v.Flags.Has(17) {
+		v.GroupedID = tg.ReadLong(r)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageTLTypeID] = func(r io.Reader) (tg.TLObject, error) {
-		return DecodeDecryptedMessageTL(r)
+	Registry[DecryptedMessageTypeID] = func(r io.Reader) (tg.TLObject, error) {
+		return DecodeDecryptedMessage(r)
 	}
 }
