@@ -138,24 +138,23 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data.read(8) == session_id"}
 	}
 
+	// Validate padding BEFORE decode to prevent OOM from corrupted body length.
+	if len(decrypted) < 32 {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short for header"}
+	}
+	bodyLen := int32(decrypted[28]) | int32(decrypted[29])<<8 |
+		int32(decrypted[30])<<16 | int32(decrypted[31])<<24
+	paddingLen := len(decrypted) - 32 - int(bodyLen)
+	if paddingLen < 12 || paddingLen > 1024 {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "12 <= len(padding) <= 1024"}
+	}
+	if (len(decrypted)-32)%4 != 0 {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "len(payload) % 4 == 0"}
+	}
+
 	message, err := tg.DecodeMTProtoMessage(bytes.NewReader(decrypted[16:]))
 	if err != nil {
 		return nil, nil, fmt.Errorf("crypto/mtproto: decode message: %w", err)
-	}
-
-	// Validate padding
-	// Layout: salt(8) + session_id(8) + msg_id(8) + seq_no(4) + body_len(4) + body + padding
-	// body_len is at decrypted[28:32]
-	if len(decrypted) >= 32 {
-		bodyLen := int32(decrypted[28]) | int32(decrypted[29])<<8 |
-			int32(decrypted[30])<<16 | int32(decrypted[31])<<24
-		paddingLen := len(decrypted) - 32 - int(bodyLen)
-		if paddingLen < 12 || paddingLen > 1024 {
-			return nil, nil, &tgerr.SecurityCheckMismatch{Name: "12 <= len(padding) <= 1024"}
-		}
-		if (len(decrypted)-32)%4 != 0 {
-			return nil, nil, &tgerr.SecurityCheckMismatch{Name: "len(payload) % 4 == 0"}
-		}
 	}
 
 	return message, decrypted, nil
