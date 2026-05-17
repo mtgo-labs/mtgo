@@ -680,7 +680,7 @@ func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToCons
 		default:
 			elemType := strings.TrimPrefix(goType, "[]")
 			idx := fieldNameFromTL(arg.Name)
-			return fmt.Sprintf("ReadInt(r); _cnt%s := ReadInt(r); %s = make(%s, _cnt%s); for _i%s := range %s { _obj%s, _ := ReadTLObject(r); %s[_i%s] = %s }", idx, assign, goType, idx, idx, assign, idx, assign, idx, typeAssertExpr("_obj"+idx, elemType))
+			return fmt.Sprintf("ReadInt(r); _cnt%s := ReadInt(r); if err := checkVectorCount(_cnt%s); err != nil { return nil, err }; %s = make(%s, _cnt%s); for _i%s := range %s { _obj%s, _ := ReadTLObject(r); %s[_i%s] = %s }", idx, idx, assign, goType, idx, idx, assign, idx, assign, idx, typeAssertExpr("_obj"+idx, elemType))
 		}
 	}
 
