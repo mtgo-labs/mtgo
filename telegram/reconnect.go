@@ -10,7 +10,20 @@ import (
 
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
+
+// isAuthLostError reports whether err indicates the auth key has been
+// permanently invalidated (revoked, unregistered, duplicated, or invalid).
+// Reconnect attempts stop when this returns true.
+func isAuthLostError(err error) bool {
+	return tgerr.Is(err,
+		tgerr.ErrAuthKeyUnregistered,
+		tgerr.ErrAuthKeyInvalid,
+		tgerr.ErrAuthKeyDuplicated,
+		tgerr.ErrSessionRevoked,
+	)
+}
 
 type backoffConfig struct {
 	BaseDelay   time.Duration
@@ -244,6 +257,16 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 		err := rm.client.reconnectOnce()
 		if err == nil {
 			rm.client.Log.Info("reconnected successfully")
+			rm.running.Store(false)
+			return
+		}
+
+		if isAuthLostError(err) {
+			rm.client.Log.Errorf("auth key invalid, stopping reconnects: %v", err)
+			rm.client.state.SetDisconnected(&ReconnectError{
+				Attempts: attempt,
+				Err:      fmt.Errorf("auth key invalid: %w", err),
+			})
 			rm.running.Store(false)
 			return
 		}

@@ -2,6 +2,7 @@ package session
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"io"
 	"testing"
@@ -242,7 +243,7 @@ func TestSessionSendAndWait(t *testing.T) {
 
 	sendDone := make(chan error, 1)
 	go func() {
-		_, err := s.Send(msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
+		_, err := s.Send(context.Background(), msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
 		sendDone <- err
 	}()
 
@@ -279,7 +280,7 @@ func TestSessionSendDeliversRpcResultByRequestMsgID(t *testing.T) {
 
 	sendDone := make(chan error, 1)
 	go func() {
-		_, err := s.Send(msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
+		_, err := s.Send(context.Background(), msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
 		sendDone <- err
 	}()
 
@@ -316,7 +317,7 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 		err error
 	}, 1)
 	go func() {
-		obj, err := s.Invoke(&tg.PingRequest{PingID: pingID}, 2, 5*time.Second)
+		obj, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: pingID}, 2, 5*time.Second)
 		invokeDone <- struct {
 			obj tg.TLObject
 			err error
@@ -376,7 +377,7 @@ func TestSessionInvokeTimeout(t *testing.T) {
 
 	startTestWorkers(s)
 
-	_, err := s.Invoke(&tg.PingRequest{PingID: 123}, 1, 50*time.Millisecond)
+	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 123}, 1, 50*time.Millisecond)
 	if err == nil {
 		t.Fatal("expected timeout error, got nil")
 	}

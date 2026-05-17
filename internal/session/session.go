@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/binary"
@@ -36,6 +37,22 @@ type sendJob struct {
 	encrypted []byte
 	deadline  time.Time
 	done      chan error
+}
+
+var sendJobPool = sync.Pool{
+	New: func() any {
+		return &sendJob{done: make(chan error, 1)}
+	},
+}
+
+func getSendJob() *sendJob {
+	return sendJobPool.Get().(*sendJob)
+}
+
+func putSendJob(job *sendJob) {
+	job.encrypted = nil
+	job.done = nil
+	sendJobPool.Put(job)
 }
 
 // AuthFunc is a function that performs key generation/authentication against
@@ -260,9 +277,10 @@ func (s *Session) sessionIDBytes() []byte {
 
 // Send encrypts and sends a TLObject as a single MTProto message, then waits
 // for the server's response. The msgID and seqNo identify the message.
-// It returns the raw response bytes or an error if the auth key is missing,
-// the transport is unset, the send fails, or the timeout is exceeded.
-func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) (tg.TLObject, error) {
+// ctx is used for cancellation: when cancelled after the message has been sent,
+// an RPCDropAnswerRequest is fired to inform the server the request is no longer
+// needed. Returns the raw response bytes or an error.
+func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) (tg.TLObject, error) {
 	if len(s.authKey) == 0 {
 		return nil, ErrAuthKeyNotSet
 	}
@@ -280,32 +298,61 @@ func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time
 
 	ch := s.registerResult(msgID)
 
-	job := &sendJob{
-		encrypted: encrypted,
-		deadline:  time.Now().Add(timeout),
-		done:      make(chan error, 1),
-	}
+	job := getSendJob()
+	job.encrypted = encrypted
+	job.deadline = time.Now().Add(timeout)
+	job.done = make(chan error, 1)
 	select {
 	case s.sendCh <- job:
 	case <-time.After(timeout):
+		putSendJob(job)
 		s.unregisterResult(msgID)
 		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
 	}
 	if err := <-job.done; err != nil {
+		putSendJob(job)
 		s.unregisterResult(msgID)
 		if s.onDisconnect != nil {
 			s.onDisconnect(err)
 		}
 		return nil, fmt.Errorf("session: send: %w", err)
 	}
+	putSendJob(job)
 
 	select {
 	case obj := <-ch:
 		s.unregisterResult(msgID)
 		return obj, nil
+	case <-ctx.Done():
+		s.unregisterResult(msgID)
+		s.sendRPCDrop(msgID)
+		return nil, ctx.Err()
+	case <-s.cancel:
+		s.unregisterResult(msgID)
+		return nil, ErrSessionClosed
 	case <-time.After(timeout):
 		s.unregisterResult(msgID)
 		return nil, ErrSendTimeout
+	}
+}
+
+func (s *Session) sendRPCDrop(reqMsgID int64) {
+	drop := &tg.RPCDropAnswerRequest{ReqMsgID: reqMsgID}
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(false)
+	message := &tg.MTProtoMessage{
+		MsgID: msgID,
+		SeqNo: uint32(seqNo),
+		Body:  drop,
+	}
+	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	job := getSendJob()
+	job.encrypted = encrypted
+	job.deadline = time.Now().Add(5 * time.Second)
+	select {
+	case s.sendCh <- job:
+	default:
+		putSendJob(job)
 	}
 }
 
@@ -395,7 +442,7 @@ func unpackIncomingMessage(data, sessionID, authKey, authKeyID []byte) (*tg.MTPr
 // Invoke sends an RPC query and decodes the response into a TLObject.
 // It retries the request up to retries times with the given per-attempt
 // timeout. Returns the decoded response object or the last error encountered.
-func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
+func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if retries < 1 {
 		retries = 1
 	}
@@ -405,7 +452,7 @@ func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) 
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
-		obj, err := s.Send(msgID, uint32(seqNo), query, timeout)
+		obj, err := s.Send(ctx, msgID, uint32(seqNo), query, timeout)
 		if err != nil {
 			lastErr = err
 			continue
@@ -428,11 +475,6 @@ func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) 
 				return obj, nil
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-			if d, ok := tgerr.AsFloodWait(parsed); ok {
-				time.Sleep(d + time.Second)
-				retries++
-				continue
-			}
 			// Non-retryable errors (auth, permission, bad request) fail immediately.
 			if rpcErr.ErrorCode == 401 || rpcErr.ErrorCode == 400 || rpcErr.ErrorCode == 403 {
 				return nil, parsed
@@ -454,11 +496,13 @@ func (s *Session) Start(timeout time.Duration) error {
 	s.sendCh = make(chan *sendJob, 64)
 	s.connected = true
 
+	go s.ackLoop()
+	go s.saltLoop()
 	go s.writer()
 	go s.recvWorker()
 	go s.pingWorker()
 
-	_, err := s.Invoke(&tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
+	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
 	if err != nil {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
@@ -482,6 +526,64 @@ func (s *Session) Stop() {
 	}
 }
 
+func (s *Session) saltLoop() {
+	// Initial delay: wait for session to be fully started.
+	select {
+	case <-s.cancel:
+		return
+	case <-time.After(15 * time.Second):
+	}
+
+	const numSalts = 4
+
+	for {
+		result, err := s.Invoke(context.Background(), &tg.GetFutureSaltsRequest{Num: numSalts}, 1, 10*time.Second)
+		if err == nil {
+			if salts, ok := result.(*tg.FutureSalts); ok && len(salts.Salts) > 0 {
+				s.serverSalt = salts.Salts[0].Salt
+			}
+		}
+
+		select {
+		case <-s.cancel:
+			return
+		case <-time.After(1 * time.Hour):
+		}
+	}
+}
+
+func (s *Session) ackLoop() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-s.cancel:
+			return
+		case <-ticker.C:
+			acks := s.drainAcks()
+			if len(acks) == 0 {
+				continue
+			}
+			msgID := s.msgFactory.AllocateMsgID()
+			seqNo := s.msgFactory.AllocateSeqNo(false)
+			message := &tg.MTProtoMessage{
+				MsgID: msgID,
+				SeqNo: uint32(seqNo),
+				Body:  &tg.MsgsAck{MsgIds: acks},
+			}
+			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+			job := &sendJob{
+				encrypted: encrypted,
+				deadline:  time.Now().Add(10 * time.Second),
+			}
+			select {
+			case s.sendCh <- job:
+			default:
+			}
+		}
+	}
+}
+
 func (s *Session) writer() {
 	for {
 		select {
@@ -491,7 +593,12 @@ func (s *Session) writer() {
 			s.transport.SetWriteDeadline(job.deadline)
 			err := s.transport.Send(job.encrypted)
 			s.transport.SetWriteDeadline(time.Time{})
-			job.done <- err
+			if job.done != nil {
+				job.done <- err
+			}
+			if err != nil && s.onDisconnect != nil {
+				s.onDisconnect(err)
+			}
 		}
 	}
 }
@@ -566,22 +673,24 @@ func (s *Session) pingWorker() {
 
 			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
 
-			job := &sendJob{
-				encrypted: encrypted,
-				deadline:  time.Now().Add(30 * time.Second),
-				done:      make(chan error, 1),
-			}
+			job := getSendJob()
+			job.encrypted = encrypted
+			job.deadline = time.Now().Add(30 * time.Second)
+			job.done = make(chan error, 1)
 			select {
 			case s.sendCh <- job:
 			default:
+				putSendJob(job)
 				continue
 			}
 			if err := <-job.done; err != nil {
+				putSendJob(job)
 				if s.onDisconnect != nil {
 					s.onDisconnect(err)
 				}
 				continue
 			}
+			putSendJob(job)
 		}
 	}
 }
