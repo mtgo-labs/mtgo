@@ -837,7 +837,7 @@ func GenerateE2EPackage(outDir string, combos []Combinator, layer int) error {
 					{"ReadVectorString(r)", "tg.ReadVectorString(r)"},
 					{"ReadVectorBytes(r)", "tg.ReadVectorBytes(r)"},
 					{"ReadTLObject(r)", "ReadE2ETLObject(r)"},
-					{"checkVectorCount(", "tg.checkVectorCount("},
+					{"checkVectorCount(", "tg.CheckVectorCount("},
 					{"Fields(", "tg.Fields("},
 					{".Has(", ".Has("},
 				}
