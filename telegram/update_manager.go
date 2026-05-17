@@ -16,6 +16,9 @@ type updateManagerConfig struct {
 	QueueSize       int
 	DurableQueue    bool
 	MaxHandlerRetry int
+	// GapBuffer is the duration to defer getDifference calls after detecting
+	// a PTS gap. Defaults to 500ms. Set to 0 to disable buffering.
+	GapBuffer time.Duration
 }
 
 // UpdateHealth holds diagnostic metrics about the update processing pipeline,
@@ -60,6 +63,10 @@ type updateManager struct {
 	state      updateState
 	channels   map[int64]channelState
 	recovering bool
+	// recoveryTimer buffers gap detection for 500ms to avoid triggering
+	// expensive getDifference calls for gaps that self-resolve via the
+	// next arriving update. When non-nil, a deferred recovery is pending.
+	recoveryTimer *time.Timer
 
 	health UpdateHealth
 }
@@ -123,6 +130,12 @@ func (m *updateManager) Stop(ctx context.Context) error {
 	if m.cancel != nil {
 		m.cancel()
 	}
+	m.mu.Lock()
+	if m.recoveryTimer != nil {
+		m.recoveryTimer.Stop()
+		m.recoveryTimer = nil
+	}
+	m.mu.Unlock()
 	select {
 	case <-m.done:
 	case <-ctx.Done():
@@ -230,21 +243,7 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 		m.mu.Lock()
 		m.health.LastGap = time.Now()
 		m.mu.Unlock()
-		if m.rpc != nil {
-			if recErr := m.RecoverAccount(ctx, m.rpc); recErr != nil {
-				m.client.Log.Warnf("gap recovery failed: %v", recErr)
-			}
-			retryKind := m.classifyUpdate(meta)
-			if retryKind == duplicateUpdate {
-				m.mu.Lock()
-				m.health.DuplicateCount++
-				m.mu.Unlock()
-				return nil
-			}
-			if retryKind == noGap {
-				return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
-			}
-		}
+		m.bufferGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
 		return nil
 	case noGap:
 	}
@@ -463,4 +462,48 @@ func classifyChannelUpdate(state channelState, meta updateMeta) gapKind {
 
 func buildPeerMapFromClasses(users []tg.UserClass, chats []tg.ChatClass) *types.PeerMap {
 	return types.NewPeerMapFromClasses(users, chats)
+}
+
+// bufferGapRecovery defers account gap recovery by 500ms. If the gap is
+// filled by the next arriving update before the timer fires, the expensive
+// getDifference call is skipped. If the timer fires and the gap persists,
+// RecoverAccount is triggered.
+func (m *updateManager) bufferGapRecovery(ctx context.Context, container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
+	m.mu.Lock()
+	if m.recoveryTimer != nil {
+		m.mu.Unlock()
+		return
+	}
+	if m.cfg.GapBuffer <= 0 {
+		m.mu.Unlock()
+		m.doGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
+		return
+	}
+	m.recoveryTimer = time.AfterFunc(m.cfg.GapBuffer, func() {
+		m.mu.Lock()
+		m.recoveryTimer = nil
+		m.mu.Unlock()
+		m.doGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
+	})
+	m.mu.Unlock()
+}
+
+func (m *updateManager) doGapRecovery(ctx context.Context, container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
+	kind := m.classifyUpdate(meta)
+	if kind == noGap || kind == duplicateUpdate {
+		return
+	}
+	if m.rpc != nil {
+		if recErr := m.RecoverAccount(ctx, m.rpc); recErr != nil {
+			m.client.Log.Warnf("gap recovery failed: %v", recErr)
+		}
+	}
+	retryKind := m.classifyUpdate(meta)
+	if retryKind == duplicateUpdate {
+		m.mu.Lock()
+		m.health.DuplicateCount++
+		m.mu.Unlock()
+	} else if retryKind == noGap {
+		_ = m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
+	}
 }

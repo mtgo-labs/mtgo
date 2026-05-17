@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"errors"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -23,9 +22,6 @@ func TestNewClientDefaults(t *testing.T) {
 	}
 	if c.cfg.APIHash != "deadbeef" {
 		t.Errorf("APIHash = %q, want %q", c.cfg.APIHash, "deadbeef")
-	}
-	if c.cfg.Workers <= 0 || c.cfg.Workers > 32 {
-		t.Errorf("Workers = %d, want between 1 and 32", c.cfg.Workers)
 	}
 	if c.cfg.SleepThreshold != 10*time.Second {
 		t.Errorf("SleepThreshold = %v, want 10s", c.cfg.SleepThreshold)
@@ -63,11 +59,6 @@ func TestNewClientDefaults(t *testing.T) {
 	if c.cfg.TransportMode != TransportModeAbridged {
 		t.Errorf("TransportMode = %q, want %q", c.cfg.TransportMode, TransportModeAbridged)
 	}
-
-	expectedWorkers := min(runtime.NumCPU()+4, 32)
-	if c.cfg.Workers != expectedWorkers {
-		t.Errorf("Workers = %d, want %d", c.cfg.Workers, expectedWorkers)
-	}
 }
 
 func TestNewClientWithOptions(t *testing.T) {
@@ -83,7 +74,6 @@ func TestNewClientWithOptions(t *testing.T) {
 		TestMode:            true,
 		IPv6:                true,
 		NoUpdates:           true,
-		Workers:             16,
 		SleepThreshold:      5 * time.Second,
 		MaxConcurrentTrans:  4,
 		MaxMessageCacheSize: 500,
@@ -132,9 +122,6 @@ func TestNewClientWithOptions(t *testing.T) {
 	}
 	if !cfg.NoUpdates {
 		t.Error("NoUpdates = false")
-	}
-	if cfg.Workers != 16 {
-		t.Errorf("Workers = %d", cfg.Workers)
 	}
 	if cfg.SleepThreshold != 5*time.Second {
 		t.Errorf("SleepThreshold = %v", cfg.SleepThreshold)
@@ -605,7 +592,6 @@ func TestConfigAccessors(t *testing.T) {
 		DC:          4,
 		TestMode:    true,
 		NoUpdates:   true,
-		Workers:     16,
 	})
 
 	if c.APIID() != 12345 {
@@ -629,9 +615,6 @@ func TestConfigAccessors(t *testing.T) {
 	if !c.NoUpdates() {
 		t.Error("NoUpdates() should be true")
 	}
-	if c.Workers() != 16 {
-		t.Errorf("Workers() = %d, want 16", c.Workers())
-	}
 	if !c.IsBot() {
 		t.Error("IsBot() should be true with BotToken set")
 	}
@@ -653,7 +636,6 @@ func TestWithConfig(t *testing.T) {
 		BotToken:       "999:TOKEN",
 		DC:             3,
 		TestMode:       true,
-		Workers:        8,
 		LangCode:       "de",
 		DeviceModel:    "Pixel 8",
 		ClientPlatform: types.ClientPlatformAndroid,
@@ -671,9 +653,6 @@ func TestWithConfig(t *testing.T) {
 	if !c.TestMode() {
 		t.Error("TestMode should be true")
 	}
-	if c.Workers() != 8 {
-		t.Errorf("Workers = %d, want 8", c.Workers())
-	}
 	if c.APIID() != 111 {
 		t.Errorf("APIID = %d, want 111", c.APIID())
 	}
@@ -682,7 +661,6 @@ func TestWithConfig(t *testing.T) {
 func TestWithConfigMixedWithOption(t *testing.T) {
 	c, _ := NewClient(1, "h", &Config{
 		SessionName: "from-struct",
-		Workers:     4,
 		BotToken:    "override-token",
 	})
 
@@ -691,9 +669,6 @@ func TestWithConfigMixedWithOption(t *testing.T) {
 	}
 	if c.BotToken() != "override-token" {
 		t.Errorf("BotToken = %q", c.BotToken())
-	}
-	if c.Workers() != 4 {
-		t.Errorf("Workers = %d, want 4", c.Workers())
 	}
 }
 

@@ -177,9 +177,6 @@ type Config struct {
 	// SkipUpdates discards all updates that arrived while the client was
 	// offline. Prevents a flood of stale messages on reconnection.
 	SkipUpdates bool
-	// Workers is the number of goroutines dedicated to processing incoming
-	// updates. When zero, a sensible default based on GOMAXPROCS is used.
-	Workers int
 	// SleepThreshold is the duration the client waits in flood-wait
 	// situations before resuming requests. Telegram signals this when rate
 	// limits are approached.
@@ -192,7 +189,7 @@ type Config struct {
 	// Defaults to 60 seconds.
 	Timeout time.Duration
 	// ReqTimeout is the default timeout applied to RPC requests when no deadline
-	// is set on the context. Defaults to 60 seconds.
+	// is set on the context. Defaults to 60 seconds. Enforced minimum of 1 second.
 	ReqTimeout time.Duration
 	// Retries is the number of retries for RPC calls on transient errors
 	// (timeouts, connection resets, 500s). Non-retryable errors (401, 400, 403)
@@ -319,19 +316,50 @@ type Config struct {
 	//
 	//	cfg.LocalAddr = "192.168.1.100:0"
 	LocalAddr string
-	Log       LogConfig
+	// Log configures MTProto-level logging for the client. Use it to capture
+	// protocol events for debugging connection or authentication issues.
+	Log LogConfig
 
-	ReconnectEnabled     bool
-	ReconnectBaseDelay   time.Duration
-	ReconnectMaxDelay    time.Duration
+	// ReconnectEnabled enables automatic reconnection when the underlying
+	// transport is interrupted. When true, the client retries with exponential
+	// backoff up to ReconnectMaxAttempts. Defaults to true.
+	ReconnectEnabled bool
+	// ReconnectBaseDelay is the initial delay before the first reconnection
+	// attempt. Subsequent attempts double the delay until ReconnectMaxDelay
+	// is reached. Defaults to 1 second.
+	ReconnectBaseDelay time.Duration
+	// ReconnectMaxDelay caps the exponential backoff delay between reconnection
+	// attempts. Defaults to 60 seconds.
+	ReconnectMaxDelay time.Duration
+	// ReconnectMaxAttempts is the maximum number of reconnection tries before
+	// giving up and reporting a permanent failure. A value of 0 means unlimited
+	// retries.
 	ReconnectMaxAttempts int
-	HealthEnabled        bool
-	HealthPingInterval   time.Duration
-	HealthPongTimeout    time.Duration
+	// HealthEnabled activates periodic health-check pings to the server to
+	// detect stale connections early. When false, disconnections are only
+	// discovered on the next RPC call. Defaults to true.
+	HealthEnabled bool
+	// HealthPingInterval is the time between successive health-check pings.
+	// Shorter intervals detect failures faster but consume more bandwidth.
+	// Defaults to 60 seconds.
+	HealthPingInterval time.Duration
+	// HealthPongTimeout is the maximum time to wait for a pong response
+	// before treating the connection as dead and triggering a reconnect.
+	// Defaults to 30 seconds.
+	HealthPongTimeout time.Duration
 
-	UpdateQueueSize       int
-	DurableUpdateQueue    bool
+	// UpdateQueueSize is the buffered channel capacity for incoming updates.
+	// Larger values absorb bursts but increase memory usage. Defaults to 1024.
+	UpdateQueueSize int
+	// DurableUpdateQueue persists undelivered updates across reconnects so
+	// that no update is lost during brief network outages. Defaults to true.
+	DurableUpdateQueue bool
+	// MaxUpdateHandlerRetry is the number of times the client will retry
+	// calling an update handler that returned an error. After exhausting
+	// retries the update is dropped. Defaults to 3.
 	MaxUpdateHandlerRetry int
+	// UpdateRecoveryEnabled restores updates that may have been lost during
+	// a reconnection by fetching missed events from the server. Defaults to true.
 	UpdateRecoveryEnabled bool
 }
 
@@ -346,8 +374,7 @@ type Config struct {
 //	cfg.InMemory = true
 //	client, err := telegram.NewClient(apiID, apiHash, &cfg)
 var DefaultConfig = Config{
-	Workers:             0,
-	SleepThreshold:      10 * time.Second,
+	SleepThreshold:     10 * time.Second,
 	Timeout:             60 * time.Second,
 	ReqTimeout:          60 * time.Second,
 	MaxConcurrentTrans:  1,

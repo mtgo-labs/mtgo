@@ -28,6 +28,9 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 			timeout = 60 * time.Second
 		}
 	}
+	if timeout < time.Second {
+		timeout = time.Second
+	}
 
 	retries := ci.client.cfg.Retries
 	if retries < 1 {

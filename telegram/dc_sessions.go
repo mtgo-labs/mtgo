@@ -208,7 +208,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 		query = wrapInitConnection(d.client.cfg, input)
 	}
 
-	result, err := d.sess.Invoke(query, 2, timeout)
+	result, err := d.sess.Invoke(context.Background(), query, 2, timeout)
 	if err != nil {
 		return nil, err
 	}

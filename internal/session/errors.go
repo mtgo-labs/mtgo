@@ -16,6 +16,9 @@ var (
 	// ErrSendTimeout is returned when sending a message to the server
 	// exceeds the configured write deadline.
 	ErrSendTimeout = errors.New("session: send timeout")
+	// ErrSessionClosed is returned when the session has been stopped and
+	// pending operations are cancelled.
+	ErrSessionClosed = errors.New("session: closed")
 	// ErrConnectNoAuthKey is returned when Connect is called before an
 	// authorization key has been generated via key generation.
 	ErrConnectNoAuthKey = errors.New("session: connect: no auth key")

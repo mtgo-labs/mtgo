@@ -16,7 +16,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"time"
 
@@ -191,9 +190,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.SkipUpdates {
 			c.SkipUpdates = true
 		}
-		if cfg.Workers != 0 {
-			c.Workers = cfg.Workers
-		}
 		if cfg.SleepThreshold != 0 {
 			c.SleepThreshold = cfg.SleepThreshold
 		}
@@ -356,9 +352,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	if _, err := newTCPTransport(c.TransportMode, nil); err != nil {
 		return nil, err
 	}
-	if c.Workers == 0 {
-		c.Workers = min(runtime.NumCPU()+4, 32)
-	}
 
 	var logger *Logger
 	if c.Log.Logger != nil {
@@ -373,9 +366,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 				return nil, fmt.Errorf("setup log file: %w", err)
 			}
 		}
-	}
-	if c.Workers == 0 {
-		c.Workers = min(runtime.NumCPU()+4, 32)
 	}
 
 	dialer := transport.Dialer(&transport.NetDialer{LocalAddr: c.LocalAddr})
@@ -1390,7 +1380,7 @@ func (c *Client) Invoke(query tg.TLObject, retries int, timeout time.Duration) (
 		return nil, ErrNotConnected
 	}
 
-	result, err := sess.Invoke(query, retries, timeout)
+	result, err := sess.Invoke(context.Background(), query, retries, timeout)
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
@@ -1418,7 +1408,7 @@ func (c *Client) InvokeRaw(query tg.TLObject, retries int, timeout time.Duration
 		return nil, ErrNotConnected
 	}
 
-	return sess.Invoke(query, retries, timeout)
+	return sess.Invoke(context.Background(), query, retries, timeout)
 }
 
 // HandleUpdates processes an incoming Telegram UpdatesClass by flattening it
@@ -1941,9 +1931,6 @@ func (c *Client) IPv6() bool { return c.cfg.IPv6 }
 
 // NoUpdates reports whether update processing is disabled.
 func (c *Client) NoUpdates() bool { return c.cfg.NoUpdates }
-
-// Workers returns the number of handler worker goroutines configured for update dispatch.
-func (c *Client) Workers() int { return c.cfg.Workers }
 
 // ParseMode returns the default message parsing mode.
 func (c *Client) ParseMode() ParseMode { return c.cfg.ParseMode }

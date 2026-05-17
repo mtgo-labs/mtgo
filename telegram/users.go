@@ -70,8 +70,8 @@ func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, 
 // Returns the authenticated types.User, or an error if the client is not
 // connected or the server response is unexpected.
 func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
-	if !c.IsConnected() {
-		return nil, ErrNotConnected
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
 	}
 
 	c.Log.Debug("GetMe")
