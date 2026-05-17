@@ -590,6 +590,9 @@ func DecodeUsersUserFull(r io.Reader) (*UsersUserFull, error) {
 	v.FullUser = _objFullUser.(UserFullClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -597,6 +600,9 @@ func DecodeUsersUserFull(r io.Reader) (*UsersUserFull, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -659,6 +665,9 @@ func DecodeUsersUsers(r io.Reader) (*UsersUsers, error) {
 	v := &UsersUsers{}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -704,6 +713,9 @@ func DecodeUsersUsersSlice(r io.Reader) (*UsersUsersSlice, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -801,6 +813,9 @@ func DecodeUsersSavedMusic(r io.Reader) (*UsersSavedMusic, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntDocuments := ReadInt(r)
+	if err := checkVectorCount(_cntDocuments); err != nil {
+		return nil, err
+	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
 		_objDocuments, _ := ReadTLObject(r)

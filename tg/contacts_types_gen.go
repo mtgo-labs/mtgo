@@ -92,6 +92,9 @@ func DecodeContactsContacts(r io.Reader) (*ContactsContacts, error) {
 	v := &ContactsContacts{}
 	ReadInt(r)
 	_cntContacts := ReadInt(r)
+	if err := checkVectorCount(_cntContacts); err != nil {
+		return nil, err
+	}
 	v.Contacts = make([]*Contact, _cntContacts)
 	for _iContacts := range v.Contacts {
 		_objContacts, _ := ReadTLObject(r)
@@ -100,6 +103,9 @@ func DecodeContactsContacts(r io.Reader) (*ContactsContacts, error) {
 	v.SavedCount = int32(ReadInt(r))
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -159,6 +165,9 @@ func DecodeContactsImportedContacts(r io.Reader) (*ContactsImportedContacts, err
 	v := &ContactsImportedContacts{}
 	ReadInt(r)
 	_cntImported := ReadInt(r)
+	if err := checkVectorCount(_cntImported); err != nil {
+		return nil, err
+	}
 	v.Imported = make([]*ImportedContact, _cntImported)
 	for _iImported := range v.Imported {
 		_objImported, _ := ReadTLObject(r)
@@ -166,6 +175,9 @@ func DecodeContactsImportedContacts(r io.Reader) (*ContactsImportedContacts, err
 	}
 	ReadInt(r)
 	_cntPopularInvites := ReadInt(r)
+	if err := checkVectorCount(_cntPopularInvites); err != nil {
+		return nil, err
+	}
 	v.PopularInvites = make([]*PopularContact, _cntPopularInvites)
 	for _iPopularInvites := range v.PopularInvites {
 		_objPopularInvites, _ := ReadTLObject(r)
@@ -174,6 +186,9 @@ func DecodeContactsImportedContacts(r io.Reader) (*ContactsImportedContacts, err
 	v.RetryContacts = ReadVectorLong(r)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -248,6 +263,9 @@ func DecodeContactsBlocked(r io.Reader) (*ContactsBlocked, error) {
 	v := &ContactsBlocked{}
 	ReadInt(r)
 	_cntBlocked := ReadInt(r)
+	if err := checkVectorCount(_cntBlocked); err != nil {
+		return nil, err
+	}
 	v.Blocked = make([]*PeerBlocked, _cntBlocked)
 	for _iBlocked := range v.Blocked {
 		_objBlocked, _ := ReadTLObject(r)
@@ -255,6 +273,9 @@ func DecodeContactsBlocked(r io.Reader) (*ContactsBlocked, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -262,6 +283,9 @@ func DecodeContactsBlocked(r io.Reader) (*ContactsBlocked, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -319,6 +343,9 @@ func DecodeContactsBlockedSlice(r io.Reader) (*ContactsBlockedSlice, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntBlocked := ReadInt(r)
+	if err := checkVectorCount(_cntBlocked); err != nil {
+		return nil, err
+	}
 	v.Blocked = make([]*PeerBlocked, _cntBlocked)
 	for _iBlocked := range v.Blocked {
 		_objBlocked, _ := ReadTLObject(r)
@@ -326,6 +353,9 @@ func DecodeContactsBlockedSlice(r io.Reader) (*ContactsBlockedSlice, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -333,6 +363,9 @@ func DecodeContactsBlockedSlice(r io.Reader) (*ContactsBlockedSlice, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -396,6 +429,9 @@ func DecodeContactsFound(r io.Reader) (*ContactsFound, error) {
 	v := &ContactsFound{}
 	ReadInt(r)
 	_cntMyResults := ReadInt(r)
+	if err := checkVectorCount(_cntMyResults); err != nil {
+		return nil, err
+	}
 	v.MyResults = make([]PeerClass, _cntMyResults)
 	for _iMyResults := range v.MyResults {
 		_objMyResults, _ := ReadTLObject(r)
@@ -403,6 +439,9 @@ func DecodeContactsFound(r io.Reader) (*ContactsFound, error) {
 	}
 	ReadInt(r)
 	_cntResults := ReadInt(r)
+	if err := checkVectorCount(_cntResults); err != nil {
+		return nil, err
+	}
 	v.Results = make([]PeerClass, _cntResults)
 	for _iResults := range v.Results {
 		_objResults, _ := ReadTLObject(r)
@@ -410,6 +449,9 @@ func DecodeContactsFound(r io.Reader) (*ContactsFound, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -417,6 +459,9 @@ func DecodeContactsFound(r io.Reader) (*ContactsFound, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -472,6 +517,9 @@ func DecodeContactsResolvedPeer(r io.Reader) (*ContactsResolvedPeer, error) {
 	v.Peer = _objPeer.(PeerClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -479,6 +527,9 @@ func DecodeContactsResolvedPeer(r io.Reader) (*ContactsResolvedPeer, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -588,6 +639,9 @@ func DecodeContactsTopPeers(r io.Reader) (*ContactsTopPeers, error) {
 	v := &ContactsTopPeers{}
 	ReadInt(r)
 	_cntCategories := ReadInt(r)
+	if err := checkVectorCount(_cntCategories); err != nil {
+		return nil, err
+	}
 	v.Categories = make([]*TopPeerCategoryPeers, _cntCategories)
 	for _iCategories := range v.Categories {
 		_objCategories, _ := ReadTLObject(r)
@@ -595,6 +649,9 @@ func DecodeContactsTopPeers(r io.Reader) (*ContactsTopPeers, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -602,6 +659,9 @@ func DecodeContactsTopPeers(r io.Reader) (*ContactsTopPeers, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -682,6 +742,9 @@ func DecodeContactsContactBirthdays(r io.Reader) (*ContactsContactBirthdays, err
 	v := &ContactsContactBirthdays{}
 	ReadInt(r)
 	_cntContacts := ReadInt(r)
+	if err := checkVectorCount(_cntContacts); err != nil {
+		return nil, err
+	}
 	v.Contacts = make([]*ContactBirthday, _cntContacts)
 	for _iContacts := range v.Contacts {
 		_objContacts, _ := ReadTLObject(r)
@@ -689,6 +752,9 @@ func DecodeContactsContactBirthdays(r io.Reader) (*ContactsContactBirthdays, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -792,6 +858,9 @@ func DecodeContactsSponsoredPeers(r io.Reader) (*ContactsSponsoredPeers, error) 
 	v := &ContactsSponsoredPeers{}
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]*SponsoredPeer, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -799,6 +868,9 @@ func DecodeContactsSponsoredPeers(r io.Reader) (*ContactsSponsoredPeers, error) 
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -806,6 +878,9 @@ func DecodeContactsSponsoredPeers(r io.Reader) (*ContactsSponsoredPeers, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

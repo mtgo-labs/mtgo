@@ -385,6 +385,9 @@ func DecodeAicomposeTones(r io.Reader) (*AicomposeTones, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntTones := ReadInt(r)
+	if err := checkVectorCount(_cntTones); err != nil {
+		return nil, err
+	}
 	v.Tones = make([]AiComposeToneClass, _cntTones)
 	for _iTones := range v.Tones {
 		_objTones, _ := ReadTLObject(r)
@@ -392,6 +395,9 @@ func DecodeAicomposeTones(r io.Reader) (*AicomposeTones, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

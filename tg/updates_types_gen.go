@@ -1267,6 +1267,9 @@ func DecodeUpdateUserName(r io.Reader) (*UpdateUserName, error) {
 	v.LastName = ReadString(r)
 	ReadInt(r)
 	_cntUsernames := ReadInt(r)
+	if err := checkVectorCount(_cntUsernames); err != nil {
+		return nil, err
+	}
 	v.Usernames = make([]*Username, _cntUsernames)
 	for _iUsernames := range v.Usernames {
 		_objUsernames, _ := ReadTLObject(r)
@@ -1612,6 +1615,9 @@ func DecodeUpdateDCOptions(r io.Reader) (*UpdateDCOptions, error) {
 	v := &UpdateDCOptions{}
 	ReadInt(r)
 	_cntDCOptions := ReadInt(r)
+	if err := checkVectorCount(_cntDCOptions); err != nil {
+		return nil, err
+	}
 	v.DCOptions = make([]*DCOption, _cntDCOptions)
 	for _iDCOptions := range v.DCOptions {
 		_objDCOptions, _ := ReadTLObject(r)
@@ -1733,6 +1739,9 @@ func DecodeUpdateServiceNotification(r io.Reader) (*UpdateServiceNotification, e
 	v.Media = _objMedia.(MessageMediaClass)
 	ReadInt(r)
 	_cntEntities := ReadInt(r)
+	if err := checkVectorCount(_cntEntities); err != nil {
+		return nil, err
+	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
 		_objEntities, _ := ReadTLObject(r)
@@ -1779,6 +1788,9 @@ func DecodeUpdatePrivacy(r io.Reader) (*UpdatePrivacy, error) {
 	v.Key = _objKey.(PrivacyKeyClass)
 	ReadInt(r)
 	_cntRules := ReadInt(r)
+	if err := checkVectorCount(_cntRules); err != nil {
+		return nil, err
+	}
 	v.Rules = make([]PrivacyRuleClass, _cntRules)
 	for _iRules := range v.Rules {
 		_objRules, _ := ReadTLObject(r)
@@ -3276,6 +3288,9 @@ func DecodeUpdatePinnedDialogs(r io.Reader) (*UpdatePinnedDialogs, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntOrder := ReadInt(r)
+		if err := checkVectorCount(_cntOrder); err != nil {
+			return nil, err
+		}
 		v.Order = make([]DialogPeerClass, _cntOrder)
 		for _iOrder := range v.Order {
 			_objOrder, _ := ReadTLObject(r)
@@ -3964,6 +3979,9 @@ func DecodeUpdateFolderPeers(r io.Reader) (*UpdateFolderPeers, error) {
 	v := &UpdateFolderPeers{}
 	ReadInt(r)
 	_cntFolderPeers := ReadInt(r)
+	if err := checkVectorCount(_cntFolderPeers); err != nil {
+		return nil, err
+	}
 	v.FolderPeers = make([]*FolderPeer, _cntFolderPeers)
 	for _iFolderPeers := range v.FolderPeers {
 		_objFolderPeers, _ := ReadTLObject(r)
@@ -4045,6 +4063,9 @@ func DecodeUpdatePeerLocated(r io.Reader) (*UpdatePeerLocated, error) {
 	v := &UpdatePeerLocated{}
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]PeerLocatedClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -4890,6 +4911,9 @@ func DecodeUpdateGroupCallParticipants(r io.Reader) (*UpdateGroupCallParticipant
 	v.Call = _objCall.(InputGroupCallClass)
 	ReadInt(r)
 	_cntParticipants := ReadInt(r)
+	if err := checkVectorCount(_cntParticipants); err != nil {
+		return nil, err
+	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
 		_objParticipants, _ := ReadTLObject(r)
@@ -5330,6 +5354,9 @@ func DecodeUpdateBotCommands(r io.Reader) (*UpdateBotCommands, error) {
 	v.BotID = ReadLong(r)
 	ReadInt(r)
 	_cntCommands := ReadInt(r)
+	if err := checkVectorCount(_cntCommands); err != nil {
+		return nil, err
+	}
 	v.Commands = make([]*BotCommand, _cntCommands)
 	for _iCommands := range v.Commands {
 		_objCommands, _ := ReadTLObject(r)
@@ -5902,6 +5929,9 @@ func DecodeUpdateMessageExtendedMedia(r io.Reader) (*UpdateMessageExtendedMedia,
 	v.MsgID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntExtendedMedia := ReadInt(r)
+	if err := checkVectorCount(_cntExtendedMedia); err != nil {
+		return nil, err
+	}
 	v.ExtendedMedia = make([]MessageExtendedMediaClass, _cntExtendedMedia)
 	for _iExtendedMedia := range v.ExtendedMedia {
 		_objExtendedMedia, _ := ReadTLObject(r)
@@ -6344,6 +6374,9 @@ func DecodeUpdateBotMessageReaction(r io.Reader) (*UpdateBotMessageReaction, err
 	v.Actor = _objActor.(PeerClass)
 	ReadInt(r)
 	_cntOldReactions := ReadInt(r)
+	if err := checkVectorCount(_cntOldReactions); err != nil {
+		return nil, err
+	}
 	v.OldReactions = make([]ReactionClass, _cntOldReactions)
 	for _iOldReactions := range v.OldReactions {
 		_objOldReactions, _ := ReadTLObject(r)
@@ -6351,6 +6384,9 @@ func DecodeUpdateBotMessageReaction(r io.Reader) (*UpdateBotMessageReaction, err
 	}
 	ReadInt(r)
 	_cntNewReactions := ReadInt(r)
+	if err := checkVectorCount(_cntNewReactions); err != nil {
+		return nil, err
+	}
 	v.NewReactions = make([]ReactionClass, _cntNewReactions)
 	for _iNewReactions := range v.NewReactions {
 		_objNewReactions, _ := ReadTLObject(r)
@@ -6406,6 +6442,9 @@ func DecodeUpdateBotMessageReactions(r io.Reader) (*UpdateBotMessageReactions, e
 	v.Date = int32(ReadInt(r))
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]*ReactionCount, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -6517,6 +6556,9 @@ func DecodeUpdatePinnedSavedDialogs(r io.Reader) (*UpdatePinnedSavedDialogs, err
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntOrder := ReadInt(r)
+		if err := checkVectorCount(_cntOrder); err != nil {
+			return nil, err
+		}
 		v.Order = make([]DialogPeerClass, _cntOrder)
 		for _iOrder := range v.Order {
 			_objOrder, _ := ReadTLObject(r)
@@ -6621,6 +6663,9 @@ func DecodeUpdateQuickReplies(r io.Reader) (*UpdateQuickReplies, error) {
 	v := &UpdateQuickReplies{}
 	ReadInt(r)
 	_cntQuickReplies := ReadInt(r)
+	if err := checkVectorCount(_cntQuickReplies); err != nil {
+		return nil, err
+	}
 	v.QuickReplies = make([]*QuickReply, _cntQuickReplies)
 	for _iQuickReplies := range v.QuickReplies {
 		_objQuickReplies, _ := ReadTLObject(r)
@@ -7924,6 +7969,9 @@ func DecodeUpdateBotGuestChatQuery(r io.Reader) (*UpdateBotGuestChatQuery, error
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntReferenceMessages := ReadInt(r)
+		if err := checkVectorCount(_cntReferenceMessages); err != nil {
+			return nil, err
+		}
 		v.ReferenceMessages = make([]MessageClass, _cntReferenceMessages)
 		for _iReferenceMessages := range v.ReferenceMessages {
 			_objReferenceMessages, _ := ReadTLObject(r)
@@ -8137,6 +8185,9 @@ func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
 	v := &UpdatesDifference{}
 	ReadInt(r)
 	_cntNewMessages := ReadInt(r)
+	if err := checkVectorCount(_cntNewMessages); err != nil {
+		return nil, err
+	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
 		_objNewMessages, _ := ReadTLObject(r)
@@ -8144,6 +8195,9 @@ func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
 	}
 	ReadInt(r)
 	_cntNewEncryptedMessages := ReadInt(r)
+	if err := checkVectorCount(_cntNewEncryptedMessages); err != nil {
+		return nil, err
+	}
 	v.NewEncryptedMessages = make([]EncryptedMessageClass, _cntNewEncryptedMessages)
 	for _iNewEncryptedMessages := range v.NewEncryptedMessages {
 		_objNewEncryptedMessages, _ := ReadTLObject(r)
@@ -8151,6 +8205,9 @@ func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
 	}
 	ReadInt(r)
 	_cntOtherUpdates := ReadInt(r)
+	if err := checkVectorCount(_cntOtherUpdates); err != nil {
+		return nil, err
+	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
 		_objOtherUpdates, _ := ReadTLObject(r)
@@ -8158,6 +8215,9 @@ func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8165,6 +8225,9 @@ func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -8235,6 +8298,9 @@ func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) 
 	v := &UpdatesDifferenceSlice{}
 	ReadInt(r)
 	_cntNewMessages := ReadInt(r)
+	if err := checkVectorCount(_cntNewMessages); err != nil {
+		return nil, err
+	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
 		_objNewMessages, _ := ReadTLObject(r)
@@ -8242,6 +8308,9 @@ func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) 
 	}
 	ReadInt(r)
 	_cntNewEncryptedMessages := ReadInt(r)
+	if err := checkVectorCount(_cntNewEncryptedMessages); err != nil {
+		return nil, err
+	}
 	v.NewEncryptedMessages = make([]EncryptedMessageClass, _cntNewEncryptedMessages)
 	for _iNewEncryptedMessages := range v.NewEncryptedMessages {
 		_objNewEncryptedMessages, _ := ReadTLObject(r)
@@ -8249,6 +8318,9 @@ func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) 
 	}
 	ReadInt(r)
 	_cntOtherUpdates := ReadInt(r)
+	if err := checkVectorCount(_cntOtherUpdates); err != nil {
+		return nil, err
+	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
 		_objOtherUpdates, _ := ReadTLObject(r)
@@ -8256,6 +8328,9 @@ func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) 
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8263,6 +8338,9 @@ func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -8513,6 +8591,9 @@ func DecodeUpdateShortMessage(r io.Reader) (*UpdateShortMessage, error) {
 	if v.Flags.Has(7) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -8657,6 +8738,9 @@ func DecodeUpdateShortChatMessage(r io.Reader) (*UpdateShortChatMessage, error) 
 	if v.Flags.Has(7) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -8757,6 +8841,9 @@ func DecodeUpdatesCombined(r io.Reader) (*UpdatesCombined, error) {
 	v := &UpdatesCombined{}
 	ReadInt(r)
 	_cntUpdates := ReadInt(r)
+	if err := checkVectorCount(_cntUpdates); err != nil {
+		return nil, err
+	}
 	v.Updates = make([]UpdateClass, _cntUpdates)
 	for _iUpdates := range v.Updates {
 		_objUpdates, _ := ReadTLObject(r)
@@ -8764,6 +8851,9 @@ func DecodeUpdatesCombined(r io.Reader) (*UpdatesCombined, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -8771,6 +8861,9 @@ func DecodeUpdatesCombined(r io.Reader) (*UpdatesCombined, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8832,6 +8925,9 @@ func DecodeUpdates(r io.Reader) (*Updates, error) {
 	v := &Updates{}
 	ReadInt(r)
 	_cntUpdates := ReadInt(r)
+	if err := checkVectorCount(_cntUpdates); err != nil {
+		return nil, err
+	}
 	v.Updates = make([]UpdateClass, _cntUpdates)
 	for _iUpdates := range v.Updates {
 		_objUpdates, _ := ReadTLObject(r)
@@ -8839,6 +8935,9 @@ func DecodeUpdates(r io.Reader) (*Updates, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -8846,6 +8945,9 @@ func DecodeUpdates(r io.Reader) (*Updates, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8943,6 +9045,9 @@ func DecodeUpdateShortSentMessage(r io.Reader) (*UpdateShortSentMessage, error) 
 	if v.Flags.Has(7) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -9117,6 +9222,9 @@ func DecodeUpdatesChannelDifferenceTooLong(r io.Reader) (*UpdatesChannelDifferen
 	v.Dialog = _objDialog.(DialogClass)
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -9124,6 +9232,9 @@ func DecodeUpdatesChannelDifferenceTooLong(r io.Reader) (*UpdatesChannelDifferen
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -9131,6 +9242,9 @@ func DecodeUpdatesChannelDifferenceTooLong(r io.Reader) (*UpdatesChannelDifferen
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -9221,6 +9335,9 @@ func DecodeUpdatesChannelDifference(r io.Reader) (*UpdatesChannelDifference, err
 	}
 	ReadInt(r)
 	_cntNewMessages := ReadInt(r)
+	if err := checkVectorCount(_cntNewMessages); err != nil {
+		return nil, err
+	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
 		_objNewMessages, _ := ReadTLObject(r)
@@ -9228,6 +9345,9 @@ func DecodeUpdatesChannelDifference(r io.Reader) (*UpdatesChannelDifference, err
 	}
 	ReadInt(r)
 	_cntOtherUpdates := ReadInt(r)
+	if err := checkVectorCount(_cntOtherUpdates); err != nil {
+		return nil, err
+	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
 		_objOtherUpdates, _ := ReadTLObject(r)
@@ -9235,6 +9355,9 @@ func DecodeUpdatesChannelDifference(r io.Reader) (*UpdatesChannelDifference, err
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -9242,6 +9365,9 @@ func DecodeUpdatesChannelDifference(r io.Reader) (*UpdatesChannelDifference, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -9296,6 +9422,9 @@ func DecodeLangPackDifference(r io.Reader) (*LangPackDifference, error) {
 	v.Version = int32(ReadInt(r))
 	ReadInt(r)
 	_cntStrings := ReadInt(r)
+	if err := checkVectorCount(_cntStrings); err != nil {
+		return nil, err
+	}
 	v.Strings = make([]LangPackStringClass, _cntStrings)
 	for _iStrings := range v.Strings {
 		_objStrings, _ := ReadTLObject(r)

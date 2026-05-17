@@ -223,8 +223,7 @@ func (c *RPCClient) BotsGetBotCommands(ctx context.Context, req *BotsGetBotComma
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // BotsSetBotMenuButtonTypeID is the constructor ID for the RPC function bots.setBotMenuButton.
@@ -1050,8 +1049,7 @@ func (c *RPCClient) BotsGetPreviewMedias(ctx context.Context, req *BotsGetPrevie
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // BotsUpdateUserEmojiStatusTypeID is the constructor ID for the RPC function bots.updateUserEmojiStatus.
@@ -1216,8 +1214,7 @@ func (c *RPCClient) BotsGetAdminedBots(ctx context.Context) (TLObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // BotsUpdateStarRefProgramTypeID is the constructor ID for the RPC function bots.updateStarRefProgram.

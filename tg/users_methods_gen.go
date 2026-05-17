@@ -49,8 +49,7 @@ func (c *RPCClient) UsersGetUsers(ctx context.Context, req *UsersGetUsersRequest
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // UsersGetFullUserTypeID is the constructor ID for the RPC function users.getFullUser.
@@ -181,8 +180,7 @@ func (c *RPCClient) UsersGetRequirementsToContact(ctx context.Context, req *User
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // UsersGetSavedMusicTypeID is the constructor ID for the RPC function users.getSavedMusic.

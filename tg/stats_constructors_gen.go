@@ -4,10 +4,10 @@ package tg
 
 // ConstructorMapStats maps constructor IDs to factory functions.
 var ConstructorMapStats = map[uint32]func() TLObject{
-	0x7fe91c14: func() TLObject { return &StatsMessageStats{} },
-	0x396ca5fc: func() TLObject { return &StatsBroadcastStats{} },
-	0xef7ff916: func() TLObject { return &StatsMegagroupStats{} },
 	0x50cd067c: func() TLObject { return &StatsStoryStats{} },
 	0x93037e20: func() TLObject { return &StatsPublicForwards{} },
+	0x7fe91c14: func() TLObject { return &StatsMessageStats{} },
 	0x2999beed: func() TLObject { return &StatsPollStats{} },
+	0xef7ff916: func() TLObject { return &StatsMegagroupStats{} },
+	0x396ca5fc: func() TLObject { return &StatsBroadcastStats{} },
 }

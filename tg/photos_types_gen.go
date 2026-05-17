@@ -135,6 +135,9 @@ func DecodePhoto(r io.Reader) (*Photo, error) {
 	v.Date = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSizes := ReadInt(r)
+	if err := checkVectorCount(_cntSizes); err != nil {
+		return nil, err
+	}
 	v.Sizes = make([]PhotoSizeClass, _cntSizes)
 	for _iSizes := range v.Sizes {
 		_objSizes, _ := ReadTLObject(r)
@@ -143,6 +146,9 @@ func DecodePhoto(r io.Reader) (*Photo, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntVideoSizes := ReadInt(r)
+		if err := checkVectorCount(_cntVideoSizes); err != nil {
+			return nil, err
+		}
 		v.VideoSizes = make([]VideoSizeClass, _cntVideoSizes)
 		for _iVideoSizes := range v.VideoSizes {
 			_objVideoSizes, _ := ReadTLObject(r)
@@ -191,6 +197,9 @@ func DecodePhotosPhoto(r io.Reader) (*PhotosPhoto, error) {
 	v.Photo = _objPhoto.(PhotoClass)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -259,6 +268,9 @@ func DecodePhotosPhotos(r io.Reader) (*PhotosPhotos, error) {
 	v := &PhotosPhotos{}
 	ReadInt(r)
 	_cntPhotos := ReadInt(r)
+	if err := checkVectorCount(_cntPhotos); err != nil {
+		return nil, err
+	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
 		_objPhotos, _ := ReadTLObject(r)
@@ -266,6 +278,9 @@ func DecodePhotosPhotos(r io.Reader) (*PhotosPhotos, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -317,6 +332,9 @@ func DecodePhotosPhotosSlice(r io.Reader) (*PhotosPhotosSlice, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntPhotos := ReadInt(r)
+	if err := checkVectorCount(_cntPhotos); err != nil {
+		return nil, err
+	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
 		_objPhotos, _ := ReadTLObject(r)
@@ -324,6 +342,9 @@ func DecodePhotosPhotosSlice(r io.Reader) (*PhotosPhotosSlice, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

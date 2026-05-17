@@ -4,7 +4,7 @@ package tg
 
 // ConstructorMapSmsjobs maps constructor IDs to factory functions.
 var ConstructorMapSmsjobs = map[uint32]func() TLObject{
-	0xdc8b44cf: func() TLObject { return &SmsjobsEligibleToJoin{} },
-	0xe6a1eeb8: func() TLObject { return &SmsJob{} },
 	0x2aee9191: func() TLObject { return &SmsjobsStatus{} },
+	0xe6a1eeb8: func() TLObject { return &SmsJob{} },
+	0xdc8b44cf: func() TLObject { return &SmsjobsEligibleToJoin{} },
 }

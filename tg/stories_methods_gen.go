@@ -329,8 +329,7 @@ func (c *RPCClient) StoriesDeleteStories(ctx context.Context, req *StoriesDelete
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // StoriesTogglePinnedTypeID is the constructor ID for the RPC function stories.togglePinned.
@@ -373,8 +372,7 @@ func (c *RPCClient) StoriesTogglePinned(ctx context.Context, req *StoriesToggleP
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // StoriesGetAllStoriesTypeID is the constructor ID for the RPC function stories.getAllStories.
@@ -653,8 +651,7 @@ func (c *RPCClient) StoriesReadStories(ctx context.Context, req *StoriesReadStor
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // StoriesIncrementStoryViewsTypeID is the constructor ID for the RPC function stories.incrementStoryViews.
@@ -1143,8 +1140,7 @@ func (c *RPCClient) StoriesGetPeerMaxIDs(ctx context.Context, req *StoriesGetPee
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // StoriesGetChatsToSendTypeID is the constructor ID for the RPC function stories.getChatsToSend.

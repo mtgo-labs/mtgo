@@ -106,6 +106,9 @@ func DecodeUploadFileCDNRedirect(r io.Reader) (*UploadFileCDNRedirect, error) {
 	v.EncryptionIv = ReadBytes(r)
 	ReadInt(r)
 	_cntFileHashes := ReadInt(r)
+	if err := checkVectorCount(_cntFileHashes); err != nil {
+		return nil, err
+	}
 	v.FileHashes = make([]*FileHash, _cntFileHashes)
 	for _iFileHashes := range v.FileHashes {
 		_objFileHashes, _ := ReadTLObject(r)

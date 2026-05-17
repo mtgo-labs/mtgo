@@ -8,7 +8,7 @@ var ConstructorMapCrypto = map[uint32]func() TLObject{
 	0x64bd0306: func() TLObject { return &InputEncryptedFileUploaded{} },
 	0x5a17b5e5: func() TLObject { return &InputEncryptedFile{} },
 	0x2dc173c8: func() TLObject { return &InputEncryptedFileBigUploaded{} },
+	0x33f0ea47: func() TLObject { return &SecureCredentialsEncrypted{} },
 	0xc21f497e: func() TLObject { return &EncryptedFileEmpty{} },
 	0xa8008cd8: func() TLObject { return &EncryptedFile{} },
-	0x33f0ea47: func() TLObject { return &SecureCredentialsEncrypted{} },
 }

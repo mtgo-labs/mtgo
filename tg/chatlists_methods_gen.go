@@ -468,8 +468,7 @@ func (c *RPCClient) ChatlistsGetLeaveChatlistSuggestions(ctx context.Context, re
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // ChatlistsLeaveChatlistTypeID is the constructor ID for the RPC function chatlists.leaveChatlist.

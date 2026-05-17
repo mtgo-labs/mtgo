@@ -4,7 +4,7 @@ package tg
 
 // ConstructorMapPremium maps constructor IDs to factory functions.
 var ConstructorMapPremium = map[uint32]func() TLObject{
+	0x9ae228e2: func() TLObject { return &PremiumMyBoosts{} },
 	0x86f8613c: func() TLObject { return &PremiumBoostsList{} },
 	0x4959427a: func() TLObject { return &PremiumBoostsStatus{} },
-	0x9ae228e2: func() TLObject { return &PremiumMyBoosts{} },
 }

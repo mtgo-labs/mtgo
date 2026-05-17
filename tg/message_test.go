@@ -32,3 +32,19 @@ func TestMessage_ConstructorID(t *testing.T) {
 		t.Fatalf("expected 0x5BB8E511, got 0x%x", msg.ConstructorID())
 	}
 }
+
+func TestDecodeFutureSaltsRejectsHugeVector(t *testing.T) {
+	var buf bytes.Buffer
+	WriteLong(&buf, 1)
+	WriteInt(&buf, 2)
+	WriteInt(&buf, vectorBareID)
+	WriteInt(&buf, maxVectorElements+1)
+
+	_, err := DecodeFutureSalts(bytes.NewReader(buf.Bytes()))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if _, ok := err.(*vectorTooLargeError); !ok {
+		t.Fatalf("expected vectorTooLargeError, got %T: %v", err, err)
+	}
+}

@@ -66,6 +66,9 @@ func DecodePremiumBoostsList(r io.Reader) (*PremiumBoostsList, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntBoosts := ReadInt(r)
+	if err := checkVectorCount(_cntBoosts); err != nil {
+		return nil, err
+	}
 	v.Boosts = make([]*Boost, _cntBoosts)
 	for _iBoosts := range v.Boosts {
 		_objBoosts, _ := ReadTLObject(r)
@@ -76,6 +79,9 @@ func DecodePremiumBoostsList(r io.Reader) (*PremiumBoostsList, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -133,6 +139,9 @@ func DecodePremiumMyBoosts(r io.Reader) (*PremiumMyBoosts, error) {
 	v := &PremiumMyBoosts{}
 	ReadInt(r)
 	_cntMyBoosts := ReadInt(r)
+	if err := checkVectorCount(_cntMyBoosts); err != nil {
+		return nil, err
+	}
 	v.MyBoosts = make([]*MyBoost, _cntMyBoosts)
 	for _iMyBoosts := range v.MyBoosts {
 		_objMyBoosts, _ := ReadTLObject(r)
@@ -140,6 +149,9 @@ func DecodePremiumMyBoosts(r io.Reader) (*PremiumMyBoosts, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -147,6 +159,9 @@ func DecodePremiumMyBoosts(r io.Reader) (*PremiumMyBoosts, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -265,6 +280,9 @@ func DecodePremiumBoostsStatus(r io.Reader) (*PremiumBoostsStatus, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntPrepaidGiveaways := ReadInt(r)
+		if err := checkVectorCount(_cntPrepaidGiveaways); err != nil {
+			return nil, err
+		}
 		v.PrepaidGiveaways = make([]PrepaidGiveawayClass, _cntPrepaidGiveaways)
 		for _iPrepaidGiveaways := range v.PrepaidGiveaways {
 			_objPrepaidGiveaways, _ := ReadTLObject(r)

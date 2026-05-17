@@ -102,6 +102,9 @@ func DecodeHelpAppUpdate(r io.Reader) (*HelpAppUpdate, error) {
 	v.Text = ReadString(r)
 	ReadInt(r)
 	_cntEntities := ReadInt(r)
+	if err := checkVectorCount(_cntEntities); err != nil {
+		return nil, err
+	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
 		_objEntities, _ := ReadTLObject(r)
@@ -292,6 +295,9 @@ func DecodeHelpTermsOfService(r io.Reader) (*HelpTermsOfService, error) {
 	v.Text = ReadString(r)
 	ReadInt(r)
 	_cntEntities := ReadInt(r)
+	if err := checkVectorCount(_cntEntities); err != nil {
+		return nil, err
+	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
 		_objEntities, _ := ReadTLObject(r)
@@ -352,6 +358,9 @@ func DecodeHelpRecentMeUrls(r io.Reader) (*HelpRecentMeUrls, error) {
 	v := &HelpRecentMeUrls{}
 	ReadInt(r)
 	_cntUrls := ReadInt(r)
+	if err := checkVectorCount(_cntUrls); err != nil {
+		return nil, err
+	}
 	v.Urls = make([]RecentMeURLClass, _cntUrls)
 	for _iUrls := range v.Urls {
 		_objUrls, _ := ReadTLObject(r)
@@ -359,6 +368,9 @@ func DecodeHelpRecentMeUrls(r io.Reader) (*HelpRecentMeUrls, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -366,6 +378,9 @@ func DecodeHelpRecentMeUrls(r io.Reader) (*HelpRecentMeUrls, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -571,6 +586,9 @@ func DecodeHelpDeepLinkInfo(r io.Reader) (*HelpDeepLinkInfo, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -790,6 +808,9 @@ func DecodeHelpUserInfo(r io.Reader) (*HelpUserInfo, error) {
 	v.Message = ReadString(r)
 	ReadInt(r)
 	_cntEntities := ReadInt(r)
+	if err := checkVectorCount(_cntEntities); err != nil {
+		return nil, err
+	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
 		_objEntities, _ := ReadTLObject(r)
@@ -960,6 +981,9 @@ func DecodeHelpPromoData(r io.Reader) (*HelpPromoData, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -967,6 +991,9 @@ func DecodeHelpPromoData(r io.Reader) (*HelpPromoData, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1112,6 +1139,9 @@ func DecodeHelpCountry(r io.Reader) (*HelpCountry, error) {
 	}
 	ReadInt(r)
 	_cntCountryCodes := ReadInt(r)
+	if err := checkVectorCount(_cntCountryCodes); err != nil {
+		return nil, err
+	}
 	v.CountryCodes = make([]*HelpCountryCode, _cntCountryCodes)
 	for _iCountryCodes := range v.CountryCodes {
 		_objCountryCodes, _ := ReadTLObject(r)
@@ -1205,6 +1235,9 @@ func DecodeHelpCountriesList(r io.Reader) (*HelpCountriesList, error) {
 	v := &HelpCountriesList{}
 	ReadInt(r)
 	_cntCountries := ReadInt(r)
+	if err := checkVectorCount(_cntCountries); err != nil {
+		return nil, err
+	}
 	v.Countries = make([]*HelpCountry, _cntCountries)
 	for _iCountries := range v.Countries {
 		_objCountries, _ := ReadTLObject(r)
@@ -1274,6 +1307,9 @@ func DecodeHelpPremiumPromo(r io.Reader) (*HelpPremiumPromo, error) {
 	v.StatusText = ReadString(r)
 	ReadInt(r)
 	_cntStatusEntities := ReadInt(r)
+	if err := checkVectorCount(_cntStatusEntities); err != nil {
+		return nil, err
+	}
 	v.StatusEntities = make([]MessageEntityClass, _cntStatusEntities)
 	for _iStatusEntities := range v.StatusEntities {
 		_objStatusEntities, _ := ReadTLObject(r)
@@ -1282,6 +1318,9 @@ func DecodeHelpPremiumPromo(r io.Reader) (*HelpPremiumPromo, error) {
 	v.VideoSections = ReadVectorString(r)
 	ReadInt(r)
 	_cntVideos := ReadInt(r)
+	if err := checkVectorCount(_cntVideos); err != nil {
+		return nil, err
+	}
 	v.Videos = make([]DocumentClass, _cntVideos)
 	for _iVideos := range v.Videos {
 		_objVideos, _ := ReadTLObject(r)
@@ -1289,6 +1328,9 @@ func DecodeHelpPremiumPromo(r io.Reader) (*HelpPremiumPromo, error) {
 	}
 	ReadInt(r)
 	_cntPeriodOptions := ReadInt(r)
+	if err := checkVectorCount(_cntPeriodOptions); err != nil {
+		return nil, err
+	}
 	v.PeriodOptions = make([]*PremiumSubscriptionOption, _cntPeriodOptions)
 	for _iPeriodOptions := range v.PeriodOptions {
 		_objPeriodOptions, _ := ReadTLObject(r)
@@ -1296,6 +1338,9 @@ func DecodeHelpPremiumPromo(r io.Reader) (*HelpPremiumPromo, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1659,6 +1704,9 @@ func DecodeHelpPeerColors(r io.Reader) (*HelpPeerColors, error) {
 	v.Hash = int32(ReadInt(r))
 	ReadInt(r)
 	_cntColors := ReadInt(r)
+	if err := checkVectorCount(_cntColors); err != nil {
+		return nil, err
+	}
 	v.Colors = make([]*HelpPeerColorOption, _cntColors)
 	for _iColors := range v.Colors {
 		_objColors, _ := ReadTLObject(r)
@@ -1752,6 +1800,9 @@ func DecodeHelpTimezonesList(r io.Reader) (*HelpTimezonesList, error) {
 	v := &HelpTimezonesList{}
 	ReadInt(r)
 	_cntTimezones := ReadInt(r)
+	if err := checkVectorCount(_cntTimezones); err != nil {
+		return nil, err
+	}
 	v.Timezones = make([]*Timezone, _cntTimezones)
 	for _iTimezones := range v.Timezones {
 		_objTimezones, _ := ReadTLObject(r)
@@ -1804,6 +1855,9 @@ func DecodeHelpConfigSimple(r io.Reader) (*HelpConfigSimple, error) {
 	v.Expires = int32(ReadInt(r))
 	ReadInt(r)
 	_cntRules := ReadInt(r)
+	if err := checkVectorCount(_cntRules); err != nil {
+		return nil, err
+	}
 	v.Rules = make([]*AccessPointRule, _cntRules)
 	for _iRules := range v.Rules {
 		_objRules, _ := ReadTLObject(r)

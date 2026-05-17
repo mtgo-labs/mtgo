@@ -72,3 +72,17 @@ type vectorTooLargeError struct {
 func (e *vectorTooLargeError) Error() string {
 	return "tg: vector too large"
 }
+
+const maxVectorElements uint32 = 100000
+
+// CheckVectorCount rejects implausibly large TL vector lengths before allocating.
+func CheckVectorCount(count uint32) error {
+	if count > maxVectorElements {
+		return &vectorTooLargeError{count: count}
+	}
+	return nil
+}
+
+func checkVectorCount(count uint32) error {
+	return CheckVectorCount(count)
+}

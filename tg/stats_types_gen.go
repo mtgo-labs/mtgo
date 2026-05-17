@@ -122,6 +122,9 @@ func DecodeStatsBroadcastStats(r io.Reader) (*StatsBroadcastStats, error) {
 	v.StoryReactionsByEmotionGraph = _objStoryReactionsByEmotionGraph.(StatsGraphClass)
 	ReadInt(r)
 	_cntRecentPostsInteractions := ReadInt(r)
+	if err := checkVectorCount(_cntRecentPostsInteractions); err != nil {
+		return nil, err
+	}
 	v.RecentPostsInteractions = make([]PostInteractionCountersClass, _cntRecentPostsInteractions)
 	for _iRecentPostsInteractions := range v.RecentPostsInteractions {
 		_objRecentPostsInteractions, _ := ReadTLObject(r)
@@ -237,6 +240,9 @@ func DecodeStatsMegagroupStats(r io.Reader) (*StatsMegagroupStats, error) {
 	v.WeekdaysGraph = _objWeekdaysGraph.(StatsGraphClass)
 	ReadInt(r)
 	_cntTopPosters := ReadInt(r)
+	if err := checkVectorCount(_cntTopPosters); err != nil {
+		return nil, err
+	}
 	v.TopPosters = make([]*StatsGroupTopPoster, _cntTopPosters)
 	for _iTopPosters := range v.TopPosters {
 		_objTopPosters, _ := ReadTLObject(r)
@@ -244,6 +250,9 @@ func DecodeStatsMegagroupStats(r io.Reader) (*StatsMegagroupStats, error) {
 	}
 	ReadInt(r)
 	_cntTopAdmins := ReadInt(r)
+	if err := checkVectorCount(_cntTopAdmins); err != nil {
+		return nil, err
+	}
 	v.TopAdmins = make([]*StatsGroupTopAdmin, _cntTopAdmins)
 	for _iTopAdmins := range v.TopAdmins {
 		_objTopAdmins, _ := ReadTLObject(r)
@@ -251,6 +260,9 @@ func DecodeStatsMegagroupStats(r io.Reader) (*StatsMegagroupStats, error) {
 	}
 	ReadInt(r)
 	_cntTopInviters := ReadInt(r)
+	if err := checkVectorCount(_cntTopInviters); err != nil {
+		return nil, err
+	}
 	v.TopInviters = make([]*StatsGroupTopInviter, _cntTopInviters)
 	for _iTopInviters := range v.TopInviters {
 		_objTopInviters, _ := ReadTLObject(r)
@@ -258,6 +270,9 @@ func DecodeStatsMegagroupStats(r io.Reader) (*StatsMegagroupStats, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -417,6 +432,9 @@ func DecodeStatsPublicForwards(r io.Reader) (*StatsPublicForwards, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntForwards := ReadInt(r)
+	if err := checkVectorCount(_cntForwards); err != nil {
+		return nil, err
+	}
 	v.Forwards = make([]PublicForwardClass, _cntForwards)
 	for _iForwards := range v.Forwards {
 		_objForwards, _ := ReadTLObject(r)
@@ -427,6 +445,9 @@ func DecodeStatsPublicForwards(r io.Reader) (*StatsPublicForwards, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -434,6 +455,9 @@ func DecodeStatsPublicForwards(r io.Reader) (*StatsPublicForwards, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

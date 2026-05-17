@@ -482,6 +482,9 @@ func DecodeChannelsChannelParticipant(r io.Reader) (*ChannelsChannelParticipant,
 	v.Participant = _objParticipant.(ChannelParticipantClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -489,6 +492,9 @@ func DecodeChannelsChannelParticipant(r io.Reader) (*ChannelsChannelParticipant,
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -566,6 +572,9 @@ func DecodeChannelsChannelParticipants(r io.Reader) (*ChannelsChannelParticipant
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntParticipants := ReadInt(r)
+	if err := checkVectorCount(_cntParticipants); err != nil {
+		return nil, err
+	}
 	v.Participants = make([]ChannelParticipantClass, _cntParticipants)
 	for _iParticipants := range v.Participants {
 		_objParticipants, _ := ReadTLObject(r)
@@ -573,6 +582,9 @@ func DecodeChannelsChannelParticipants(r io.Reader) (*ChannelsChannelParticipant
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -580,6 +592,9 @@ func DecodeChannelsChannelParticipants(r io.Reader) (*ChannelsChannelParticipant
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -666,6 +681,9 @@ func DecodeChannelsAdminLogResults(r io.Reader) (*ChannelsAdminLogResults, error
 	v := &ChannelsAdminLogResults{}
 	ReadInt(r)
 	_cntEvents := ReadInt(r)
+	if err := checkVectorCount(_cntEvents); err != nil {
+		return nil, err
+	}
 	v.Events = make([]*ChannelAdminLogEvent, _cntEvents)
 	for _iEvents := range v.Events {
 		_objEvents, _ := ReadTLObject(r)
@@ -673,6 +691,9 @@ func DecodeChannelsAdminLogResults(r io.Reader) (*ChannelsAdminLogResults, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -680,6 +701,9 @@ func DecodeChannelsAdminLogResults(r io.Reader) (*ChannelsAdminLogResults, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -737,6 +761,9 @@ func DecodeChannelsSendAsPeers(r io.Reader) (*ChannelsSendAsPeers, error) {
 	v := &ChannelsSendAsPeers{}
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]*SendAsPeer, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -744,6 +771,9 @@ func DecodeChannelsSendAsPeers(r io.Reader) (*ChannelsSendAsPeers, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -751,6 +781,9 @@ func DecodeChannelsSendAsPeers(r io.Reader) (*ChannelsSendAsPeers, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -822,6 +855,9 @@ func DecodeChannelsSponsoredMessageReportResultChooseOption(r io.Reader) (*Chann
 	v.Title = ReadString(r)
 	ReadInt(r)
 	_cntOptions := ReadInt(r)
+	if err := checkVectorCount(_cntOptions); err != nil {
+		return nil, err
+	}
 	v.Options = make([]*SponsoredMessageReportOption, _cntOptions)
 	for _iOptions := range v.Options {
 		_objOptions, _ := ReadTLObject(r)

@@ -290,8 +290,7 @@ func (c *RPCClient) UploadReuploadCDNFile(ctx context.Context, req *UploadReuplo
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // UploadGetCDNFileHashesTypeID is the constructor ID for the RPC function upload.getCdnFileHashes.
@@ -332,8 +331,7 @@ func (c *RPCClient) UploadGetCDNFileHashes(ctx context.Context, req *UploadGetCD
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // UploadGetFileHashesTypeID is the constructor ID for the RPC function upload.getFileHashes.
@@ -374,6 +372,5 @@ func (c *RPCClient) UploadGetFileHashes(ctx context.Context, req *UploadGetFileH
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }

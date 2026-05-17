@@ -4,9 +4,9 @@ package tg
 
 // ConstructorMapPhotos maps constructor IDs to factory functions.
 var ConstructorMapPhotos = map[uint32]func() TLObject{
+	0x8dca6aa5: func() TLObject { return &PhotosPhotos{} },
+	0x15051f54: func() TLObject { return &PhotosPhotosSlice{} },
 	0x2331b22d: func() TLObject { return &PhotoEmpty{} },
 	0xfb197a65: func() TLObject { return &Photo{} },
 	0x20212ca8: func() TLObject { return &PhotosPhoto{} },
-	0x8dca6aa5: func() TLObject { return &PhotosPhotos{} },
-	0x15051f54: func() TLObject { return &PhotosPhotosSlice{} },
 }
