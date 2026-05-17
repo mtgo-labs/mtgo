@@ -603,6 +603,21 @@ func (s *Session) writer() {
 	}
 }
 
+func (s *Session) processIncoming(msg *tg.MTProtoMessage) {
+	if msg == nil || msg.Body == nil {
+		return
+	}
+	if container, ok := msg.Body.(*tg.MsgContainer); ok {
+		for _, subMsg := range container.Messages {
+			if subMsg.Body != nil {
+				s.handlePacket(subMsg.MsgID, subMsg.SeqNo, subMsg.Body)
+			}
+		}
+		return
+	}
+	s.handlePacket(msg.MsgID, msg.SeqNo, msg.Body)
+}
+
 func (s *Session) recvWorker() {
 	var lastDisconnect time.Time
 	for {
@@ -632,20 +647,15 @@ func (s *Session) recvWorker() {
 		if err != nil {
 			continue
 		}
-		if msg == nil || msg.Body == nil {
-			continue
-		}
 
-		if container, ok := msg.Body.(*tg.MsgContainer); ok {
-			for _, subMsg := range container.Messages {
-				if subMsg.Body != nil {
-					s.handlePacket(subMsg.MsgID, subMsg.SeqNo, subMsg.Body)
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("session: recvWorker panic: %v", r)
 				}
-			}
-			continue
-		}
-
-		s.handlePacket(msg.MsgID, msg.SeqNo, msg.Body)
+			}()
+			s.processIncoming(msg)
+		}()
 	}
 }
 
