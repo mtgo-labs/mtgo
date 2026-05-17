@@ -16,11 +16,7 @@ type TLObject interface {
 }
 
 // EncodeTLObject encodes obj into b using the TLObject.Encode method.
-// Returns nil if obj is nil.
 func EncodeTLObject(b *bytes.Buffer, obj TLObject) error {
-	if obj == nil {
-		return nil
-	}
 	return obj.Encode(b)
 }
 

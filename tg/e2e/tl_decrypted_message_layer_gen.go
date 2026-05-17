@@ -44,13 +44,8 @@ func DecodeDecryptedMessageLayer(r io.Reader) (*DecryptedMessageLayer, error) {
 	v.Layer = int32(tg.ReadInt(r))
 	v.InSeqNo = int32(tg.ReadInt(r))
 	v.OutSeqNo = int32(tg.ReadInt(r))
-	_objMessage, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cMessage, _ok := _objMessage.(DecryptedMessageClass); _ok {
-		v.Message = _cMessage
-	}
+	_objMessage, _ := ReadE2ETLObject(r)
+	v.Message = _objMessage.(DecryptedMessageClass)
 	return v, nil
 }
 

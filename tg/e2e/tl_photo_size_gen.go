@@ -20,8 +20,8 @@ type PhotoSizeClass interface {
 // PhotoSizeEmptyTypeID is the constructor ID for TL type photoSizeEmpty.
 const PhotoSizeEmptyTypeID = 0x0e17e23c
 
-// PhotoSizeTLTypeID is the constructor ID for TL type photoSize.
-const PhotoSizeTLTypeID = 0x77bfb61b
+// PhotoSizeTypeID is the constructor ID for TL type photoSize.
+const PhotoSizeTypeID = 0x77bfb61b
 
 // PhotoCachedSizeTypeID is the constructor ID for TL type photoCachedSize.
 const PhotoCachedSizeTypeID = 0xe9a734fa
@@ -29,8 +29,8 @@ const PhotoCachedSizeTypeID = 0xe9a734fa
 // isPhotoSize marks PhotoSizeEmpty as implementing the PhotoSizeClass interface.
 func (*PhotoSizeEmpty) isPhotoSize() {}
 
-// isPhotoSize marks PhotoSizeTL as implementing the PhotoSizeClass interface.
-func (*PhotoSizeTL) isPhotoSize() {}
+// isPhotoSize marks PhotoSize as implementing the PhotoSizeClass interface.
+func (*PhotoSize) isPhotoSize() {}
 
 // isPhotoSize marks PhotoCachedSize as implementing the PhotoSizeClass interface.
 func (*PhotoCachedSize) isPhotoSize() {}
@@ -65,8 +65,8 @@ func init() {
 	}
 }
 
-// PhotoSizeTL represents the TL constructor photoSize (0x77bfb61b).
-type PhotoSizeTL struct {
+// PhotoSize represents the TL constructor photoSize (0x77bfb61b).
+type PhotoSize struct {
 	Type     string            `json:"type,omitempty"`
 	Location FileLocationClass `json:"location,omitempty"`
 	W        int32             `json:"w,omitempty"`
@@ -75,13 +75,13 @@ type PhotoSizeTL struct {
 }
 
 // ConstructorID returns the TL constructor identifier 0x77bfb61b.
-func (v *PhotoSizeTL) ConstructorID() uint32 {
-	return PhotoSizeTLTypeID
+func (v *PhotoSize) ConstructorID() uint32 {
+	return PhotoSizeTypeID
 }
 
-// Encode serializes PhotoSizeTL to a bytes.Buffer using the TL binary protocol.
-func (v *PhotoSizeTL) Encode(b *bytes.Buffer) error {
-	tg.WriteInt(b, PhotoSizeTLTypeID)
+// Encode serializes PhotoSize to a bytes.Buffer using the TL binary protocol.
+func (v *PhotoSize) Encode(b *bytes.Buffer) error {
+	tg.WriteInt(b, PhotoSizeTypeID)
 	tg.WriteString(b, v.Type)
 	tg.EncodeTLObject(b, v.Location)
 	tg.WriteInt(b, uint32(v.W))
@@ -90,17 +90,12 @@ func (v *PhotoSizeTL) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
-// DecodePhotoSizeTL deserializes a PhotoSizeTL from a reader using the TL binary protocol.
-func DecodePhotoSizeTL(r io.Reader) (*PhotoSizeTL, error) {
-	v := &PhotoSizeTL{}
+// DecodePhotoSize deserializes a PhotoSize from a reader using the TL binary protocol.
+func DecodePhotoSize(r io.Reader) (*PhotoSize, error) {
+	v := &PhotoSize{}
 	v.Type = tg.ReadString(r)
-	_objLocation, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cLocation, _ok := _objLocation.(FileLocationClass); _ok {
-		v.Location = _cLocation
-	}
+	_objLocation, _ := ReadE2ETLObject(r)
+	v.Location = _objLocation.(FileLocationClass)
 	v.W = int32(tg.ReadInt(r))
 	v.H = int32(tg.ReadInt(r))
 	v.Size = int32(tg.ReadInt(r))
@@ -108,8 +103,8 @@ func DecodePhotoSizeTL(r io.Reader) (*PhotoSizeTL, error) {
 }
 
 func init() {
-	Registry[PhotoSizeTLTypeID] = func(r io.Reader) (tg.TLObject, error) {
-		return DecodePhotoSizeTL(r)
+	Registry[PhotoSizeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+		return DecodePhotoSize(r)
 	}
 }
 
@@ -142,13 +137,8 @@ func (v *PhotoCachedSize) Encode(b *bytes.Buffer) error {
 func DecodePhotoCachedSize(r io.Reader) (*PhotoCachedSize, error) {
 	v := &PhotoCachedSize{}
 	v.Type = tg.ReadString(r)
-	_objLocation, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cLocation, _ok := _objLocation.(FileLocationClass); _ok {
-		v.Location = _cLocation
-	}
+	_objLocation, _ := ReadE2ETLObject(r)
+	v.Location = _objLocation.(FileLocationClass)
 	v.W = int32(tg.ReadInt(r))
 	v.H = int32(tg.ReadInt(r))
 	v.Bytes = tg.ReadBytes(r)

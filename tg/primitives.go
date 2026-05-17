@@ -26,9 +26,7 @@ func ReadIntErr(r io.Reader) (uint32, error) {
 
 // WriteInt writes a 32-bit little-endian unsigned integer to b.
 func WriteInt(b *bytes.Buffer, v uint32) {
-	var buf [4]byte
-	binary.LittleEndian.PutUint32(buf[:], v)
-	b.Write(buf[:])
+	_ = binary.Write(b, binary.LittleEndian, v)
 }
 
 // ReadLong reads a 64-bit little-endian signed integer from r.
@@ -40,9 +38,7 @@ func ReadLong(r io.Reader) int64 {
 
 // WriteLong writes a 64-bit little-endian signed integer to b.
 func WriteLong(b *bytes.Buffer, v int64) {
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(v))
-	b.Write(buf[:])
+	_ = binary.Write(b, binary.LittleEndian, v)
 }
 
 // ReadInt128 reads a 128-bit (16-byte) value from r.
@@ -130,7 +126,8 @@ func ReadBytes(r io.Reader) []byte {
 
 	padding := (4 - (length+headerLen)%4) % 4
 	if padding > 0 {
-		_, _ = io.CopyN(io.Discard, r, int64(padding))
+		discard := make([]byte, padding)
+		_, _ = io.ReadFull(r, discard)
 	}
 	return data
 }
@@ -168,27 +165,9 @@ func ReadString(r io.Reader) string {
 	return string(data)
 }
 
-// WriteString writes a TL-encoded string to b without allocating an
-// intermediate []byte copy. It mirrors WriteBytes using b.WriteString.
+// WriteString writes a TL-encoded string to b.
 func WriteString(b *bytes.Buffer, v string) {
-	length := len(v)
-	headerLen := 1
-	if length <= 253 {
-		b.WriteByte(byte(length))
-	} else {
-		headerLen = 4
-		b.WriteByte(254)
-		b.WriteByte(byte(length))
-		b.WriteByte(byte(length >> 8))
-		b.WriteByte(byte(length >> 16))
-	}
-	if length > 0 {
-		b.WriteString(v)
-	}
-	padding := (4 - (length+headerLen)%4) % 4
-	for i := 0; i < padding; i++ {
-		b.WriteByte(0)
-	}
+	WriteBytes(b, []byte(v))
 }
 
 const vectorBareID uint32 = 0x1cb5c415

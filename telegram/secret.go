@@ -175,7 +175,7 @@ func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text strin
 	randomBytes := make([]byte, 32)
 	rand.Read(randomBytes)
 
-	innerMsg := &e2e.DecryptedMessageTL{
+	innerMsg := &e2e.DecryptedMessage{
 		RandomID: generateRandomInt64(),
 		Message:  text,
 	}
@@ -285,7 +285,7 @@ func (c *Client) SecretChatVisualization(chatID int32) []string {
 // Example:
 //
 //	client.OnSecretMessage(func(chat *telegram.SecretChat, layer *e2e.DecryptedMessageLayer) {
-//		msg := layer.Message.(*e2e.DecryptedMessageTL)
+//		msg := layer.Message.(*e2e.DecryptedMessage)
 //		fmt.Printf("secret chat %d: %s\n", chat.ID, msg.Message)
 //	})
 type SecretMessageHandler func(chat *SecretChat, layer *e2e.DecryptedMessageLayer)
@@ -614,7 +614,7 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 	randomBytes := make([]byte, 32)
 	rand.Read(randomBytes)
 
-	innerMsg := &e2e.DecryptedMessageTL{
+	innerMsg := &e2e.DecryptedMessage{
 		RandomID: generateRandomInt64(),
 		TTL:      opts.TTL,
 		Message:  opts.Caption,

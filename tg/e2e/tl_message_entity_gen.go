@@ -29,8 +29,8 @@ const MessageEntityHashtagTypeID = 0x6f635b0d
 // MessageEntityBotCommandTypeID is the constructor ID for TL type messageEntityBotCommand.
 const MessageEntityBotCommandTypeID = 0x6cef8ac7
 
-// MessageEntityUrlTypeID is the constructor ID for TL type messageEntityUrl.
-const MessageEntityUrlTypeID = 0x6ed02538
+// MessageEntityURLTypeID is the constructor ID for TL type messageEntityUrl.
+const MessageEntityURLTypeID = 0x6ed02538
 
 // MessageEntityEmailTypeID is the constructor ID for TL type messageEntityEmail.
 const MessageEntityEmailTypeID = 0x64e475c2
@@ -47,8 +47,8 @@ const MessageEntityCodeTypeID = 0x28a20571
 // MessageEntityPreTypeID is the constructor ID for TL type messageEntityPre.
 const MessageEntityPreTypeID = 0x73924be0
 
-// MessageEntityTextUrlTypeID is the constructor ID for TL type messageEntityTextUrl.
-const MessageEntityTextUrlTypeID = 0x76a6d327
+// MessageEntityTextURLTypeID is the constructor ID for TL type messageEntityTextUrl.
+const MessageEntityTextURLTypeID = 0x76a6d327
 
 // MessageEntityMentionNameTypeID is the constructor ID for TL type messageEntityMentionName.
 const MessageEntityMentionNameTypeID = 0x352dca58
@@ -89,8 +89,8 @@ func (*MessageEntityHashtag) isMessageEntity() {}
 // isMessageEntity marks MessageEntityBotCommand as implementing the MessageEntityClass interface.
 func (*MessageEntityBotCommand) isMessageEntity() {}
 
-// isMessageEntity marks MessageEntityUrl as implementing the MessageEntityClass interface.
-func (*MessageEntityUrl) isMessageEntity() {}
+// isMessageEntity marks MessageEntityURL as implementing the MessageEntityClass interface.
+func (*MessageEntityURL) isMessageEntity() {}
 
 // isMessageEntity marks MessageEntityEmail as implementing the MessageEntityClass interface.
 func (*MessageEntityEmail) isMessageEntity() {}
@@ -107,8 +107,8 @@ func (*MessageEntityCode) isMessageEntity() {}
 // isMessageEntity marks MessageEntityPre as implementing the MessageEntityClass interface.
 func (*MessageEntityPre) isMessageEntity() {}
 
-// isMessageEntity marks MessageEntityTextUrl as implementing the MessageEntityClass interface.
-func (*MessageEntityTextUrl) isMessageEntity() {}
+// isMessageEntity marks MessageEntityTextURL as implementing the MessageEntityClass interface.
+func (*MessageEntityTextURL) isMessageEntity() {}
 
 // isMessageEntity marks MessageEntityMentionName as implementing the MessageEntityClass interface.
 func (*MessageEntityMentionName) isMessageEntity() {}
@@ -269,36 +269,36 @@ func init() {
 	}
 }
 
-// MessageEntityUrl represents the TL constructor messageEntityUrl (0x6ed02538).
-type MessageEntityUrl struct {
+// MessageEntityURL represents the TL constructor messageEntityUrl (0x6ed02538).
+type MessageEntityURL struct {
 	Offset int32 `json:"offset,omitempty"`
 	Length int32 `json:"length,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0x6ed02538.
-func (v *MessageEntityUrl) ConstructorID() uint32 {
-	return MessageEntityUrlTypeID
+func (v *MessageEntityURL) ConstructorID() uint32 {
+	return MessageEntityURLTypeID
 }
 
-// Encode serializes MessageEntityUrl to a bytes.Buffer using the TL binary protocol.
-func (v *MessageEntityUrl) Encode(b *bytes.Buffer) error {
-	tg.WriteInt(b, MessageEntityUrlTypeID)
+// Encode serializes MessageEntityURL to a bytes.Buffer using the TL binary protocol.
+func (v *MessageEntityURL) Encode(b *bytes.Buffer) error {
+	tg.WriteInt(b, MessageEntityURLTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
 	return nil
 }
 
-// DecodeMessageEntityUrl deserializes a MessageEntityUrl from a reader using the TL binary protocol.
-func DecodeMessageEntityUrl(r io.Reader) (*MessageEntityUrl, error) {
-	v := &MessageEntityUrl{}
+// DecodeMessageEntityURL deserializes a MessageEntityURL from a reader using the TL binary protocol.
+func DecodeMessageEntityURL(r io.Reader) (*MessageEntityURL, error) {
+	v := &MessageEntityURL{}
 	v.Offset = int32(tg.ReadInt(r))
 	v.Length = int32(tg.ReadInt(r))
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityUrlTypeID] = func(r io.Reader) (tg.TLObject, error) {
-		return DecodeMessageEntityUrl(r)
+	Registry[MessageEntityURLTypeID] = func(r io.Reader) (tg.TLObject, error) {
+		return DecodeMessageEntityURL(r)
 	}
 }
 
@@ -470,39 +470,39 @@ func init() {
 	}
 }
 
-// MessageEntityTextUrl represents the TL constructor messageEntityTextUrl (0x76a6d327).
-type MessageEntityTextUrl struct {
+// MessageEntityTextURL represents the TL constructor messageEntityTextUrl (0x76a6d327).
+type MessageEntityTextURL struct {
 	Offset int32  `json:"offset,omitempty"`
 	Length int32  `json:"length,omitempty"`
-	Url    string `json:"url,omitempty"`
+	URL    string `json:"url,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0x76a6d327.
-func (v *MessageEntityTextUrl) ConstructorID() uint32 {
-	return MessageEntityTextUrlTypeID
+func (v *MessageEntityTextURL) ConstructorID() uint32 {
+	return MessageEntityTextURLTypeID
 }
 
-// Encode serializes MessageEntityTextUrl to a bytes.Buffer using the TL binary protocol.
-func (v *MessageEntityTextUrl) Encode(b *bytes.Buffer) error {
-	tg.WriteInt(b, MessageEntityTextUrlTypeID)
+// Encode serializes MessageEntityTextURL to a bytes.Buffer using the TL binary protocol.
+func (v *MessageEntityTextURL) Encode(b *bytes.Buffer) error {
+	tg.WriteInt(b, MessageEntityTextURLTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
-	tg.WriteString(b, v.Url)
+	tg.WriteString(b, v.URL)
 	return nil
 }
 
-// DecodeMessageEntityTextUrl deserializes a MessageEntityTextUrl from a reader using the TL binary protocol.
-func DecodeMessageEntityTextUrl(r io.Reader) (*MessageEntityTextUrl, error) {
-	v := &MessageEntityTextUrl{}
+// DecodeMessageEntityTextURL deserializes a MessageEntityTextURL from a reader using the TL binary protocol.
+func DecodeMessageEntityTextURL(r io.Reader) (*MessageEntityTextURL, error) {
+	v := &MessageEntityTextURL{}
 	v.Offset = int32(tg.ReadInt(r))
 	v.Length = int32(tg.ReadInt(r))
-	v.Url = tg.ReadString(r)
+	v.URL = tg.ReadString(r)
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityTextUrlTypeID] = func(r io.Reader) (tg.TLObject, error) {
-		return DecodeMessageEntityTextUrl(r)
+	Registry[MessageEntityTextURLTypeID] = func(r io.Reader) (tg.TLObject, error) {
+		return DecodeMessageEntityTextURL(r)
 	}
 }
 
