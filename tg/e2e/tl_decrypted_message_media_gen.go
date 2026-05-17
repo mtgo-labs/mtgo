@@ -514,7 +514,7 @@ type DecryptedMessageMediaExternalDocument struct {
 	MimeType   string                   `json:"mime_type,omitempty"`
 	Size       int32                    `json:"size,omitempty"`
 	Thumb      PhotoSizeClass           `json:"thumb,omitempty"`
-	DcID       int32                    `json:"dc_id,omitempty"`
+	DCID       int32                    `json:"dcid,omitempty"`
 	Attributes []DocumentAttributeClass `json:"attributes,omitempty"`
 }
 
@@ -532,11 +532,11 @@ func (v *DecryptedMessageMediaExternalDocument) Encode(b *bytes.Buffer) error {
 	tg.WriteString(b, v.MimeType)
 	tg.WriteInt(b, uint32(v.Size))
 	tg.EncodeTLObject(b, v.Thumb)
-	tg.WriteInt(b, uint32(v.DcID))
-	tg.WriteInt(b, vectorBareID)
+	tg.WriteInt(b, uint32(v.DCID))
+	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
-	for _, _el := range v.Attributes {
-		tg.EncodeTLObject(b, _el)
+	for _, _item := range v.Attributes {
+		tg.EncodeTLObject(b, _item)
 	}
 	return nil
 }
@@ -549,28 +549,15 @@ func DecodeDecryptedMessageMediaExternalDocument(r io.Reader) (*DecryptedMessage
 	v.Date = int32(tg.ReadInt(r))
 	v.MimeType = tg.ReadString(r)
 	v.Size = int32(tg.ReadInt(r))
-	_objThumb, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cThumb, _ok := _objThumb.(PhotoSizeClass); _ok {
-		v.Thumb = _cThumb
-	}
-	v.DcID = int32(tg.ReadInt(r))
+	_objThumb, _ := ReadE2ETLObject(r)
+	v.Thumb = _objThumb.(PhotoSizeClass)
+	v.DCID = int32(tg.ReadInt(r))
 	tg.ReadInt(r)
-	_cntAttributes, _err := tg.ReadIntErr(r)
-	if _err != nil {
-		return nil, _err
-	}
+	_cntAttributes := tg.ReadInt(r)
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
-	for i := range v.Attributes {
-		_obj, _err := ReadE2ETLObject(r)
-		if _err != nil {
-			return nil, _err
-		}
-		if _c, _ok := _obj.(DocumentAttributeClass); _ok {
-			v.Attributes[i] = _c
-		}
+	for _iAttributes := range v.Attributes {
+		_objAttributes, _ := ReadE2ETLObject(r)
+		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
 	return v, nil
 }
@@ -723,10 +710,10 @@ func (v *DecryptedMessageMediaDocument46) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, uint32(v.Size))
 	tg.WriteBytes(b, v.Key)
 	tg.WriteBytes(b, v.Iv)
-	tg.WriteInt(b, vectorBareID)
+	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
-	for _, _el := range v.Attributes {
-		tg.EncodeTLObject(b, _el)
+	for _, _item := range v.Attributes {
+		tg.EncodeTLObject(b, _item)
 	}
 	tg.WriteString(b, v.Caption)
 	return nil
@@ -743,19 +730,11 @@ func DecodeDecryptedMessageMediaDocument46(r io.Reader) (*DecryptedMessageMediaD
 	v.Key = tg.ReadBytes(r)
 	v.Iv = tg.ReadBytes(r)
 	tg.ReadInt(r)
-	_cntAttributes, _err := tg.ReadIntErr(r)
-	if _err != nil {
-		return nil, _err
-	}
+	_cntAttributes := tg.ReadInt(r)
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
-	for i := range v.Attributes {
-		_obj, _err := ReadE2ETLObject(r)
-		if _err != nil {
-			return nil, _err
-		}
-		if _c, _ok := _obj.(DocumentAttributeClass); _ok {
-			v.Attributes[i] = _c
-		}
+	for _iAttributes := range v.Attributes {
+		_objAttributes, _ := ReadE2ETLObject(r)
+		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
 	v.Caption = tg.ReadString(r)
 	return v, nil
@@ -814,7 +793,7 @@ func init() {
 
 // DecryptedMessageMediaWebPage represents the TL constructor decryptedMessageMediaWebPage (0xe50511d8).
 type DecryptedMessageMediaWebPage struct {
-	Url string `json:"url,omitempty"`
+	URL string `json:"url,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xe50511d8.
@@ -825,14 +804,14 @@ func (v *DecryptedMessageMediaWebPage) ConstructorID() uint32 {
 // Encode serializes DecryptedMessageMediaWebPage to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, DecryptedMessageMediaWebPageTypeID)
-	tg.WriteString(b, v.Url)
+	tg.WriteString(b, v.URL)
 	return nil
 }
 
 // DecodeDecryptedMessageMediaWebPage deserializes a DecryptedMessageMediaWebPage from a reader using the TL binary protocol.
 func DecodeDecryptedMessageMediaWebPage(r io.Reader) (*DecryptedMessageMediaWebPage, error) {
 	v := &DecryptedMessageMediaWebPage{}
-	v.Url = tg.ReadString(r)
+	v.URL = tg.ReadString(r)
 	return v, nil
 }
 
@@ -870,10 +849,10 @@ func (v *DecryptedMessageMediaDocument) Encode(b *bytes.Buffer) error {
 	tg.WriteLong(b, v.Size)
 	tg.WriteBytes(b, v.Key)
 	tg.WriteBytes(b, v.Iv)
-	tg.WriteInt(b, vectorBareID)
+	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
-	for _, _el := range v.Attributes {
-		tg.EncodeTLObject(b, _el)
+	for _, _item := range v.Attributes {
+		tg.EncodeTLObject(b, _item)
 	}
 	tg.WriteString(b, v.Caption)
 	return nil
@@ -890,19 +869,11 @@ func DecodeDecryptedMessageMediaDocument(r io.Reader) (*DecryptedMessageMediaDoc
 	v.Key = tg.ReadBytes(r)
 	v.Iv = tg.ReadBytes(r)
 	tg.ReadInt(r)
-	_cntAttributes, _err := tg.ReadIntErr(r)
-	if _err != nil {
-		return nil, _err
-	}
+	_cntAttributes := tg.ReadInt(r)
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
-	for i := range v.Attributes {
-		_obj, _err := ReadE2ETLObject(r)
-		if _err != nil {
-			return nil, _err
-		}
-		if _c, _ok := _obj.(DocumentAttributeClass); _ok {
-			v.Attributes[i] = _c
-		}
+	for _iAttributes := range v.Attributes {
+		_objAttributes, _ := ReadE2ETLObject(r)
+		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
 	v.Caption = tg.ReadString(r)
 	return v, nil

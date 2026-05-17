@@ -381,6 +381,8 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		}
 	case *tg.NewSessionCreated:
 		s.serverSalt = v.ServerSalt
+	case *tg.FutureSalts:
+		s.storeFutureSalts(v)
 	case *tg.MsgsAck:
 	case *tg.RPCResult:
 		result := v.Result
@@ -526,8 +528,33 @@ func (s *Session) Stop() {
 	}
 }
 
+func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
+	if len(fs.Salts) == 0 {
+		return
+	}
+	s.serverSalt = fs.Salts[0].Salt
+}
+
+func (s *Session) sendServiceMessage(body tg.TLObject) {
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(false)
+	message := &tg.MTProtoMessage{
+		MsgID: msgID,
+		SeqNo: uint32(seqNo),
+		Body:  body,
+	}
+	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	job := getSendJob()
+	job.encrypted = encrypted
+	job.deadline = time.Now().Add(10 * time.Second)
+	select {
+	case s.sendCh <- job:
+	default:
+		putSendJob(job)
+	}
+}
+
 func (s *Session) saltLoop() {
-	// Initial delay: wait for session to be fully started.
 	select {
 	case <-s.cancel:
 		return
@@ -537,12 +564,7 @@ func (s *Session) saltLoop() {
 	const numSalts = 4
 
 	for {
-		result, err := s.Invoke(context.Background(), &tg.GetFutureSaltsRequest{Num: numSalts}, 1, 10*time.Second)
-		if err == nil {
-			if salts, ok := result.(*tg.FutureSalts); ok && len(salts.Salts) > 0 {
-				s.serverSalt = salts.Salts[0].Salt
-			}
-		}
+		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numSalts})
 
 		select {
 		case <-s.cancel:

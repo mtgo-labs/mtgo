@@ -20,14 +20,14 @@ type FileLocationClass interface {
 // FileLocationUnavailableTypeID is the constructor ID for TL type fileLocationUnavailable.
 const FileLocationUnavailableTypeID = 0x7c596b46
 
-// FileLocationTLTypeID is the constructor ID for TL type fileLocation.
-const FileLocationTLTypeID = 0x53d69076
+// FileLocationTypeID is the constructor ID for TL type fileLocation.
+const FileLocationTypeID = 0x53d69076
 
 // isFileLocation marks FileLocationUnavailable as implementing the FileLocationClass interface.
 func (*FileLocationUnavailable) isFileLocation() {}
 
-// isFileLocation marks FileLocationTL as implementing the FileLocationClass interface.
-func (*FileLocationTL) isFileLocation() {}
+// isFileLocation marks FileLocation as implementing the FileLocationClass interface.
+func (*FileLocation) isFileLocation() {}
 
 // FileLocationUnavailable represents the TL constructor fileLocationUnavailable (0x7c596b46).
 type FileLocationUnavailable struct {
@@ -65,33 +65,33 @@ func init() {
 	}
 }
 
-// FileLocationTL represents the TL constructor fileLocation (0x53d69076).
-type FileLocationTL struct {
-	DcID     int32 `json:"dc_id,omitempty"`
+// FileLocation represents the TL constructor fileLocation (0x53d69076).
+type FileLocation struct {
+	DCID     int32 `json:"dcid,omitempty"`
 	VolumeID int64 `json:"volume_id,omitempty"`
 	LocalID  int32 `json:"local_id,omitempty"`
 	Secret   int64 `json:"secret,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0x53d69076.
-func (v *FileLocationTL) ConstructorID() uint32 {
-	return FileLocationTLTypeID
+func (v *FileLocation) ConstructorID() uint32 {
+	return FileLocationTypeID
 }
 
-// Encode serializes FileLocationTL to a bytes.Buffer using the TL binary protocol.
-func (v *FileLocationTL) Encode(b *bytes.Buffer) error {
-	tg.WriteInt(b, FileLocationTLTypeID)
-	tg.WriteInt(b, uint32(v.DcID))
+// Encode serializes FileLocation to a bytes.Buffer using the TL binary protocol.
+func (v *FileLocation) Encode(b *bytes.Buffer) error {
+	tg.WriteInt(b, FileLocationTypeID)
+	tg.WriteInt(b, uint32(v.DCID))
 	tg.WriteLong(b, v.VolumeID)
 	tg.WriteInt(b, uint32(v.LocalID))
 	tg.WriteLong(b, v.Secret)
 	return nil
 }
 
-// DecodeFileLocationTL deserializes a FileLocationTL from a reader using the TL binary protocol.
-func DecodeFileLocationTL(r io.Reader) (*FileLocationTL, error) {
-	v := &FileLocationTL{}
-	v.DcID = int32(tg.ReadInt(r))
+// DecodeFileLocation deserializes a FileLocation from a reader using the TL binary protocol.
+func DecodeFileLocation(r io.Reader) (*FileLocation, error) {
+	v := &FileLocation{}
+	v.DCID = int32(tg.ReadInt(r))
 	v.VolumeID = tg.ReadLong(r)
 	v.LocalID = int32(tg.ReadInt(r))
 	v.Secret = tg.ReadLong(r)
@@ -99,7 +99,7 @@ func DecodeFileLocationTL(r io.Reader) (*FileLocationTL, error) {
 }
 
 func init() {
-	Registry[FileLocationTLTypeID] = func(r io.Reader) (tg.TLObject, error) {
-		return DecodeFileLocationTL(r)
+	Registry[FileLocationTypeID] = func(r io.Reader) (tg.TLObject, error) {
+		return DecodeFileLocation(r)
 	}
 }

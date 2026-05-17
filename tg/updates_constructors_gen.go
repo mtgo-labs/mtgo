@@ -4,7 +4,6 @@ package tg
 
 // ConstructorMapUpdates maps constructor IDs to factory functions.
 var ConstructorMapUpdates = map[uint32]func() TLObject{
-	0xa56c2a3e: func() TLObject { return &UpdatesState{} },
 	0x1f2b0afd: func() TLObject { return &UpdateNewMessage{} },
 	0x4e90bfd6: func() TLObject { return &UpdateMessageID{} },
 	0xa20db0e5: func() TLObject { return &UpdateDeleteMessages{} },
@@ -161,9 +160,6 @@ var ConstructorMapUpdates = map[uint32]func() TLObject{
 	0x4880ed9a: func() TLObject { return &UpdateManagedBot{} },
 	0xcdd4093d: func() TLObject { return &UpdateBotGuestChatQuery{} },
 	0x8c0f91fb: func() TLObject { return &UpdateAiComposeTones{} },
-	0x3e11affb: func() TLObject { return &UpdatesChannelDifferenceEmpty{} },
-	0xa4bcc6fe: func() TLObject { return &UpdatesChannelDifferenceTooLong{} },
-	0x2064674e: func() TLObject { return &UpdatesChannelDifference{} },
 	0xf385c1f6: func() TLObject { return &LangPackDifference{} },
 	0xe317af7e: func() TLObject { return &UpdatesTooLong{} },
 	0x313bc7f8: func() TLObject { return &UpdateShortMessage{} },
@@ -172,6 +168,10 @@ var ConstructorMapUpdates = map[uint32]func() TLObject{
 	0x725b04c3: func() TLObject { return &UpdatesCombined{} },
 	0x74ae4240: func() TLObject { return &Updates{} },
 	0x9015e101: func() TLObject { return &UpdateShortSentMessage{} },
+	0x3e11affb: func() TLObject { return &UpdatesChannelDifferenceEmpty{} },
+	0xa4bcc6fe: func() TLObject { return &UpdatesChannelDifferenceTooLong{} },
+	0x2064674e: func() TLObject { return &UpdatesChannelDifference{} },
+	0xa56c2a3e: func() TLObject { return &UpdatesState{} },
 	0x5d75a138: func() TLObject { return &UpdatesDifferenceEmpty{} },
 	0x00f49ca0: func() TLObject { return &UpdatesDifference{} },
 	0xa8fb1981: func() TLObject { return &UpdatesDifferenceSlice{} },

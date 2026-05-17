@@ -97,7 +97,7 @@ func (*DecryptedMessageActionNoop) isDecryptedMessageAction() {}
 
 // DecryptedMessageActionSetMessageTTL represents the TL constructor decryptedMessageActionSetMessageTTL (0xa1733aec).
 type DecryptedMessageActionSetMessageTTL struct {
-	TtlSeconds int32 `json:"ttl_seconds,omitempty"`
+	TTLSeconds int32 `json:"ttl_seconds,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xa1733aec.
@@ -108,14 +108,14 @@ func (v *DecryptedMessageActionSetMessageTTL) ConstructorID() uint32 {
 // Encode serializes DecryptedMessageActionSetMessageTTL to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionSetMessageTTL) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, DecryptedMessageActionSetMessageTTLTypeID)
-	tg.WriteInt(b, uint32(v.TtlSeconds))
+	tg.WriteInt(b, uint32(v.TTLSeconds))
 	return nil
 }
 
 // DecodeDecryptedMessageActionSetMessageTTL deserializes a DecryptedMessageActionSetMessageTTL from a reader using the TL binary protocol.
 func DecodeDecryptedMessageActionSetMessageTTL(r io.Reader) (*DecryptedMessageActionSetMessageTTL, error) {
 	v := &DecryptedMessageActionSetMessageTTL{}
-	v.TtlSeconds = int32(tg.ReadInt(r))
+	v.TTLSeconds = int32(tg.ReadInt(r))
 	return v, nil
 }
 
@@ -325,13 +325,8 @@ func (v *DecryptedMessageActionTyping) Encode(b *bytes.Buffer) error {
 // DecodeDecryptedMessageActionTyping deserializes a DecryptedMessageActionTyping from a reader using the TL binary protocol.
 func DecodeDecryptedMessageActionTyping(r io.Reader) (*DecryptedMessageActionTyping, error) {
 	v := &DecryptedMessageActionTyping{}
-	_objAction, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cAction, _ok := _objAction.(SendMessageActionClass); _ok {
-		v.Action = _cAction
-	}
+	_objAction, _ := ReadE2ETLObject(r)
+	v.Action = _objAction.(SendMessageActionClass)
 	return v, nil
 }
 
@@ -344,7 +339,7 @@ func init() {
 // DecryptedMessageActionRequestKey represents the TL constructor decryptedMessageActionRequestKey (0xf3c9611b).
 type DecryptedMessageActionRequestKey struct {
 	ExchangeID int64  `json:"exchange_id,omitempty"`
-	GA         []byte `json:"g_a,omitempty"`
+	GA         []byte `json:"ga,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xf3c9611b.
@@ -377,7 +372,7 @@ func init() {
 // DecryptedMessageActionAcceptKey represents the TL constructor decryptedMessageActionAcceptKey (0x6fe1735b).
 type DecryptedMessageActionAcceptKey struct {
 	ExchangeID     int64  `json:"exchange_id,omitempty"`
-	GB             []byte `json:"g_b,omitempty"`
+	GB             []byte `json:"gb,omitempty"`
 	KeyFingerprint int64  `json:"key_fingerprint,omitempty"`
 }
 

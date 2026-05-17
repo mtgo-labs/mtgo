@@ -319,13 +319,8 @@ func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
 func DecodeDocumentAttributeSticker(r io.Reader) (*DocumentAttributeSticker, error) {
 	v := &DocumentAttributeSticker{}
 	v.Alt = tg.ReadString(r)
-	_objStickerset, _err := ReadE2ETLObject(r)
-	if _err != nil {
-		return nil, _err
-	}
-	if _cStickerset, _ok := _objStickerset.(InputStickerSetClass); _ok {
-		v.Stickerset = _cStickerset
-	}
+	_objStickerset, _ := ReadE2ETLObject(r)
+	v.Stickerset = _objStickerset.(InputStickerSetClass)
 	return v, nil
 }
 
@@ -337,12 +332,28 @@ func init() {
 
 // DocumentAttributeAudio represents the TL constructor documentAttributeAudio (0x9852f9c6).
 type DocumentAttributeAudio struct {
-	Flags     uint32  `json:"-"`
-	Voice     bool    `json:"voice,omitempty"`
-	Duration  int32   `json:"duration,omitempty"`
-	Title     *string `json:"title,omitempty"`
-	Performer *string `json:"performer,omitempty"`
-	Waveform  []byte  `json:"waveform,omitempty"`
+	Flags     tg.Fields `json:"-"`
+	Voice     bool      `json:"voice,omitempty"`
+	Duration  int32     `json:"duration,omitempty"`
+	Title     string    `json:"title,omitempty"`
+	Performer string    `json:"performer,omitempty"`
+	Waveform  []byte    `json:"waveform,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *DocumentAttributeAudio) SetFlags() {
+	if v.Voice {
+		v.Flags.Set(10)
+	}
+	if v.Title != "" {
+		v.Flags.Set(0)
+	}
+	if v.Performer != "" {
+		v.Flags.Set(1)
+	}
+	if v.Waveform != nil {
+		v.Flags.Set(2)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x9852f9c6.
@@ -353,15 +364,16 @@ func (v *DocumentAttributeAudio) ConstructorID() uint32 {
 // Encode serializes DocumentAttributeAudio to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, DocumentAttributeAudioTypeID)
-	tg.WriteInt(b, v.Flags)
+	v.SetFlags()
+	tg.WriteInt(b, uint32(v.Flags))
 	tg.WriteInt(b, uint32(v.Duration))
-	if v.Flags&(1<<0) != 0 {
-		tg.WriteString(b, *v.Title)
+	if v.Flags.Has(0) {
+		tg.WriteString(b, v.Title)
 	}
-	if v.Flags&(1<<1) != 0 {
-		tg.WriteString(b, *v.Performer)
+	if v.Flags.Has(1) {
+		tg.WriteString(b, v.Performer)
 	}
-	if v.Flags&(1<<2) != 0 {
+	if v.Flags.Has(2) {
 		tg.WriteBytes(b, v.Waveform)
 	}
 	return nil
@@ -370,18 +382,20 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeAudio deserializes a DocumentAttributeAudio from a reader using the TL binary protocol.
 func DecodeDocumentAttributeAudio(r io.Reader) (*DocumentAttributeAudio, error) {
 	v := &DocumentAttributeAudio{}
-	v.Flags = tg.ReadInt(r)
-	v.Voice = v.Flags&(1<<10) != 0
+	{
+		var _f uint32
+		_f, _ = tg.ReadIntErr(r)
+		v.Flags = tg.Fields(_f)
+	}
+	v.Voice = v.Flags.Has(10)
 	v.Duration = int32(tg.ReadInt(r))
-	if v.Flags&(1<<0) != 0 {
-		val := tg.ReadString(r)
-		v.Title = &val
+	if v.Flags.Has(0) {
+		v.Title = tg.ReadString(r)
 	}
-	if v.Flags&(1<<1) != 0 {
-		val := tg.ReadString(r)
-		v.Performer = &val
+	if v.Flags.Has(1) {
+		v.Performer = tg.ReadString(r)
 	}
-	if v.Flags&(1<<2) != 0 {
+	if v.Flags.Has(2) {
 		v.Waveform = tg.ReadBytes(r)
 	}
 	return v, nil
@@ -395,11 +409,18 @@ func init() {
 
 // DocumentAttributeVideo represents the TL constructor documentAttributeVideo (0x0ef02ce6).
 type DocumentAttributeVideo struct {
-	Flags        uint32 `json:"-"`
-	RoundMessage bool   `json:"round_message,omitempty"`
-	Duration     int32  `json:"duration,omitempty"`
-	W            int32  `json:"w,omitempty"`
-	H            int32  `json:"h,omitempty"`
+	Flags        tg.Fields `json:"-"`
+	RoundMessage bool      `json:"round_message,omitempty"`
+	Duration     int32     `json:"duration,omitempty"`
+	W            int32     `json:"w,omitempty"`
+	H            int32     `json:"h,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *DocumentAttributeVideo) SetFlags() {
+	if v.RoundMessage {
+		v.Flags.Set(0)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x0ef02ce6.
@@ -410,7 +431,8 @@ func (v *DocumentAttributeVideo) ConstructorID() uint32 {
 // Encode serializes DocumentAttributeVideo to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, DocumentAttributeVideoTypeID)
-	tg.WriteInt(b, v.Flags)
+	v.SetFlags()
+	tg.WriteInt(b, uint32(v.Flags))
 	tg.WriteInt(b, uint32(v.Duration))
 	tg.WriteInt(b, uint32(v.W))
 	tg.WriteInt(b, uint32(v.H))
@@ -420,8 +442,12 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeVideo deserializes a DocumentAttributeVideo from a reader using the TL binary protocol.
 func DecodeDocumentAttributeVideo(r io.Reader) (*DocumentAttributeVideo, error) {
 	v := &DocumentAttributeVideo{}
-	v.Flags = tg.ReadInt(r)
-	v.RoundMessage = v.Flags&(1<<0) != 0
+	{
+		var _f uint32
+		_f, _ = tg.ReadIntErr(r)
+		v.Flags = tg.Fields(_f)
+	}
+	v.RoundMessage = v.Flags.Has(0)
 	v.Duration = int32(tg.ReadInt(r))
 	v.W = int32(tg.ReadInt(r))
 	v.H = int32(tg.ReadInt(r))
