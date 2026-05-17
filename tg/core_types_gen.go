@@ -588,6 +588,9 @@ func DecodeInputMediaUploadedPhoto(r io.Reader) (*InputMediaUploadedPhoto, error
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntStickers := ReadInt(r)
+		if err := checkVectorCount(_cntStickers); err != nil {
+			return nil, err
+		}
 		v.Stickers = make([]InputDocumentClass, _cntStickers)
 		for _iStickers := range v.Stickers {
 			_objStickers, _ := ReadTLObject(r)
@@ -865,6 +868,9 @@ func DecodeInputMediaUploadedDocument(r io.Reader) (*InputMediaUploadedDocument,
 	v.MimeType = ReadString(r)
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -873,6 +879,9 @@ func DecodeInputMediaUploadedDocument(r io.Reader) (*InputMediaUploadedDocument,
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntStickers := ReadInt(r)
+		if err := checkVectorCount(_cntStickers); err != nil {
+			return nil, err
+		}
 		v.Stickers = make([]InputDocumentClass, _cntStickers)
 		for _iStickers := range v.Stickers {
 			_objStickers, _ := ReadTLObject(r)
@@ -1477,6 +1486,9 @@ func DecodeInputMediaPoll(r io.Reader) (*InputMediaPoll, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntSolutionEntities := ReadInt(r)
+		if err := checkVectorCount(_cntSolutionEntities); err != nil {
+			return nil, err
+		}
 		v.SolutionEntities = make([]MessageEntityClass, _cntSolutionEntities)
 		for _iSolutionEntities := range v.SolutionEntities {
 			_objSolutionEntities, _ := ReadTLObject(r)
@@ -1673,6 +1685,9 @@ func DecodeInputMediaPaidMedia(r io.Reader) (*InputMediaPaidMedia, error) {
 	v.StarsAmount = ReadLong(r)
 	ReadInt(r)
 	_cntExtendedMedia := ReadInt(r)
+	if err := checkVectorCount(_cntExtendedMedia); err != nil {
+		return nil, err
+	}
 	v.ExtendedMedia = make([]InputMediaClass, _cntExtendedMedia)
 	for _iExtendedMedia := range v.ExtendedMedia {
 		_objExtendedMedia, _ := ReadTLObject(r)
@@ -2421,6 +2436,9 @@ func DecodeConfig(r io.Reader) (*Config, error) {
 	v.ThisDC = int32(ReadInt(r))
 	ReadInt(r)
 	_cntDCOptions := ReadInt(r)
+	if err := checkVectorCount(_cntDCOptions); err != nil {
+		return nil, err
+	}
 	v.DCOptions = make([]*DCOption, _cntDCOptions)
 	for _iDCOptions := range v.DCOptions {
 		_objDCOptions, _ := ReadTLObject(r)
@@ -2742,6 +2760,9 @@ func DecodeReplyKeyboardMarkup(r io.Reader) (*ReplyKeyboardMarkup, error) {
 	v.Persistent = v.Flags.Has(4)
 	ReadInt(r)
 	_cntRows := ReadInt(r)
+	if err := checkVectorCount(_cntRows); err != nil {
+		return nil, err
+	}
 	v.Rows = make([]*KeyboardButtonRow, _cntRows)
 	for _iRows := range v.Rows {
 		_objRows, _ := ReadTLObject(r)
@@ -2787,6 +2808,9 @@ func DecodeReplyInlineMarkup(r io.Reader) (*ReplyInlineMarkup, error) {
 	v := &ReplyInlineMarkup{}
 	ReadInt(r)
 	_cntRows := ReadInt(r)
+	if err := checkVectorCount(_cntRows); err != nil {
+		return nil, err
+	}
 	v.Rows = make([]*KeyboardButtonRow, _cntRows)
 	for _iRows := range v.Rows {
 		_objRows, _ := ReadTLObject(r)
@@ -3034,6 +3058,9 @@ func DecodeCDNConfig(r io.Reader) (*CDNConfig, error) {
 	v := &CDNConfig{}
 	ReadInt(r)
 	_cntPublicKeys := ReadInt(r)
+	if err := checkVectorCount(_cntPublicKeys); err != nil {
+		return nil, err
+	}
 	v.PublicKeys = make([]*CDNPublicKey, _cntPublicKeys)
 	for _iPublicKeys := range v.PublicKeys {
 		_objPublicKeys, _ := ReadTLObject(r)
@@ -3599,6 +3626,9 @@ func DecodeInputSingleMedia(r io.Reader) (*InputSingleMedia, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -4596,6 +4626,9 @@ func DecodeSecureValue(r io.Reader) (*SecureValue, error) {
 	if v.Flags.Has(6) {
 		ReadInt(r)
 		_cntTranslation := ReadInt(r)
+		if err := checkVectorCount(_cntTranslation); err != nil {
+			return nil, err
+		}
 		v.Translation = make([]SecureFileClass, _cntTranslation)
 		for _iTranslation := range v.Translation {
 			_objTranslation, _ := ReadTLObject(r)
@@ -4605,6 +4638,9 @@ func DecodeSecureValue(r io.Reader) (*SecureValue, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntFiles := ReadInt(r)
+		if err := checkVectorCount(_cntFiles); err != nil {
+			return nil, err
+		}
 		v.Files = make([]SecureFileClass, _cntFiles)
 		for _iFiles := range v.Files {
 			_objFiles, _ := ReadTLObject(r)
@@ -4740,6 +4776,9 @@ func DecodeInputSecureValue(r io.Reader) (*InputSecureValue, error) {
 	if v.Flags.Has(6) {
 		ReadInt(r)
 		_cntTranslation := ReadInt(r)
+		if err := checkVectorCount(_cntTranslation); err != nil {
+			return nil, err
+		}
 		v.Translation = make([]InputSecureFileClass, _cntTranslation)
 		for _iTranslation := range v.Translation {
 			_objTranslation, _ := ReadTLObject(r)
@@ -4749,6 +4788,9 @@ func DecodeInputSecureValue(r io.Reader) (*InputSecureValue, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntFiles := ReadInt(r)
+		if err := checkVectorCount(_cntFiles); err != nil {
+			return nil, err
+		}
 		v.Files = make([]InputSecureFileClass, _cntFiles)
 		for _iFiles := range v.Files {
 			_objFiles, _ := ReadTLObject(r)
@@ -5373,6 +5415,9 @@ func DecodeSecureRequiredTypeOneOf(r io.Reader) (*SecureRequiredTypeOneOf, error
 	v := &SecureRequiredTypeOneOf{}
 	ReadInt(r)
 	_cntTypes := ReadInt(r)
+	if err := checkVectorCount(_cntTypes); err != nil {
+		return nil, err
+	}
 	v.Types = make([]SecureRequiredTypeClass, _cntTypes)
 	for _iTypes := range v.Types {
 		_objTypes, _ := ReadTLObject(r)
@@ -5668,6 +5713,9 @@ func DecodeJSONArray(r io.Reader) (*JSONArray, error) {
 	v := &JSONArray{}
 	ReadInt(r)
 	_cntValue := ReadInt(r)
+	if err := checkVectorCount(_cntValue); err != nil {
+		return nil, err
+	}
 	v.Value = make([]JSONValueClass, _cntValue)
 	for _iValue := range v.Value {
 		_objValue, _ := ReadTLObject(r)
@@ -5710,6 +5758,9 @@ func DecodeJSONObject(r io.Reader) (*JSONObject, error) {
 	v := &JSONObject{}
 	ReadInt(r)
 	_cntValue := ReadInt(r)
+	if err := checkVectorCount(_cntValue); err != nil {
+		return nil, err
+	}
 	v.Value = make([]*JSONObjectValue, _cntValue)
 	for _iValue := range v.Value {
 		_objValue, _ := ReadTLObject(r)
@@ -6092,6 +6143,9 @@ func DecodeTheme(r io.Reader) (*Theme, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntSettings := ReadInt(r)
+		if err := checkVectorCount(_cntSettings); err != nil {
+			return nil, err
+		}
 		v.Settings = make([]*ThemeSettings, _cntSettings)
 		for _iSettings := range v.Settings {
 			_objSettings, _ := ReadTLObject(r)
@@ -7298,6 +7352,9 @@ func DecodeTextWithEntities(r io.Reader) (*TextWithEntities, error) {
 	v.Text = ReadString(r)
 	ReadInt(r)
 	_cntEntities := ReadInt(r)
+	if err := checkVectorCount(_cntEntities); err != nil {
+		return nil, err
+	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
 		_objEntities, _ := ReadTLObject(r)
@@ -7446,6 +7503,9 @@ func DecodeInputReplyToMessage(r io.Reader) (*InputReplyToMessage, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntQuoteEntities := ReadInt(r)
+		if err := checkVectorCount(_cntQuoteEntities); err != nil {
+			return nil, err
+		}
 		v.QuoteEntities = make([]MessageEntityClass, _cntQuoteEntities)
 		for _iQuoteEntities := range v.QuoteEntities {
 			_objQuoteEntities, _ := ReadTLObject(r)
@@ -8637,6 +8697,9 @@ func DecodeReportResultChooseOption(r io.Reader) (*ReportResultChooseOption, err
 	v.Title = ReadString(r)
 	ReadInt(r)
 	_cntOptions := ReadInt(r)
+	if err := checkVectorCount(_cntOptions); err != nil {
+		return nil, err
+	}
 	v.Options = make([]*MessageReportOption, _cntOptions)
 	for _iOptions := range v.Options {
 		_objOptions, _ := ReadTLObject(r)
@@ -10578,6 +10641,9 @@ func DecodeFutureSalts(r io.Reader) (*FutureSalts, error) {
 	v.Now = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSalts := ReadInt(r)
+	if err := checkVectorCount(_cntSalts); err != nil {
+		return nil, err
+	}
 	v.Salts = make([]*FutureSalt, _cntSalts)
 	for _iSalts := range v.Salts {
 		_objSalts, _ := ReadTLObject(r)
@@ -10926,6 +10992,9 @@ func DecodeAccessPointRule(r io.Reader) (*AccessPointRule, error) {
 	v.DCID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntIps := ReadInt(r)
+	if err := checkVectorCount(_cntIps); err != nil {
+		return nil, err
+	}
 	v.Ips = make([]IpPortClass, _cntIps)
 	for _iIps := range v.Ips {
 		_objIps, _ := ReadTLObject(r)

@@ -551,8 +551,7 @@ func (c *RPCClient) PaymentsGetPremiumGiftCodeOptions(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PaymentsCheckGiftCodeTypeID is the constructor ID for the RPC function payments.checkGiftCode.
@@ -763,8 +762,7 @@ func (c *RPCClient) PaymentsGetStarsTopupOptions(ctx context.Context) (TLObject,
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PaymentsGetStarsStatusTypeID is the constructor ID for the RPC function payments.getStarsStatus.
@@ -1252,8 +1250,7 @@ func (c *RPCClient) PaymentsGetStarsGiftOptions(ctx context.Context, req *Paymen
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PaymentsGetStarsSubscriptionsTypeID is the constructor ID for the RPC function payments.getStarsSubscriptions.
@@ -1443,8 +1440,7 @@ func (c *RPCClient) PaymentsGetStarsGiveawayOptions(ctx context.Context) (TLObje
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PaymentsGetStarGiftsTypeID is the constructor ID for the RPC function payments.getStarGifts.

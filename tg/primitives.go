@@ -175,7 +175,10 @@ const vectorBareID uint32 = 0x1cb5c415
 // ReadVectorInt reads a TL-encoded vector of int32 values from r.
 func ReadVectorInt(r io.Reader) []int32 {
 	ReadInt(r)
-	count := int(ReadInt(r))
+	count := ReadInt(r)
+	if checkVectorCount(count) != nil {
+		return nil
+	}
 	result := make([]int32, count)
 	for i := range result {
 		result[i] = int32(ReadInt(r))
@@ -195,7 +198,10 @@ func WriteVectorInt(b *bytes.Buffer, v []int32) {
 // ReadVectorLong reads a TL-encoded vector of int64 values from r.
 func ReadVectorLong(r io.Reader) []int64 {
 	ReadInt(r)
-	count := int(ReadInt(r))
+	count := ReadInt(r)
+	if checkVectorCount(count) != nil {
+		return nil
+	}
 	result := make([]int64, count)
 	for i := range result {
 		result[i] = ReadLong(r)
@@ -215,7 +221,10 @@ func WriteVectorLong(b *bytes.Buffer, v []int64) {
 // ReadVectorString reads a TL-encoded vector of strings from r.
 func ReadVectorString(r io.Reader) []string {
 	ReadInt(r)
-	count := int(ReadInt(r))
+	count := ReadInt(r)
+	if checkVectorCount(count) != nil {
+		return nil
+	}
 	result := make([]string, count)
 	for i := range result {
 		result[i] = ReadString(r)
@@ -235,7 +244,10 @@ func WriteVectorString(b *bytes.Buffer, v []string) {
 // ReadVectorBytes reads a TL-encoded vector of byte slices from r.
 func ReadVectorBytes(r io.Reader) [][]byte {
 	ReadInt(r)
-	count := int(ReadInt(r))
+	count := ReadInt(r)
+	if checkVectorCount(count) != nil {
+		return nil
+	}
 	result := make([][]byte, count)
 	for i := range result {
 		result[i] = ReadBytes(r)
@@ -300,8 +312,8 @@ func WriteVectorObject(b *bytes.Buffer, items []TLObject) error {
 
 func ReadVectorObject(r io.Reader) ([]TLObject, error) {
 	count := ReadInt(r)
-	if count > 100000 {
-		return nil, &vectorTooLargeError{count: count}
+	if err := checkVectorCount(count); err != nil {
+		return nil, err
 	}
 	items := make([]TLObject, count)
 	for i := range items {
@@ -323,8 +335,8 @@ func init() {
 	}
 	Registry[vectorBareID] = func(r io.Reader) (TLObject, error) {
 		count := ReadInt(r)
-		if count > 10000 {
-			return nil, &vectorTooLargeError{count: count}
+		if err := checkVectorCount(count); err != nil {
+			return nil, err
 		}
 		items := make([]TLObject, count)
 		for i := range items {

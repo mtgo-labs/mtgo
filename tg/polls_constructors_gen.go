@@ -4,9 +4,9 @@ package tg
 
 // ConstructorMapPolls maps constructor IDs to factory functions.
 var ConstructorMapPolls = map[uint32]func() TLObject{
+	0x3645230a: func() TLObject { return &PollAnswerVoters{} },
+	0xba7bb15e: func() TLObject { return &PollResults{} },
 	0x4b7d786a: func() TLObject { return &PollAnswer{} },
 	0x199fed96: func() TLObject { return &InputPollAnswer{} },
 	0x966e2dbf: func() TLObject { return &Poll{} },
-	0xba7bb15e: func() TLObject { return &PollResults{} },
-	0x3645230a: func() TLObject { return &PollAnswerVoters{} },
 }

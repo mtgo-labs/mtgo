@@ -286,6 +286,9 @@ func DecodePoll(r io.Reader) (*Poll, error) {
 	v.Question = _objQuestion.(*TextWithEntities)
 	ReadInt(r)
 	_cntAnswers := ReadInt(r)
+	if err := checkVectorCount(_cntAnswers); err != nil {
+		return nil, err
+	}
 	v.Answers = make([]PollAnswerClass, _cntAnswers)
 	for _iAnswers := range v.Answers {
 		_objAnswers, _ := ReadTLObject(r)
@@ -382,6 +385,9 @@ func DecodePollAnswerVoters(r io.Reader) (*PollAnswerVoters, error) {
 	if v.Flags.Has(2) {
 		ReadInt(r)
 		_cntRecentVoters := ReadInt(r)
+		if err := checkVectorCount(_cntRecentVoters); err != nil {
+			return nil, err
+		}
 		v.RecentVoters = make([]PeerClass, _cntRecentVoters)
 		for _iRecentVoters := range v.RecentVoters {
 			_objRecentVoters, _ := ReadTLObject(r)
@@ -504,6 +510,9 @@ func DecodePollResults(r io.Reader) (*PollResults, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntResults := ReadInt(r)
+		if err := checkVectorCount(_cntResults); err != nil {
+			return nil, err
+		}
 		v.Results = make([]*PollAnswerVoters, _cntResults)
 		for _iResults := range v.Results {
 			_objResults, _ := ReadTLObject(r)
@@ -516,6 +525,9 @@ func DecodePollResults(r io.Reader) (*PollResults, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntRecentVoters := ReadInt(r)
+		if err := checkVectorCount(_cntRecentVoters); err != nil {
+			return nil, err
+		}
 		v.RecentVoters = make([]PeerClass, _cntRecentVoters)
 		for _iRecentVoters := range v.RecentVoters {
 			_objRecentVoters, _ := ReadTLObject(r)
@@ -528,6 +540,9 @@ func DecodePollResults(r io.Reader) (*PollResults, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntSolutionEntities := ReadInt(r)
+		if err := checkVectorCount(_cntSolutionEntities); err != nil {
+			return nil, err
+		}
 		v.SolutionEntities = make([]MessageEntityClass, _cntSolutionEntities)
 		for _iSolutionEntities := range v.SolutionEntities {
 			_objSolutionEntities, _ := ReadTLObject(r)

@@ -93,8 +93,7 @@ func (c *RPCClient) LangpackGetStrings(ctx context.Context, req *LangpackGetStri
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // LangpackGetDifferenceTypeID is the constructor ID for the RPC function langpack.getDifference.
@@ -179,8 +178,7 @@ func (c *RPCClient) LangpackGetLanguages(ctx context.Context, req *LangpackGetLa
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // LangpackGetLanguageTypeID is the constructor ID for the RPC function langpack.getLanguage.

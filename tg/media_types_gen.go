@@ -585,6 +585,9 @@ func DecodeDocument(r io.Reader) (*Document, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntThumbs := ReadInt(r)
+		if err := checkVectorCount(_cntThumbs); err != nil {
+			return nil, err
+		}
 		v.Thumbs = make([]PhotoSizeClass, _cntThumbs)
 		for _iThumbs := range v.Thumbs {
 			_objThumbs, _ := ReadTLObject(r)
@@ -594,6 +597,9 @@ func DecodeDocument(r io.Reader) (*Document, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntVideoThumbs := ReadInt(r)
+		if err := checkVectorCount(_cntVideoThumbs); err != nil {
+			return nil, err
+		}
 		v.VideoThumbs = make([]VideoSizeClass, _cntVideoThumbs)
 		for _iVideoThumbs := range v.VideoThumbs {
 			_objVideoThumbs, _ := ReadTLObject(r)
@@ -603,6 +609,9 @@ func DecodeDocument(r io.Reader) (*Document, error) {
 	v.DCID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -1198,6 +1207,9 @@ func DecodeWebDocument(r io.Reader) (*WebDocument, error) {
 	v.MimeType = ReadString(r)
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -1249,6 +1261,9 @@ func DecodeWebDocumentNoProxy(r io.Reader) (*WebDocumentNoProxy, error) {
 	v.MimeType = ReadString(r)
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -1303,6 +1318,9 @@ func DecodeInputWebDocument(r io.Reader) (*InputWebDocument, error) {
 	v.MimeType = ReadString(r)
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -1420,6 +1438,9 @@ func DecodeWebPageAttributeTheme(r io.Reader) (*WebPageAttributeTheme, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntDocuments := ReadInt(r)
+		if err := checkVectorCount(_cntDocuments); err != nil {
+			return nil, err
+		}
 		v.Documents = make([]DocumentClass, _cntDocuments)
 		for _iDocuments := range v.Documents {
 			_objDocuments, _ := ReadTLObject(r)
@@ -1548,6 +1569,9 @@ func DecodeWebPageAttributeStickerSet(r io.Reader) (*WebPageAttributeStickerSet,
 	v.TextColor = v.Flags.Has(1)
 	ReadInt(r)
 	_cntStickers := ReadInt(r)
+	if err := checkVectorCount(_cntStickers); err != nil {
+		return nil, err
+	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
 		_objStickers, _ := ReadTLObject(r)
@@ -1623,6 +1647,9 @@ func DecodeWebPageAttributeStarGiftCollection(r io.Reader) (*WebPageAttributeSta
 	v := &WebPageAttributeStarGiftCollection{}
 	ReadInt(r)
 	_cntIcons := ReadInt(r)
+	if err := checkVectorCount(_cntIcons); err != nil {
+		return nil, err
+	}
 	v.Icons = make([]DocumentClass, _cntIcons)
 	for _iIcons := range v.Icons {
 		_objIcons, _ := ReadTLObject(r)

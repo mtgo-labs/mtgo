@@ -613,6 +613,9 @@ func DecodePhoneCall(r io.Reader) (*PhoneCall, error) {
 	v.Protocol = _objProtocol.(*PhoneCallProtocol)
 	ReadInt(r)
 	_cntConnections := ReadInt(r)
+	if err := checkVectorCount(_cntConnections); err != nil {
+		return nil, err
+	}
 	v.Connections = make([]PhoneConnectionClass, _cntConnections)
 	for _iConnections := range v.Connections {
 		_objConnections, _ := ReadTLObject(r)
@@ -744,6 +747,9 @@ func DecodePhonePhoneCall(r io.Reader) (*PhonePhoneCall, error) {
 	v.PhoneCall = _objPhoneCall.(PhoneCallClass)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1283,6 +1289,9 @@ func DecodePhoneGroupCall(r io.Reader) (*PhoneGroupCall, error) {
 	v.Call = _objCall.(GroupCallClass)
 	ReadInt(r)
 	_cntParticipants := ReadInt(r)
+	if err := checkVectorCount(_cntParticipants); err != nil {
+		return nil, err
+	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
 		_objParticipants, _ := ReadTLObject(r)
@@ -1291,6 +1300,9 @@ func DecodePhoneGroupCall(r io.Reader) (*PhoneGroupCall, error) {
 	v.ParticipantsNextOffset = ReadString(r)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1298,6 +1310,9 @@ func DecodePhoneGroupCall(r io.Reader) (*PhoneGroupCall, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1487,6 +1502,9 @@ func DecodePhoneGroupParticipants(r io.Reader) (*PhoneGroupParticipants, error) 
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntParticipants := ReadInt(r)
+	if err := checkVectorCount(_cntParticipants); err != nil {
+		return nil, err
+	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
 		_objParticipants, _ := ReadTLObject(r)
@@ -1495,6 +1513,9 @@ func DecodePhoneGroupParticipants(r io.Reader) (*PhoneGroupParticipants, error) 
 	v.NextOffset = ReadString(r)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1502,6 +1523,9 @@ func DecodePhoneGroupParticipants(r io.Reader) (*PhoneGroupParticipants, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1560,6 +1584,9 @@ func DecodePhoneJoinAsPeers(r io.Reader) (*PhoneJoinAsPeers, error) {
 	v := &PhoneJoinAsPeers{}
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -1567,6 +1594,9 @@ func DecodePhoneJoinAsPeers(r io.Reader) (*PhoneJoinAsPeers, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1574,6 +1604,9 @@ func DecodePhoneJoinAsPeers(r io.Reader) (*PhoneJoinAsPeers, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1654,6 +1687,9 @@ func DecodePhoneGroupCallStreamChannels(r io.Reader) (*PhoneGroupCallStreamChann
 	v := &PhoneGroupCallStreamChannels{}
 	ReadInt(r)
 	_cntChannels := ReadInt(r)
+	if err := checkVectorCount(_cntChannels); err != nil {
+		return nil, err
+	}
 	v.Channels = make([]*GroupCallStreamChannel, _cntChannels)
 	for _iChannels := range v.Channels {
 		_objChannels, _ := ReadTLObject(r)
@@ -1820,6 +1856,9 @@ func DecodePhoneGroupCallStars(r io.Reader) (*PhoneGroupCallStars, error) {
 	v.TotalStars = ReadLong(r)
 	ReadInt(r)
 	_cntTopDonors := ReadInt(r)
+	if err := checkVectorCount(_cntTopDonors); err != nil {
+		return nil, err
+	}
 	v.TopDonors = make([]*GroupCallDonor, _cntTopDonors)
 	for _iTopDonors := range v.TopDonors {
 		_objTopDonors, _ := ReadTLObject(r)
@@ -1827,6 +1866,9 @@ func DecodePhoneGroupCallStars(r io.Reader) (*PhoneGroupCallStars, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1834,6 +1876,9 @@ func DecodePhoneGroupCallStars(r io.Reader) (*PhoneGroupCallStars, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

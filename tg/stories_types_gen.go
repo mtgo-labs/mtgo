@@ -94,6 +94,9 @@ func DecodePageListOrderedItemBlocks(r io.Reader) (*PageListOrderedItemBlocks, e
 	v.Num = ReadString(r)
 	ReadInt(r)
 	_cntBlocks := ReadInt(r)
+	if err := checkVectorCount(_cntBlocks); err != nil {
+		return nil, err
+	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
 		_objBlocks, _ := ReadTLObject(r)
@@ -241,6 +244,9 @@ func DecodeStoryViews(r io.Reader) (*StoryViews, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntReactions := ReadInt(r)
+		if err := checkVectorCount(_cntReactions); err != nil {
+			return nil, err
+		}
 		v.Reactions = make([]*ReactionCount, _cntReactions)
 		for _iReactions := range v.Reactions {
 			_objReactions, _ := ReadTLObject(r)
@@ -296,6 +302,9 @@ func DecodeStoriesStoryViews(r io.Reader) (*StoriesStoryViews, error) {
 	v := &StoriesStoryViews{}
 	ReadInt(r)
 	_cntViews := ReadInt(r)
+	if err := checkVectorCount(_cntViews); err != nil {
+		return nil, err
+	}
 	v.Views = make([]StoryViewsClass, _cntViews)
 	for _iViews := range v.Views {
 		_objViews, _ := ReadTLObject(r)
@@ -303,6 +312,9 @@ func DecodeStoriesStoryViews(r io.Reader) (*StoriesStoryViews, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -619,6 +631,9 @@ func DecodeStoryItem(r io.Reader) (*StoryItem, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -630,6 +645,9 @@ func DecodeStoryItem(r io.Reader) (*StoryItem, error) {
 	if v.Flags.Has(14) {
 		ReadInt(r)
 		_cntMediaAreas := ReadInt(r)
+		if err := checkVectorCount(_cntMediaAreas); err != nil {
+			return nil, err
+		}
 		v.MediaAreas = make([]MediaAreaClass, _cntMediaAreas)
 		for _iMediaAreas := range v.MediaAreas {
 			_objMediaAreas, _ := ReadTLObject(r)
@@ -639,6 +657,9 @@ func DecodeStoryItem(r io.Reader) (*StoryItem, error) {
 	if v.Flags.Has(2) {
 		ReadInt(r)
 		_cntPrivacy := ReadInt(r)
+		if err := checkVectorCount(_cntPrivacy); err != nil {
+			return nil, err
+		}
 		v.Privacy = make([]PrivacyRuleClass, _cntPrivacy)
 		for _iPrivacy := range v.Privacy {
 			_objPrivacy, _ := ReadTLObject(r)
@@ -802,6 +823,9 @@ func DecodeStoriesAllStories(r io.Reader) (*StoriesAllStories, error) {
 	v.State = ReadString(r)
 	ReadInt(r)
 	_cntPeerStories := ReadInt(r)
+	if err := checkVectorCount(_cntPeerStories); err != nil {
+		return nil, err
+	}
 	v.PeerStories = make([]PeerStoriesClass, _cntPeerStories)
 	for _iPeerStories := range v.PeerStories {
 		_objPeerStories, _ := ReadTLObject(r)
@@ -809,6 +833,9 @@ func DecodeStoriesAllStories(r io.Reader) (*StoriesAllStories, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -816,6 +843,9 @@ func DecodeStoriesAllStories(r io.Reader) (*StoriesAllStories, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -897,6 +927,9 @@ func DecodeStoriesStories(r io.Reader) (*StoriesStories, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntStories := ReadInt(r)
+	if err := checkVectorCount(_cntStories); err != nil {
+		return nil, err
+	}
 	v.Stories = make([]StoryItemClass, _cntStories)
 	for _iStories := range v.Stories {
 		_objStories, _ := ReadTLObject(r)
@@ -907,6 +940,9 @@ func DecodeStoriesStories(r io.Reader) (*StoriesStories, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -914,6 +950,9 @@ func DecodeStoriesStories(r io.Reader) (*StoriesStories, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1210,6 +1249,9 @@ func DecodeStoriesStoryViewsList(r io.Reader) (*StoriesStoryViewsList, error) {
 	v.ReactionsCount = int32(ReadInt(r))
 	ReadInt(r)
 	_cntViews := ReadInt(r)
+	if err := checkVectorCount(_cntViews); err != nil {
+		return nil, err
+	}
 	v.Views = make([]StoryViewClass, _cntViews)
 	for _iViews := range v.Views {
 		_objViews, _ := ReadTLObject(r)
@@ -1217,6 +1259,9 @@ func DecodeStoriesStoryViewsList(r io.Reader) (*StoriesStoryViewsList, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1224,6 +1269,9 @@ func DecodeStoriesStoryViewsList(r io.Reader) (*StoriesStoryViewsList, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1414,6 +1462,9 @@ func DecodePeerStories(r io.Reader) (*PeerStories, error) {
 	}
 	ReadInt(r)
 	_cntStories := ReadInt(r)
+	if err := checkVectorCount(_cntStories); err != nil {
+		return nil, err
+	}
 	v.Stories = make([]StoryItemClass, _cntStories)
 	for _iStories := range v.Stories {
 		_objStories, _ := ReadTLObject(r)
@@ -1466,6 +1517,9 @@ func DecodeStoriesPeerStories(r io.Reader) (*StoriesPeerStories, error) {
 	v.Stories = _objStories.(PeerStoriesClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1473,6 +1527,9 @@ func DecodeStoriesPeerStories(r io.Reader) (*StoriesPeerStories, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1632,6 +1689,9 @@ func DecodeStoriesStoryReactionsList(r io.Reader) (*StoriesStoryReactionsList, e
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]StoryReactionClass, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -1639,6 +1699,9 @@ func DecodeStoriesStoryReactionsList(r io.Reader) (*StoriesStoryReactionsList, e
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1646,6 +1709,9 @@ func DecodeStoriesStoryReactionsList(r io.Reader) (*StoriesStoryReactionsList, e
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1768,6 +1834,9 @@ func DecodeStoriesFoundStories(r io.Reader) (*StoriesFoundStories, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntStories := ReadInt(r)
+	if err := checkVectorCount(_cntStories); err != nil {
+		return nil, err
+	}
 	v.Stories = make([]*FoundStory, _cntStories)
 	for _iStories := range v.Stories {
 		_objStories, _ := ReadTLObject(r)
@@ -1778,6 +1847,9 @@ func DecodeStoriesFoundStories(r io.Reader) (*StoriesFoundStories, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -1785,6 +1857,9 @@ func DecodeStoriesFoundStories(r io.Reader) (*StoriesFoundStories, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1986,6 +2061,9 @@ func DecodeStoriesAlbums(r io.Reader) (*StoriesAlbums, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntAlbums := ReadInt(r)
+	if err := checkVectorCount(_cntAlbums); err != nil {
+		return nil, err
+	}
 	v.Albums = make([]*StoryAlbum, _cntAlbums)
 	for _iAlbums := range v.Albums {
 		_objAlbums, _ := ReadTLObject(r)

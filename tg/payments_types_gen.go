@@ -126,6 +126,9 @@ func DecodeInvoice(r io.Reader) (*Invoice, error) {
 	v.Currency = ReadString(r)
 	ReadInt(r)
 	_cntPrices := ReadInt(r)
+	if err := checkVectorCount(_cntPrices); err != nil {
+		return nil, err
+	}
 	v.Prices = make([]*LabeledPrice, _cntPrices)
 	for _iPrices := range v.Prices {
 		_objPrices, _ := ReadTLObject(r)
@@ -473,6 +476,9 @@ func DecodePaymentsPaymentForm(r io.Reader) (*PaymentsPaymentForm, error) {
 	if v.Flags.Has(6) {
 		ReadInt(r)
 		_cntAdditionalMethods := ReadInt(r)
+		if err := checkVectorCount(_cntAdditionalMethods); err != nil {
+			return nil, err
+		}
 		v.AdditionalMethods = make([]*PaymentFormMethod, _cntAdditionalMethods)
 		for _iAdditionalMethods := range v.AdditionalMethods {
 			_objAdditionalMethods, _ := ReadTLObject(r)
@@ -486,6 +492,9 @@ func DecodePaymentsPaymentForm(r io.Reader) (*PaymentsPaymentForm, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntSavedCredentials := ReadInt(r)
+		if err := checkVectorCount(_cntSavedCredentials); err != nil {
+			return nil, err
+		}
 		v.SavedCredentials = make([]*PaymentSavedCredentialsCard, _cntSavedCredentials)
 		for _iSavedCredentials := range v.SavedCredentials {
 			_objSavedCredentials, _ := ReadTLObject(r)
@@ -494,6 +503,9 @@ func DecodePaymentsPaymentForm(r io.Reader) (*PaymentsPaymentForm, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -575,6 +587,9 @@ func DecodePaymentsPaymentFormStars(r io.Reader) (*PaymentsPaymentFormStars, err
 	v.Invoice = _objInvoice.(*Invoice)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -684,6 +699,9 @@ func DecodePaymentsValidatedRequestedInfo(r io.Reader) (*PaymentsValidatedReques
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntShippingOptions := ReadInt(r)
+		if err := checkVectorCount(_cntShippingOptions); err != nil {
+			return nil, err
+		}
 		v.ShippingOptions = make([]*ShippingOption, _cntShippingOptions)
 		for _iShippingOptions := range v.ShippingOptions {
 			_objShippingOptions, _ := ReadTLObject(r)
@@ -915,6 +933,9 @@ func DecodePaymentsPaymentReceipt(r io.Reader) (*PaymentsPaymentReceipt, error) 
 	v.CredentialsTitle = ReadString(r)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1005,6 +1026,9 @@ func DecodePaymentsPaymentReceiptStars(r io.Reader) (*PaymentsPaymentReceiptStar
 	v.TransactionID = ReadString(r)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1299,6 +1323,9 @@ func DecodeShippingOption(r io.Reader) (*ShippingOption, error) {
 	v.Title = ReadString(r)
 	ReadInt(r)
 	_cntPrices := ReadInt(r)
+	if err := checkVectorCount(_cntPrices); err != nil {
+		return nil, err
+	}
 	v.Prices = make([]*LabeledPrice, _cntPrices)
 	for _iPrices := range v.Prices {
 		_objPrices, _ := ReadTLObject(r)
@@ -1385,6 +1412,9 @@ func DecodePaymentsBankCardData(r io.Reader) (*PaymentsBankCardData, error) {
 	v.Title = ReadString(r)
 	ReadInt(r)
 	_cntOpenUrls := ReadInt(r)
+	if err := checkVectorCount(_cntOpenUrls); err != nil {
+		return nil, err
+	}
 	v.OpenUrls = make([]*BankCardOpenURL, _cntOpenUrls)
 	for _iOpenUrls := range v.OpenUrls {
 		_objOpenUrls, _ := ReadTLObject(r)
@@ -2391,6 +2421,9 @@ func DecodeInputStorePaymentPremiumGiftCode(r io.Reader) (*InputStorePaymentPrem
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]InputUserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -2497,6 +2530,9 @@ func DecodeInputStorePaymentPremiumGiveaway(r io.Reader) (*InputStorePaymentPrem
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntAdditionalPeers := ReadInt(r)
+		if err := checkVectorCount(_cntAdditionalPeers); err != nil {
+			return nil, err
+		}
 		v.AdditionalPeers = make([]InputPeerClass, _cntAdditionalPeers)
 		for _iAdditionalPeers := range v.AdditionalPeers {
 			_objAdditionalPeers, _ := ReadTLObject(r)
@@ -2712,6 +2748,9 @@ func DecodeInputStorePaymentStarsGiveaway(r io.Reader) (*InputStorePaymentStarsG
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntAdditionalPeers := ReadInt(r)
+		if err := checkVectorCount(_cntAdditionalPeers); err != nil {
+			return nil, err
+		}
 		v.AdditionalPeers = make([]InputPeerClass, _cntAdditionalPeers)
 		for _iAdditionalPeers := range v.AdditionalPeers {
 			_objAdditionalPeers, _ := ReadTLObject(r)
@@ -3100,6 +3139,9 @@ func DecodePaymentsCheckedGiftCode(r io.Reader) (*PaymentsCheckedGiftCode, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -3107,6 +3149,9 @@ func DecodePaymentsCheckedGiftCode(r io.Reader) (*PaymentsCheckedGiftCode, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -3961,6 +4006,9 @@ func DecodeStarsTransaction(r io.Reader) (*StarsTransaction, error) {
 	if v.Flags.Has(9) {
 		ReadInt(r)
 		_cntExtendedMedia := ReadInt(r)
+		if err := checkVectorCount(_cntExtendedMedia); err != nil {
+			return nil, err
+		}
 		v.ExtendedMedia = make([]MessageMediaClass, _cntExtendedMedia)
 		for _iExtendedMedia := range v.ExtendedMedia {
 			_objExtendedMedia, _ := ReadTLObject(r)
@@ -4109,6 +4157,9 @@ func DecodePaymentsStarsStatus(r io.Reader) (*PaymentsStarsStatus, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntSubscriptions := ReadInt(r)
+		if err := checkVectorCount(_cntSubscriptions); err != nil {
+			return nil, err
+		}
 		v.Subscriptions = make([]*StarsSubscription, _cntSubscriptions)
 		for _iSubscriptions := range v.Subscriptions {
 			_objSubscriptions, _ := ReadTLObject(r)
@@ -4124,6 +4175,9 @@ func DecodePaymentsStarsStatus(r io.Reader) (*PaymentsStarsStatus, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntHistory := ReadInt(r)
+		if err := checkVectorCount(_cntHistory); err != nil {
+			return nil, err
+		}
 		v.History = make([]*StarsTransaction, _cntHistory)
 		for _iHistory := range v.History {
 			_objHistory, _ := ReadTLObject(r)
@@ -4135,6 +4189,9 @@ func DecodePaymentsStarsStatus(r io.Reader) (*PaymentsStarsStatus, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -4142,6 +4199,9 @@ func DecodePaymentsStarsStatus(r io.Reader) (*PaymentsStarsStatus, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -4715,6 +4775,9 @@ func DecodeStarsGiveawayOption(r io.Reader) (*StarsGiveawayOption, error) {
 	v.Amount = ReadLong(r)
 	ReadInt(r)
 	_cntWinners := ReadInt(r)
+	if err := checkVectorCount(_cntWinners); err != nil {
+		return nil, err
+	}
 	v.Winners = make([]*StarsGiveawayWinnersOption, _cntWinners)
 	for _iWinners := range v.Winners {
 		_objWinners, _ := ReadTLObject(r)
@@ -5261,6 +5324,9 @@ func DecodeStarGiftUnique(r io.Reader) (*StarGiftUnique, error) {
 	}
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)
@@ -5274,6 +5340,9 @@ func DecodeStarGiftUnique(r io.Reader) (*StarGiftUnique, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntResellAmount := ReadInt(r)
+		if err := checkVectorCount(_cntResellAmount); err != nil {
+			return nil, err
+		}
 		v.ResellAmount = make([]StarsAmountClass, _cntResellAmount)
 		for _iResellAmount := range v.ResellAmount {
 			_objResellAmount, _ := ReadTLObject(r)
@@ -5412,6 +5481,9 @@ func DecodePaymentsStarGifts(r io.Reader) (*PaymentsStarGifts, error) {
 	v.Hash = int32(ReadInt(r))
 	ReadInt(r)
 	_cntGifts := ReadInt(r)
+	if err := checkVectorCount(_cntGifts); err != nil {
+		return nil, err
+	}
 	v.Gifts = make([]StarGiftClass, _cntGifts)
 	for _iGifts := range v.Gifts {
 		_objGifts, _ := ReadTLObject(r)
@@ -5419,6 +5491,9 @@ func DecodePaymentsStarGifts(r io.Reader) (*PaymentsStarGifts, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -5426,6 +5501,9 @@ func DecodePaymentsStarGifts(r io.Reader) (*PaymentsStarGifts, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -5561,6 +5639,9 @@ func DecodePaymentsConnectedStarRefBots(r io.Reader) (*PaymentsConnectedStarRefB
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntConnectedBots := ReadInt(r)
+	if err := checkVectorCount(_cntConnectedBots); err != nil {
+		return nil, err
+	}
 	v.ConnectedBots = make([]*ConnectedBotStarRef, _cntConnectedBots)
 	for _iConnectedBots := range v.ConnectedBots {
 		_objConnectedBots, _ := ReadTLObject(r)
@@ -5568,6 +5649,9 @@ func DecodePaymentsConnectedStarRefBots(r io.Reader) (*PaymentsConnectedStarRefB
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -5641,6 +5725,9 @@ func DecodePaymentsSuggestedStarRefBots(r io.Reader) (*PaymentsSuggestedStarRefB
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSuggestedBots := ReadInt(r)
+	if err := checkVectorCount(_cntSuggestedBots); err != nil {
+		return nil, err
+	}
 	v.SuggestedBots = make([]*StarRefProgram, _cntSuggestedBots)
 	for _iSuggestedBots := range v.SuggestedBots {
 		_objSuggestedBots, _ := ReadTLObject(r)
@@ -5648,6 +5735,9 @@ func DecodePaymentsSuggestedStarRefBots(r io.Reader) (*PaymentsSuggestedStarRefB
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -6045,6 +6135,9 @@ func DecodePaymentsStarGiftUpgradePreview(r io.Reader) (*PaymentsStarGiftUpgrade
 	v := &PaymentsStarGiftUpgradePreview{}
 	ReadInt(r)
 	_cntSampleAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntSampleAttributes); err != nil {
+		return nil, err
+	}
 	v.SampleAttributes = make([]StarGiftAttributeClass, _cntSampleAttributes)
 	for _iSampleAttributes := range v.SampleAttributes {
 		_objSampleAttributes, _ := ReadTLObject(r)
@@ -6052,6 +6145,9 @@ func DecodePaymentsStarGiftUpgradePreview(r io.Reader) (*PaymentsStarGiftUpgrade
 	}
 	ReadInt(r)
 	_cntPrices := ReadInt(r)
+	if err := checkVectorCount(_cntPrices); err != nil {
+		return nil, err
+	}
 	v.Prices = make([]*StarGiftUpgradePrice, _cntPrices)
 	for _iPrices := range v.Prices {
 		_objPrices, _ := ReadTLObject(r)
@@ -6059,6 +6155,9 @@ func DecodePaymentsStarGiftUpgradePreview(r io.Reader) (*PaymentsStarGiftUpgrade
 	}
 	ReadInt(r)
 	_cntNextPrices := ReadInt(r)
+	if err := checkVectorCount(_cntNextPrices); err != nil {
+		return nil, err
+	}
 	v.NextPrices = make([]*StarGiftUpgradePrice, _cntNextPrices)
 	for _iNextPrices := range v.NextPrices {
 		_objNextPrices, _ := ReadTLObject(r)
@@ -6114,6 +6213,9 @@ func DecodePaymentsUniqueStarGift(r io.Reader) (*PaymentsUniqueStarGift, error) 
 	v.Gift = _objGift.(StarGiftClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -6121,6 +6223,9 @@ func DecodePaymentsUniqueStarGift(r io.Reader) (*PaymentsUniqueStarGift, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -6443,6 +6548,9 @@ func DecodePaymentsSavedStarGifts(r io.Reader) (*PaymentsSavedStarGifts, error) 
 	}
 	ReadInt(r)
 	_cntGifts := ReadInt(r)
+	if err := checkVectorCount(_cntGifts); err != nil {
+		return nil, err
+	}
 	v.Gifts = make([]*SavedStarGift, _cntGifts)
 	for _iGifts := range v.Gifts {
 		_objGifts, _ := ReadTLObject(r)
@@ -6453,6 +6561,9 @@ func DecodePaymentsSavedStarGifts(r io.Reader) (*PaymentsSavedStarGifts, error) 
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -6460,6 +6571,9 @@ func DecodePaymentsSavedStarGifts(r io.Reader) (*PaymentsSavedStarGifts, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -6890,6 +7004,9 @@ func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntGifts := ReadInt(r)
+	if err := checkVectorCount(_cntGifts); err != nil {
+		return nil, err
+	}
 	v.Gifts = make([]StarGiftClass, _cntGifts)
 	for _iGifts := range v.Gifts {
 		_objGifts, _ := ReadTLObject(r)
@@ -6901,6 +7018,9 @@ func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntAttributes := ReadInt(r)
+		if err := checkVectorCount(_cntAttributes); err != nil {
+			return nil, err
+		}
 		v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 		for _iAttributes := range v.Attributes {
 			_objAttributes, _ := ReadTLObject(r)
@@ -6912,6 +7032,9 @@ func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -6920,6 +7043,9 @@ func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error
 	if v.Flags.Has(2) {
 		ReadInt(r)
 		_cntCounters := ReadInt(r)
+		if err := checkVectorCount(_cntCounters); err != nil {
+			return nil, err
+		}
 		v.Counters = make([]*StarGiftAttributeCounter, _cntCounters)
 		for _iCounters := range v.Counters {
 			_objCounters, _ := ReadTLObject(r)
@@ -6928,6 +7054,9 @@ func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7149,6 +7278,9 @@ func DecodePaymentsStarGiftCollections(r io.Reader) (*PaymentsStarGiftCollection
 	v := &PaymentsStarGiftCollections{}
 	ReadInt(r)
 	_cntCollections := ReadInt(r)
+	if err := checkVectorCount(_cntCollections); err != nil {
+		return nil, err
+	}
 	v.Collections = make([]*StarGiftCollection, _cntCollections)
 	for _iCollections := range v.Collections {
 		_objCollections, _ := ReadTLObject(r)
@@ -7541,6 +7673,9 @@ func DecodeStarGiftAuctionState(r io.Reader) (*StarGiftAuctionState, error) {
 	v.MinBidAmount = ReadLong(r)
 	ReadInt(r)
 	_cntBidLevels := ReadInt(r)
+	if err := checkVectorCount(_cntBidLevels); err != nil {
+		return nil, err
+	}
 	v.BidLevels = make([]*AuctionBidLevel, _cntBidLevels)
 	for _iBidLevels := range v.BidLevels {
 		_objBidLevels, _ := ReadTLObject(r)
@@ -7554,6 +7689,9 @@ func DecodeStarGiftAuctionState(r io.Reader) (*StarGiftAuctionState, error) {
 	v.TotalRounds = int32(ReadInt(r))
 	ReadInt(r)
 	_cntRounds := ReadInt(r)
+	if err := checkVectorCount(_cntRounds); err != nil {
+		return nil, err
+	}
 	v.Rounds = make([]StarGiftAuctionRoundClass, _cntRounds)
 	for _iRounds := range v.Rounds {
 		_objRounds, _ := ReadTLObject(r)
@@ -7697,6 +7835,9 @@ func DecodePaymentsStarGiftAuctionState(r io.Reader) (*PaymentsStarGiftAuctionSt
 	v.Timeout = int32(ReadInt(r))
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7704,6 +7845,9 @@ func DecodePaymentsStarGiftAuctionState(r io.Reader) (*PaymentsStarGiftAuctionSt
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7847,6 +7991,9 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r io.Reader) (*PaymentsStarGiftA
 	v := &PaymentsStarGiftAuctionAcquiredGifts{}
 	ReadInt(r)
 	_cntGifts := ReadInt(r)
+	if err := checkVectorCount(_cntGifts); err != nil {
+		return nil, err
+	}
 	v.Gifts = make([]*StarGiftAuctionAcquiredGift, _cntGifts)
 	for _iGifts := range v.Gifts {
 		_objGifts, _ := ReadTLObject(r)
@@ -7854,6 +8001,9 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r io.Reader) (*PaymentsStarGiftA
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7861,6 +8011,9 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r io.Reader) (*PaymentsStarGiftA
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8008,6 +8161,9 @@ func DecodePaymentsStarGiftActiveAuctions(r io.Reader) (*PaymentsStarGiftActiveA
 	v := &PaymentsStarGiftActiveAuctions{}
 	ReadInt(r)
 	_cntAuctions := ReadInt(r)
+	if err := checkVectorCount(_cntAuctions); err != nil {
+		return nil, err
+	}
 	v.Auctions = make([]*StarGiftActiveAuctionState, _cntAuctions)
 	for _iAuctions := range v.Auctions {
 		_objAuctions, _ := ReadTLObject(r)
@@ -8015,6 +8171,9 @@ func DecodePaymentsStarGiftActiveAuctions(r io.Reader) (*PaymentsStarGiftActiveA
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -8022,6 +8181,9 @@ func DecodePaymentsStarGiftActiveAuctions(r io.Reader) (*PaymentsStarGiftActiveA
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -8288,6 +8450,9 @@ func DecodePaymentsStarGiftUpgradeAttributes(r io.Reader) (*PaymentsStarGiftUpgr
 	v := &PaymentsStarGiftUpgradeAttributes{}
 	ReadInt(r)
 	_cntAttributes := ReadInt(r)
+	if err := checkVectorCount(_cntAttributes); err != nil {
+		return nil, err
+	}
 	v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
 		_objAttributes, _ := ReadTLObject(r)

@@ -486,8 +486,7 @@ func (c *RPCClient) MessagesReceivedMessages(ctx context.Context, req *MessagesR
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesSetTypingTypeID is the constructor ID for the RPC function messages.setTyping.
@@ -1949,8 +1948,7 @@ func (c *RPCClient) MessagesReceivedQueue(ctx context.Context, req *MessagesRece
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesReportEncryptedSpamTypeID is the constructor ID for the RPC function messages.reportEncryptedSpam.
@@ -4112,8 +4110,7 @@ func (c *RPCClient) MessagesGetAttachedStickers(ctx context.Context, req *Messag
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesSetGameScoreTypeID is the constructor ID for the RPC function messages.setGameScore.
@@ -5305,8 +5302,7 @@ func (c *RPCClient) MessagesGetSplitRanges(ctx context.Context) (TLObject, error
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesMarkDialogUnreadTypeID is the constructor ID for the RPC function messages.markDialogUnread.
@@ -5415,8 +5411,7 @@ func (c *RPCClient) MessagesGetDialogUnreadMarks(ctx context.Context, req *Messa
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesClearAllDraftsTypeID is the constructor ID for the RPC function messages.clearAllDrafts.
@@ -5862,8 +5857,7 @@ func (c *RPCClient) MessagesGetEmojiKeywordsLanguages(ctx context.Context, req *
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesGetEmojiURLTypeID is the constructor ID for the RPC function messages.getEmojiURL.
@@ -6566,8 +6560,7 @@ func (c *RPCClient) MessagesGetSuggestedDialogFilters(ctx context.Context) (TLOb
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesUpdateDialogFilterTypeID is the constructor ID for the RPC function messages.updateDialogFilter.
@@ -7757,8 +7750,7 @@ func (c *RPCClient) MessagesGetMessageReadParticipants(ctx context.Context, req 
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesGetSearchResultsCalendarTypeID is the constructor ID for the RPC function messages.getSearchResultsCalendar.
@@ -9307,8 +9299,7 @@ func (c *RPCClient) MessagesGetCustomEmojiDocuments(ctx context.Context, req *Me
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesGetEmojiStickersTypeID is the constructor ID for the RPC function messages.getEmojiStickers.
@@ -11439,8 +11430,7 @@ func (c *RPCClient) MessagesGetFactCheck(ctx context.Context, req *MessagesGetFa
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // MessagesRequestMainWebViewTypeID is the constructor ID for the RPC function messages.requestMainWebView.

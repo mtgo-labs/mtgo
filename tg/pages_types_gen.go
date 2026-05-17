@@ -440,6 +440,9 @@ func DecodeTextConcat(r io.Reader) (*TextConcat, error) {
 	v := &TextConcat{}
 	ReadInt(r)
 	_cntTexts := ReadInt(r)
+	if err := checkVectorCount(_cntTexts); err != nil {
+		return nil, err
+	}
 	v.Texts = make([]RichTextClass, _cntTexts)
 	for _iTexts := range v.Texts {
 		_objTexts, _ := ReadTLObject(r)
@@ -1233,6 +1236,9 @@ func DecodePageBlockList(r io.Reader) (*PageBlockList, error) {
 	v := &PageBlockList{}
 	ReadInt(r)
 	_cntItems := ReadInt(r)
+	if err := checkVectorCount(_cntItems); err != nil {
+		return nil, err
+	}
 	v.Items = make([]PageListItemClass, _cntItems)
 	for _iItems := range v.Items {
 		_objItems, _ := ReadTLObject(r)
@@ -1630,6 +1636,9 @@ func DecodePageBlockEmbedPost(r io.Reader) (*PageBlockEmbedPost, error) {
 	v.Date = int32(ReadInt(r))
 	ReadInt(r)
 	_cntBlocks := ReadInt(r)
+	if err := checkVectorCount(_cntBlocks); err != nil {
+		return nil, err
+	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
 		_objBlocks, _ := ReadTLObject(r)
@@ -1676,6 +1685,9 @@ func DecodePageBlockCollage(r io.Reader) (*PageBlockCollage, error) {
 	v := &PageBlockCollage{}
 	ReadInt(r)
 	_cntItems := ReadInt(r)
+	if err := checkVectorCount(_cntItems); err != nil {
+		return nil, err
+	}
 	v.Items = make([]PageBlockClass, _cntItems)
 	for _iItems := range v.Items {
 		_objItems, _ := ReadTLObject(r)
@@ -1722,6 +1734,9 @@ func DecodePageBlockSlideshow(r io.Reader) (*PageBlockSlideshow, error) {
 	v := &PageBlockSlideshow{}
 	ReadInt(r)
 	_cntItems := ReadInt(r)
+	if err := checkVectorCount(_cntItems); err != nil {
+		return nil, err
+	}
 	v.Items = make([]PageBlockClass, _cntItems)
 	for _iItems := range v.Items {
 		_objItems, _ := ReadTLObject(r)
@@ -1894,6 +1909,9 @@ func DecodePageBlockTable(r io.Reader) (*PageBlockTable, error) {
 	v.Title = _objTitle.(RichTextClass)
 	ReadInt(r)
 	_cntRows := ReadInt(r)
+	if err := checkVectorCount(_cntRows); err != nil {
+		return nil, err
+	}
 	v.Rows = make([]*PageTableRow, _cntRows)
 	for _iRows := range v.Rows {
 		_objRows, _ := ReadTLObject(r)
@@ -1936,6 +1954,9 @@ func DecodePageBlockOrderedList(r io.Reader) (*PageBlockOrderedList, error) {
 	v := &PageBlockOrderedList{}
 	ReadInt(r)
 	_cntItems := ReadInt(r)
+	if err := checkVectorCount(_cntItems); err != nil {
+		return nil, err
+	}
 	v.Items = make([]PageListOrderedItemClass, _cntItems)
 	for _iItems := range v.Items {
 		_objItems, _ := ReadTLObject(r)
@@ -1997,6 +2018,9 @@ func DecodePageBlockDetails(r io.Reader) (*PageBlockDetails, error) {
 	v.Open = v.Flags.Has(0)
 	ReadInt(r)
 	_cntBlocks := ReadInt(r)
+	if err := checkVectorCount(_cntBlocks); err != nil {
+		return nil, err
+	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
 		_objBlocks, _ := ReadTLObject(r)
@@ -2045,6 +2069,9 @@ func DecodePageBlockRelatedArticles(r io.Reader) (*PageBlockRelatedArticles, err
 	v.Title = _objTitle.(RichTextClass)
 	ReadInt(r)
 	_cntArticles := ReadInt(r)
+	if err := checkVectorCount(_cntArticles); err != nil {
+		return nil, err
+	}
 	v.Articles = make([]*PageRelatedArticle, _cntArticles)
 	for _iArticles := range v.Articles {
 		_objArticles, _ := ReadTLObject(r)
@@ -2236,6 +2263,9 @@ func DecodePageTableRow(r io.Reader) (*PageTableRow, error) {
 	v := &PageTableRow{}
 	ReadInt(r)
 	_cntCells := ReadInt(r)
+	if err := checkVectorCount(_cntCells); err != nil {
+		return nil, err
+	}
 	v.Cells = make([]*PageTableCell, _cntCells)
 	for _iCells := range v.Cells {
 		_objCells, _ := ReadTLObject(r)
@@ -2371,6 +2401,9 @@ func DecodePageListItemBlocks(r io.Reader) (*PageListItemBlocks, error) {
 	v := &PageListItemBlocks{}
 	ReadInt(r)
 	_cntBlocks := ReadInt(r)
+	if err := checkVectorCount(_cntBlocks); err != nil {
+		return nil, err
+	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
 		_objBlocks, _ := ReadTLObject(r)
@@ -2565,6 +2598,9 @@ func DecodePage(r io.Reader) (*Page, error) {
 	v.URL = ReadString(r)
 	ReadInt(r)
 	_cntBlocks := ReadInt(r)
+	if err := checkVectorCount(_cntBlocks); err != nil {
+		return nil, err
+	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
 		_objBlocks, _ := ReadTLObject(r)
@@ -2572,6 +2608,9 @@ func DecodePage(r io.Reader) (*Page, error) {
 	}
 	ReadInt(r)
 	_cntPhotos := ReadInt(r)
+	if err := checkVectorCount(_cntPhotos); err != nil {
+		return nil, err
+	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
 		_objPhotos, _ := ReadTLObject(r)
@@ -2579,6 +2618,9 @@ func DecodePage(r io.Reader) (*Page, error) {
 	}
 	ReadInt(r)
 	_cntDocuments := ReadInt(r)
+	if err := checkVectorCount(_cntDocuments); err != nil {
+		return nil, err
+	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
 		_objDocuments, _ := ReadTLObject(r)

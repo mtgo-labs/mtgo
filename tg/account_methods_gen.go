@@ -1350,8 +1350,7 @@ func (c *RPCClient) AccountGetAllSecureValues(ctx context.Context) (TLObject, er
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // AccountGetSecureValueTypeID is the constructor ID for the RPC function account.getSecureValue.
@@ -1394,8 +1393,7 @@ func (c *RPCClient) AccountGetSecureValue(ctx context.Context, req *AccountGetSe
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // AccountSaveSecureValueTypeID is the constructor ID for the RPC function account.saveSecureValue.
@@ -3002,8 +3000,7 @@ func (c *RPCClient) AccountGetMultiWallPapers(ctx context.Context, req *AccountG
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // AccountGetGlobalPrivacySettingsTypeID is the constructor ID for the RPC function account.getGlobalPrivacySettings.

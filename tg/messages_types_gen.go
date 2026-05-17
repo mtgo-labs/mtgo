@@ -200,6 +200,9 @@ func DecodeChatFull(r io.Reader) (*ChatFull, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntBotInfo := ReadInt(r)
+		if err := checkVectorCount(_cntBotInfo); err != nil {
+			return nil, err
+		}
 		v.BotInfo = make([]BotInfoClass, _cntBotInfo)
 		for _iBotInfo := range v.BotInfo {
 			_objBotInfo, _ := ReadTLObject(r)
@@ -696,6 +699,9 @@ func DecodeChannelFull(r io.Reader) (*ChannelFull, error) {
 	}
 	ReadInt(r)
 	_cntBotInfo := ReadInt(r)
+	if err := checkVectorCount(_cntBotInfo); err != nil {
+		return nil, err
+	}
 	v.BotInfo = make([]BotInfoClass, _cntBotInfo)
 	for _iBotInfo := range v.BotInfo {
 		_objBotInfo, _ := ReadTLObject(r)
@@ -850,6 +856,9 @@ func DecodeMessagesChatFull(r io.Reader) (*MessagesChatFull, error) {
 	v.FullChat = _objFullChat.(ChatFullClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -857,6 +866,9 @@ func DecodeMessagesChatFull(r io.Reader) (*MessagesChatFull, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1333,6 +1345,9 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 	if v.Flags.Has(7) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -1365,6 +1380,9 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 	if v.Flags.Has(22) {
 		ReadInt(r)
 		_cntRestrictionReason := ReadInt(r)
+		if err := checkVectorCount(_cntRestrictionReason); err != nil {
+			return nil, err
+		}
 		v.RestrictionReason = make([]*RestrictionReason, _cntRestrictionReason)
 		for _iRestrictionReason := range v.RestrictionReason {
 			_objRestrictionReason, _ := ReadTLObject(r)
@@ -1996,6 +2014,9 @@ func DecodeMessageMediaDocument(r io.Reader) (*MessageMediaDocument, error) {
 	if v.Flags.Has(5) {
 		ReadInt(r)
 		_cntAltDocuments := ReadInt(r)
+		if err := checkVectorCount(_cntAltDocuments); err != nil {
+			return nil, err
+		}
 		v.AltDocuments = make([]DocumentClass, _cntAltDocuments)
 		for _iAltDocuments := range v.AltDocuments {
 			_objAltDocuments, _ := ReadTLObject(r)
@@ -2755,6 +2776,9 @@ func DecodeMessageMediaPaidMedia(r io.Reader) (*MessageMediaPaidMedia, error) {
 	v.StarsAmount = ReadLong(r)
 	ReadInt(r)
 	_cntExtendedMedia := ReadInt(r)
+	if err := checkVectorCount(_cntExtendedMedia); err != nil {
+		return nil, err
+	}
 	v.ExtendedMedia = make([]MessageExtendedMediaClass, _cntExtendedMedia)
 	for _iExtendedMedia := range v.ExtendedMedia {
 		_objExtendedMedia, _ := ReadTLObject(r)
@@ -2819,6 +2843,9 @@ func DecodeMessageMediaToDo(r io.Reader) (*MessageMediaToDo, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntCompletions := ReadInt(r)
+		if err := checkVectorCount(_cntCompletions); err != nil {
+			return nil, err
+		}
 		v.Completions = make([]*TodoCompletion, _cntCompletions)
 		for _iCompletions := range v.Completions {
 			_objCompletions, _ := ReadTLObject(r)
@@ -4145,6 +4172,9 @@ func DecodeMessageActionSecureValuesSentMe(r io.Reader) (*MessageActionSecureVal
 	v := &MessageActionSecureValuesSentMe{}
 	ReadInt(r)
 	_cntValues := ReadInt(r)
+	if err := checkVectorCount(_cntValues); err != nil {
+		return nil, err
+	}
 	v.Values = make([]*SecureValue, _cntValues)
 	for _iValues := range v.Values {
 		_objValues, _ := ReadTLObject(r)
@@ -4189,6 +4219,9 @@ func DecodeMessageActionSecureValuesSent(r io.Reader) (*MessageActionSecureValue
 	v := &MessageActionSecureValuesSent{}
 	ReadInt(r)
 	_cntTypes := ReadInt(r)
+	if err := checkVectorCount(_cntTypes); err != nil {
+		return nil, err
+	}
 	v.Types = make([]SecureValueTypeClass, _cntTypes)
 	for _iTypes := range v.Types {
 		_objTypes, _ := ReadTLObject(r)
@@ -4870,6 +4903,9 @@ func DecodeMessageActionRequestedPeer(r io.Reader) (*MessageActionRequestedPeer,
 	v.ButtonID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -5224,6 +5260,9 @@ func DecodeMessageActionRequestedPeerSentMe(r io.Reader) (*MessageActionRequeste
 	v.ButtonID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]RequestedPeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -5992,6 +6031,9 @@ func DecodeMessageActionConferenceCall(r io.Reader) (*MessageActionConferenceCal
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntOtherParticipants := ReadInt(r)
+		if err := checkVectorCount(_cntOtherParticipants); err != nil {
+			return nil, err
+		}
 		v.OtherParticipants = make([]PeerClass, _cntOtherParticipants)
 		for _iOtherParticipants := range v.OtherParticipants {
 			_objOtherParticipants, _ := ReadTLObject(r)
@@ -6070,6 +6112,9 @@ func DecodeMessageActionTodoAppendTasks(r io.Reader) (*MessageActionTodoAppendTa
 	v := &MessageActionTodoAppendTasks{}
 	ReadInt(r)
 	_cntList := ReadInt(r)
+	if err := checkVectorCount(_cntList); err != nil {
+		return nil, err
+	}
 	v.List = make([]*TodoItem, _cntList)
 	for _iList := range v.List {
 		_objList, _ := ReadTLObject(r)
@@ -7175,6 +7220,9 @@ func DecodeMessagesPeerSettings(r io.Reader) (*MessagesPeerSettings, error) {
 	v.Settings = _objSettings.(PeerSettingsClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7182,6 +7230,9 @@ func DecodeMessagesPeerSettings(r io.Reader) (*MessagesPeerSettings, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7268,6 +7319,9 @@ func DecodeMessagesDialogs(r io.Reader) (*MessagesDialogs, error) {
 	v := &MessagesDialogs{}
 	ReadInt(r)
 	_cntDialogs := ReadInt(r)
+	if err := checkVectorCount(_cntDialogs); err != nil {
+		return nil, err
+	}
 	v.Dialogs = make([]DialogClass, _cntDialogs)
 	for _iDialogs := range v.Dialogs {
 		_objDialogs, _ := ReadTLObject(r)
@@ -7275,6 +7329,9 @@ func DecodeMessagesDialogs(r io.Reader) (*MessagesDialogs, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -7282,6 +7339,9 @@ func DecodeMessagesDialogs(r io.Reader) (*MessagesDialogs, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7289,6 +7349,9 @@ func DecodeMessagesDialogs(r io.Reader) (*MessagesDialogs, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7352,6 +7415,9 @@ func DecodeMessagesDialogsSlice(r io.Reader) (*MessagesDialogsSlice, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntDialogs := ReadInt(r)
+	if err := checkVectorCount(_cntDialogs); err != nil {
+		return nil, err
+	}
 	v.Dialogs = make([]DialogClass, _cntDialogs)
 	for _iDialogs := range v.Dialogs {
 		_objDialogs, _ := ReadTLObject(r)
@@ -7359,6 +7425,9 @@ func DecodeMessagesDialogsSlice(r io.Reader) (*MessagesDialogsSlice, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -7366,6 +7435,9 @@ func DecodeMessagesDialogsSlice(r io.Reader) (*MessagesDialogsSlice, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7373,6 +7445,9 @@ func DecodeMessagesDialogsSlice(r io.Reader) (*MessagesDialogsSlice, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7497,6 +7572,9 @@ func DecodeMessagesMessages(r io.Reader) (*MessagesMessages, error) {
 	v := &MessagesMessages{}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -7504,6 +7582,9 @@ func DecodeMessagesMessages(r io.Reader) (*MessagesMessages, error) {
 	}
 	ReadInt(r)
 	_cntTopics := ReadInt(r)
+	if err := checkVectorCount(_cntTopics); err != nil {
+		return nil, err
+	}
 	v.Topics = make([]ForumTopicClass, _cntTopics)
 	for _iTopics := range v.Topics {
 		_objTopics, _ := ReadTLObject(r)
@@ -7511,6 +7592,9 @@ func DecodeMessagesMessages(r io.Reader) (*MessagesMessages, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7518,6 +7602,9 @@ func DecodeMessagesMessages(r io.Reader) (*MessagesMessages, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7629,6 +7716,9 @@ func DecodeMessagesMessagesSlice(r io.Reader) (*MessagesMessagesSlice, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -7636,6 +7726,9 @@ func DecodeMessagesMessagesSlice(r io.Reader) (*MessagesMessagesSlice, error) {
 	}
 	ReadInt(r)
 	_cntTopics := ReadInt(r)
+	if err := checkVectorCount(_cntTopics); err != nil {
+		return nil, err
+	}
 	v.Topics = make([]ForumTopicClass, _cntTopics)
 	for _iTopics := range v.Topics {
 		_objTopics, _ := ReadTLObject(r)
@@ -7643,6 +7736,9 @@ func DecodeMessagesMessagesSlice(r io.Reader) (*MessagesMessagesSlice, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7650,6 +7746,9 @@ func DecodeMessagesMessagesSlice(r io.Reader) (*MessagesMessagesSlice, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7743,6 +7842,9 @@ func DecodeMessagesChannelMessages(r io.Reader) (*MessagesChannelMessages, error
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -7750,6 +7852,9 @@ func DecodeMessagesChannelMessages(r io.Reader) (*MessagesChannelMessages, error
 	}
 	ReadInt(r)
 	_cntTopics := ReadInt(r)
+	if err := checkVectorCount(_cntTopics); err != nil {
+		return nil, err
+	}
 	v.Topics = make([]ForumTopicClass, _cntTopics)
 	for _iTopics := range v.Topics {
 		_objTopics, _ := ReadTLObject(r)
@@ -7757,6 +7862,9 @@ func DecodeMessagesChannelMessages(r io.Reader) (*MessagesChannelMessages, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7764,6 +7872,9 @@ func DecodeMessagesChannelMessages(r io.Reader) (*MessagesChannelMessages, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -7858,6 +7969,9 @@ func DecodeMessagesChats(r io.Reader) (*MessagesChats, error) {
 	v := &MessagesChats{}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -7903,6 +8017,9 @@ func DecodeMessagesChatsSlice(r io.Reader) (*MessagesChatsSlice, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -9691,6 +9808,9 @@ func DecodeMessagesStickers(r io.Reader) (*MessagesStickers, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntStickers := ReadInt(r)
+	if err := checkVectorCount(_cntStickers); err != nil {
+		return nil, err
+	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
 		_objStickers, _ := ReadTLObject(r)
@@ -9823,6 +9943,9 @@ func DecodeMessagesAllStickers(r io.Reader) (*MessagesAllStickers, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -10225,6 +10348,9 @@ func DecodeWebPage(r io.Reader) (*WebPage, error) {
 	if v.Flags.Has(12) {
 		ReadInt(r)
 		_cntAttributes := ReadInt(r)
+		if err := checkVectorCount(_cntAttributes); err != nil {
+			return nil, err
+		}
 		v.Attributes = make([]WebPageAttributeClass, _cntAttributes)
 		for _iAttributes := range v.Attributes {
 			_objAttributes, _ := ReadTLObject(r)
@@ -10329,6 +10455,9 @@ func DecodeMessagesWebPage(r io.Reader) (*MessagesWebPage, error) {
 	v.Webpage = _objWebpage.(WebPageClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -10336,6 +10465,9 @@ func DecodeMessagesWebPage(r io.Reader) (*MessagesWebPage, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -10627,6 +10759,9 @@ func DecodeMessagesExportedChatInvite(r io.Reader) (*MessagesExportedChatInvite,
 	v.Invite = _objInvite.(ExportedChatInviteClass)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -10677,6 +10812,9 @@ func DecodeMessagesExportedChatInviteReplaced(r io.Reader) (*MessagesExportedCha
 	v.NewInvite = _objNewInvite.(ExportedChatInviteClass)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -11285,6 +11423,9 @@ func DecodeStickerSet(r io.Reader) (*StickerSet, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntThumbs := ReadInt(r)
+		if err := checkVectorCount(_cntThumbs); err != nil {
+			return nil, err
+		}
 		v.Thumbs = make([]PhotoSizeClass, _cntThumbs)
 		for _iThumbs := range v.Thumbs {
 			_objThumbs, _ := ReadTLObject(r)
@@ -11355,6 +11496,9 @@ func DecodeMessagesStickerSet(r io.Reader) (*MessagesStickerSet, error) {
 	v.Set = _objSet.(StickerSetClass)
 	ReadInt(r)
 	_cntPacks := ReadInt(r)
+	if err := checkVectorCount(_cntPacks); err != nil {
+		return nil, err
+	}
 	v.Packs = make([]*StickerPack, _cntPacks)
 	for _iPacks := range v.Packs {
 		_objPacks, _ := ReadTLObject(r)
@@ -11362,6 +11506,9 @@ func DecodeMessagesStickerSet(r io.Reader) (*MessagesStickerSet, error) {
 	}
 	ReadInt(r)
 	_cntKeywords := ReadInt(r)
+	if err := checkVectorCount(_cntKeywords); err != nil {
+		return nil, err
+	}
 	v.Keywords = make([]*StickerKeyword, _cntKeywords)
 	for _iKeywords := range v.Keywords {
 		_objKeywords, _ := ReadTLObject(r)
@@ -11369,6 +11516,9 @@ func DecodeMessagesStickerSet(r io.Reader) (*MessagesStickerSet, error) {
 	}
 	ReadInt(r)
 	_cntDocuments := ReadInt(r)
+	if err := checkVectorCount(_cntDocuments); err != nil {
+		return nil, err
+	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
 		_objDocuments, _ := ReadTLObject(r)
@@ -12658,6 +12808,9 @@ func DecodeChannelMessagesFilter(r io.Reader) (*ChannelMessagesFilter, error) {
 	v.ExcludeNewMessages = v.Flags.Has(1)
 	ReadInt(r)
 	_cntRanges := ReadInt(r)
+	if err := checkVectorCount(_cntRanges); err != nil {
+		return nil, err
+	}
 	v.Ranges = make([]*MessageRange, _cntRanges)
 	for _iRanges := range v.Ranges {
 		_objRanges, _ := ReadTLObject(r)
@@ -12752,6 +12905,9 @@ func DecodeMessagesSavedGifs(r io.Reader) (*MessagesSavedGifs, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntGifs := ReadInt(r)
+	if err := checkVectorCount(_cntGifs); err != nil {
+		return nil, err
+	}
 	v.Gifs = make([]DocumentClass, _cntGifs)
 	for _iGifs := range v.Gifs {
 		_objGifs, _ := ReadTLObject(r)
@@ -12883,6 +13039,9 @@ func DecodeInputBotInlineMessageMediaAuto(r io.Reader) (*InputBotInlineMessageMe
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -12968,6 +13127,9 @@ func DecodeInputBotInlineMessageText(r io.Reader) (*InputBotInlineMessageText, e
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -13421,6 +13583,9 @@ func DecodeInputBotInlineMessageMediaWebPage(r io.Reader) (*InputBotInlineMessag
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -13552,6 +13717,9 @@ func DecodeBotInlineMessageMediaAuto(r io.Reader) (*BotInlineMessageMediaAuto, e
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -13637,6 +13805,9 @@ func DecodeBotInlineMessageText(r io.Reader) (*BotInlineMessageText, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -14045,6 +14216,9 @@ func DecodeBotInlineMessageMediaWebPage(r io.Reader) (*BotInlineMessageMediaWebP
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -14156,6 +14330,9 @@ func DecodeMessagesBotResults(r io.Reader) (*MessagesBotResults, error) {
 	}
 	ReadInt(r)
 	_cntResults := ReadInt(r)
+	if err := checkVectorCount(_cntResults); err != nil {
+		return nil, err
+	}
 	v.Results = make([]BotInlineResultClass, _cntResults)
 	for _iResults := range v.Results {
 		_objResults, _ := ReadTLObject(r)
@@ -14164,6 +14341,9 @@ func DecodeMessagesBotResults(r io.Reader) (*MessagesBotResults, error) {
 	v.CacheTime = int32(ReadInt(r))
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -14657,6 +14837,9 @@ func DecodeMessagesPeerDialogs(r io.Reader) (*MessagesPeerDialogs, error) {
 	v := &MessagesPeerDialogs{}
 	ReadInt(r)
 	_cntDialogs := ReadInt(r)
+	if err := checkVectorCount(_cntDialogs); err != nil {
+		return nil, err
+	}
 	v.Dialogs = make([]DialogClass, _cntDialogs)
 	for _iDialogs := range v.Dialogs {
 		_objDialogs, _ := ReadTLObject(r)
@@ -14664,6 +14847,9 @@ func DecodeMessagesPeerDialogs(r io.Reader) (*MessagesPeerDialogs, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -14671,6 +14857,9 @@ func DecodeMessagesPeerDialogs(r io.Reader) (*MessagesPeerDialogs, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -14678,6 +14867,9 @@ func DecodeMessagesPeerDialogs(r io.Reader) (*MessagesPeerDialogs, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -14858,6 +15050,9 @@ func DecodeDraftMessage(r io.Reader) (*DraftMessage, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -14990,6 +15185,9 @@ func DecodeMessagesFeaturedStickers(r io.Reader) (*MessagesFeaturedStickers, err
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetCoveredClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -15093,6 +15291,9 @@ func DecodeMessagesRecentStickers(r io.Reader) (*MessagesRecentStickers, error) 
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntPacks := ReadInt(r)
+	if err := checkVectorCount(_cntPacks); err != nil {
+		return nil, err
+	}
 	v.Packs = make([]*StickerPack, _cntPacks)
 	for _iPacks := range v.Packs {
 		_objPacks, _ := ReadTLObject(r)
@@ -15100,6 +15301,9 @@ func DecodeMessagesRecentStickers(r io.Reader) (*MessagesRecentStickers, error) 
 	}
 	ReadInt(r)
 	_cntStickers := ReadInt(r)
+	if err := checkVectorCount(_cntStickers); err != nil {
+		return nil, err
+	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
 		_objStickers, _ := ReadTLObject(r)
@@ -15149,6 +15353,9 @@ func DecodeMessagesArchivedStickers(r io.Reader) (*MessagesArchivedStickers, err
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetCoveredClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -15240,6 +15447,9 @@ func DecodeMessagesStickerSetInstallResultArchive(r io.Reader) (*MessagesSticker
 	v := &MessagesStickerSetInstallResultArchive{}
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetCoveredClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -15355,6 +15565,9 @@ func DecodeStickerSetMultiCovered(r io.Reader) (*StickerSetMultiCovered, error) 
 	v.Set = _objSet.(StickerSetClass)
 	ReadInt(r)
 	_cntCovers := ReadInt(r)
+	if err := checkVectorCount(_cntCovers); err != nil {
+		return nil, err
+	}
 	v.Covers = make([]DocumentClass, _cntCovers)
 	for _iCovers := range v.Covers {
 		_objCovers, _ := ReadTLObject(r)
@@ -15413,6 +15626,9 @@ func DecodeStickerSetFullCovered(r io.Reader) (*StickerSetFullCovered, error) {
 	v.Set = _objSet.(StickerSetClass)
 	ReadInt(r)
 	_cntPacks := ReadInt(r)
+	if err := checkVectorCount(_cntPacks); err != nil {
+		return nil, err
+	}
 	v.Packs = make([]*StickerPack, _cntPacks)
 	for _iPacks := range v.Packs {
 		_objPacks, _ := ReadTLObject(r)
@@ -15420,6 +15636,9 @@ func DecodeStickerSetFullCovered(r io.Reader) (*StickerSetFullCovered, error) {
 	}
 	ReadInt(r)
 	_cntKeywords := ReadInt(r)
+	if err := checkVectorCount(_cntKeywords); err != nil {
+		return nil, err
+	}
 	v.Keywords = make([]*StickerKeyword, _cntKeywords)
 	for _iKeywords := range v.Keywords {
 		_objKeywords, _ := ReadTLObject(r)
@@ -15427,6 +15646,9 @@ func DecodeStickerSetFullCovered(r io.Reader) (*StickerSetFullCovered, error) {
 	}
 	ReadInt(r)
 	_cntDocuments := ReadInt(r)
+	if err := checkVectorCount(_cntDocuments); err != nil {
+		return nil, err
+	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
 		_objDocuments, _ := ReadTLObject(r)
@@ -15597,6 +15819,9 @@ func DecodeMessagesHighScores(r io.Reader) (*MessagesHighScores, error) {
 	v := &MessagesHighScores{}
 	ReadInt(r)
 	_cntScores := ReadInt(r)
+	if err := checkVectorCount(_cntScores); err != nil {
+		return nil, err
+	}
 	v.Scores = make([]*HighScore, _cntScores)
 	for _iScores := range v.Scores {
 		_objScores, _ := ReadTLObject(r)
@@ -15604,6 +15829,9 @@ func DecodeMessagesHighScores(r io.Reader) (*MessagesHighScores, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -15776,6 +16004,9 @@ func DecodeMessagesFavedStickers(r io.Reader) (*MessagesFavedStickers, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntPacks := ReadInt(r)
+	if err := checkVectorCount(_cntPacks); err != nil {
+		return nil, err
+	}
 	v.Packs = make([]*StickerPack, _cntPacks)
 	for _iPacks := range v.Packs {
 		_objPacks, _ := ReadTLObject(r)
@@ -15783,6 +16014,9 @@ func DecodeMessagesFavedStickers(r io.Reader) (*MessagesFavedStickers, error) {
 	}
 	ReadInt(r)
 	_cntStickers := ReadInt(r)
+	if err := checkVectorCount(_cntStickers); err != nil {
+		return nil, err
+	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
 		_objStickers, _ := ReadTLObject(r)
@@ -16207,6 +16441,9 @@ func DecodeMessagesFoundStickerSets(r io.Reader) (*MessagesFoundStickerSets, err
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetCoveredClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -16351,6 +16588,9 @@ func DecodeEmojiKeywordsDifference(r io.Reader) (*EmojiKeywordsDifference, error
 	v.Version = int32(ReadInt(r))
 	ReadInt(r)
 	_cntKeywords := ReadInt(r)
+	if err := checkVectorCount(_cntKeywords); err != nil {
+		return nil, err
+	}
 	v.Keywords = make([]EmojiKeywordClass, _cntKeywords)
 	for _iKeywords := range v.Keywords {
 		_objKeywords, _ := ReadTLObject(r)
@@ -16531,6 +16771,9 @@ func DecodeMessagesInactiveChats(r io.Reader) (*MessagesInactiveChats, error) {
 	v.Dates = ReadVectorInt(r)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -16538,6 +16781,9 @@ func DecodeMessagesInactiveChats(r io.Reader) (*MessagesInactiveChats, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -16617,6 +16863,9 @@ func DecodeMessagesVotesList(r io.Reader) (*MessagesVotesList, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntVotes := ReadInt(r)
+	if err := checkVectorCount(_cntVotes); err != nil {
+		return nil, err
+	}
 	v.Votes = make([]MessagePeerVoteClass, _cntVotes)
 	for _iVotes := range v.Votes {
 		_objVotes, _ := ReadTLObject(r)
@@ -16624,6 +16873,9 @@ func DecodeMessagesVotesList(r io.Reader) (*MessagesVotesList, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -16631,6 +16883,9 @@ func DecodeMessagesVotesList(r io.Reader) (*MessagesVotesList, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -16798,6 +17053,9 @@ func DecodeDialogFilter(r io.Reader) (*DialogFilter, error) {
 	}
 	ReadInt(r)
 	_cntPinnedPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPinnedPeers); err != nil {
+		return nil, err
+	}
 	v.PinnedPeers = make([]InputPeerClass, _cntPinnedPeers)
 	for _iPinnedPeers := range v.PinnedPeers {
 		_objPinnedPeers, _ := ReadTLObject(r)
@@ -16805,6 +17063,9 @@ func DecodeDialogFilter(r io.Reader) (*DialogFilter, error) {
 	}
 	ReadInt(r)
 	_cntIncludePeers := ReadInt(r)
+	if err := checkVectorCount(_cntIncludePeers); err != nil {
+		return nil, err
+	}
 	v.IncludePeers = make([]InputPeerClass, _cntIncludePeers)
 	for _iIncludePeers := range v.IncludePeers {
 		_objIncludePeers, _ := ReadTLObject(r)
@@ -16812,6 +17073,9 @@ func DecodeDialogFilter(r io.Reader) (*DialogFilter, error) {
 	}
 	ReadInt(r)
 	_cntExcludePeers := ReadInt(r)
+	if err := checkVectorCount(_cntExcludePeers); err != nil {
+		return nil, err
+	}
 	v.ExcludePeers = make([]InputPeerClass, _cntExcludePeers)
 	for _iExcludePeers := range v.ExcludePeers {
 		_objExcludePeers, _ := ReadTLObject(r)
@@ -16938,6 +17202,9 @@ func DecodeDialogFilterChatlist(r io.Reader) (*DialogFilterChatlist, error) {
 	}
 	ReadInt(r)
 	_cntPinnedPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPinnedPeers); err != nil {
+		return nil, err
+	}
 	v.PinnedPeers = make([]InputPeerClass, _cntPinnedPeers)
 	for _iPinnedPeers := range v.PinnedPeers {
 		_objPinnedPeers, _ := ReadTLObject(r)
@@ -16945,6 +17212,9 @@ func DecodeDialogFilterChatlist(r io.Reader) (*DialogFilterChatlist, error) {
 	}
 	ReadInt(r)
 	_cntIncludePeers := ReadInt(r)
+	if err := checkVectorCount(_cntIncludePeers); err != nil {
+		return nil, err
+	}
 	v.IncludePeers = make([]InputPeerClass, _cntIncludePeers)
 	for _iIncludePeers := range v.IncludePeers {
 		_objIncludePeers, _ := ReadTLObject(r)
@@ -17130,6 +17400,9 @@ func DecodeMessagesMessageViews(r io.Reader) (*MessagesMessageViews, error) {
 	v := &MessagesMessageViews{}
 	ReadInt(r)
 	_cntViews := ReadInt(r)
+	if err := checkVectorCount(_cntViews); err != nil {
+		return nil, err
+	}
 	v.Views = make([]MessageViewsClass, _cntViews)
 	for _iViews := range v.Views {
 		_objViews, _ := ReadTLObject(r)
@@ -17137,6 +17410,9 @@ func DecodeMessagesMessageViews(r io.Reader) (*MessagesMessageViews, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -17144,6 +17420,9 @@ func DecodeMessagesMessageViews(r io.Reader) (*MessagesMessageViews, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -17236,6 +17515,9 @@ func DecodeMessagesDiscussionMessage(r io.Reader) (*MessagesDiscussionMessage, e
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -17253,6 +17535,9 @@ func DecodeMessagesDiscussionMessage(r io.Reader) (*MessagesDiscussionMessage, e
 	v.UnreadCount = int32(ReadInt(r))
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -17260,6 +17545,9 @@ func DecodeMessagesDiscussionMessage(r io.Reader) (*MessagesDiscussionMessage, e
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -17439,6 +17727,9 @@ func DecodeMessageReplyHeader(r io.Reader) (*MessageReplyHeader, error) {
 	if v.Flags.Has(7) {
 		ReadInt(r)
 		_cntQuoteEntities := ReadInt(r)
+		if err := checkVectorCount(_cntQuoteEntities); err != nil {
+			return nil, err
+		}
 		v.QuoteEntities = make([]MessageEntityClass, _cntQuoteEntities)
 		for _iQuoteEntities := range v.QuoteEntities {
 			_objQuoteEntities, _ := ReadTLObject(r)
@@ -17580,6 +17871,9 @@ func DecodeMessageReplies(r io.Reader) (*MessageReplies, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntRecentRepliers := ReadInt(r)
+		if err := checkVectorCount(_cntRecentRepliers); err != nil {
+			return nil, err
+		}
 		v.RecentRepliers = make([]PeerClass, _cntRecentRepliers)
 		for _iRecentRepliers := range v.RecentRepliers {
 			_objRecentRepliers, _ := ReadTLObject(r)
@@ -17787,6 +18081,9 @@ func DecodeMessagesExportedChatInvites(r io.Reader) (*MessagesExportedChatInvite
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntInvites := ReadInt(r)
+	if err := checkVectorCount(_cntInvites); err != nil {
+		return nil, err
+	}
 	v.Invites = make([]ExportedChatInviteClass, _cntInvites)
 	for _iInvites := range v.Invites {
 		_objInvites, _ := ReadTLObject(r)
@@ -17794,6 +18091,9 @@ func DecodeMessagesExportedChatInvites(r io.Reader) (*MessagesExportedChatInvite
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -17848,6 +18148,9 @@ func DecodeMessagesChatInviteImporters(r io.Reader) (*MessagesChatInviteImporter
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntImporters := ReadInt(r)
+	if err := checkVectorCount(_cntImporters); err != nil {
+		return nil, err
+	}
 	v.Importers = make([]*ChatInviteImporter, _cntImporters)
 	for _iImporters := range v.Importers {
 		_objImporters, _ := ReadTLObject(r)
@@ -17855,6 +18158,9 @@ func DecodeMessagesChatInviteImporters(r io.Reader) (*MessagesChatInviteImporter
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -17906,6 +18212,9 @@ func DecodeMessagesChatAdminsWithInvites(r io.Reader) (*MessagesChatAdminsWithIn
 	v := &MessagesChatAdminsWithInvites{}
 	ReadInt(r)
 	_cntAdmins := ReadInt(r)
+	if err := checkVectorCount(_cntAdmins); err != nil {
+		return nil, err
+	}
 	v.Admins = make([]*ChatAdminWithInvites, _cntAdmins)
 	for _iAdmins := range v.Admins {
 		_objAdmins, _ := ReadTLObject(r)
@@ -17913,6 +18222,9 @@ func DecodeMessagesChatAdminsWithInvites(r io.Reader) (*MessagesChatAdminsWithIn
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -18084,6 +18396,9 @@ func DecodeSponsoredMessage(r io.Reader) (*SponsoredMessage, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -18226,6 +18541,9 @@ func DecodeMessagesSponsoredMessages(r io.Reader) (*MessagesSponsoredMessages, e
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]*SponsoredMessage, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -18233,6 +18551,9 @@ func DecodeMessagesSponsoredMessages(r io.Reader) (*MessagesSponsoredMessages, e
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -18240,6 +18561,9 @@ func DecodeMessagesSponsoredMessages(r io.Reader) (*MessagesSponsoredMessages, e
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -18368,6 +18692,9 @@ func DecodeMessagesSearchResultsCalendar(r io.Reader) (*MessagesSearchResultsCal
 	}
 	ReadInt(r)
 	_cntPeriods := ReadInt(r)
+	if err := checkVectorCount(_cntPeriods); err != nil {
+		return nil, err
+	}
 	v.Periods = make([]*SearchResultsCalendarPeriod, _cntPeriods)
 	for _iPeriods := range v.Periods {
 		_objPeriods, _ := ReadTLObject(r)
@@ -18375,6 +18702,9 @@ func DecodeMessagesSearchResultsCalendar(r io.Reader) (*MessagesSearchResultsCal
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -18382,6 +18712,9 @@ func DecodeMessagesSearchResultsCalendar(r io.Reader) (*MessagesSearchResultsCal
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -18389,6 +18722,9 @@ func DecodeMessagesSearchResultsCalendar(r io.Reader) (*MessagesSearchResultsCal
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -18437,6 +18773,9 @@ func DecodeMessagesSearchResultsPositions(r io.Reader) (*MessagesSearchResultsPo
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntPositions := ReadInt(r)
+	if err := checkVectorCount(_cntPositions); err != nil {
+		return nil, err
+	}
 	v.Positions = make([]*SearchResultPosition, _cntPositions)
 	for _iPositions := range v.Positions {
 		_objPositions, _ := ReadTLObject(r)
@@ -18592,6 +18931,9 @@ func DecodeMessageReactions(r io.Reader) (*MessageReactions, error) {
 	v.ReactionsAsTags = v.Flags.Has(3)
 	ReadInt(r)
 	_cntResults := ReadInt(r)
+	if err := checkVectorCount(_cntResults); err != nil {
+		return nil, err
+	}
 	v.Results = make([]*ReactionCount, _cntResults)
 	for _iResults := range v.Results {
 		_objResults, _ := ReadTLObject(r)
@@ -18600,6 +18942,9 @@ func DecodeMessageReactions(r io.Reader) (*MessageReactions, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntRecentReactions := ReadInt(r)
+		if err := checkVectorCount(_cntRecentReactions); err != nil {
+			return nil, err
+		}
 		v.RecentReactions = make([]*MessagePeerReaction, _cntRecentReactions)
 		for _iRecentReactions := range v.RecentReactions {
 			_objRecentReactions, _ := ReadTLObject(r)
@@ -18609,6 +18954,9 @@ func DecodeMessageReactions(r io.Reader) (*MessageReactions, error) {
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntTopReactors := ReadInt(r)
+		if err := checkVectorCount(_cntTopReactors); err != nil {
+			return nil, err
+		}
 		v.TopReactors = make([]*MessageReactor, _cntTopReactors)
 		for _iTopReactors := range v.TopReactors {
 			_objTopReactors, _ := ReadTLObject(r)
@@ -18689,6 +19037,9 @@ func DecodeMessagesMessageReactionsList(r io.Reader) (*MessagesMessageReactionsL
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]*MessagePeerReaction, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -18696,6 +19047,9 @@ func DecodeMessagesMessageReactionsList(r io.Reader) (*MessagesMessageReactionsL
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -18703,6 +19057,9 @@ func DecodeMessagesMessageReactionsList(r io.Reader) (*MessagesMessageReactionsL
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -18902,6 +19259,9 @@ func DecodeMessagesAvailableReactions(r io.Reader) (*MessagesAvailableReactions,
 	v.Hash = int32(ReadInt(r))
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]*AvailableReaction, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -19646,6 +20006,9 @@ func DecodeChatReactionsSome(r io.Reader) (*ChatReactionsSome, error) {
 	v := &ChatReactionsSome{}
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]ReactionClass, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -19740,6 +20103,9 @@ func DecodeMessagesReactions(r io.Reader) (*MessagesReactions, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntReactions := ReadInt(r)
+	if err := checkVectorCount(_cntReactions); err != nil {
+		return nil, err
+	}
 	v.Reactions = make([]ReactionClass, _cntReactions)
 	for _iReactions := range v.Reactions {
 		_objReactions, _ := ReadTLObject(r)
@@ -20187,6 +20553,9 @@ func DecodeMessagesForumTopics(r io.Reader) (*MessagesForumTopics, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntTopics := ReadInt(r)
+	if err := checkVectorCount(_cntTopics); err != nil {
+		return nil, err
+	}
 	v.Topics = make([]ForumTopicClass, _cntTopics)
 	for _iTopics := range v.Topics {
 		_objTopics, _ := ReadTLObject(r)
@@ -20194,6 +20563,9 @@ func DecodeMessagesForumTopics(r io.Reader) (*MessagesForumTopics, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -20201,6 +20573,9 @@ func DecodeMessagesForumTopics(r io.Reader) (*MessagesForumTopics, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -20208,6 +20583,9 @@ func DecodeMessagesForumTopics(r io.Reader) (*MessagesForumTopics, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -20524,6 +20902,9 @@ func DecodeMessagesEmojiGroups(r io.Reader) (*MessagesEmojiGroups, error) {
 	v.Hash = int32(ReadInt(r))
 	ReadInt(r)
 	_cntGroups := ReadInt(r)
+	if err := checkVectorCount(_cntGroups); err != nil {
+		return nil, err
+	}
 	v.Groups = make([]EmojiGroupClass, _cntGroups)
 	for _iGroups := range v.Groups {
 		_objGroups, _ := ReadTLObject(r)
@@ -20569,6 +20950,9 @@ func DecodeMessagesTranslateResult(r io.Reader) (*MessagesTranslateResult, error
 	v := &MessagesTranslateResult{}
 	ReadInt(r)
 	_cntResult := ReadInt(r)
+	if err := checkVectorCount(_cntResult); err != nil {
+		return nil, err
+	}
 	v.Result = make([]*TextWithEntities, _cntResult)
 	for _iResult := range v.Result {
 		_objResult, _ := ReadTLObject(r)
@@ -21274,6 +21658,9 @@ func DecodeMessagesSavedDialogs(r io.Reader) (*MessagesSavedDialogs, error) {
 	v := &MessagesSavedDialogs{}
 	ReadInt(r)
 	_cntDialogs := ReadInt(r)
+	if err := checkVectorCount(_cntDialogs); err != nil {
+		return nil, err
+	}
 	v.Dialogs = make([]SavedDialogClass, _cntDialogs)
 	for _iDialogs := range v.Dialogs {
 		_objDialogs, _ := ReadTLObject(r)
@@ -21281,6 +21668,9 @@ func DecodeMessagesSavedDialogs(r io.Reader) (*MessagesSavedDialogs, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -21288,6 +21678,9 @@ func DecodeMessagesSavedDialogs(r io.Reader) (*MessagesSavedDialogs, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -21295,6 +21688,9 @@ func DecodeMessagesSavedDialogs(r io.Reader) (*MessagesSavedDialogs, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -21358,6 +21754,9 @@ func DecodeMessagesSavedDialogsSlice(r io.Reader) (*MessagesSavedDialogsSlice, e
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntDialogs := ReadInt(r)
+	if err := checkVectorCount(_cntDialogs); err != nil {
+		return nil, err
+	}
 	v.Dialogs = make([]SavedDialogClass, _cntDialogs)
 	for _iDialogs := range v.Dialogs {
 		_objDialogs, _ := ReadTLObject(r)
@@ -21365,6 +21764,9 @@ func DecodeMessagesSavedDialogsSlice(r io.Reader) (*MessagesSavedDialogsSlice, e
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -21372,6 +21774,9 @@ func DecodeMessagesSavedDialogsSlice(r io.Reader) (*MessagesSavedDialogsSlice, e
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -21379,6 +21784,9 @@ func DecodeMessagesSavedDialogsSlice(r io.Reader) (*MessagesSavedDialogsSlice, e
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -21565,6 +21973,9 @@ func DecodeMessagesSavedReactionTags(r io.Reader) (*MessagesSavedReactionTags, e
 	v := &MessagesSavedReactionTags{}
 	ReadInt(r)
 	_cntTags := ReadInt(r)
+	if err := checkVectorCount(_cntTags); err != nil {
+		return nil, err
+	}
 	v.Tags = make([]*SavedReactionTag, _cntTags)
 	for _iTags := range v.Tags {
 		_objTags, _ := ReadTLObject(r)
@@ -22097,6 +22508,9 @@ func DecodeMessagesQuickReplies(r io.Reader) (*MessagesQuickReplies, error) {
 	v := &MessagesQuickReplies{}
 	ReadInt(r)
 	_cntQuickReplies := ReadInt(r)
+	if err := checkVectorCount(_cntQuickReplies); err != nil {
+		return nil, err
+	}
 	v.QuickReplies = make([]*QuickReply, _cntQuickReplies)
 	for _iQuickReplies := range v.QuickReplies {
 		_objQuickReplies, _ := ReadTLObject(r)
@@ -22104,6 +22518,9 @@ func DecodeMessagesQuickReplies(r io.Reader) (*MessagesQuickReplies, error) {
 	}
 	ReadInt(r)
 	_cntMessages := ReadInt(r)
+	if err := checkVectorCount(_cntMessages); err != nil {
+		return nil, err
+	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
 		_objMessages, _ := ReadTLObject(r)
@@ -22111,6 +22528,9 @@ func DecodeMessagesQuickReplies(r io.Reader) (*MessagesQuickReplies, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -22118,6 +22538,9 @@ func DecodeMessagesQuickReplies(r io.Reader) (*MessagesQuickReplies, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -22209,6 +22632,9 @@ func DecodeMessagesDialogFilters(r io.Reader) (*MessagesDialogFilters, error) {
 	v.TagsEnabled = v.Flags.Has(0)
 	ReadInt(r)
 	_cntFilters := ReadInt(r)
+	if err := checkVectorCount(_cntFilters); err != nil {
+		return nil, err
+	}
 	v.Filters = make([]DialogFilterClass, _cntFilters)
 	for _iFilters := range v.Filters {
 		_objFilters, _ := ReadTLObject(r)
@@ -22257,6 +22683,9 @@ func DecodeMessagesMyStickers(r io.Reader) (*MessagesMyStickers, error) {
 	v.Count = int32(ReadInt(r))
 	ReadInt(r)
 	_cntSets := ReadInt(r)
+	if err := checkVectorCount(_cntSets); err != nil {
+		return nil, err
+	}
 	v.Sets = make([]StickerSetCoveredClass, _cntSets)
 	for _iSets := range v.Sets {
 		_objSets, _ := ReadTLObject(r)
@@ -22306,6 +22735,9 @@ func DecodeMessagesInvitedUsers(r io.Reader) (*MessagesInvitedUsers, error) {
 	v.Updates = _objUpdates.(UpdatesClass)
 	ReadInt(r)
 	_cntMissingInvitees := ReadInt(r)
+	if err := checkVectorCount(_cntMissingInvitees); err != nil {
+		return nil, err
+	}
 	v.MissingInvitees = make([]*MissingInvitee, _cntMissingInvitees)
 	for _iMissingInvitees := range v.MissingInvitees {
 		_objMissingInvitees, _ := ReadTLObject(r)
@@ -22606,6 +23038,9 @@ func DecodeMessagesAvailableEffects(r io.Reader) (*MessagesAvailableEffects, err
 	v.Hash = int32(ReadInt(r))
 	ReadInt(r)
 	_cntEffects := ReadInt(r)
+	if err := checkVectorCount(_cntEffects); err != nil {
+		return nil, err
+	}
 	v.Effects = make([]*AvailableEffect, _cntEffects)
 	for _iEffects := range v.Effects {
 		_objEffects, _ := ReadTLObject(r)
@@ -22613,6 +23048,9 @@ func DecodeMessagesAvailableEffects(r io.Reader) (*MessagesAvailableEffects, err
 	}
 	ReadInt(r)
 	_cntDocuments := ReadInt(r)
+	if err := checkVectorCount(_cntDocuments); err != nil {
+		return nil, err
+	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
 		_objDocuments, _ := ReadTLObject(r)
@@ -22822,6 +23260,9 @@ func DecodeMessagesPreparedInlineMessage(r io.Reader) (*MessagesPreparedInlineMe
 	v.Result = _objResult.(BotInlineResultClass)
 	ReadInt(r)
 	_cntPeerTypes := ReadInt(r)
+	if err := checkVectorCount(_cntPeerTypes); err != nil {
+		return nil, err
+	}
 	v.PeerTypes = make([]InlineQueryPeerTypeClass, _cntPeerTypes)
 	for _iPeerTypes := range v.PeerTypes {
 		_objPeerTypes, _ := ReadTLObject(r)
@@ -22830,6 +23271,9 @@ func DecodeMessagesPreparedInlineMessage(r io.Reader) (*MessagesPreparedInlineMe
 	v.CacheTime = int32(ReadInt(r))
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -22968,6 +23412,9 @@ func DecodeMessagesFoundStickers(r io.Reader) (*MessagesFoundStickers, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntStickers := ReadInt(r)
+	if err := checkVectorCount(_cntStickers); err != nil {
+		return nil, err
+	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
 		_objStickers, _ := ReadTLObject(r)
@@ -23023,6 +23470,9 @@ func DecodeMessagesWebPagePreview(r io.Reader) (*MessagesWebPagePreview, error) 
 	v.Media = _objMedia.(MessageMediaClass)
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -23030,6 +23480,9 @@ func DecodeMessagesWebPagePreview(r io.Reader) (*MessagesWebPagePreview, error) 
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -23328,6 +23781,9 @@ func DecodeTodoList(r io.Reader) (*TodoList, error) {
 	v.Title = _objTitle.(*TextWithEntities)
 	ReadInt(r)
 	_cntList := ReadInt(r)
+	if err := checkVectorCount(_cntList); err != nil {
+		return nil, err
+	}
 	v.List = make([]*TodoItem, _cntList)
 	for _iList := range v.List {
 		_objList, _ := ReadTLObject(r)

@@ -186,6 +186,9 @@ func DecodeBotInfo(r io.Reader) (*BotInfo, error) {
 	if v.Flags.Has(2) {
 		ReadInt(r)
 		_cntCommands := ReadInt(r)
+		if err := checkVectorCount(_cntCommands); err != nil {
+			return nil, err
+		}
 		v.Commands = make([]*BotCommand, _cntCommands)
 		for _iCommands := range v.Commands {
 			_objCommands, _ := ReadTLObject(r)
@@ -724,6 +727,9 @@ func DecodeKeyboardButtonSwitchInline(r io.Reader) (*KeyboardButtonSwitchInline,
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntPeerTypes := ReadInt(r)
+		if err := checkVectorCount(_cntPeerTypes); err != nil {
+			return nil, err
+		}
 		v.PeerTypes = make([]InlineQueryPeerTypeClass, _cntPeerTypes)
 		for _iPeerTypes := range v.PeerTypes {
 			_objPeerTypes, _ := ReadTLObject(r)
@@ -1495,6 +1501,9 @@ func DecodeKeyboardButtonRow(r io.Reader) (*KeyboardButtonRow, error) {
 	v := &KeyboardButtonRow{}
 	ReadInt(r)
 	_cntButtons := ReadInt(r)
+	if err := checkVectorCount(_cntButtons); err != nil {
+		return nil, err
+	}
 	v.Buttons = make([]KeyboardButtonClass, _cntButtons)
 	for _iButtons := range v.Buttons {
 		_objButtons, _ := ReadTLObject(r)
@@ -2583,6 +2592,9 @@ func DecodeAttachMenuBotIcon(r io.Reader) (*AttachMenuBotIcon, error) {
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntColors := ReadInt(r)
+		if err := checkVectorCount(_cntColors); err != nil {
+			return nil, err
+		}
 		v.Colors = make([]*AttachMenuBotIconColor, _cntColors)
 		for _iColors := range v.Colors {
 			_objColors, _ := ReadTLObject(r)
@@ -2689,6 +2701,9 @@ func DecodeAttachMenuBot(r io.Reader) (*AttachMenuBot, error) {
 	if v.Flags.Has(3) {
 		ReadInt(r)
 		_cntPeerTypes := ReadInt(r)
+		if err := checkVectorCount(_cntPeerTypes); err != nil {
+			return nil, err
+		}
 		v.PeerTypes = make([]AttachMenuPeerTypeClass, _cntPeerTypes)
 		for _iPeerTypes := range v.PeerTypes {
 			_objPeerTypes, _ := ReadTLObject(r)
@@ -2697,6 +2712,9 @@ func DecodeAttachMenuBot(r io.Reader) (*AttachMenuBot, error) {
 	}
 	ReadInt(r)
 	_cntIcons := ReadInt(r)
+	if err := checkVectorCount(_cntIcons); err != nil {
+		return nil, err
+	}
 	v.Icons = make([]*AttachMenuBotIcon, _cntIcons)
 	for _iIcons := range v.Icons {
 		_objIcons, _ := ReadTLObject(r)
@@ -2797,6 +2815,9 @@ func DecodeAttachMenuBots(r io.Reader) (*AttachMenuBots, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntBots := ReadInt(r)
+	if err := checkVectorCount(_cntBots); err != nil {
+		return nil, err
+	}
 	v.Bots = make([]*AttachMenuBot, _cntBots)
 	for _iBots := range v.Bots {
 		_objBots, _ := ReadTLObject(r)
@@ -2804,6 +2825,9 @@ func DecodeAttachMenuBots(r io.Reader) (*AttachMenuBots, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -2853,6 +2877,9 @@ func DecodeAttachMenuBotsBot(r io.Reader) (*AttachMenuBotsBot, error) {
 	v.Bot = _objBot.(*AttachMenuBot)
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -3235,6 +3262,9 @@ func DecodeBotsPopularAppBots(r io.Reader) (*BotsPopularAppBots, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -3321,6 +3351,9 @@ func DecodeBotsPreviewInfo(r io.Reader) (*BotsPreviewInfo, error) {
 	v := &BotsPreviewInfo{}
 	ReadInt(r)
 	_cntMedia := ReadInt(r)
+	if err := checkVectorCount(_cntMedia); err != nil {
+		return nil, err
+	}
 	v.Media = make([]*BotPreviewMedia, _cntMedia)
 	for _iMedia := range v.Media {
 		_objMedia, _ := ReadTLObject(r)
@@ -3729,6 +3762,9 @@ func DecodeBotsAccessSettings(r io.Reader) (*BotsAccessSettings, error) {
 	if v.Flags.Has(1) {
 		ReadInt(r)
 		_cntAddUsers := ReadInt(r)
+		if err := checkVectorCount(_cntAddUsers); err != nil {
+			return nil, err
+		}
 		v.AddUsers = make([]UserClass, _cntAddUsers)
 		for _iAddUsers := range v.AddUsers {
 			_objAddUsers, _ := ReadTLObject(r)

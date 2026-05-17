@@ -4,17 +4,17 @@ package tg
 
 // ConstructorMapContacts maps constructor IDs to factory functions.
 var ConstructorMapContacts = map[uint32]func() TLObject{
-	0x77d01c3b: func() TLObject { return &ContactsImportedContacts{} },
-	0xea32b4b1: func() TLObject { return &ContactsSponsoredPeersEmpty{} },
-	0xeb032884: func() TLObject { return &ContactsSponsoredPeers{} },
-	0x114ff30d: func() TLObject { return &ContactsContactBirthdays{} },
-	0x7f077ad9: func() TLObject { return &ContactsResolvedPeer{} },
 	0x0ade1591: func() TLObject { return &ContactsBlocked{} },
 	0xe1664194: func() TLObject { return &ContactsBlockedSlice{} },
-	0xb3134d9d: func() TLObject { return &ContactsFound{} },
 	0xde266ef5: func() TLObject { return &ContactsTopPeersNotModified{} },
 	0x70b772a8: func() TLObject { return &ContactsTopPeers{} },
 	0xb52c939d: func() TLObject { return &ContactsTopPeersDisabled{} },
+	0xb3134d9d: func() TLObject { return &ContactsFound{} },
+	0xea32b4b1: func() TLObject { return &ContactsSponsoredPeersEmpty{} },
+	0xeb032884: func() TLObject { return &ContactsSponsoredPeers{} },
+	0x7f077ad9: func() TLObject { return &ContactsResolvedPeer{} },
+	0x114ff30d: func() TLObject { return &ContactsContactBirthdays{} },
 	0xb74ba9d2: func() TLObject { return &ContactsContactsNotModified{} },
 	0xeae87e42: func() TLObject { return &ContactsContacts{} },
+	0x77d01c3b: func() TLObject { return &ContactsImportedContacts{} },
 }

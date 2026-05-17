@@ -1339,6 +1339,9 @@ func DecodeInputPrivacyValueAllowUsers(r io.Reader) (*InputPrivacyValueAllowUser
 	v := &InputPrivacyValueAllowUsers{}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]InputUserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -1439,6 +1442,9 @@ func DecodeInputPrivacyValueDisallowUsers(r io.Reader) (*InputPrivacyValueDisall
 	v := &InputPrivacyValueDisallowUsers{}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]InputUserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -2116,6 +2122,9 @@ func DecodeAccountPrivacyRules(r io.Reader) (*AccountPrivacyRules, error) {
 	v := &AccountPrivacyRules{}
 	ReadInt(r)
 	_cntRules := ReadInt(r)
+	if err := checkVectorCount(_cntRules); err != nil {
+		return nil, err
+	}
 	v.Rules = make([]PrivacyRuleClass, _cntRules)
 	for _iRules := range v.Rules {
 		_objRules, _ := ReadTLObject(r)
@@ -2123,6 +2132,9 @@ func DecodeAccountPrivacyRules(r io.Reader) (*AccountPrivacyRules, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -2130,6 +2142,9 @@ func DecodeAccountPrivacyRules(r io.Reader) (*AccountPrivacyRules, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -2213,6 +2228,9 @@ func DecodeAccountAuthorizations(r io.Reader) (*AccountAuthorizations, error) {
 	v.AuthorizationTTLDays = int32(ReadInt(r))
 	ReadInt(r)
 	_cntAuthorizations := ReadInt(r)
+	if err := checkVectorCount(_cntAuthorizations); err != nil {
+		return nil, err
+	}
 	v.Authorizations = make([]AuthorizationClass, _cntAuthorizations)
 	for _iAuthorizations := range v.Authorizations {
 		_objAuthorizations, _ := ReadTLObject(r)
@@ -2604,6 +2622,9 @@ func DecodeAccountWebAuthorizations(r io.Reader) (*AccountWebAuthorizations, err
 	v := &AccountWebAuthorizations{}
 	ReadInt(r)
 	_cntAuthorizations := ReadInt(r)
+	if err := checkVectorCount(_cntAuthorizations); err != nil {
+		return nil, err
+	}
 	v.Authorizations = make([]*WebAuthorization, _cntAuthorizations)
 	for _iAuthorizations := range v.Authorizations {
 		_objAuthorizations, _ := ReadTLObject(r)
@@ -2611,6 +2632,9 @@ func DecodeAccountWebAuthorizations(r io.Reader) (*AccountWebAuthorizations, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -2693,6 +2717,9 @@ func DecodeAccountAuthorizationForm(r io.Reader) (*AccountAuthorizationForm, err
 	}
 	ReadInt(r)
 	_cntRequiredTypes := ReadInt(r)
+	if err := checkVectorCount(_cntRequiredTypes); err != nil {
+		return nil, err
+	}
 	v.RequiredTypes = make([]SecureRequiredTypeClass, _cntRequiredTypes)
 	for _iRequiredTypes := range v.RequiredTypes {
 		_objRequiredTypes, _ := ReadTLObject(r)
@@ -2700,6 +2727,9 @@ func DecodeAccountAuthorizationForm(r io.Reader) (*AccountAuthorizationForm, err
 	}
 	ReadInt(r)
 	_cntValues := ReadInt(r)
+	if err := checkVectorCount(_cntValues); err != nil {
+		return nil, err
+	}
 	v.Values = make([]*SecureValue, _cntValues)
 	for _iValues := range v.Values {
 		_objValues, _ := ReadTLObject(r)
@@ -2707,6 +2737,9 @@ func DecodeAccountAuthorizationForm(r io.Reader) (*AccountAuthorizationForm, err
 	}
 	ReadInt(r)
 	_cntErrors := ReadInt(r)
+	if err := checkVectorCount(_cntErrors); err != nil {
+		return nil, err
+	}
 	v.Errors = make([]SecureValueErrorClass, _cntErrors)
 	for _iErrors := range v.Errors {
 		_objErrors, _ := ReadTLObject(r)
@@ -2714,6 +2747,9 @@ func DecodeAccountAuthorizationForm(r io.Reader) (*AccountAuthorizationForm, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -3009,6 +3045,9 @@ func DecodeAccountWallPapers(r io.Reader) (*AccountWallPapers, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntWallpapers := ReadInt(r)
+	if err := checkVectorCount(_cntWallpapers); err != nil {
+		return nil, err
+	}
 	v.Wallpapers = make([]WallPaperClass, _cntWallpapers)
 	for _iWallpapers := range v.Wallpapers {
 		_objWallpapers, _ := ReadTLObject(r)
@@ -3372,6 +3411,9 @@ func DecodeAccountThemes(r io.Reader) (*AccountThemes, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntThemes := ReadInt(r)
+	if err := checkVectorCount(_cntThemes); err != nil {
+		return nil, err
+	}
 	v.Themes = make([]*Theme, _cntThemes)
 	for _iThemes := range v.Themes {
 		_objThemes, _ := ReadTLObject(r)
@@ -3765,6 +3807,9 @@ func DecodeAccountChatThemes(r io.Reader) (*AccountChatThemes, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntThemes := ReadInt(r)
+	if err := checkVectorCount(_cntThemes); err != nil {
+		return nil, err
+	}
 	v.Themes = make([]ChatThemeClass, _cntThemes)
 	for _iThemes := range v.Themes {
 		_objThemes, _ := ReadTLObject(r)
@@ -3772,6 +3817,9 @@ func DecodeAccountChatThemes(r io.Reader) (*AccountChatThemes, error) {
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -3779,6 +3827,9 @@ func DecodeAccountChatThemes(r io.Reader) (*AccountChatThemes, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -3876,6 +3927,9 @@ func DecodeAccountSavedRingtones(r io.Reader) (*AccountSavedRingtones, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntRingtones := ReadInt(r)
+	if err := checkVectorCount(_cntRingtones); err != nil {
+		return nil, err
+	}
 	v.Ringtones = make([]DocumentClass, _cntRingtones)
 	for _iRingtones := range v.Ringtones {
 		_objRingtones, _ := ReadTLObject(r)
@@ -4052,6 +4106,9 @@ func DecodeAccountEmojiStatuses(r io.Reader) (*AccountEmojiStatuses, error) {
 	v.Hash = ReadLong(r)
 	ReadInt(r)
 	_cntStatuses := ReadInt(r)
+	if err := checkVectorCount(_cntStatuses); err != nil {
+		return nil, err
+	}
 	v.Statuses = make([]EmojiStatusClass, _cntStatuses)
 	for _iStatuses := range v.Statuses {
 		_objStatuses, _ := ReadTLObject(r)
@@ -4287,6 +4344,9 @@ func DecodeAccountAutoSaveSettings(r io.Reader) (*AccountAutoSaveSettings, error
 	v.BroadcastsSettings = _objBroadcastsSettings.(AutoSaveSettingsClass)
 	ReadInt(r)
 	_cntExceptions := ReadInt(r)
+	if err := checkVectorCount(_cntExceptions); err != nil {
+		return nil, err
+	}
 	v.Exceptions = make([]*AutoSaveException, _cntExceptions)
 	for _iExceptions := range v.Exceptions {
 		_objExceptions, _ := ReadTLObject(r)
@@ -4294,6 +4354,9 @@ func DecodeAccountAutoSaveSettings(r io.Reader) (*AccountAutoSaveSettings, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -4301,6 +4364,9 @@ func DecodeAccountAutoSaveSettings(r io.Reader) (*AccountAutoSaveSettings, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -4444,6 +4510,9 @@ func DecodeBusinessWorkHours(r io.Reader) (*BusinessWorkHours, error) {
 	v.TimezoneID = ReadString(r)
 	ReadInt(r)
 	_cntWeeklyOpen := ReadInt(r)
+	if err := checkVectorCount(_cntWeeklyOpen); err != nil {
+		return nil, err
+	}
 	v.WeeklyOpen = make([]*BusinessWeeklyOpen, _cntWeeklyOpen)
 	for _iWeeklyOpen := range v.WeeklyOpen {
 		_objWeeklyOpen, _ := ReadTLObject(r)
@@ -4590,6 +4659,9 @@ func DecodeInputBusinessRecipients(r io.Reader) (*InputBusinessRecipients, error
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntUsers := ReadInt(r)
+		if err := checkVectorCount(_cntUsers); err != nil {
+			return nil, err
+		}
 		v.Users = make([]InputUserClass, _cntUsers)
 		for _iUsers := range v.Users {
 			_objUsers, _ := ReadTLObject(r)
@@ -4776,6 +4848,9 @@ func DecodeAccountConnectedBots(r io.Reader) (*AccountConnectedBots, error) {
 	v := &AccountConnectedBots{}
 	ReadInt(r)
 	_cntConnectedBots := ReadInt(r)
+	if err := checkVectorCount(_cntConnectedBots); err != nil {
+		return nil, err
+	}
 	v.ConnectedBots = make([]*ConnectedBot, _cntConnectedBots)
 	for _iConnectedBots := range v.ConnectedBots {
 		_objConnectedBots, _ := ReadTLObject(r)
@@ -4783,6 +4858,9 @@ func DecodeAccountConnectedBots(r io.Reader) (*AccountConnectedBots, error) {
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -5136,6 +5214,9 @@ func DecodeInputBusinessBotRecipients(r io.Reader) (*InputBusinessBotRecipients,
 	if v.Flags.Has(4) {
 		ReadInt(r)
 		_cntUsers := ReadInt(r)
+		if err := checkVectorCount(_cntUsers); err != nil {
+			return nil, err
+		}
 		v.Users = make([]InputUserClass, _cntUsers)
 		for _iUsers := range v.Users {
 			_objUsers, _ := ReadTLObject(r)
@@ -5145,6 +5226,9 @@ func DecodeInputBusinessBotRecipients(r io.Reader) (*InputBusinessBotRecipients,
 	if v.Flags.Has(6) {
 		ReadInt(r)
 		_cntExcludeUsers := ReadInt(r)
+		if err := checkVectorCount(_cntExcludeUsers); err != nil {
+			return nil, err
+		}
 		v.ExcludeUsers = make([]InputUserClass, _cntExcludeUsers)
 		for _iExcludeUsers := range v.ExcludeUsers {
 			_objExcludeUsers, _ := ReadTLObject(r)
@@ -5292,6 +5376,9 @@ func DecodeAccountBusinessChatLinks(r io.Reader) (*AccountBusinessChatLinks, err
 	v := &AccountBusinessChatLinks{}
 	ReadInt(r)
 	_cntLinks := ReadInt(r)
+	if err := checkVectorCount(_cntLinks); err != nil {
+		return nil, err
+	}
 	v.Links = make([]*BusinessChatLink, _cntLinks)
 	for _iLinks := range v.Links {
 		_objLinks, _ := ReadTLObject(r)
@@ -5299,6 +5386,9 @@ func DecodeAccountBusinessChatLinks(r io.Reader) (*AccountBusinessChatLinks, err
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -5306,6 +5396,9 @@ func DecodeAccountBusinessChatLinks(r io.Reader) (*AccountBusinessChatLinks, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -5388,6 +5481,9 @@ func DecodeAccountResolvedBusinessChatLinks(r io.Reader) (*AccountResolvedBusine
 	if v.Flags.Has(0) {
 		ReadInt(r)
 		_cntEntities := ReadInt(r)
+		if err := checkVectorCount(_cntEntities); err != nil {
+			return nil, err
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
 			_objEntities, _ := ReadTLObject(r)
@@ -5396,6 +5492,9 @@ func DecodeAccountResolvedBusinessChatLinks(r io.Reader) (*AccountResolvedBusine
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -5403,6 +5502,9 @@ func DecodeAccountResolvedBusinessChatLinks(r io.Reader) (*AccountResolvedBusine
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -5755,6 +5857,9 @@ func DecodeAccountPasskeys(r io.Reader) (*AccountPasskeys, error) {
 	v := &AccountPasskeys{}
 	ReadInt(r)
 	_cntPasskeys := ReadInt(r)
+	if err := checkVectorCount(_cntPasskeys); err != nil {
+		return nil, err
+	}
 	v.Passkeys = make([]*Passkey, _cntPasskeys)
 	for _iPasskeys := range v.Passkeys {
 		_objPasskeys, _ := ReadTLObject(r)

@@ -4,12 +4,12 @@ package tg
 
 // ConstructorMapAicompose maps constructor IDs to factory functions.
 var ConstructorMapAicompose = map[uint32]func() TLObject{
+	0xf1d628ec: func() TLObject { return &AiComposeToneExample{} },
+	0xcff63ea9: func() TLObject { return &AiComposeTone{} },
+	0x9bad6414: func() TLObject { return &AiComposeToneDefault{} },
 	0xc1f46103: func() TLObject { return &AicomposeTonesNotModified{} },
 	0x6c9d0efe: func() TLObject { return &AicomposeTones{} },
 	0x1fe9a9bf: func() TLObject { return &InputAiComposeToneDefault{} },
 	0x0773c080: func() TLObject { return &InputAiComposeToneID{} },
 	0x1fa01357: func() TLObject { return &InputAiComposeToneSlug{} },
-	0xcff63ea9: func() TLObject { return &AiComposeTone{} },
-	0x9bad6414: func() TLObject { return &AiComposeToneDefault{} },
-	0xf1d628ec: func() TLObject { return &AiComposeToneExample{} },
 }

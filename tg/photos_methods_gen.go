@@ -195,8 +195,7 @@ func (c *RPCClient) PhotosDeletePhotos(ctx context.Context, req *PhotosDeletePho
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PhotosGetUserPhotosTypeID is the constructor ID for the RPC function photos.getUserPhotos.

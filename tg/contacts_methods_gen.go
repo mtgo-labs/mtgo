@@ -45,8 +45,7 @@ func (c *RPCClient) ContactsGetContactIDs(ctx context.Context, req *ContactsGetC
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // ContactsGetStatusesTypeID is the constructor ID for the RPC function contacts.getStatuses.
@@ -83,8 +82,7 @@ func (c *RPCClient) ContactsGetStatuses(ctx context.Context) (TLObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // ContactsGetContactsTypeID is the constructor ID for the RPC function contacts.getContacts.
@@ -725,8 +723,7 @@ func (c *RPCClient) ContactsGetSaved(ctx context.Context) (TLObject, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // ContactsToggleTopPeersTypeID is the constructor ID for the RPC function contacts.toggleTopPeers.

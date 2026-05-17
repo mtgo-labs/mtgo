@@ -149,6 +149,9 @@ func DecodeExportedChatlistInvite(r io.Reader) (*ExportedChatlistInvite, error) 
 	v.URL = ReadString(r)
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -243,6 +246,9 @@ func DecodeChatlistsExportedInvites(r io.Reader) (*ChatlistsExportedInvites, err
 	v := &ChatlistsExportedInvites{}
 	ReadInt(r)
 	_cntInvites := ReadInt(r)
+	if err := checkVectorCount(_cntInvites); err != nil {
+		return nil, err
+	}
 	v.Invites = make([]ExportedChatlistInviteClass, _cntInvites)
 	for _iInvites := range v.Invites {
 		_objInvites, _ := ReadTLObject(r)
@@ -250,6 +256,9 @@ func DecodeChatlistsExportedInvites(r io.Reader) (*ChatlistsExportedInvites, err
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -257,6 +266,9 @@ func DecodeChatlistsExportedInvites(r io.Reader) (*ChatlistsExportedInvites, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -340,6 +352,9 @@ func DecodeChatlistsChatlistInviteAlready(r io.Reader) (*ChatlistsChatlistInvite
 	v.FilterID = int32(ReadInt(r))
 	ReadInt(r)
 	_cntMissingPeers := ReadInt(r)
+	if err := checkVectorCount(_cntMissingPeers); err != nil {
+		return nil, err
+	}
 	v.MissingPeers = make([]PeerClass, _cntMissingPeers)
 	for _iMissingPeers := range v.MissingPeers {
 		_objMissingPeers, _ := ReadTLObject(r)
@@ -347,6 +362,9 @@ func DecodeChatlistsChatlistInviteAlready(r io.Reader) (*ChatlistsChatlistInvite
 	}
 	ReadInt(r)
 	_cntAlreadyPeers := ReadInt(r)
+	if err := checkVectorCount(_cntAlreadyPeers); err != nil {
+		return nil, err
+	}
 	v.AlreadyPeers = make([]PeerClass, _cntAlreadyPeers)
 	for _iAlreadyPeers := range v.AlreadyPeers {
 		_objAlreadyPeers, _ := ReadTLObject(r)
@@ -354,6 +372,9 @@ func DecodeChatlistsChatlistInviteAlready(r io.Reader) (*ChatlistsChatlistInvite
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -361,6 +382,9 @@ func DecodeChatlistsChatlistInviteAlready(r io.Reader) (*ChatlistsChatlistInvite
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -446,6 +470,9 @@ func DecodeChatlistsChatlistInvite(r io.Reader) (*ChatlistsChatlistInvite, error
 	}
 	ReadInt(r)
 	_cntPeers := ReadInt(r)
+	if err := checkVectorCount(_cntPeers); err != nil {
+		return nil, err
+	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
 		_objPeers, _ := ReadTLObject(r)
@@ -453,6 +480,9 @@ func DecodeChatlistsChatlistInvite(r io.Reader) (*ChatlistsChatlistInvite, error
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -460,6 +490,9 @@ func DecodeChatlistsChatlistInvite(r io.Reader) (*ChatlistsChatlistInvite, error
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)
@@ -517,6 +550,9 @@ func DecodeChatlistsChatlistUpdates(r io.Reader) (*ChatlistsChatlistUpdates, err
 	v := &ChatlistsChatlistUpdates{}
 	ReadInt(r)
 	_cntMissingPeers := ReadInt(r)
+	if err := checkVectorCount(_cntMissingPeers); err != nil {
+		return nil, err
+	}
 	v.MissingPeers = make([]PeerClass, _cntMissingPeers)
 	for _iMissingPeers := range v.MissingPeers {
 		_objMissingPeers, _ := ReadTLObject(r)
@@ -524,6 +560,9 @@ func DecodeChatlistsChatlistUpdates(r io.Reader) (*ChatlistsChatlistUpdates, err
 	}
 	ReadInt(r)
 	_cntChats := ReadInt(r)
+	if err := checkVectorCount(_cntChats); err != nil {
+		return nil, err
+	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
 		_objChats, _ := ReadTLObject(r)
@@ -531,6 +570,9 @@ func DecodeChatlistsChatlistUpdates(r io.Reader) (*ChatlistsChatlistUpdates, err
 	}
 	ReadInt(r)
 	_cntUsers := ReadInt(r)
+	if err := checkVectorCount(_cntUsers); err != nil {
+		return nil, err
+	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
 		_objUsers, _ := ReadTLObject(r)

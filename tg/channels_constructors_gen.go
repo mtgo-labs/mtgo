@@ -4,11 +4,8 @@ package tg
 
 // ConstructorMapChannels maps constructor IDs to factory functions.
 var ConstructorMapChannels = map[uint32]func() TLObject{
-	0xed8af74d: func() TLObject { return &ChannelsAdminLogResults{} },
-	0x846f9e42: func() TLObject { return &ChannelsSponsoredMessageReportResultChooseOption{} },
-	0x3e3bcf2f: func() TLObject { return &ChannelsSponsoredMessageReportResultAdsHidden{} },
-	0xad798849: func() TLObject { return &ChannelsSponsoredMessageReportResultReported{} },
-	0xf496b0c6: func() TLObject { return &ChannelsSendAsPeers{} },
+	0x9ab0feaf: func() TLObject { return &ChannelsChannelParticipants{} },
+	0xf0173fe9: func() TLObject { return &ChannelsChannelParticipantsNotModified{} },
 	0x1bd54456: func() TLObject { return &ChannelParticipant{} },
 	0xa9478a1a: func() TLObject { return &ChannelParticipantSelf{} },
 	0x2fe601d3: func() TLObject { return &ChannelParticipantCreator{} },
@@ -16,6 +13,9 @@ var ConstructorMapChannels = map[uint32]func() TLObject{
 	0xd5f0ad91: func() TLObject { return &ChannelParticipantBanned{} },
 	0x1b03f006: func() TLObject { return &ChannelParticipantLeft{} },
 	0xdfb80317: func() TLObject { return &ChannelsChannelParticipant{} },
-	0x9ab0feaf: func() TLObject { return &ChannelsChannelParticipants{} },
-	0xf0173fe9: func() TLObject { return &ChannelsChannelParticipantsNotModified{} },
+	0xed8af74d: func() TLObject { return &ChannelsAdminLogResults{} },
+	0x846f9e42: func() TLObject { return &ChannelsSponsoredMessageReportResultChooseOption{} },
+	0x3e3bcf2f: func() TLObject { return &ChannelsSponsoredMessageReportResultAdsHidden{} },
+	0xad798849: func() TLObject { return &ChannelsSponsoredMessageReportResultReported{} },
+	0xf496b0c6: func() TLObject { return &ChannelsSendAsPeers{} },
 }

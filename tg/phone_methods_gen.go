@@ -937,8 +937,7 @@ func (c *RPCClient) PhoneCheckGroupCall(ctx context.Context, req *PhoneCheckGrou
 	if err != nil {
 		return nil, err
 	}
-	_ = result
-	return nil, nil
+	return result, nil
 }
 
 // PhoneToggleGroupCallRecordTypeID is the constructor ID for the RPC function phone.toggleGroupCallRecord.

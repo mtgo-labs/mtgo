@@ -6,7 +6,7 @@ package tg
 var ConstructorMapUpload = map[uint32]func() TLObject{
 	0xeea8e46e: func() TLObject { return &UploadCDNFileReuploadNeeded{} },
 	0xa99fca4f: func() TLObject { return &UploadCDNFile{} },
-	0x21e753bc: func() TLObject { return &UploadWebFile{} },
 	0x096a18d5: func() TLObject { return &UploadFile{} },
 	0xf18cda44: func() TLObject { return &UploadFileCDNRedirect{} },
+	0x21e753bc: func() TLObject { return &UploadWebFile{} },
 }
