@@ -37,6 +37,8 @@ go get github.com/mtgo-labs/mtgo
 
 # Install the Agent Skill for Claude Code, Codex, Cursor, etc.
 npx skills add mtgo-labs/mtgo
+# or with full URL
+npx skills add https://github.com/mtgo-labs/mtgo
 ```
 
 ```go
