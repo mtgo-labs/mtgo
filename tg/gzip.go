@@ -2,8 +2,12 @@ package tg
 
 import (
 	"bytes"
-	"compress/gzip"
+	"errors"
+	"fmt"
 	"io"
+	"sync"
+
+	"github.com/klauspost/compress/gzip"
 )
 
 // GzipPackedID is the TL constructor ID for the gzip_packed type.
@@ -20,8 +24,11 @@ func (g *GzipPacked) ConstructorID() uint32 { return GzipPackedID }
 
 // Encode compresses the inner TLObject and writes it to b in TL format.
 func (g *GzipPacked) Encode(b *bytes.Buffer) error {
-	var buf bytes.Buffer
-	if err := EncodeTLObject(&buf, g.Data); err != nil {
+	buf := gzipBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer gzipBufPool.Put(buf)
+
+	if err := EncodeTLObject(buf, g.Data); err != nil {
 		return err
 	}
 	WriteString(b, gzipCompress(buf.Bytes()))
@@ -61,21 +68,60 @@ func (d *GzipPackedData) Encode(b *bytes.Buffer) error {
 
 func (d *GzipPackedData) ConstructorID() uint32 { return 0 }
 
+var (
+	gzipReaderPool = sync.Pool{
+		New: func() any { return new(gzip.Reader) },
+	}
+	gzipWriterPool = sync.Pool{
+		New: func() any { return gzip.NewWriter(nil) },
+	}
+	gzipBufPool = sync.Pool{
+		New: func() any { return bytes.NewBuffer(make([]byte, 0, 4096)) },
+	}
+)
+
+var errDecompressionBomb = errors.New("gzip: decompression bomb detected")
+
 func gzipCompress(data []byte) string {
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
+	buf := gzipBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer gzipBufPool.Put(buf)
+
+	w := gzipWriterPool.Get().(*gzip.Writer)
+	w.Reset(buf)
+	defer gzipWriterPool.Put(w)
+
 	w.Write(data)
 	w.Close()
 	return buf.String()
 }
 
 func gzipDecompress(data []byte) ([]byte, error) {
-	r, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
+	r := gzipReaderPool.Get().(*gzip.Reader)
+	defer gzipReaderPool.Put(r)
+
+	if err := r.Reset(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
-	defer r.Close()
-	return io.ReadAll(r)
+
+	buf := gzipBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer gzipBufPool.Put(buf)
+
+	// Decompression bomb protection: limit to 10 MB like gotd/td.
+	const maxUncompressed = 10 * 1024 * 1024
+	lr := io.LimitReader(r, maxUncompressed+1)
+	n, err := buf.ReadFrom(lr)
+	if err != nil {
+		return nil, fmt.Errorf("gzip: decompress: %w", err)
+	}
+	if n > maxUncompressed {
+		return nil, errDecompressionBomb
+	}
+
+	out := make([]byte, buf.Len())
+	copy(out, buf.Bytes())
+	return out, nil
 }
 
 func init() {
