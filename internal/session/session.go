@@ -92,9 +92,7 @@ type Session struct {
 	msgFactory *MsgFactory
 
 	// results maps message IDs to channels that receive RPC response objects.
-	results map[int64]chan tg.TLObject
-	// resultsMu protects the results map.
-	resultsMu sync.Mutex
+	results sync.Map
 
 	// acks accumulates message IDs that need to be acknowledged.
 	acks []int64
@@ -169,7 +167,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		authKey:      authKey,
 		sessionID:    sid,
 		msgFactory:   NewMsgFactory(time.Now()),
-		results:      make(map[int64]chan tg.TLObject),
+		results:      sync.Map{},
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
@@ -185,23 +183,18 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 
 func (s *Session) registerResult(msgID int64) chan tg.TLObject {
 	ch := make(chan tg.TLObject, 1)
-	s.resultsMu.Lock()
-	s.results[msgID] = ch
-	s.resultsMu.Unlock()
+	s.results.Store(msgID, ch)
 	return ch
 }
 
 func (s *Session) unregisterResult(msgID int64) {
-	s.resultsMu.Lock()
-	delete(s.results, msgID)
-	s.resultsMu.Unlock()
+	s.results.Delete(msgID)
 }
 
 func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
-	s.resultsMu.Lock()
-	ch, ok := s.results[msgID]
-	s.resultsMu.Unlock()
+	val, ok := s.results.Load(msgID)
 	if ok {
+		ch := val.(chan tg.TLObject)
 		select {
 		case ch <- obj:
 		default:
@@ -402,10 +395,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 			s.dispatchUpdate(obj)
 		}
 	default:
-		s.resultsMu.Lock()
-		_, hasResult := s.results[msgID]
-		s.resultsMu.Unlock()
-		if hasResult {
+		if _, hasResult := s.results.Load(msgID); hasResult {
 			s.deliverResult(msgID, obj)
 		} else if s.onUpdate != nil {
 			s.dispatchUpdate(obj)
@@ -452,6 +442,8 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		retries = 1
 	}
 
+	methodName := typeName(query)
+
 	var lastErr error
 	for i := 0; i < retries; i++ {
 		msgID := s.msgFactory.AllocateMsgID()
@@ -459,18 +451,18 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 
 		obj, err := s.Send(ctx, msgID, uint32(seqNo), query, timeout)
 		if err != nil {
-			lastErr = err
+			lastErr = fmt.Errorf("invoke %s: send: %w", methodName, err)
 			continue
 		}
 
 		if bad, ok := obj.(tg.BadMsgNotificationClass); ok {
 			switch v := bad.(type) {
 			case *tg.BadMsgNotification:
-				lastErr = fmt.Errorf("bad message notification: code=%d", v.ErrorCode)
+				lastErr = fmt.Errorf("invoke %s: bad message (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
 			case *tg.BadServerSalt:
-				lastErr = fmt.Errorf("bad server salt: code=%d", v.ErrorCode)
+				lastErr = fmt.Errorf("invoke %s: bad server salt (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
 			default:
-				lastErr = fmt.Errorf("bad message notification: %T", bad)
+				lastErr = fmt.Errorf("invoke %s: bad message notification: %T", methodName, bad)
 			}
 			continue
 		}
@@ -480,17 +472,28 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return obj, nil
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-			// Non-retryable errors (auth, permission, bad request) fail immediately.
 			if rpcErr.ErrorCode == 401 || rpcErr.ErrorCode == 400 || rpcErr.ErrorCode == 403 {
-				return nil, parsed
+				return nil, fmt.Errorf("invoke %s: %w", methodName, parsed)
 			}
-			lastErr = parsed
+			lastErr = fmt.Errorf("invoke %s: %w", methodName, parsed)
 			continue
 		}
 
 		return obj, nil
 	}
-	return nil, fmt.Errorf("session: invoke: retries exhausted: %w", lastErr)
+	return nil, fmt.Errorf("invoke %s: retries exhausted (%d): %w", methodName, retries, lastErr)
+}
+
+func typeName(v tg.TLObject) string {
+	if v == nil {
+		return "unknown"
+	}
+	switch t := v.(type) {
+	case interface{ ConstructorID() uint32 }:
+		return fmt.Sprintf("%T(cid=%08x)", v, t.ConstructorID())
+	default:
+		return fmt.Sprintf("%T", v)
+	}
 }
 
 // Start launches the receive, writer, and keep-alive ping background workers and

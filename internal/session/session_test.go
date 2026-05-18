@@ -124,10 +124,7 @@ func TestSessionResultChannel(t *testing.T) {
 
 	s.unregisterResult(msgID)
 
-	s.resultsMu.Lock()
-	_, exists := s.results[msgID]
-	s.resultsMu.Unlock()
-	if exists {
+	if _, exists := s.results.Load(msgID); exists {
 		t.Error("result still exists after unregister")
 	}
 }
