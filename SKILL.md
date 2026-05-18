@@ -489,10 +489,10 @@ result, err := rpc.MessagesGetMessages(ctx, req)
 
 ### InvokeRaw — skip error wrapping
 
-`client.InvokeRaw(ctx, query, retries, timeout)` sends a TL object and returns the raw response without wrapping or transforming errors. Use this when you need to inspect the original RPC error directly instead of the processed version:
+`client.InvokeRaw(ctx, query, retries, timeout)` sends a TL object and returns the decoded TL response without wrapping or transforming RPC errors. Use this when you need to inspect the original RPC error directly instead of the processed version. For raw MTProto result payload bytes, use `InvokeWithRawResult`.
 
 ```go
-// Get the raw TL response with original error
+// Get the decoded TL response with original RPC error handling
 raw, err := client.InvokeRaw(ctx, &tg.MessagesGetHistoryRequest{
     Peer:  &tg.InputPeerChannel{ChannelID: channelID, AccessHash: hash},
     Limit: 100,
