@@ -499,25 +499,25 @@ raw, err := client.InvokeRaw(ctx, &tg.MessagesGetHistoryRequest{
 }, 3, 10*time.Second)
 ```
 
-### InvokeWithRawByte — skip decode (performance)
+### InvokeWithRawResult — raw MTProto result payload
 
-`client.InvokeWithRawByte(ctx, query)` sends a TL object and returns the raw response **bytes** without running the TL decode algorithm. This saves significant time for high-throughput operations where you don't need the decoded response, or when you want to deserialize manually with a custom decoder:
+`client.InvokeWithRawResult(ctx, query)` sends a TL object and returns the raw MTProto `rpc_result.result:Object` payload bytes. The return value is not a decoded Go struct, and it is not necessarily gzip-unpacked; if Telegram returns `gzip_packed`, the returned bytes start with the `gzip_packed` constructor.
 
 ```go
-// Fast ping — don't waste time decoding the pong
-rawBytes, err := client.InvokeWithRawByte(ctx, &tg.PingRequest{PingID: rand.Int63()})
+// Fast ping: get the raw rpc_result payload bytes without TL decoding.
+rawBytes, err := client.InvokeWithRawResult(ctx, &tg.PingRequest{PingID: rand.Int63()})
 
 // Batch operation: check multiple peer access hashes without decode overhead
 for _, peer := range peers {
-    rawBytes, err := client.InvokeWithRawByte(ctx, &tg.MessagesGetHistoryRequest{
+    rawBytes, err := client.InvokeWithRawResult(ctx, &tg.MessagesGetHistoryRequest{
         Peer:  peer.InputPeer(),
         Limit: 1,
     })
-    // rawBytes is the undecoded TL response — parse only what you need
+    // rawBytes is the undecoded rpc_result payload; parse only what you need.
 }
 ```
 
-Use `InvokeWithRawByte` when:
+Use `InvokeWithRawResult` when:
 - You're doing bulk operations and don't need the full typed response
 - You only need part of the response and want to skip full TL deserialization
 - You're implementing a custom parser that's faster than the generated decoder

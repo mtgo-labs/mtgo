@@ -37,8 +37,13 @@ func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(*Rea
 	return c.rpc.RPCInvoke(ctx, input, decode)
 }
 
-// InvokeWithBytes sends a TLObject query and returns the raw response body
-// bytes without TL decoding.
-func (c *RPCClient) InvokeWithBytes(ctx context.Context, input TLObject) ([]byte, error) {
+// InvokeWithRawResult sends a TLObject query and returns the raw MTProto
+// rpc_result result:Object payload bytes without gzip unpacking or TL decoding.
+func (c *RPCClient) InvokeWithRawResult(ctx context.Context, input TLObject) ([]byte, error) {
 	return c.rpc.RPCInvokeRaw(ctx, input)
+}
+
+// InvokeWithBytes is deprecated. Use [RPCClient.InvokeWithRawResult].
+func (c *RPCClient) InvokeWithBytes(ctx context.Context, input TLObject) ([]byte, error) {
+	return c.InvokeWithRawResult(ctx, input)
 }

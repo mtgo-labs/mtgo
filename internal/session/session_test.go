@@ -206,6 +206,19 @@ func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObje
 	return crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
 }
 
+func makeEncryptedRawResponse(s *Session, msgID int64, seqNo uint32, body []byte) []byte {
+	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+}
+
+func encodeTLObject(t *testing.T, obj tg.TLObject) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := tg.EncodeTLObject(&buf, obj); err != nil {
+		t.Fatalf("encode %T: %v", obj, err)
+	}
+	return buf.Bytes()
+}
+
 func newSessionWithAuthKey(t *testing.T) *Session {
 	t.Helper()
 	dc := DataCenter{ID: 2}
@@ -298,7 +311,10 @@ func TestSessionSendRawAndWait(t *testing.T) {
 	respMsgID := s.msgFactory.AllocateMsgID()
 	respSeqNo := s.msgFactory.AllocateSeqNo(false)
 	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
-	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
+	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), &tg.RPCResult{
+		ReqMsgID: msgID,
+		Result:   pong,
+	})
 	mt.recvCh <- encrypted
 
 	select {
@@ -306,8 +322,9 @@ func TestSessionSendRawAndWait(t *testing.T) {
 		if result.err != nil {
 			t.Fatalf("SendRaw() error: %v", result.err)
 		}
-		if len(result.data) == 0 {
-			t.Fatal("SendRaw() returned empty data")
+		want := encodeTLObject(t, pong)
+		if !bytes.Equal(result.data, want) {
+			t.Fatalf("SendRaw() returned %x, want raw rpc_result payload %x", result.data, want)
 		}
 		obj, err := tg.ReadTLObject(tg.NewReader(result.data))
 		if err != nil {
@@ -319,6 +336,60 @@ func TestSessionSendRawAndWait(t *testing.T) {
 		}
 		if p.PingID != pingID {
 			t.Errorf("pong.PingID = %d, want %d", p.PingID, pingID)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("SendRaw() timed out")
+	}
+
+	close(s.cancel)
+}
+
+func TestSessionSendRawReturnsGzipPackedPayloadWithoutDecode(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	startTestWorkers(s)
+
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(true)
+
+	sendDone := make(chan struct {
+		data []byte
+		err  error
+	}, 1)
+	go func() {
+		data, err := s.SendRaw(context.Background(), msgID, uint32(seqNo), encodeTLObject(t, &tg.PingRequest{PingID: 1}), 5*time.Second)
+		sendDone <- struct {
+			data []byte
+			err  error
+		}{data, err}
+	}()
+
+	<-mt.sendCh
+
+	var gzipPayload bytes.Buffer
+	gz := &tg.GzipPacked{Data: &tg.Pong{MsgID: msgID, PingID: 1}}
+	tg.WriteInt(&gzipPayload, tg.GzipPackedID)
+	if err := gz.Encode(&gzipPayload); err != nil {
+		t.Fatalf("encode gzip payload: %v", err)
+	}
+	var rpcResult bytes.Buffer
+	tg.WriteInt(&rpcResult, tg.RPCResultTypeID)
+	tg.WriteLong(&rpcResult, msgID)
+	rpcResult.Write(gzipPayload.Bytes())
+	mt.recvCh <- makeEncryptedRawResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
+
+	select {
+	case result := <-sendDone:
+		if result.err != nil {
+			t.Fatalf("SendRaw() error: %v", result.err)
+		}
+		if len(result.data) < 4 {
+			t.Fatalf("SendRaw() returned short payload: %x", result.data)
+		}
+		if got := tg.ReadInt(bytes.NewReader(result.data[:4])); got != tg.GzipPackedID {
+			t.Fatalf("raw payload constructor = %08x, want gzip_packed %08x", got, tg.GzipPackedID)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("SendRaw() timed out")

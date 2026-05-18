@@ -113,7 +113,7 @@ type Client struct {
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
 
-	dcSessions  *dcSessions
+	dcSessions *dcSessions
 
 	testStorage  storage.Storage
 	testSession  *session.Session
@@ -1427,10 +1427,11 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 	return sess.Invoke(ctx, query, retries, timeout)
 }
 
-// InvokeWithRawByte sends a TLObject query and returns the raw response body bytes
-// without TL decoding. Unlike [Client.Invoke], the caller is responsible for
-// deserializing the response.
-func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]byte, error) {
+// InvokeWithRawResult sends a TLObject query and returns the raw MTProto
+// rpc_result result:Object payload bytes. The returned bytes are not decoded
+// into a Go struct and are not gzip-unpacked; if the server returned
+// gzip_packed, the bytes start with the gzip_packed constructor.
+func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]byte, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
@@ -1453,6 +1454,11 @@ func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]by
 	}
 
 	return sess.InvokeRaw(ctx, query, retries, timeout)
+}
+
+// InvokeWithRawByte is deprecated. Use [Client.InvokeWithRawResult].
+func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]byte, error) {
+	return c.InvokeWithRawResult(ctx, query)
 }
 
 // HandleUpdates processes an incoming Telegram UpdatesClass by flattening it

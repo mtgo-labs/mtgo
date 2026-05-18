@@ -960,6 +960,7 @@ func (c *Client) GetAccountTTL(ctx context.Context) (int32, error)
 ```go
 func (c *Client) Invoke(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error)
 func (c *Client) InvokeRaw(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error)
+func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]byte, error)
 func (c *Client) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error)
 func (c *Client) Raw() *tg.RPCClient
 func (c *Client) RPC() *tg.RPCClient
@@ -969,6 +970,7 @@ func (c *Client) RPC() *tg.RPCClient
 |--------|-------------|
 | `Invoke` | High-level TL object invocation with wrapped errors |
 | `InvokeRaw` | Low-level TL invocation returning raw errors |
+| `InvokeWithRawResult` | Returns raw MTProto `rpc_result.result:Object` payload bytes; not a decoded Go struct and not necessarily gzip-unpacked |
 | `InvokeJSON` | JSON-based RPC proxy (name-based invocation) |
 | `Raw` / `RPC` | Returns the typed `RPCClient` for direct TL function calls |
 
