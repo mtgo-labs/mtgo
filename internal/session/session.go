@@ -243,6 +243,9 @@ func (s *Session) deliverRawResult(msgID int64, data []byte) {
 
 func (s *Session) addAck(msgID int64) {
 	s.acksMu.Lock()
+	if s.acks == nil {
+		s.acks = make([]int64, 0, 64)
+	}
 	s.acks = append(s.acks, msgID)
 	s.acksMu.Unlock()
 }
@@ -340,13 +343,17 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(timeout)
 	job.done = make(chan error, 1)
+
+	writeTimer := time.NewTimer(timeout)
 	select {
 	case s.sendCh <- job:
+		writeTimer.Stop()
 	case <-ctx.Done():
+		writeTimer.Stop()
 		putSendJob(job)
 		s.unregisterResult(msgID)
 		return nil, ctx.Err()
-	case <-time.After(timeout):
+	case <-writeTimer.C:
 		putSendJob(job)
 		s.unregisterResult(msgID)
 		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
@@ -361,18 +368,22 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 	}
 	putSendJob(job)
 
+	respTimer := time.NewTimer(timeout)
 	select {
 	case obj := <-ch:
+		respTimer.Stop()
 		s.unregisterResult(msgID)
 		return obj, nil
 	case <-ctx.Done():
+		respTimer.Stop()
 		s.unregisterResult(msgID)
 		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.cancel:
+		respTimer.Stop()
 		s.unregisterResult(msgID)
 		return nil, ErrSessionClosed
-	case <-time.After(timeout):
+	case <-respTimer.C:
 		s.unregisterResult(msgID)
 		return nil, ErrSendTimeout
 	}
@@ -500,9 +511,12 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(timeout)
 	job.done = make(chan error, 1)
+
+	writeTimer := time.NewTimer(timeout)
 	select {
 	case s.sendCh <- job:
-	case <-time.After(timeout):
+		writeTimer.Stop()
+	case <-writeTimer.C:
 		putSendJob(job)
 		s.unregisterRawResult(msgID)
 		return nil, fmt.Errorf("session: send raw: write queue full: %w", ErrSendTimeout)
@@ -517,18 +531,22 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	}
 	putSendJob(job)
 
+	respTimer := time.NewTimer(timeout)
 	select {
 	case data := <-ch:
+		respTimer.Stop()
 		s.unregisterRawResult(msgID)
 		return data, nil
 	case <-ctx.Done():
+		respTimer.Stop()
 		s.unregisterRawResult(msgID)
 		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.cancel:
+		respTimer.Stop()
 		s.unregisterRawResult(msgID)
 		return nil, ErrSessionClosed
-	case <-time.After(timeout):
+	case <-respTimer.C:
 		s.unregisterRawResult(msgID)
 		return nil, ErrSendTimeout
 	}
@@ -806,11 +824,13 @@ func (s *Session) readLoop() {
 		}
 
 		// Deliver raw body bytes to any registered raw result channel.
+		// Copy the sub-slice since the decrypted buffer will be released.
 		if len(decrypted) >= 32 {
 			bodyLen := int(decrypted[28]) | int(decrypted[29])<<8 |
 				int(decrypted[30])<<16 | int(decrypted[31])<<24
 			if bodyLen > 0 && 32+bodyLen <= len(decrypted) {
-				bodyBytes := decrypted[32 : 32+bodyLen]
+				bodyBytes := make([]byte, bodyLen)
+				copy(bodyBytes, decrypted[32:32+bodyLen])
 				s.deliverRawResult(msg.MsgID, bodyBytes)
 				if bodyLen >= 12 {
 					reqMsgID := int64(binary.LittleEndian.Uint64(bodyBytes[4:12]))
@@ -818,6 +838,8 @@ func (s *Session) readLoop() {
 				}
 			}
 		}
+
+		crypto.ReleaseAESBuf(decrypted)
 
 		select {
 		case s.dispatchSem <- struct{}{}:
@@ -835,7 +857,7 @@ func (s *Session) readLoop() {
 				s.processIncoming(m)
 			}(msg)
 		default:
-			log.Printf("session: readLoop: dispatch semaphore full, dropping message")
+			log.Printf("session: readLoop: dispatch panic semaphore full, dropping message")
 		}
 	}
 }
