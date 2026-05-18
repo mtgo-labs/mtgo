@@ -1,5 +1,5 @@
 ---
-name: MTGo
+name: mtgo-mtproto-go
 description: Build Telegram bots and userbots with mtgo (MTProto Go) — a fast, idiomatic Go client for the Telegram MTProto API. Use this skill whenever the user mentions Telegram bots, Telegram bots in Go, userbots, MTProto, mtgo, Telegram client library, or wants to build any Telegram-related application in Go — even if they don't explicitly say "mtgo". Also use when the user asks about Telegram message handlers, inline keyboards, callback queries, media upload/download, session management, Telegram authentication (bot token, phone number, QR login, session strings), MTProxy, middleware, plugins, conversations, i18n, storage backends, or multi-client setups in Go.
 ---
 
