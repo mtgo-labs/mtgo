@@ -139,11 +139,35 @@ func (r *Reader) ReadBytes() ([]byte, error) {
 }
 
 func (r *Reader) ReadString() (string, error) {
-	data, err := r.ReadBytes()
-	if err != nil {
-		return "", err
+	if r.off >= len(r.b) {
+		return "", io.ErrUnexpectedEOF
 	}
-	return string(data), nil
+	first := r.b[r.off]
+	r.off++
+	length := int(first)
+	headerLen := 1
+
+	if length > 253 {
+		if r.off+3 > len(r.b) {
+			return "", io.ErrUnexpectedEOF
+		}
+		length = int(r.b[r.off]) | int(r.b[r.off+1])<<8 | int(r.b[r.off+2])<<16
+		headerLen = 4
+		r.off += 3
+	}
+
+	var s string
+	if length > 0 {
+		if r.off+length > len(r.b) {
+			return "", io.ErrUnexpectedEOF
+		}
+		s = string(r.b[r.off : r.off+length])
+		r.off += length
+	}
+
+	padding := (4 - (length+headerLen)%4) % 4
+	r.off += padding
+	return s, nil
 }
 
 func (r *Reader) ReadVectorInt() ([]int32, error) {

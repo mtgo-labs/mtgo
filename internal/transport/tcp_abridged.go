@@ -10,7 +10,8 @@ import (
 // variable-length prefix (1 or 4 bytes) to encode the payload length in
 // 4-byte units, making it more compact than the full transport.
 type TCPAbridged struct {
-	conn net.Conn
+	conn    net.Conn
+	readBuf []byte
 }
 
 // NewTCPAbridged returns a new TCPAbridged transport wrapping conn.
@@ -72,7 +73,10 @@ func (t *TCPAbridged) Recv() ([]byte, error) {
 	}
 
 	length *= 4
-	data := make([]byte, length)
+	if cap(t.readBuf) < length {
+		t.readBuf = make([]byte, length)
+	}
+	data := t.readBuf[:length]
 	if _, err := io.ReadFull(t.conn, data); err != nil {
 		return nil, err
 	}

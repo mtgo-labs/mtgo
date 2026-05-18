@@ -23,6 +23,7 @@ type TCPObfuscated struct {
 	marker  byte
 	nonce   []byte
 	reverse bool
+	readBuf []byte
 }
 
 // NewTCPObfuscated returns a new obfuscated transport wrapping inner. The
@@ -195,40 +196,46 @@ func (t *TCPObfuscated) Send(buf *bytes.Buffer) error {
 func (t *TCPObfuscated) Recv() ([]byte, error) {
 	switch t.inner.(type) {
 	case *TCPIntermediate:
-		lenBytes := make([]byte, 4)
-		if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
+		var lenBytes [4]byte
+		if _, err := io.ReadFull(t.conn, lenBytes[:]); err != nil {
 			return nil, err
 		}
-		decLen := t.dec.Process(lenBytes)
+		decLen := t.dec.Process(lenBytes[:])
 		length := binary.LittleEndian.Uint32(decLen)
 
-		data := make([]byte, length)
+		if cap(t.readBuf) < int(length) {
+			t.readBuf = make([]byte, length)
+		}
+		data := t.readBuf[:length]
 		if _, err := io.ReadFull(t.conn, data); err != nil {
 			return nil, err
 		}
 		return t.dec.Process(data), nil
 
 	case *TCPAbridged:
-		lenByte := make([]byte, 1)
-		if _, err := io.ReadFull(t.conn, lenByte); err != nil {
+		var lenByte [1]byte
+		if _, err := io.ReadFull(t.conn, lenByte[:]); err != nil {
 			return nil, err
 		}
-		decLen := t.dec.Process(lenByte)
+		decLen := t.dec.Process(lenByte[:])
 
 		var length int
 		if decLen[0] == 0x7f {
-			extLen := make([]byte, 3)
-			if _, err := io.ReadFull(t.conn, extLen); err != nil {
+			var extLen [3]byte
+			if _, err := io.ReadFull(t.conn, extLen[:]); err != nil {
 				return nil, err
 			}
-			decExt := t.dec.Process(extLen)
+			decExt := t.dec.Process(extLen[:])
 			length = int(decExt[0]) | int(decExt[1])<<8 | int(decExt[2])<<16
 		} else {
 			length = int(decLen[0])
 		}
 
 		length *= 4
-		data := make([]byte, length)
+		if cap(t.readBuf) < length {
+			t.readBuf = make([]byte, length)
+		}
+		data := t.readBuf[:length]
 		if _, err := io.ReadFull(t.conn, data); err != nil {
 			return nil, err
 		}

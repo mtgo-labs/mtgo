@@ -19,22 +19,9 @@ func TestKDF(t *testing.T) {
 	}
 
 	aesKeyOut, aesIVOut := KDF(authKey, msgKey, true)
-	aesKeyIn, aesIVIn := KDF(authKey, msgKey, false)
+	aesKeyIn, _ := KDF(authKey, msgKey, false)
 
-	if len(aesKeyOut) != 32 {
-		t.Fatalf("outgoing key: expected 32 bytes, got %d", len(aesKeyOut))
-	}
-	if len(aesIVOut) != 32 {
-		t.Fatalf("outgoing IV: expected 32 bytes, got %d", len(aesIVOut))
-	}
-	if len(aesKeyIn) != 32 {
-		t.Fatalf("incoming key: expected 32 bytes, got %d", len(aesKeyIn))
-	}
-	if len(aesIVIn) != 32 {
-		t.Fatalf("incoming IV: expected 32 bytes, got %d", len(aesIVIn))
-	}
-
-	if bytes.Equal(aesKeyOut, aesKeyIn) {
+	if bytes.Equal(aesKeyOut[:], aesKeyIn[:]) {
 		t.Fatal("outgoing and incoming keys should differ")
 	}
 
@@ -52,10 +39,10 @@ func TestKDF(t *testing.T) {
 	expectedIV = append(expectedIV, sha256A[8:24]...)
 	expectedIV = append(expectedIV, sha256B[24:32]...)
 
-	if !bytes.Equal(aesKeyOut, expectedKey) {
+	if !bytes.Equal(aesKeyOut[:], expectedKey) {
 		t.Fatal("outgoing key mismatch")
 	}
-	if !bytes.Equal(aesIVOut, expectedIV) {
+	if !bytes.Equal(aesIVOut[:], expectedIV) {
 		t.Fatal("outgoing IV mismatch")
 	}
 }
@@ -72,6 +59,8 @@ func TestKDFIncoming(t *testing.T) {
 	if len(key) != 32 || len(iv) != 32 {
 		t.Fatal("KDF should return 32-byte key and IV")
 	}
+	_ = key
+	_ = iv
 }
 
 func TestPackUnpackRoundTrip(t *testing.T) {
