@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // ChatlistsExportChatlistInviteTypeID is the constructor ID for the RPC function chatlists.exportChatlistInvite.
@@ -47,7 +46,7 @@ func (v *ChatlistsExportChatlistInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsExportChatlistInvite(ctx context.Context, req *ChatlistsExportChatlistInviteRequest) (ExportedChatlistInviteClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -91,7 +90,7 @@ func (v *ChatlistsDeleteExportedInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsDeleteExportedInvite(ctx context.Context, req *ChatlistsDeleteExportedInviteRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -158,7 +157,7 @@ func (v *ChatlistsEditExportedInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsEditExportedInvite(ctx context.Context, req *ChatlistsEditExportedInviteRequest) (ExportedChatlistInviteClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -200,7 +199,7 @@ func (v *ChatlistsGetExportedInvitesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsGetExportedInvites(ctx context.Context, req *ChatlistsGetExportedInvitesRequest) (*ChatlistsExportedInvites, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -242,7 +241,7 @@ func (v *ChatlistsCheckChatlistInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsCheckChatlistInvite(ctx context.Context, req *ChatlistsCheckChatlistInviteRequest) (ChatlistInviteClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -290,7 +289,7 @@ func (v *ChatlistsJoinChatlistInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsJoinChatlistInvite(ctx context.Context, req *ChatlistsJoinChatlistInviteRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -332,7 +331,7 @@ func (v *ChatlistsGetChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsGetChatlistUpdates(ctx context.Context, req *ChatlistsGetChatlistUpdatesRequest) (*ChatlistsChatlistUpdates, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -380,7 +379,7 @@ func (v *ChatlistsJoinChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsJoinChatlistUpdates(ctx context.Context, req *ChatlistsJoinChatlistUpdatesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -422,7 +421,7 @@ func (v *ChatlistsHideChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsHideChatlistUpdates(ctx context.Context, req *ChatlistsHideChatlistUpdatesRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -462,7 +461,7 @@ func (v *ChatlistsGetLeaveChatlistSuggestionsRequest) Encode(b *bytes.Buffer) er
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsGetLeaveChatlistSuggestions(ctx context.Context, req *ChatlistsGetLeaveChatlistSuggestionsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -507,7 +506,7 @@ func (v *ChatlistsLeaveChatlistRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChatlistsLeaveChatlist(ctx context.Context, req *ChatlistsLeaveChatlistRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

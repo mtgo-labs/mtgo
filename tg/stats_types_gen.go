@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // StatsBroadcastStatsTypeID is the constructor ID for TL type stats.broadcastStats.
@@ -76,65 +75,138 @@ func (v *StatsBroadcastStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsBroadcastStats deserializes a StatsBroadcastStats from a reader using the TL binary protocol.
-func DecodeStatsBroadcastStats(r io.Reader) (*StatsBroadcastStats, error) {
+func DecodeStatsBroadcastStats(r *Reader) (*StatsBroadcastStats, error) {
 	v := &StatsBroadcastStats{}
-	_objPeriod, _ := ReadTLObject(r)
+	_objPeriod, _errPeriod := ReadTLObject(r)
+	if _errPeriod != nil {
+		return nil, _errPeriod
+	}
 	v.Period = _objPeriod.(*StatsDateRangeDays)
-	_objFollowers, _ := ReadTLObject(r)
+	_objFollowers, _errFollowers := ReadTLObject(r)
+	if _errFollowers != nil {
+		return nil, _errFollowers
+	}
 	v.Followers = _objFollowers.(*StatsAbsValueAndPrev)
-	_objViewsPerPost, _ := ReadTLObject(r)
+	_objViewsPerPost, _errViewsPerPost := ReadTLObject(r)
+	if _errViewsPerPost != nil {
+		return nil, _errViewsPerPost
+	}
 	v.ViewsPerPost = _objViewsPerPost.(*StatsAbsValueAndPrev)
-	_objSharesPerPost, _ := ReadTLObject(r)
+	_objSharesPerPost, _errSharesPerPost := ReadTLObject(r)
+	if _errSharesPerPost != nil {
+		return nil, _errSharesPerPost
+	}
 	v.SharesPerPost = _objSharesPerPost.(*StatsAbsValueAndPrev)
-	_objReactionsPerPost, _ := ReadTLObject(r)
+	_objReactionsPerPost, _errReactionsPerPost := ReadTLObject(r)
+	if _errReactionsPerPost != nil {
+		return nil, _errReactionsPerPost
+	}
 	v.ReactionsPerPost = _objReactionsPerPost.(*StatsAbsValueAndPrev)
-	_objViewsPerStory, _ := ReadTLObject(r)
+	_objViewsPerStory, _errViewsPerStory := ReadTLObject(r)
+	if _errViewsPerStory != nil {
+		return nil, _errViewsPerStory
+	}
 	v.ViewsPerStory = _objViewsPerStory.(*StatsAbsValueAndPrev)
-	_objSharesPerStory, _ := ReadTLObject(r)
+	_objSharesPerStory, _errSharesPerStory := ReadTLObject(r)
+	if _errSharesPerStory != nil {
+		return nil, _errSharesPerStory
+	}
 	v.SharesPerStory = _objSharesPerStory.(*StatsAbsValueAndPrev)
-	_objReactionsPerStory, _ := ReadTLObject(r)
+	_objReactionsPerStory, _errReactionsPerStory := ReadTLObject(r)
+	if _errReactionsPerStory != nil {
+		return nil, _errReactionsPerStory
+	}
 	v.ReactionsPerStory = _objReactionsPerStory.(*StatsAbsValueAndPrev)
-	_objEnabledNotifications, _ := ReadTLObject(r)
+	_objEnabledNotifications, _errEnabledNotifications := ReadTLObject(r)
+	if _errEnabledNotifications != nil {
+		return nil, _errEnabledNotifications
+	}
 	v.EnabledNotifications = _objEnabledNotifications.(*StatsPercentValue)
-	_objGrowthGraph, _ := ReadTLObject(r)
+	_objGrowthGraph, _errGrowthGraph := ReadTLObject(r)
+	if _errGrowthGraph != nil {
+		return nil, _errGrowthGraph
+	}
 	v.GrowthGraph = _objGrowthGraph.(StatsGraphClass)
-	_objFollowersGraph, _ := ReadTLObject(r)
+	_objFollowersGraph, _errFollowersGraph := ReadTLObject(r)
+	if _errFollowersGraph != nil {
+		return nil, _errFollowersGraph
+	}
 	v.FollowersGraph = _objFollowersGraph.(StatsGraphClass)
-	_objMuteGraph, _ := ReadTLObject(r)
+	_objMuteGraph, _errMuteGraph := ReadTLObject(r)
+	if _errMuteGraph != nil {
+		return nil, _errMuteGraph
+	}
 	v.MuteGraph = _objMuteGraph.(StatsGraphClass)
-	_objTopHoursGraph, _ := ReadTLObject(r)
+	_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
+	if _errTopHoursGraph != nil {
+		return nil, _errTopHoursGraph
+	}
 	v.TopHoursGraph = _objTopHoursGraph.(StatsGraphClass)
-	_objInteractionsGraph, _ := ReadTLObject(r)
+	_objInteractionsGraph, _errInteractionsGraph := ReadTLObject(r)
+	if _errInteractionsGraph != nil {
+		return nil, _errInteractionsGraph
+	}
 	v.InteractionsGraph = _objInteractionsGraph.(StatsGraphClass)
-	_objIvInteractionsGraph, _ := ReadTLObject(r)
+	_objIvInteractionsGraph, _errIvInteractionsGraph := ReadTLObject(r)
+	if _errIvInteractionsGraph != nil {
+		return nil, _errIvInteractionsGraph
+	}
 	v.IvInteractionsGraph = _objIvInteractionsGraph.(StatsGraphClass)
-	_objViewsBySourceGraph, _ := ReadTLObject(r)
+	_objViewsBySourceGraph, _errViewsBySourceGraph := ReadTLObject(r)
+	if _errViewsBySourceGraph != nil {
+		return nil, _errViewsBySourceGraph
+	}
 	v.ViewsBySourceGraph = _objViewsBySourceGraph.(StatsGraphClass)
-	_objNewFollowersBySourceGraph, _ := ReadTLObject(r)
+	_objNewFollowersBySourceGraph, _errNewFollowersBySourceGraph := ReadTLObject(r)
+	if _errNewFollowersBySourceGraph != nil {
+		return nil, _errNewFollowersBySourceGraph
+	}
 	v.NewFollowersBySourceGraph = _objNewFollowersBySourceGraph.(StatsGraphClass)
-	_objLanguagesGraph, _ := ReadTLObject(r)
+	_objLanguagesGraph, _errLanguagesGraph := ReadTLObject(r)
+	if _errLanguagesGraph != nil {
+		return nil, _errLanguagesGraph
+	}
 	v.LanguagesGraph = _objLanguagesGraph.(StatsGraphClass)
-	_objReactionsByEmotionGraph, _ := ReadTLObject(r)
+	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
+	if _errReactionsByEmotionGraph != nil {
+		return nil, _errReactionsByEmotionGraph
+	}
 	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
-	_objStoryInteractionsGraph, _ := ReadTLObject(r)
+	_objStoryInteractionsGraph, _errStoryInteractionsGraph := ReadTLObject(r)
+	if _errStoryInteractionsGraph != nil {
+		return nil, _errStoryInteractionsGraph
+	}
 	v.StoryInteractionsGraph = _objStoryInteractionsGraph.(StatsGraphClass)
-	_objStoryReactionsByEmotionGraph, _ := ReadTLObject(r)
+	_objStoryReactionsByEmotionGraph, _errStoryReactionsByEmotionGraph := ReadTLObject(r)
+	if _errStoryReactionsByEmotionGraph != nil {
+		return nil, _errStoryReactionsByEmotionGraph
+	}
 	v.StoryReactionsByEmotionGraph = _objStoryReactionsByEmotionGraph.(StatsGraphClass)
-	ReadInt(r)
-	_cntRecentPostsInteractions := ReadInt(r)
-	if err := checkVectorCount(_cntRecentPostsInteractions); err != nil {
-		return nil, err
+	_vhdrRecentPostsInteractions, _ehdrRecentPostsInteractions := r.ReadUint32()
+	if _ehdrRecentPostsInteractions != nil {
+		return nil, _ehdrRecentPostsInteractions
+	}
+	_cntRecentPostsInteractions, _ecntRecentPostsInteractions := r.ReadUint32()
+	if _ecntRecentPostsInteractions != nil {
+		return nil, _ecntRecentPostsInteractions
+	}
+	if _errRecentPostsInteractions := checkVectorCount(_cntRecentPostsInteractions); _errRecentPostsInteractions != nil {
+		return nil, _errRecentPostsInteractions
 	}
 	v.RecentPostsInteractions = make([]PostInteractionCountersClass, _cntRecentPostsInteractions)
 	for _iRecentPostsInteractions := range v.RecentPostsInteractions {
-		_objRecentPostsInteractions, _ := ReadTLObject(r)
+		_objRecentPostsInteractions, _errRecentPostsInteractions := ReadTLObject(r)
+		if _errRecentPostsInteractions != nil {
+			return nil, _errRecentPostsInteractions
+		}
 		v.RecentPostsInteractions[_iRecentPostsInteractions] = _objRecentPostsInteractions.(PostInteractionCountersClass)
 	}
+	_ = _vhdrRecentPostsInteractions
 	return v, nil
 }
 
 func init() {
-	Registry[StatsBroadcastStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsBroadcastStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsBroadcastStats(r)
 	}
 }
@@ -210,79 +282,158 @@ func (v *StatsMegagroupStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsMegagroupStats deserializes a StatsMegagroupStats from a reader using the TL binary protocol.
-func DecodeStatsMegagroupStats(r io.Reader) (*StatsMegagroupStats, error) {
+func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 	v := &StatsMegagroupStats{}
-	_objPeriod, _ := ReadTLObject(r)
+	_objPeriod, _errPeriod := ReadTLObject(r)
+	if _errPeriod != nil {
+		return nil, _errPeriod
+	}
 	v.Period = _objPeriod.(*StatsDateRangeDays)
-	_objMembers, _ := ReadTLObject(r)
+	_objMembers, _errMembers := ReadTLObject(r)
+	if _errMembers != nil {
+		return nil, _errMembers
+	}
 	v.Members = _objMembers.(*StatsAbsValueAndPrev)
-	_objMessages, _ := ReadTLObject(r)
+	_objMessages, _errMessages := ReadTLObject(r)
+	if _errMessages != nil {
+		return nil, _errMessages
+	}
 	v.Messages = _objMessages.(*StatsAbsValueAndPrev)
-	_objViewers, _ := ReadTLObject(r)
+	_objViewers, _errViewers := ReadTLObject(r)
+	if _errViewers != nil {
+		return nil, _errViewers
+	}
 	v.Viewers = _objViewers.(*StatsAbsValueAndPrev)
-	_objPosters, _ := ReadTLObject(r)
+	_objPosters, _errPosters := ReadTLObject(r)
+	if _errPosters != nil {
+		return nil, _errPosters
+	}
 	v.Posters = _objPosters.(*StatsAbsValueAndPrev)
-	_objGrowthGraph, _ := ReadTLObject(r)
+	_objGrowthGraph, _errGrowthGraph := ReadTLObject(r)
+	if _errGrowthGraph != nil {
+		return nil, _errGrowthGraph
+	}
 	v.GrowthGraph = _objGrowthGraph.(StatsGraphClass)
-	_objMembersGraph, _ := ReadTLObject(r)
+	_objMembersGraph, _errMembersGraph := ReadTLObject(r)
+	if _errMembersGraph != nil {
+		return nil, _errMembersGraph
+	}
 	v.MembersGraph = _objMembersGraph.(StatsGraphClass)
-	_objNewMembersBySourceGraph, _ := ReadTLObject(r)
+	_objNewMembersBySourceGraph, _errNewMembersBySourceGraph := ReadTLObject(r)
+	if _errNewMembersBySourceGraph != nil {
+		return nil, _errNewMembersBySourceGraph
+	}
 	v.NewMembersBySourceGraph = _objNewMembersBySourceGraph.(StatsGraphClass)
-	_objLanguagesGraph, _ := ReadTLObject(r)
+	_objLanguagesGraph, _errLanguagesGraph := ReadTLObject(r)
+	if _errLanguagesGraph != nil {
+		return nil, _errLanguagesGraph
+	}
 	v.LanguagesGraph = _objLanguagesGraph.(StatsGraphClass)
-	_objMessagesGraph, _ := ReadTLObject(r)
+	_objMessagesGraph, _errMessagesGraph := ReadTLObject(r)
+	if _errMessagesGraph != nil {
+		return nil, _errMessagesGraph
+	}
 	v.MessagesGraph = _objMessagesGraph.(StatsGraphClass)
-	_objActionsGraph, _ := ReadTLObject(r)
+	_objActionsGraph, _errActionsGraph := ReadTLObject(r)
+	if _errActionsGraph != nil {
+		return nil, _errActionsGraph
+	}
 	v.ActionsGraph = _objActionsGraph.(StatsGraphClass)
-	_objTopHoursGraph, _ := ReadTLObject(r)
+	_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
+	if _errTopHoursGraph != nil {
+		return nil, _errTopHoursGraph
+	}
 	v.TopHoursGraph = _objTopHoursGraph.(StatsGraphClass)
-	_objWeekdaysGraph, _ := ReadTLObject(r)
+	_objWeekdaysGraph, _errWeekdaysGraph := ReadTLObject(r)
+	if _errWeekdaysGraph != nil {
+		return nil, _errWeekdaysGraph
+	}
 	v.WeekdaysGraph = _objWeekdaysGraph.(StatsGraphClass)
-	ReadInt(r)
-	_cntTopPosters := ReadInt(r)
-	if err := checkVectorCount(_cntTopPosters); err != nil {
-		return nil, err
+	_vhdrTopPosters, _ehdrTopPosters := r.ReadUint32()
+	if _ehdrTopPosters != nil {
+		return nil, _ehdrTopPosters
+	}
+	_cntTopPosters, _ecntTopPosters := r.ReadUint32()
+	if _ecntTopPosters != nil {
+		return nil, _ecntTopPosters
+	}
+	if _errTopPosters := checkVectorCount(_cntTopPosters); _errTopPosters != nil {
+		return nil, _errTopPosters
 	}
 	v.TopPosters = make([]*StatsGroupTopPoster, _cntTopPosters)
 	for _iTopPosters := range v.TopPosters {
-		_objTopPosters, _ := ReadTLObject(r)
+		_objTopPosters, _errTopPosters := ReadTLObject(r)
+		if _errTopPosters != nil {
+			return nil, _errTopPosters
+		}
 		v.TopPosters[_iTopPosters] = _objTopPosters.(*StatsGroupTopPoster)
 	}
-	ReadInt(r)
-	_cntTopAdmins := ReadInt(r)
-	if err := checkVectorCount(_cntTopAdmins); err != nil {
-		return nil, err
+	_ = _vhdrTopPosters
+	_vhdrTopAdmins, _ehdrTopAdmins := r.ReadUint32()
+	if _ehdrTopAdmins != nil {
+		return nil, _ehdrTopAdmins
+	}
+	_cntTopAdmins, _ecntTopAdmins := r.ReadUint32()
+	if _ecntTopAdmins != nil {
+		return nil, _ecntTopAdmins
+	}
+	if _errTopAdmins := checkVectorCount(_cntTopAdmins); _errTopAdmins != nil {
+		return nil, _errTopAdmins
 	}
 	v.TopAdmins = make([]*StatsGroupTopAdmin, _cntTopAdmins)
 	for _iTopAdmins := range v.TopAdmins {
-		_objTopAdmins, _ := ReadTLObject(r)
+		_objTopAdmins, _errTopAdmins := ReadTLObject(r)
+		if _errTopAdmins != nil {
+			return nil, _errTopAdmins
+		}
 		v.TopAdmins[_iTopAdmins] = _objTopAdmins.(*StatsGroupTopAdmin)
 	}
-	ReadInt(r)
-	_cntTopInviters := ReadInt(r)
-	if err := checkVectorCount(_cntTopInviters); err != nil {
-		return nil, err
+	_ = _vhdrTopAdmins
+	_vhdrTopInviters, _ehdrTopInviters := r.ReadUint32()
+	if _ehdrTopInviters != nil {
+		return nil, _ehdrTopInviters
+	}
+	_cntTopInviters, _ecntTopInviters := r.ReadUint32()
+	if _ecntTopInviters != nil {
+		return nil, _ecntTopInviters
+	}
+	if _errTopInviters := checkVectorCount(_cntTopInviters); _errTopInviters != nil {
+		return nil, _errTopInviters
 	}
 	v.TopInviters = make([]*StatsGroupTopInviter, _cntTopInviters)
 	for _iTopInviters := range v.TopInviters {
-		_objTopInviters, _ := ReadTLObject(r)
+		_objTopInviters, _errTopInviters := ReadTLObject(r)
+		if _errTopInviters != nil {
+			return nil, _errTopInviters
+		}
 		v.TopInviters[_iTopInviters] = _objTopInviters.(*StatsGroupTopInviter)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrTopInviters
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[StatsMegagroupStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsMegagroupStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsMegagroupStats(r)
 	}
 }
@@ -312,17 +463,23 @@ func (v *StatsMessageStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsMessageStats deserializes a StatsMessageStats from a reader using the TL binary protocol.
-func DecodeStatsMessageStats(r io.Reader) (*StatsMessageStats, error) {
+func DecodeStatsMessageStats(r *Reader) (*StatsMessageStats, error) {
 	v := &StatsMessageStats{}
-	_objViewsGraph, _ := ReadTLObject(r)
+	_objViewsGraph, _errViewsGraph := ReadTLObject(r)
+	if _errViewsGraph != nil {
+		return nil, _errViewsGraph
+	}
 	v.ViewsGraph = _objViewsGraph.(StatsGraphClass)
-	_objReactionsByEmotionGraph, _ := ReadTLObject(r)
+	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
+	if _errReactionsByEmotionGraph != nil {
+		return nil, _errReactionsByEmotionGraph
+	}
 	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StatsMessageStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsMessageStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsMessageStats(r)
 	}
 }
@@ -352,17 +509,23 @@ func (v *StatsStoryStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsStoryStats deserializes a StatsStoryStats from a reader using the TL binary protocol.
-func DecodeStatsStoryStats(r io.Reader) (*StatsStoryStats, error) {
+func DecodeStatsStoryStats(r *Reader) (*StatsStoryStats, error) {
 	v := &StatsStoryStats{}
-	_objViewsGraph, _ := ReadTLObject(r)
+	_objViewsGraph, _errViewsGraph := ReadTLObject(r)
+	if _errViewsGraph != nil {
+		return nil, _errViewsGraph
+	}
 	v.ViewsGraph = _objViewsGraph.(StatsGraphClass)
-	_objReactionsByEmotionGraph, _ := ReadTLObject(r)
+	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
+	if _errReactionsByEmotionGraph != nil {
+		return nil, _errReactionsByEmotionGraph
+	}
 	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StatsStoryStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsStoryStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsStoryStats(r)
 	}
 }
@@ -422,52 +585,90 @@ func (v *StatsPublicForwards) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsPublicForwards deserializes a StatsPublicForwards from a reader using the TL binary protocol.
-func DecodeStatsPublicForwards(r io.Reader) (*StatsPublicForwards, error) {
+func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 	v := &StatsPublicForwards{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntForwards := ReadInt(r)
-	if err := checkVectorCount(_cntForwards); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrForwards, _ehdrForwards := r.ReadUint32()
+	if _ehdrForwards != nil {
+		return nil, _ehdrForwards
+	}
+	_cntForwards, _ecntForwards := r.ReadUint32()
+	if _ecntForwards != nil {
+		return nil, _ecntForwards
+	}
+	if _errForwards := checkVectorCount(_cntForwards); _errForwards != nil {
+		return nil, _errForwards
 	}
 	v.Forwards = make([]PublicForwardClass, _cntForwards)
 	for _iForwards := range v.Forwards {
-		_objForwards, _ := ReadTLObject(r)
+		_objForwards, _errForwards := ReadTLObject(r)
+		if _errForwards != nil {
+			return nil, _errForwards
+		}
 		v.Forwards[_iForwards] = _objForwards.(PublicForwardClass)
 	}
+	_ = _vhdrForwards
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[StatsPublicForwardsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsPublicForwardsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsPublicForwards(r)
 	}
 }
@@ -495,15 +696,18 @@ func (v *StatsPollStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsPollStats deserializes a StatsPollStats from a reader using the TL binary protocol.
-func DecodeStatsPollStats(r io.Reader) (*StatsPollStats, error) {
+func DecodeStatsPollStats(r *Reader) (*StatsPollStats, error) {
 	v := &StatsPollStats{}
-	_objVotesGraph, _ := ReadTLObject(r)
+	_objVotesGraph, _errVotesGraph := ReadTLObject(r)
+	if _errVotesGraph != nil {
+		return nil, _errVotesGraph
+	}
 	v.VotesGraph = _objVotesGraph.(StatsGraphClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StatsPollStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsPollStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsPollStats(r)
 	}
 }

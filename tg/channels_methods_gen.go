@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // ChannelsReadHistoryTypeID is the constructor ID for the RPC function channels.readHistory.
@@ -41,7 +40,7 @@ func (v *ChannelsReadHistoryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsReadHistory(ctx context.Context, req *ChannelsReadHistoryRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -83,7 +82,7 @@ func (v *ChannelsDeleteMessagesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsDeleteMessages(ctx context.Context, req *ChannelsDeleteMessagesRequest) (*MessagesAffectedMessages, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -129,7 +128,7 @@ func (v *ChannelsReportSpamRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsReportSpam(ctx context.Context, req *ChannelsReportSpamRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -175,7 +174,7 @@ func (v *ChannelsGetMessagesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetMessages(ctx context.Context, req *ChannelsGetMessagesRequest) (MessagesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -225,7 +224,7 @@ func (v *ChannelsGetParticipantsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetParticipants(ctx context.Context, req *ChannelsGetParticipantsRequest) (ChannelParticipantsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -269,7 +268,7 @@ func (v *ChannelsGetParticipantRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetParticipant(ctx context.Context, req *ChannelsGetParticipantRequest) (ChannelParticipantClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -315,7 +314,7 @@ func (v *ChannelsGetChannelsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetChannels(ctx context.Context, req *ChannelsGetChannelsRequest) (ChatsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -357,7 +356,7 @@ func (v *ChannelsGetFullChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetFullChannel(ctx context.Context, req *ChannelsGetFullChannelRequest) (ChatFullClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -445,7 +444,7 @@ func (v *ChannelsCreateChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsCreateChannel(ctx context.Context, req *ChannelsCreateChannelRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -505,7 +504,7 @@ func (v *ChannelsEditAdminRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsEditAdmin(ctx context.Context, req *ChannelsEditAdminRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -549,7 +548,7 @@ func (v *ChannelsEditTitleRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsEditTitle(ctx context.Context, req *ChannelsEditTitleRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -593,7 +592,7 @@ func (v *ChannelsEditPhotoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsEditPhoto(ctx context.Context, req *ChannelsEditPhotoRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -637,7 +636,7 @@ func (v *ChannelsCheckUsernameRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsCheckUsername(ctx context.Context, req *ChannelsCheckUsernameRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -679,7 +678,7 @@ func (v *ChannelsUpdateUsernameRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsUpdateUsername(ctx context.Context, req *ChannelsUpdateUsernameRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -719,7 +718,7 @@ func (v *ChannelsJoinChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsJoinChannel(ctx context.Context, req *ChannelsJoinChannelRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -761,7 +760,7 @@ func (v *ChannelsLeaveChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsLeaveChannel(ctx context.Context, req *ChannelsLeaveChannelRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -809,7 +808,7 @@ func (v *ChannelsInviteToChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsInviteToChannel(ctx context.Context, req *ChannelsInviteToChannelRequest) (*MessagesInvitedUsers, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -851,7 +850,7 @@ func (v *ChannelsDeleteChannelRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsDeleteChannel(ctx context.Context, req *ChannelsDeleteChannelRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -910,7 +909,7 @@ func (v *ChannelsExportMessageLinkRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsExportMessageLink(ctx context.Context, req *ChannelsExportMessageLinkRequest) (*ExportedMessageLink, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -967,7 +966,7 @@ func (v *ChannelsToggleSignaturesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleSignatures(ctx context.Context, req *ChannelsToggleSignaturesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1026,7 +1025,7 @@ func (v *ChannelsGetAdminedPublicChannelsRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetAdminedPublicChannels(ctx context.Context, req *ChannelsGetAdminedPublicChannelsRequest) (ChatsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1072,7 +1071,7 @@ func (v *ChannelsEditBannedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsEditBanned(ctx context.Context, req *ChannelsEditBannedRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1147,7 +1146,7 @@ func (v *ChannelsGetAdminLogRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetAdminLog(ctx context.Context, req *ChannelsGetAdminLogRequest) (*ChannelsAdminLogResults, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1191,7 +1190,7 @@ func (v *ChannelsSetStickersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSetStickers(ctx context.Context, req *ChannelsSetStickersRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1233,7 +1232,7 @@ func (v *ChannelsReadMessageContentsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsReadMessageContents(ctx context.Context, req *ChannelsReadMessageContentsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1286,7 +1285,7 @@ func (v *ChannelsDeleteHistoryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsDeleteHistory(ctx context.Context, req *ChannelsDeleteHistoryRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1330,7 +1329,7 @@ func (v *ChannelsTogglePreHistoryHiddenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsTogglePreHistoryHidden(ctx context.Context, req *ChannelsTogglePreHistoryHiddenRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1372,7 +1371,7 @@ func (v *ChannelsGetLeftChannelsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetLeftChannels(ctx context.Context, req *ChannelsGetLeftChannelsRequest) (ChatsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1412,7 +1411,7 @@ func (v *ChannelsGetGroupsForDiscussionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetGroupsForDiscussion(ctx context.Context) (ChatsClass, error) {
-	result, err := c.invoke(ctx, &ChannelsGetGroupsForDiscussionRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ChannelsGetGroupsForDiscussionRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1456,7 +1455,7 @@ func (v *ChannelsSetDiscussionGroupRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSetDiscussionGroup(ctx context.Context, req *ChannelsSetDiscussionGroupRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1500,7 +1499,7 @@ func (v *ChannelsEditLocationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsEditLocation(ctx context.Context, req *ChannelsEditLocationRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1542,7 +1541,7 @@ func (v *ChannelsToggleSlowModeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleSlowMode(ctx context.Context, req *ChannelsToggleSlowModeRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1582,7 +1581,7 @@ func (v *ChannelsGetInactiveChannelsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetInactiveChannels(ctx context.Context) (*MessagesInactiveChats, error) {
-	result, err := c.invoke(ctx, &ChannelsGetInactiveChannelsRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ChannelsGetInactiveChannelsRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1624,7 +1623,7 @@ func (v *ChannelsConvertToGigagroupRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsConvertToGigagroup(ctx context.Context, req *ChannelsConvertToGigagroupRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1681,7 +1680,7 @@ func (v *ChannelsGetSendAsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetSendAs(ctx context.Context, req *ChannelsGetSendAsRequest) (*ChannelsSendAsPeers, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1725,7 +1724,7 @@ func (v *ChannelsDeleteParticipantHistoryRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsDeleteParticipantHistory(ctx context.Context, req *ChannelsDeleteParticipantHistoryRequest) (*MessagesAffectedHistory, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1769,7 +1768,7 @@ func (v *ChannelsToggleJoinToSendRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleJoinToSend(ctx context.Context, req *ChannelsToggleJoinToSendRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1813,7 +1812,7 @@ func (v *ChannelsToggleJoinRequestRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleJoinRequest(ctx context.Context, req *ChannelsToggleJoinRequestRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1857,7 +1856,7 @@ func (v *ChannelsReorderUsernamesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsReorderUsernames(ctx context.Context, req *ChannelsReorderUsernamesRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1901,7 +1900,7 @@ func (v *ChannelsToggleUsernameRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleUsername(ctx context.Context, req *ChannelsToggleUsernameRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1941,7 +1940,7 @@ func (v *ChannelsDeactivateAllUsernamesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsDeactivateAllUsernames(ctx context.Context, req *ChannelsDeactivateAllUsernamesRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1985,7 +1984,7 @@ func (v *ChannelsToggleForumRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleForum(ctx context.Context, req *ChannelsToggleForumRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2029,7 +2028,7 @@ func (v *ChannelsToggleAntiSpamRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleAntiSpam(ctx context.Context, req *ChannelsToggleAntiSpamRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2073,7 +2072,7 @@ func (v *ChannelsReportAntiSpamFalsePositiveRequest) Encode(b *bytes.Buffer) err
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsReportAntiSpamFalsePositive(ctx context.Context, req *ChannelsReportAntiSpamFalsePositiveRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2115,7 +2114,7 @@ func (v *ChannelsToggleParticipantsHiddenRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleParticipantsHidden(ctx context.Context, req *ChannelsToggleParticipantsHiddenRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2182,7 +2181,7 @@ func (v *ChannelsUpdateColorRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsUpdateColor(ctx context.Context, req *ChannelsUpdateColorRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2226,7 +2225,7 @@ func (v *ChannelsToggleViewForumAsMessagesRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleViewForumAsMessages(ctx context.Context, req *ChannelsToggleViewForumAsMessagesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2280,7 +2279,7 @@ func (v *ChannelsGetChannelRecommendationsRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetChannelRecommendations(ctx context.Context, req *ChannelsGetChannelRecommendationsRequest) (ChatsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2324,7 +2323,7 @@ func (v *ChannelsUpdateEmojiStatusRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsUpdateEmojiStatus(ctx context.Context, req *ChannelsUpdateEmojiStatusRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2368,7 +2367,7 @@ func (v *ChannelsSetBoostsToUnblockRestrictionsRequest) Encode(b *bytes.Buffer) 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSetBoostsToUnblockRestrictions(ctx context.Context, req *ChannelsSetBoostsToUnblockRestrictionsRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2412,7 +2411,7 @@ func (v *ChannelsSetEmojiStickersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSetEmojiStickers(ctx context.Context, req *ChannelsSetEmojiStickersRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2454,7 +2453,7 @@ func (v *ChannelsRestrictSponsoredMessagesRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsRestrictSponsoredMessages(ctx context.Context, req *ChannelsRestrictSponsoredMessagesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2530,7 +2529,7 @@ func (v *ChannelsSearchPostsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSearchPosts(ctx context.Context, req *ChannelsSearchPostsRequest) (MessagesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2585,7 +2584,7 @@ func (v *ChannelsUpdatePaidMessagesPriceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsUpdatePaidMessagesPrice(ctx context.Context, req *ChannelsUpdatePaidMessagesPriceRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2629,7 +2628,7 @@ func (v *ChannelsToggleAutotranslationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsToggleAutotranslation(ctx context.Context, req *ChannelsToggleAutotranslationRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2673,7 +2672,7 @@ func (v *ChannelsGetMessageAuthorRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsGetMessageAuthor(ctx context.Context, req *ChannelsGetMessageAuthorRequest) (UserClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2727,7 +2726,7 @@ func (v *ChannelsCheckSearchPostsFloodRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsCheckSearchPostsFlood(ctx context.Context, req *ChannelsCheckSearchPostsFloodRequest) (*SearchPostsFlood, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2771,7 +2770,7 @@ func (v *ChannelsSetMainProfileTabRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ChannelsSetMainProfileTab(ctx context.Context, req *ChannelsSetMainProfileTabRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

@@ -3,8 +3,6 @@ package session
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
-	"io"
 	"testing"
 	"time"
 
@@ -56,11 +54,13 @@ func (t *testStorage) SessionID() (string, error)           { return "test", nil
 func (t *testStorage) SetSessionID(string) error            { return nil }
 
 func init() {
-	tg.Registry[tg.PingTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	tg.Registry[tg.PingTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		v := &tg.PingRequest{}
-		var buf [8]byte
-		r.Read(buf[:])
-		v.PingID = int64(binary.LittleEndian.Uint64(buf[:]))
+		pingID, err := r.ReadInt64()
+		if err != nil {
+			return nil, err
+		}
+		v.PingID = pingID
 		return v, nil
 	}
 }

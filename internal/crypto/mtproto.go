@@ -152,7 +152,11 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "len(payload) % 4 == 0"}
 	}
 
-	message, err := tg.DecodeMTProtoMessage(bytes.NewReader(decrypted[16:]))
+	message, err := func() (*tg.MTProtoMessage, error) {
+		r := tg.NewReader(decrypted[16:])
+		defer tg.ReleaseReader(r)
+		return tg.DecodeMTProtoMessage(r)
+	}()
 	if err != nil {
 		return nil, nil, fmt.Errorf("crypto/mtproto: decode message: %w", err)
 	}

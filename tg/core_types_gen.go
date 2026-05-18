@@ -4,8 +4,2084 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
+
+// ResPQTypeID is the constructor ID for TL type resPQ.
+const ResPQTypeID = 0x05162463
+
+// ResPQ represents the TL constructor resPQ (0x05162463).
+//
+// See https://core.telegram.org/constructor/resPQ for reference.
+type ResPQ struct {
+	Nonce                       [16]byte `json:"nonce,omitempty"`
+	ServerNonce                 [16]byte `json:"server_nonce,omitempty"`
+	PQ                          string   `json:"pq,omitempty"`
+	ServerPublicKeyFingerprints []int64  `json:"server_public_key_fingerprints,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x05162463.
+func (v *ResPQ) ConstructorID() uint32 {
+	return ResPQTypeID
+}
+
+// Encode serializes ResPQ to a bytes.Buffer using the TL binary protocol.
+func (v *ResPQ) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ResPQTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.PQ)
+	WriteVectorLong(b, v.ServerPublicKeyFingerprints)
+	return nil
+}
+
+// DecodeResPQ deserializes a ResPQ from a reader using the TL binary protocol.
+func DecodeResPQ(r *Reader) (*ResPQ, error) {
+	v := &ResPQ{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_vvServerPublicKeyFingerprints, _veServerPublicKeyFingerprints := r.ReadVectorLong()
+	if _veServerPublicKeyFingerprints != nil {
+		return nil, _veServerPublicKeyFingerprints
+	}
+	v.ServerPublicKeyFingerprints = _vvServerPublicKeyFingerprints
+	return v, nil
+}
+
+func init() {
+	Registry[ResPQTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeResPQ(r)
+	}
+}
+
+// PQInnerDataClass is the interface for TL type PQInnerData.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the PQInnerData TL type.
+type PQInnerDataClass interface {
+	TLObject
+	isPQInnerData()
+}
+
+// PQInnerDataTypeID is the constructor ID for TL type p_q_inner_data.
+const PQInnerDataTypeID = 0x83c95aec
+
+// PQInnerDataDCTypeID is the constructor ID for TL type p_q_inner_data_dc.
+const PQInnerDataDCTypeID = 0xa9f55f95
+
+// PQInnerDataTempTypeID is the constructor ID for TL type p_q_inner_data_temp.
+const PQInnerDataTempTypeID = 0x3c6a84d4
+
+// PQInnerDataTempDCTypeID is the constructor ID for TL type p_q_inner_data_temp_dc.
+const PQInnerDataTempDCTypeID = 0x56fddf88
+
+// isPQInnerData marks PQInnerData as implementing the PQInnerDataClass interface.
+func (*PQInnerData) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataDC as implementing the PQInnerDataClass interface.
+func (*PQInnerDataDC) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataTemp as implementing the PQInnerDataClass interface.
+func (*PQInnerDataTemp) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataTempDC as implementing the PQInnerDataClass interface.
+func (*PQInnerDataTempDC) isPQInnerData() {}
+
+// PQInnerData represents the TL constructor p_q_inner_data (0x83c95aec).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data for reference.
+type PQInnerData struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x83c95aec.
+func (v *PQInnerData) ConstructorID() uint32 {
+	return PQInnerDataTypeID
+}
+
+// Encode serializes PQInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	return nil
+}
+
+// DecodePQInnerData deserializes a PQInnerData from a reader using the TL binary protocol.
+func DecodePQInnerData(r *Reader) (*PQInnerData, error) {
+	v := &PQInnerData{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerData(r)
+	}
+}
+
+// PQInnerDataDC represents the TL constructor p_q_inner_data_dc (0xa9f55f95).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_dc for reference.
+type PQInnerDataDC struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	DC          int32    `json:"dc,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa9f55f95.
+func (v *PQInnerDataDC) ConstructorID() uint32 {
+	return PQInnerDataDCTypeID
+}
+
+// Encode serializes PQInnerDataDC to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataDC) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataDCTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.DC))
+	return nil
+}
+
+// DecodePQInnerDataDC deserializes a PQInnerDataDC from a reader using the TL binary protocol.
+func DecodePQInnerDataDC(r *Reader) (*PQInnerDataDC, error) {
+	v := &PQInnerDataDC{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rDC, _eDC := r.ReadInt32()
+	if _eDC != nil {
+		return nil, _eDC
+	}
+	v.DC = _rDC
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataDCTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataDC(r)
+	}
+}
+
+// PQInnerDataTemp represents the TL constructor p_q_inner_data_temp (0x3c6a84d4).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_temp for reference.
+type PQInnerDataTemp struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	ExpiresIn   int32    `json:"expires_in,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3c6a84d4.
+func (v *PQInnerDataTemp) ConstructorID() uint32 {
+	return PQInnerDataTempTypeID
+}
+
+// Encode serializes PQInnerDataTemp to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataTemp) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTempTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.ExpiresIn))
+	return nil
+}
+
+// DecodePQInnerDataTemp deserializes a PQInnerDataTemp from a reader using the TL binary protocol.
+func DecodePQInnerDataTemp(r *Reader) (*PQInnerDataTemp, error) {
+	v := &PQInnerDataTemp{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rExpiresIn, _eExpiresIn := r.ReadInt32()
+	if _eExpiresIn != nil {
+		return nil, _eExpiresIn
+	}
+	v.ExpiresIn = _rExpiresIn
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTempTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataTemp(r)
+	}
+}
+
+// PQInnerDataTempDC represents the TL constructor p_q_inner_data_temp_dc (0x56fddf88).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_temp_dc for reference.
+type PQInnerDataTempDC struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	DC          int32    `json:"dc,omitempty"`
+	ExpiresIn   int32    `json:"expires_in,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x56fddf88.
+func (v *PQInnerDataTempDC) ConstructorID() uint32 {
+	return PQInnerDataTempDCTypeID
+}
+
+// Encode serializes PQInnerDataTempDC to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataTempDC) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTempDCTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.DC))
+	WriteInt(b, uint32(v.ExpiresIn))
+	return nil
+}
+
+// DecodePQInnerDataTempDC deserializes a PQInnerDataTempDC from a reader using the TL binary protocol.
+func DecodePQInnerDataTempDC(r *Reader) (*PQInnerDataTempDC, error) {
+	v := &PQInnerDataTempDC{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rDC, _eDC := r.ReadInt32()
+	if _eDC != nil {
+		return nil, _eDC
+	}
+	v.DC = _rDC
+	_rExpiresIn, _eExpiresIn := r.ReadInt32()
+	if _eExpiresIn != nil {
+		return nil, _eExpiresIn
+	}
+	v.ExpiresIn = _rExpiresIn
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTempDCTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataTempDC(r)
+	}
+}
+
+// ServerDHParamsClass is the interface for TL type ServerDHParams.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the ServerDHParams TL type.
+type ServerDHParamsClass interface {
+	TLObject
+	isServerDHParams()
+}
+
+// ServerDHParamsFailTypeID is the constructor ID for TL type server_DH_params_fail.
+const ServerDHParamsFailTypeID = 0x79cb045d
+
+// ServerDHParamsOkTypeID is the constructor ID for TL type server_DH_params_ok.
+const ServerDHParamsOkTypeID = 0xd0e8075c
+
+// isServerDHParams marks ServerDHParamsFail as implementing the ServerDHParamsClass interface.
+func (*ServerDHParamsFail) isServerDHParams() {}
+
+// isServerDHParams marks ServerDHParamsOk as implementing the ServerDHParamsClass interface.
+func (*ServerDHParamsOk) isServerDHParams() {}
+
+// ServerDHParamsFail represents the TL constructor server_DH_params_fail (0x79cb045d).
+//
+// See https://core.telegram.org/constructor/server_DH_params_fail for reference.
+type ServerDHParamsFail struct {
+	Nonce        [16]byte `json:"nonce,omitempty"`
+	ServerNonce  [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash [16]byte `json:"new_nonce_hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x79cb045d.
+func (v *ServerDHParamsFail) ConstructorID() uint32 {
+	return ServerDHParamsFailTypeID
+}
+
+// Encode serializes ServerDHParamsFail to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHParamsFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHParamsFailTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash)
+	return nil
+}
+
+// DecodeServerDHParamsFail deserializes a ServerDHParamsFail from a reader using the TL binary protocol.
+func DecodeServerDHParamsFail(r *Reader) (*ServerDHParamsFail, error) {
+	v := &ServerDHParamsFail{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash, _eNewNonceHash := r.ReadInt128()
+	if _eNewNonceHash != nil {
+		return nil, _eNewNonceHash
+	}
+	v.NewNonceHash = _rNewNonceHash
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHParamsFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHParamsFail(r)
+	}
+}
+
+// ServerDHParamsOk represents the TL constructor server_DH_params_ok (0xd0e8075c).
+//
+// See https://core.telegram.org/constructor/server_DH_params_ok for reference.
+type ServerDHParamsOk struct {
+	Nonce           [16]byte `json:"nonce,omitempty"`
+	ServerNonce     [16]byte `json:"server_nonce,omitempty"`
+	EncryptedAnswer string   `json:"encrypted_answer,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd0e8075c.
+func (v *ServerDHParamsOk) ConstructorID() uint32 {
+	return ServerDHParamsOkTypeID
+}
+
+// Encode serializes ServerDHParamsOk to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHParamsOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHParamsOkTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.EncryptedAnswer)
+	return nil
+}
+
+// DecodeServerDHParamsOk deserializes a ServerDHParamsOk from a reader using the TL binary protocol.
+func DecodeServerDHParamsOk(r *Reader) (*ServerDHParamsOk, error) {
+	v := &ServerDHParamsOk{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rEncryptedAnswer, _eEncryptedAnswer := r.ReadString()
+	if _eEncryptedAnswer != nil {
+		return nil, _eEncryptedAnswer
+	}
+	v.EncryptedAnswer = _rEncryptedAnswer
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHParamsOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHParamsOk(r)
+	}
+}
+
+// ServerDHInnerDataTypeID is the constructor ID for TL type server_DH_inner_data.
+const ServerDHInnerDataTypeID = 0xb5890dba
+
+// ServerDHInnerData represents the TL constructor server_DH_inner_data (0xb5890dba).
+//
+// See https://core.telegram.org/constructor/server_DH_inner_data for reference.
+type ServerDHInnerData struct {
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	G           int32    `json:"g,omitempty"`
+	DHPrime     string   `json:"dh_prime,omitempty"`
+	GA          string   `json:"ga,omitempty"`
+	ServerTime  int32    `json:"server_time,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb5890dba.
+func (v *ServerDHInnerData) ConstructorID() uint32 {
+	return ServerDHInnerDataTypeID
+}
+
+// Encode serializes ServerDHInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHInnerDataTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt(b, uint32(v.G))
+	WriteString(b, v.DHPrime)
+	WriteString(b, v.GA)
+	WriteInt(b, uint32(v.ServerTime))
+	return nil
+}
+
+// DecodeServerDHInnerData deserializes a ServerDHInnerData from a reader using the TL binary protocol.
+func DecodeServerDHInnerData(r *Reader) (*ServerDHInnerData, error) {
+	v := &ServerDHInnerData{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rG, _eG := r.ReadInt32()
+	if _eG != nil {
+		return nil, _eG
+	}
+	v.G = _rG
+	_rDHPrime, _eDHPrime := r.ReadString()
+	if _eDHPrime != nil {
+		return nil, _eDHPrime
+	}
+	v.DHPrime = _rDHPrime
+	_rGA, _eGA := r.ReadString()
+	if _eGA != nil {
+		return nil, _eGA
+	}
+	v.GA = _rGA
+	_rServerTime, _eServerTime := r.ReadInt32()
+	if _eServerTime != nil {
+		return nil, _eServerTime
+	}
+	v.ServerTime = _rServerTime
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHInnerData(r)
+	}
+}
+
+// ClientDHInnerDataTypeID is the constructor ID for TL type client_DH_inner_data.
+const ClientDHInnerDataTypeID = 0x6643b654
+
+// ClientDHInnerData represents the TL constructor client_DH_inner_data (0x6643b654).
+//
+// See https://core.telegram.org/constructor/client_DH_inner_data for reference.
+type ClientDHInnerData struct {
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	RetryID     int64    `json:"retry_id,omitempty"`
+	GB          string   `json:"gb,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x6643b654.
+func (v *ClientDHInnerData) ConstructorID() uint32 {
+	return ClientDHInnerDataTypeID
+}
+
+// Encode serializes ClientDHInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *ClientDHInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ClientDHInnerDataTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteLong(b, v.RetryID)
+	WriteString(b, v.GB)
+	return nil
+}
+
+// DecodeClientDHInnerData deserializes a ClientDHInnerData from a reader using the TL binary protocol.
+func DecodeClientDHInnerData(r *Reader) (*ClientDHInnerData, error) {
+	v := &ClientDHInnerData{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rRetryID, _eRetryID := r.ReadInt64()
+	if _eRetryID != nil {
+		return nil, _eRetryID
+	}
+	v.RetryID = _rRetryID
+	_rGB, _eGB := r.ReadString()
+	if _eGB != nil {
+		return nil, _eGB
+	}
+	v.GB = _rGB
+	return v, nil
+}
+
+func init() {
+	Registry[ClientDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeClientDHInnerData(r)
+	}
+}
+
+// SetClientDHParamsAnswerClass is the interface for TL type SetClientDHParamsAnswer.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the SetClientDHParamsAnswer TL type.
+type SetClientDHParamsAnswerClass interface {
+	TLObject
+	isSetClientDHParamsAnswer()
+}
+
+// DHGenOkTypeID is the constructor ID for TL type dh_gen_ok.
+const DHGenOkTypeID = 0x3bcbf734
+
+// DHGenRetryTypeID is the constructor ID for TL type dh_gen_retry.
+const DHGenRetryTypeID = 0x46dc1fb9
+
+// DHGenFailTypeID is the constructor ID for TL type dh_gen_fail.
+const DHGenFailTypeID = 0xa69dae02
+
+// isSetClientDHParamsAnswer marks DHGenOk as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenOk) isSetClientDHParamsAnswer() {}
+
+// isSetClientDHParamsAnswer marks DHGenRetry as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenRetry) isSetClientDHParamsAnswer() {}
+
+// isSetClientDHParamsAnswer marks DHGenFail as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenFail) isSetClientDHParamsAnswer() {}
+
+// DHGenOk represents the TL constructor dh_gen_ok (0x3bcbf734).
+//
+// See https://core.telegram.org/constructor/dh_gen_ok for reference.
+type DHGenOk struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash1 [16]byte `json:"new_nonce_hash1,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3bcbf734.
+func (v *DHGenOk) ConstructorID() uint32 {
+	return DHGenOkTypeID
+}
+
+// Encode serializes DHGenOk to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenOkTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash1)
+	return nil
+}
+
+// DecodeDHGenOk deserializes a DHGenOk from a reader using the TL binary protocol.
+func DecodeDHGenOk(r *Reader) (*DHGenOk, error) {
+	v := &DHGenOk{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash1, _eNewNonceHash1 := r.ReadInt128()
+	if _eNewNonceHash1 != nil {
+		return nil, _eNewNonceHash1
+	}
+	v.NewNonceHash1 = _rNewNonceHash1
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenOk(r)
+	}
+}
+
+// DHGenRetry represents the TL constructor dh_gen_retry (0x46dc1fb9).
+//
+// See https://core.telegram.org/constructor/dh_gen_retry for reference.
+type DHGenRetry struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash2 [16]byte `json:"new_nonce_hash2,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x46dc1fb9.
+func (v *DHGenRetry) ConstructorID() uint32 {
+	return DHGenRetryTypeID
+}
+
+// Encode serializes DHGenRetry to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenRetry) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenRetryTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash2)
+	return nil
+}
+
+// DecodeDHGenRetry deserializes a DHGenRetry from a reader using the TL binary protocol.
+func DecodeDHGenRetry(r *Reader) (*DHGenRetry, error) {
+	v := &DHGenRetry{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash2, _eNewNonceHash2 := r.ReadInt128()
+	if _eNewNonceHash2 != nil {
+		return nil, _eNewNonceHash2
+	}
+	v.NewNonceHash2 = _rNewNonceHash2
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenRetryTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenRetry(r)
+	}
+}
+
+// DHGenFail represents the TL constructor dh_gen_fail (0xa69dae02).
+//
+// See https://core.telegram.org/constructor/dh_gen_fail for reference.
+type DHGenFail struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash3 [16]byte `json:"new_nonce_hash3,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa69dae02.
+func (v *DHGenFail) ConstructorID() uint32 {
+	return DHGenFailTypeID
+}
+
+// Encode serializes DHGenFail to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenFailTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash3)
+	return nil
+}
+
+// DecodeDHGenFail deserializes a DHGenFail from a reader using the TL binary protocol.
+func DecodeDHGenFail(r *Reader) (*DHGenFail, error) {
+	v := &DHGenFail{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash3, _eNewNonceHash3 := r.ReadInt128()
+	if _eNewNonceHash3 != nil {
+		return nil, _eNewNonceHash3
+	}
+	v.NewNonceHash3 = _rNewNonceHash3
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenFail(r)
+	}
+}
+
+// MsgsAckTypeID is the constructor ID for TL type msgs_ack.
+const MsgsAckTypeID = 0x62d6b459
+
+// MsgsAck represents the TL constructor msgs_ack (0x62d6b459).
+//
+// See https://core.telegram.org/constructor/msgs_ack for reference.
+type MsgsAck struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x62d6b459.
+func (v *MsgsAck) ConstructorID() uint32 {
+	return MsgsAckTypeID
+}
+
+// Encode serializes MsgsAck to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsAck) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsAckTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgsAck deserializes a MsgsAck from a reader using the TL binary protocol.
+func DecodeMsgsAck(r *Reader) (*MsgsAck, error) {
+	v := &MsgsAck{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsAckTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsAck(r)
+	}
+}
+
+// BadMsgNotificationClass is the interface for TL type BadMsgNotification.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the BadMsgNotification TL type.
+type BadMsgNotificationClass interface {
+	TLObject
+	isBadMsgNotification()
+}
+
+// BadMsgNotificationTypeID is the constructor ID for TL type bad_msg_notification.
+const BadMsgNotificationTypeID = 0xa7eff811
+
+// BadServerSaltTypeID is the constructor ID for TL type bad_server_salt.
+const BadServerSaltTypeID = 0xedab447b
+
+// isBadMsgNotification marks BadMsgNotification as implementing the BadMsgNotificationClass interface.
+func (*BadMsgNotification) isBadMsgNotification() {}
+
+// isBadMsgNotification marks BadServerSalt as implementing the BadMsgNotificationClass interface.
+func (*BadServerSalt) isBadMsgNotification() {}
+
+// BadMsgNotification represents the TL constructor bad_msg_notification (0xa7eff811).
+//
+// See https://core.telegram.org/constructor/bad_msg_notification for reference.
+type BadMsgNotification struct {
+	BadMsgID    int64 `json:"bad_msg_id,omitempty"`
+	BadMsgSeqno int32 `json:"bad_msg_seqno,omitempty"`
+	ErrorCode   int32 `json:"error_code,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa7eff811.
+func (v *BadMsgNotification) ConstructorID() uint32 {
+	return BadMsgNotificationTypeID
+}
+
+// Encode serializes BadMsgNotification to a bytes.Buffer using the TL binary protocol.
+func (v *BadMsgNotification) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BadMsgNotificationTypeID)
+	WriteLong(b, v.BadMsgID)
+	WriteInt(b, uint32(v.BadMsgSeqno))
+	WriteInt(b, uint32(v.ErrorCode))
+	return nil
+}
+
+// DecodeBadMsgNotification deserializes a BadMsgNotification from a reader using the TL binary protocol.
+func DecodeBadMsgNotification(r *Reader) (*BadMsgNotification, error) {
+	v := &BadMsgNotification{}
+	_rBadMsgID, _eBadMsgID := r.ReadInt64()
+	if _eBadMsgID != nil {
+		return nil, _eBadMsgID
+	}
+	v.BadMsgID = _rBadMsgID
+	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
+	if _eBadMsgSeqno != nil {
+		return nil, _eBadMsgSeqno
+	}
+	v.BadMsgSeqno = _rBadMsgSeqno
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	return v, nil
+}
+
+func init() {
+	Registry[BadMsgNotificationTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBadMsgNotification(r)
+	}
+}
+
+// BadServerSalt represents the TL constructor bad_server_salt (0xedab447b).
+//
+// See https://core.telegram.org/constructor/bad_server_salt for reference.
+type BadServerSalt struct {
+	BadMsgID      int64 `json:"bad_msg_id,omitempty"`
+	BadMsgSeqno   int32 `json:"bad_msg_seqno,omitempty"`
+	ErrorCode     int32 `json:"error_code,omitempty"`
+	NewServerSalt int64 `json:"new_server_salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xedab447b.
+func (v *BadServerSalt) ConstructorID() uint32 {
+	return BadServerSaltTypeID
+}
+
+// Encode serializes BadServerSalt to a bytes.Buffer using the TL binary protocol.
+func (v *BadServerSalt) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BadServerSaltTypeID)
+	WriteLong(b, v.BadMsgID)
+	WriteInt(b, uint32(v.BadMsgSeqno))
+	WriteInt(b, uint32(v.ErrorCode))
+	WriteLong(b, v.NewServerSalt)
+	return nil
+}
+
+// DecodeBadServerSalt deserializes a BadServerSalt from a reader using the TL binary protocol.
+func DecodeBadServerSalt(r *Reader) (*BadServerSalt, error) {
+	v := &BadServerSalt{}
+	_rBadMsgID, _eBadMsgID := r.ReadInt64()
+	if _eBadMsgID != nil {
+		return nil, _eBadMsgID
+	}
+	v.BadMsgID = _rBadMsgID
+	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
+	if _eBadMsgSeqno != nil {
+		return nil, _eBadMsgSeqno
+	}
+	v.BadMsgSeqno = _rBadMsgSeqno
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	_rNewServerSalt, _eNewServerSalt := r.ReadInt64()
+	if _eNewServerSalt != nil {
+		return nil, _eNewServerSalt
+	}
+	v.NewServerSalt = _rNewServerSalt
+	return v, nil
+}
+
+func init() {
+	Registry[BadServerSaltTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBadServerSalt(r)
+	}
+}
+
+// MsgsStateReqTypeID is the constructor ID for TL type msgs_state_req.
+const MsgsStateReqTypeID = 0xda69fb52
+
+// MsgsStateReq represents the TL constructor msgs_state_req (0xda69fb52).
+//
+// See https://core.telegram.org/constructor/msgs_state_req for reference.
+type MsgsStateReq struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xda69fb52.
+func (v *MsgsStateReq) ConstructorID() uint32 {
+	return MsgsStateReqTypeID
+}
+
+// Encode serializes MsgsStateReq to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsStateReq) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsStateReqTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgsStateReq deserializes a MsgsStateReq from a reader using the TL binary protocol.
+func DecodeMsgsStateReq(r *Reader) (*MsgsStateReq, error) {
+	v := &MsgsStateReq{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsStateReqTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsStateReq(r)
+	}
+}
+
+// MsgsStateInfoTypeID is the constructor ID for TL type msgs_state_info.
+const MsgsStateInfoTypeID = 0x04deb57d
+
+// MsgsStateInfo represents the TL constructor msgs_state_info (0x04deb57d).
+//
+// See https://core.telegram.org/constructor/msgs_state_info for reference.
+type MsgsStateInfo struct {
+	ReqMsgID int64  `json:"req_msg_id,omitempty"`
+	Info     string `json:"info,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x04deb57d.
+func (v *MsgsStateInfo) ConstructorID() uint32 {
+	return MsgsStateInfoTypeID
+}
+
+// Encode serializes MsgsStateInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsStateInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsStateInfoTypeID)
+	WriteLong(b, v.ReqMsgID)
+	WriteString(b, v.Info)
+	return nil
+}
+
+// DecodeMsgsStateInfo deserializes a MsgsStateInfo from a reader using the TL binary protocol.
+func DecodeMsgsStateInfo(r *Reader) (*MsgsStateInfo, error) {
+	v := &MsgsStateInfo{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_rInfo, _eInfo := r.ReadString()
+	if _eInfo != nil {
+		return nil, _eInfo
+	}
+	v.Info = _rInfo
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsStateInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsStateInfo(r)
+	}
+}
+
+// MsgsAllInfoTypeID is the constructor ID for TL type msgs_all_info.
+const MsgsAllInfoTypeID = 0x8cc0d131
+
+// MsgsAllInfo represents the TL constructor msgs_all_info (0x8cc0d131).
+//
+// See https://core.telegram.org/constructor/msgs_all_info for reference.
+type MsgsAllInfo struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+	Info   string  `json:"info,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x8cc0d131.
+func (v *MsgsAllInfo) ConstructorID() uint32 {
+	return MsgsAllInfoTypeID
+}
+
+// Encode serializes MsgsAllInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsAllInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsAllInfoTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	WriteString(b, v.Info)
+	return nil
+}
+
+// DecodeMsgsAllInfo deserializes a MsgsAllInfo from a reader using the TL binary protocol.
+func DecodeMsgsAllInfo(r *Reader) (*MsgsAllInfo, error) {
+	v := &MsgsAllInfo{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	_rInfo, _eInfo := r.ReadString()
+	if _eInfo != nil {
+		return nil, _eInfo
+	}
+	v.Info = _rInfo
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsAllInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsAllInfo(r)
+	}
+}
+
+// MsgDetailedInfoClass is the interface for TL type MsgDetailedInfo.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the MsgDetailedInfo TL type.
+type MsgDetailedInfoClass interface {
+	TLObject
+	isMsgDetailedInfo()
+}
+
+// MsgDetailedInfoTypeID is the constructor ID for TL type msg_detailed_info.
+const MsgDetailedInfoTypeID = 0x276d3ec6
+
+// MsgNewDetailedInfoTypeID is the constructor ID for TL type msg_new_detailed_info.
+const MsgNewDetailedInfoTypeID = 0x809db6df
+
+// isMsgDetailedInfo marks MsgDetailedInfo as implementing the MsgDetailedInfoClass interface.
+func (*MsgDetailedInfo) isMsgDetailedInfo() {}
+
+// isMsgDetailedInfo marks MsgNewDetailedInfo as implementing the MsgDetailedInfoClass interface.
+func (*MsgNewDetailedInfo) isMsgDetailedInfo() {}
+
+// MsgDetailedInfo represents the TL constructor msg_detailed_info (0x276d3ec6).
+//
+// See https://core.telegram.org/constructor/msg_detailed_info for reference.
+type MsgDetailedInfo struct {
+	MsgID       int64 `json:"msg_id,omitempty"`
+	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
+	Bytes       int32 `json:"bytes,omitempty"`
+	Status      int32 `json:"status,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x276d3ec6.
+func (v *MsgDetailedInfo) ConstructorID() uint32 {
+	return MsgDetailedInfoTypeID
+}
+
+// Encode serializes MsgDetailedInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgDetailedInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgDetailedInfoTypeID)
+	WriteLong(b, v.MsgID)
+	WriteLong(b, v.AnswerMsgID)
+	WriteInt(b, uint32(v.Bytes))
+	WriteInt(b, uint32(v.Status))
+	return nil
+}
+
+// DecodeMsgDetailedInfo deserializes a MsgDetailedInfo from a reader using the TL binary protocol.
+func DecodeMsgDetailedInfo(r *Reader) (*MsgDetailedInfo, error) {
+	v := &MsgDetailedInfo{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
+	if _eAnswerMsgID != nil {
+		return nil, _eAnswerMsgID
+	}
+	v.AnswerMsgID = _rAnswerMsgID
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	_rStatus, _eStatus := r.ReadInt32()
+	if _eStatus != nil {
+		return nil, _eStatus
+	}
+	v.Status = _rStatus
+	return v, nil
+}
+
+func init() {
+	Registry[MsgDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgDetailedInfo(r)
+	}
+}
+
+// MsgNewDetailedInfo represents the TL constructor msg_new_detailed_info (0x809db6df).
+//
+// See https://core.telegram.org/constructor/msg_new_detailed_info for reference.
+type MsgNewDetailedInfo struct {
+	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
+	Bytes       int32 `json:"bytes,omitempty"`
+	Status      int32 `json:"status,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x809db6df.
+func (v *MsgNewDetailedInfo) ConstructorID() uint32 {
+	return MsgNewDetailedInfoTypeID
+}
+
+// Encode serializes MsgNewDetailedInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgNewDetailedInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgNewDetailedInfoTypeID)
+	WriteLong(b, v.AnswerMsgID)
+	WriteInt(b, uint32(v.Bytes))
+	WriteInt(b, uint32(v.Status))
+	return nil
+}
+
+// DecodeMsgNewDetailedInfo deserializes a MsgNewDetailedInfo from a reader using the TL binary protocol.
+func DecodeMsgNewDetailedInfo(r *Reader) (*MsgNewDetailedInfo, error) {
+	v := &MsgNewDetailedInfo{}
+	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
+	if _eAnswerMsgID != nil {
+		return nil, _eAnswerMsgID
+	}
+	v.AnswerMsgID = _rAnswerMsgID
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	_rStatus, _eStatus := r.ReadInt32()
+	if _eStatus != nil {
+		return nil, _eStatus
+	}
+	v.Status = _rStatus
+	return v, nil
+}
+
+func init() {
+	Registry[MsgNewDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgNewDetailedInfo(r)
+	}
+}
+
+// MsgResendReqTypeID is the constructor ID for TL type msg_resend_req.
+const MsgResendReqTypeID = 0x7d861a08
+
+// MsgResendReq represents the TL constructor msg_resend_req (0x7d861a08).
+//
+// See https://core.telegram.org/constructor/msg_resend_req for reference.
+type MsgResendReq struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7d861a08.
+func (v *MsgResendReq) ConstructorID() uint32 {
+	return MsgResendReqTypeID
+}
+
+// Encode serializes MsgResendReq to a bytes.Buffer using the TL binary protocol.
+func (v *MsgResendReq) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgResendReqTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgResendReq deserializes a MsgResendReq from a reader using the TL binary protocol.
+func DecodeMsgResendReq(r *Reader) (*MsgResendReq, error) {
+	v := &MsgResendReq{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgResendReqTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgResendReq(r)
+	}
+}
+
+// RPCResultTypeID is the constructor ID for TL type rpc_result.
+const RPCResultTypeID = 0xf35c6d01
+
+// RPCResult represents the TL constructor rpc_result (0xf35c6d01).
+//
+// See https://core.telegram.org/constructor/rpc_result for reference.
+type RPCResult struct {
+	ReqMsgID int64    `json:"req_msg_id,omitempty"`
+	Result   TLObject `json:"result,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf35c6d01.
+func (v *RPCResult) ConstructorID() uint32 {
+	return RPCResultTypeID
+}
+
+// Encode serializes RPCResult to a bytes.Buffer using the TL binary protocol.
+func (v *RPCResult) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCResultTypeID)
+	WriteLong(b, v.ReqMsgID)
+	EncodeTLObject(b, v.Result)
+	return nil
+}
+
+// DecodeRPCResult deserializes a RPCResult from a reader using the TL binary protocol.
+func DecodeRPCResult(r *Reader) (*RPCResult, error) {
+	v := &RPCResult{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_objResult, _errResult := ReadTLObject(r)
+	if _errResult != nil {
+		return nil, _errResult
+	}
+	v.Result = _objResult.(TLObject)
+	return v, nil
+}
+
+func init() {
+	Registry[RPCResultTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCResult(r)
+	}
+}
+
+// RPCErrorTypeID is the constructor ID for TL type rpc_error.
+const RPCErrorTypeID = 0x2144ca19
+
+// RPCError represents the TL constructor rpc_error (0x2144ca19).
+//
+// See https://core.telegram.org/constructor/rpc_error for reference.
+type RPCError struct {
+	ErrorCode    int32  `json:"error_code,omitempty"`
+	ErrorMessage string `json:"error_message,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x2144ca19.
+func (v *RPCError) ConstructorID() uint32 {
+	return RPCErrorTypeID
+}
+
+// Encode serializes RPCError to a bytes.Buffer using the TL binary protocol.
+func (v *RPCError) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCErrorTypeID)
+	WriteInt(b, uint32(v.ErrorCode))
+	WriteString(b, v.ErrorMessage)
+	return nil
+}
+
+// DecodeRPCError deserializes a RPCError from a reader using the TL binary protocol.
+func DecodeRPCError(r *Reader) (*RPCError, error) {
+	v := &RPCError{}
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	_rErrorMessage, _eErrorMessage := r.ReadString()
+	if _eErrorMessage != nil {
+		return nil, _eErrorMessage
+	}
+	v.ErrorMessage = _rErrorMessage
+	return v, nil
+}
+
+func init() {
+	Registry[RPCErrorTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCError(r)
+	}
+}
+
+// RPCDropAnswerClass is the interface for TL type RPCDropAnswer.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the RPCDropAnswer TL type.
+type RPCDropAnswerClass interface {
+	TLObject
+	isRPCDropAnswer()
+}
+
+// RPCAnswerUnknownTypeID is the constructor ID for TL type rpc_answer_unknown.
+const RPCAnswerUnknownTypeID = 0x5e2ad36e
+
+// RPCAnswerDroppedRunningTypeID is the constructor ID for TL type rpc_answer_dropped_running.
+const RPCAnswerDroppedRunningTypeID = 0xcd78e586
+
+// RPCAnswerDroppedTypeID is the constructor ID for TL type rpc_answer_dropped.
+const RPCAnswerDroppedTypeID = 0xa43ad8b7
+
+// isRPCDropAnswer marks RPCAnswerUnknown as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerUnknown) isRPCDropAnswer() {}
+
+// isRPCDropAnswer marks RPCAnswerDroppedRunning as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerDroppedRunning) isRPCDropAnswer() {}
+
+// isRPCDropAnswer marks RPCAnswerDropped as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerDropped) isRPCDropAnswer() {}
+
+// RPCAnswerUnknown represents the TL constructor rpc_answer_unknown (0x5e2ad36e).
+//
+// See https://core.telegram.org/constructor/rpc_answer_unknown for reference.
+type RPCAnswerUnknown struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x5e2ad36e.
+func (v *RPCAnswerUnknown) ConstructorID() uint32 {
+	return RPCAnswerUnknownTypeID
+}
+
+// Encode serializes RPCAnswerUnknown to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerUnknown) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerUnknownTypeID)
+	return nil
+}
+
+// DecodeRPCAnswerUnknown deserializes a RPCAnswerUnknown from a reader using the TL binary protocol.
+func DecodeRPCAnswerUnknown(r *Reader) (*RPCAnswerUnknown, error) {
+	v := &RPCAnswerUnknown{}
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerUnknownTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerUnknown(r)
+	}
+}
+
+// RPCAnswerDroppedRunning represents the TL constructor rpc_answer_dropped_running (0xcd78e586).
+//
+// See https://core.telegram.org/constructor/rpc_answer_dropped_running for reference.
+type RPCAnswerDroppedRunning struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xcd78e586.
+func (v *RPCAnswerDroppedRunning) ConstructorID() uint32 {
+	return RPCAnswerDroppedRunningTypeID
+}
+
+// Encode serializes RPCAnswerDroppedRunning to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerDroppedRunning) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerDroppedRunningTypeID)
+	return nil
+}
+
+// DecodeRPCAnswerDroppedRunning deserializes a RPCAnswerDroppedRunning from a reader using the TL binary protocol.
+func DecodeRPCAnswerDroppedRunning(r *Reader) (*RPCAnswerDroppedRunning, error) {
+	v := &RPCAnswerDroppedRunning{}
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerDroppedRunningTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerDroppedRunning(r)
+	}
+}
+
+// RPCAnswerDropped represents the TL constructor rpc_answer_dropped (0xa43ad8b7).
+//
+// See https://core.telegram.org/constructor/rpc_answer_dropped for reference.
+type RPCAnswerDropped struct {
+	MsgID int64 `json:"msg_id,omitempty"`
+	SeqNo int32 `json:"seq_no,omitempty"`
+	Bytes int32 `json:"bytes,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa43ad8b7.
+func (v *RPCAnswerDropped) ConstructorID() uint32 {
+	return RPCAnswerDroppedTypeID
+}
+
+// Encode serializes RPCAnswerDropped to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerDropped) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerDroppedTypeID)
+	WriteLong(b, v.MsgID)
+	WriteInt(b, uint32(v.SeqNo))
+	WriteInt(b, uint32(v.Bytes))
+	return nil
+}
+
+// DecodeRPCAnswerDropped deserializes a RPCAnswerDropped from a reader using the TL binary protocol.
+func DecodeRPCAnswerDropped(r *Reader) (*RPCAnswerDropped, error) {
+	v := &RPCAnswerDropped{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rSeqNo, _eSeqNo := r.ReadInt32()
+	if _eSeqNo != nil {
+		return nil, _eSeqNo
+	}
+	v.SeqNo = _rSeqNo
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerDroppedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerDropped(r)
+	}
+}
+
+// FutureSaltTypeID is the constructor ID for TL type future_salt.
+const FutureSaltTypeID = 0x0949d9dc
+
+// FutureSalt represents the TL constructor future_salt (0x0949d9dc).
+//
+// See https://core.telegram.org/constructor/future_salt for reference.
+type FutureSalt struct {
+	ValidSince int32 `json:"valid_since,omitempty"`
+	ValidUntil int32 `json:"valid_until,omitempty"`
+	Salt       int64 `json:"salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x0949d9dc.
+func (v *FutureSalt) ConstructorID() uint32 {
+	return FutureSaltTypeID
+}
+
+// Encode serializes FutureSalt to a bytes.Buffer using the TL binary protocol.
+func (v *FutureSalt) Encode(b *bytes.Buffer) error {
+	WriteInt(b, FutureSaltTypeID)
+	WriteInt(b, uint32(v.ValidSince))
+	WriteInt(b, uint32(v.ValidUntil))
+	WriteLong(b, v.Salt)
+	return nil
+}
+
+// DecodeFutureSalt deserializes a FutureSalt from a reader using the TL binary protocol.
+func DecodeFutureSalt(r *Reader) (*FutureSalt, error) {
+	v := &FutureSalt{}
+	_rValidSince, _eValidSince := r.ReadInt32()
+	if _eValidSince != nil {
+		return nil, _eValidSince
+	}
+	v.ValidSince = _rValidSince
+	_rValidUntil, _eValidUntil := r.ReadInt32()
+	if _eValidUntil != nil {
+		return nil, _eValidUntil
+	}
+	v.ValidUntil = _rValidUntil
+	_rSalt, _eSalt := r.ReadInt64()
+	if _eSalt != nil {
+		return nil, _eSalt
+	}
+	v.Salt = _rSalt
+	return v, nil
+}
+
+func init() {
+	Registry[FutureSaltTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeFutureSalt(r)
+	}
+}
+
+// FutureSaltsTypeID is the constructor ID for TL type future_salts.
+const FutureSaltsTypeID = 0xae500895
+
+// FutureSalts represents the TL constructor future_salts (0xae500895).
+//
+// See https://core.telegram.org/constructor/future_salts for reference.
+type FutureSalts struct {
+	ReqMsgID int64         `json:"req_msg_id,omitempty"`
+	Now      int32         `json:"now,omitempty"`
+	Salts    []*FutureSalt `json:"salts,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xae500895.
+func (v *FutureSalts) ConstructorID() uint32 {
+	return FutureSaltsTypeID
+}
+
+// Encode serializes FutureSalts to a bytes.Buffer using the TL binary protocol.
+func (v *FutureSalts) Encode(b *bytes.Buffer) error {
+	WriteInt(b, FutureSaltsTypeID)
+	WriteLong(b, v.ReqMsgID)
+	WriteInt(b, uint32(v.Now))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Salts)))
+	for _, _item := range v.Salts {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeFutureSalts deserializes a FutureSalts from a reader using the TL binary protocol.
+func DecodeFutureSalts(r *Reader) (*FutureSalts, error) {
+	v := &FutureSalts{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_rNow, _eNow := r.ReadInt32()
+	if _eNow != nil {
+		return nil, _eNow
+	}
+	v.Now = _rNow
+	_vhdrSalts, _ehdrSalts := r.ReadUint32()
+	if _ehdrSalts != nil {
+		return nil, _ehdrSalts
+	}
+	_cntSalts, _ecntSalts := r.ReadUint32()
+	if _ecntSalts != nil {
+		return nil, _ecntSalts
+	}
+	if _errSalts := checkVectorCount(_cntSalts); _errSalts != nil {
+		return nil, _errSalts
+	}
+	v.Salts = make([]*FutureSalt, _cntSalts)
+	for _iSalts := range v.Salts {
+		_objSalts, _errSalts := ReadTLObject(r)
+		if _errSalts != nil {
+			return nil, _errSalts
+		}
+		v.Salts[_iSalts] = _objSalts.(*FutureSalt)
+	}
+	_ = _vhdrSalts
+	return v, nil
+}
+
+func init() {
+	Registry[FutureSaltsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeFutureSalts(r)
+	}
+}
+
+// PongTypeID is the constructor ID for TL type pong.
+const PongTypeID = 0x347773c5
+
+// Pong represents the TL constructor pong (0x347773c5).
+//
+// See https://core.telegram.org/constructor/pong for reference.
+type Pong struct {
+	MsgID  int64 `json:"msg_id,omitempty"`
+	PingID int64 `json:"ping_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x347773c5.
+func (v *Pong) ConstructorID() uint32 {
+	return PongTypeID
+}
+
+// Encode serializes Pong to a bytes.Buffer using the TL binary protocol.
+func (v *Pong) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PongTypeID)
+	WriteLong(b, v.MsgID)
+	WriteLong(b, v.PingID)
+	return nil
+}
+
+// DecodePong deserializes a Pong from a reader using the TL binary protocol.
+func DecodePong(r *Reader) (*Pong, error) {
+	v := &Pong{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rPingID, _ePingID := r.ReadInt64()
+	if _ePingID != nil {
+		return nil, _ePingID
+	}
+	v.PingID = _rPingID
+	return v, nil
+}
+
+func init() {
+	Registry[PongTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePong(r)
+	}
+}
+
+// DestroySessionResClass is the interface for TL type DestroySessionRes.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the DestroySessionRes TL type.
+type DestroySessionResClass interface {
+	TLObject
+	isDestroySessionRes()
+}
+
+// DestroySessionOkTypeID is the constructor ID for TL type destroy_session_ok.
+const DestroySessionOkTypeID = 0xe22045fc
+
+// DestroySessionNoneTypeID is the constructor ID for TL type destroy_session_none.
+const DestroySessionNoneTypeID = 0x62d350c9
+
+// isDestroySessionRes marks DestroySessionOk as implementing the DestroySessionResClass interface.
+func (*DestroySessionOk) isDestroySessionRes() {}
+
+// isDestroySessionRes marks DestroySessionNone as implementing the DestroySessionResClass interface.
+func (*DestroySessionNone) isDestroySessionRes() {}
+
+// DestroySessionOk represents the TL constructor destroy_session_ok (0xe22045fc).
+//
+// See https://core.telegram.org/constructor/destroy_session_ok for reference.
+type DestroySessionOk struct {
+	SessionID int64 `json:"session_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xe22045fc.
+func (v *DestroySessionOk) ConstructorID() uint32 {
+	return DestroySessionOkTypeID
+}
+
+// Encode serializes DestroySessionOk to a bytes.Buffer using the TL binary protocol.
+func (v *DestroySessionOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroySessionOkTypeID)
+	WriteLong(b, v.SessionID)
+	return nil
+}
+
+// DecodeDestroySessionOk deserializes a DestroySessionOk from a reader using the TL binary protocol.
+func DecodeDestroySessionOk(r *Reader) (*DestroySessionOk, error) {
+	v := &DestroySessionOk{}
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	return v, nil
+}
+
+func init() {
+	Registry[DestroySessionOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroySessionOk(r)
+	}
+}
+
+// DestroySessionNone represents the TL constructor destroy_session_none (0x62d350c9).
+//
+// See https://core.telegram.org/constructor/destroy_session_none for reference.
+type DestroySessionNone struct {
+	SessionID int64 `json:"session_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x62d350c9.
+func (v *DestroySessionNone) ConstructorID() uint32 {
+	return DestroySessionNoneTypeID
+}
+
+// Encode serializes DestroySessionNone to a bytes.Buffer using the TL binary protocol.
+func (v *DestroySessionNone) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroySessionNoneTypeID)
+	WriteLong(b, v.SessionID)
+	return nil
+}
+
+// DecodeDestroySessionNone deserializes a DestroySessionNone from a reader using the TL binary protocol.
+func DecodeDestroySessionNone(r *Reader) (*DestroySessionNone, error) {
+	v := &DestroySessionNone{}
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	return v, nil
+}
+
+func init() {
+	Registry[DestroySessionNoneTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroySessionNone(r)
+	}
+}
+
+// NewSessionCreatedTypeID is the constructor ID for TL type new_session_created.
+const NewSessionCreatedTypeID = 0x9ec20908
+
+// NewSessionCreated represents the TL constructor new_session_created (0x9ec20908).
+//
+// See https://core.telegram.org/constructor/new_session_created for reference.
+type NewSessionCreated struct {
+	FirstMsgID int64 `json:"first_msg_id,omitempty"`
+	UniqueID   int64 `json:"unique_id,omitempty"`
+	ServerSalt int64 `json:"server_salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9ec20908.
+func (v *NewSessionCreated) ConstructorID() uint32 {
+	return NewSessionCreatedTypeID
+}
+
+// Encode serializes NewSessionCreated to a bytes.Buffer using the TL binary protocol.
+func (v *NewSessionCreated) Encode(b *bytes.Buffer) error {
+	WriteInt(b, NewSessionCreatedTypeID)
+	WriteLong(b, v.FirstMsgID)
+	WriteLong(b, v.UniqueID)
+	WriteLong(b, v.ServerSalt)
+	return nil
+}
+
+// DecodeNewSessionCreated deserializes a NewSessionCreated from a reader using the TL binary protocol.
+func DecodeNewSessionCreated(r *Reader) (*NewSessionCreated, error) {
+	v := &NewSessionCreated{}
+	_rFirstMsgID, _eFirstMsgID := r.ReadInt64()
+	if _eFirstMsgID != nil {
+		return nil, _eFirstMsgID
+	}
+	v.FirstMsgID = _rFirstMsgID
+	_rUniqueID, _eUniqueID := r.ReadInt64()
+	if _eUniqueID != nil {
+		return nil, _eUniqueID
+	}
+	v.UniqueID = _rUniqueID
+	_rServerSalt, _eServerSalt := r.ReadInt64()
+	if _eServerSalt != nil {
+		return nil, _eServerSalt
+	}
+	v.ServerSalt = _rServerSalt
+	return v, nil
+}
+
+func init() {
+	Registry[NewSessionCreatedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeNewSessionCreated(r)
+	}
+}
+
+// HTTPWaitTypeID is the constructor ID for TL type http_wait.
+const HTTPWaitTypeID = 0x9299359f
+
+// HTTPWait represents the TL constructor http_wait (0x9299359f).
+//
+// See https://core.telegram.org/constructor/http_wait for reference.
+type HTTPWait struct {
+	MaxDelay  int32 `json:"max_delay,omitempty"`
+	WaitAfter int32 `json:"wait_after,omitempty"`
+	MaxWait   int32 `json:"max_wait,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9299359f.
+func (v *HTTPWait) ConstructorID() uint32 {
+	return HTTPWaitTypeID
+}
+
+// Encode serializes HTTPWait to a bytes.Buffer using the TL binary protocol.
+func (v *HTTPWait) Encode(b *bytes.Buffer) error {
+	WriteInt(b, HTTPWaitTypeID)
+	WriteInt(b, uint32(v.MaxDelay))
+	WriteInt(b, uint32(v.WaitAfter))
+	WriteInt(b, uint32(v.MaxWait))
+	return nil
+}
+
+// DecodeHTTPWait deserializes a HTTPWait from a reader using the TL binary protocol.
+func DecodeHTTPWait(r *Reader) (*HTTPWait, error) {
+	v := &HTTPWait{}
+	_rMaxDelay, _eMaxDelay := r.ReadInt32()
+	if _eMaxDelay != nil {
+		return nil, _eMaxDelay
+	}
+	v.MaxDelay = _rMaxDelay
+	_rWaitAfter, _eWaitAfter := r.ReadInt32()
+	if _eWaitAfter != nil {
+		return nil, _eWaitAfter
+	}
+	v.WaitAfter = _rWaitAfter
+	_rMaxWait, _eMaxWait := r.ReadInt32()
+	if _eMaxWait != nil {
+		return nil, _eMaxWait
+	}
+	v.MaxWait = _rMaxWait
+	return v, nil
+}
+
+func init() {
+	Registry[HTTPWaitTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeHTTPWait(r)
+	}
+}
+
+// IpPortClass is the interface for TL type IpPort.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the IpPort TL type.
+type IpPortClass interface {
+	TLObject
+	isIpPort()
+}
+
+// IpPortTypeID is the constructor ID for TL type ipPort.
+const IpPortTypeID = 0xd433ad73
+
+// IpPortSecretTypeID is the constructor ID for TL type ipPortSecret.
+const IpPortSecretTypeID = 0x37982646
+
+// isIpPort marks IpPort as implementing the IpPortClass interface.
+func (*IpPort) isIpPort() {}
+
+// isIpPort marks IpPortSecret as implementing the IpPortClass interface.
+func (*IpPortSecret) isIpPort() {}
+
+// IpPort represents the TL constructor ipPort (0xd433ad73).
+//
+// See https://core.telegram.org/constructor/ipPort for reference.
+type IpPort struct {
+	IPv4 int32 `json:"i_pv4,omitempty"`
+	Port int32 `json:"port,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd433ad73.
+func (v *IpPort) ConstructorID() uint32 {
+	return IpPortTypeID
+}
+
+// Encode serializes IpPort to a bytes.Buffer using the TL binary protocol.
+func (v *IpPort) Encode(b *bytes.Buffer) error {
+	WriteInt(b, IpPortTypeID)
+	WriteInt(b, uint32(v.IPv4))
+	WriteInt(b, uint32(v.Port))
+	return nil
+}
+
+// DecodeIpPort deserializes a IpPort from a reader using the TL binary protocol.
+func DecodeIpPort(r *Reader) (*IpPort, error) {
+	v := &IpPort{}
+	_rIPv4, _eIPv4 := r.ReadInt32()
+	if _eIPv4 != nil {
+		return nil, _eIPv4
+	}
+	v.IPv4 = _rIPv4
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	return v, nil
+}
+
+func init() {
+	Registry[IpPortTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeIpPort(r)
+	}
+}
+
+// IpPortSecret represents the TL constructor ipPortSecret (0x37982646).
+//
+// See https://core.telegram.org/constructor/ipPortSecret for reference.
+type IpPortSecret struct {
+	IPv4   int32  `json:"i_pv4,omitempty"`
+	Port   int32  `json:"port,omitempty"`
+	Secret []byte `json:"secret,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x37982646.
+func (v *IpPortSecret) ConstructorID() uint32 {
+	return IpPortSecretTypeID
+}
+
+// Encode serializes IpPortSecret to a bytes.Buffer using the TL binary protocol.
+func (v *IpPortSecret) Encode(b *bytes.Buffer) error {
+	WriteInt(b, IpPortSecretTypeID)
+	WriteInt(b, uint32(v.IPv4))
+	WriteInt(b, uint32(v.Port))
+	WriteBytes(b, v.Secret)
+	return nil
+}
+
+// DecodeIpPortSecret deserializes a IpPortSecret from a reader using the TL binary protocol.
+func DecodeIpPortSecret(r *Reader) (*IpPortSecret, error) {
+	v := &IpPortSecret{}
+	_rIPv4, _eIPv4 := r.ReadInt32()
+	if _eIPv4 != nil {
+		return nil, _eIPv4
+	}
+	v.IPv4 = _rIPv4
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
+	return v, nil
+}
+
+func init() {
+	Registry[IpPortSecretTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeIpPortSecret(r)
+	}
+}
+
+// AccessPointRuleTypeID is the constructor ID for TL type accessPointRule.
+const AccessPointRuleTypeID = 0x4679b65f
+
+// AccessPointRule represents the TL constructor accessPointRule (0x4679b65f).
+//
+// See https://core.telegram.org/constructor/accessPointRule for reference.
+type AccessPointRule struct {
+	PhonePrefixRules string        `json:"phone_prefix_rules,omitempty"`
+	DCID             int32         `json:"dcid,omitempty"`
+	Ips              []IpPortClass `json:"ips,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x4679b65f.
+func (v *AccessPointRule) ConstructorID() uint32 {
+	return AccessPointRuleTypeID
+}
+
+// Encode serializes AccessPointRule to a bytes.Buffer using the TL binary protocol.
+func (v *AccessPointRule) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccessPointRuleTypeID)
+	WriteString(b, v.PhonePrefixRules)
+	WriteInt(b, uint32(v.DCID))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Ips)))
+	for _, _item := range v.Ips {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeAccessPointRule deserializes a AccessPointRule from a reader using the TL binary protocol.
+func DecodeAccessPointRule(r *Reader) (*AccessPointRule, error) {
+	v := &AccessPointRule{}
+	_rPhonePrefixRules, _ePhonePrefixRules := r.ReadString()
+	if _ePhonePrefixRules != nil {
+		return nil, _ePhonePrefixRules
+	}
+	v.PhonePrefixRules = _rPhonePrefixRules
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_vhdrIps, _ehdrIps := r.ReadUint32()
+	if _ehdrIps != nil {
+		return nil, _ehdrIps
+	}
+	_cntIps, _ecntIps := r.ReadUint32()
+	if _ecntIps != nil {
+		return nil, _ecntIps
+	}
+	if _errIps := checkVectorCount(_cntIps); _errIps != nil {
+		return nil, _errIps
+	}
+	v.Ips = make([]IpPortClass, _cntIps)
+	for _iIps := range v.Ips {
+		_objIps, _errIps := ReadTLObject(r)
+		if _errIps != nil {
+			return nil, _errIps
+		}
+		v.Ips[_iIps] = _objIps.(IpPortClass)
+	}
+	_ = _vhdrIps
+	return v, nil
+}
+
+func init() {
+	Registry[AccessPointRuleTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeAccessPointRule(r)
+	}
+}
 
 // BoolClass is the interface for TL type Bool.
 // Implementations must satisfy TLObject and are used to represent
@@ -45,13 +2121,13 @@ func (v *BoolFalse) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBoolFalse deserializes a BoolFalse from a reader using the TL binary protocol.
-func DecodeBoolFalse(r io.Reader) (*BoolFalse, error) {
+func DecodeBoolFalse(r *Reader) (*BoolFalse, error) {
 	v := &BoolFalse{}
 	return v, nil
 }
 
 func init() {
-	Registry[BoolFalseTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BoolFalseTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBoolFalse(r)
 	}
 }
@@ -74,13 +2150,13 @@ func (v *BoolTrue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBoolTrue deserializes a BoolTrue from a reader using the TL binary protocol.
-func DecodeBoolTrue(r io.Reader) (*BoolTrue, error) {
+func DecodeBoolTrue(r *Reader) (*BoolTrue, error) {
 	v := &BoolTrue{}
 	return v, nil
 }
 
 func init() {
-	Registry[BoolTrueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BoolTrueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBoolTrue(r)
 	}
 }
@@ -106,13 +2182,13 @@ func (v *True) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTrue deserializes a True from a reader using the TL binary protocol.
-func DecodeTrue(r io.Reader) (*True, error) {
+func DecodeTrue(r *Reader) (*True, error) {
 	v := &True{}
 	return v, nil
 }
 
 func init() {
-	Registry[TrueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TrueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTrue(r)
 	}
 }
@@ -138,13 +2214,13 @@ func (v *Vector) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeVector deserializes a Vector from a reader using the TL binary protocol.
-func DecodeVector(r io.Reader) (*Vector, error) {
+func DecodeVector(r *Reader) (*Vector, error) {
 	v := &Vector{}
 	return v, nil
 }
 
 func init() {
-	Registry[VectorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[VectorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeVector(r)
 	}
 }
@@ -174,15 +2250,23 @@ func (v *Error) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeError deserializes a Error from a reader using the TL binary protocol.
-func DecodeError(r io.Reader) (*Error, error) {
+func DecodeError(r *Reader) (*Error, error) {
 	v := &Error{}
-	v.Code = int32(ReadInt(r))
-	v.Text = ReadString(r)
+	_rCode, _eCode := r.ReadInt32()
+	if _eCode != nil {
+		return nil, _eCode
+	}
+	v.Code = _rCode
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[ErrorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ErrorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeError(r)
 	}
 }
@@ -208,13 +2292,13 @@ func (v *Null) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNull deserializes a Null from a reader using the TL binary protocol.
-func DecodeNull(r io.Reader) (*Null, error) {
+func DecodeNull(r *Reader) (*Null, error) {
 	v := &Null{}
 	return v, nil
 }
 
 func init() {
-	Registry[NullTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NullTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNull(r)
 	}
 }
@@ -271,17 +2355,33 @@ func (v *InputFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputFile deserializes a InputFile from a reader using the TL binary protocol.
-func DecodeInputFile(r io.Reader) (*InputFile, error) {
+func DecodeInputFile(r *Reader) (*InputFile, error) {
 	v := &InputFile{}
-	v.ID = ReadLong(r)
-	v.Parts = int32(ReadInt(r))
-	v.Name = ReadString(r)
-	v.MD5Checksum = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rParts, _eParts := r.ReadInt32()
+	if _eParts != nil {
+		return nil, _eParts
+	}
+	v.Parts = _rParts
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_rMD5Checksum, _eMD5Checksum := r.ReadString()
+	if _eMD5Checksum != nil {
+		return nil, _eMD5Checksum
+	}
+	v.MD5Checksum = _rMD5Checksum
 	return v, nil
 }
 
 func init() {
-	Registry[InputFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputFile(r)
 	}
 }
@@ -310,16 +2410,28 @@ func (v *InputFileBig) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputFileBig deserializes a InputFileBig from a reader using the TL binary protocol.
-func DecodeInputFileBig(r io.Reader) (*InputFileBig, error) {
+func DecodeInputFileBig(r *Reader) (*InputFileBig, error) {
 	v := &InputFileBig{}
-	v.ID = ReadLong(r)
-	v.Parts = int32(ReadInt(r))
-	v.Name = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rParts, _eParts := r.ReadInt32()
+	if _eParts != nil {
+		return nil, _eParts
+	}
+	v.Parts = _rParts
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
 	return v, nil
 }
 
 func init() {
-	Registry[InputFileBigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputFileBigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputFileBig(r)
 	}
 }
@@ -344,15 +2456,18 @@ func (v *InputFileStoryDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputFileStoryDocument deserializes a InputFileStoryDocument from a reader using the TL binary protocol.
-func DecodeInputFileStoryDocument(r io.Reader) (*InputFileStoryDocument, error) {
+func DecodeInputFileStoryDocument(r *Reader) (*InputFileStoryDocument, error) {
 	v := &InputFileStoryDocument{}
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(InputDocumentClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputFileStoryDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputFileStoryDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputFileStoryDocument(r)
 	}
 }
@@ -503,13 +2618,13 @@ func (v *InputMediaEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaEmpty deserializes a InputMediaEmpty from a reader using the TL binary protocol.
-func DecodeInputMediaEmpty(r io.Reader) (*InputMediaEmpty, error) {
+func DecodeInputMediaEmpty(r *Reader) (*InputMediaEmpty, error) {
 	v := &InputMediaEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaEmpty(r)
 	}
 }
@@ -574,41 +2689,61 @@ func (v *InputMediaUploadedPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaUploadedPhoto deserializes a InputMediaUploadedPhoto from a reader using the TL binary protocol.
-func DecodeInputMediaUploadedPhoto(r io.Reader) (*InputMediaUploadedPhoto, error) {
+func DecodeInputMediaUploadedPhoto(r *Reader) (*InputMediaUploadedPhoto, error) {
 	v := &InputMediaUploadedPhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Spoiler = v.Flags.Has(2)
 	v.LivePhoto = v.Flags.Has(3)
-	_objFile, _ := ReadTLObject(r)
+	_objFile, _errFile := ReadTLObject(r)
+	if _errFile != nil {
+		return nil, _errFile
+	}
 	v.File = _objFile.(InputFileClass)
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntStickers := ReadInt(r)
-		if err := checkVectorCount(_cntStickers); err != nil {
-			return nil, err
+		_vhdrStickers, _ehdrStickers := r.ReadUint32()
+		if _ehdrStickers != nil {
+			return nil, _ehdrStickers
+		}
+		_cntStickers, _ecntStickers := r.ReadUint32()
+		if _ecntStickers != nil {
+			return nil, _ecntStickers
+		}
+		if _errStickers := checkVectorCount(_cntStickers); _errStickers != nil {
+			return nil, _errStickers
 		}
 		v.Stickers = make([]InputDocumentClass, _cntStickers)
 		for _iStickers := range v.Stickers {
-			_objStickers, _ := ReadTLObject(r)
+			_objStickers, _errStickers := ReadTLObject(r)
+			if _errStickers != nil {
+				return nil, _errStickers
+			}
 			v.Stickers[_iStickers] = _objStickers.(InputDocumentClass)
 		}
+		_ = _vhdrStickers
 	}
 	if v.Flags.Has(1) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	if v.Flags.Has(3) {
-		_objVideo, _ := ReadTLObject(r)
+		_objVideo, _errVideo := ReadTLObject(r)
+		if _errVideo != nil {
+			return nil, _errVideo
+		}
 		v.Video = _objVideo.(InputDocumentClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaUploadedPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaUploadedPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaUploadedPhoto(r)
 	}
 }
@@ -662,29 +2797,39 @@ func (v *InputMediaPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaPhoto deserializes a InputMediaPhoto from a reader using the TL binary protocol.
-func DecodeInputMediaPhoto(r io.Reader) (*InputMediaPhoto, error) {
+func DecodeInputMediaPhoto(r *Reader) (*InputMediaPhoto, error) {
 	v := &InputMediaPhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Spoiler = v.Flags.Has(1)
 	v.LivePhoto = v.Flags.Has(2)
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(InputPhotoClass)
 	if v.Flags.Has(0) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	if v.Flags.Has(2) {
-		_objVideo, _ := ReadTLObject(r)
+		_objVideo, _errVideo := ReadTLObject(r)
+		if _errVideo != nil {
+			return nil, _errVideo
+		}
 		v.Video = _objVideo.(InputDocumentClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaPhoto(r)
 	}
 }
@@ -709,15 +2854,18 @@ func (v *InputMediaGeoPoint) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaGeoPoint deserializes a InputMediaGeoPoint from a reader using the TL binary protocol.
-func DecodeInputMediaGeoPoint(r io.Reader) (*InputMediaGeoPoint, error) {
+func DecodeInputMediaGeoPoint(r *Reader) (*InputMediaGeoPoint, error) {
 	v := &InputMediaGeoPoint{}
-	_objGeoPoint, _ := ReadTLObject(r)
+	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
+	if _errGeoPoint != nil {
+		return nil, _errGeoPoint
+	}
 	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaGeoPointTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaGeoPointTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaGeoPoint(r)
 	}
 }
@@ -748,17 +2896,33 @@ func (v *InputMediaContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaContact deserializes a InputMediaContact from a reader using the TL binary protocol.
-func DecodeInputMediaContact(r io.Reader) (*InputMediaContact, error) {
+func DecodeInputMediaContact(r *Reader) (*InputMediaContact, error) {
 	v := &InputMediaContact{}
-	v.PhoneNumber = ReadString(r)
-	v.FirstName = ReadString(r)
-	v.LastName = ReadString(r)
-	v.Vcard = ReadString(r)
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_rFirstName, _eFirstName := r.ReadString()
+	if _eFirstName != nil {
+		return nil, _eFirstName
+	}
+	v.FirstName = _rFirstName
+	_rLastName, _eLastName := r.ReadString()
+	if _eLastName != nil {
+		return nil, _eLastName
+	}
+	v.LastName = _rLastName
+	_rVcard, _eVcard := r.ReadString()
+	if _eVcard != nil {
+		return nil, _eVcard
+	}
+	v.Vcard = _rVcard
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaContact(r)
 	}
 }
@@ -849,60 +3013,101 @@ func (v *InputMediaUploadedDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaUploadedDocument deserializes a InputMediaUploadedDocument from a reader using the TL binary protocol.
-func DecodeInputMediaUploadedDocument(r io.Reader) (*InputMediaUploadedDocument, error) {
+func DecodeInputMediaUploadedDocument(r *Reader) (*InputMediaUploadedDocument, error) {
 	v := &InputMediaUploadedDocument{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NosoundVideo = v.Flags.Has(3)
 	v.ForceFile = v.Flags.Has(4)
 	v.Spoiler = v.Flags.Has(5)
-	_objFile, _ := ReadTLObject(r)
+	_objFile, _errFile := ReadTLObject(r)
+	if _errFile != nil {
+		return nil, _errFile
+	}
 	v.File = _objFile.(InputFileClass)
 	if v.Flags.Has(2) {
-		_objThumb, _ := ReadTLObject(r)
+		_objThumb, _errThumb := ReadTLObject(r)
+		if _errThumb != nil {
+			return nil, _errThumb
+		}
 		v.Thumb = _objThumb.(InputFileClass)
 	}
-	v.MimeType = ReadString(r)
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntStickers := ReadInt(r)
-		if err := checkVectorCount(_cntStickers); err != nil {
-			return nil, err
+		_vhdrStickers, _ehdrStickers := r.ReadUint32()
+		if _ehdrStickers != nil {
+			return nil, _ehdrStickers
+		}
+		_cntStickers, _ecntStickers := r.ReadUint32()
+		if _ecntStickers != nil {
+			return nil, _ecntStickers
+		}
+		if _errStickers := checkVectorCount(_cntStickers); _errStickers != nil {
+			return nil, _errStickers
 		}
 		v.Stickers = make([]InputDocumentClass, _cntStickers)
 		for _iStickers := range v.Stickers {
-			_objStickers, _ := ReadTLObject(r)
+			_objStickers, _errStickers := ReadTLObject(r)
+			if _errStickers != nil {
+				return nil, _errStickers
+			}
 			v.Stickers[_iStickers] = _objStickers.(InputDocumentClass)
 		}
+		_ = _vhdrStickers
 	}
 	if v.Flags.Has(6) {
-		_objVideoCover, _ := ReadTLObject(r)
+		_objVideoCover, _errVideoCover := ReadTLObject(r)
+		if _errVideoCover != nil {
+			return nil, _errVideoCover
+		}
 		v.VideoCover = _objVideoCover.(InputPhotoClass)
 	}
 	if v.Flags.Has(7) {
-		v.VideoTimestamp = int32(ReadInt(r))
+		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
+		if _eVideoTimestamp != nil {
+			return nil, _eVideoTimestamp
+		}
+		v.VideoTimestamp = _rVideoTimestamp
 	}
 	if v.Flags.Has(1) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaUploadedDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaUploadedDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaUploadedDocument(r)
 	}
 }
@@ -966,34 +3171,52 @@ func (v *InputMediaDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaDocument deserializes a InputMediaDocument from a reader using the TL binary protocol.
-func DecodeInputMediaDocument(r io.Reader) (*InputMediaDocument, error) {
+func DecodeInputMediaDocument(r *Reader) (*InputMediaDocument, error) {
 	v := &InputMediaDocument{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Spoiler = v.Flags.Has(2)
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(InputDocumentClass)
 	if v.Flags.Has(3) {
-		_objVideoCover, _ := ReadTLObject(r)
+		_objVideoCover, _errVideoCover := ReadTLObject(r)
+		if _errVideoCover != nil {
+			return nil, _errVideoCover
+		}
 		v.VideoCover = _objVideoCover.(InputPhotoClass)
 	}
 	if v.Flags.Has(4) {
-		v.VideoTimestamp = int32(ReadInt(r))
+		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
+		if _eVideoTimestamp != nil {
+			return nil, _eVideoTimestamp
+		}
+		v.VideoTimestamp = _rVideoTimestamp
 	}
 	if v.Flags.Has(0) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	if v.Flags.Has(1) {
-		v.Query = ReadString(r)
+		_rQuery, _eQuery := r.ReadString()
+		if _eQuery != nil {
+			return nil, _eQuery
+		}
+		v.Query = _rQuery
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaDocument(r)
 	}
 }
@@ -1028,20 +3251,43 @@ func (v *InputMediaVenue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaVenue deserializes a InputMediaVenue from a reader using the TL binary protocol.
-func DecodeInputMediaVenue(r io.Reader) (*InputMediaVenue, error) {
+func DecodeInputMediaVenue(r *Reader) (*InputMediaVenue, error) {
 	v := &InputMediaVenue{}
-	_objGeoPoint, _ := ReadTLObject(r)
+	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
+	if _errGeoPoint != nil {
+		return nil, _errGeoPoint
+	}
 	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
-	v.Title = ReadString(r)
-	v.Address = ReadString(r)
-	v.Provider = ReadString(r)
-	v.VenueID = ReadString(r)
-	v.VenueType = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rProvider, _eProvider := r.ReadString()
+	if _eProvider != nil {
+		return nil, _eProvider
+	}
+	v.Provider = _rProvider
+	_rVenueID, _eVenueID := r.ReadString()
+	if _eVenueID != nil {
+		return nil, _eVenueID
+	}
+	v.VenueID = _rVenueID
+	_rVenueType, _eVenueType := r.ReadString()
+	if _eVenueType != nil {
+		return nil, _eVenueType
+	}
+	v.VenueType = _rVenueType
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaVenueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaVenueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaVenue(r)
 	}
 }
@@ -1084,23 +3330,31 @@ func (v *InputMediaPhotoExternal) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaPhotoExternal deserializes a InputMediaPhotoExternal from a reader using the TL binary protocol.
-func DecodeInputMediaPhotoExternal(r io.Reader) (*InputMediaPhotoExternal, error) {
+func DecodeInputMediaPhotoExternal(r *Reader) (*InputMediaPhotoExternal, error) {
 	v := &InputMediaPhotoExternal{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Spoiler = v.Flags.Has(1)
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	if v.Flags.Has(0) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaPhotoExternalTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaPhotoExternalTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaPhotoExternal(r)
 	}
 }
@@ -1157,30 +3411,45 @@ func (v *InputMediaDocumentExternal) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaDocumentExternal deserializes a InputMediaDocumentExternal from a reader using the TL binary protocol.
-func DecodeInputMediaDocumentExternal(r io.Reader) (*InputMediaDocumentExternal, error) {
+func DecodeInputMediaDocumentExternal(r *Reader) (*InputMediaDocumentExternal, error) {
 	v := &InputMediaDocumentExternal{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Spoiler = v.Flags.Has(1)
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	if v.Flags.Has(0) {
-		v.TTLSeconds = int32(ReadInt(r))
+		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+		if _eTTLSeconds != nil {
+			return nil, _eTTLSeconds
+		}
+		v.TTLSeconds = _rTTLSeconds
 	}
 	if v.Flags.Has(2) {
-		_objVideoCover, _ := ReadTLObject(r)
+		_objVideoCover, _errVideoCover := ReadTLObject(r)
+		if _errVideoCover != nil {
+			return nil, _errVideoCover
+		}
 		v.VideoCover = _objVideoCover.(InputPhotoClass)
 	}
 	if v.Flags.Has(3) {
-		v.VideoTimestamp = int32(ReadInt(r))
+		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
+		if _eVideoTimestamp != nil {
+			return nil, _eVideoTimestamp
+		}
+		v.VideoTimestamp = _rVideoTimestamp
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaDocumentExternalTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaDocumentExternalTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaDocumentExternal(r)
 	}
 }
@@ -1205,15 +3474,18 @@ func (v *InputMediaGame) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaGame deserializes a InputMediaGame from a reader using the TL binary protocol.
-func DecodeInputMediaGame(r io.Reader) (*InputMediaGame, error) {
+func DecodeInputMediaGame(r *Reader) (*InputMediaGame, error) {
 	v := &InputMediaGame{}
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(InputGameClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaGameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaGameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaGame(r)
 	}
 }
@@ -1281,39 +3553,71 @@ func (v *InputMediaInvoice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaInvoice deserializes a InputMediaInvoice from a reader using the TL binary protocol.
-func DecodeInputMediaInvoice(r io.Reader) (*InputMediaInvoice, error) {
+func DecodeInputMediaInvoice(r *Reader) (*InputMediaInvoice, error) {
 	v := &InputMediaInvoice{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Title = ReadString(r)
-	v.Description = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rDescription, _eDescription := r.ReadString()
+	if _eDescription != nil {
+		return nil, _eDescription
+	}
+	v.Description = _rDescription
 	if v.Flags.Has(0) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(*InputWebDocument)
 	}
-	_objInvoice, _ := ReadTLObject(r)
-	v.Invoice = _objInvoice.(*Invoice)
-	v.Payload = ReadBytes(r)
-	if v.Flags.Has(3) {
-		v.Provider = ReadString(r)
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
 	}
-	_objProviderData, _ := ReadTLObject(r)
+	v.Invoice = _objInvoice.(*Invoice)
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	if v.Flags.Has(3) {
+		_rProvider, _eProvider := r.ReadString()
+		if _eProvider != nil {
+			return nil, _eProvider
+		}
+		v.Provider = _rProvider
+	}
+	_objProviderData, _errProviderData := ReadTLObject(r)
+	if _errProviderData != nil {
+		return nil, _errProviderData
+	}
 	v.ProviderData = _objProviderData.(*DataJSON)
 	if v.Flags.Has(1) {
-		v.StartParam = ReadString(r)
+		_rStartParam, _eStartParam := r.ReadString()
+		if _eStartParam != nil {
+			return nil, _eStartParam
+		}
+		v.StartParam = _rStartParam
 	}
 	if v.Flags.Has(2) {
-		_objExtendedMedia, _ := ReadTLObject(r)
+		_objExtendedMedia, _errExtendedMedia := ReadTLObject(r)
+		if _errExtendedMedia != nil {
+			return nil, _errExtendedMedia
+		}
 		v.ExtendedMedia = _objExtendedMedia.(InputMediaClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaInvoiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaInvoiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaInvoice(r)
 	}
 }
@@ -1370,30 +3674,45 @@ func (v *InputMediaGeoLive) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaGeoLive deserializes a InputMediaGeoLive from a reader using the TL binary protocol.
-func DecodeInputMediaGeoLive(r io.Reader) (*InputMediaGeoLive, error) {
+func DecodeInputMediaGeoLive(r *Reader) (*InputMediaGeoLive, error) {
 	v := &InputMediaGeoLive{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Stopped = v.Flags.Has(0)
-	_objGeoPoint, _ := ReadTLObject(r)
+	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
+	if _errGeoPoint != nil {
+		return nil, _errGeoPoint
+	}
 	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
 	if v.Flags.Has(2) {
-		v.Heading = int32(ReadInt(r))
+		_rHeading, _eHeading := r.ReadInt32()
+		if _eHeading != nil {
+			return nil, _eHeading
+		}
+		v.Heading = _rHeading
 	}
 	if v.Flags.Has(1) {
-		v.Period = int32(ReadInt(r))
+		_rPeriod, _ePeriod := r.ReadInt32()
+		if _ePeriod != nil {
+			return nil, _ePeriod
+		}
+		v.Period = _rPeriod
 	}
 	if v.Flags.Has(3) {
-		v.ProximityNotificationRadius = int32(ReadInt(r))
+		_rProximityNotificationRadius, _eProximityNotificationRadius := r.ReadInt32()
+		if _eProximityNotificationRadius != nil {
+			return nil, _eProximityNotificationRadius
+		}
+		v.ProximityNotificationRadius = _rProximityNotificationRadius
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaGeoLiveTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaGeoLiveTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaGeoLive(r)
 	}
 }
@@ -1464,46 +3783,73 @@ func (v *InputMediaPoll) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaPoll deserializes a InputMediaPoll from a reader using the TL binary protocol.
-func DecodeInputMediaPoll(r io.Reader) (*InputMediaPoll, error) {
+func DecodeInputMediaPoll(r *Reader) (*InputMediaPoll, error) {
 	v := &InputMediaPoll{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPoll, _ := ReadTLObject(r)
+	_objPoll, _errPoll := ReadTLObject(r)
+	if _errPoll != nil {
+		return nil, _errPoll
+	}
 	v.Poll = _objPoll.(*Poll)
 	if v.Flags.Has(0) {
-		v.CorrectAnswers = ReadVectorInt(r)
+		_vvCorrectAnswers, _veCorrectAnswers := r.ReadVectorInt()
+		if _veCorrectAnswers != nil {
+			return nil, _veCorrectAnswers
+		}
+		v.CorrectAnswers = _vvCorrectAnswers
 	}
 	if v.Flags.Has(3) {
-		_objAttachedMedia, _ := ReadTLObject(r)
+		_objAttachedMedia, _errAttachedMedia := ReadTLObject(r)
+		if _errAttachedMedia != nil {
+			return nil, _errAttachedMedia
+		}
 		v.AttachedMedia = _objAttachedMedia.(InputMediaClass)
 	}
 	if v.Flags.Has(1) {
-		v.Solution = ReadString(r)
+		_rSolution, _eSolution := r.ReadString()
+		if _eSolution != nil {
+			return nil, _eSolution
+		}
+		v.Solution = _rSolution
 	}
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntSolutionEntities := ReadInt(r)
-		if err := checkVectorCount(_cntSolutionEntities); err != nil {
-			return nil, err
+		_vhdrSolutionEntities, _ehdrSolutionEntities := r.ReadUint32()
+		if _ehdrSolutionEntities != nil {
+			return nil, _ehdrSolutionEntities
+		}
+		_cntSolutionEntities, _ecntSolutionEntities := r.ReadUint32()
+		if _ecntSolutionEntities != nil {
+			return nil, _ecntSolutionEntities
+		}
+		if _errSolutionEntities := checkVectorCount(_cntSolutionEntities); _errSolutionEntities != nil {
+			return nil, _errSolutionEntities
 		}
 		v.SolutionEntities = make([]MessageEntityClass, _cntSolutionEntities)
 		for _iSolutionEntities := range v.SolutionEntities {
-			_objSolutionEntities, _ := ReadTLObject(r)
+			_objSolutionEntities, _errSolutionEntities := ReadTLObject(r)
+			if _errSolutionEntities != nil {
+				return nil, _errSolutionEntities
+			}
 			v.SolutionEntities[_iSolutionEntities] = _objSolutionEntities.(MessageEntityClass)
 		}
+		_ = _vhdrSolutionEntities
 	}
 	if v.Flags.Has(2) {
-		_objSolutionMedia, _ := ReadTLObject(r)
+		_objSolutionMedia, _errSolutionMedia := ReadTLObject(r)
+		if _errSolutionMedia != nil {
+			return nil, _errSolutionMedia
+		}
 		v.SolutionMedia = _objSolutionMedia.(InputMediaClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaPollTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaPollTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaPoll(r)
 	}
 }
@@ -1528,14 +3874,18 @@ func (v *InputMediaDice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaDice deserializes a InputMediaDice from a reader using the TL binary protocol.
-func DecodeInputMediaDice(r io.Reader) (*InputMediaDice, error) {
+func DecodeInputMediaDice(r *Reader) (*InputMediaDice, error) {
 	v := &InputMediaDice{}
-	v.Emoticon = ReadString(r)
+	_rEmoticon, _eEmoticon := r.ReadString()
+	if _eEmoticon != nil {
+		return nil, _eEmoticon
+	}
+	v.Emoticon = _rEmoticon
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaDiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaDiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaDice(r)
 	}
 }
@@ -1562,16 +3912,23 @@ func (v *InputMediaStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaStory deserializes a InputMediaStory from a reader using the TL binary protocol.
-func DecodeInputMediaStory(r io.Reader) (*InputMediaStory, error) {
+func DecodeInputMediaStory(r *Reader) (*InputMediaStory, error) {
 	v := &InputMediaStory{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.ID = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaStory(r)
 	}
 }
@@ -1615,22 +3972,26 @@ func (v *InputMediaWebPage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaWebPage deserializes a InputMediaWebPage from a reader using the TL binary protocol.
-func DecodeInputMediaWebPage(r io.Reader) (*InputMediaWebPage, error) {
+func DecodeInputMediaWebPage(r *Reader) (*InputMediaWebPage, error) {
 	v := &InputMediaWebPage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ForceLargeMedia = v.Flags.Has(0)
 	v.ForceSmallMedia = v.Flags.Has(1)
 	v.Optional = v.Flags.Has(2)
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaWebPageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaWebPageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaWebPage(r)
 	}
 }
@@ -1675,32 +4036,50 @@ func (v *InputMediaPaidMedia) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaPaidMedia deserializes a InputMediaPaidMedia from a reader using the TL binary protocol.
-func DecodeInputMediaPaidMedia(r io.Reader) (*InputMediaPaidMedia, error) {
+func DecodeInputMediaPaidMedia(r *Reader) (*InputMediaPaidMedia, error) {
 	v := &InputMediaPaidMedia{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.StarsAmount = ReadLong(r)
-	ReadInt(r)
-	_cntExtendedMedia := ReadInt(r)
-	if err := checkVectorCount(_cntExtendedMedia); err != nil {
-		return nil, err
+	_rStarsAmount, _eStarsAmount := r.ReadInt64()
+	if _eStarsAmount != nil {
+		return nil, _eStarsAmount
+	}
+	v.StarsAmount = _rStarsAmount
+	_vhdrExtendedMedia, _ehdrExtendedMedia := r.ReadUint32()
+	if _ehdrExtendedMedia != nil {
+		return nil, _ehdrExtendedMedia
+	}
+	_cntExtendedMedia, _ecntExtendedMedia := r.ReadUint32()
+	if _ecntExtendedMedia != nil {
+		return nil, _ecntExtendedMedia
+	}
+	if _errExtendedMedia := checkVectorCount(_cntExtendedMedia); _errExtendedMedia != nil {
+		return nil, _errExtendedMedia
 	}
 	v.ExtendedMedia = make([]InputMediaClass, _cntExtendedMedia)
 	for _iExtendedMedia := range v.ExtendedMedia {
-		_objExtendedMedia, _ := ReadTLObject(r)
+		_objExtendedMedia, _errExtendedMedia := ReadTLObject(r)
+		if _errExtendedMedia != nil {
+			return nil, _errExtendedMedia
+		}
 		v.ExtendedMedia[_iExtendedMedia] = _objExtendedMedia.(InputMediaClass)
 	}
+	_ = _vhdrExtendedMedia
 	if v.Flags.Has(0) {
-		v.Payload = ReadString(r)
+		_rPayload, _ePayload := r.ReadString()
+		if _ePayload != nil {
+			return nil, _ePayload
+		}
+		v.Payload = _rPayload
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaPaidMediaTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaPaidMediaTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaPaidMedia(r)
 	}
 }
@@ -1725,15 +4104,18 @@ func (v *InputMediaTodo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaTodo deserializes a InputMediaTodo from a reader using the TL binary protocol.
-func DecodeInputMediaTodo(r io.Reader) (*InputMediaTodo, error) {
+func DecodeInputMediaTodo(r *Reader) (*InputMediaTodo, error) {
 	v := &InputMediaTodo{}
-	_objTodo, _ := ReadTLObject(r)
+	_objTodo, _errTodo := ReadTLObject(r)
+	if _errTodo != nil {
+		return nil, _errTodo
+	}
 	v.Todo = _objTodo.(*TodoList)
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaTodoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaTodoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaTodo(r)
 	}
 }
@@ -1762,16 +4144,28 @@ func (v *InputMediaStakeDice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaStakeDice deserializes a InputMediaStakeDice from a reader using the TL binary protocol.
-func DecodeInputMediaStakeDice(r io.Reader) (*InputMediaStakeDice, error) {
+func DecodeInputMediaStakeDice(r *Reader) (*InputMediaStakeDice, error) {
 	v := &InputMediaStakeDice{}
-	v.GameHash = ReadString(r)
-	v.TonAmount = ReadLong(r)
-	v.ClientSeed = ReadBytes(r)
+	_rGameHash, _eGameHash := r.ReadString()
+	if _eGameHash != nil {
+		return nil, _eGameHash
+	}
+	v.GameHash = _rGameHash
+	_rTonAmount, _eTonAmount := r.ReadInt64()
+	if _eTonAmount != nil {
+		return nil, _eTonAmount
+	}
+	v.TonAmount = _rTonAmount
+	_rClientSeed, _eClientSeed := r.ReadBytes()
+	if _eClientSeed != nil {
+		return nil, _eClientSeed
+	}
+	v.ClientSeed = _rClientSeed
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaStakeDiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaStakeDiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaStakeDice(r)
 	}
 }
@@ -1862,13 +4256,13 @@ func (v *InputReportReasonSpam) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonSpam deserializes a InputReportReasonSpam from a reader using the TL binary protocol.
-func DecodeInputReportReasonSpam(r io.Reader) (*InputReportReasonSpam, error) {
+func DecodeInputReportReasonSpam(r *Reader) (*InputReportReasonSpam, error) {
 	v := &InputReportReasonSpam{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonSpamTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonSpamTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonSpam(r)
 	}
 }
@@ -1891,13 +4285,13 @@ func (v *InputReportReasonViolence) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonViolence deserializes a InputReportReasonViolence from a reader using the TL binary protocol.
-func DecodeInputReportReasonViolence(r io.Reader) (*InputReportReasonViolence, error) {
+func DecodeInputReportReasonViolence(r *Reader) (*InputReportReasonViolence, error) {
 	v := &InputReportReasonViolence{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonViolenceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonViolenceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonViolence(r)
 	}
 }
@@ -1920,13 +4314,13 @@ func (v *InputReportReasonPornography) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonPornography deserializes a InputReportReasonPornography from a reader using the TL binary protocol.
-func DecodeInputReportReasonPornography(r io.Reader) (*InputReportReasonPornography, error) {
+func DecodeInputReportReasonPornography(r *Reader) (*InputReportReasonPornography, error) {
 	v := &InputReportReasonPornography{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonPornographyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonPornographyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonPornography(r)
 	}
 }
@@ -1949,13 +4343,13 @@ func (v *InputReportReasonChildAbuse) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonChildAbuse deserializes a InputReportReasonChildAbuse from a reader using the TL binary protocol.
-func DecodeInputReportReasonChildAbuse(r io.Reader) (*InputReportReasonChildAbuse, error) {
+func DecodeInputReportReasonChildAbuse(r *Reader) (*InputReportReasonChildAbuse, error) {
 	v := &InputReportReasonChildAbuse{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonChildAbuseTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonChildAbuseTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonChildAbuse(r)
 	}
 }
@@ -1978,13 +4372,13 @@ func (v *InputReportReasonOther) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonOther deserializes a InputReportReasonOther from a reader using the TL binary protocol.
-func DecodeInputReportReasonOther(r io.Reader) (*InputReportReasonOther, error) {
+func DecodeInputReportReasonOther(r *Reader) (*InputReportReasonOther, error) {
 	v := &InputReportReasonOther{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonOtherTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonOtherTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonOther(r)
 	}
 }
@@ -2007,13 +4401,13 @@ func (v *InputReportReasonCopyright) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonCopyright deserializes a InputReportReasonCopyright from a reader using the TL binary protocol.
-func DecodeInputReportReasonCopyright(r io.Reader) (*InputReportReasonCopyright, error) {
+func DecodeInputReportReasonCopyright(r *Reader) (*InputReportReasonCopyright, error) {
 	v := &InputReportReasonCopyright{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonCopyrightTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonCopyrightTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonCopyright(r)
 	}
 }
@@ -2036,13 +4430,13 @@ func (v *InputReportReasonGeoIrrelevant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonGeoIrrelevant deserializes a InputReportReasonGeoIrrelevant from a reader using the TL binary protocol.
-func DecodeInputReportReasonGeoIrrelevant(r io.Reader) (*InputReportReasonGeoIrrelevant, error) {
+func DecodeInputReportReasonGeoIrrelevant(r *Reader) (*InputReportReasonGeoIrrelevant, error) {
 	v := &InputReportReasonGeoIrrelevant{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonGeoIrrelevantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonGeoIrrelevantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonGeoIrrelevant(r)
 	}
 }
@@ -2065,13 +4459,13 @@ func (v *InputReportReasonFake) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonFake deserializes a InputReportReasonFake from a reader using the TL binary protocol.
-func DecodeInputReportReasonFake(r io.Reader) (*InputReportReasonFake, error) {
+func DecodeInputReportReasonFake(r *Reader) (*InputReportReasonFake, error) {
 	v := &InputReportReasonFake{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonFakeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonFakeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonFake(r)
 	}
 }
@@ -2094,13 +4488,13 @@ func (v *InputReportReasonIllegalDrugs) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonIllegalDrugs deserializes a InputReportReasonIllegalDrugs from a reader using the TL binary protocol.
-func DecodeInputReportReasonIllegalDrugs(r io.Reader) (*InputReportReasonIllegalDrugs, error) {
+func DecodeInputReportReasonIllegalDrugs(r *Reader) (*InputReportReasonIllegalDrugs, error) {
 	v := &InputReportReasonIllegalDrugs{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonIllegalDrugsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonIllegalDrugsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonIllegalDrugs(r)
 	}
 }
@@ -2123,13 +4517,13 @@ func (v *InputReportReasonPersonalDetails) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReportReasonPersonalDetails deserializes a InputReportReasonPersonalDetails from a reader using the TL binary protocol.
-func DecodeInputReportReasonPersonalDetails(r io.Reader) (*InputReportReasonPersonalDetails, error) {
+func DecodeInputReportReasonPersonalDetails(r *Reader) (*InputReportReasonPersonalDetails, error) {
 	v := &InputReportReasonPersonalDetails{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReportReasonPersonalDetailsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReportReasonPersonalDetailsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReportReasonPersonalDetails(r)
 	}
 }
@@ -2199,11 +4593,11 @@ func (v *DCOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDCOption deserializes a DCOption from a reader using the TL binary protocol.
-func DecodeDCOption(r io.Reader) (*DCOption, error) {
+func DecodeDCOption(r *Reader) (*DCOption, error) {
 	v := &DCOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.IPv6 = v.Flags.Has(0)
@@ -2212,17 +4606,33 @@ func DecodeDCOption(r io.Reader) (*DCOption, error) {
 	v.CDN = v.Flags.Has(3)
 	v.Static = v.Flags.Has(4)
 	v.ThisPortOnly = v.Flags.Has(5)
-	v.ID = int32(ReadInt(r))
-	v.IpAddress = ReadString(r)
-	v.Port = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rIpAddress, _eIpAddress := r.ReadString()
+	if _eIpAddress != nil {
+		return nil, _eIpAddress
+	}
+	v.IpAddress = _rIpAddress
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
 	if v.Flags.Has(10) {
-		v.Secret = ReadBytes(r)
+		_rSecret, _eSecret := r.ReadBytes()
+		if _eSecret != nil {
+			return nil, _eSecret
+		}
+		v.Secret = _rSecret
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DCOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DCOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDCOption(r)
 	}
 }
@@ -2418,11 +4828,11 @@ func (v *Config) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeConfig deserializes a Config from a reader using the TL binary protocol.
-func DecodeConfig(r io.Reader) (*Config, error) {
+func DecodeConfig(r *Reader) (*Config, error) {
 	v := &Config{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.DefaultP2pContacts = v.Flags.Has(3)
@@ -2430,85 +4840,258 @@ func DecodeConfig(r io.Reader) (*Config, error) {
 	v.RevokePmInbox = v.Flags.Has(6)
 	v.BlockedMode = v.Flags.Has(8)
 	v.ForceTryIPv6 = v.Flags.Has(14)
-	v.Date = int32(ReadInt(r))
-	v.Expires = int32(ReadInt(r))
-	v.TestMode = ReadBool(r)
-	v.ThisDC = int32(ReadInt(r))
-	ReadInt(r)
-	_cntDCOptions := ReadInt(r)
-	if err := checkVectorCount(_cntDCOptions); err != nil {
-		return nil, err
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_rTestMode, _eTestMode := r.ReadBool()
+	if _eTestMode != nil {
+		return nil, _eTestMode
+	}
+	v.TestMode = _rTestMode
+	_rThisDC, _eThisDC := r.ReadInt32()
+	if _eThisDC != nil {
+		return nil, _eThisDC
+	}
+	v.ThisDC = _rThisDC
+	_vhdrDCOptions, _ehdrDCOptions := r.ReadUint32()
+	if _ehdrDCOptions != nil {
+		return nil, _ehdrDCOptions
+	}
+	_cntDCOptions, _ecntDCOptions := r.ReadUint32()
+	if _ecntDCOptions != nil {
+		return nil, _ecntDCOptions
+	}
+	if _errDCOptions := checkVectorCount(_cntDCOptions); _errDCOptions != nil {
+		return nil, _errDCOptions
 	}
 	v.DCOptions = make([]*DCOption, _cntDCOptions)
 	for _iDCOptions := range v.DCOptions {
-		_objDCOptions, _ := ReadTLObject(r)
+		_objDCOptions, _errDCOptions := ReadTLObject(r)
+		if _errDCOptions != nil {
+			return nil, _errDCOptions
+		}
 		v.DCOptions[_iDCOptions] = _objDCOptions.(*DCOption)
 	}
-	v.DCTxtDomainName = ReadString(r)
-	v.ChatSizeMax = int32(ReadInt(r))
-	v.MegagroupSizeMax = int32(ReadInt(r))
-	v.ForwardedCountMax = int32(ReadInt(r))
-	v.OnlineUpdatePeriodMs = int32(ReadInt(r))
-	v.OfflineBlurTimeoutMs = int32(ReadInt(r))
-	v.OfflineIdleTimeoutMs = int32(ReadInt(r))
-	v.OnlineCloudTimeoutMs = int32(ReadInt(r))
-	v.NotifyCloudDelayMs = int32(ReadInt(r))
-	v.NotifyDefaultDelayMs = int32(ReadInt(r))
-	v.PushChatPeriodMs = int32(ReadInt(r))
-	v.PushChatLimit = int32(ReadInt(r))
-	v.EditTimeLimit = int32(ReadInt(r))
-	v.RevokeTimeLimit = int32(ReadInt(r))
-	v.RevokePmTimeLimit = int32(ReadInt(r))
-	v.RatingEDecay = int32(ReadInt(r))
-	v.StickersRecentLimit = int32(ReadInt(r))
-	v.ChannelsReadMediaPeriod = int32(ReadInt(r))
-	if v.Flags.Has(0) {
-		v.TmpSessions = int32(ReadInt(r))
+	_ = _vhdrDCOptions
+	_rDCTxtDomainName, _eDCTxtDomainName := r.ReadString()
+	if _eDCTxtDomainName != nil {
+		return nil, _eDCTxtDomainName
 	}
-	v.CallReceiveTimeoutMs = int32(ReadInt(r))
-	v.CallRingTimeoutMs = int32(ReadInt(r))
-	v.CallConnectTimeoutMs = int32(ReadInt(r))
-	v.CallPacketTimeoutMs = int32(ReadInt(r))
-	v.MeURLPrefix = ReadString(r)
+	v.DCTxtDomainName = _rDCTxtDomainName
+	_rChatSizeMax, _eChatSizeMax := r.ReadInt32()
+	if _eChatSizeMax != nil {
+		return nil, _eChatSizeMax
+	}
+	v.ChatSizeMax = _rChatSizeMax
+	_rMegagroupSizeMax, _eMegagroupSizeMax := r.ReadInt32()
+	if _eMegagroupSizeMax != nil {
+		return nil, _eMegagroupSizeMax
+	}
+	v.MegagroupSizeMax = _rMegagroupSizeMax
+	_rForwardedCountMax, _eForwardedCountMax := r.ReadInt32()
+	if _eForwardedCountMax != nil {
+		return nil, _eForwardedCountMax
+	}
+	v.ForwardedCountMax = _rForwardedCountMax
+	_rOnlineUpdatePeriodMs, _eOnlineUpdatePeriodMs := r.ReadInt32()
+	if _eOnlineUpdatePeriodMs != nil {
+		return nil, _eOnlineUpdatePeriodMs
+	}
+	v.OnlineUpdatePeriodMs = _rOnlineUpdatePeriodMs
+	_rOfflineBlurTimeoutMs, _eOfflineBlurTimeoutMs := r.ReadInt32()
+	if _eOfflineBlurTimeoutMs != nil {
+		return nil, _eOfflineBlurTimeoutMs
+	}
+	v.OfflineBlurTimeoutMs = _rOfflineBlurTimeoutMs
+	_rOfflineIdleTimeoutMs, _eOfflineIdleTimeoutMs := r.ReadInt32()
+	if _eOfflineIdleTimeoutMs != nil {
+		return nil, _eOfflineIdleTimeoutMs
+	}
+	v.OfflineIdleTimeoutMs = _rOfflineIdleTimeoutMs
+	_rOnlineCloudTimeoutMs, _eOnlineCloudTimeoutMs := r.ReadInt32()
+	if _eOnlineCloudTimeoutMs != nil {
+		return nil, _eOnlineCloudTimeoutMs
+	}
+	v.OnlineCloudTimeoutMs = _rOnlineCloudTimeoutMs
+	_rNotifyCloudDelayMs, _eNotifyCloudDelayMs := r.ReadInt32()
+	if _eNotifyCloudDelayMs != nil {
+		return nil, _eNotifyCloudDelayMs
+	}
+	v.NotifyCloudDelayMs = _rNotifyCloudDelayMs
+	_rNotifyDefaultDelayMs, _eNotifyDefaultDelayMs := r.ReadInt32()
+	if _eNotifyDefaultDelayMs != nil {
+		return nil, _eNotifyDefaultDelayMs
+	}
+	v.NotifyDefaultDelayMs = _rNotifyDefaultDelayMs
+	_rPushChatPeriodMs, _ePushChatPeriodMs := r.ReadInt32()
+	if _ePushChatPeriodMs != nil {
+		return nil, _ePushChatPeriodMs
+	}
+	v.PushChatPeriodMs = _rPushChatPeriodMs
+	_rPushChatLimit, _ePushChatLimit := r.ReadInt32()
+	if _ePushChatLimit != nil {
+		return nil, _ePushChatLimit
+	}
+	v.PushChatLimit = _rPushChatLimit
+	_rEditTimeLimit, _eEditTimeLimit := r.ReadInt32()
+	if _eEditTimeLimit != nil {
+		return nil, _eEditTimeLimit
+	}
+	v.EditTimeLimit = _rEditTimeLimit
+	_rRevokeTimeLimit, _eRevokeTimeLimit := r.ReadInt32()
+	if _eRevokeTimeLimit != nil {
+		return nil, _eRevokeTimeLimit
+	}
+	v.RevokeTimeLimit = _rRevokeTimeLimit
+	_rRevokePmTimeLimit, _eRevokePmTimeLimit := r.ReadInt32()
+	if _eRevokePmTimeLimit != nil {
+		return nil, _eRevokePmTimeLimit
+	}
+	v.RevokePmTimeLimit = _rRevokePmTimeLimit
+	_rRatingEDecay, _eRatingEDecay := r.ReadInt32()
+	if _eRatingEDecay != nil {
+		return nil, _eRatingEDecay
+	}
+	v.RatingEDecay = _rRatingEDecay
+	_rStickersRecentLimit, _eStickersRecentLimit := r.ReadInt32()
+	if _eStickersRecentLimit != nil {
+		return nil, _eStickersRecentLimit
+	}
+	v.StickersRecentLimit = _rStickersRecentLimit
+	_rChannelsReadMediaPeriod, _eChannelsReadMediaPeriod := r.ReadInt32()
+	if _eChannelsReadMediaPeriod != nil {
+		return nil, _eChannelsReadMediaPeriod
+	}
+	v.ChannelsReadMediaPeriod = _rChannelsReadMediaPeriod
+	if v.Flags.Has(0) {
+		_rTmpSessions, _eTmpSessions := r.ReadInt32()
+		if _eTmpSessions != nil {
+			return nil, _eTmpSessions
+		}
+		v.TmpSessions = _rTmpSessions
+	}
+	_rCallReceiveTimeoutMs, _eCallReceiveTimeoutMs := r.ReadInt32()
+	if _eCallReceiveTimeoutMs != nil {
+		return nil, _eCallReceiveTimeoutMs
+	}
+	v.CallReceiveTimeoutMs = _rCallReceiveTimeoutMs
+	_rCallRingTimeoutMs, _eCallRingTimeoutMs := r.ReadInt32()
+	if _eCallRingTimeoutMs != nil {
+		return nil, _eCallRingTimeoutMs
+	}
+	v.CallRingTimeoutMs = _rCallRingTimeoutMs
+	_rCallConnectTimeoutMs, _eCallConnectTimeoutMs := r.ReadInt32()
+	if _eCallConnectTimeoutMs != nil {
+		return nil, _eCallConnectTimeoutMs
+	}
+	v.CallConnectTimeoutMs = _rCallConnectTimeoutMs
+	_rCallPacketTimeoutMs, _eCallPacketTimeoutMs := r.ReadInt32()
+	if _eCallPacketTimeoutMs != nil {
+		return nil, _eCallPacketTimeoutMs
+	}
+	v.CallPacketTimeoutMs = _rCallPacketTimeoutMs
+	_rMeURLPrefix, _eMeURLPrefix := r.ReadString()
+	if _eMeURLPrefix != nil {
+		return nil, _eMeURLPrefix
+	}
+	v.MeURLPrefix = _rMeURLPrefix
 	if v.Flags.Has(7) {
-		v.AutoupdateURLPrefix = ReadString(r)
+		_rAutoupdateURLPrefix, _eAutoupdateURLPrefix := r.ReadString()
+		if _eAutoupdateURLPrefix != nil {
+			return nil, _eAutoupdateURLPrefix
+		}
+		v.AutoupdateURLPrefix = _rAutoupdateURLPrefix
 	}
 	if v.Flags.Has(9) {
-		v.GIFSearchUsername = ReadString(r)
+		_rGIFSearchUsername, _eGIFSearchUsername := r.ReadString()
+		if _eGIFSearchUsername != nil {
+			return nil, _eGIFSearchUsername
+		}
+		v.GIFSearchUsername = _rGIFSearchUsername
 	}
 	if v.Flags.Has(10) {
-		v.VenueSearchUsername = ReadString(r)
+		_rVenueSearchUsername, _eVenueSearchUsername := r.ReadString()
+		if _eVenueSearchUsername != nil {
+			return nil, _eVenueSearchUsername
+		}
+		v.VenueSearchUsername = _rVenueSearchUsername
 	}
 	if v.Flags.Has(11) {
-		v.ImgSearchUsername = ReadString(r)
+		_rImgSearchUsername, _eImgSearchUsername := r.ReadString()
+		if _eImgSearchUsername != nil {
+			return nil, _eImgSearchUsername
+		}
+		v.ImgSearchUsername = _rImgSearchUsername
 	}
 	if v.Flags.Has(12) {
-		v.StaticMapsProvider = ReadString(r)
+		_rStaticMapsProvider, _eStaticMapsProvider := r.ReadString()
+		if _eStaticMapsProvider != nil {
+			return nil, _eStaticMapsProvider
+		}
+		v.StaticMapsProvider = _rStaticMapsProvider
 	}
-	v.CaptionLengthMax = int32(ReadInt(r))
-	v.MessageLengthMax = int32(ReadInt(r))
-	v.WebfileDCID = int32(ReadInt(r))
+	_rCaptionLengthMax, _eCaptionLengthMax := r.ReadInt32()
+	if _eCaptionLengthMax != nil {
+		return nil, _eCaptionLengthMax
+	}
+	v.CaptionLengthMax = _rCaptionLengthMax
+	_rMessageLengthMax, _eMessageLengthMax := r.ReadInt32()
+	if _eMessageLengthMax != nil {
+		return nil, _eMessageLengthMax
+	}
+	v.MessageLengthMax = _rMessageLengthMax
+	_rWebfileDCID, _eWebfileDCID := r.ReadInt32()
+	if _eWebfileDCID != nil {
+		return nil, _eWebfileDCID
+	}
+	v.WebfileDCID = _rWebfileDCID
 	if v.Flags.Has(2) {
-		v.SuggestedLangCode = ReadString(r)
+		_rSuggestedLangCode, _eSuggestedLangCode := r.ReadString()
+		if _eSuggestedLangCode != nil {
+			return nil, _eSuggestedLangCode
+		}
+		v.SuggestedLangCode = _rSuggestedLangCode
 	}
 	if v.Flags.Has(2) {
-		v.LangPackVersion = int32(ReadInt(r))
+		_rLangPackVersion, _eLangPackVersion := r.ReadInt32()
+		if _eLangPackVersion != nil {
+			return nil, _eLangPackVersion
+		}
+		v.LangPackVersion = _rLangPackVersion
 	}
 	if v.Flags.Has(2) {
-		v.BaseLangPackVersion = int32(ReadInt(r))
+		_rBaseLangPackVersion, _eBaseLangPackVersion := r.ReadInt32()
+		if _eBaseLangPackVersion != nil {
+			return nil, _eBaseLangPackVersion
+		}
+		v.BaseLangPackVersion = _rBaseLangPackVersion
 	}
 	if v.Flags.Has(15) {
-		_objReactionsDefault, _ := ReadTLObject(r)
+		_objReactionsDefault, _errReactionsDefault := ReadTLObject(r)
+		if _errReactionsDefault != nil {
+			return nil, _errReactionsDefault
+		}
 		v.ReactionsDefault = _objReactionsDefault.(ReactionClass)
 	}
 	if v.Flags.Has(16) {
-		v.AutologinToken = ReadString(r)
+		_rAutologinToken, _eAutologinToken := r.ReadString()
+		if _eAutologinToken != nil {
+			return nil, _eAutologinToken
+		}
+		v.AutologinToken = _rAutologinToken
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ConfigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ConfigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeConfig(r)
 	}
 }
@@ -2540,16 +5123,28 @@ func (v *NearestDC) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNearestDC deserializes a NearestDC from a reader using the TL binary protocol.
-func DecodeNearestDC(r io.Reader) (*NearestDC, error) {
+func DecodeNearestDC(r *Reader) (*NearestDC, error) {
 	v := &NearestDC{}
-	v.Country = ReadString(r)
-	v.ThisDC = int32(ReadInt(r))
-	v.NearestDC = int32(ReadInt(r))
+	_rCountry, _eCountry := r.ReadString()
+	if _eCountry != nil {
+		return nil, _eCountry
+	}
+	v.Country = _rCountry
+	_rThisDC, _eThisDC := r.ReadInt32()
+	if _eThisDC != nil {
+		return nil, _eThisDC
+	}
+	v.ThisDC = _rThisDC
+	_rNearestDC, _eNearestDC := r.ReadInt32()
+	if _eNearestDC != nil {
+		return nil, _eNearestDC
+	}
+	v.NearestDC = _rNearestDC
 	return v, nil
 }
 
 func init() {
-	Registry[NearestDCTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NearestDCTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNearestDC(r)
 	}
 }
@@ -2615,11 +5210,11 @@ func (v *ReplyKeyboardHide) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReplyKeyboardHide deserializes a ReplyKeyboardHide from a reader using the TL binary protocol.
-func DecodeReplyKeyboardHide(r io.Reader) (*ReplyKeyboardHide, error) {
+func DecodeReplyKeyboardHide(r *Reader) (*ReplyKeyboardHide, error) {
 	v := &ReplyKeyboardHide{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Selective = v.Flags.Has(2)
@@ -2627,7 +5222,7 @@ func DecodeReplyKeyboardHide(r io.Reader) (*ReplyKeyboardHide, error) {
 }
 
 func init() {
-	Registry[ReplyKeyboardHideTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReplyKeyboardHideTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReplyKeyboardHide(r)
 	}
 }
@@ -2672,23 +5267,27 @@ func (v *ReplyKeyboardForceReply) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReplyKeyboardForceReply deserializes a ReplyKeyboardForceReply from a reader using the TL binary protocol.
-func DecodeReplyKeyboardForceReply(r io.Reader) (*ReplyKeyboardForceReply, error) {
+func DecodeReplyKeyboardForceReply(r *Reader) (*ReplyKeyboardForceReply, error) {
 	v := &ReplyKeyboardForceReply{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.SingleUse = v.Flags.Has(1)
 	v.Selective = v.Flags.Has(2)
 	if v.Flags.Has(3) {
-		v.Placeholder = ReadString(r)
+		_rPlaceholder, _ePlaceholder := r.ReadString()
+		if _ePlaceholder != nil {
+			return nil, _ePlaceholder
+		}
+		v.Placeholder = _rPlaceholder
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ReplyKeyboardForceReplyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReplyKeyboardForceReplyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReplyKeyboardForceReply(r)
 	}
 }
@@ -2747,35 +5346,49 @@ func (v *ReplyKeyboardMarkup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReplyKeyboardMarkup deserializes a ReplyKeyboardMarkup from a reader using the TL binary protocol.
-func DecodeReplyKeyboardMarkup(r io.Reader) (*ReplyKeyboardMarkup, error) {
+func DecodeReplyKeyboardMarkup(r *Reader) (*ReplyKeyboardMarkup, error) {
 	v := &ReplyKeyboardMarkup{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Resize = v.Flags.Has(0)
 	v.SingleUse = v.Flags.Has(1)
 	v.Selective = v.Flags.Has(2)
 	v.Persistent = v.Flags.Has(4)
-	ReadInt(r)
-	_cntRows := ReadInt(r)
-	if err := checkVectorCount(_cntRows); err != nil {
-		return nil, err
+	_vhdrRows, _ehdrRows := r.ReadUint32()
+	if _ehdrRows != nil {
+		return nil, _ehdrRows
+	}
+	_cntRows, _ecntRows := r.ReadUint32()
+	if _ecntRows != nil {
+		return nil, _ecntRows
+	}
+	if _errRows := checkVectorCount(_cntRows); _errRows != nil {
+		return nil, _errRows
 	}
 	v.Rows = make([]*KeyboardButtonRow, _cntRows)
 	for _iRows := range v.Rows {
-		_objRows, _ := ReadTLObject(r)
+		_objRows, _errRows := ReadTLObject(r)
+		if _errRows != nil {
+			return nil, _errRows
+		}
 		v.Rows[_iRows] = _objRows.(*KeyboardButtonRow)
 	}
+	_ = _vhdrRows
 	if v.Flags.Has(3) {
-		v.Placeholder = ReadString(r)
+		_rPlaceholder, _ePlaceholder := r.ReadString()
+		if _ePlaceholder != nil {
+			return nil, _ePlaceholder
+		}
+		v.Placeholder = _rPlaceholder
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ReplyKeyboardMarkupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReplyKeyboardMarkupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReplyKeyboardMarkup(r)
 	}
 }
@@ -2804,23 +5417,33 @@ func (v *ReplyInlineMarkup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReplyInlineMarkup deserializes a ReplyInlineMarkup from a reader using the TL binary protocol.
-func DecodeReplyInlineMarkup(r io.Reader) (*ReplyInlineMarkup, error) {
+func DecodeReplyInlineMarkup(r *Reader) (*ReplyInlineMarkup, error) {
 	v := &ReplyInlineMarkup{}
-	ReadInt(r)
-	_cntRows := ReadInt(r)
-	if err := checkVectorCount(_cntRows); err != nil {
-		return nil, err
+	_vhdrRows, _ehdrRows := r.ReadUint32()
+	if _ehdrRows != nil {
+		return nil, _ehdrRows
+	}
+	_cntRows, _ecntRows := r.ReadUint32()
+	if _ecntRows != nil {
+		return nil, _ecntRows
+	}
+	if _errRows := checkVectorCount(_cntRows); _errRows != nil {
+		return nil, _errRows
 	}
 	v.Rows = make([]*KeyboardButtonRow, _cntRows)
 	for _iRows := range v.Rows {
-		_objRows, _ := ReadTLObject(r)
+		_objRows, _errRows := ReadTLObject(r)
+		if _errRows != nil {
+			return nil, _errRows
+		}
 		v.Rows[_iRows] = _objRows.(*KeyboardButtonRow)
 	}
+	_ = _vhdrRows
 	return v, nil
 }
 
 func init() {
-	Registry[ReplyInlineMarkupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReplyInlineMarkupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReplyInlineMarkup(r)
 	}
 }
@@ -2852,16 +5475,28 @@ func (v *HighScore) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHighScore deserializes a HighScore from a reader using the TL binary protocol.
-func DecodeHighScore(r io.Reader) (*HighScore, error) {
+func DecodeHighScore(r *Reader) (*HighScore, error) {
 	v := &HighScore{}
-	v.Pos = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
-	v.Score = int32(ReadInt(r))
+	_rPos, _ePos := r.ReadInt32()
+	if _ePos != nil {
+		return nil, _ePos
+	}
+	v.Pos = _rPos
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rScore, _eScore := r.ReadInt32()
+	if _eScore != nil {
+		return nil, _eScore
+	}
+	v.Score = _rScore
 	return v, nil
 }
 
 func init() {
-	Registry[HighScoreTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HighScoreTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHighScore(r)
 	}
 }
@@ -2889,14 +5524,18 @@ func (v *DataJSON) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDataJSON deserializes a DataJSON from a reader using the TL binary protocol.
-func DecodeDataJSON(r io.Reader) (*DataJSON, error) {
+func DecodeDataJSON(r *Reader) (*DataJSON, error) {
 	v := &DataJSON{}
-	v.Data = ReadString(r)
+	_rData, _eData := r.ReadString()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
 	return v, nil
 }
 
 func init() {
-	Registry[DataJSONTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DataJSONTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDataJSON(r)
 	}
 }
@@ -2926,15 +5565,23 @@ func (v *LabeledPrice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLabeledPrice deserializes a LabeledPrice from a reader using the TL binary protocol.
-func DecodeLabeledPrice(r io.Reader) (*LabeledPrice, error) {
+func DecodeLabeledPrice(r *Reader) (*LabeledPrice, error) {
 	v := &LabeledPrice{}
-	v.Label = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rLabel, _eLabel := r.ReadString()
+	if _eLabel != nil {
+		return nil, _eLabel
+	}
+	v.Label = _rLabel
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[LabeledPriceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LabeledPriceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLabeledPrice(r)
 	}
 }
@@ -2972,19 +5619,43 @@ func (v *PostAddress) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePostAddress deserializes a PostAddress from a reader using the TL binary protocol.
-func DecodePostAddress(r io.Reader) (*PostAddress, error) {
+func DecodePostAddress(r *Reader) (*PostAddress, error) {
 	v := &PostAddress{}
-	v.StreetLine1 = ReadString(r)
-	v.StreetLine2 = ReadString(r)
-	v.City = ReadString(r)
-	v.State = ReadString(r)
-	v.CountryIso2 = ReadString(r)
-	v.PostCode = ReadString(r)
+	_rStreetLine1, _eStreetLine1 := r.ReadString()
+	if _eStreetLine1 != nil {
+		return nil, _eStreetLine1
+	}
+	v.StreetLine1 = _rStreetLine1
+	_rStreetLine2, _eStreetLine2 := r.ReadString()
+	if _eStreetLine2 != nil {
+		return nil, _eStreetLine2
+	}
+	v.StreetLine2 = _rStreetLine2
+	_rCity, _eCity := r.ReadString()
+	if _eCity != nil {
+		return nil, _eCity
+	}
+	v.City = _rCity
+	_rState, _eState := r.ReadString()
+	if _eState != nil {
+		return nil, _eState
+	}
+	v.State = _rState
+	_rCountryIso2, _eCountryIso2 := r.ReadString()
+	if _eCountryIso2 != nil {
+		return nil, _eCountryIso2
+	}
+	v.CountryIso2 = _rCountryIso2
+	_rPostCode, _ePostCode := r.ReadString()
+	if _ePostCode != nil {
+		return nil, _ePostCode
+	}
+	v.PostCode = _rPostCode
 	return v, nil
 }
 
 func init() {
-	Registry[PostAddressTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PostAddressTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePostAddress(r)
 	}
 }
@@ -3014,15 +5685,23 @@ func (v *CDNPublicKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeCDNPublicKey deserializes a CDNPublicKey from a reader using the TL binary protocol.
-func DecodeCDNPublicKey(r io.Reader) (*CDNPublicKey, error) {
+func DecodeCDNPublicKey(r *Reader) (*CDNPublicKey, error) {
 	v := &CDNPublicKey{}
-	v.DCID = int32(ReadInt(r))
-	v.PublicKey = ReadString(r)
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rPublicKey, _ePublicKey := r.ReadString()
+	if _ePublicKey != nil {
+		return nil, _ePublicKey
+	}
+	v.PublicKey = _rPublicKey
 	return v, nil
 }
 
 func init() {
-	Registry[CDNPublicKeyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[CDNPublicKeyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeCDNPublicKey(r)
 	}
 }
@@ -3054,23 +5733,33 @@ func (v *CDNConfig) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeCDNConfig deserializes a CDNConfig from a reader using the TL binary protocol.
-func DecodeCDNConfig(r io.Reader) (*CDNConfig, error) {
+func DecodeCDNConfig(r *Reader) (*CDNConfig, error) {
 	v := &CDNConfig{}
-	ReadInt(r)
-	_cntPublicKeys := ReadInt(r)
-	if err := checkVectorCount(_cntPublicKeys); err != nil {
-		return nil, err
+	_vhdrPublicKeys, _ehdrPublicKeys := r.ReadUint32()
+	if _ehdrPublicKeys != nil {
+		return nil, _ehdrPublicKeys
+	}
+	_cntPublicKeys, _ecntPublicKeys := r.ReadUint32()
+	if _ecntPublicKeys != nil {
+		return nil, _ecntPublicKeys
+	}
+	if _errPublicKeys := checkVectorCount(_cntPublicKeys); _errPublicKeys != nil {
+		return nil, _errPublicKeys
 	}
 	v.PublicKeys = make([]*CDNPublicKey, _cntPublicKeys)
 	for _iPublicKeys := range v.PublicKeys {
-		_objPublicKeys, _ := ReadTLObject(r)
+		_objPublicKeys, _errPublicKeys := ReadTLObject(r)
+		if _errPublicKeys != nil {
+			return nil, _errPublicKeys
+		}
 		v.PublicKeys[_iPublicKeys] = _objPublicKeys.(*CDNPublicKey)
 	}
+	_ = _vhdrPublicKeys
 	return v, nil
 }
 
 func init() {
-	Registry[CDNConfigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[CDNConfigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeCDNConfig(r)
 	}
 }
@@ -3123,15 +5812,23 @@ func (v *LangPackString) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLangPackString deserializes a LangPackString from a reader using the TL binary protocol.
-func DecodeLangPackString(r io.Reader) (*LangPackString, error) {
+func DecodeLangPackString(r *Reader) (*LangPackString, error) {
 	v := &LangPackString{}
-	v.Key = ReadString(r)
-	v.Value = ReadString(r)
+	_rKey, _eKey := r.ReadString()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rValue, _eValue := r.ReadString()
+	if _eValue != nil {
+		return nil, _eValue
+	}
+	v.Value = _rValue
 	return v, nil
 }
 
 func init() {
-	Registry[LangPackStringTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LangPackStringTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLangPackString(r)
 	}
 }
@@ -3200,35 +5897,63 @@ func (v *LangPackStringPluralized) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLangPackStringPluralized deserializes a LangPackStringPluralized from a reader using the TL binary protocol.
-func DecodeLangPackStringPluralized(r io.Reader) (*LangPackStringPluralized, error) {
+func DecodeLangPackStringPluralized(r *Reader) (*LangPackStringPluralized, error) {
 	v := &LangPackStringPluralized{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Key = ReadString(r)
+	_rKey, _eKey := r.ReadString()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
 	if v.Flags.Has(0) {
-		v.ZeroValue = ReadString(r)
+		_rZeroValue, _eZeroValue := r.ReadString()
+		if _eZeroValue != nil {
+			return nil, _eZeroValue
+		}
+		v.ZeroValue = _rZeroValue
 	}
 	if v.Flags.Has(1) {
-		v.OneValue = ReadString(r)
+		_rOneValue, _eOneValue := r.ReadString()
+		if _eOneValue != nil {
+			return nil, _eOneValue
+		}
+		v.OneValue = _rOneValue
 	}
 	if v.Flags.Has(2) {
-		v.TwoValue = ReadString(r)
+		_rTwoValue, _eTwoValue := r.ReadString()
+		if _eTwoValue != nil {
+			return nil, _eTwoValue
+		}
+		v.TwoValue = _rTwoValue
 	}
 	if v.Flags.Has(3) {
-		v.FewValue = ReadString(r)
+		_rFewValue, _eFewValue := r.ReadString()
+		if _eFewValue != nil {
+			return nil, _eFewValue
+		}
+		v.FewValue = _rFewValue
 	}
 	if v.Flags.Has(4) {
-		v.ManyValue = ReadString(r)
+		_rManyValue, _eManyValue := r.ReadString()
+		if _eManyValue != nil {
+			return nil, _eManyValue
+		}
+		v.ManyValue = _rManyValue
 	}
-	v.OtherValue = ReadString(r)
+	_rOtherValue, _eOtherValue := r.ReadString()
+	if _eOtherValue != nil {
+		return nil, _eOtherValue
+	}
+	v.OtherValue = _rOtherValue
 	return v, nil
 }
 
 func init() {
-	Registry[LangPackStringPluralizedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LangPackStringPluralizedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLangPackStringPluralized(r)
 	}
 }
@@ -3253,14 +5978,18 @@ func (v *LangPackStringDeleted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLangPackStringDeleted deserializes a LangPackStringDeleted from a reader using the TL binary protocol.
-func DecodeLangPackStringDeleted(r io.Reader) (*LangPackStringDeleted, error) {
+func DecodeLangPackStringDeleted(r *Reader) (*LangPackStringDeleted, error) {
 	v := &LangPackStringDeleted{}
-	v.Key = ReadString(r)
+	_rKey, _eKey := r.ReadString()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
 	return v, nil
 }
 
 func init() {
-	Registry[LangPackStringDeletedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LangPackStringDeletedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLangPackStringDeleted(r)
 	}
 }
@@ -3326,31 +6055,63 @@ func (v *LangPackLanguage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLangPackLanguage deserializes a LangPackLanguage from a reader using the TL binary protocol.
-func DecodeLangPackLanguage(r io.Reader) (*LangPackLanguage, error) {
+func DecodeLangPackLanguage(r *Reader) (*LangPackLanguage, error) {
 	v := &LangPackLanguage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Official = v.Flags.Has(0)
 	v.Rtl = v.Flags.Has(2)
 	v.Beta = v.Flags.Has(3)
-	v.Name = ReadString(r)
-	v.NativeName = ReadString(r)
-	v.LangCode = ReadString(r)
-	if v.Flags.Has(1) {
-		v.BaseLangCode = ReadString(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
 	}
-	v.PluralCode = ReadString(r)
-	v.StringsCount = int32(ReadInt(r))
-	v.TranslatedCount = int32(ReadInt(r))
-	v.TranslationsURL = ReadString(r)
+	v.Name = _rName
+	_rNativeName, _eNativeName := r.ReadString()
+	if _eNativeName != nil {
+		return nil, _eNativeName
+	}
+	v.NativeName = _rNativeName
+	_rLangCode, _eLangCode := r.ReadString()
+	if _eLangCode != nil {
+		return nil, _eLangCode
+	}
+	v.LangCode = _rLangCode
+	if v.Flags.Has(1) {
+		_rBaseLangCode, _eBaseLangCode := r.ReadString()
+		if _eBaseLangCode != nil {
+			return nil, _eBaseLangCode
+		}
+		v.BaseLangCode = _rBaseLangCode
+	}
+	_rPluralCode, _ePluralCode := r.ReadString()
+	if _ePluralCode != nil {
+		return nil, _ePluralCode
+	}
+	v.PluralCode = _rPluralCode
+	_rStringsCount, _eStringsCount := r.ReadInt32()
+	if _eStringsCount != nil {
+		return nil, _eStringsCount
+	}
+	v.StringsCount = _rStringsCount
+	_rTranslatedCount, _eTranslatedCount := r.ReadInt32()
+	if _eTranslatedCount != nil {
+		return nil, _eTranslatedCount
+	}
+	v.TranslatedCount = _rTranslatedCount
+	_rTranslationsURL, _eTranslationsURL := r.ReadString()
+	if _eTranslationsURL != nil {
+		return nil, _eTranslationsURL
+	}
+	v.TranslationsURL = _rTranslationsURL
 	return v, nil
 }
 
 func init() {
-	Registry[LangPackLanguageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LangPackLanguageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLangPackLanguage(r)
 	}
 }
@@ -3413,14 +6174,18 @@ func (v *RecentMeURLUnknown) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRecentMeURLUnknown deserializes a RecentMeURLUnknown from a reader using the TL binary protocol.
-func DecodeRecentMeURLUnknown(r io.Reader) (*RecentMeURLUnknown, error) {
+func DecodeRecentMeURLUnknown(r *Reader) (*RecentMeURLUnknown, error) {
 	v := &RecentMeURLUnknown{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[RecentMeURLUnknownTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RecentMeURLUnknownTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRecentMeURLUnknown(r)
 	}
 }
@@ -3447,15 +6212,23 @@ func (v *RecentMeURLUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRecentMeURLUser deserializes a RecentMeURLUser from a reader using the TL binary protocol.
-func DecodeRecentMeURLUser(r io.Reader) (*RecentMeURLUser, error) {
+func DecodeRecentMeURLUser(r *Reader) (*RecentMeURLUser, error) {
 	v := &RecentMeURLUser{}
-	v.URL = ReadString(r)
-	v.UserID = ReadLong(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[RecentMeURLUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RecentMeURLUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRecentMeURLUser(r)
 	}
 }
@@ -3482,15 +6255,23 @@ func (v *RecentMeURLChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRecentMeURLChat deserializes a RecentMeURLChat from a reader using the TL binary protocol.
-func DecodeRecentMeURLChat(r io.Reader) (*RecentMeURLChat, error) {
+func DecodeRecentMeURLChat(r *Reader) (*RecentMeURLChat, error) {
 	v := &RecentMeURLChat{}
-	v.URL = ReadString(r)
-	v.ChatID = ReadLong(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	return v, nil
 }
 
 func init() {
-	Registry[RecentMeURLChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RecentMeURLChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRecentMeURLChat(r)
 	}
 }
@@ -3517,16 +6298,23 @@ func (v *RecentMeURLChatInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRecentMeURLChatInvite deserializes a RecentMeURLChatInvite from a reader using the TL binary protocol.
-func DecodeRecentMeURLChatInvite(r io.Reader) (*RecentMeURLChatInvite, error) {
+func DecodeRecentMeURLChatInvite(r *Reader) (*RecentMeURLChatInvite, error) {
 	v := &RecentMeURLChatInvite{}
-	v.URL = ReadString(r)
-	_objChatInvite, _ := ReadTLObject(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_objChatInvite, _errChatInvite := ReadTLObject(r)
+	if _errChatInvite != nil {
+		return nil, _errChatInvite
+	}
 	v.ChatInvite = _objChatInvite.(ChatInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[RecentMeURLChatInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RecentMeURLChatInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRecentMeURLChatInvite(r)
 	}
 }
@@ -3553,16 +6341,23 @@ func (v *RecentMeURLStickerSet) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRecentMeURLStickerSet deserializes a RecentMeURLStickerSet from a reader using the TL binary protocol.
-func DecodeRecentMeURLStickerSet(r io.Reader) (*RecentMeURLStickerSet, error) {
+func DecodeRecentMeURLStickerSet(r *Reader) (*RecentMeURLStickerSet, error) {
 	v := &RecentMeURLStickerSet{}
-	v.URL = ReadString(r)
-	_objSet, _ := ReadTLObject(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_objSet, _errSet := ReadTLObject(r)
+	if _errSet != nil {
+		return nil, _errSet
+	}
 	v.Set = _objSet.(StickerSetCoveredClass)
 	return v, nil
 }
 
 func init() {
-	Registry[RecentMeURLStickerSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RecentMeURLStickerSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRecentMeURLStickerSet(r)
 	}
 }
@@ -3612,34 +6407,55 @@ func (v *InputSingleMedia) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSingleMedia deserializes a InputSingleMedia from a reader using the TL binary protocol.
-func DecodeInputSingleMedia(r io.Reader) (*InputSingleMedia, error) {
+func DecodeInputSingleMedia(r *Reader) (*InputSingleMedia, error) {
 	v := &InputSingleMedia{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objMedia, _ := ReadTLObject(r)
+	_objMedia, _errMedia := ReadTLObject(r)
+	if _errMedia != nil {
+		return nil, _errMedia
+	}
 	v.Media = _objMedia.(InputMediaClass)
-	v.RandomID = ReadLong(r)
-	v.Message = ReadString(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputSingleMediaTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSingleMediaTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSingleMedia(r)
 	}
 }
@@ -3671,16 +6487,28 @@ func (v *FileHash) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFileHash deserializes a FileHash from a reader using the TL binary protocol.
-func DecodeFileHash(r io.Reader) (*FileHash, error) {
+func DecodeFileHash(r *Reader) (*FileHash, error) {
 	v := &FileHash{}
-	v.Offset = ReadLong(r)
-	v.Limit = int32(ReadInt(r))
-	v.Hash = ReadBytes(r)
+	_rOffset, _eOffset := r.ReadInt64()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLimit, _eLimit := r.ReadInt32()
+	if _eLimit != nil {
+		return nil, _eLimit
+	}
+	v.Limit = _rLimit
+	_rHash, _eHash := r.ReadBytes()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[FileHashTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[FileHashTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeFileHash(r)
 	}
 }
@@ -3710,15 +6538,23 @@ func (v *InputClientProxy) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputClientProxy deserializes a InputClientProxy from a reader using the TL binary protocol.
-func DecodeInputClientProxy(r io.Reader) (*InputClientProxy, error) {
+func DecodeInputClientProxy(r *Reader) (*InputClientProxy, error) {
 	v := &InputClientProxy{}
-	v.Address = ReadString(r)
-	v.Port = int32(ReadInt(r))
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
 	return v, nil
 }
 
 func init() {
-	Registry[InputClientProxyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputClientProxyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputClientProxy(r)
 	}
 }
@@ -3771,18 +6607,38 @@ func (v *InputSecureFileUploaded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSecureFileUploaded deserializes a InputSecureFileUploaded from a reader using the TL binary protocol.
-func DecodeInputSecureFileUploaded(r io.Reader) (*InputSecureFileUploaded, error) {
+func DecodeInputSecureFileUploaded(r *Reader) (*InputSecureFileUploaded, error) {
 	v := &InputSecureFileUploaded{}
-	v.ID = ReadLong(r)
-	v.Parts = int32(ReadInt(r))
-	v.MD5Checksum = ReadString(r)
-	v.FileHash = ReadBytes(r)
-	v.Secret = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rParts, _eParts := r.ReadInt32()
+	if _eParts != nil {
+		return nil, _eParts
+	}
+	v.Parts = _rParts
+	_rMD5Checksum, _eMD5Checksum := r.ReadString()
+	if _eMD5Checksum != nil {
+		return nil, _eMD5Checksum
+	}
+	v.MD5Checksum = _rMD5Checksum
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[InputSecureFileUploadedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSecureFileUploadedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSecureFileUploaded(r)
 	}
 }
@@ -3809,15 +6665,23 @@ func (v *InputSecureFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSecureFile deserializes a InputSecureFile from a reader using the TL binary protocol.
-func DecodeInputSecureFile(r io.Reader) (*InputSecureFile, error) {
+func DecodeInputSecureFile(r *Reader) (*InputSecureFile, error) {
 	v := &InputSecureFile{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputSecureFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSecureFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSecureFile(r)
 	}
 }
@@ -3860,13 +6724,13 @@ func (v *SecureFileEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureFileEmpty deserializes a SecureFileEmpty from a reader using the TL binary protocol.
-func DecodeSecureFileEmpty(r io.Reader) (*SecureFileEmpty, error) {
+func DecodeSecureFileEmpty(r *Reader) (*SecureFileEmpty, error) {
 	v := &SecureFileEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureFileEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureFileEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureFileEmpty(r)
 	}
 }
@@ -3903,20 +6767,48 @@ func (v *SecureFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureFile deserializes a SecureFile from a reader using the TL binary protocol.
-func DecodeSecureFile(r io.Reader) (*SecureFile, error) {
+func DecodeSecureFile(r *Reader) (*SecureFile, error) {
 	v := &SecureFile{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Size = ReadLong(r)
-	v.DCID = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	v.FileHash = ReadBytes(r)
-	v.Secret = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rSize, _eSize := r.ReadInt64()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[SecureFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureFile(r)
 	}
 }
@@ -3948,16 +6840,28 @@ func (v *SecureData) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureData deserializes a SecureData from a reader using the TL binary protocol.
-func DecodeSecureData(r io.Reader) (*SecureData, error) {
+func DecodeSecureData(r *Reader) (*SecureData, error) {
 	v := &SecureData{}
-	v.Data = ReadBytes(r)
-	v.DataHash = ReadBytes(r)
-	v.Secret = ReadBytes(r)
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	_rDataHash, _eDataHash := r.ReadBytes()
+	if _eDataHash != nil {
+		return nil, _eDataHash
+	}
+	v.DataHash = _rDataHash
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[SecureDataTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureDataTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureData(r)
 	}
 }
@@ -4002,14 +6906,18 @@ func (v *SecurePlainPhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecurePlainPhone deserializes a SecurePlainPhone from a reader using the TL binary protocol.
-func DecodeSecurePlainPhone(r io.Reader) (*SecurePlainPhone, error) {
+func DecodeSecurePlainPhone(r *Reader) (*SecurePlainPhone, error) {
 	v := &SecurePlainPhone{}
-	v.Phone = ReadString(r)
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
 	return v, nil
 }
 
 func init() {
-	Registry[SecurePlainPhoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecurePlainPhoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecurePlainPhone(r)
 	}
 }
@@ -4034,14 +6942,18 @@ func (v *SecurePlainEmail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecurePlainEmail deserializes a SecurePlainEmail from a reader using the TL binary protocol.
-func DecodeSecurePlainEmail(r io.Reader) (*SecurePlainEmail, error) {
+func DecodeSecurePlainEmail(r *Reader) (*SecurePlainEmail, error) {
 	v := &SecurePlainEmail{}
-	v.Email = ReadString(r)
+	_rEmail, _eEmail := r.ReadString()
+	if _eEmail != nil {
+		return nil, _eEmail
+	}
+	v.Email = _rEmail
 	return v, nil
 }
 
 func init() {
-	Registry[SecurePlainEmailTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecurePlainEmailTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecurePlainEmail(r)
 	}
 }
@@ -4150,13 +7062,13 @@ func (v *SecureValueTypePersonalDetails) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypePersonalDetails deserializes a SecureValueTypePersonalDetails from a reader using the TL binary protocol.
-func DecodeSecureValueTypePersonalDetails(r io.Reader) (*SecureValueTypePersonalDetails, error) {
+func DecodeSecureValueTypePersonalDetails(r *Reader) (*SecureValueTypePersonalDetails, error) {
 	v := &SecureValueTypePersonalDetails{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypePersonalDetailsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypePersonalDetailsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypePersonalDetails(r)
 	}
 }
@@ -4179,13 +7091,13 @@ func (v *SecureValueTypePassport) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypePassport deserializes a SecureValueTypePassport from a reader using the TL binary protocol.
-func DecodeSecureValueTypePassport(r io.Reader) (*SecureValueTypePassport, error) {
+func DecodeSecureValueTypePassport(r *Reader) (*SecureValueTypePassport, error) {
 	v := &SecureValueTypePassport{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypePassportTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypePassportTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypePassport(r)
 	}
 }
@@ -4208,13 +7120,13 @@ func (v *SecureValueTypeDriverLicense) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeDriverLicense deserializes a SecureValueTypeDriverLicense from a reader using the TL binary protocol.
-func DecodeSecureValueTypeDriverLicense(r io.Reader) (*SecureValueTypeDriverLicense, error) {
+func DecodeSecureValueTypeDriverLicense(r *Reader) (*SecureValueTypeDriverLicense, error) {
 	v := &SecureValueTypeDriverLicense{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeDriverLicenseTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeDriverLicenseTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeDriverLicense(r)
 	}
 }
@@ -4237,13 +7149,13 @@ func (v *SecureValueTypeIdentityCard) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeIdentityCard deserializes a SecureValueTypeIdentityCard from a reader using the TL binary protocol.
-func DecodeSecureValueTypeIdentityCard(r io.Reader) (*SecureValueTypeIdentityCard, error) {
+func DecodeSecureValueTypeIdentityCard(r *Reader) (*SecureValueTypeIdentityCard, error) {
 	v := &SecureValueTypeIdentityCard{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeIdentityCardTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeIdentityCardTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeIdentityCard(r)
 	}
 }
@@ -4266,13 +7178,13 @@ func (v *SecureValueTypeInternalPassport) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeInternalPassport deserializes a SecureValueTypeInternalPassport from a reader using the TL binary protocol.
-func DecodeSecureValueTypeInternalPassport(r io.Reader) (*SecureValueTypeInternalPassport, error) {
+func DecodeSecureValueTypeInternalPassport(r *Reader) (*SecureValueTypeInternalPassport, error) {
 	v := &SecureValueTypeInternalPassport{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeInternalPassportTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeInternalPassportTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeInternalPassport(r)
 	}
 }
@@ -4295,13 +7207,13 @@ func (v *SecureValueTypeAddress) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeAddress deserializes a SecureValueTypeAddress from a reader using the TL binary protocol.
-func DecodeSecureValueTypeAddress(r io.Reader) (*SecureValueTypeAddress, error) {
+func DecodeSecureValueTypeAddress(r *Reader) (*SecureValueTypeAddress, error) {
 	v := &SecureValueTypeAddress{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeAddressTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeAddressTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeAddress(r)
 	}
 }
@@ -4324,13 +7236,13 @@ func (v *SecureValueTypeUtilityBill) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeUtilityBill deserializes a SecureValueTypeUtilityBill from a reader using the TL binary protocol.
-func DecodeSecureValueTypeUtilityBill(r io.Reader) (*SecureValueTypeUtilityBill, error) {
+func DecodeSecureValueTypeUtilityBill(r *Reader) (*SecureValueTypeUtilityBill, error) {
 	v := &SecureValueTypeUtilityBill{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeUtilityBillTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeUtilityBillTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeUtilityBill(r)
 	}
 }
@@ -4353,13 +7265,13 @@ func (v *SecureValueTypeBankStatement) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeBankStatement deserializes a SecureValueTypeBankStatement from a reader using the TL binary protocol.
-func DecodeSecureValueTypeBankStatement(r io.Reader) (*SecureValueTypeBankStatement, error) {
+func DecodeSecureValueTypeBankStatement(r *Reader) (*SecureValueTypeBankStatement, error) {
 	v := &SecureValueTypeBankStatement{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeBankStatementTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeBankStatementTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeBankStatement(r)
 	}
 }
@@ -4382,13 +7294,13 @@ func (v *SecureValueTypeRentalAgreement) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeRentalAgreement deserializes a SecureValueTypeRentalAgreement from a reader using the TL binary protocol.
-func DecodeSecureValueTypeRentalAgreement(r io.Reader) (*SecureValueTypeRentalAgreement, error) {
+func DecodeSecureValueTypeRentalAgreement(r *Reader) (*SecureValueTypeRentalAgreement, error) {
 	v := &SecureValueTypeRentalAgreement{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeRentalAgreementTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeRentalAgreementTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeRentalAgreement(r)
 	}
 }
@@ -4411,13 +7323,13 @@ func (v *SecureValueTypePassportRegistration) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypePassportRegistration deserializes a SecureValueTypePassportRegistration from a reader using the TL binary protocol.
-func DecodeSecureValueTypePassportRegistration(r io.Reader) (*SecureValueTypePassportRegistration, error) {
+func DecodeSecureValueTypePassportRegistration(r *Reader) (*SecureValueTypePassportRegistration, error) {
 	v := &SecureValueTypePassportRegistration{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypePassportRegistrationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypePassportRegistrationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypePassportRegistration(r)
 	}
 }
@@ -4440,13 +7352,13 @@ func (v *SecureValueTypeTemporaryRegistration) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeTemporaryRegistration deserializes a SecureValueTypeTemporaryRegistration from a reader using the TL binary protocol.
-func DecodeSecureValueTypeTemporaryRegistration(r io.Reader) (*SecureValueTypeTemporaryRegistration, error) {
+func DecodeSecureValueTypeTemporaryRegistration(r *Reader) (*SecureValueTypeTemporaryRegistration, error) {
 	v := &SecureValueTypeTemporaryRegistration{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeTemporaryRegistrationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeTemporaryRegistrationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeTemporaryRegistration(r)
 	}
 }
@@ -4469,13 +7381,13 @@ func (v *SecureValueTypePhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypePhone deserializes a SecureValueTypePhone from a reader using the TL binary protocol.
-func DecodeSecureValueTypePhone(r io.Reader) (*SecureValueTypePhone, error) {
+func DecodeSecureValueTypePhone(r *Reader) (*SecureValueTypePhone, error) {
 	v := &SecureValueTypePhone{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypePhoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypePhoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypePhone(r)
 	}
 }
@@ -4498,13 +7410,13 @@ func (v *SecureValueTypeEmail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueTypeEmail deserializes a SecureValueTypeEmail from a reader using the TL binary protocol.
-func DecodeSecureValueTypeEmail(r io.Reader) (*SecureValueTypeEmail, error) {
+func DecodeSecureValueTypeEmail(r *Reader) (*SecureValueTypeEmail, error) {
 	v := &SecureValueTypeEmail{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeEmailTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeEmailTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueTypeEmail(r)
 	}
 }
@@ -4598,65 +7510,107 @@ func (v *SecureValue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValue deserializes a SecureValue from a reader using the TL binary protocol.
-func DecodeSecureValue(r io.Reader) (*SecureValue, error) {
+func DecodeSecureValue(r *Reader) (*SecureValue, error) {
 	v := &SecureValue{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
 	if v.Flags.Has(0) {
-		_objData, _ := ReadTLObject(r)
+		_objData, _errData := ReadTLObject(r)
+		if _errData != nil {
+			return nil, _errData
+		}
 		v.Data = _objData.(*SecureData)
 	}
 	if v.Flags.Has(1) {
-		_objFrontSide, _ := ReadTLObject(r)
+		_objFrontSide, _errFrontSide := ReadTLObject(r)
+		if _errFrontSide != nil {
+			return nil, _errFrontSide
+		}
 		v.FrontSide = _objFrontSide.(SecureFileClass)
 	}
 	if v.Flags.Has(2) {
-		_objReverseSide, _ := ReadTLObject(r)
+		_objReverseSide, _errReverseSide := ReadTLObject(r)
+		if _errReverseSide != nil {
+			return nil, _errReverseSide
+		}
 		v.ReverseSide = _objReverseSide.(SecureFileClass)
 	}
 	if v.Flags.Has(3) {
-		_objSelfie, _ := ReadTLObject(r)
+		_objSelfie, _errSelfie := ReadTLObject(r)
+		if _errSelfie != nil {
+			return nil, _errSelfie
+		}
 		v.Selfie = _objSelfie.(SecureFileClass)
 	}
 	if v.Flags.Has(6) {
-		ReadInt(r)
-		_cntTranslation := ReadInt(r)
-		if err := checkVectorCount(_cntTranslation); err != nil {
-			return nil, err
+		_vhdrTranslation, _ehdrTranslation := r.ReadUint32()
+		if _ehdrTranslation != nil {
+			return nil, _ehdrTranslation
+		}
+		_cntTranslation, _ecntTranslation := r.ReadUint32()
+		if _ecntTranslation != nil {
+			return nil, _ecntTranslation
+		}
+		if _errTranslation := checkVectorCount(_cntTranslation); _errTranslation != nil {
+			return nil, _errTranslation
 		}
 		v.Translation = make([]SecureFileClass, _cntTranslation)
 		for _iTranslation := range v.Translation {
-			_objTranslation, _ := ReadTLObject(r)
+			_objTranslation, _errTranslation := ReadTLObject(r)
+			if _errTranslation != nil {
+				return nil, _errTranslation
+			}
 			v.Translation[_iTranslation] = _objTranslation.(SecureFileClass)
 		}
+		_ = _vhdrTranslation
 	}
 	if v.Flags.Has(4) {
-		ReadInt(r)
-		_cntFiles := ReadInt(r)
-		if err := checkVectorCount(_cntFiles); err != nil {
-			return nil, err
+		_vhdrFiles, _ehdrFiles := r.ReadUint32()
+		if _ehdrFiles != nil {
+			return nil, _ehdrFiles
+		}
+		_cntFiles, _ecntFiles := r.ReadUint32()
+		if _ecntFiles != nil {
+			return nil, _ecntFiles
+		}
+		if _errFiles := checkVectorCount(_cntFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
 		v.Files = make([]SecureFileClass, _cntFiles)
 		for _iFiles := range v.Files {
-			_objFiles, _ := ReadTLObject(r)
+			_objFiles, _errFiles := ReadTLObject(r)
+			if _errFiles != nil {
+				return nil, _errFiles
+			}
 			v.Files[_iFiles] = _objFiles.(SecureFileClass)
 		}
+		_ = _vhdrFiles
 	}
 	if v.Flags.Has(5) {
-		_objPlainData, _ := ReadTLObject(r)
+		_objPlainData, _errPlainData := ReadTLObject(r)
+		if _errPlainData != nil {
+			return nil, _errPlainData
+		}
 		v.PlainData = _objPlainData.(SecurePlainDataClass)
 	}
-	v.Hash = ReadBytes(r)
+	_rHash, _eHash := r.ReadBytes()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValue(r)
 	}
 }
@@ -4748,64 +7702,102 @@ func (v *InputSecureValue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSecureValue deserializes a InputSecureValue from a reader using the TL binary protocol.
-func DecodeInputSecureValue(r io.Reader) (*InputSecureValue, error) {
+func DecodeInputSecureValue(r *Reader) (*InputSecureValue, error) {
 	v := &InputSecureValue{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
 	if v.Flags.Has(0) {
-		_objData, _ := ReadTLObject(r)
+		_objData, _errData := ReadTLObject(r)
+		if _errData != nil {
+			return nil, _errData
+		}
 		v.Data = _objData.(*SecureData)
 	}
 	if v.Flags.Has(1) {
-		_objFrontSide, _ := ReadTLObject(r)
+		_objFrontSide, _errFrontSide := ReadTLObject(r)
+		if _errFrontSide != nil {
+			return nil, _errFrontSide
+		}
 		v.FrontSide = _objFrontSide.(InputSecureFileClass)
 	}
 	if v.Flags.Has(2) {
-		_objReverseSide, _ := ReadTLObject(r)
+		_objReverseSide, _errReverseSide := ReadTLObject(r)
+		if _errReverseSide != nil {
+			return nil, _errReverseSide
+		}
 		v.ReverseSide = _objReverseSide.(InputSecureFileClass)
 	}
 	if v.Flags.Has(3) {
-		_objSelfie, _ := ReadTLObject(r)
+		_objSelfie, _errSelfie := ReadTLObject(r)
+		if _errSelfie != nil {
+			return nil, _errSelfie
+		}
 		v.Selfie = _objSelfie.(InputSecureFileClass)
 	}
 	if v.Flags.Has(6) {
-		ReadInt(r)
-		_cntTranslation := ReadInt(r)
-		if err := checkVectorCount(_cntTranslation); err != nil {
-			return nil, err
+		_vhdrTranslation, _ehdrTranslation := r.ReadUint32()
+		if _ehdrTranslation != nil {
+			return nil, _ehdrTranslation
+		}
+		_cntTranslation, _ecntTranslation := r.ReadUint32()
+		if _ecntTranslation != nil {
+			return nil, _ecntTranslation
+		}
+		if _errTranslation := checkVectorCount(_cntTranslation); _errTranslation != nil {
+			return nil, _errTranslation
 		}
 		v.Translation = make([]InputSecureFileClass, _cntTranslation)
 		for _iTranslation := range v.Translation {
-			_objTranslation, _ := ReadTLObject(r)
+			_objTranslation, _errTranslation := ReadTLObject(r)
+			if _errTranslation != nil {
+				return nil, _errTranslation
+			}
 			v.Translation[_iTranslation] = _objTranslation.(InputSecureFileClass)
 		}
+		_ = _vhdrTranslation
 	}
 	if v.Flags.Has(4) {
-		ReadInt(r)
-		_cntFiles := ReadInt(r)
-		if err := checkVectorCount(_cntFiles); err != nil {
-			return nil, err
+		_vhdrFiles, _ehdrFiles := r.ReadUint32()
+		if _ehdrFiles != nil {
+			return nil, _ehdrFiles
+		}
+		_cntFiles, _ecntFiles := r.ReadUint32()
+		if _ecntFiles != nil {
+			return nil, _ecntFiles
+		}
+		if _errFiles := checkVectorCount(_cntFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
 		v.Files = make([]InputSecureFileClass, _cntFiles)
 		for _iFiles := range v.Files {
-			_objFiles, _ := ReadTLObject(r)
+			_objFiles, _errFiles := ReadTLObject(r)
+			if _errFiles != nil {
+				return nil, _errFiles
+			}
 			v.Files[_iFiles] = _objFiles.(InputSecureFileClass)
 		}
+		_ = _vhdrFiles
 	}
 	if v.Flags.Has(5) {
-		_objPlainData, _ := ReadTLObject(r)
+		_objPlainData, _errPlainData := ReadTLObject(r)
+		if _errPlainData != nil {
+			return nil, _errPlainData
+		}
 		v.PlainData = _objPlainData.(SecurePlainDataClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputSecureValueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSecureValueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSecureValue(r)
 	}
 }
@@ -4835,16 +7827,23 @@ func (v *SecureValueHash) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueHash deserializes a SecureValueHash from a reader using the TL binary protocol.
-func DecodeSecureValueHash(r io.Reader) (*SecureValueHash, error) {
+func DecodeSecureValueHash(r *Reader) (*SecureValueHash, error) {
 	v := &SecureValueHash{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.Hash = ReadBytes(r)
+	_rHash, _eHash := r.ReadBytes()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueHashTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueHashTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueHash(r)
 	}
 }
@@ -4937,18 +7936,33 @@ func (v *SecureValueErrorData) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorData deserializes a SecureValueErrorData from a reader using the TL binary protocol.
-func DecodeSecureValueErrorData(r io.Reader) (*SecureValueErrorData, error) {
+func DecodeSecureValueErrorData(r *Reader) (*SecureValueErrorData, error) {
 	v := &SecureValueErrorData{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.DataHash = ReadBytes(r)
-	v.Field = ReadString(r)
-	v.Text = ReadString(r)
+	_rDataHash, _eDataHash := r.ReadBytes()
+	if _eDataHash != nil {
+		return nil, _eDataHash
+	}
+	v.DataHash = _rDataHash
+	_rField, _eField := r.ReadString()
+	if _eField != nil {
+		return nil, _eField
+	}
+	v.Field = _rField
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorDataTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorDataTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorData(r)
 	}
 }
@@ -4977,17 +7991,28 @@ func (v *SecureValueErrorFrontSide) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorFrontSide deserializes a SecureValueErrorFrontSide from a reader using the TL binary protocol.
-func DecodeSecureValueErrorFrontSide(r io.Reader) (*SecureValueErrorFrontSide, error) {
+func DecodeSecureValueErrorFrontSide(r *Reader) (*SecureValueErrorFrontSide, error) {
 	v := &SecureValueErrorFrontSide{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorFrontSideTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorFrontSideTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorFrontSide(r)
 	}
 }
@@ -5016,17 +8041,28 @@ func (v *SecureValueErrorReverseSide) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorReverseSide deserializes a SecureValueErrorReverseSide from a reader using the TL binary protocol.
-func DecodeSecureValueErrorReverseSide(r io.Reader) (*SecureValueErrorReverseSide, error) {
+func DecodeSecureValueErrorReverseSide(r *Reader) (*SecureValueErrorReverseSide, error) {
 	v := &SecureValueErrorReverseSide{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorReverseSideTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorReverseSideTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorReverseSide(r)
 	}
 }
@@ -5055,17 +8091,28 @@ func (v *SecureValueErrorSelfie) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorSelfie deserializes a SecureValueErrorSelfie from a reader using the TL binary protocol.
-func DecodeSecureValueErrorSelfie(r io.Reader) (*SecureValueErrorSelfie, error) {
+func DecodeSecureValueErrorSelfie(r *Reader) (*SecureValueErrorSelfie, error) {
 	v := &SecureValueErrorSelfie{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorSelfieTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorSelfieTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorSelfie(r)
 	}
 }
@@ -5094,17 +8141,28 @@ func (v *SecureValueErrorFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorFile deserializes a SecureValueErrorFile from a reader using the TL binary protocol.
-func DecodeSecureValueErrorFile(r io.Reader) (*SecureValueErrorFile, error) {
+func DecodeSecureValueErrorFile(r *Reader) (*SecureValueErrorFile, error) {
 	v := &SecureValueErrorFile{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorFile(r)
 	}
 }
@@ -5133,17 +8191,28 @@ func (v *SecureValueErrorFiles) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorFiles deserializes a SecureValueErrorFiles from a reader using the TL binary protocol.
-func DecodeSecureValueErrorFiles(r io.Reader) (*SecureValueErrorFiles, error) {
+func DecodeSecureValueErrorFiles(r *Reader) (*SecureValueErrorFiles, error) {
 	v := &SecureValueErrorFiles{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadVectorBytes(r)
-	v.Text = ReadString(r)
+	_vvFileHash, _veFileHash := r.ReadVectorBytes()
+	if _veFileHash != nil {
+		return nil, _veFileHash
+	}
+	v.FileHash = _vvFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorFilesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorFilesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorFiles(r)
 	}
 }
@@ -5172,17 +8241,28 @@ func (v *SecureValueError) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueError deserializes a SecureValueError from a reader using the TL binary protocol.
-func DecodeSecureValueError(r io.Reader) (*SecureValueError, error) {
+func DecodeSecureValueError(r *Reader) (*SecureValueError, error) {
 	v := &SecureValueError{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.Hash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rHash, _eHash := r.ReadBytes()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueError(r)
 	}
 }
@@ -5211,17 +8291,28 @@ func (v *SecureValueErrorTranslationFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorTranslationFile deserializes a SecureValueErrorTranslationFile from a reader using the TL binary protocol.
-func DecodeSecureValueErrorTranslationFile(r io.Reader) (*SecureValueErrorTranslationFile, error) {
+func DecodeSecureValueErrorTranslationFile(r *Reader) (*SecureValueErrorTranslationFile, error) {
 	v := &SecureValueErrorTranslationFile{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadBytes(r)
-	v.Text = ReadString(r)
+	_rFileHash, _eFileHash := r.ReadBytes()
+	if _eFileHash != nil {
+		return nil, _eFileHash
+	}
+	v.FileHash = _rFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorTranslationFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorTranslationFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorTranslationFile(r)
 	}
 }
@@ -5250,17 +8341,28 @@ func (v *SecureValueErrorTranslationFiles) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureValueErrorTranslationFiles deserializes a SecureValueErrorTranslationFiles from a reader using the TL binary protocol.
-func DecodeSecureValueErrorTranslationFiles(r io.Reader) (*SecureValueErrorTranslationFiles, error) {
+func DecodeSecureValueErrorTranslationFiles(r *Reader) (*SecureValueErrorTranslationFiles, error) {
 	v := &SecureValueErrorTranslationFiles{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
-	v.FileHash = ReadVectorBytes(r)
-	v.Text = ReadString(r)
+	_vvFileHash, _veFileHash := r.ReadVectorBytes()
+	if _veFileHash != nil {
+		return nil, _veFileHash
+	}
+	v.FileHash = _vvFileHash
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SecureValueErrorTranslationFilesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureValueErrorTranslationFilesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureValueErrorTranslationFiles(r)
 	}
 }
@@ -5292,17 +8394,28 @@ func (v *SecureSecretSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureSecretSettings deserializes a SecureSecretSettings from a reader using the TL binary protocol.
-func DecodeSecureSecretSettings(r io.Reader) (*SecureSecretSettings, error) {
+func DecodeSecureSecretSettings(r *Reader) (*SecureSecretSettings, error) {
 	v := &SecureSecretSettings{}
-	_objSecureAlgo, _ := ReadTLObject(r)
+	_objSecureAlgo, _errSecureAlgo := ReadTLObject(r)
+	if _errSecureAlgo != nil {
+		return nil, _errSecureAlgo
+	}
 	v.SecureAlgo = _objSecureAlgo.(SecurePasswordKdfAlgoClass)
-	v.SecureSecret = ReadBytes(r)
-	v.SecureSecretID = ReadLong(r)
+	_rSecureSecret, _eSecureSecret := r.ReadBytes()
+	if _eSecureSecret != nil {
+		return nil, _eSecureSecret
+	}
+	v.SecureSecret = _rSecureSecret
+	_rSecureSecretID, _eSecureSecretID := r.ReadInt64()
+	if _eSecureSecretID != nil {
+		return nil, _eSecureSecretID
+	}
+	v.SecureSecretID = _rSecureSecretID
 	return v, nil
 }
 
 func init() {
-	Registry[SecureSecretSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureSecretSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureSecretSettings(r)
 	}
 }
@@ -5366,23 +8479,26 @@ func (v *SecureRequiredType) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureRequiredType deserializes a SecureRequiredType from a reader using the TL binary protocol.
-func DecodeSecureRequiredType(r io.Reader) (*SecureRequiredType, error) {
+func DecodeSecureRequiredType(r *Reader) (*SecureRequiredType, error) {
 	v := &SecureRequiredType{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NativeNames = v.Flags.Has(0)
 	v.SelfieRequired = v.Flags.Has(1)
 	v.TranslationRequired = v.Flags.Has(2)
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SecureValueTypeClass)
 	return v, nil
 }
 
 func init() {
-	Registry[SecureRequiredTypeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureRequiredTypeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureRequiredType(r)
 	}
 }
@@ -5411,23 +8527,33 @@ func (v *SecureRequiredTypeOneOf) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureRequiredTypeOneOf deserializes a SecureRequiredTypeOneOf from a reader using the TL binary protocol.
-func DecodeSecureRequiredTypeOneOf(r io.Reader) (*SecureRequiredTypeOneOf, error) {
+func DecodeSecureRequiredTypeOneOf(r *Reader) (*SecureRequiredTypeOneOf, error) {
 	v := &SecureRequiredTypeOneOf{}
-	ReadInt(r)
-	_cntTypes := ReadInt(r)
-	if err := checkVectorCount(_cntTypes); err != nil {
-		return nil, err
+	_vhdrTypes, _ehdrTypes := r.ReadUint32()
+	if _ehdrTypes != nil {
+		return nil, _ehdrTypes
+	}
+	_cntTypes, _ecntTypes := r.ReadUint32()
+	if _ecntTypes != nil {
+		return nil, _ecntTypes
+	}
+	if _errTypes := checkVectorCount(_cntTypes); _errTypes != nil {
+		return nil, _errTypes
 	}
 	v.Types = make([]SecureRequiredTypeClass, _cntTypes)
 	for _iTypes := range v.Types {
-		_objTypes, _ := ReadTLObject(r)
+		_objTypes, _errTypes := ReadTLObject(r)
+		if _errTypes != nil {
+			return nil, _errTypes
+		}
 		v.Types[_iTypes] = _objTypes.(SecureRequiredTypeClass)
 	}
+	_ = _vhdrTypes
 	return v, nil
 }
 
 func init() {
-	Registry[SecureRequiredTypeOneOfTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureRequiredTypeOneOfTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureRequiredTypeOneOf(r)
 	}
 }
@@ -5461,18 +8587,33 @@ func (v *InputAppEvent) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputAppEvent deserializes a InputAppEvent from a reader using the TL binary protocol.
-func DecodeInputAppEvent(r io.Reader) (*InputAppEvent, error) {
+func DecodeInputAppEvent(r *Reader) (*InputAppEvent, error) {
 	v := &InputAppEvent{}
-	v.Time = ReadDouble(r)
-	v.Type = ReadString(r)
-	v.Peer = ReadLong(r)
-	_objData, _ := ReadTLObject(r)
+	_rTime, _eTime := r.ReadFloat64()
+	if _eTime != nil {
+		return nil, _eTime
+	}
+	v.Time = _rTime
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rPeer, _ePeer := r.ReadInt64()
+	if _ePeer != nil {
+		return nil, _ePeer
+	}
+	v.Peer = _rPeer
+	_objData, _errData := ReadTLObject(r)
+	if _errData != nil {
+		return nil, _errData
+	}
 	v.Data = _objData.(JSONValueClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputAppEventTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputAppEventTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputAppEvent(r)
 	}
 }
@@ -5502,16 +8643,23 @@ func (v *JSONObjectValue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONObjectValue deserializes a JSONObjectValue from a reader using the TL binary protocol.
-func DecodeJSONObjectValue(r io.Reader) (*JSONObjectValue, error) {
+func DecodeJSONObjectValue(r *Reader) (*JSONObjectValue, error) {
 	v := &JSONObjectValue{}
-	v.Key = ReadString(r)
-	_objValue, _ := ReadTLObject(r)
+	_rKey, _eKey := r.ReadString()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_objValue, _errValue := ReadTLObject(r)
+	if _errValue != nil {
+		return nil, _errValue
+	}
 	v.Value = _objValue.(JSONValueClass)
 	return v, nil
 }
 
 func init() {
-	Registry[JSONObjectValueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONObjectValueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONObjectValue(r)
 	}
 }
@@ -5578,13 +8726,13 @@ func (v *JSONNull) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONNull deserializes a JSONNull from a reader using the TL binary protocol.
-func DecodeJSONNull(r io.Reader) (*JSONNull, error) {
+func DecodeJSONNull(r *Reader) (*JSONNull, error) {
 	v := &JSONNull{}
 	return v, nil
 }
 
 func init() {
-	Registry[JSONNullTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONNullTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONNull(r)
 	}
 }
@@ -5609,14 +8757,18 @@ func (v *JSONBool) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONBool deserializes a JSONBool from a reader using the TL binary protocol.
-func DecodeJSONBool(r io.Reader) (*JSONBool, error) {
+func DecodeJSONBool(r *Reader) (*JSONBool, error) {
 	v := &JSONBool{}
-	v.Value = ReadBool(r)
+	_rValue, _eValue := r.ReadBool()
+	if _eValue != nil {
+		return nil, _eValue
+	}
+	v.Value = _rValue
 	return v, nil
 }
 
 func init() {
-	Registry[JSONBoolTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONBoolTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONBool(r)
 	}
 }
@@ -5641,14 +8793,18 @@ func (v *JSONNumber) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONNumber deserializes a JSONNumber from a reader using the TL binary protocol.
-func DecodeJSONNumber(r io.Reader) (*JSONNumber, error) {
+func DecodeJSONNumber(r *Reader) (*JSONNumber, error) {
 	v := &JSONNumber{}
-	v.Value = ReadDouble(r)
+	_rValue, _eValue := r.ReadFloat64()
+	if _eValue != nil {
+		return nil, _eValue
+	}
+	v.Value = _rValue
 	return v, nil
 }
 
 func init() {
-	Registry[JSONNumberTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONNumberTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONNumber(r)
 	}
 }
@@ -5673,14 +8829,18 @@ func (v *JSONString) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONString deserializes a JSONString from a reader using the TL binary protocol.
-func DecodeJSONString(r io.Reader) (*JSONString, error) {
+func DecodeJSONString(r *Reader) (*JSONString, error) {
 	v := &JSONString{}
-	v.Value = ReadString(r)
+	_rValue, _eValue := r.ReadString()
+	if _eValue != nil {
+		return nil, _eValue
+	}
+	v.Value = _rValue
 	return v, nil
 }
 
 func init() {
-	Registry[JSONStringTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONStringTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONString(r)
 	}
 }
@@ -5709,23 +8869,33 @@ func (v *JSONArray) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONArray deserializes a JSONArray from a reader using the TL binary protocol.
-func DecodeJSONArray(r io.Reader) (*JSONArray, error) {
+func DecodeJSONArray(r *Reader) (*JSONArray, error) {
 	v := &JSONArray{}
-	ReadInt(r)
-	_cntValue := ReadInt(r)
-	if err := checkVectorCount(_cntValue); err != nil {
-		return nil, err
+	_vhdrValue, _ehdrValue := r.ReadUint32()
+	if _ehdrValue != nil {
+		return nil, _ehdrValue
+	}
+	_cntValue, _ecntValue := r.ReadUint32()
+	if _ecntValue != nil {
+		return nil, _ecntValue
+	}
+	if _errValue := checkVectorCount(_cntValue); _errValue != nil {
+		return nil, _errValue
 	}
 	v.Value = make([]JSONValueClass, _cntValue)
 	for _iValue := range v.Value {
-		_objValue, _ := ReadTLObject(r)
+		_objValue, _errValue := ReadTLObject(r)
+		if _errValue != nil {
+			return nil, _errValue
+		}
 		v.Value[_iValue] = _objValue.(JSONValueClass)
 	}
+	_ = _vhdrValue
 	return v, nil
 }
 
 func init() {
-	Registry[JSONArrayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONArrayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONArray(r)
 	}
 }
@@ -5754,23 +8924,33 @@ func (v *JSONObject) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeJSONObject deserializes a JSONObject from a reader using the TL binary protocol.
-func DecodeJSONObject(r io.Reader) (*JSONObject, error) {
+func DecodeJSONObject(r *Reader) (*JSONObject, error) {
 	v := &JSONObject{}
-	ReadInt(r)
-	_cntValue := ReadInt(r)
-	if err := checkVectorCount(_cntValue); err != nil {
-		return nil, err
+	_vhdrValue, _ehdrValue := r.ReadUint32()
+	if _ehdrValue != nil {
+		return nil, _ehdrValue
+	}
+	_cntValue, _ecntValue := r.ReadUint32()
+	if _ecntValue != nil {
+		return nil, _ecntValue
+	}
+	if _errValue := checkVectorCount(_cntValue); _errValue != nil {
+		return nil, _errValue
 	}
 	v.Value = make([]*JSONObjectValue, _cntValue)
 	for _iValue := range v.Value {
-		_objValue, _ := ReadTLObject(r)
+		_objValue, _errValue := ReadTLObject(r)
+		if _errValue != nil {
+			return nil, _errValue
+		}
 		v.Value[_iValue] = _objValue.(*JSONObjectValue)
 	}
+	_ = _vhdrValue
 	return v, nil
 }
 
 func init() {
-	Registry[JSONObjectTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[JSONObjectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJSONObject(r)
 	}
 }
@@ -5798,14 +8978,18 @@ func (v *StatsURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsURL deserializes a StatsURL from a reader using the TL binary protocol.
-func DecodeStatsURL(r io.Reader) (*StatsURL, error) {
+func DecodeStatsURL(r *Reader) (*StatsURL, error) {
 	v := &StatsURL{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[StatsURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsURL(r)
 	}
 }
@@ -5883,11 +9067,11 @@ func (v *CodeSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeCodeSettings deserializes a CodeSettings from a reader using the TL binary protocol.
-func DecodeCodeSettings(r io.Reader) (*CodeSettings, error) {
+func DecodeCodeSettings(r *Reader) (*CodeSettings, error) {
 	v := &CodeSettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.AllowFlashcall = v.Flags.Has(0)
@@ -5897,19 +9081,31 @@ func DecodeCodeSettings(r io.Reader) (*CodeSettings, error) {
 	v.AllowFirebase = v.Flags.Has(7)
 	v.UnknownNumber = v.Flags.Has(9)
 	if v.Flags.Has(6) {
-		v.LogoutTokens = ReadVectorBytes(r)
+		_vvLogoutTokens, _veLogoutTokens := r.ReadVectorBytes()
+		if _veLogoutTokens != nil {
+			return nil, _veLogoutTokens
+		}
+		v.LogoutTokens = _vvLogoutTokens
 	}
 	if v.Flags.Has(8) {
-		v.Token = ReadString(r)
+		_rToken, _eToken := r.ReadString()
+		if _eToken != nil {
+			return nil, _eToken
+		}
+		v.Token = _rToken
 	}
 	if v.Flags.Has(8) {
-		v.AppSandbox = ReadBool(r)
+		_rAppSandbox, _eAppSandbox := r.ReadBool()
+		if _eAppSandbox != nil {
+			return nil, _eAppSandbox
+		}
+		v.AppSandbox = _rAppSandbox
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[CodeSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[CodeSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeCodeSettings(r)
 	}
 }
@@ -5941,16 +9137,28 @@ func (v *RestrictionReason) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRestrictionReason deserializes a RestrictionReason from a reader using the TL binary protocol.
-func DecodeRestrictionReason(r io.Reader) (*RestrictionReason, error) {
+func DecodeRestrictionReason(r *Reader) (*RestrictionReason, error) {
 	v := &RestrictionReason{}
-	v.Platform = ReadString(r)
-	v.Reason = ReadString(r)
-	v.Text = ReadString(r)
+	_rPlatform, _ePlatform := r.ReadString()
+	if _ePlatform != nil {
+		return nil, _ePlatform
+	}
+	v.Platform = _rPlatform
+	_rReason, _eReason := r.ReadString()
+	if _eReason != nil {
+		return nil, _eReason
+	}
+	v.Reason = _rReason
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[RestrictionReasonTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RestrictionReasonTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRestrictionReason(r)
 	}
 }
@@ -5997,15 +9205,23 @@ func (v *InputTheme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputTheme deserializes a InputTheme from a reader using the TL binary protocol.
-func DecodeInputTheme(r io.Reader) (*InputTheme, error) {
+func DecodeInputTheme(r *Reader) (*InputTheme, error) {
 	v := &InputTheme{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputTheme(r)
 	}
 }
@@ -6030,14 +9246,18 @@ func (v *InputThemeSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputThemeSlug deserializes a InputThemeSlug from a reader using the TL binary protocol.
-func DecodeInputThemeSlug(r io.Reader) (*InputThemeSlug, error) {
+func DecodeInputThemeSlug(r *Reader) (*InputThemeSlug, error) {
 	v := &InputThemeSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputThemeSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputThemeSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputThemeSlug(r)
 	}
 }
@@ -6122,47 +9342,84 @@ func (v *Theme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTheme deserializes a Theme from a reader using the TL binary protocol.
-func DecodeTheme(r io.Reader) (*Theme, error) {
+func DecodeTheme(r *Reader) (*Theme, error) {
 	v := &Theme{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
 	v.Default = v.Flags.Has(1)
 	v.ForChat = v.Flags.Has(5)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Slug = ReadString(r)
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(2) {
-		_objDocument, _ := ReadTLObject(r)
+		_objDocument, _errDocument := ReadTLObject(r)
+		if _errDocument != nil {
+			return nil, _errDocument
+		}
 		v.Document = _objDocument.(DocumentClass)
 	}
 	if v.Flags.Has(3) {
-		ReadInt(r)
-		_cntSettings := ReadInt(r)
-		if err := checkVectorCount(_cntSettings); err != nil {
-			return nil, err
+		_vhdrSettings, _ehdrSettings := r.ReadUint32()
+		if _ehdrSettings != nil {
+			return nil, _ehdrSettings
+		}
+		_cntSettings, _ecntSettings := r.ReadUint32()
+		if _ecntSettings != nil {
+			return nil, _ecntSettings
+		}
+		if _errSettings := checkVectorCount(_cntSettings); _errSettings != nil {
+			return nil, _errSettings
 		}
 		v.Settings = make([]*ThemeSettings, _cntSettings)
 		for _iSettings := range v.Settings {
-			_objSettings, _ := ReadTLObject(r)
+			_objSettings, _errSettings := ReadTLObject(r)
+			if _errSettings != nil {
+				return nil, _errSettings
+			}
 			v.Settings[_iSettings] = _objSettings.(*ThemeSettings)
 		}
+		_ = _vhdrSettings
 	}
 	if v.Flags.Has(6) {
-		v.Emoticon = ReadString(r)
+		_rEmoticon, _eEmoticon := r.ReadString()
+		if _eEmoticon != nil {
+			return nil, _eEmoticon
+		}
+		v.Emoticon = _rEmoticon
 	}
 	if v.Flags.Has(4) {
-		v.InstallsCount = int32(ReadInt(r))
+		_rInstallsCount, _eInstallsCount := r.ReadInt32()
+		if _eInstallsCount != nil {
+			return nil, _eInstallsCount
+		}
+		v.InstallsCount = _rInstallsCount
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTheme(r)
 	}
 }
@@ -6223,13 +9480,13 @@ func (v *BaseThemeClassic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBaseThemeClassic deserializes a BaseThemeClassic from a reader using the TL binary protocol.
-func DecodeBaseThemeClassic(r io.Reader) (*BaseThemeClassic, error) {
+func DecodeBaseThemeClassic(r *Reader) (*BaseThemeClassic, error) {
 	v := &BaseThemeClassic{}
 	return v, nil
 }
 
 func init() {
-	Registry[BaseThemeClassicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BaseThemeClassicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBaseThemeClassic(r)
 	}
 }
@@ -6252,13 +9509,13 @@ func (v *BaseThemeDay) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBaseThemeDay deserializes a BaseThemeDay from a reader using the TL binary protocol.
-func DecodeBaseThemeDay(r io.Reader) (*BaseThemeDay, error) {
+func DecodeBaseThemeDay(r *Reader) (*BaseThemeDay, error) {
 	v := &BaseThemeDay{}
 	return v, nil
 }
 
 func init() {
-	Registry[BaseThemeDayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BaseThemeDayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBaseThemeDay(r)
 	}
 }
@@ -6281,13 +9538,13 @@ func (v *BaseThemeNight) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBaseThemeNight deserializes a BaseThemeNight from a reader using the TL binary protocol.
-func DecodeBaseThemeNight(r io.Reader) (*BaseThemeNight, error) {
+func DecodeBaseThemeNight(r *Reader) (*BaseThemeNight, error) {
 	v := &BaseThemeNight{}
 	return v, nil
 }
 
 func init() {
-	Registry[BaseThemeNightTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BaseThemeNightTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBaseThemeNight(r)
 	}
 }
@@ -6310,13 +9567,13 @@ func (v *BaseThemeTinted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBaseThemeTinted deserializes a BaseThemeTinted from a reader using the TL binary protocol.
-func DecodeBaseThemeTinted(r io.Reader) (*BaseThemeTinted, error) {
+func DecodeBaseThemeTinted(r *Reader) (*BaseThemeTinted, error) {
 	v := &BaseThemeTinted{}
 	return v, nil
 }
 
 func init() {
-	Registry[BaseThemeTintedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BaseThemeTintedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBaseThemeTinted(r)
 	}
 }
@@ -6339,13 +9596,13 @@ func (v *BaseThemeArctic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBaseThemeArctic deserializes a BaseThemeArctic from a reader using the TL binary protocol.
-func DecodeBaseThemeArctic(r io.Reader) (*BaseThemeArctic, error) {
+func DecodeBaseThemeArctic(r *Reader) (*BaseThemeArctic, error) {
 	v := &BaseThemeArctic{}
 	return v, nil
 }
 
 func init() {
-	Registry[BaseThemeArcticTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BaseThemeArcticTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBaseThemeArctic(r)
 	}
 }
@@ -6414,36 +9671,57 @@ func (v *InputThemeSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputThemeSettings deserializes a InputThemeSettings from a reader using the TL binary protocol.
-func DecodeInputThemeSettings(r io.Reader) (*InputThemeSettings, error) {
+func DecodeInputThemeSettings(r *Reader) (*InputThemeSettings, error) {
 	v := &InputThemeSettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.MessageColorsAnimated = v.Flags.Has(2)
-	_objBaseTheme, _ := ReadTLObject(r)
+	_objBaseTheme, _errBaseTheme := ReadTLObject(r)
+	if _errBaseTheme != nil {
+		return nil, _errBaseTheme
+	}
 	v.BaseTheme = _objBaseTheme.(BaseThemeClass)
-	v.AccentColor = int32(ReadInt(r))
+	_rAccentColor, _eAccentColor := r.ReadInt32()
+	if _eAccentColor != nil {
+		return nil, _eAccentColor
+	}
+	v.AccentColor = _rAccentColor
 	if v.Flags.Has(3) {
-		v.OutboxAccentColor = int32(ReadInt(r))
+		_rOutboxAccentColor, _eOutboxAccentColor := r.ReadInt32()
+		if _eOutboxAccentColor != nil {
+			return nil, _eOutboxAccentColor
+		}
+		v.OutboxAccentColor = _rOutboxAccentColor
 	}
 	if v.Flags.Has(0) {
-		v.MessageColors = ReadVectorInt(r)
+		_vvMessageColors, _veMessageColors := r.ReadVectorInt()
+		if _veMessageColors != nil {
+			return nil, _veMessageColors
+		}
+		v.MessageColors = _vvMessageColors
 	}
 	if v.Flags.Has(1) {
-		_objWallpaper, _ := ReadTLObject(r)
+		_objWallpaper, _errWallpaper := ReadTLObject(r)
+		if _errWallpaper != nil {
+			return nil, _errWallpaper
+		}
 		v.Wallpaper = _objWallpaper.(InputWallPaperClass)
 	}
 	if v.Flags.Has(1) {
-		_objWallpaperSettings, _ := ReadTLObject(r)
+		_objWallpaperSettings, _errWallpaperSettings := ReadTLObject(r)
+		if _errWallpaperSettings != nil {
+			return nil, _errWallpaperSettings
+		}
 		v.WallpaperSettings = _objWallpaperSettings.(*WallPaperSettings)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputThemeSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputThemeSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputThemeSettings(r)
 	}
 }
@@ -6505,32 +9783,50 @@ func (v *ThemeSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeThemeSettings deserializes a ThemeSettings from a reader using the TL binary protocol.
-func DecodeThemeSettings(r io.Reader) (*ThemeSettings, error) {
+func DecodeThemeSettings(r *Reader) (*ThemeSettings, error) {
 	v := &ThemeSettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.MessageColorsAnimated = v.Flags.Has(2)
-	_objBaseTheme, _ := ReadTLObject(r)
+	_objBaseTheme, _errBaseTheme := ReadTLObject(r)
+	if _errBaseTheme != nil {
+		return nil, _errBaseTheme
+	}
 	v.BaseTheme = _objBaseTheme.(BaseThemeClass)
-	v.AccentColor = int32(ReadInt(r))
+	_rAccentColor, _eAccentColor := r.ReadInt32()
+	if _eAccentColor != nil {
+		return nil, _eAccentColor
+	}
+	v.AccentColor = _rAccentColor
 	if v.Flags.Has(3) {
-		v.OutboxAccentColor = int32(ReadInt(r))
+		_rOutboxAccentColor, _eOutboxAccentColor := r.ReadInt32()
+		if _eOutboxAccentColor != nil {
+			return nil, _eOutboxAccentColor
+		}
+		v.OutboxAccentColor = _rOutboxAccentColor
 	}
 	if v.Flags.Has(0) {
-		v.MessageColors = ReadVectorInt(r)
+		_vvMessageColors, _veMessageColors := r.ReadVectorInt()
+		if _veMessageColors != nil {
+			return nil, _veMessageColors
+		}
+		v.MessageColors = _vvMessageColors
 	}
 	if v.Flags.Has(1) {
-		_objWallpaper, _ := ReadTLObject(r)
+		_objWallpaper, _errWallpaper := ReadTLObject(r)
+		if _errWallpaper != nil {
+			return nil, _errWallpaper
+		}
 		v.Wallpaper = _objWallpaper.(WallPaperClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ThemeSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ThemeSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeThemeSettings(r)
 	}
 }
@@ -6560,15 +9856,23 @@ func (v *StatsDateRangeDays) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsDateRangeDays deserializes a StatsDateRangeDays from a reader using the TL binary protocol.
-func DecodeStatsDateRangeDays(r io.Reader) (*StatsDateRangeDays, error) {
+func DecodeStatsDateRangeDays(r *Reader) (*StatsDateRangeDays, error) {
 	v := &StatsDateRangeDays{}
-	v.MinDate = int32(ReadInt(r))
-	v.MaxDate = int32(ReadInt(r))
+	_rMinDate, _eMinDate := r.ReadInt32()
+	if _eMinDate != nil {
+		return nil, _eMinDate
+	}
+	v.MinDate = _rMinDate
+	_rMaxDate, _eMaxDate := r.ReadInt32()
+	if _eMaxDate != nil {
+		return nil, _eMaxDate
+	}
+	v.MaxDate = _rMaxDate
 	return v, nil
 }
 
 func init() {
-	Registry[StatsDateRangeDaysTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsDateRangeDaysTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsDateRangeDays(r)
 	}
 }
@@ -6598,15 +9902,23 @@ func (v *StatsAbsValueAndPrev) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsAbsValueAndPrev deserializes a StatsAbsValueAndPrev from a reader using the TL binary protocol.
-func DecodeStatsAbsValueAndPrev(r io.Reader) (*StatsAbsValueAndPrev, error) {
+func DecodeStatsAbsValueAndPrev(r *Reader) (*StatsAbsValueAndPrev, error) {
 	v := &StatsAbsValueAndPrev{}
-	v.Current = ReadDouble(r)
-	v.Previous = ReadDouble(r)
+	_rCurrent, _eCurrent := r.ReadFloat64()
+	if _eCurrent != nil {
+		return nil, _eCurrent
+	}
+	v.Current = _rCurrent
+	_rPrevious, _ePrevious := r.ReadFloat64()
+	if _ePrevious != nil {
+		return nil, _ePrevious
+	}
+	v.Previous = _rPrevious
 	return v, nil
 }
 
 func init() {
-	Registry[StatsAbsValueAndPrevTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsAbsValueAndPrevTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsAbsValueAndPrev(r)
 	}
 }
@@ -6636,15 +9948,23 @@ func (v *StatsPercentValue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsPercentValue deserializes a StatsPercentValue from a reader using the TL binary protocol.
-func DecodeStatsPercentValue(r io.Reader) (*StatsPercentValue, error) {
+func DecodeStatsPercentValue(r *Reader) (*StatsPercentValue, error) {
 	v := &StatsPercentValue{}
-	v.Part = ReadDouble(r)
-	v.Total = ReadDouble(r)
+	_rPart, _ePart := r.ReadFloat64()
+	if _ePart != nil {
+		return nil, _ePart
+	}
+	v.Part = _rPart
+	_rTotal, _eTotal := r.ReadFloat64()
+	if _eTotal != nil {
+		return nil, _eTotal
+	}
+	v.Total = _rTotal
 	return v, nil
 }
 
 func init() {
-	Registry[StatsPercentValueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsPercentValueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsPercentValue(r)
 	}
 }
@@ -6695,14 +10015,18 @@ func (v *StatsGraphAsync) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGraphAsync deserializes a StatsGraphAsync from a reader using the TL binary protocol.
-func DecodeStatsGraphAsync(r io.Reader) (*StatsGraphAsync, error) {
+func DecodeStatsGraphAsync(r *Reader) (*StatsGraphAsync, error) {
 	v := &StatsGraphAsync{}
-	v.Token = ReadString(r)
+	_rToken, _eToken := r.ReadString()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGraphAsyncTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGraphAsyncTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGraphAsync(r)
 	}
 }
@@ -6727,14 +10051,18 @@ func (v *StatsGraphError) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGraphError deserializes a StatsGraphError from a reader using the TL binary protocol.
-func DecodeStatsGraphError(r io.Reader) (*StatsGraphError, error) {
+func DecodeStatsGraphError(r *Reader) (*StatsGraphError, error) {
 	v := &StatsGraphError{}
-	v.Error = ReadString(r)
+	_rError, _eError := r.ReadString()
+	if _eError != nil {
+		return nil, _eError
+	}
+	v.Error = _rError
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGraphErrorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGraphErrorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGraphError(r)
 	}
 }
@@ -6773,23 +10101,30 @@ func (v *StatsGraph) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGraph deserializes a StatsGraph from a reader using the TL binary protocol.
-func DecodeStatsGraph(r io.Reader) (*StatsGraph, error) {
+func DecodeStatsGraph(r *Reader) (*StatsGraph, error) {
 	v := &StatsGraph{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objJSON, _ := ReadTLObject(r)
+	_objJSON, _errJSON := ReadTLObject(r)
+	if _errJSON != nil {
+		return nil, _errJSON
+	}
 	v.JSON = _objJSON.(*DataJSON)
 	if v.Flags.Has(0) {
-		v.ZoomToken = ReadString(r)
+		_rZoomToken, _eZoomToken := r.ReadString()
+		if _eZoomToken != nil {
+			return nil, _eZoomToken
+		}
+		v.ZoomToken = _rZoomToken
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGraphTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGraphTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGraph(r)
 	}
 }
@@ -6821,16 +10156,28 @@ func (v *StatsGroupTopPoster) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGroupTopPoster deserializes a StatsGroupTopPoster from a reader using the TL binary protocol.
-func DecodeStatsGroupTopPoster(r io.Reader) (*StatsGroupTopPoster, error) {
+func DecodeStatsGroupTopPoster(r *Reader) (*StatsGroupTopPoster, error) {
 	v := &StatsGroupTopPoster{}
-	v.UserID = ReadLong(r)
-	v.Messages = int32(ReadInt(r))
-	v.AvgChars = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rMessages, _eMessages := r.ReadInt32()
+	if _eMessages != nil {
+		return nil, _eMessages
+	}
+	v.Messages = _rMessages
+	_rAvgChars, _eAvgChars := r.ReadInt32()
+	if _eAvgChars != nil {
+		return nil, _eAvgChars
+	}
+	v.AvgChars = _rAvgChars
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGroupTopPosterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGroupTopPosterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGroupTopPoster(r)
 	}
 }
@@ -6864,17 +10211,33 @@ func (v *SearchResultsCalendarPeriod) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSearchResultsCalendarPeriod deserializes a SearchResultsCalendarPeriod from a reader using the TL binary protocol.
-func DecodeSearchResultsCalendarPeriod(r io.Reader) (*SearchResultsCalendarPeriod, error) {
+func DecodeSearchResultsCalendarPeriod(r *Reader) (*SearchResultsCalendarPeriod, error) {
 	v := &SearchResultsCalendarPeriod{}
-	v.Date = int32(ReadInt(r))
-	v.MinMsgID = int32(ReadInt(r))
-	v.MaxMsgID = int32(ReadInt(r))
-	v.Count = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rMinMsgID, _eMinMsgID := r.ReadInt32()
+	if _eMinMsgID != nil {
+		return nil, _eMinMsgID
+	}
+	v.MinMsgID = _rMinMsgID
+	_rMaxMsgID, _eMaxMsgID := r.ReadInt32()
+	if _eMaxMsgID != nil {
+		return nil, _eMaxMsgID
+	}
+	v.MaxMsgID = _rMaxMsgID
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
 	return v, nil
 }
 
 func init() {
-	Registry[SearchResultsCalendarPeriodTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SearchResultsCalendarPeriodTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSearchResultsCalendarPeriod(r)
 	}
 }
@@ -6906,16 +10269,28 @@ func (v *SearchResultPosition) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSearchResultPosition deserializes a SearchResultPosition from a reader using the TL binary protocol.
-func DecodeSearchResultPosition(r io.Reader) (*SearchResultPosition, error) {
+func DecodeSearchResultPosition(r *Reader) (*SearchResultPosition, error) {
 	v := &SearchResultPosition{}
-	v.MsgID = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	v.Offset = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
 	return v, nil
 }
 
 func init() {
-	Registry[SearchResultPositionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SearchResultPositionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSearchResultPosition(r)
 	}
 }
@@ -6970,13 +10345,13 @@ func (v *NotificationSoundDefault) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotificationSoundDefault deserializes a NotificationSoundDefault from a reader using the TL binary protocol.
-func DecodeNotificationSoundDefault(r io.Reader) (*NotificationSoundDefault, error) {
+func DecodeNotificationSoundDefault(r *Reader) (*NotificationSoundDefault, error) {
 	v := &NotificationSoundDefault{}
 	return v, nil
 }
 
 func init() {
-	Registry[NotificationSoundDefaultTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotificationSoundDefaultTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotificationSoundDefault(r)
 	}
 }
@@ -6999,13 +10374,13 @@ func (v *NotificationSoundNone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotificationSoundNone deserializes a NotificationSoundNone from a reader using the TL binary protocol.
-func DecodeNotificationSoundNone(r io.Reader) (*NotificationSoundNone, error) {
+func DecodeNotificationSoundNone(r *Reader) (*NotificationSoundNone, error) {
 	v := &NotificationSoundNone{}
 	return v, nil
 }
 
 func init() {
-	Registry[NotificationSoundNoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotificationSoundNoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotificationSoundNone(r)
 	}
 }
@@ -7032,15 +10407,23 @@ func (v *NotificationSoundLocal) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotificationSoundLocal deserializes a NotificationSoundLocal from a reader using the TL binary protocol.
-func DecodeNotificationSoundLocal(r io.Reader) (*NotificationSoundLocal, error) {
+func DecodeNotificationSoundLocal(r *Reader) (*NotificationSoundLocal, error) {
 	v := &NotificationSoundLocal{}
-	v.Title = ReadString(r)
-	v.Data = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rData, _eData := r.ReadString()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
 	return v, nil
 }
 
 func init() {
-	Registry[NotificationSoundLocalTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotificationSoundLocalTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotificationSoundLocal(r)
 	}
 }
@@ -7065,14 +10448,18 @@ func (v *NotificationSoundRingtone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotificationSoundRingtone deserializes a NotificationSoundRingtone from a reader using the TL binary protocol.
-func DecodeNotificationSoundRingtone(r io.Reader) (*NotificationSoundRingtone, error) {
+func DecodeNotificationSoundRingtone(r *Reader) (*NotificationSoundRingtone, error) {
 	v := &NotificationSoundRingtone{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[NotificationSoundRingtoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotificationSoundRingtoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotificationSoundRingtone(r)
 	}
 }
@@ -7125,15 +10512,23 @@ func (v *EmailVerifyPurposeLoginSetup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerifyPurposeLoginSetup deserializes a EmailVerifyPurposeLoginSetup from a reader using the TL binary protocol.
-func DecodeEmailVerifyPurposeLoginSetup(r io.Reader) (*EmailVerifyPurposeLoginSetup, error) {
+func DecodeEmailVerifyPurposeLoginSetup(r *Reader) (*EmailVerifyPurposeLoginSetup, error) {
 	v := &EmailVerifyPurposeLoginSetup{}
-	v.PhoneNumber = ReadString(r)
-	v.PhoneCodeHash = ReadString(r)
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_rPhoneCodeHash, _ePhoneCodeHash := r.ReadString()
+	if _ePhoneCodeHash != nil {
+		return nil, _ePhoneCodeHash
+	}
+	v.PhoneCodeHash = _rPhoneCodeHash
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerifyPurposeLoginSetupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerifyPurposeLoginSetupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerifyPurposeLoginSetup(r)
 	}
 }
@@ -7156,13 +10551,13 @@ func (v *EmailVerifyPurposeLoginChange) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerifyPurposeLoginChange deserializes a EmailVerifyPurposeLoginChange from a reader using the TL binary protocol.
-func DecodeEmailVerifyPurposeLoginChange(r io.Reader) (*EmailVerifyPurposeLoginChange, error) {
+func DecodeEmailVerifyPurposeLoginChange(r *Reader) (*EmailVerifyPurposeLoginChange, error) {
 	v := &EmailVerifyPurposeLoginChange{}
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerifyPurposeLoginChangeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerifyPurposeLoginChangeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerifyPurposeLoginChange(r)
 	}
 }
@@ -7185,13 +10580,13 @@ func (v *EmailVerifyPurposePassport) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerifyPurposePassport deserializes a EmailVerifyPurposePassport from a reader using the TL binary protocol.
-func DecodeEmailVerifyPurposePassport(r io.Reader) (*EmailVerifyPurposePassport, error) {
+func DecodeEmailVerifyPurposePassport(r *Reader) (*EmailVerifyPurposePassport, error) {
 	v := &EmailVerifyPurposePassport{}
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerifyPurposePassportTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerifyPurposePassportTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerifyPurposePassport(r)
 	}
 }
@@ -7242,14 +10637,18 @@ func (v *EmailVerificationCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerificationCode deserializes a EmailVerificationCode from a reader using the TL binary protocol.
-func DecodeEmailVerificationCode(r io.Reader) (*EmailVerificationCode, error) {
+func DecodeEmailVerificationCode(r *Reader) (*EmailVerificationCode, error) {
 	v := &EmailVerificationCode{}
-	v.Code = ReadString(r)
+	_rCode, _eCode := r.ReadString()
+	if _eCode != nil {
+		return nil, _eCode
+	}
+	v.Code = _rCode
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerificationCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerificationCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerificationCode(r)
 	}
 }
@@ -7274,14 +10673,18 @@ func (v *EmailVerificationGoogle) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerificationGoogle deserializes a EmailVerificationGoogle from a reader using the TL binary protocol.
-func DecodeEmailVerificationGoogle(r io.Reader) (*EmailVerificationGoogle, error) {
+func DecodeEmailVerificationGoogle(r *Reader) (*EmailVerificationGoogle, error) {
 	v := &EmailVerificationGoogle{}
-	v.Token = ReadString(r)
+	_rToken, _eToken := r.ReadString()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerificationGoogleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerificationGoogleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerificationGoogle(r)
 	}
 }
@@ -7306,14 +10709,18 @@ func (v *EmailVerificationApple) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEmailVerificationApple deserializes a EmailVerificationApple from a reader using the TL binary protocol.
-func DecodeEmailVerificationApple(r io.Reader) (*EmailVerificationApple, error) {
+func DecodeEmailVerificationApple(r *Reader) (*EmailVerificationApple, error) {
 	v := &EmailVerificationApple{}
-	v.Token = ReadString(r)
+	_rToken, _eToken := r.ReadString()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
 	return v, nil
 }
 
 func init() {
-	Registry[EmailVerificationAppleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EmailVerificationAppleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEmailVerificationApple(r)
 	}
 }
@@ -7347,24 +10754,38 @@ func (v *TextWithEntities) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextWithEntities deserializes a TextWithEntities from a reader using the TL binary protocol.
-func DecodeTextWithEntities(r io.Reader) (*TextWithEntities, error) {
+func DecodeTextWithEntities(r *Reader) (*TextWithEntities, error) {
 	v := &TextWithEntities{}
-	v.Text = ReadString(r)
-	ReadInt(r)
-	_cntEntities := ReadInt(r)
-	if err := checkVectorCount(_cntEntities); err != nil {
-		return nil, err
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
+	_vhdrEntities, _ehdrEntities := r.ReadUint32()
+	if _ehdrEntities != nil {
+		return nil, _ehdrEntities
+	}
+	_cntEntities, _ecntEntities := r.ReadUint32()
+	if _ecntEntities != nil {
+		return nil, _ecntEntities
+	}
+	if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
-		_objEntities, _ := ReadTLObject(r)
+		_objEntities, _errEntities := ReadTLObject(r)
+		if _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 	}
+	_ = _vhdrEntities
 	return v, nil
 }
 
 func init() {
-	Registry[TextWithEntitiesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextWithEntitiesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextWithEntities(r)
 	}
 }
@@ -7482,54 +10903,94 @@ func (v *InputReplyToMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReplyToMessage deserializes a InputReplyToMessage from a reader using the TL binary protocol.
-func DecodeInputReplyToMessage(r io.Reader) (*InputReplyToMessage, error) {
+func DecodeInputReplyToMessage(r *Reader) (*InputReplyToMessage, error) {
 	v := &InputReplyToMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ReplyToMsgID = int32(ReadInt(r))
+	_rReplyToMsgID, _eReplyToMsgID := r.ReadInt32()
+	if _eReplyToMsgID != nil {
+		return nil, _eReplyToMsgID
+	}
+	v.ReplyToMsgID = _rReplyToMsgID
 	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
 	if v.Flags.Has(1) {
-		_objReplyToPeerID, _ := ReadTLObject(r)
+		_objReplyToPeerID, _errReplyToPeerID := ReadTLObject(r)
+		if _errReplyToPeerID != nil {
+			return nil, _errReplyToPeerID
+		}
 		v.ReplyToPeerID = _objReplyToPeerID.(InputPeerClass)
 	}
 	if v.Flags.Has(2) {
-		v.QuoteText = ReadString(r)
+		_rQuoteText, _eQuoteText := r.ReadString()
+		if _eQuoteText != nil {
+			return nil, _eQuoteText
+		}
+		v.QuoteText = _rQuoteText
 	}
 	if v.Flags.Has(3) {
-		ReadInt(r)
-		_cntQuoteEntities := ReadInt(r)
-		if err := checkVectorCount(_cntQuoteEntities); err != nil {
-			return nil, err
+		_vhdrQuoteEntities, _ehdrQuoteEntities := r.ReadUint32()
+		if _ehdrQuoteEntities != nil {
+			return nil, _ehdrQuoteEntities
+		}
+		_cntQuoteEntities, _ecntQuoteEntities := r.ReadUint32()
+		if _ecntQuoteEntities != nil {
+			return nil, _ecntQuoteEntities
+		}
+		if _errQuoteEntities := checkVectorCount(_cntQuoteEntities); _errQuoteEntities != nil {
+			return nil, _errQuoteEntities
 		}
 		v.QuoteEntities = make([]MessageEntityClass, _cntQuoteEntities)
 		for _iQuoteEntities := range v.QuoteEntities {
-			_objQuoteEntities, _ := ReadTLObject(r)
+			_objQuoteEntities, _errQuoteEntities := ReadTLObject(r)
+			if _errQuoteEntities != nil {
+				return nil, _errQuoteEntities
+			}
 			v.QuoteEntities[_iQuoteEntities] = _objQuoteEntities.(MessageEntityClass)
 		}
+		_ = _vhdrQuoteEntities
 	}
 	if v.Flags.Has(4) {
-		v.QuoteOffset = int32(ReadInt(r))
+		_rQuoteOffset, _eQuoteOffset := r.ReadInt32()
+		if _eQuoteOffset != nil {
+			return nil, _eQuoteOffset
+		}
+		v.QuoteOffset = _rQuoteOffset
 	}
 	if v.Flags.Has(5) {
-		_objMonoforumPeerID, _ := ReadTLObject(r)
+		_objMonoforumPeerID, _errMonoforumPeerID := ReadTLObject(r)
+		if _errMonoforumPeerID != nil {
+			return nil, _errMonoforumPeerID
+		}
 		v.MonoforumPeerID = _objMonoforumPeerID.(InputPeerClass)
 	}
 	if v.Flags.Has(6) {
-		v.TodoItemID = int32(ReadInt(r))
+		_rTodoItemID, _eTodoItemID := r.ReadInt32()
+		if _eTodoItemID != nil {
+			return nil, _eTodoItemID
+		}
+		v.TodoItemID = _rTodoItemID
 	}
 	if v.Flags.Has(7) {
-		v.PollOption = ReadBytes(r)
+		_rPollOption, _ePollOption := r.ReadBytes()
+		if _ePollOption != nil {
+			return nil, _ePollOption
+		}
+		v.PollOption = _rPollOption
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputReplyToMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReplyToMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReplyToMessage(r)
 	}
 }
@@ -7556,16 +11017,23 @@ func (v *InputReplyToStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReplyToStory deserializes a InputReplyToStory from a reader using the TL binary protocol.
-func DecodeInputReplyToStory(r io.Reader) (*InputReplyToStory, error) {
+func DecodeInputReplyToStory(r *Reader) (*InputReplyToStory, error) {
 	v := &InputReplyToStory{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.StoryID = int32(ReadInt(r))
+	_rStoryID, _eStoryID := r.ReadInt32()
+	if _eStoryID != nil {
+		return nil, _eStoryID
+	}
+	v.StoryID = _rStoryID
 	return v, nil
 }
 
 func init() {
-	Registry[InputReplyToStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReplyToStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReplyToStory(r)
 	}
 }
@@ -7590,15 +11058,18 @@ func (v *InputReplyToMonoForum) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputReplyToMonoForum deserializes a InputReplyToMonoForum from a reader using the TL binary protocol.
-func DecodeInputReplyToMonoForum(r io.Reader) (*InputReplyToMonoForum, error) {
+func DecodeInputReplyToMonoForum(r *Reader) (*InputReplyToMonoForum, error) {
 	v := &InputReplyToMonoForum{}
-	_objMonoforumPeerID, _ := ReadTLObject(r)
+	_objMonoforumPeerID, _errMonoforumPeerID := ReadTLObject(r)
+	if _errMonoforumPeerID != nil {
+		return nil, _errMonoforumPeerID
+	}
 	v.MonoforumPeerID = _objMonoforumPeerID.(InputPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputReplyToMonoForumTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputReplyToMonoForumTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReplyToMonoForum(r)
 	}
 }
@@ -7648,26 +11119,50 @@ func (v *MediaAreaCoordinates) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaCoordinates deserializes a MediaAreaCoordinates from a reader using the TL binary protocol.
-func DecodeMediaAreaCoordinates(r io.Reader) (*MediaAreaCoordinates, error) {
+func DecodeMediaAreaCoordinates(r *Reader) (*MediaAreaCoordinates, error) {
 	v := &MediaAreaCoordinates{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.X = ReadDouble(r)
-	v.Y = ReadDouble(r)
-	v.W = ReadDouble(r)
-	v.H = ReadDouble(r)
-	v.Rotation = ReadDouble(r)
+	_rX, _eX := r.ReadFloat64()
+	if _eX != nil {
+		return nil, _eX
+	}
+	v.X = _rX
+	_rY, _eY := r.ReadFloat64()
+	if _eY != nil {
+		return nil, _eY
+	}
+	v.Y = _rY
+	_rW, _eW := r.ReadFloat64()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadFloat64()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rRotation, _eRotation := r.ReadFloat64()
+	if _eRotation != nil {
+		return nil, _eRotation
+	}
+	v.Rotation = _rRotation
 	if v.Flags.Has(0) {
-		v.Radius = ReadDouble(r)
+		_rRadius, _eRadius := r.ReadFloat64()
+		if _eRadius != nil {
+			return nil, _eRadius
+		}
+		v.Radius = _rRadius
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaCoordinatesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaCoordinatesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaCoordinates(r)
 	}
 }
@@ -7766,22 +11261,48 @@ func (v *MediaAreaVenue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaVenue deserializes a MediaAreaVenue from a reader using the TL binary protocol.
-func DecodeMediaAreaVenue(r io.Reader) (*MediaAreaVenue, error) {
+func DecodeMediaAreaVenue(r *Reader) (*MediaAreaVenue, error) {
 	v := &MediaAreaVenue{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	_objGeo, _ := ReadTLObject(r)
+	_objGeo, _errGeo := ReadTLObject(r)
+	if _errGeo != nil {
+		return nil, _errGeo
+	}
 	v.Geo = _objGeo.(GeoPointClass)
-	v.Title = ReadString(r)
-	v.Address = ReadString(r)
-	v.Provider = ReadString(r)
-	v.VenueID = ReadString(r)
-	v.VenueType = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rProvider, _eProvider := r.ReadString()
+	if _eProvider != nil {
+		return nil, _eProvider
+	}
+	v.Provider = _rProvider
+	_rVenueID, _eVenueID := r.ReadString()
+	if _eVenueID != nil {
+		return nil, _eVenueID
+	}
+	v.VenueID = _rVenueID
+	_rVenueType, _eVenueType := r.ReadString()
+	if _eVenueType != nil {
+		return nil, _eVenueType
+	}
+	v.VenueType = _rVenueType
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaVenueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaVenueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaVenue(r)
 	}
 }
@@ -7810,17 +11331,28 @@ func (v *InputMediaAreaVenue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaAreaVenue deserializes a InputMediaAreaVenue from a reader using the TL binary protocol.
-func DecodeInputMediaAreaVenue(r io.Reader) (*InputMediaAreaVenue, error) {
+func DecodeInputMediaAreaVenue(r *Reader) (*InputMediaAreaVenue, error) {
 	v := &InputMediaAreaVenue{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	v.QueryID = ReadLong(r)
-	v.ResultID = ReadString(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rResultID, _eResultID := r.ReadString()
+	if _eResultID != nil {
+		return nil, _eResultID
+	}
+	v.ResultID = _rResultID
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaAreaVenueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaAreaVenueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaAreaVenue(r)
 	}
 }
@@ -7861,26 +11393,35 @@ func (v *MediaAreaGeoPoint) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaGeoPoint deserializes a MediaAreaGeoPoint from a reader using the TL binary protocol.
-func DecodeMediaAreaGeoPoint(r io.Reader) (*MediaAreaGeoPoint, error) {
+func DecodeMediaAreaGeoPoint(r *Reader) (*MediaAreaGeoPoint, error) {
 	v := &MediaAreaGeoPoint{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	_objGeo, _ := ReadTLObject(r)
+	_objGeo, _errGeo := ReadTLObject(r)
+	if _errGeo != nil {
+		return nil, _errGeo
+	}
 	v.Geo = _objGeo.(GeoPointClass)
 	if v.Flags.Has(0) {
-		_objAddress, _ := ReadTLObject(r)
+		_objAddress, _errAddress := ReadTLObject(r)
+		if _errAddress != nil {
+			return nil, _errAddress
+		}
 		v.Address = _objAddress.(*GeoPointAddress)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaGeoPointTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaGeoPointTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaGeoPoint(r)
 	}
 }
@@ -7922,24 +11463,30 @@ func (v *MediaAreaSuggestedReaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaSuggestedReaction deserializes a MediaAreaSuggestedReaction from a reader using the TL binary protocol.
-func DecodeMediaAreaSuggestedReaction(r io.Reader) (*MediaAreaSuggestedReaction, error) {
+func DecodeMediaAreaSuggestedReaction(r *Reader) (*MediaAreaSuggestedReaction, error) {
 	v := &MediaAreaSuggestedReaction{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Dark = v.Flags.Has(0)
 	v.Flipped = v.Flags.Has(1)
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	_objReaction, _ := ReadTLObject(r)
+	_objReaction, _errReaction := ReadTLObject(r)
+	if _errReaction != nil {
+		return nil, _errReaction
+	}
 	v.Reaction = _objReaction.(ReactionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaSuggestedReactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaSuggestedReactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaSuggestedReaction(r)
 	}
 }
@@ -7968,17 +11515,28 @@ func (v *MediaAreaChannelPost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaChannelPost deserializes a MediaAreaChannelPost from a reader using the TL binary protocol.
-func DecodeMediaAreaChannelPost(r io.Reader) (*MediaAreaChannelPost, error) {
+func DecodeMediaAreaChannelPost(r *Reader) (*MediaAreaChannelPost, error) {
 	v := &MediaAreaChannelPost{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	v.ChannelID = ReadLong(r)
-	v.MsgID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaChannelPostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaChannelPostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaChannelPost(r)
 	}
 }
@@ -8007,18 +11565,28 @@ func (v *InputMediaAreaChannelPost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputMediaAreaChannelPost deserializes a InputMediaAreaChannelPost from a reader using the TL binary protocol.
-func DecodeInputMediaAreaChannelPost(r io.Reader) (*InputMediaAreaChannelPost, error) {
+func DecodeInputMediaAreaChannelPost(r *Reader) (*InputMediaAreaChannelPost, error) {
 	v := &InputMediaAreaChannelPost{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	_objChannel, _ := ReadTLObject(r)
+	_objChannel, _errChannel := ReadTLObject(r)
+	if _errChannel != nil {
+		return nil, _errChannel
+	}
 	v.Channel = _objChannel.(InputChannelClass)
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[InputMediaAreaChannelPostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputMediaAreaChannelPostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaAreaChannelPost(r)
 	}
 }
@@ -8045,16 +11613,23 @@ func (v *MediaAreaURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaURL deserializes a MediaAreaURL from a reader using the TL binary protocol.
-func DecodeMediaAreaURL(r io.Reader) (*MediaAreaURL, error) {
+func DecodeMediaAreaURL(r *Reader) (*MediaAreaURL, error) {
 	v := &MediaAreaURL{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaURL(r)
 	}
 }
@@ -8085,18 +11660,33 @@ func (v *MediaAreaWeather) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaWeather deserializes a MediaAreaWeather from a reader using the TL binary protocol.
-func DecodeMediaAreaWeather(r io.Reader) (*MediaAreaWeather, error) {
+func DecodeMediaAreaWeather(r *Reader) (*MediaAreaWeather, error) {
 	v := &MediaAreaWeather{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	v.Emoji = ReadString(r)
-	v.TemperatureC = ReadDouble(r)
-	v.Color = int32(ReadInt(r))
+	_rEmoji, _eEmoji := r.ReadString()
+	if _eEmoji != nil {
+		return nil, _eEmoji
+	}
+	v.Emoji = _rEmoji
+	_rTemperatureC, _eTemperatureC := r.ReadFloat64()
+	if _eTemperatureC != nil {
+		return nil, _eTemperatureC
+	}
+	v.TemperatureC = _rTemperatureC
+	_rColor, _eColor := r.ReadInt32()
+	if _eColor != nil {
+		return nil, _eColor
+	}
+	v.Color = _rColor
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaWeatherTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaWeatherTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaWeather(r)
 	}
 }
@@ -8123,16 +11713,23 @@ func (v *MediaAreaStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMediaAreaStarGift deserializes a MediaAreaStarGift from a reader using the TL binary protocol.
-func DecodeMediaAreaStarGift(r io.Reader) (*MediaAreaStarGift, error) {
+func DecodeMediaAreaStarGift(r *Reader) (*MediaAreaStarGift, error) {
 	v := &MediaAreaStarGift{}
-	_objCoordinates, _ := ReadTLObject(r)
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
 	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[MediaAreaStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MediaAreaStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMediaAreaStarGift(r)
 	}
 }
@@ -8183,17 +11780,33 @@ func (v *PostInteractionCountersMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePostInteractionCountersMessage deserializes a PostInteractionCountersMessage from a reader using the TL binary protocol.
-func DecodePostInteractionCountersMessage(r io.Reader) (*PostInteractionCountersMessage, error) {
+func DecodePostInteractionCountersMessage(r *Reader) (*PostInteractionCountersMessage, error) {
 	v := &PostInteractionCountersMessage{}
-	v.MsgID = int32(ReadInt(r))
-	v.Views = int32(ReadInt(r))
-	v.Forwards = int32(ReadInt(r))
-	v.Reactions = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rViews, _eViews := r.ReadInt32()
+	if _eViews != nil {
+		return nil, _eViews
+	}
+	v.Views = _rViews
+	_rForwards, _eForwards := r.ReadInt32()
+	if _eForwards != nil {
+		return nil, _eForwards
+	}
+	v.Forwards = _rForwards
+	_rReactions, _eReactions := r.ReadInt32()
+	if _eReactions != nil {
+		return nil, _eReactions
+	}
+	v.Reactions = _rReactions
 	return v, nil
 }
 
 func init() {
-	Registry[PostInteractionCountersMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PostInteractionCountersMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePostInteractionCountersMessage(r)
 	}
 }
@@ -8224,17 +11837,33 @@ func (v *PostInteractionCountersStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePostInteractionCountersStory deserializes a PostInteractionCountersStory from a reader using the TL binary protocol.
-func DecodePostInteractionCountersStory(r io.Reader) (*PostInteractionCountersStory, error) {
+func DecodePostInteractionCountersStory(r *Reader) (*PostInteractionCountersStory, error) {
 	v := &PostInteractionCountersStory{}
-	v.StoryID = int32(ReadInt(r))
-	v.Views = int32(ReadInt(r))
-	v.Forwards = int32(ReadInt(r))
-	v.Reactions = int32(ReadInt(r))
+	_rStoryID, _eStoryID := r.ReadInt32()
+	if _eStoryID != nil {
+		return nil, _eStoryID
+	}
+	v.StoryID = _rStoryID
+	_rViews, _eViews := r.ReadInt32()
+	if _eViews != nil {
+		return nil, _eViews
+	}
+	v.Views = _rViews
+	_rForwards, _eForwards := r.ReadInt32()
+	if _eForwards != nil {
+		return nil, _eForwards
+	}
+	v.Forwards = _rForwards
+	_rReactions, _eReactions := r.ReadInt32()
+	if _eReactions != nil {
+		return nil, _eReactions
+	}
+	v.Reactions = _rReactions
 	return v, nil
 }
 
 func init() {
-	Registry[PostInteractionCountersStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PostInteractionCountersStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePostInteractionCountersStory(r)
 	}
 }
@@ -8279,15 +11908,18 @@ func (v *PublicForwardMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePublicForwardMessage deserializes a PublicForwardMessage from a reader using the TL binary protocol.
-func DecodePublicForwardMessage(r io.Reader) (*PublicForwardMessage, error) {
+func DecodePublicForwardMessage(r *Reader) (*PublicForwardMessage, error) {
 	v := &PublicForwardMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PublicForwardMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PublicForwardMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePublicForwardMessage(r)
 	}
 }
@@ -8314,17 +11946,23 @@ func (v *PublicForwardStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePublicForwardStory deserializes a PublicForwardStory from a reader using the TL binary protocol.
-func DecodePublicForwardStory(r io.Reader) (*PublicForwardStory, error) {
+func DecodePublicForwardStory(r *Reader) (*PublicForwardStory, error) {
 	v := &PublicForwardStory{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objStory, _ := ReadTLObject(r)
+	_objStory, _errStory := ReadTLObject(r)
+	if _errStory != nil {
+		return nil, _errStory
+	}
 	v.Story = _objStory.(StoryItemClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PublicForwardStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PublicForwardStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePublicForwardStory(r)
 	}
 }
@@ -8352,14 +11990,18 @@ func (v *OutboxReadDate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeOutboxReadDate deserializes a OutboxReadDate from a reader using the TL binary protocol.
-func DecodeOutboxReadDate(r io.Reader) (*OutboxReadDate, error) {
+func DecodeOutboxReadDate(r *Reader) (*OutboxReadDate, error) {
 	v := &OutboxReadDate{}
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[OutboxReadDateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[OutboxReadDateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeOutboxReadDate(r)
 	}
 }
@@ -8391,16 +12033,28 @@ func (v *Timezone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTimezone deserializes a Timezone from a reader using the TL binary protocol.
-func DecodeTimezone(r io.Reader) (*Timezone, error) {
+func DecodeTimezone(r *Reader) (*Timezone, error) {
 	v := &Timezone{}
-	v.ID = ReadString(r)
-	v.Name = ReadString(r)
-	v.UTCOffset = int32(ReadInt(r))
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_rUTCOffset, _eUTCOffset := r.ReadInt32()
+	if _eUTCOffset != nil {
+		return nil, _eUTCOffset
+	}
+	v.UTCOffset = _rUTCOffset
 	return v, nil
 }
 
 func init() {
-	Registry[TimezoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TimezoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTimezone(r)
 	}
 }
@@ -8445,14 +12099,18 @@ func (v *InputCollectibleUsername) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputCollectibleUsername deserializes a InputCollectibleUsername from a reader using the TL binary protocol.
-func DecodeInputCollectibleUsername(r io.Reader) (*InputCollectibleUsername, error) {
+func DecodeInputCollectibleUsername(r *Reader) (*InputCollectibleUsername, error) {
 	v := &InputCollectibleUsername{}
-	v.Username = ReadString(r)
+	_rUsername, _eUsername := r.ReadString()
+	if _eUsername != nil {
+		return nil, _eUsername
+	}
+	v.Username = _rUsername
 	return v, nil
 }
 
 func init() {
-	Registry[InputCollectibleUsernameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputCollectibleUsernameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputCollectibleUsername(r)
 	}
 }
@@ -8477,14 +12135,18 @@ func (v *InputCollectiblePhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputCollectiblePhone deserializes a InputCollectiblePhone from a reader using the TL binary protocol.
-func DecodeInputCollectiblePhone(r io.Reader) (*InputCollectiblePhone, error) {
+func DecodeInputCollectiblePhone(r *Reader) (*InputCollectiblePhone, error) {
 	v := &InputCollectiblePhone{}
-	v.Phone = ReadString(r)
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
 	return v, nil
 }
 
 func init() {
-	Registry[InputCollectiblePhoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputCollectiblePhoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputCollectiblePhone(r)
 	}
 }
@@ -8541,28 +12203,48 @@ func (v *AvailableEffect) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAvailableEffect deserializes a AvailableEffect from a reader using the TL binary protocol.
-func DecodeAvailableEffect(r io.Reader) (*AvailableEffect, error) {
+func DecodeAvailableEffect(r *Reader) (*AvailableEffect, error) {
 	v := &AvailableEffect{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.PremiumRequired = v.Flags.Has(2)
-	v.ID = ReadLong(r)
-	v.Emoticon = ReadString(r)
-	if v.Flags.Has(0) {
-		v.StaticIconID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
 	}
-	v.EffectStickerID = ReadLong(r)
+	v.ID = _rID
+	_rEmoticon, _eEmoticon := r.ReadString()
+	if _eEmoticon != nil {
+		return nil, _eEmoticon
+	}
+	v.Emoticon = _rEmoticon
+	if v.Flags.Has(0) {
+		_rStaticIconID, _eStaticIconID := r.ReadInt64()
+		if _eStaticIconID != nil {
+			return nil, _eStaticIconID
+		}
+		v.StaticIconID = _rStaticIconID
+	}
+	_rEffectStickerID, _eEffectStickerID := r.ReadInt64()
+	if _eEffectStickerID != nil {
+		return nil, _eEffectStickerID
+	}
+	v.EffectStickerID = _rEffectStickerID
 	if v.Flags.Has(1) {
-		v.EffectAnimationID = ReadLong(r)
+		_rEffectAnimationID, _eEffectAnimationID := r.ReadInt64()
+		if _eEffectAnimationID != nil {
+			return nil, _eEffectAnimationID
+		}
+		v.EffectAnimationID = _rEffectAnimationID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AvailableEffectTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AvailableEffectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAvailableEffect(r)
 	}
 }
@@ -8615,27 +12297,38 @@ func (v *FactCheck) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFactCheck deserializes a FactCheck from a reader using the TL binary protocol.
-func DecodeFactCheck(r io.Reader) (*FactCheck, error) {
+func DecodeFactCheck(r *Reader) (*FactCheck, error) {
 	v := &FactCheck{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NeedCheck = v.Flags.Has(0)
 	if v.Flags.Has(1) {
-		v.Country = ReadString(r)
+		_rCountry, _eCountry := r.ReadString()
+		if _eCountry != nil {
+			return nil, _eCountry
+		}
+		v.Country = _rCountry
 	}
 	if v.Flags.Has(1) {
-		_objText, _ := ReadTLObject(r)
+		_objText, _errText := ReadTLObject(r)
+		if _errText != nil {
+			return nil, _errText
+		}
 		v.Text = _objText.(*TextWithEntities)
 	}
-	v.Hash = ReadLong(r)
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[FactCheckTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[FactCheckTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeFactCheck(r)
 	}
 }
@@ -8692,24 +12385,38 @@ func (v *ReportResultChooseOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReportResultChooseOption deserializes a ReportResultChooseOption from a reader using the TL binary protocol.
-func DecodeReportResultChooseOption(r io.Reader) (*ReportResultChooseOption, error) {
+func DecodeReportResultChooseOption(r *Reader) (*ReportResultChooseOption, error) {
 	v := &ReportResultChooseOption{}
-	v.Title = ReadString(r)
-	ReadInt(r)
-	_cntOptions := ReadInt(r)
-	if err := checkVectorCount(_cntOptions); err != nil {
-		return nil, err
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_vhdrOptions, _ehdrOptions := r.ReadUint32()
+	if _ehdrOptions != nil {
+		return nil, _ehdrOptions
+	}
+	_cntOptions, _ecntOptions := r.ReadUint32()
+	if _ecntOptions != nil {
+		return nil, _ecntOptions
+	}
+	if _errOptions := checkVectorCount(_cntOptions); _errOptions != nil {
+		return nil, _errOptions
 	}
 	v.Options = make([]*MessageReportOption, _cntOptions)
 	for _iOptions := range v.Options {
-		_objOptions, _ := ReadTLObject(r)
+		_objOptions, _errOptions := ReadTLObject(r)
+		if _errOptions != nil {
+			return nil, _errOptions
+		}
 		v.Options[_iOptions] = _objOptions.(*MessageReportOption)
 	}
+	_ = _vhdrOptions
 	return v, nil
 }
 
 func init() {
-	Registry[ReportResultChooseOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReportResultChooseOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReportResultChooseOption(r)
 	}
 }
@@ -8745,20 +12452,24 @@ func (v *ReportResultAddComment) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReportResultAddComment deserializes a ReportResultAddComment from a reader using the TL binary protocol.
-func DecodeReportResultAddComment(r io.Reader) (*ReportResultAddComment, error) {
+func DecodeReportResultAddComment(r *Reader) (*ReportResultAddComment, error) {
 	v := &ReportResultAddComment{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Optional = v.Flags.Has(0)
-	v.Option = ReadBytes(r)
+	_rOption, _eOption := r.ReadBytes()
+	if _eOption != nil {
+		return nil, _eOption
+	}
+	v.Option = _rOption
 	return v, nil
 }
 
 func init() {
-	Registry[ReportResultAddCommentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReportResultAddCommentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReportResultAddComment(r)
 	}
 }
@@ -8781,13 +12492,13 @@ func (v *ReportResultReported) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReportResultReported deserializes a ReportResultReported from a reader using the TL binary protocol.
-func DecodeReportResultReported(r io.Reader) (*ReportResultReported, error) {
+func DecodeReportResultReported(r *Reader) (*ReportResultReported, error) {
 	v := &ReportResultReported{}
 	return v, nil
 }
 
 func init() {
-	Registry[ReportResultReportedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReportResultReportedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReportResultReported(r)
 	}
 }
@@ -8840,11 +12551,11 @@ func (v *DisallowedGiftsSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDisallowedGiftsSettings deserializes a DisallowedGiftsSettings from a reader using the TL binary protocol.
-func DecodeDisallowedGiftsSettings(r io.Reader) (*DisallowedGiftsSettings, error) {
+func DecodeDisallowedGiftsSettings(r *Reader) (*DisallowedGiftsSettings, error) {
 	v := &DisallowedGiftsSettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.DisallowUnlimitedStargifts = v.Flags.Has(0)
@@ -8856,7 +12567,7 @@ func DecodeDisallowedGiftsSettings(r io.Reader) (*DisallowedGiftsSettings, error
 }
 
 func init() {
-	Registry[DisallowedGiftsSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DisallowedGiftsSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDisallowedGiftsSettings(r)
 	}
 }
@@ -8890,19 +12601,33 @@ func (v *PendingSuggestion) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePendingSuggestion deserializes a PendingSuggestion from a reader using the TL binary protocol.
-func DecodePendingSuggestion(r io.Reader) (*PendingSuggestion, error) {
+func DecodePendingSuggestion(r *Reader) (*PendingSuggestion, error) {
 	v := &PendingSuggestion{}
-	v.Suggestion = ReadString(r)
-	_objTitle, _ := ReadTLObject(r)
+	_rSuggestion, _eSuggestion := r.ReadString()
+	if _eSuggestion != nil {
+		return nil, _eSuggestion
+	}
+	v.Suggestion = _rSuggestion
+	_objTitle, _errTitle := ReadTLObject(r)
+	if _errTitle != nil {
+		return nil, _errTitle
+	}
 	v.Title = _objTitle.(*TextWithEntities)
-	_objDescription, _ := ReadTLObject(r)
+	_objDescription, _errDescription := ReadTLObject(r)
+	if _errDescription != nil {
+		return nil, _errDescription
+	}
 	v.Description = _objDescription.(*TextWithEntities)
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PendingSuggestionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PendingSuggestionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePendingSuggestion(r)
 	}
 }
@@ -8957,27 +12682,34 @@ func (v *SuggestedPost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSuggestedPost deserializes a SuggestedPost from a reader using the TL binary protocol.
-func DecodeSuggestedPost(r io.Reader) (*SuggestedPost, error) {
+func DecodeSuggestedPost(r *Reader) (*SuggestedPost, error) {
 	v := &SuggestedPost{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Accepted = v.Flags.Has(1)
 	v.Rejected = v.Flags.Has(2)
 	if v.Flags.Has(3) {
-		_objPrice, _ := ReadTLObject(r)
+		_objPrice, _errPrice := ReadTLObject(r)
+		if _errPrice != nil {
+			return nil, _errPrice
+		}
 		v.Price = _objPrice.(StarsAmountClass)
 	}
 	if v.Flags.Has(0) {
-		v.ScheduleDate = int32(ReadInt(r))
+		_rScheduleDate, _eScheduleDate := r.ReadInt32()
+		if _eScheduleDate != nil {
+			return nil, _eScheduleDate
+		}
+		v.ScheduleDate = _rScheduleDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[SuggestedPostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SuggestedPostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSuggestedPost(r)
 	}
 }
@@ -9027,25 +12759,41 @@ func (v *SearchPostsFlood) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSearchPostsFlood deserializes a SearchPostsFlood from a reader using the TL binary protocol.
-func DecodeSearchPostsFlood(r io.Reader) (*SearchPostsFlood, error) {
+func DecodeSearchPostsFlood(r *Reader) (*SearchPostsFlood, error) {
 	v := &SearchPostsFlood{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.QueryIsFree = v.Flags.Has(0)
-	v.TotalDaily = int32(ReadInt(r))
-	v.Remains = int32(ReadInt(r))
-	if v.Flags.Has(1) {
-		v.WaitTill = int32(ReadInt(r))
+	_rTotalDaily, _eTotalDaily := r.ReadInt32()
+	if _eTotalDaily != nil {
+		return nil, _eTotalDaily
 	}
-	v.StarsAmount = ReadLong(r)
+	v.TotalDaily = _rTotalDaily
+	_rRemains, _eRemains := r.ReadInt32()
+	if _eRemains != nil {
+		return nil, _eRemains
+	}
+	v.Remains = _rRemains
+	if v.Flags.Has(1) {
+		_rWaitTill, _eWaitTill := r.ReadInt32()
+		if _eWaitTill != nil {
+			return nil, _eWaitTill
+		}
+		v.WaitTill = _rWaitTill
+	}
+	_rStarsAmount, _eStarsAmount := r.ReadInt64()
+	if _eStarsAmount != nil {
+		return nil, _eStarsAmount
+	}
+	v.StarsAmount = _rStarsAmount
 	return v, nil
 }
 
 func init() {
-	Registry[SearchPostsFloodTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SearchPostsFloodTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSearchPostsFlood(r)
 	}
 }
@@ -9124,13 +12872,13 @@ func (v *ProfileTabPosts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabPosts deserializes a ProfileTabPosts from a reader using the TL binary protocol.
-func DecodeProfileTabPosts(r io.Reader) (*ProfileTabPosts, error) {
+func DecodeProfileTabPosts(r *Reader) (*ProfileTabPosts, error) {
 	v := &ProfileTabPosts{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabPostsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabPostsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabPosts(r)
 	}
 }
@@ -9153,13 +12901,13 @@ func (v *ProfileTabGifts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabGifts deserializes a ProfileTabGifts from a reader using the TL binary protocol.
-func DecodeProfileTabGifts(r io.Reader) (*ProfileTabGifts, error) {
+func DecodeProfileTabGifts(r *Reader) (*ProfileTabGifts, error) {
 	v := &ProfileTabGifts{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabGiftsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabGiftsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabGifts(r)
 	}
 }
@@ -9182,13 +12930,13 @@ func (v *ProfileTabMedia) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabMedia deserializes a ProfileTabMedia from a reader using the TL binary protocol.
-func DecodeProfileTabMedia(r io.Reader) (*ProfileTabMedia, error) {
+func DecodeProfileTabMedia(r *Reader) (*ProfileTabMedia, error) {
 	v := &ProfileTabMedia{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabMediaTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabMediaTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabMedia(r)
 	}
 }
@@ -9211,13 +12959,13 @@ func (v *ProfileTabFiles) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabFiles deserializes a ProfileTabFiles from a reader using the TL binary protocol.
-func DecodeProfileTabFiles(r io.Reader) (*ProfileTabFiles, error) {
+func DecodeProfileTabFiles(r *Reader) (*ProfileTabFiles, error) {
 	v := &ProfileTabFiles{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabFilesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabFilesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabFiles(r)
 	}
 }
@@ -9240,13 +12988,13 @@ func (v *ProfileTabMusic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabMusic deserializes a ProfileTabMusic from a reader using the TL binary protocol.
-func DecodeProfileTabMusic(r io.Reader) (*ProfileTabMusic, error) {
+func DecodeProfileTabMusic(r *Reader) (*ProfileTabMusic, error) {
 	v := &ProfileTabMusic{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabMusicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabMusicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabMusic(r)
 	}
 }
@@ -9269,13 +13017,13 @@ func (v *ProfileTabVoice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabVoice deserializes a ProfileTabVoice from a reader using the TL binary protocol.
-func DecodeProfileTabVoice(r io.Reader) (*ProfileTabVoice, error) {
+func DecodeProfileTabVoice(r *Reader) (*ProfileTabVoice, error) {
 	v := &ProfileTabVoice{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabVoiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabVoiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabVoice(r)
 	}
 }
@@ -9298,13 +13046,13 @@ func (v *ProfileTabLinks) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabLinks deserializes a ProfileTabLinks from a reader using the TL binary protocol.
-func DecodeProfileTabLinks(r io.Reader) (*ProfileTabLinks, error) {
+func DecodeProfileTabLinks(r *Reader) (*ProfileTabLinks, error) {
 	v := &ProfileTabLinks{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabLinksTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabLinksTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabLinks(r)
 	}
 }
@@ -9327,13 +13075,13 @@ func (v *ProfileTabGifs) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeProfileTabGifs deserializes a ProfileTabGifs from a reader using the TL binary protocol.
-func DecodeProfileTabGifs(r io.Reader) (*ProfileTabGifs, error) {
+func DecodeProfileTabGifs(r *Reader) (*ProfileTabGifs, error) {
 	v := &ProfileTabGifs{}
 	return v, nil
 }
 
 func init() {
-	Registry[ProfileTabGifsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ProfileTabGifsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeProfileTabGifs(r)
 	}
 }
@@ -9365,1646 +13113,28 @@ func (v *AuctionBidLevel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuctionBidLevel deserializes a AuctionBidLevel from a reader using the TL binary protocol.
-func DecodeAuctionBidLevel(r io.Reader) (*AuctionBidLevel, error) {
+func DecodeAuctionBidLevel(r *Reader) (*AuctionBidLevel, error) {
 	v := &AuctionBidLevel{}
-	v.Pos = int32(ReadInt(r))
-	v.Amount = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rPos, _ePos := r.ReadInt32()
+	if _ePos != nil {
+		return nil, _ePos
+	}
+	v.Pos = _rPos
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[AuctionBidLevelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuctionBidLevelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuctionBidLevel(r)
-	}
-}
-
-// ResPQTypeID is the constructor ID for TL type resPQ.
-const ResPQTypeID = 0x05162463
-
-// ResPQ represents the TL constructor resPQ (0x05162463).
-//
-// See https://core.telegram.org/constructor/resPQ for reference.
-type ResPQ struct {
-	Nonce                       [16]byte `json:"nonce,omitempty"`
-	ServerNonce                 [16]byte `json:"server_nonce,omitempty"`
-	PQ                          string   `json:"pq,omitempty"`
-	ServerPublicKeyFingerprints []int64  `json:"server_public_key_fingerprints,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x05162463.
-func (v *ResPQ) ConstructorID() uint32 {
-	return ResPQTypeID
-}
-
-// Encode serializes ResPQ to a bytes.Buffer using the TL binary protocol.
-func (v *ResPQ) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ResPQTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.PQ)
-	WriteVectorLong(b, v.ServerPublicKeyFingerprints)
-	return nil
-}
-
-// DecodeResPQ deserializes a ResPQ from a reader using the TL binary protocol.
-func DecodeResPQ(r io.Reader) (*ResPQ, error) {
-	v := &ResPQ{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.PQ = ReadString(r)
-	v.ServerPublicKeyFingerprints = ReadVectorLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[ResPQTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeResPQ(r)
-	}
-}
-
-// PQInnerDataClass is the interface for TL type PQInnerData.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the PQInnerData TL type.
-type PQInnerDataClass interface {
-	TLObject
-	isPQInnerData()
-}
-
-// PQInnerDataTypeID is the constructor ID for TL type p_q_inner_data.
-const PQInnerDataTypeID = 0x83c95aec
-
-// PQInnerDataDCTypeID is the constructor ID for TL type p_q_inner_data_dc.
-const PQInnerDataDCTypeID = 0xa9f55f95
-
-// PQInnerDataTempTypeID is the constructor ID for TL type p_q_inner_data_temp.
-const PQInnerDataTempTypeID = 0x3c6a84d4
-
-// PQInnerDataTempDCTypeID is the constructor ID for TL type p_q_inner_data_temp_dc.
-const PQInnerDataTempDCTypeID = 0x56fddf88
-
-// isPQInnerData marks PQInnerData as implementing the PQInnerDataClass interface.
-func (*PQInnerData) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataDC as implementing the PQInnerDataClass interface.
-func (*PQInnerDataDC) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataTemp as implementing the PQInnerDataClass interface.
-func (*PQInnerDataTemp) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataTempDC as implementing the PQInnerDataClass interface.
-func (*PQInnerDataTempDC) isPQInnerData() {}
-
-// PQInnerData represents the TL constructor p_q_inner_data (0x83c95aec).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data for reference.
-type PQInnerData struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x83c95aec.
-func (v *PQInnerData) ConstructorID() uint32 {
-	return PQInnerDataTypeID
-}
-
-// Encode serializes PQInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	return nil
-}
-
-// DecodePQInnerData deserializes a PQInnerData from a reader using the TL binary protocol.
-func DecodePQInnerData(r io.Reader) (*PQInnerData, error) {
-	v := &PQInnerData{}
-	v.PQ = ReadString(r)
-	v.P = ReadString(r)
-	v.Q = ReadString(r)
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonce = ReadInt256(r)
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodePQInnerData(r)
-	}
-}
-
-// PQInnerDataDC represents the TL constructor p_q_inner_data_dc (0xa9f55f95).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_dc for reference.
-type PQInnerDataDC struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	DC          int32    `json:"dc,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa9f55f95.
-func (v *PQInnerDataDC) ConstructorID() uint32 {
-	return PQInnerDataDCTypeID
-}
-
-// Encode serializes PQInnerDataDC to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataDC) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataDCTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.DC))
-	return nil
-}
-
-// DecodePQInnerDataDC deserializes a PQInnerDataDC from a reader using the TL binary protocol.
-func DecodePQInnerDataDC(r io.Reader) (*PQInnerDataDC, error) {
-	v := &PQInnerDataDC{}
-	v.PQ = ReadString(r)
-	v.P = ReadString(r)
-	v.Q = ReadString(r)
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonce = ReadInt256(r)
-	v.DC = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataDCTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodePQInnerDataDC(r)
-	}
-}
-
-// PQInnerDataTemp represents the TL constructor p_q_inner_data_temp (0x3c6a84d4).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_temp for reference.
-type PQInnerDataTemp struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	ExpiresIn   int32    `json:"expires_in,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x3c6a84d4.
-func (v *PQInnerDataTemp) ConstructorID() uint32 {
-	return PQInnerDataTempTypeID
-}
-
-// Encode serializes PQInnerDataTemp to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataTemp) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTempTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.ExpiresIn))
-	return nil
-}
-
-// DecodePQInnerDataTemp deserializes a PQInnerDataTemp from a reader using the TL binary protocol.
-func DecodePQInnerDataTemp(r io.Reader) (*PQInnerDataTemp, error) {
-	v := &PQInnerDataTemp{}
-	v.PQ = ReadString(r)
-	v.P = ReadString(r)
-	v.Q = ReadString(r)
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonce = ReadInt256(r)
-	v.ExpiresIn = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTempTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodePQInnerDataTemp(r)
-	}
-}
-
-// PQInnerDataTempDC represents the TL constructor p_q_inner_data_temp_dc (0x56fddf88).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_temp_dc for reference.
-type PQInnerDataTempDC struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	DC          int32    `json:"dc,omitempty"`
-	ExpiresIn   int32    `json:"expires_in,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x56fddf88.
-func (v *PQInnerDataTempDC) ConstructorID() uint32 {
-	return PQInnerDataTempDCTypeID
-}
-
-// Encode serializes PQInnerDataTempDC to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataTempDC) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTempDCTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.DC))
-	WriteInt(b, uint32(v.ExpiresIn))
-	return nil
-}
-
-// DecodePQInnerDataTempDC deserializes a PQInnerDataTempDC from a reader using the TL binary protocol.
-func DecodePQInnerDataTempDC(r io.Reader) (*PQInnerDataTempDC, error) {
-	v := &PQInnerDataTempDC{}
-	v.PQ = ReadString(r)
-	v.P = ReadString(r)
-	v.Q = ReadString(r)
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonce = ReadInt256(r)
-	v.DC = int32(ReadInt(r))
-	v.ExpiresIn = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTempDCTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodePQInnerDataTempDC(r)
-	}
-}
-
-// ServerDHParamsClass is the interface for TL type ServerDHParams.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the ServerDHParams TL type.
-type ServerDHParamsClass interface {
-	TLObject
-	isServerDHParams()
-}
-
-// ServerDHParamsFailTypeID is the constructor ID for TL type server_DH_params_fail.
-const ServerDHParamsFailTypeID = 0x79cb045d
-
-// ServerDHParamsOkTypeID is the constructor ID for TL type server_DH_params_ok.
-const ServerDHParamsOkTypeID = 0xd0e8075c
-
-// isServerDHParams marks ServerDHParamsFail as implementing the ServerDHParamsClass interface.
-func (*ServerDHParamsFail) isServerDHParams() {}
-
-// isServerDHParams marks ServerDHParamsOk as implementing the ServerDHParamsClass interface.
-func (*ServerDHParamsOk) isServerDHParams() {}
-
-// ServerDHParamsFail represents the TL constructor server_DH_params_fail (0x79cb045d).
-//
-// See https://core.telegram.org/constructor/server_DH_params_fail for reference.
-type ServerDHParamsFail struct {
-	Nonce        [16]byte `json:"nonce,omitempty"`
-	ServerNonce  [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash [16]byte `json:"new_nonce_hash,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x79cb045d.
-func (v *ServerDHParamsFail) ConstructorID() uint32 {
-	return ServerDHParamsFailTypeID
-}
-
-// Encode serializes ServerDHParamsFail to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHParamsFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHParamsFailTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash)
-	return nil
-}
-
-// DecodeServerDHParamsFail deserializes a ServerDHParamsFail from a reader using the TL binary protocol.
-func DecodeServerDHParamsFail(r io.Reader) (*ServerDHParamsFail, error) {
-	v := &ServerDHParamsFail{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonceHash = ReadInt128(r)
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHParamsFailTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeServerDHParamsFail(r)
-	}
-}
-
-// ServerDHParamsOk represents the TL constructor server_DH_params_ok (0xd0e8075c).
-//
-// See https://core.telegram.org/constructor/server_DH_params_ok for reference.
-type ServerDHParamsOk struct {
-	Nonce           [16]byte `json:"nonce,omitempty"`
-	ServerNonce     [16]byte `json:"server_nonce,omitempty"`
-	EncryptedAnswer string   `json:"encrypted_answer,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xd0e8075c.
-func (v *ServerDHParamsOk) ConstructorID() uint32 {
-	return ServerDHParamsOkTypeID
-}
-
-// Encode serializes ServerDHParamsOk to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHParamsOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHParamsOkTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.EncryptedAnswer)
-	return nil
-}
-
-// DecodeServerDHParamsOk deserializes a ServerDHParamsOk from a reader using the TL binary protocol.
-func DecodeServerDHParamsOk(r io.Reader) (*ServerDHParamsOk, error) {
-	v := &ServerDHParamsOk{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.EncryptedAnswer = ReadString(r)
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHParamsOkTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeServerDHParamsOk(r)
-	}
-}
-
-// ServerDHInnerDataTypeID is the constructor ID for TL type server_DH_inner_data.
-const ServerDHInnerDataTypeID = 0xb5890dba
-
-// ServerDHInnerData represents the TL constructor server_DH_inner_data (0xb5890dba).
-//
-// See https://core.telegram.org/constructor/server_DH_inner_data for reference.
-type ServerDHInnerData struct {
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	G           int32    `json:"g,omitempty"`
-	DHPrime     string   `json:"dh_prime,omitempty"`
-	GA          string   `json:"ga,omitempty"`
-	ServerTime  int32    `json:"server_time,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xb5890dba.
-func (v *ServerDHInnerData) ConstructorID() uint32 {
-	return ServerDHInnerDataTypeID
-}
-
-// Encode serializes ServerDHInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHInnerDataTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt(b, uint32(v.G))
-	WriteString(b, v.DHPrime)
-	WriteString(b, v.GA)
-	WriteInt(b, uint32(v.ServerTime))
-	return nil
-}
-
-// DecodeServerDHInnerData deserializes a ServerDHInnerData from a reader using the TL binary protocol.
-func DecodeServerDHInnerData(r io.Reader) (*ServerDHInnerData, error) {
-	v := &ServerDHInnerData{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.G = int32(ReadInt(r))
-	v.DHPrime = ReadString(r)
-	v.GA = ReadString(r)
-	v.ServerTime = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHInnerDataTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeServerDHInnerData(r)
-	}
-}
-
-// ClientDHInnerDataTypeID is the constructor ID for TL type client_DH_inner_data.
-const ClientDHInnerDataTypeID = 0x6643b654
-
-// ClientDHInnerData represents the TL constructor client_DH_inner_data (0x6643b654).
-//
-// See https://core.telegram.org/constructor/client_DH_inner_data for reference.
-type ClientDHInnerData struct {
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	RetryID     int64    `json:"retry_id,omitempty"`
-	GB          string   `json:"gb,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x6643b654.
-func (v *ClientDHInnerData) ConstructorID() uint32 {
-	return ClientDHInnerDataTypeID
-}
-
-// Encode serializes ClientDHInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *ClientDHInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ClientDHInnerDataTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteLong(b, v.RetryID)
-	WriteString(b, v.GB)
-	return nil
-}
-
-// DecodeClientDHInnerData deserializes a ClientDHInnerData from a reader using the TL binary protocol.
-func DecodeClientDHInnerData(r io.Reader) (*ClientDHInnerData, error) {
-	v := &ClientDHInnerData{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.RetryID = ReadLong(r)
-	v.GB = ReadString(r)
-	return v, nil
-}
-
-func init() {
-	Registry[ClientDHInnerDataTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeClientDHInnerData(r)
-	}
-}
-
-// SetClientDHParamsAnswerClass is the interface for TL type SetClientDHParamsAnswer.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the SetClientDHParamsAnswer TL type.
-type SetClientDHParamsAnswerClass interface {
-	TLObject
-	isSetClientDHParamsAnswer()
-}
-
-// DHGenOkTypeID is the constructor ID for TL type dh_gen_ok.
-const DHGenOkTypeID = 0x3bcbf734
-
-// DHGenRetryTypeID is the constructor ID for TL type dh_gen_retry.
-const DHGenRetryTypeID = 0x46dc1fb9
-
-// DHGenFailTypeID is the constructor ID for TL type dh_gen_fail.
-const DHGenFailTypeID = 0xa69dae02
-
-// isSetClientDHParamsAnswer marks DHGenOk as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenOk) isSetClientDHParamsAnswer() {}
-
-// isSetClientDHParamsAnswer marks DHGenRetry as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenRetry) isSetClientDHParamsAnswer() {}
-
-// isSetClientDHParamsAnswer marks DHGenFail as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenFail) isSetClientDHParamsAnswer() {}
-
-// DHGenOk represents the TL constructor dh_gen_ok (0x3bcbf734).
-//
-// See https://core.telegram.org/constructor/dh_gen_ok for reference.
-type DHGenOk struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash1 [16]byte `json:"new_nonce_hash1,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x3bcbf734.
-func (v *DHGenOk) ConstructorID() uint32 {
-	return DHGenOkTypeID
-}
-
-// Encode serializes DHGenOk to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenOkTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash1)
-	return nil
-}
-
-// DecodeDHGenOk deserializes a DHGenOk from a reader using the TL binary protocol.
-func DecodeDHGenOk(r io.Reader) (*DHGenOk, error) {
-	v := &DHGenOk{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonceHash1 = ReadInt128(r)
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenOkTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDHGenOk(r)
-	}
-}
-
-// DHGenRetry represents the TL constructor dh_gen_retry (0x46dc1fb9).
-//
-// See https://core.telegram.org/constructor/dh_gen_retry for reference.
-type DHGenRetry struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash2 [16]byte `json:"new_nonce_hash2,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x46dc1fb9.
-func (v *DHGenRetry) ConstructorID() uint32 {
-	return DHGenRetryTypeID
-}
-
-// Encode serializes DHGenRetry to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenRetry) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenRetryTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash2)
-	return nil
-}
-
-// DecodeDHGenRetry deserializes a DHGenRetry from a reader using the TL binary protocol.
-func DecodeDHGenRetry(r io.Reader) (*DHGenRetry, error) {
-	v := &DHGenRetry{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonceHash2 = ReadInt128(r)
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenRetryTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDHGenRetry(r)
-	}
-}
-
-// DHGenFail represents the TL constructor dh_gen_fail (0xa69dae02).
-//
-// See https://core.telegram.org/constructor/dh_gen_fail for reference.
-type DHGenFail struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash3 [16]byte `json:"new_nonce_hash3,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa69dae02.
-func (v *DHGenFail) ConstructorID() uint32 {
-	return DHGenFailTypeID
-}
-
-// Encode serializes DHGenFail to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenFailTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash3)
-	return nil
-}
-
-// DecodeDHGenFail deserializes a DHGenFail from a reader using the TL binary protocol.
-func DecodeDHGenFail(r io.Reader) (*DHGenFail, error) {
-	v := &DHGenFail{}
-	v.Nonce = ReadInt128(r)
-	v.ServerNonce = ReadInt128(r)
-	v.NewNonceHash3 = ReadInt128(r)
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenFailTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDHGenFail(r)
-	}
-}
-
-// MsgsAckTypeID is the constructor ID for TL type msgs_ack.
-const MsgsAckTypeID = 0x62d6b459
-
-// MsgsAck represents the TL constructor msgs_ack (0x62d6b459).
-//
-// See https://core.telegram.org/constructor/msgs_ack for reference.
-type MsgsAck struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x62d6b459.
-func (v *MsgsAck) ConstructorID() uint32 {
-	return MsgsAckTypeID
-}
-
-// Encode serializes MsgsAck to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsAck) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsAckTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgsAck deserializes a MsgsAck from a reader using the TL binary protocol.
-func DecodeMsgsAck(r io.Reader) (*MsgsAck, error) {
-	v := &MsgsAck{}
-	v.MsgIds = ReadVectorLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsAckTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgsAck(r)
-	}
-}
-
-// BadMsgNotificationClass is the interface for TL type BadMsgNotification.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the BadMsgNotification TL type.
-type BadMsgNotificationClass interface {
-	TLObject
-	isBadMsgNotification()
-}
-
-// BadMsgNotificationTypeID is the constructor ID for TL type bad_msg_notification.
-const BadMsgNotificationTypeID = 0xa7eff811
-
-// BadServerSaltTypeID is the constructor ID for TL type bad_server_salt.
-const BadServerSaltTypeID = 0xedab447b
-
-// isBadMsgNotification marks BadMsgNotification as implementing the BadMsgNotificationClass interface.
-func (*BadMsgNotification) isBadMsgNotification() {}
-
-// isBadMsgNotification marks BadServerSalt as implementing the BadMsgNotificationClass interface.
-func (*BadServerSalt) isBadMsgNotification() {}
-
-// BadMsgNotification represents the TL constructor bad_msg_notification (0xa7eff811).
-//
-// See https://core.telegram.org/constructor/bad_msg_notification for reference.
-type BadMsgNotification struct {
-	BadMsgID    int64 `json:"bad_msg_id,omitempty"`
-	BadMsgSeqno int32 `json:"bad_msg_seqno,omitempty"`
-	ErrorCode   int32 `json:"error_code,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa7eff811.
-func (v *BadMsgNotification) ConstructorID() uint32 {
-	return BadMsgNotificationTypeID
-}
-
-// Encode serializes BadMsgNotification to a bytes.Buffer using the TL binary protocol.
-func (v *BadMsgNotification) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BadMsgNotificationTypeID)
-	WriteLong(b, v.BadMsgID)
-	WriteInt(b, uint32(v.BadMsgSeqno))
-	WriteInt(b, uint32(v.ErrorCode))
-	return nil
-}
-
-// DecodeBadMsgNotification deserializes a BadMsgNotification from a reader using the TL binary protocol.
-func DecodeBadMsgNotification(r io.Reader) (*BadMsgNotification, error) {
-	v := &BadMsgNotification{}
-	v.BadMsgID = ReadLong(r)
-	v.BadMsgSeqno = int32(ReadInt(r))
-	v.ErrorCode = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[BadMsgNotificationTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeBadMsgNotification(r)
-	}
-}
-
-// BadServerSalt represents the TL constructor bad_server_salt (0xedab447b).
-//
-// See https://core.telegram.org/constructor/bad_server_salt for reference.
-type BadServerSalt struct {
-	BadMsgID      int64 `json:"bad_msg_id,omitempty"`
-	BadMsgSeqno   int32 `json:"bad_msg_seqno,omitempty"`
-	ErrorCode     int32 `json:"error_code,omitempty"`
-	NewServerSalt int64 `json:"new_server_salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xedab447b.
-func (v *BadServerSalt) ConstructorID() uint32 {
-	return BadServerSaltTypeID
-}
-
-// Encode serializes BadServerSalt to a bytes.Buffer using the TL binary protocol.
-func (v *BadServerSalt) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BadServerSaltTypeID)
-	WriteLong(b, v.BadMsgID)
-	WriteInt(b, uint32(v.BadMsgSeqno))
-	WriteInt(b, uint32(v.ErrorCode))
-	WriteLong(b, v.NewServerSalt)
-	return nil
-}
-
-// DecodeBadServerSalt deserializes a BadServerSalt from a reader using the TL binary protocol.
-func DecodeBadServerSalt(r io.Reader) (*BadServerSalt, error) {
-	v := &BadServerSalt{}
-	v.BadMsgID = ReadLong(r)
-	v.BadMsgSeqno = int32(ReadInt(r))
-	v.ErrorCode = int32(ReadInt(r))
-	v.NewServerSalt = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[BadServerSaltTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeBadServerSalt(r)
-	}
-}
-
-// MsgsStateReqTypeID is the constructor ID for TL type msgs_state_req.
-const MsgsStateReqTypeID = 0xda69fb52
-
-// MsgsStateReq represents the TL constructor msgs_state_req (0xda69fb52).
-//
-// See https://core.telegram.org/constructor/msgs_state_req for reference.
-type MsgsStateReq struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xda69fb52.
-func (v *MsgsStateReq) ConstructorID() uint32 {
-	return MsgsStateReqTypeID
-}
-
-// Encode serializes MsgsStateReq to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsStateReq) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsStateReqTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgsStateReq deserializes a MsgsStateReq from a reader using the TL binary protocol.
-func DecodeMsgsStateReq(r io.Reader) (*MsgsStateReq, error) {
-	v := &MsgsStateReq{}
-	v.MsgIds = ReadVectorLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsStateReqTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgsStateReq(r)
-	}
-}
-
-// MsgsStateInfoTypeID is the constructor ID for TL type msgs_state_info.
-const MsgsStateInfoTypeID = 0x04deb57d
-
-// MsgsStateInfo represents the TL constructor msgs_state_info (0x04deb57d).
-//
-// See https://core.telegram.org/constructor/msgs_state_info for reference.
-type MsgsStateInfo struct {
-	ReqMsgID int64  `json:"req_msg_id,omitempty"`
-	Info     string `json:"info,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x04deb57d.
-func (v *MsgsStateInfo) ConstructorID() uint32 {
-	return MsgsStateInfoTypeID
-}
-
-// Encode serializes MsgsStateInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsStateInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsStateInfoTypeID)
-	WriteLong(b, v.ReqMsgID)
-	WriteString(b, v.Info)
-	return nil
-}
-
-// DecodeMsgsStateInfo deserializes a MsgsStateInfo from a reader using the TL binary protocol.
-func DecodeMsgsStateInfo(r io.Reader) (*MsgsStateInfo, error) {
-	v := &MsgsStateInfo{}
-	v.ReqMsgID = ReadLong(r)
-	v.Info = ReadString(r)
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsStateInfoTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgsStateInfo(r)
-	}
-}
-
-// MsgsAllInfoTypeID is the constructor ID for TL type msgs_all_info.
-const MsgsAllInfoTypeID = 0x8cc0d131
-
-// MsgsAllInfo represents the TL constructor msgs_all_info (0x8cc0d131).
-//
-// See https://core.telegram.org/constructor/msgs_all_info for reference.
-type MsgsAllInfo struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-	Info   string  `json:"info,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x8cc0d131.
-func (v *MsgsAllInfo) ConstructorID() uint32 {
-	return MsgsAllInfoTypeID
-}
-
-// Encode serializes MsgsAllInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsAllInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsAllInfoTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	WriteString(b, v.Info)
-	return nil
-}
-
-// DecodeMsgsAllInfo deserializes a MsgsAllInfo from a reader using the TL binary protocol.
-func DecodeMsgsAllInfo(r io.Reader) (*MsgsAllInfo, error) {
-	v := &MsgsAllInfo{}
-	v.MsgIds = ReadVectorLong(r)
-	v.Info = ReadString(r)
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsAllInfoTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgsAllInfo(r)
-	}
-}
-
-// MsgDetailedInfoClass is the interface for TL type MsgDetailedInfo.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the MsgDetailedInfo TL type.
-type MsgDetailedInfoClass interface {
-	TLObject
-	isMsgDetailedInfo()
-}
-
-// MsgDetailedInfoTypeID is the constructor ID for TL type msg_detailed_info.
-const MsgDetailedInfoTypeID = 0x276d3ec6
-
-// MsgNewDetailedInfoTypeID is the constructor ID for TL type msg_new_detailed_info.
-const MsgNewDetailedInfoTypeID = 0x809db6df
-
-// isMsgDetailedInfo marks MsgDetailedInfo as implementing the MsgDetailedInfoClass interface.
-func (*MsgDetailedInfo) isMsgDetailedInfo() {}
-
-// isMsgDetailedInfo marks MsgNewDetailedInfo as implementing the MsgDetailedInfoClass interface.
-func (*MsgNewDetailedInfo) isMsgDetailedInfo() {}
-
-// MsgDetailedInfo represents the TL constructor msg_detailed_info (0x276d3ec6).
-//
-// See https://core.telegram.org/constructor/msg_detailed_info for reference.
-type MsgDetailedInfo struct {
-	MsgID       int64 `json:"msg_id,omitempty"`
-	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
-	Bytes       int32 `json:"bytes,omitempty"`
-	Status      int32 `json:"status,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x276d3ec6.
-func (v *MsgDetailedInfo) ConstructorID() uint32 {
-	return MsgDetailedInfoTypeID
-}
-
-// Encode serializes MsgDetailedInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgDetailedInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgDetailedInfoTypeID)
-	WriteLong(b, v.MsgID)
-	WriteLong(b, v.AnswerMsgID)
-	WriteInt(b, uint32(v.Bytes))
-	WriteInt(b, uint32(v.Status))
-	return nil
-}
-
-// DecodeMsgDetailedInfo deserializes a MsgDetailedInfo from a reader using the TL binary protocol.
-func DecodeMsgDetailedInfo(r io.Reader) (*MsgDetailedInfo, error) {
-	v := &MsgDetailedInfo{}
-	v.MsgID = ReadLong(r)
-	v.AnswerMsgID = ReadLong(r)
-	v.Bytes = int32(ReadInt(r))
-	v.Status = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[MsgDetailedInfoTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgDetailedInfo(r)
-	}
-}
-
-// MsgNewDetailedInfo represents the TL constructor msg_new_detailed_info (0x809db6df).
-//
-// See https://core.telegram.org/constructor/msg_new_detailed_info for reference.
-type MsgNewDetailedInfo struct {
-	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
-	Bytes       int32 `json:"bytes,omitempty"`
-	Status      int32 `json:"status,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x809db6df.
-func (v *MsgNewDetailedInfo) ConstructorID() uint32 {
-	return MsgNewDetailedInfoTypeID
-}
-
-// Encode serializes MsgNewDetailedInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgNewDetailedInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgNewDetailedInfoTypeID)
-	WriteLong(b, v.AnswerMsgID)
-	WriteInt(b, uint32(v.Bytes))
-	WriteInt(b, uint32(v.Status))
-	return nil
-}
-
-// DecodeMsgNewDetailedInfo deserializes a MsgNewDetailedInfo from a reader using the TL binary protocol.
-func DecodeMsgNewDetailedInfo(r io.Reader) (*MsgNewDetailedInfo, error) {
-	v := &MsgNewDetailedInfo{}
-	v.AnswerMsgID = ReadLong(r)
-	v.Bytes = int32(ReadInt(r))
-	v.Status = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[MsgNewDetailedInfoTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgNewDetailedInfo(r)
-	}
-}
-
-// MsgResendReqTypeID is the constructor ID for TL type msg_resend_req.
-const MsgResendReqTypeID = 0x7d861a08
-
-// MsgResendReq represents the TL constructor msg_resend_req (0x7d861a08).
-//
-// See https://core.telegram.org/constructor/msg_resend_req for reference.
-type MsgResendReq struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x7d861a08.
-func (v *MsgResendReq) ConstructorID() uint32 {
-	return MsgResendReqTypeID
-}
-
-// Encode serializes MsgResendReq to a bytes.Buffer using the TL binary protocol.
-func (v *MsgResendReq) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgResendReqTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgResendReq deserializes a MsgResendReq from a reader using the TL binary protocol.
-func DecodeMsgResendReq(r io.Reader) (*MsgResendReq, error) {
-	v := &MsgResendReq{}
-	v.MsgIds = ReadVectorLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[MsgResendReqTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeMsgResendReq(r)
-	}
-}
-
-// RPCResultTypeID is the constructor ID for TL type rpc_result.
-const RPCResultTypeID = 0xf35c6d01
-
-// RPCResult represents the TL constructor rpc_result (0xf35c6d01).
-//
-// See https://core.telegram.org/constructor/rpc_result for reference.
-type RPCResult struct {
-	ReqMsgID int64    `json:"req_msg_id,omitempty"`
-	Result   TLObject `json:"result,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xf35c6d01.
-func (v *RPCResult) ConstructorID() uint32 {
-	return RPCResultTypeID
-}
-
-// Encode serializes RPCResult to a bytes.Buffer using the TL binary protocol.
-func (v *RPCResult) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCResultTypeID)
-	WriteLong(b, v.ReqMsgID)
-	EncodeTLObject(b, v.Result)
-	return nil
-}
-
-// DecodeRPCResult deserializes a RPCResult from a reader using the TL binary protocol.
-func DecodeRPCResult(r io.Reader) (*RPCResult, error) {
-	v := &RPCResult{}
-	v.ReqMsgID = ReadLong(r)
-	_objResult, _ := ReadTLObject(r)
-	v.Result = _objResult.(TLObject)
-	return v, nil
-}
-
-func init() {
-	Registry[RPCResultTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeRPCResult(r)
-	}
-}
-
-// RPCErrorTypeID is the constructor ID for TL type rpc_error.
-const RPCErrorTypeID = 0x2144ca19
-
-// RPCError represents the TL constructor rpc_error (0x2144ca19).
-//
-// See https://core.telegram.org/constructor/rpc_error for reference.
-type RPCError struct {
-	ErrorCode    int32  `json:"error_code,omitempty"`
-	ErrorMessage string `json:"error_message,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x2144ca19.
-func (v *RPCError) ConstructorID() uint32 {
-	return RPCErrorTypeID
-}
-
-// Encode serializes RPCError to a bytes.Buffer using the TL binary protocol.
-func (v *RPCError) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCErrorTypeID)
-	WriteInt(b, uint32(v.ErrorCode))
-	WriteString(b, v.ErrorMessage)
-	return nil
-}
-
-// DecodeRPCError deserializes a RPCError from a reader using the TL binary protocol.
-func DecodeRPCError(r io.Reader) (*RPCError, error) {
-	v := &RPCError{}
-	v.ErrorCode = int32(ReadInt(r))
-	v.ErrorMessage = ReadString(r)
-	return v, nil
-}
-
-func init() {
-	Registry[RPCErrorTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeRPCError(r)
-	}
-}
-
-// RPCDropAnswerClass is the interface for TL type RPCDropAnswer.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the RPCDropAnswer TL type.
-type RPCDropAnswerClass interface {
-	TLObject
-	isRPCDropAnswer()
-}
-
-// RPCAnswerUnknownTypeID is the constructor ID for TL type rpc_answer_unknown.
-const RPCAnswerUnknownTypeID = 0x5e2ad36e
-
-// RPCAnswerDroppedRunningTypeID is the constructor ID for TL type rpc_answer_dropped_running.
-const RPCAnswerDroppedRunningTypeID = 0xcd78e586
-
-// RPCAnswerDroppedTypeID is the constructor ID for TL type rpc_answer_dropped.
-const RPCAnswerDroppedTypeID = 0xa43ad8b7
-
-// isRPCDropAnswer marks RPCAnswerUnknown as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerUnknown) isRPCDropAnswer() {}
-
-// isRPCDropAnswer marks RPCAnswerDroppedRunning as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerDroppedRunning) isRPCDropAnswer() {}
-
-// isRPCDropAnswer marks RPCAnswerDropped as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerDropped) isRPCDropAnswer() {}
-
-// RPCAnswerUnknown represents the TL constructor rpc_answer_unknown (0x5e2ad36e).
-//
-// See https://core.telegram.org/constructor/rpc_answer_unknown for reference.
-type RPCAnswerUnknown struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0x5e2ad36e.
-func (v *RPCAnswerUnknown) ConstructorID() uint32 {
-	return RPCAnswerUnknownTypeID
-}
-
-// Encode serializes RPCAnswerUnknown to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerUnknown) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerUnknownTypeID)
-	return nil
-}
-
-// DecodeRPCAnswerUnknown deserializes a RPCAnswerUnknown from a reader using the TL binary protocol.
-func DecodeRPCAnswerUnknown(r io.Reader) (*RPCAnswerUnknown, error) {
-	v := &RPCAnswerUnknown{}
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerUnknownTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeRPCAnswerUnknown(r)
-	}
-}
-
-// RPCAnswerDroppedRunning represents the TL constructor rpc_answer_dropped_running (0xcd78e586).
-//
-// See https://core.telegram.org/constructor/rpc_answer_dropped_running for reference.
-type RPCAnswerDroppedRunning struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xcd78e586.
-func (v *RPCAnswerDroppedRunning) ConstructorID() uint32 {
-	return RPCAnswerDroppedRunningTypeID
-}
-
-// Encode serializes RPCAnswerDroppedRunning to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerDroppedRunning) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerDroppedRunningTypeID)
-	return nil
-}
-
-// DecodeRPCAnswerDroppedRunning deserializes a RPCAnswerDroppedRunning from a reader using the TL binary protocol.
-func DecodeRPCAnswerDroppedRunning(r io.Reader) (*RPCAnswerDroppedRunning, error) {
-	v := &RPCAnswerDroppedRunning{}
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerDroppedRunningTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeRPCAnswerDroppedRunning(r)
-	}
-}
-
-// RPCAnswerDropped represents the TL constructor rpc_answer_dropped (0xa43ad8b7).
-//
-// See https://core.telegram.org/constructor/rpc_answer_dropped for reference.
-type RPCAnswerDropped struct {
-	MsgID int64 `json:"msg_id,omitempty"`
-	SeqNo int32 `json:"seq_no,omitempty"`
-	Bytes int32 `json:"bytes,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa43ad8b7.
-func (v *RPCAnswerDropped) ConstructorID() uint32 {
-	return RPCAnswerDroppedTypeID
-}
-
-// Encode serializes RPCAnswerDropped to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerDropped) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerDroppedTypeID)
-	WriteLong(b, v.MsgID)
-	WriteInt(b, uint32(v.SeqNo))
-	WriteInt(b, uint32(v.Bytes))
-	return nil
-}
-
-// DecodeRPCAnswerDropped deserializes a RPCAnswerDropped from a reader using the TL binary protocol.
-func DecodeRPCAnswerDropped(r io.Reader) (*RPCAnswerDropped, error) {
-	v := &RPCAnswerDropped{}
-	v.MsgID = ReadLong(r)
-	v.SeqNo = int32(ReadInt(r))
-	v.Bytes = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerDroppedTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeRPCAnswerDropped(r)
-	}
-}
-
-// FutureSaltTypeID is the constructor ID for TL type future_salt.
-const FutureSaltTypeID = 0x0949d9dc
-
-// FutureSalt represents the TL constructor future_salt (0x0949d9dc).
-//
-// See https://core.telegram.org/constructor/future_salt for reference.
-type FutureSalt struct {
-	ValidSince int32 `json:"valid_since,omitempty"`
-	ValidUntil int32 `json:"valid_until,omitempty"`
-	Salt       int64 `json:"salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x0949d9dc.
-func (v *FutureSalt) ConstructorID() uint32 {
-	return FutureSaltTypeID
-}
-
-// Encode serializes FutureSalt to a bytes.Buffer using the TL binary protocol.
-func (v *FutureSalt) Encode(b *bytes.Buffer) error {
-	WriteInt(b, FutureSaltTypeID)
-	WriteInt(b, uint32(v.ValidSince))
-	WriteInt(b, uint32(v.ValidUntil))
-	WriteLong(b, v.Salt)
-	return nil
-}
-
-// DecodeFutureSalt deserializes a FutureSalt from a reader using the TL binary protocol.
-func DecodeFutureSalt(r io.Reader) (*FutureSalt, error) {
-	v := &FutureSalt{}
-	v.ValidSince = int32(ReadInt(r))
-	v.ValidUntil = int32(ReadInt(r))
-	v.Salt = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[FutureSaltTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeFutureSalt(r)
-	}
-}
-
-// FutureSaltsTypeID is the constructor ID for TL type future_salts.
-const FutureSaltsTypeID = 0xae500895
-
-// FutureSalts represents the TL constructor future_salts (0xae500895).
-//
-// See https://core.telegram.org/constructor/future_salts for reference.
-type FutureSalts struct {
-	ReqMsgID int64         `json:"req_msg_id,omitempty"`
-	Now      int32         `json:"now,omitempty"`
-	Salts    []*FutureSalt `json:"salts,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xae500895.
-func (v *FutureSalts) ConstructorID() uint32 {
-	return FutureSaltsTypeID
-}
-
-// Encode serializes FutureSalts to a bytes.Buffer using the TL binary protocol.
-func (v *FutureSalts) Encode(b *bytes.Buffer) error {
-	WriteInt(b, FutureSaltsTypeID)
-	WriteLong(b, v.ReqMsgID)
-	WriteInt(b, uint32(v.Now))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Salts)))
-	for _, _item := range v.Salts {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeFutureSalts deserializes a FutureSalts from a reader using the TL binary protocol.
-func DecodeFutureSalts(r io.Reader) (*FutureSalts, error) {
-	v := &FutureSalts{}
-	v.ReqMsgID = ReadLong(r)
-	v.Now = int32(ReadInt(r))
-	ReadInt(r)
-	_cntSalts := ReadInt(r)
-	if err := checkVectorCount(_cntSalts); err != nil {
-		return nil, err
-	}
-	v.Salts = make([]*FutureSalt, _cntSalts)
-	for _iSalts := range v.Salts {
-		_objSalts, _ := ReadTLObject(r)
-		v.Salts[_iSalts] = _objSalts.(*FutureSalt)
-	}
-	return v, nil
-}
-
-func init() {
-	Registry[FutureSaltsTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeFutureSalts(r)
-	}
-}
-
-// PongTypeID is the constructor ID for TL type pong.
-const PongTypeID = 0x347773c5
-
-// Pong represents the TL constructor pong (0x347773c5).
-//
-// See https://core.telegram.org/constructor/pong for reference.
-type Pong struct {
-	MsgID  int64 `json:"msg_id,omitempty"`
-	PingID int64 `json:"ping_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x347773c5.
-func (v *Pong) ConstructorID() uint32 {
-	return PongTypeID
-}
-
-// Encode serializes Pong to a bytes.Buffer using the TL binary protocol.
-func (v *Pong) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PongTypeID)
-	WriteLong(b, v.MsgID)
-	WriteLong(b, v.PingID)
-	return nil
-}
-
-// DecodePong deserializes a Pong from a reader using the TL binary protocol.
-func DecodePong(r io.Reader) (*Pong, error) {
-	v := &Pong{}
-	v.MsgID = ReadLong(r)
-	v.PingID = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[PongTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodePong(r)
-	}
-}
-
-// DestroySessionResClass is the interface for TL type DestroySessionRes.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the DestroySessionRes TL type.
-type DestroySessionResClass interface {
-	TLObject
-	isDestroySessionRes()
-}
-
-// DestroySessionOkTypeID is the constructor ID for TL type destroy_session_ok.
-const DestroySessionOkTypeID = 0xe22045fc
-
-// DestroySessionNoneTypeID is the constructor ID for TL type destroy_session_none.
-const DestroySessionNoneTypeID = 0x62d350c9
-
-// isDestroySessionRes marks DestroySessionOk as implementing the DestroySessionResClass interface.
-func (*DestroySessionOk) isDestroySessionRes() {}
-
-// isDestroySessionRes marks DestroySessionNone as implementing the DestroySessionResClass interface.
-func (*DestroySessionNone) isDestroySessionRes() {}
-
-// DestroySessionOk represents the TL constructor destroy_session_ok (0xe22045fc).
-//
-// See https://core.telegram.org/constructor/destroy_session_ok for reference.
-type DestroySessionOk struct {
-	SessionID int64 `json:"session_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xe22045fc.
-func (v *DestroySessionOk) ConstructorID() uint32 {
-	return DestroySessionOkTypeID
-}
-
-// Encode serializes DestroySessionOk to a bytes.Buffer using the TL binary protocol.
-func (v *DestroySessionOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroySessionOkTypeID)
-	WriteLong(b, v.SessionID)
-	return nil
-}
-
-// DecodeDestroySessionOk deserializes a DestroySessionOk from a reader using the TL binary protocol.
-func DecodeDestroySessionOk(r io.Reader) (*DestroySessionOk, error) {
-	v := &DestroySessionOk{}
-	v.SessionID = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[DestroySessionOkTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDestroySessionOk(r)
-	}
-}
-
-// DestroySessionNone represents the TL constructor destroy_session_none (0x62d350c9).
-//
-// See https://core.telegram.org/constructor/destroy_session_none for reference.
-type DestroySessionNone struct {
-	SessionID int64 `json:"session_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x62d350c9.
-func (v *DestroySessionNone) ConstructorID() uint32 {
-	return DestroySessionNoneTypeID
-}
-
-// Encode serializes DestroySessionNone to a bytes.Buffer using the TL binary protocol.
-func (v *DestroySessionNone) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroySessionNoneTypeID)
-	WriteLong(b, v.SessionID)
-	return nil
-}
-
-// DecodeDestroySessionNone deserializes a DestroySessionNone from a reader using the TL binary protocol.
-func DecodeDestroySessionNone(r io.Reader) (*DestroySessionNone, error) {
-	v := &DestroySessionNone{}
-	v.SessionID = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[DestroySessionNoneTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDestroySessionNone(r)
-	}
-}
-
-// NewSessionCreatedTypeID is the constructor ID for TL type new_session_created.
-const NewSessionCreatedTypeID = 0x9ec20908
-
-// NewSessionCreated represents the TL constructor new_session_created (0x9ec20908).
-//
-// See https://core.telegram.org/constructor/new_session_created for reference.
-type NewSessionCreated struct {
-	FirstMsgID int64 `json:"first_msg_id,omitempty"`
-	UniqueID   int64 `json:"unique_id,omitempty"`
-	ServerSalt int64 `json:"server_salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x9ec20908.
-func (v *NewSessionCreated) ConstructorID() uint32 {
-	return NewSessionCreatedTypeID
-}
-
-// Encode serializes NewSessionCreated to a bytes.Buffer using the TL binary protocol.
-func (v *NewSessionCreated) Encode(b *bytes.Buffer) error {
-	WriteInt(b, NewSessionCreatedTypeID)
-	WriteLong(b, v.FirstMsgID)
-	WriteLong(b, v.UniqueID)
-	WriteLong(b, v.ServerSalt)
-	return nil
-}
-
-// DecodeNewSessionCreated deserializes a NewSessionCreated from a reader using the TL binary protocol.
-func DecodeNewSessionCreated(r io.Reader) (*NewSessionCreated, error) {
-	v := &NewSessionCreated{}
-	v.FirstMsgID = ReadLong(r)
-	v.UniqueID = ReadLong(r)
-	v.ServerSalt = ReadLong(r)
-	return v, nil
-}
-
-func init() {
-	Registry[NewSessionCreatedTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeNewSessionCreated(r)
-	}
-}
-
-// HTTPWaitTypeID is the constructor ID for TL type http_wait.
-const HTTPWaitTypeID = 0x9299359f
-
-// HTTPWait represents the TL constructor http_wait (0x9299359f).
-//
-// See https://core.telegram.org/constructor/http_wait for reference.
-type HTTPWait struct {
-	MaxDelay  int32 `json:"max_delay,omitempty"`
-	WaitAfter int32 `json:"wait_after,omitempty"`
-	MaxWait   int32 `json:"max_wait,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x9299359f.
-func (v *HTTPWait) ConstructorID() uint32 {
-	return HTTPWaitTypeID
-}
-
-// Encode serializes HTTPWait to a bytes.Buffer using the TL binary protocol.
-func (v *HTTPWait) Encode(b *bytes.Buffer) error {
-	WriteInt(b, HTTPWaitTypeID)
-	WriteInt(b, uint32(v.MaxDelay))
-	WriteInt(b, uint32(v.WaitAfter))
-	WriteInt(b, uint32(v.MaxWait))
-	return nil
-}
-
-// DecodeHTTPWait deserializes a HTTPWait from a reader using the TL binary protocol.
-func DecodeHTTPWait(r io.Reader) (*HTTPWait, error) {
-	v := &HTTPWait{}
-	v.MaxDelay = int32(ReadInt(r))
-	v.WaitAfter = int32(ReadInt(r))
-	v.MaxWait = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[HTTPWaitTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeHTTPWait(r)
-	}
-}
-
-// IpPortClass is the interface for TL type IpPort.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the IpPort TL type.
-type IpPortClass interface {
-	TLObject
-	isIpPort()
-}
-
-// IpPortTypeID is the constructor ID for TL type ipPort.
-const IpPortTypeID = 0xd433ad73
-
-// IpPortSecretTypeID is the constructor ID for TL type ipPortSecret.
-const IpPortSecretTypeID = 0x37982646
-
-// isIpPort marks IpPort as implementing the IpPortClass interface.
-func (*IpPort) isIpPort() {}
-
-// isIpPort marks IpPortSecret as implementing the IpPortClass interface.
-func (*IpPortSecret) isIpPort() {}
-
-// IpPort represents the TL constructor ipPort (0xd433ad73).
-//
-// See https://core.telegram.org/constructor/ipPort for reference.
-type IpPort struct {
-	IPv4 int32 `json:"i_pv4,omitempty"`
-	Port int32 `json:"port,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xd433ad73.
-func (v *IpPort) ConstructorID() uint32 {
-	return IpPortTypeID
-}
-
-// Encode serializes IpPort to a bytes.Buffer using the TL binary protocol.
-func (v *IpPort) Encode(b *bytes.Buffer) error {
-	WriteInt(b, IpPortTypeID)
-	WriteInt(b, uint32(v.IPv4))
-	WriteInt(b, uint32(v.Port))
-	return nil
-}
-
-// DecodeIpPort deserializes a IpPort from a reader using the TL binary protocol.
-func DecodeIpPort(r io.Reader) (*IpPort, error) {
-	v := &IpPort{}
-	v.IPv4 = int32(ReadInt(r))
-	v.Port = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[IpPortTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeIpPort(r)
-	}
-}
-
-// IpPortSecret represents the TL constructor ipPortSecret (0x37982646).
-//
-// See https://core.telegram.org/constructor/ipPortSecret for reference.
-type IpPortSecret struct {
-	IPv4   int32  `json:"i_pv4,omitempty"`
-	Port   int32  `json:"port,omitempty"`
-	Secret []byte `json:"secret,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x37982646.
-func (v *IpPortSecret) ConstructorID() uint32 {
-	return IpPortSecretTypeID
-}
-
-// Encode serializes IpPortSecret to a bytes.Buffer using the TL binary protocol.
-func (v *IpPortSecret) Encode(b *bytes.Buffer) error {
-	WriteInt(b, IpPortSecretTypeID)
-	WriteInt(b, uint32(v.IPv4))
-	WriteInt(b, uint32(v.Port))
-	WriteBytes(b, v.Secret)
-	return nil
-}
-
-// DecodeIpPortSecret deserializes a IpPortSecret from a reader using the TL binary protocol.
-func DecodeIpPortSecret(r io.Reader) (*IpPortSecret, error) {
-	v := &IpPortSecret{}
-	v.IPv4 = int32(ReadInt(r))
-	v.Port = int32(ReadInt(r))
-	v.Secret = ReadBytes(r)
-	return v, nil
-}
-
-func init() {
-	Registry[IpPortSecretTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeIpPortSecret(r)
-	}
-}
-
-// AccessPointRuleTypeID is the constructor ID for TL type accessPointRule.
-const AccessPointRuleTypeID = 0x4679b65f
-
-// AccessPointRule represents the TL constructor accessPointRule (0x4679b65f).
-//
-// See https://core.telegram.org/constructor/accessPointRule for reference.
-type AccessPointRule struct {
-	PhonePrefixRules string        `json:"phone_prefix_rules,omitempty"`
-	DCID             int32         `json:"dcid,omitempty"`
-	Ips              []IpPortClass `json:"ips,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x4679b65f.
-func (v *AccessPointRule) ConstructorID() uint32 {
-	return AccessPointRuleTypeID
-}
-
-// Encode serializes AccessPointRule to a bytes.Buffer using the TL binary protocol.
-func (v *AccessPointRule) Encode(b *bytes.Buffer) error {
-	WriteInt(b, AccessPointRuleTypeID)
-	WriteString(b, v.PhonePrefixRules)
-	WriteInt(b, uint32(v.DCID))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Ips)))
-	for _, _item := range v.Ips {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeAccessPointRule deserializes a AccessPointRule from a reader using the TL binary protocol.
-func DecodeAccessPointRule(r io.Reader) (*AccessPointRule, error) {
-	v := &AccessPointRule{}
-	v.PhonePrefixRules = ReadString(r)
-	v.DCID = int32(ReadInt(r))
-	ReadInt(r)
-	_cntIps := ReadInt(r)
-	if err := checkVectorCount(_cntIps); err != nil {
-		return nil, err
-	}
-	v.Ips = make([]IpPortClass, _cntIps)
-	for _iIps := range v.Ips {
-		_objIps, _ := ReadTLObject(r)
-		v.Ips[_iIps] = _objIps.(IpPortClass)
-	}
-	return v, nil
-}
-
-func init() {
-	Registry[AccessPointRuleTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeAccessPointRule(r)
 	}
 }

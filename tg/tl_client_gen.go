@@ -4,7 +4,6 @@ package tg
 
 import (
 	"context"
-	"io"
 )
 
 // RPCClient provides typed RPC methods for all TL functions.
@@ -17,6 +16,6 @@ func NewRPCClient(rpc Invoker) *RPCClient {
 	return &RPCClient{rpc: rpc}
 }
 
-func (c *RPCClient) invoke(ctx context.Context, req TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error) {
+func (c *RPCClient) invoke(ctx context.Context, req TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {
 	return c.rpc.RPCInvoke(ctx, req, decode)
 }

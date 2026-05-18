@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // InputAiComposeToneClass is the interface for TL type InputAiComposeTone.
@@ -53,14 +52,18 @@ func (v *InputAiComposeToneDefault) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputAiComposeToneDefault deserializes a InputAiComposeToneDefault from a reader using the TL binary protocol.
-func DecodeInputAiComposeToneDefault(r io.Reader) (*InputAiComposeToneDefault, error) {
+func DecodeInputAiComposeToneDefault(r *Reader) (*InputAiComposeToneDefault, error) {
 	v := &InputAiComposeToneDefault{}
-	v.Tone = ReadString(r)
+	_rTone, _eTone := r.ReadString()
+	if _eTone != nil {
+		return nil, _eTone
+	}
+	v.Tone = _rTone
 	return v, nil
 }
 
 func init() {
-	Registry[InputAiComposeToneDefaultTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputAiComposeToneDefaultTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputAiComposeToneDefault(r)
 	}
 }
@@ -87,15 +90,23 @@ func (v *InputAiComposeToneID) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputAiComposeToneID deserializes a InputAiComposeToneID from a reader using the TL binary protocol.
-func DecodeInputAiComposeToneID(r io.Reader) (*InputAiComposeToneID, error) {
+func DecodeInputAiComposeToneID(r *Reader) (*InputAiComposeToneID, error) {
 	v := &InputAiComposeToneID{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputAiComposeToneIDTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputAiComposeToneIDTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputAiComposeToneID(r)
 	}
 }
@@ -120,14 +131,18 @@ func (v *InputAiComposeToneSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputAiComposeToneSlug deserializes a InputAiComposeToneSlug from a reader using the TL binary protocol.
-func DecodeInputAiComposeToneSlug(r io.Reader) (*InputAiComposeToneSlug, error) {
+func DecodeInputAiComposeToneSlug(r *Reader) (*InputAiComposeToneSlug, error) {
 	v := &InputAiComposeToneSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputAiComposeToneSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputAiComposeToneSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputAiComposeToneSlug(r)
 	}
 }
@@ -224,39 +239,74 @@ func (v *AiComposeTone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAiComposeTone deserializes a AiComposeTone from a reader using the TL binary protocol.
-func DecodeAiComposeTone(r io.Reader) (*AiComposeTone, error) {
+func DecodeAiComposeTone(r *Reader) (*AiComposeTone, error) {
 	v := &AiComposeTone{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Slug = ReadString(r)
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(1) {
-		v.EmojiID = ReadLong(r)
+		_rEmojiID, _eEmojiID := r.ReadInt64()
+		if _eEmojiID != nil {
+			return nil, _eEmojiID
+		}
+		v.EmojiID = _rEmojiID
 	}
 	if v.Flags.Has(4) {
-		v.Prompt = ReadString(r)
+		_rPrompt, _ePrompt := r.ReadString()
+		if _ePrompt != nil {
+			return nil, _ePrompt
+		}
+		v.Prompt = _rPrompt
 	}
 	if v.Flags.Has(2) {
-		v.InstallsCount = int32(ReadInt(r))
+		_rInstallsCount, _eInstallsCount := r.ReadInt32()
+		if _eInstallsCount != nil {
+			return nil, _eInstallsCount
+		}
+		v.InstallsCount = _rInstallsCount
 	}
 	if v.Flags.Has(3) {
-		v.AuthorID = ReadLong(r)
+		_rAuthorID, _eAuthorID := r.ReadInt64()
+		if _eAuthorID != nil {
+			return nil, _eAuthorID
+		}
+		v.AuthorID = _rAuthorID
 	}
 	if v.Flags.Has(5) {
-		_objExampleEnglish, _ := ReadTLObject(r)
+		_objExampleEnglish, _errExampleEnglish := ReadTLObject(r)
+		if _errExampleEnglish != nil {
+			return nil, _errExampleEnglish
+		}
 		v.ExampleEnglish = _objExampleEnglish.(*AiComposeToneExample)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AiComposeToneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AiComposeToneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAiComposeTone(r)
 	}
 }
@@ -285,16 +335,28 @@ func (v *AiComposeToneDefault) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAiComposeToneDefault deserializes a AiComposeToneDefault from a reader using the TL binary protocol.
-func DecodeAiComposeToneDefault(r io.Reader) (*AiComposeToneDefault, error) {
+func DecodeAiComposeToneDefault(r *Reader) (*AiComposeToneDefault, error) {
 	v := &AiComposeToneDefault{}
-	v.Tone = ReadString(r)
-	v.EmojiID = ReadLong(r)
-	v.Title = ReadString(r)
+	_rTone, _eTone := r.ReadString()
+	if _eTone != nil {
+		return nil, _eTone
+	}
+	v.Tone = _rTone
+	_rEmojiID, _eEmojiID := r.ReadInt64()
+	if _eEmojiID != nil {
+		return nil, _eEmojiID
+	}
+	v.EmojiID = _rEmojiID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	return v, nil
 }
 
 func init() {
-	Registry[AiComposeToneDefaultTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AiComposeToneDefaultTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAiComposeToneDefault(r)
 	}
 }
@@ -337,13 +399,13 @@ func (v *AicomposeTonesNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAicomposeTonesNotModified deserializes a AicomposeTonesNotModified from a reader using the TL binary protocol.
-func DecodeAicomposeTonesNotModified(r io.Reader) (*AicomposeTonesNotModified, error) {
+func DecodeAicomposeTonesNotModified(r *Reader) (*AicomposeTonesNotModified, error) {
 	v := &AicomposeTonesNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[AicomposeTonesNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AicomposeTonesNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAicomposeTonesNotModified(r)
 	}
 }
@@ -380,34 +442,58 @@ func (v *AicomposeTones) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAicomposeTones deserializes a AicomposeTones from a reader using the TL binary protocol.
-func DecodeAicomposeTones(r io.Reader) (*AicomposeTones, error) {
+func DecodeAicomposeTones(r *Reader) (*AicomposeTones, error) {
 	v := &AicomposeTones{}
-	v.Hash = ReadLong(r)
-	ReadInt(r)
-	_cntTones := ReadInt(r)
-	if err := checkVectorCount(_cntTones); err != nil {
-		return nil, err
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_vhdrTones, _ehdrTones := r.ReadUint32()
+	if _ehdrTones != nil {
+		return nil, _ehdrTones
+	}
+	_cntTones, _ecntTones := r.ReadUint32()
+	if _ecntTones != nil {
+		return nil, _ecntTones
+	}
+	if _errTones := checkVectorCount(_cntTones); _errTones != nil {
+		return nil, _errTones
 	}
 	v.Tones = make([]AiComposeToneClass, _cntTones)
 	for _iTones := range v.Tones {
-		_objTones, _ := ReadTLObject(r)
+		_objTones, _errTones := ReadTLObject(r)
+		if _errTones != nil {
+			return nil, _errTones
+		}
 		v.Tones[_iTones] = _objTones.(AiComposeToneClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrTones
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[AicomposeTonesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AicomposeTonesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAicomposeTones(r)
 	}
 }
@@ -437,17 +523,23 @@ func (v *AiComposeToneExample) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAiComposeToneExample deserializes a AiComposeToneExample from a reader using the TL binary protocol.
-func DecodeAiComposeToneExample(r io.Reader) (*AiComposeToneExample, error) {
+func DecodeAiComposeToneExample(r *Reader) (*AiComposeToneExample, error) {
 	v := &AiComposeToneExample{}
-	_objFrom, _ := ReadTLObject(r)
+	_objFrom, _errFrom := ReadTLObject(r)
+	if _errFrom != nil {
+		return nil, _errFrom
+	}
 	v.From = _objFrom.(*TextWithEntities)
-	_objTo, _ := ReadTLObject(r)
+	_objTo, _errTo := ReadTLObject(r)
+	if _errTo != nil {
+		return nil, _errTo
+	}
 	v.To = _objTo.(*TextWithEntities)
 	return v, nil
 }
 
 func init() {
-	Registry[AiComposeToneExampleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AiComposeToneExampleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAiComposeToneExample(r)
 	}
 }

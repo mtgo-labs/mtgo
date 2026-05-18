@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"io"
 	"maps"
 	"sort"
 
@@ -114,7 +113,7 @@ func (c *Client) UseInvokerMiddleware(mw InvokerMiddleware) {
 
 // InvokeWithMiddleware wraps base with all registered invoker middleware
 // and performs the RPC call.
-func (c *Client) InvokeWithMiddleware(base tg.Invoker, ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (c *Client) InvokeWithMiddleware(base tg.Invoker, ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	c.mu.RLock()
 	mws := c.invokerMiddlewares
 	c.mu.RUnlock()

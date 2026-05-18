@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // PhotosUpdateProfilePhotoTypeID is the constructor ID for the RPC function photos.updateProfilePhoto.
@@ -57,7 +56,7 @@ func (v *PhotosUpdateProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhotosUpdateProfilePhoto(ctx context.Context, req *PhotosUpdateProfilePhotoRequest) (PhotoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -143,7 +142,7 @@ func (v *PhotosUploadProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhotosUploadProfilePhoto(ctx context.Context, req *PhotosUploadProfilePhotoRequest) (PhotoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -189,7 +188,7 @@ func (v *PhotosDeletePhotosRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhotosDeletePhotos(ctx context.Context, req *PhotosDeletePhotosRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -234,7 +233,7 @@ func (v *PhotosGetUserPhotosRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhotosGetUserPhotos(ctx context.Context, req *PhotosGetUserPhotosRequest) (PhotosClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -319,7 +318,7 @@ func (v *PhotosUploadContactProfilePhotoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhotosUploadContactProfilePhoto(ctx context.Context, req *PhotosUploadContactProfilePhotoRequest) (PhotoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

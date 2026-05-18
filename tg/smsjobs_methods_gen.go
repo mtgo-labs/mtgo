@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // SmsjobsIsEligibleToJoinTypeID is the constructor ID for the RPC function smsjobs.isEligibleToJoin.
@@ -37,7 +36,7 @@ func (v *SmsjobsIsEligibleToJoinRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsIsEligibleToJoin(ctx context.Context) (*SmsjobsEligibleToJoin, error) {
-	result, err := c.invoke(ctx, &SmsjobsIsEligibleToJoinRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &SmsjobsIsEligibleToJoinRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -77,7 +76,7 @@ func (v *SmsjobsJoinRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsJoin(ctx context.Context) (bool, error) {
-	result, err := c.invoke(ctx, &SmsjobsJoinRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &SmsjobsJoinRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -115,7 +114,7 @@ func (v *SmsjobsLeaveRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsLeave(ctx context.Context) (bool, error) {
-	result, err := c.invoke(ctx, &SmsjobsLeaveRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &SmsjobsLeaveRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -164,7 +163,7 @@ func (v *SmsjobsUpdateSettingsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsUpdateSettings(ctx context.Context, req *SmsjobsUpdateSettingsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -202,7 +201,7 @@ func (v *SmsjobsGetStatusRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsGetStatus(ctx context.Context) (*SmsjobsStatus, error) {
-	result, err := c.invoke(ctx, &SmsjobsGetStatusRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &SmsjobsGetStatusRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -244,7 +243,7 @@ func (v *SmsjobsGetSmsJobRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsGetSmsJob(ctx context.Context, req *SmsjobsGetSmsJobRequest) (*SmsJob, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -300,7 +299,7 @@ func (v *SmsjobsFinishJobRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) SmsjobsFinishJob(ctx context.Context, req *SmsjobsFinishJobRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

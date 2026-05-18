@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -105,13 +103,13 @@ func (v *SendMessageTypingAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageTypingAction deserializes a SendMessageTypingAction from a reader using the TL binary protocol.
-func DecodeSendMessageTypingAction(r io.Reader) (*SendMessageTypingAction, error) {
+func DecodeSendMessageTypingAction(r *tg.Reader) (*SendMessageTypingAction, error) {
 	v := &SendMessageTypingAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageTypingActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageTypingActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageTypingAction(r)
 	}
 }
@@ -132,13 +130,13 @@ func (v *SendMessageCancelAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageCancelAction deserializes a SendMessageCancelAction from a reader using the TL binary protocol.
-func DecodeSendMessageCancelAction(r io.Reader) (*SendMessageCancelAction, error) {
+func DecodeSendMessageCancelAction(r *tg.Reader) (*SendMessageCancelAction, error) {
 	v := &SendMessageCancelAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageCancelActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageCancelActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageCancelAction(r)
 	}
 }
@@ -159,13 +157,13 @@ func (v *SendMessageRecordVideoAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageRecordVideoAction deserializes a SendMessageRecordVideoAction from a reader using the TL binary protocol.
-func DecodeSendMessageRecordVideoAction(r io.Reader) (*SendMessageRecordVideoAction, error) {
+func DecodeSendMessageRecordVideoAction(r *tg.Reader) (*SendMessageRecordVideoAction, error) {
 	v := &SendMessageRecordVideoAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageRecordVideoActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageRecordVideoActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageRecordVideoAction(r)
 	}
 }
@@ -186,13 +184,13 @@ func (v *SendMessageUploadVideoAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageUploadVideoAction deserializes a SendMessageUploadVideoAction from a reader using the TL binary protocol.
-func DecodeSendMessageUploadVideoAction(r io.Reader) (*SendMessageUploadVideoAction, error) {
+func DecodeSendMessageUploadVideoAction(r *tg.Reader) (*SendMessageUploadVideoAction, error) {
 	v := &SendMessageUploadVideoAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageUploadVideoActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageUploadVideoActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageUploadVideoAction(r)
 	}
 }
@@ -213,13 +211,13 @@ func (v *SendMessageRecordAudioAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageRecordAudioAction deserializes a SendMessageRecordAudioAction from a reader using the TL binary protocol.
-func DecodeSendMessageRecordAudioAction(r io.Reader) (*SendMessageRecordAudioAction, error) {
+func DecodeSendMessageRecordAudioAction(r *tg.Reader) (*SendMessageRecordAudioAction, error) {
 	v := &SendMessageRecordAudioAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageRecordAudioActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageRecordAudioActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageRecordAudioAction(r)
 	}
 }
@@ -240,13 +238,13 @@ func (v *SendMessageUploadAudioAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageUploadAudioAction deserializes a SendMessageUploadAudioAction from a reader using the TL binary protocol.
-func DecodeSendMessageUploadAudioAction(r io.Reader) (*SendMessageUploadAudioAction, error) {
+func DecodeSendMessageUploadAudioAction(r *tg.Reader) (*SendMessageUploadAudioAction, error) {
 	v := &SendMessageUploadAudioAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageUploadAudioActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageUploadAudioActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageUploadAudioAction(r)
 	}
 }
@@ -267,13 +265,13 @@ func (v *SendMessageUploadPhotoAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageUploadPhotoAction deserializes a SendMessageUploadPhotoAction from a reader using the TL binary protocol.
-func DecodeSendMessageUploadPhotoAction(r io.Reader) (*SendMessageUploadPhotoAction, error) {
+func DecodeSendMessageUploadPhotoAction(r *tg.Reader) (*SendMessageUploadPhotoAction, error) {
 	v := &SendMessageUploadPhotoAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageUploadPhotoActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageUploadPhotoActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageUploadPhotoAction(r)
 	}
 }
@@ -294,13 +292,13 @@ func (v *SendMessageUploadDocumentAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageUploadDocumentAction deserializes a SendMessageUploadDocumentAction from a reader using the TL binary protocol.
-func DecodeSendMessageUploadDocumentAction(r io.Reader) (*SendMessageUploadDocumentAction, error) {
+func DecodeSendMessageUploadDocumentAction(r *tg.Reader) (*SendMessageUploadDocumentAction, error) {
 	v := &SendMessageUploadDocumentAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageUploadDocumentActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageUploadDocumentActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageUploadDocumentAction(r)
 	}
 }
@@ -321,13 +319,13 @@ func (v *SendMessageGeoLocationAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageGeoLocationAction deserializes a SendMessageGeoLocationAction from a reader using the TL binary protocol.
-func DecodeSendMessageGeoLocationAction(r io.Reader) (*SendMessageGeoLocationAction, error) {
+func DecodeSendMessageGeoLocationAction(r *tg.Reader) (*SendMessageGeoLocationAction, error) {
 	v := &SendMessageGeoLocationAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageGeoLocationActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageGeoLocationActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageGeoLocationAction(r)
 	}
 }
@@ -348,13 +346,13 @@ func (v *SendMessageChooseContactAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageChooseContactAction deserializes a SendMessageChooseContactAction from a reader using the TL binary protocol.
-func DecodeSendMessageChooseContactAction(r io.Reader) (*SendMessageChooseContactAction, error) {
+func DecodeSendMessageChooseContactAction(r *tg.Reader) (*SendMessageChooseContactAction, error) {
 	v := &SendMessageChooseContactAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageChooseContactActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageChooseContactActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageChooseContactAction(r)
 	}
 }
@@ -375,13 +373,13 @@ func (v *SendMessageRecordRoundAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageRecordRoundAction deserializes a SendMessageRecordRoundAction from a reader using the TL binary protocol.
-func DecodeSendMessageRecordRoundAction(r io.Reader) (*SendMessageRecordRoundAction, error) {
+func DecodeSendMessageRecordRoundAction(r *tg.Reader) (*SendMessageRecordRoundAction, error) {
 	v := &SendMessageRecordRoundAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageRecordRoundActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageRecordRoundActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageRecordRoundAction(r)
 	}
 }
@@ -402,13 +400,13 @@ func (v *SendMessageUploadRoundAction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendMessageUploadRoundAction deserializes a SendMessageUploadRoundAction from a reader using the TL binary protocol.
-func DecodeSendMessageUploadRoundAction(r io.Reader) (*SendMessageUploadRoundAction, error) {
+func DecodeSendMessageUploadRoundAction(r *tg.Reader) (*SendMessageUploadRoundAction, error) {
 	v := &SendMessageUploadRoundAction{}
 	return v, nil
 }
 
 func init() {
-	Registry[SendMessageUploadRoundActionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[SendMessageUploadRoundActionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeSendMessageUploadRoundAction(r)
 	}
 }

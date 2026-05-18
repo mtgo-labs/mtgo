@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -97,15 +95,23 @@ func (v *DocumentAttributeImageSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeImageSize deserializes a DocumentAttributeImageSize from a reader using the TL binary protocol.
-func DecodeDocumentAttributeImageSize(r io.Reader) (*DocumentAttributeImageSize, error) {
+func DecodeDocumentAttributeImageSize(r *tg.Reader) (*DocumentAttributeImageSize, error) {
 	v := &DocumentAttributeImageSize{}
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeImageSizeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeImageSizeTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeImageSize(r)
 	}
 }
@@ -126,13 +132,13 @@ func (v *DocumentAttributeAnimated) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAnimated deserializes a DocumentAttributeAnimated from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAnimated(r io.Reader) (*DocumentAttributeAnimated, error) {
+func DecodeDocumentAttributeAnimated(r *tg.Reader) (*DocumentAttributeAnimated, error) {
 	v := &DocumentAttributeAnimated{}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAnimatedTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeAnimatedTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeAnimated(r)
 	}
 }
@@ -153,13 +159,13 @@ func (v *DocumentAttributeSticker23) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeSticker23 deserializes a DocumentAttributeSticker23 from a reader using the TL binary protocol.
-func DecodeDocumentAttributeSticker23(r io.Reader) (*DocumentAttributeSticker23, error) {
+func DecodeDocumentAttributeSticker23(r *tg.Reader) (*DocumentAttributeSticker23, error) {
 	v := &DocumentAttributeSticker23{}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeSticker23TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeSticker23TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeSticker23(r)
 	}
 }
@@ -186,16 +192,28 @@ func (v *DocumentAttributeVideo23) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeVideo23 deserializes a DocumentAttributeVideo23 from a reader using the TL binary protocol.
-func DecodeDocumentAttributeVideo23(r io.Reader) (*DocumentAttributeVideo23, error) {
+func DecodeDocumentAttributeVideo23(r *tg.Reader) (*DocumentAttributeVideo23, error) {
 	v := &DocumentAttributeVideo23{}
-	v.Duration = int32(tg.ReadInt(r))
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeVideo23TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeVideo23TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeVideo23(r)
 	}
 }
@@ -218,14 +236,18 @@ func (v *DocumentAttributeAudio23) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAudio23 deserializes a DocumentAttributeAudio23 from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAudio23(r io.Reader) (*DocumentAttributeAudio23, error) {
+func DecodeDocumentAttributeAudio23(r *tg.Reader) (*DocumentAttributeAudio23, error) {
 	v := &DocumentAttributeAudio23{}
-	v.Duration = int32(tg.ReadInt(r))
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAudio23TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeAudio23TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeAudio23(r)
 	}
 }
@@ -248,14 +270,18 @@ func (v *DocumentAttributeFilename) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeFilename deserializes a DocumentAttributeFilename from a reader using the TL binary protocol.
-func DecodeDocumentAttributeFilename(r io.Reader) (*DocumentAttributeFilename, error) {
+func DecodeDocumentAttributeFilename(r *tg.Reader) (*DocumentAttributeFilename, error) {
 	v := &DocumentAttributeFilename{}
-	v.FileName = tg.ReadString(r)
+	_rFileName, _eFileName := r.ReadString()
+	if _eFileName != nil {
+		return nil, _eFileName
+	}
+	v.FileName = _rFileName
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeFilenameTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeFilenameTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeFilename(r)
 	}
 }
@@ -282,16 +308,28 @@ func (v *DocumentAttributeAudio45) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAudio45 deserializes a DocumentAttributeAudio45 from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAudio45(r io.Reader) (*DocumentAttributeAudio45, error) {
+func DecodeDocumentAttributeAudio45(r *tg.Reader) (*DocumentAttributeAudio45, error) {
 	v := &DocumentAttributeAudio45{}
-	v.Duration = int32(tg.ReadInt(r))
-	v.Title = tg.ReadString(r)
-	v.Performer = tg.ReadString(r)
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rPerformer, _ePerformer := r.ReadString()
+	if _ePerformer != nil {
+		return nil, _ePerformer
+	}
+	v.Performer = _rPerformer
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAudio45TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeAudio45TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeAudio45(r)
 	}
 }
@@ -316,16 +354,23 @@ func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeSticker deserializes a DocumentAttributeSticker from a reader using the TL binary protocol.
-func DecodeDocumentAttributeSticker(r io.Reader) (*DocumentAttributeSticker, error) {
+func DecodeDocumentAttributeSticker(r *tg.Reader) (*DocumentAttributeSticker, error) {
 	v := &DocumentAttributeSticker{}
-	v.Alt = tg.ReadString(r)
-	_objStickerset, _ := ReadE2ETLObject(r)
+	_rAlt, _eAlt := r.ReadString()
+	if _eAlt != nil {
+		return nil, _eAlt
+	}
+	v.Alt = _rAlt
+	_objStickerset, _errStickerset := ReadE2ETLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(InputStickerSetClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeStickerTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeStickerTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeSticker(r)
 	}
 }
@@ -380,29 +425,45 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAudio deserializes a DocumentAttributeAudio from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAudio(r io.Reader) (*DocumentAttributeAudio, error) {
+func DecodeDocumentAttributeAudio(r *tg.Reader) (*DocumentAttributeAudio, error) {
 	v := &DocumentAttributeAudio{}
 	{
 		var _f uint32
-		_f, _ = tg.ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = tg.Fields(_f)
 	}
 	v.Voice = v.Flags.Has(10)
-	v.Duration = int32(tg.ReadInt(r))
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
 	if v.Flags.Has(0) {
-		v.Title = tg.ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Performer = tg.ReadString(r)
+		_rPerformer, _ePerformer := r.ReadString()
+		if _ePerformer != nil {
+			return nil, _ePerformer
+		}
+		v.Performer = _rPerformer
 	}
 	if v.Flags.Has(2) {
-		v.Waveform = tg.ReadBytes(r)
+		_rWaveform, _eWaveform := r.ReadBytes()
+		if _eWaveform != nil {
+			return nil, _eWaveform
+		}
+		v.Waveform = _rWaveform
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAudioTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeAudioTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeAudio(r)
 	}
 }
@@ -440,22 +501,34 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeVideo deserializes a DocumentAttributeVideo from a reader using the TL binary protocol.
-func DecodeDocumentAttributeVideo(r io.Reader) (*DocumentAttributeVideo, error) {
+func DecodeDocumentAttributeVideo(r *tg.Reader) (*DocumentAttributeVideo, error) {
 	v := &DocumentAttributeVideo{}
 	{
 		var _f uint32
-		_f, _ = tg.ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = tg.Fields(_f)
 	}
 	v.RoundMessage = v.Flags.Has(0)
-	v.Duration = int32(tg.ReadInt(r))
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeVideoTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DocumentAttributeVideoTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDocumentAttributeVideo(r)
 	}
 }

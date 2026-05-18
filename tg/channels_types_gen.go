@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // ChannelParticipantClass is the interface for TL type ChannelParticipant.
@@ -100,26 +99,42 @@ func (v *ChannelParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipant deserializes a ChannelParticipant from a reader using the TL binary protocol.
-func DecodeChannelParticipant(r io.Reader) (*ChannelParticipant, error) {
+func DecodeChannelParticipant(r *Reader) (*ChannelParticipant, error) {
 	v := &ChannelParticipant{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(0) {
-		v.SubscriptionUntilDate = int32(ReadInt(r))
+		_rSubscriptionUntilDate, _eSubscriptionUntilDate := r.ReadInt32()
+		if _eSubscriptionUntilDate != nil {
+			return nil, _eSubscriptionUntilDate
+		}
+		v.SubscriptionUntilDate = _rSubscriptionUntilDate
 	}
 	if v.Flags.Has(2) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipant(r)
 	}
 }
@@ -173,28 +188,48 @@ func (v *ChannelParticipantSelf) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantSelf deserializes a ChannelParticipantSelf from a reader using the TL binary protocol.
-func DecodeChannelParticipantSelf(r io.Reader) (*ChannelParticipantSelf, error) {
+func DecodeChannelParticipantSelf(r *Reader) (*ChannelParticipantSelf, error) {
 	v := &ChannelParticipantSelf{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ViaRequest = v.Flags.Has(0)
-	v.UserID = ReadLong(r)
-	v.InviterID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rInviterID, _eInviterID := r.ReadInt64()
+	if _eInviterID != nil {
+		return nil, _eInviterID
+	}
+	v.InviterID = _rInviterID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(1) {
-		v.SubscriptionUntilDate = int32(ReadInt(r))
+		_rSubscriptionUntilDate, _eSubscriptionUntilDate := r.ReadInt32()
+		if _eSubscriptionUntilDate != nil {
+			return nil, _eSubscriptionUntilDate
+		}
+		v.SubscriptionUntilDate = _rSubscriptionUntilDate
 	}
 	if v.Flags.Has(2) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantSelfTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantSelfTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantSelf(r)
 	}
 }
@@ -235,24 +270,35 @@ func (v *ChannelParticipantCreator) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantCreator deserializes a ChannelParticipantCreator from a reader using the TL binary protocol.
-func DecodeChannelParticipantCreator(r io.Reader) (*ChannelParticipantCreator, error) {
+func DecodeChannelParticipantCreator(r *Reader) (*ChannelParticipantCreator, error) {
 	v := &ChannelParticipantCreator{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	_objAdminRights, _ := ReadTLObject(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objAdminRights, _errAdminRights := ReadTLObject(r)
+	if _errAdminRights != nil {
+		return nil, _errAdminRights
+	}
 	v.AdminRights = _objAdminRights.(*ChatAdminRights)
 	if v.Flags.Has(0) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantCreatorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantCreatorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantCreator(r)
 	}
 }
@@ -312,31 +358,54 @@ func (v *ChannelParticipantAdmin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantAdmin deserializes a ChannelParticipantAdmin from a reader using the TL binary protocol.
-func DecodeChannelParticipantAdmin(r io.Reader) (*ChannelParticipantAdmin, error) {
+func DecodeChannelParticipantAdmin(r *Reader) (*ChannelParticipantAdmin, error) {
 	v := &ChannelParticipantAdmin{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.CanEdit = v.Flags.Has(0)
 	v.Self = v.Flags.Has(1)
-	v.UserID = ReadLong(r)
-	if v.Flags.Has(1) {
-		v.InviterID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
 	}
-	v.PromotedBy = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	_objAdminRights, _ := ReadTLObject(r)
+	v.UserID = _rUserID
+	if v.Flags.Has(1) {
+		_rInviterID, _eInviterID := r.ReadInt64()
+		if _eInviterID != nil {
+			return nil, _eInviterID
+		}
+		v.InviterID = _rInviterID
+	}
+	_rPromotedBy, _ePromotedBy := r.ReadInt64()
+	if _ePromotedBy != nil {
+		return nil, _ePromotedBy
+	}
+	v.PromotedBy = _rPromotedBy
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objAdminRights, _errAdminRights := ReadTLObject(r)
+	if _errAdminRights != nil {
+		return nil, _errAdminRights
+	}
 	v.AdminRights = _objAdminRights.(*ChatAdminRights)
 	if v.Flags.Has(2) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantAdminTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantAdminTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantAdmin(r)
 	}
 }
@@ -385,28 +454,46 @@ func (v *ChannelParticipantBanned) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantBanned deserializes a ChannelParticipantBanned from a reader using the TL binary protocol.
-func DecodeChannelParticipantBanned(r io.Reader) (*ChannelParticipantBanned, error) {
+func DecodeChannelParticipantBanned(r *Reader) (*ChannelParticipantBanned, error) {
 	v := &ChannelParticipantBanned{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Left = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.KickedBy = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	_objBannedRights, _ := ReadTLObject(r)
+	_rKickedBy, _eKickedBy := r.ReadInt64()
+	if _eKickedBy != nil {
+		return nil, _eKickedBy
+	}
+	v.KickedBy = _rKickedBy
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objBannedRights, _errBannedRights := ReadTLObject(r)
+	if _errBannedRights != nil {
+		return nil, _errBannedRights
+	}
 	v.BannedRights = _objBannedRights.(*ChatBannedRights)
 	if v.Flags.Has(2) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantBannedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantBannedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantBanned(r)
 	}
 }
@@ -431,15 +518,18 @@ func (v *ChannelParticipantLeft) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantLeft deserializes a ChannelParticipantLeft from a reader using the TL binary protocol.
-func DecodeChannelParticipantLeft(r io.Reader) (*ChannelParticipantLeft, error) {
+func DecodeChannelParticipantLeft(r *Reader) (*ChannelParticipantLeft, error) {
 	v := &ChannelParticipantLeft{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantLeftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantLeftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantLeft(r)
 	}
 }
@@ -476,35 +566,58 @@ func (v *ChannelsChannelParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelsChannelParticipant deserializes a ChannelsChannelParticipant from a reader using the TL binary protocol.
-func DecodeChannelsChannelParticipant(r io.Reader) (*ChannelsChannelParticipant, error) {
+func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, error) {
 	v := &ChannelsChannelParticipant{}
-	_objParticipant, _ := ReadTLObject(r)
+	_objParticipant, _errParticipant := ReadTLObject(r)
+	if _errParticipant != nil {
+		return nil, _errParticipant
+	}
 	v.Participant = _objParticipant.(ChannelParticipantClass)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsChannelParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsChannelParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsChannelParticipant(r)
 	}
 }
@@ -567,44 +680,78 @@ func (v *ChannelsChannelParticipants) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelsChannelParticipants deserializes a ChannelsChannelParticipants from a reader using the TL binary protocol.
-func DecodeChannelsChannelParticipants(r io.Reader) (*ChannelsChannelParticipants, error) {
+func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants, error) {
 	v := &ChannelsChannelParticipants{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntParticipants := ReadInt(r)
-	if err := checkVectorCount(_cntParticipants); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+	if _ehdrParticipants != nil {
+		return nil, _ehdrParticipants
+	}
+	_cntParticipants, _ecntParticipants := r.ReadUint32()
+	if _ecntParticipants != nil {
+		return nil, _ecntParticipants
+	}
+	if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+		return nil, _errParticipants
 	}
 	v.Participants = make([]ChannelParticipantClass, _cntParticipants)
 	for _iParticipants := range v.Participants {
-		_objParticipants, _ := ReadTLObject(r)
+		_objParticipants, _errParticipants := ReadTLObject(r)
+		if _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		v.Participants[_iParticipants] = _objParticipants.(ChannelParticipantClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrParticipants
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsChannelParticipantsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsChannelParticipantsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsChannelParticipants(r)
 	}
 }
@@ -627,13 +774,13 @@ func (v *ChannelsChannelParticipantsNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelsChannelParticipantsNotModified deserializes a ChannelsChannelParticipantsNotModified from a reader using the TL binary protocol.
-func DecodeChannelsChannelParticipantsNotModified(r io.Reader) (*ChannelsChannelParticipantsNotModified, error) {
+func DecodeChannelsChannelParticipantsNotModified(r *Reader) (*ChannelsChannelParticipantsNotModified, error) {
 	v := &ChannelsChannelParticipantsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsChannelParticipantsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsChannelParticipantsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsChannelParticipantsNotModified(r)
 	}
 }
@@ -677,43 +824,73 @@ func (v *ChannelsAdminLogResults) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelsAdminLogResults deserializes a ChannelsAdminLogResults from a reader using the TL binary protocol.
-func DecodeChannelsAdminLogResults(r io.Reader) (*ChannelsAdminLogResults, error) {
+func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) {
 	v := &ChannelsAdminLogResults{}
-	ReadInt(r)
-	_cntEvents := ReadInt(r)
-	if err := checkVectorCount(_cntEvents); err != nil {
-		return nil, err
+	_vhdrEvents, _ehdrEvents := r.ReadUint32()
+	if _ehdrEvents != nil {
+		return nil, _ehdrEvents
+	}
+	_cntEvents, _ecntEvents := r.ReadUint32()
+	if _ecntEvents != nil {
+		return nil, _ecntEvents
+	}
+	if _errEvents := checkVectorCount(_cntEvents); _errEvents != nil {
+		return nil, _errEvents
 	}
 	v.Events = make([]*ChannelAdminLogEvent, _cntEvents)
 	for _iEvents := range v.Events {
-		_objEvents, _ := ReadTLObject(r)
+		_objEvents, _errEvents := ReadTLObject(r)
+		if _errEvents != nil {
+			return nil, _errEvents
+		}
 		v.Events[_iEvents] = _objEvents.(*ChannelAdminLogEvent)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrEvents
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsAdminLogResultsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsAdminLogResultsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsAdminLogResults(r)
 	}
 }
@@ -757,43 +934,73 @@ func (v *ChannelsSendAsPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelsSendAsPeers deserializes a ChannelsSendAsPeers from a reader using the TL binary protocol.
-func DecodeChannelsSendAsPeers(r io.Reader) (*ChannelsSendAsPeers, error) {
+func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 	v := &ChannelsSendAsPeers{}
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]*SendAsPeer, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(*SendAsPeer)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsSendAsPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsSendAsPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsSendAsPeers(r)
 	}
 }
@@ -850,24 +1057,38 @@ func (v *ChannelsSponsoredMessageReportResultChooseOption) Encode(b *bytes.Buffe
 }
 
 // DecodeChannelsSponsoredMessageReportResultChooseOption deserializes a ChannelsSponsoredMessageReportResultChooseOption from a reader using the TL binary protocol.
-func DecodeChannelsSponsoredMessageReportResultChooseOption(r io.Reader) (*ChannelsSponsoredMessageReportResultChooseOption, error) {
+func DecodeChannelsSponsoredMessageReportResultChooseOption(r *Reader) (*ChannelsSponsoredMessageReportResultChooseOption, error) {
 	v := &ChannelsSponsoredMessageReportResultChooseOption{}
-	v.Title = ReadString(r)
-	ReadInt(r)
-	_cntOptions := ReadInt(r)
-	if err := checkVectorCount(_cntOptions); err != nil {
-		return nil, err
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_vhdrOptions, _ehdrOptions := r.ReadUint32()
+	if _ehdrOptions != nil {
+		return nil, _ehdrOptions
+	}
+	_cntOptions, _ecntOptions := r.ReadUint32()
+	if _ecntOptions != nil {
+		return nil, _ecntOptions
+	}
+	if _errOptions := checkVectorCount(_cntOptions); _errOptions != nil {
+		return nil, _errOptions
 	}
 	v.Options = make([]*SponsoredMessageReportOption, _cntOptions)
 	for _iOptions := range v.Options {
-		_objOptions, _ := ReadTLObject(r)
+		_objOptions, _errOptions := ReadTLObject(r)
+		if _errOptions != nil {
+			return nil, _errOptions
+		}
 		v.Options[_iOptions] = _objOptions.(*SponsoredMessageReportOption)
 	}
+	_ = _vhdrOptions
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsSponsoredMessageReportResultChooseOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsSponsoredMessageReportResultChooseOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsSponsoredMessageReportResultChooseOption(r)
 	}
 }
@@ -890,13 +1111,13 @@ func (v *ChannelsSponsoredMessageReportResultAdsHidden) Encode(b *bytes.Buffer) 
 }
 
 // DecodeChannelsSponsoredMessageReportResultAdsHidden deserializes a ChannelsSponsoredMessageReportResultAdsHidden from a reader using the TL binary protocol.
-func DecodeChannelsSponsoredMessageReportResultAdsHidden(r io.Reader) (*ChannelsSponsoredMessageReportResultAdsHidden, error) {
+func DecodeChannelsSponsoredMessageReportResultAdsHidden(r *Reader) (*ChannelsSponsoredMessageReportResultAdsHidden, error) {
 	v := &ChannelsSponsoredMessageReportResultAdsHidden{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsSponsoredMessageReportResultAdsHiddenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsSponsoredMessageReportResultAdsHiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsSponsoredMessageReportResultAdsHidden(r)
 	}
 }
@@ -919,13 +1140,13 @@ func (v *ChannelsSponsoredMessageReportResultReported) Encode(b *bytes.Buffer) e
 }
 
 // DecodeChannelsSponsoredMessageReportResultReported deserializes a ChannelsSponsoredMessageReportResultReported from a reader using the TL binary protocol.
-func DecodeChannelsSponsoredMessageReportResultReported(r io.Reader) (*ChannelsSponsoredMessageReportResultReported, error) {
+func DecodeChannelsSponsoredMessageReportResultReported(r *Reader) (*ChannelsSponsoredMessageReportResultReported, error) {
 	v := &ChannelsSponsoredMessageReportResultReported{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelsSponsoredMessageReportResultReportedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelsSponsoredMessageReportResultReportedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelsSponsoredMessageReportResultReported(r)
 	}
 }

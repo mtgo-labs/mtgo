@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -53,14 +51,18 @@ func (v *PhotoSizeEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoSizeEmpty deserializes a PhotoSizeEmpty from a reader using the TL binary protocol.
-func DecodePhotoSizeEmpty(r io.Reader) (*PhotoSizeEmpty, error) {
+func DecodePhotoSizeEmpty(r *tg.Reader) (*PhotoSizeEmpty, error) {
 	v := &PhotoSizeEmpty{}
-	v.Type = tg.ReadString(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoSizeEmptyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[PhotoSizeEmptyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodePhotoSizeEmpty(r)
 	}
 }
@@ -91,19 +93,38 @@ func (v *PhotoSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoSize deserializes a PhotoSize from a reader using the TL binary protocol.
-func DecodePhotoSize(r io.Reader) (*PhotoSize, error) {
+func DecodePhotoSize(r *tg.Reader) (*PhotoSize, error) {
 	v := &PhotoSize{}
-	v.Type = tg.ReadString(r)
-	_objLocation, _ := ReadE2ETLObject(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_objLocation, _errLocation := ReadE2ETLObject(r)
+	if _errLocation != nil {
+		return nil, _errLocation
+	}
 	v.Location = _objLocation.(FileLocationClass)
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoSizeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[PhotoSizeTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodePhotoSize(r)
 	}
 }
@@ -134,19 +155,38 @@ func (v *PhotoCachedSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoCachedSize deserializes a PhotoCachedSize from a reader using the TL binary protocol.
-func DecodePhotoCachedSize(r io.Reader) (*PhotoCachedSize, error) {
+func DecodePhotoCachedSize(r *tg.Reader) (*PhotoCachedSize, error) {
 	v := &PhotoCachedSize{}
-	v.Type = tg.ReadString(r)
-	_objLocation, _ := ReadE2ETLObject(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_objLocation, _errLocation := ReadE2ETLObject(r)
+	if _errLocation != nil {
+		return nil, _errLocation
+	}
 	v.Location = _objLocation.(FileLocationClass)
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Bytes = tg.ReadBytes(r)
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoCachedSizeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[PhotoCachedSizeTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodePhotoCachedSize(r)
 	}
 }

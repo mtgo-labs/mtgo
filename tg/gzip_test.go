@@ -14,7 +14,9 @@ func TestGzipPacked(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	decoded, err := DecodeGzipPacked(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	decoded, err := DecodeGzipPacked(r)
 	if err != nil {
 		t.Fatal(err)
 	}

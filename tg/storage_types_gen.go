@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // FileTypeClass is the interface for TL type FileType.
@@ -93,13 +92,13 @@ func (v *StorageFileUnknown) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileUnknown deserializes a StorageFileUnknown from a reader using the TL binary protocol.
-func DecodeStorageFileUnknown(r io.Reader) (*StorageFileUnknown, error) {
+func DecodeStorageFileUnknown(r *Reader) (*StorageFileUnknown, error) {
 	v := &StorageFileUnknown{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileUnknownTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileUnknownTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileUnknown(r)
 	}
 }
@@ -122,13 +121,13 @@ func (v *StorageFilePartial) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFilePartial deserializes a StorageFilePartial from a reader using the TL binary protocol.
-func DecodeStorageFilePartial(r io.Reader) (*StorageFilePartial, error) {
+func DecodeStorageFilePartial(r *Reader) (*StorageFilePartial, error) {
 	v := &StorageFilePartial{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFilePartialTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFilePartialTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFilePartial(r)
 	}
 }
@@ -151,13 +150,13 @@ func (v *StorageFileJPEG) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileJPEG deserializes a StorageFileJPEG from a reader using the TL binary protocol.
-func DecodeStorageFileJPEG(r io.Reader) (*StorageFileJPEG, error) {
+func DecodeStorageFileJPEG(r *Reader) (*StorageFileJPEG, error) {
 	v := &StorageFileJPEG{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileJPEGTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileJPEGTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileJPEG(r)
 	}
 }
@@ -180,13 +179,13 @@ func (v *StorageFileGIF) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileGIF deserializes a StorageFileGIF from a reader using the TL binary protocol.
-func DecodeStorageFileGIF(r io.Reader) (*StorageFileGIF, error) {
+func DecodeStorageFileGIF(r *Reader) (*StorageFileGIF, error) {
 	v := &StorageFileGIF{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileGIFTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileGIFTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileGIF(r)
 	}
 }
@@ -209,13 +208,13 @@ func (v *StorageFilePNG) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFilePNG deserializes a StorageFilePNG from a reader using the TL binary protocol.
-func DecodeStorageFilePNG(r io.Reader) (*StorageFilePNG, error) {
+func DecodeStorageFilePNG(r *Reader) (*StorageFilePNG, error) {
 	v := &StorageFilePNG{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFilePNGTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFilePNGTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFilePNG(r)
 	}
 }
@@ -238,13 +237,13 @@ func (v *StorageFilePDF) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFilePDF deserializes a StorageFilePDF from a reader using the TL binary protocol.
-func DecodeStorageFilePDF(r io.Reader) (*StorageFilePDF, error) {
+func DecodeStorageFilePDF(r *Reader) (*StorageFilePDF, error) {
 	v := &StorageFilePDF{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFilePDFTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFilePDFTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFilePDF(r)
 	}
 }
@@ -267,13 +266,13 @@ func (v *StorageFileMp3) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileMp3 deserializes a StorageFileMp3 from a reader using the TL binary protocol.
-func DecodeStorageFileMp3(r io.Reader) (*StorageFileMp3, error) {
+func DecodeStorageFileMp3(r *Reader) (*StorageFileMp3, error) {
 	v := &StorageFileMp3{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileMp3TypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileMp3TypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileMp3(r)
 	}
 }
@@ -296,13 +295,13 @@ func (v *StorageFileMov) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileMov deserializes a StorageFileMov from a reader using the TL binary protocol.
-func DecodeStorageFileMov(r io.Reader) (*StorageFileMov, error) {
+func DecodeStorageFileMov(r *Reader) (*StorageFileMov, error) {
 	v := &StorageFileMov{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileMovTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileMovTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileMov(r)
 	}
 }
@@ -325,13 +324,13 @@ func (v *StorageFileMP4) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileMP4 deserializes a StorageFileMP4 from a reader using the TL binary protocol.
-func DecodeStorageFileMP4(r io.Reader) (*StorageFileMP4, error) {
+func DecodeStorageFileMP4(r *Reader) (*StorageFileMP4, error) {
 	v := &StorageFileMP4{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileMP4TypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileMP4TypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileMP4(r)
 	}
 }
@@ -354,13 +353,13 @@ func (v *StorageFileWebp) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStorageFileWebp deserializes a StorageFileWebp from a reader using the TL binary protocol.
-func DecodeStorageFileWebp(r io.Reader) (*StorageFileWebp, error) {
+func DecodeStorageFileWebp(r *Reader) (*StorageFileWebp, error) {
 	v := &StorageFileWebp{}
 	return v, nil
 }
 
 func init() {
-	Registry[StorageFileWebpTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StorageFileWebpTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStorageFileWebp(r)
 	}
 }

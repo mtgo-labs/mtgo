@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -47,14 +45,18 @@ func (v *InputStickerSetShortName) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStickerSetShortName deserializes a InputStickerSetShortName from a reader using the TL binary protocol.
-func DecodeInputStickerSetShortName(r io.Reader) (*InputStickerSetShortName, error) {
+func DecodeInputStickerSetShortName(r *tg.Reader) (*InputStickerSetShortName, error) {
 	v := &InputStickerSetShortName{}
-	v.ShortName = tg.ReadString(r)
+	_rShortName, _eShortName := r.ReadString()
+	if _eShortName != nil {
+		return nil, _eShortName
+	}
+	v.ShortName = _rShortName
 	return v, nil
 }
 
 func init() {
-	Registry[InputStickerSetShortNameTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[InputStickerSetShortNameTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeInputStickerSetShortName(r)
 	}
 }
@@ -75,13 +77,13 @@ func (v *InputStickerSetEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStickerSetEmpty deserializes a InputStickerSetEmpty from a reader using the TL binary protocol.
-func DecodeInputStickerSetEmpty(r io.Reader) (*InputStickerSetEmpty, error) {
+func DecodeInputStickerSetEmpty(r *tg.Reader) (*InputStickerSetEmpty, error) {
 	v := &InputStickerSetEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputStickerSetEmptyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[InputStickerSetEmptyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeInputStickerSetEmpty(r)
 	}
 }

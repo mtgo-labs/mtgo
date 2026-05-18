@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -113,14 +111,18 @@ func (v *DecryptedMessageActionSetMessageTTL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionSetMessageTTL deserializes a DecryptedMessageActionSetMessageTTL from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionSetMessageTTL(r io.Reader) (*DecryptedMessageActionSetMessageTTL, error) {
+func DecodeDecryptedMessageActionSetMessageTTL(r *tg.Reader) (*DecryptedMessageActionSetMessageTTL, error) {
 	v := &DecryptedMessageActionSetMessageTTL{}
-	v.TTLSeconds = int32(tg.ReadInt(r))
+	_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
+	if _eTTLSeconds != nil {
+		return nil, _eTTLSeconds
+	}
+	v.TTLSeconds = _rTTLSeconds
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionSetMessageTTLTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionSetMessageTTLTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionSetMessageTTL(r)
 	}
 }
@@ -143,14 +145,18 @@ func (v *DecryptedMessageActionReadMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionReadMessages deserializes a DecryptedMessageActionReadMessages from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionReadMessages(r io.Reader) (*DecryptedMessageActionReadMessages, error) {
+func DecodeDecryptedMessageActionReadMessages(r *tg.Reader) (*DecryptedMessageActionReadMessages, error) {
 	v := &DecryptedMessageActionReadMessages{}
-	v.RandomIds = tg.ReadVectorLong(r)
+	_vvRandomIds, _veRandomIds := r.ReadVectorLong()
+	if _veRandomIds != nil {
+		return nil, _veRandomIds
+	}
+	v.RandomIds = _vvRandomIds
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionReadMessagesTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionReadMessagesTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionReadMessages(r)
 	}
 }
@@ -173,14 +179,18 @@ func (v *DecryptedMessageActionDeleteMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionDeleteMessages deserializes a DecryptedMessageActionDeleteMessages from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionDeleteMessages(r io.Reader) (*DecryptedMessageActionDeleteMessages, error) {
+func DecodeDecryptedMessageActionDeleteMessages(r *tg.Reader) (*DecryptedMessageActionDeleteMessages, error) {
 	v := &DecryptedMessageActionDeleteMessages{}
-	v.RandomIds = tg.ReadVectorLong(r)
+	_vvRandomIds, _veRandomIds := r.ReadVectorLong()
+	if _veRandomIds != nil {
+		return nil, _veRandomIds
+	}
+	v.RandomIds = _vvRandomIds
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionDeleteMessagesTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionDeleteMessagesTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionDeleteMessages(r)
 	}
 }
@@ -203,14 +213,18 @@ func (v *DecryptedMessageActionScreenshotMessages) Encode(b *bytes.Buffer) error
 }
 
 // DecodeDecryptedMessageActionScreenshotMessages deserializes a DecryptedMessageActionScreenshotMessages from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionScreenshotMessages(r io.Reader) (*DecryptedMessageActionScreenshotMessages, error) {
+func DecodeDecryptedMessageActionScreenshotMessages(r *tg.Reader) (*DecryptedMessageActionScreenshotMessages, error) {
 	v := &DecryptedMessageActionScreenshotMessages{}
-	v.RandomIds = tg.ReadVectorLong(r)
+	_vvRandomIds, _veRandomIds := r.ReadVectorLong()
+	if _veRandomIds != nil {
+		return nil, _veRandomIds
+	}
+	v.RandomIds = _vvRandomIds
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionScreenshotMessagesTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionScreenshotMessagesTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionScreenshotMessages(r)
 	}
 }
@@ -231,13 +245,13 @@ func (v *DecryptedMessageActionFlushHistory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionFlushHistory deserializes a DecryptedMessageActionFlushHistory from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionFlushHistory(r io.Reader) (*DecryptedMessageActionFlushHistory, error) {
+func DecodeDecryptedMessageActionFlushHistory(r *tg.Reader) (*DecryptedMessageActionFlushHistory, error) {
 	v := &DecryptedMessageActionFlushHistory{}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionFlushHistoryTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionFlushHistoryTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionFlushHistory(r)
 	}
 }
@@ -262,15 +276,23 @@ func (v *DecryptedMessageActionResend) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionResend deserializes a DecryptedMessageActionResend from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionResend(r io.Reader) (*DecryptedMessageActionResend, error) {
+func DecodeDecryptedMessageActionResend(r *tg.Reader) (*DecryptedMessageActionResend, error) {
 	v := &DecryptedMessageActionResend{}
-	v.StartSeqNo = int32(tg.ReadInt(r))
-	v.EndSeqNo = int32(tg.ReadInt(r))
+	_rStartSeqNo, _eStartSeqNo := r.ReadInt32()
+	if _eStartSeqNo != nil {
+		return nil, _eStartSeqNo
+	}
+	v.StartSeqNo = _rStartSeqNo
+	_rEndSeqNo, _eEndSeqNo := r.ReadInt32()
+	if _eEndSeqNo != nil {
+		return nil, _eEndSeqNo
+	}
+	v.EndSeqNo = _rEndSeqNo
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionResendTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionResendTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionResend(r)
 	}
 }
@@ -293,14 +315,18 @@ func (v *DecryptedMessageActionNotifyLayer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionNotifyLayer deserializes a DecryptedMessageActionNotifyLayer from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionNotifyLayer(r io.Reader) (*DecryptedMessageActionNotifyLayer, error) {
+func DecodeDecryptedMessageActionNotifyLayer(r *tg.Reader) (*DecryptedMessageActionNotifyLayer, error) {
 	v := &DecryptedMessageActionNotifyLayer{}
-	v.Layer = int32(tg.ReadInt(r))
+	_rLayer, _eLayer := r.ReadInt32()
+	if _eLayer != nil {
+		return nil, _eLayer
+	}
+	v.Layer = _rLayer
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionNotifyLayerTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionNotifyLayerTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionNotifyLayer(r)
 	}
 }
@@ -323,15 +349,18 @@ func (v *DecryptedMessageActionTyping) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionTyping deserializes a DecryptedMessageActionTyping from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionTyping(r io.Reader) (*DecryptedMessageActionTyping, error) {
+func DecodeDecryptedMessageActionTyping(r *tg.Reader) (*DecryptedMessageActionTyping, error) {
 	v := &DecryptedMessageActionTyping{}
-	_objAction, _ := ReadE2ETLObject(r)
+	_objAction, _errAction := ReadE2ETLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(SendMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionTypingTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionTypingTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionTyping(r)
 	}
 }
@@ -356,15 +385,23 @@ func (v *DecryptedMessageActionRequestKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionRequestKey deserializes a DecryptedMessageActionRequestKey from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionRequestKey(r io.Reader) (*DecryptedMessageActionRequestKey, error) {
+func DecodeDecryptedMessageActionRequestKey(r *tg.Reader) (*DecryptedMessageActionRequestKey, error) {
 	v := &DecryptedMessageActionRequestKey{}
-	v.ExchangeID = tg.ReadLong(r)
-	v.GA = tg.ReadBytes(r)
+	_rExchangeID, _eExchangeID := r.ReadInt64()
+	if _eExchangeID != nil {
+		return nil, _eExchangeID
+	}
+	v.ExchangeID = _rExchangeID
+	_rGA, _eGA := r.ReadBytes()
+	if _eGA != nil {
+		return nil, _eGA
+	}
+	v.GA = _rGA
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionRequestKeyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionRequestKeyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionRequestKey(r)
 	}
 }
@@ -391,16 +428,28 @@ func (v *DecryptedMessageActionAcceptKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionAcceptKey deserializes a DecryptedMessageActionAcceptKey from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionAcceptKey(r io.Reader) (*DecryptedMessageActionAcceptKey, error) {
+func DecodeDecryptedMessageActionAcceptKey(r *tg.Reader) (*DecryptedMessageActionAcceptKey, error) {
 	v := &DecryptedMessageActionAcceptKey{}
-	v.ExchangeID = tg.ReadLong(r)
-	v.GB = tg.ReadBytes(r)
-	v.KeyFingerprint = tg.ReadLong(r)
+	_rExchangeID, _eExchangeID := r.ReadInt64()
+	if _eExchangeID != nil {
+		return nil, _eExchangeID
+	}
+	v.ExchangeID = _rExchangeID
+	_rGB, _eGB := r.ReadBytes()
+	if _eGB != nil {
+		return nil, _eGB
+	}
+	v.GB = _rGB
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt64()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionAcceptKeyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionAcceptKeyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionAcceptKey(r)
 	}
 }
@@ -423,14 +472,18 @@ func (v *DecryptedMessageActionAbortKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionAbortKey deserializes a DecryptedMessageActionAbortKey from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionAbortKey(r io.Reader) (*DecryptedMessageActionAbortKey, error) {
+func DecodeDecryptedMessageActionAbortKey(r *tg.Reader) (*DecryptedMessageActionAbortKey, error) {
 	v := &DecryptedMessageActionAbortKey{}
-	v.ExchangeID = tg.ReadLong(r)
+	_rExchangeID, _eExchangeID := r.ReadInt64()
+	if _eExchangeID != nil {
+		return nil, _eExchangeID
+	}
+	v.ExchangeID = _rExchangeID
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionAbortKeyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionAbortKeyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionAbortKey(r)
 	}
 }
@@ -455,15 +508,23 @@ func (v *DecryptedMessageActionCommitKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionCommitKey deserializes a DecryptedMessageActionCommitKey from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionCommitKey(r io.Reader) (*DecryptedMessageActionCommitKey, error) {
+func DecodeDecryptedMessageActionCommitKey(r *tg.Reader) (*DecryptedMessageActionCommitKey, error) {
 	v := &DecryptedMessageActionCommitKey{}
-	v.ExchangeID = tg.ReadLong(r)
-	v.KeyFingerprint = tg.ReadLong(r)
+	_rExchangeID, _eExchangeID := r.ReadInt64()
+	if _eExchangeID != nil {
+		return nil, _eExchangeID
+	}
+	v.ExchangeID = _rExchangeID
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt64()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionCommitKeyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionCommitKeyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionCommitKey(r)
 	}
 }
@@ -484,13 +545,13 @@ func (v *DecryptedMessageActionNoop) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageActionNoop deserializes a DecryptedMessageActionNoop from a reader using the TL binary protocol.
-func DecodeDecryptedMessageActionNoop(r io.Reader) (*DecryptedMessageActionNoop, error) {
+func DecodeDecryptedMessageActionNoop(r *tg.Reader) (*DecryptedMessageActionNoop, error) {
 	v := &DecryptedMessageActionNoop{}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageActionNoopTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageActionNoopTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageActionNoop(r)
 	}
 }

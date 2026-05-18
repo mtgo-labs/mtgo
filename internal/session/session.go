@@ -251,7 +251,12 @@ func (s *Session) SessionID() int64 {
 // AuthKey returns a copy of the current 256-byte authorization key, or nil if
 // no key is set.
 func (s *Session) AuthKey() []byte {
-	return s.authKey
+	if len(s.authKey) == 0 {
+		return nil
+	}
+	cp := make([]byte, len(s.authKey))
+	copy(cp, s.authKey)
+	return cp
 }
 
 // IsConnected reports whether the session is currently active and connected.

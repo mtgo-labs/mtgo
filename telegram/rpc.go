@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -14,7 +13,7 @@ type clientInvoker struct {
 	client *Client
 }
 
-func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	deadline, ok := ctx.Deadline()
 	timeout := time.Duration(0)
 	if ok {

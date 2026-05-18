@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // FragmentGetCollectibleInfoTypeID is the constructor ID for the RPC function fragment.getCollectibleInfo.
@@ -39,7 +38,7 @@ func (v *FragmentGetCollectibleInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) FragmentGetCollectibleInfo(ctx context.Context, req *FragmentGetCollectibleInfoRequest) (*FragmentCollectibleInfo, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

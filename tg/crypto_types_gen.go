@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // EncryptedFileClass is the interface for TL type EncryptedFile.
@@ -45,13 +44,13 @@ func (v *EncryptedFileEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedFileEmpty deserializes a EncryptedFileEmpty from a reader using the TL binary protocol.
-func DecodeEncryptedFileEmpty(r io.Reader) (*EncryptedFileEmpty, error) {
+func DecodeEncryptedFileEmpty(r *Reader) (*EncryptedFileEmpty, error) {
 	v := &EncryptedFileEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedFileEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedFileEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedFileEmpty(r)
 	}
 }
@@ -84,18 +83,38 @@ func (v *EncryptedFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedFile deserializes a EncryptedFile from a reader using the TL binary protocol.
-func DecodeEncryptedFile(r io.Reader) (*EncryptedFile, error) {
+func DecodeEncryptedFile(r *Reader) (*EncryptedFile, error) {
 	v := &EncryptedFile{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Size = ReadLong(r)
-	v.DCID = int32(ReadInt(r))
-	v.KeyFingerprint = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rSize, _eSize := r.ReadInt64()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt32()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedFile(r)
 	}
 }
@@ -150,13 +169,13 @@ func (v *InputEncryptedFileEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedFileEmpty deserializes a InputEncryptedFileEmpty from a reader using the TL binary protocol.
-func DecodeInputEncryptedFileEmpty(r io.Reader) (*InputEncryptedFileEmpty, error) {
+func DecodeInputEncryptedFileEmpty(r *Reader) (*InputEncryptedFileEmpty, error) {
 	v := &InputEncryptedFileEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedFileEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedFileEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedFileEmpty(r)
 	}
 }
@@ -187,17 +206,33 @@ func (v *InputEncryptedFileUploaded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedFileUploaded deserializes a InputEncryptedFileUploaded from a reader using the TL binary protocol.
-func DecodeInputEncryptedFileUploaded(r io.Reader) (*InputEncryptedFileUploaded, error) {
+func DecodeInputEncryptedFileUploaded(r *Reader) (*InputEncryptedFileUploaded, error) {
 	v := &InputEncryptedFileUploaded{}
-	v.ID = ReadLong(r)
-	v.Parts = int32(ReadInt(r))
-	v.MD5Checksum = ReadString(r)
-	v.KeyFingerprint = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rParts, _eParts := r.ReadInt32()
+	if _eParts != nil {
+		return nil, _eParts
+	}
+	v.Parts = _rParts
+	_rMD5Checksum, _eMD5Checksum := r.ReadString()
+	if _eMD5Checksum != nil {
+		return nil, _eMD5Checksum
+	}
+	v.MD5Checksum = _rMD5Checksum
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt32()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedFileUploadedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedFileUploadedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedFileUploaded(r)
 	}
 }
@@ -224,15 +259,23 @@ func (v *InputEncryptedFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedFile deserializes a InputEncryptedFile from a reader using the TL binary protocol.
-func DecodeInputEncryptedFile(r io.Reader) (*InputEncryptedFile, error) {
+func DecodeInputEncryptedFile(r *Reader) (*InputEncryptedFile, error) {
 	v := &InputEncryptedFile{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedFile(r)
 	}
 }
@@ -261,16 +304,28 @@ func (v *InputEncryptedFileBigUploaded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedFileBigUploaded deserializes a InputEncryptedFileBigUploaded from a reader using the TL binary protocol.
-func DecodeInputEncryptedFileBigUploaded(r io.Reader) (*InputEncryptedFileBigUploaded, error) {
+func DecodeInputEncryptedFileBigUploaded(r *Reader) (*InputEncryptedFileBigUploaded, error) {
 	v := &InputEncryptedFileBigUploaded{}
-	v.ID = ReadLong(r)
-	v.Parts = int32(ReadInt(r))
-	v.KeyFingerprint = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rParts, _eParts := r.ReadInt32()
+	if _eParts != nil {
+		return nil, _eParts
+	}
+	v.Parts = _rParts
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt32()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedFileBigUploadedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedFileBigUploadedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedFileBigUploaded(r)
 	}
 }
@@ -302,16 +357,28 @@ func (v *SecureCredentialsEncrypted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecureCredentialsEncrypted deserializes a SecureCredentialsEncrypted from a reader using the TL binary protocol.
-func DecodeSecureCredentialsEncrypted(r io.Reader) (*SecureCredentialsEncrypted, error) {
+func DecodeSecureCredentialsEncrypted(r *Reader) (*SecureCredentialsEncrypted, error) {
 	v := &SecureCredentialsEncrypted{}
-	v.Data = ReadBytes(r)
-	v.Hash = ReadBytes(r)
-	v.Secret = ReadBytes(r)
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	_rHash, _eHash := r.ReadBytes()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[SecureCredentialsEncryptedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecureCredentialsEncryptedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecureCredentialsEncrypted(r)
 	}
 }

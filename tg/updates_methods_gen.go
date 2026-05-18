@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // UpdatesGetStateTypeID is the constructor ID for the RPC function updates.getState.
@@ -37,7 +36,7 @@ func (v *UpdatesGetStateRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) UpdatesGetState(ctx context.Context) (*UpdatesState, error) {
-	result, err := c.invoke(ctx, &UpdatesGetStateRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &UpdatesGetStateRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -111,7 +110,7 @@ func (v *UpdatesGetDifferenceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) UpdatesGetDifference(ctx context.Context, req *UpdatesGetDifferenceRequest) (DifferenceClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -170,7 +169,7 @@ func (v *UpdatesGetChannelDifferenceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) UpdatesGetChannelDifference(ctx context.Context, req *UpdatesGetChannelDifferenceRequest) (ChannelDifferenceClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

@@ -86,19 +86,19 @@ func TestReadExpr(t *testing.T) {
 		want   string
 		isFunc bool
 	}{
-		{Arg{Name: "val", Type: "int"}, "", "int32(ReadInt(r))", false},
-		{Arg{Name: "id", Type: "long"}, "", "ReadLong(r)", false},
-		{Arg{Name: "data", Type: "string"}, "", "ReadString(r)", false},
-		{Arg{Name: "b", Type: "bytes"}, "", "ReadBytes(r)", false},
-		{Arg{Name: "x", Type: "double"}, "", "ReadDouble(r)", false},
-		{Arg{Name: "n", Type: "int128"}, "", "ReadInt128(r)", false},
-		{Arg{Name: "n", Type: "int256"}, "", "ReadInt256(r)", false},
-		{Arg{Name: "ok", Type: "Bool"}, "", "ReadBool(r)", false},
-		{Arg{Name: "ok", Type: "true"}, "", "ReadBool(r)", false},
-		{Arg{Name: "items", Type: "Vector<int>"}, "", "ReadVectorInt(r)", false},
-		{Arg{Name: "ids", Type: "Vector<long>"}, "", "ReadVectorLong(r)", false},
-		{Arg{Name: "strs", Type: "Vector<string>"}, "", "ReadVectorString(r)", false},
-		{Arg{Name: "access_hash", Type: "long", FlagBit: 0, FlagName: "flags"}, "flags", "ReadLong(r) if flags&(1<<0) != 0", false},
+		{Arg{Name: "val", Type: "int"}, "", "r.ReadInt32()", false},
+		{Arg{Name: "id", Type: "long"}, "", "r.ReadInt64()", false},
+		{Arg{Name: "data", Type: "string"}, "", "r.ReadString()", false},
+		{Arg{Name: "b", Type: "bytes"}, "", "r.ReadBytes()", false},
+		{Arg{Name: "x", Type: "double"}, "", "r.ReadFloat64()", false},
+		{Arg{Name: "n", Type: "int128"}, "", "r.ReadInt128()", false},
+		{Arg{Name: "n", Type: "int256"}, "", "r.ReadInt256()", false},
+		{Arg{Name: "ok", Type: "Bool"}, "", "r.ReadBool()", false},
+		{Arg{Name: "ok", Type: "true"}, "", "r.ReadBool()", false},
+		{Arg{Name: "items", Type: "Vector<int>"}, "", "r.ReadVectorInt()", false},
+		{Arg{Name: "ids", Type: "Vector<long>"}, "", "r.ReadVectorLong()", false},
+		{Arg{Name: "strs", Type: "Vector<string>"}, "", "r.ReadVectorString()", false},
+		{Arg{Name: "access_hash", Type: "long", FlagBit: 0, FlagName: "flags"}, "flags", "r.ReadInt64() if flags&(1<<0) != 0", false},
 		{Arg{Name: "photo", Type: "Photo", FlagBit: 5, FlagName: "flags"}, "flags", "ReadTLObject(r) if flags&(1<<5) != 0", false},
 	}
 
@@ -219,7 +219,7 @@ func TestGenerateTypes(t *testing.T) {
 	if !strings.Contains(content, "if v.OptBool {") {
 		t.Fatal("optional Bool flag should be set from direct bool value")
 	}
-	if !strings.Contains(content, "v.OptBool = ReadBool(r)") {
+	if !strings.Contains(content, "v.OptBool = _rOptBool") {
 		t.Fatal("optional Bool field should decode into direct bool value")
 	}
 	if !strings.Contains(content, "OptString") || !strings.Contains(content, "string") {
@@ -228,7 +228,7 @@ func TestGenerateTypes(t *testing.T) {
 	if !strings.Contains(content, "if v.OptString != \"\" {") {
 		t.Fatal("optional string flag should be set from direct string value")
 	}
-	if !strings.Contains(content, "v.OptString = ReadString(r)") {
+	if !strings.Contains(content, "v.OptString = _rOptString") {
 		t.Fatal("optional string field should decode into direct string value")
 	}
 	if !strings.Contains(content, "OptLong") || !strings.Contains(content, "int64") {
@@ -237,7 +237,7 @@ func TestGenerateTypes(t *testing.T) {
 	if !strings.Contains(content, "if v.OptLong != 0 {") {
 		t.Fatal("optional long flag should be set from direct int64 value")
 	}
-	if !strings.Contains(content, "v.OptLong = ReadLong(r)") {
+	if !strings.Contains(content, "v.OptLong = _rOptLong") {
 		t.Fatal("optional long field should decode into direct int64 value")
 	}
 	if !strings.Contains(content, "init()") {

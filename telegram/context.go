@@ -232,7 +232,7 @@ func (c *Context) chatID() (int64, error) {
 	if c.BusinessMessage != nil && c.BusinessMessage.ChatID != 0 {
 		return c.BusinessMessage.ChatID, nil
 	}
-	if c.EditedBusinessMessage != nil && c.BusinessMessage.ChatID != 0 {
+	if c.EditedBusinessMessage != nil && c.EditedBusinessMessage.ChatID != 0 {
 		return c.EditedBusinessMessage.ChatID, nil
 	}
 	if c.CallbackQuery != nil && c.CallbackQuery.ChatID != 0 {

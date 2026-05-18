@@ -3,7 +3,6 @@ package {{.PkgPrefix}}
 
 import (
 	"bytes"
-	"io"
 
 	"github.com/pageton/mtgo/tg"
 )
@@ -78,8 +77,8 @@ func (v *{{.Name}}) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
-// Decode{{.Name}} deserializes a {{.Name}} from a reader using the TL binary protocol.
-func Decode{{.Name}}(r io.Reader) (*{{.Name}}, error) {
+// Decode{{.Name}} deserializes a {{.Name}} from a pooled reader using the TL binary protocol.
+func Decode{{.Name}}(r *tg.Reader) (*{{.Name}}, error) {
 	v := &{{.Name}}{}
 	{{- range .ReadLines}}
 	{{.Code}}
@@ -88,7 +87,7 @@ func Decode{{.Name}}(r io.Reader) (*{{.Name}}, error) {
 }
 
 func init() {
-	tg.Registry[0x{{printf "%08x" .ID}}] = func(r io.Reader) (tg.TLObject, error) {
+	tg.Registry[0x{{printf "%08x" .ID}}] = func(r *tg.Reader) (tg.TLObject, error) {
 		return Decode{{.Name}}(r)
 	}
 }

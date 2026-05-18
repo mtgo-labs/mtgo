@@ -58,7 +58,7 @@ func (s BroadcastState) String() string {
 var (
 	// ErrFFmpegNotFound is returned when the ffmpeg binary cannot be found in
 	// the system PATH. Broadcasting requires ffmpeg for media encoding.
-	ErrFFmpegNotFound = errors.New("ffmpeg not found in PATH")
+	ErrFFmpegNotFound = errors.New("ffmpeg not found in path")
 	// ErrAlreadyPlaying is returned when Play is called on a stream that is
 	// already in the BroadcastPlaying state.
 	ErrAlreadyPlaying = errors.New("stream is already playing")

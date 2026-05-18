@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // ContactsClass is the interface for TL type Contacts.
@@ -45,13 +44,13 @@ func (v *ContactsContactsNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsContactsNotModified deserializes a ContactsContactsNotModified from a reader using the TL binary protocol.
-func DecodeContactsContactsNotModified(r io.Reader) (*ContactsContactsNotModified, error) {
+func DecodeContactsContactsNotModified(r *Reader) (*ContactsContactsNotModified, error) {
 	v := &ContactsContactsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsContactsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsContactsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsContactsNotModified(r)
 	}
 }
@@ -88,34 +87,58 @@ func (v *ContactsContacts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsContacts deserializes a ContactsContacts from a reader using the TL binary protocol.
-func DecodeContactsContacts(r io.Reader) (*ContactsContacts, error) {
+func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 	v := &ContactsContacts{}
-	ReadInt(r)
-	_cntContacts := ReadInt(r)
-	if err := checkVectorCount(_cntContacts); err != nil {
-		return nil, err
+	_vhdrContacts, _ehdrContacts := r.ReadUint32()
+	if _ehdrContacts != nil {
+		return nil, _ehdrContacts
+	}
+	_cntContacts, _ecntContacts := r.ReadUint32()
+	if _ecntContacts != nil {
+		return nil, _ecntContacts
+	}
+	if _errContacts := checkVectorCount(_cntContacts); _errContacts != nil {
+		return nil, _errContacts
 	}
 	v.Contacts = make([]*Contact, _cntContacts)
 	for _iContacts := range v.Contacts {
-		_objContacts, _ := ReadTLObject(r)
+		_objContacts, _errContacts := ReadTLObject(r)
+		if _errContacts != nil {
+			return nil, _errContacts
+		}
 		v.Contacts[_iContacts] = _objContacts.(*Contact)
 	}
-	v.SavedCount = int32(ReadInt(r))
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrContacts
+	_rSavedCount, _eSavedCount := r.ReadInt32()
+	if _eSavedCount != nil {
+		return nil, _eSavedCount
+	}
+	v.SavedCount = _rSavedCount
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsContactsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsContactsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsContacts(r)
 	}
 }
@@ -161,44 +184,78 @@ func (v *ContactsImportedContacts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsImportedContacts deserializes a ContactsImportedContacts from a reader using the TL binary protocol.
-func DecodeContactsImportedContacts(r io.Reader) (*ContactsImportedContacts, error) {
+func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error) {
 	v := &ContactsImportedContacts{}
-	ReadInt(r)
-	_cntImported := ReadInt(r)
-	if err := checkVectorCount(_cntImported); err != nil {
-		return nil, err
+	_vhdrImported, _ehdrImported := r.ReadUint32()
+	if _ehdrImported != nil {
+		return nil, _ehdrImported
+	}
+	_cntImported, _ecntImported := r.ReadUint32()
+	if _ecntImported != nil {
+		return nil, _ecntImported
+	}
+	if _errImported := checkVectorCount(_cntImported); _errImported != nil {
+		return nil, _errImported
 	}
 	v.Imported = make([]*ImportedContact, _cntImported)
 	for _iImported := range v.Imported {
-		_objImported, _ := ReadTLObject(r)
+		_objImported, _errImported := ReadTLObject(r)
+		if _errImported != nil {
+			return nil, _errImported
+		}
 		v.Imported[_iImported] = _objImported.(*ImportedContact)
 	}
-	ReadInt(r)
-	_cntPopularInvites := ReadInt(r)
-	if err := checkVectorCount(_cntPopularInvites); err != nil {
-		return nil, err
+	_ = _vhdrImported
+	_vhdrPopularInvites, _ehdrPopularInvites := r.ReadUint32()
+	if _ehdrPopularInvites != nil {
+		return nil, _ehdrPopularInvites
+	}
+	_cntPopularInvites, _ecntPopularInvites := r.ReadUint32()
+	if _ecntPopularInvites != nil {
+		return nil, _ecntPopularInvites
+	}
+	if _errPopularInvites := checkVectorCount(_cntPopularInvites); _errPopularInvites != nil {
+		return nil, _errPopularInvites
 	}
 	v.PopularInvites = make([]*PopularContact, _cntPopularInvites)
 	for _iPopularInvites := range v.PopularInvites {
-		_objPopularInvites, _ := ReadTLObject(r)
+		_objPopularInvites, _errPopularInvites := ReadTLObject(r)
+		if _errPopularInvites != nil {
+			return nil, _errPopularInvites
+		}
 		v.PopularInvites[_iPopularInvites] = _objPopularInvites.(*PopularContact)
 	}
-	v.RetryContacts = ReadVectorLong(r)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrPopularInvites
+	_vvRetryContacts, _veRetryContacts := r.ReadVectorLong()
+	if _veRetryContacts != nil {
+		return nil, _veRetryContacts
+	}
+	v.RetryContacts = _vvRetryContacts
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsImportedContactsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsImportedContactsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsImportedContacts(r)
 	}
 }
@@ -259,43 +316,73 @@ func (v *ContactsBlocked) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsBlocked deserializes a ContactsBlocked from a reader using the TL binary protocol.
-func DecodeContactsBlocked(r io.Reader) (*ContactsBlocked, error) {
+func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 	v := &ContactsBlocked{}
-	ReadInt(r)
-	_cntBlocked := ReadInt(r)
-	if err := checkVectorCount(_cntBlocked); err != nil {
-		return nil, err
+	_vhdrBlocked, _ehdrBlocked := r.ReadUint32()
+	if _ehdrBlocked != nil {
+		return nil, _ehdrBlocked
+	}
+	_cntBlocked, _ecntBlocked := r.ReadUint32()
+	if _ecntBlocked != nil {
+		return nil, _ecntBlocked
+	}
+	if _errBlocked := checkVectorCount(_cntBlocked); _errBlocked != nil {
+		return nil, _errBlocked
 	}
 	v.Blocked = make([]*PeerBlocked, _cntBlocked)
 	for _iBlocked := range v.Blocked {
-		_objBlocked, _ := ReadTLObject(r)
+		_objBlocked, _errBlocked := ReadTLObject(r)
+		if _errBlocked != nil {
+			return nil, _errBlocked
+		}
 		v.Blocked[_iBlocked] = _objBlocked.(*PeerBlocked)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrBlocked
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsBlockedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsBlockedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsBlocked(r)
 	}
 }
@@ -338,44 +425,78 @@ func (v *ContactsBlockedSlice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsBlockedSlice deserializes a ContactsBlockedSlice from a reader using the TL binary protocol.
-func DecodeContactsBlockedSlice(r io.Reader) (*ContactsBlockedSlice, error) {
+func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 	v := &ContactsBlockedSlice{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntBlocked := ReadInt(r)
-	if err := checkVectorCount(_cntBlocked); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrBlocked, _ehdrBlocked := r.ReadUint32()
+	if _ehdrBlocked != nil {
+		return nil, _ehdrBlocked
+	}
+	_cntBlocked, _ecntBlocked := r.ReadUint32()
+	if _ecntBlocked != nil {
+		return nil, _ecntBlocked
+	}
+	if _errBlocked := checkVectorCount(_cntBlocked); _errBlocked != nil {
+		return nil, _errBlocked
 	}
 	v.Blocked = make([]*PeerBlocked, _cntBlocked)
 	for _iBlocked := range v.Blocked {
-		_objBlocked, _ := ReadTLObject(r)
+		_objBlocked, _errBlocked := ReadTLObject(r)
+		if _errBlocked != nil {
+			return nil, _errBlocked
+		}
 		v.Blocked[_iBlocked] = _objBlocked.(*PeerBlocked)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrBlocked
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsBlockedSliceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsBlockedSliceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsBlockedSlice(r)
 	}
 }
@@ -425,53 +546,93 @@ func (v *ContactsFound) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsFound deserializes a ContactsFound from a reader using the TL binary protocol.
-func DecodeContactsFound(r io.Reader) (*ContactsFound, error) {
+func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 	v := &ContactsFound{}
-	ReadInt(r)
-	_cntMyResults := ReadInt(r)
-	if err := checkVectorCount(_cntMyResults); err != nil {
-		return nil, err
+	_vhdrMyResults, _ehdrMyResults := r.ReadUint32()
+	if _ehdrMyResults != nil {
+		return nil, _ehdrMyResults
+	}
+	_cntMyResults, _ecntMyResults := r.ReadUint32()
+	if _ecntMyResults != nil {
+		return nil, _ecntMyResults
+	}
+	if _errMyResults := checkVectorCount(_cntMyResults); _errMyResults != nil {
+		return nil, _errMyResults
 	}
 	v.MyResults = make([]PeerClass, _cntMyResults)
 	for _iMyResults := range v.MyResults {
-		_objMyResults, _ := ReadTLObject(r)
+		_objMyResults, _errMyResults := ReadTLObject(r)
+		if _errMyResults != nil {
+			return nil, _errMyResults
+		}
 		v.MyResults[_iMyResults] = _objMyResults.(PeerClass)
 	}
-	ReadInt(r)
-	_cntResults := ReadInt(r)
-	if err := checkVectorCount(_cntResults); err != nil {
-		return nil, err
+	_ = _vhdrMyResults
+	_vhdrResults, _ehdrResults := r.ReadUint32()
+	if _ehdrResults != nil {
+		return nil, _ehdrResults
+	}
+	_cntResults, _ecntResults := r.ReadUint32()
+	if _ecntResults != nil {
+		return nil, _ecntResults
+	}
+	if _errResults := checkVectorCount(_cntResults); _errResults != nil {
+		return nil, _errResults
 	}
 	v.Results = make([]PeerClass, _cntResults)
 	for _iResults := range v.Results {
-		_objResults, _ := ReadTLObject(r)
+		_objResults, _errResults := ReadTLObject(r)
+		if _errResults != nil {
+			return nil, _errResults
+		}
 		v.Results[_iResults] = _objResults.(PeerClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrResults
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsFoundTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsFoundTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsFound(r)
 	}
 }
@@ -511,35 +672,58 @@ func (v *ContactsResolvedPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsResolvedPeer deserializes a ContactsResolvedPeer from a reader using the TL binary protocol.
-func DecodeContactsResolvedPeer(r io.Reader) (*ContactsResolvedPeer, error) {
+func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 	v := &ContactsResolvedPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsResolvedPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsResolvedPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsResolvedPeer(r)
 	}
 }
@@ -588,13 +772,13 @@ func (v *ContactsTopPeersNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsTopPeersNotModified deserializes a ContactsTopPeersNotModified from a reader using the TL binary protocol.
-func DecodeContactsTopPeersNotModified(r io.Reader) (*ContactsTopPeersNotModified, error) {
+func DecodeContactsTopPeersNotModified(r *Reader) (*ContactsTopPeersNotModified, error) {
 	v := &ContactsTopPeersNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsTopPeersNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsTopPeersNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsTopPeersNotModified(r)
 	}
 }
@@ -635,43 +819,73 @@ func (v *ContactsTopPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsTopPeers deserializes a ContactsTopPeers from a reader using the TL binary protocol.
-func DecodeContactsTopPeers(r io.Reader) (*ContactsTopPeers, error) {
+func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 	v := &ContactsTopPeers{}
-	ReadInt(r)
-	_cntCategories := ReadInt(r)
-	if err := checkVectorCount(_cntCategories); err != nil {
-		return nil, err
+	_vhdrCategories, _ehdrCategories := r.ReadUint32()
+	if _ehdrCategories != nil {
+		return nil, _ehdrCategories
+	}
+	_cntCategories, _ecntCategories := r.ReadUint32()
+	if _ecntCategories != nil {
+		return nil, _ecntCategories
+	}
+	if _errCategories := checkVectorCount(_cntCategories); _errCategories != nil {
+		return nil, _errCategories
 	}
 	v.Categories = make([]*TopPeerCategoryPeers, _cntCategories)
 	for _iCategories := range v.Categories {
-		_objCategories, _ := ReadTLObject(r)
+		_objCategories, _errCategories := ReadTLObject(r)
+		if _errCategories != nil {
+			return nil, _errCategories
+		}
 		v.Categories[_iCategories] = _objCategories.(*TopPeerCategoryPeers)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrCategories
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsTopPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsTopPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsTopPeers(r)
 	}
 }
@@ -694,13 +908,13 @@ func (v *ContactsTopPeersDisabled) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsTopPeersDisabled deserializes a ContactsTopPeersDisabled from a reader using the TL binary protocol.
-func DecodeContactsTopPeersDisabled(r io.Reader) (*ContactsTopPeersDisabled, error) {
+func DecodeContactsTopPeersDisabled(r *Reader) (*ContactsTopPeersDisabled, error) {
 	v := &ContactsTopPeersDisabled{}
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsTopPeersDisabledTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsTopPeersDisabledTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsTopPeersDisabled(r)
 	}
 }
@@ -738,33 +952,53 @@ func (v *ContactsContactBirthdays) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsContactBirthdays deserializes a ContactsContactBirthdays from a reader using the TL binary protocol.
-func DecodeContactsContactBirthdays(r io.Reader) (*ContactsContactBirthdays, error) {
+func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error) {
 	v := &ContactsContactBirthdays{}
-	ReadInt(r)
-	_cntContacts := ReadInt(r)
-	if err := checkVectorCount(_cntContacts); err != nil {
-		return nil, err
+	_vhdrContacts, _ehdrContacts := r.ReadUint32()
+	if _ehdrContacts != nil {
+		return nil, _ehdrContacts
+	}
+	_cntContacts, _ecntContacts := r.ReadUint32()
+	if _ecntContacts != nil {
+		return nil, _ecntContacts
+	}
+	if _errContacts := checkVectorCount(_cntContacts); _errContacts != nil {
+		return nil, _errContacts
 	}
 	v.Contacts = make([]*ContactBirthday, _cntContacts)
 	for _iContacts := range v.Contacts {
-		_objContacts, _ := ReadTLObject(r)
+		_objContacts, _errContacts := ReadTLObject(r)
+		if _errContacts != nil {
+			return nil, _errContacts
+		}
 		v.Contacts[_iContacts] = _objContacts.(*ContactBirthday)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrContacts
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsContactBirthdaysTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsContactBirthdaysTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsContactBirthdays(r)
 	}
 }
@@ -807,13 +1041,13 @@ func (v *ContactsSponsoredPeersEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsSponsoredPeersEmpty deserializes a ContactsSponsoredPeersEmpty from a reader using the TL binary protocol.
-func DecodeContactsSponsoredPeersEmpty(r io.Reader) (*ContactsSponsoredPeersEmpty, error) {
+func DecodeContactsSponsoredPeersEmpty(r *Reader) (*ContactsSponsoredPeersEmpty, error) {
 	v := &ContactsSponsoredPeersEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsSponsoredPeersEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsSponsoredPeersEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsSponsoredPeersEmpty(r)
 	}
 }
@@ -854,43 +1088,73 @@ func (v *ContactsSponsoredPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactsSponsoredPeers deserializes a ContactsSponsoredPeers from a reader using the TL binary protocol.
-func DecodeContactsSponsoredPeers(r io.Reader) (*ContactsSponsoredPeers, error) {
+func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 	v := &ContactsSponsoredPeers{}
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]*SponsoredPeer, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(*SponsoredPeer)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ContactsSponsoredPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactsSponsoredPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactsSponsoredPeers(r)
 	}
 }

@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // InputPhotoClass is the interface for TL type InputPhoto.
@@ -45,13 +44,13 @@ func (v *InputPhotoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhotoEmpty deserializes a InputPhotoEmpty from a reader using the TL binary protocol.
-func DecodeInputPhotoEmpty(r io.Reader) (*InputPhotoEmpty, error) {
+func DecodeInputPhotoEmpty(r *Reader) (*InputPhotoEmpty, error) {
 	v := &InputPhotoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhotoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhotoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhotoEmpty(r)
 	}
 }
@@ -80,16 +79,28 @@ func (v *InputPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhoto deserializes a InputPhoto from a reader using the TL binary protocol.
-func DecodeInputPhoto(r io.Reader) (*InputPhoto, error) {
+func DecodeInputPhoto(r *Reader) (*InputPhoto, error) {
 	v := &InputPhoto{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhoto(r)
 	}
 }
@@ -158,14 +169,18 @@ func (v *PhotoSizeEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoSizeEmpty deserializes a PhotoSizeEmpty from a reader using the TL binary protocol.
-func DecodePhotoSizeEmpty(r io.Reader) (*PhotoSizeEmpty, error) {
+func DecodePhotoSizeEmpty(r *Reader) (*PhotoSizeEmpty, error) {
 	v := &PhotoSizeEmpty{}
-	v.Type = ReadString(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoSizeEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoSizeEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoSizeEmpty(r)
 	}
 }
@@ -196,17 +211,33 @@ func (v *PhotoSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoSize deserializes a PhotoSize from a reader using the TL binary protocol.
-func DecodePhotoSize(r io.Reader) (*PhotoSize, error) {
+func DecodePhotoSize(r *Reader) (*PhotoSize, error) {
 	v := &PhotoSize{}
-	v.Type = ReadString(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	v.Size = int32(ReadInt(r))
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoSize(r)
 	}
 }
@@ -237,17 +268,33 @@ func (v *PhotoCachedSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoCachedSize deserializes a PhotoCachedSize from a reader using the TL binary protocol.
-func DecodePhotoCachedSize(r io.Reader) (*PhotoCachedSize, error) {
+func DecodePhotoCachedSize(r *Reader) (*PhotoCachedSize, error) {
 	v := &PhotoCachedSize{}
-	v.Type = ReadString(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	v.Bytes = ReadBytes(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoCachedSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoCachedSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoCachedSize(r)
 	}
 }
@@ -274,15 +321,23 @@ func (v *PhotoStrippedSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoStrippedSize deserializes a PhotoStrippedSize from a reader using the TL binary protocol.
-func DecodePhotoStrippedSize(r io.Reader) (*PhotoStrippedSize, error) {
+func DecodePhotoStrippedSize(r *Reader) (*PhotoStrippedSize, error) {
 	v := &PhotoStrippedSize{}
-	v.Type = ReadString(r)
-	v.Bytes = ReadBytes(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoStrippedSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoStrippedSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoStrippedSize(r)
 	}
 }
@@ -313,17 +368,33 @@ func (v *PhotoSizeProgressive) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoSizeProgressive deserializes a PhotoSizeProgressive from a reader using the TL binary protocol.
-func DecodePhotoSizeProgressive(r io.Reader) (*PhotoSizeProgressive, error) {
+func DecodePhotoSizeProgressive(r *Reader) (*PhotoSizeProgressive, error) {
 	v := &PhotoSizeProgressive{}
-	v.Type = ReadString(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	v.Sizes = ReadVectorInt(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_vvSizes, _veSizes := r.ReadVectorInt()
+	if _veSizes != nil {
+		return nil, _veSizes
+	}
+	v.Sizes = _vvSizes
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoSizeProgressiveTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoSizeProgressiveTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoSizeProgressive(r)
 	}
 }
@@ -350,15 +421,23 @@ func (v *PhotoPathSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoPathSize deserializes a PhotoPathSize from a reader using the TL binary protocol.
-func DecodePhotoPathSize(r io.Reader) (*PhotoPathSize, error) {
+func DecodePhotoPathSize(r *Reader) (*PhotoPathSize, error) {
 	v := &PhotoPathSize{}
-	v.Type = ReadString(r)
-	v.Bytes = ReadBytes(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoPathSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoPathSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoPathSize(r)
 	}
 }
@@ -401,13 +480,13 @@ func (v *InputDocumentEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputDocumentEmpty deserializes a InputDocumentEmpty from a reader using the TL binary protocol.
-func DecodeInputDocumentEmpty(r io.Reader) (*InputDocumentEmpty, error) {
+func DecodeInputDocumentEmpty(r *Reader) (*InputDocumentEmpty, error) {
 	v := &InputDocumentEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputDocumentEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputDocumentEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputDocumentEmpty(r)
 	}
 }
@@ -436,16 +515,28 @@ func (v *InputDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputDocument deserializes a InputDocument from a reader using the TL binary protocol.
-func DecodeInputDocument(r io.Reader) (*InputDocument, error) {
+func DecodeInputDocument(r *Reader) (*InputDocument, error) {
 	v := &InputDocument{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
 	return v, nil
 }
 
 func init() {
-	Registry[InputDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputDocument(r)
 	}
 }
@@ -490,14 +581,18 @@ func (v *DocumentEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentEmpty deserializes a DocumentEmpty from a reader using the TL binary protocol.
-func DecodeDocumentEmpty(r io.Reader) (*DocumentEmpty, error) {
+func DecodeDocumentEmpty(r *Reader) (*DocumentEmpty, error) {
 	v := &DocumentEmpty{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentEmpty(r)
 	}
 }
@@ -569,59 +664,117 @@ func (v *Document) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocument deserializes a Document from a reader using the TL binary protocol.
-func DecodeDocument(r io.Reader) (*Document, error) {
+func DecodeDocument(r *Reader) (*Document, error) {
 	v := &Document{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
-	v.Date = int32(ReadInt(r))
-	v.MimeType = ReadString(r)
-	v.Size = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt64()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntThumbs := ReadInt(r)
-		if err := checkVectorCount(_cntThumbs); err != nil {
-			return nil, err
+		_vhdrThumbs, _ehdrThumbs := r.ReadUint32()
+		if _ehdrThumbs != nil {
+			return nil, _ehdrThumbs
+		}
+		_cntThumbs, _ecntThumbs := r.ReadUint32()
+		if _ecntThumbs != nil {
+			return nil, _ecntThumbs
+		}
+		if _errThumbs := checkVectorCount(_cntThumbs); _errThumbs != nil {
+			return nil, _errThumbs
 		}
 		v.Thumbs = make([]PhotoSizeClass, _cntThumbs)
 		for _iThumbs := range v.Thumbs {
-			_objThumbs, _ := ReadTLObject(r)
+			_objThumbs, _errThumbs := ReadTLObject(r)
+			if _errThumbs != nil {
+				return nil, _errThumbs
+			}
 			v.Thumbs[_iThumbs] = _objThumbs.(PhotoSizeClass)
 		}
+		_ = _vhdrThumbs
 	}
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntVideoThumbs := ReadInt(r)
-		if err := checkVectorCount(_cntVideoThumbs); err != nil {
-			return nil, err
+		_vhdrVideoThumbs, _ehdrVideoThumbs := r.ReadUint32()
+		if _ehdrVideoThumbs != nil {
+			return nil, _ehdrVideoThumbs
+		}
+		_cntVideoThumbs, _ecntVideoThumbs := r.ReadUint32()
+		if _ecntVideoThumbs != nil {
+			return nil, _ecntVideoThumbs
+		}
+		if _errVideoThumbs := checkVectorCount(_cntVideoThumbs); _errVideoThumbs != nil {
+			return nil, _errVideoThumbs
 		}
 		v.VideoThumbs = make([]VideoSizeClass, _cntVideoThumbs)
 		for _iVideoThumbs := range v.VideoThumbs {
-			_objVideoThumbs, _ := ReadTLObject(r)
+			_objVideoThumbs, _errVideoThumbs := ReadTLObject(r)
+			if _errVideoThumbs != nil {
+				return nil, _errVideoThumbs
+			}
 			v.VideoThumbs[_iVideoThumbs] = _objVideoThumbs.(VideoSizeClass)
 		}
+		_ = _vhdrVideoThumbs
 	}
-	v.DCID = int32(ReadInt(r))
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocument(r)
 	}
 }
@@ -704,15 +857,23 @@ func (v *DocumentAttributeImageSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeImageSize deserializes a DocumentAttributeImageSize from a reader using the TL binary protocol.
-func DecodeDocumentAttributeImageSize(r io.Reader) (*DocumentAttributeImageSize, error) {
+func DecodeDocumentAttributeImageSize(r *Reader) (*DocumentAttributeImageSize, error) {
 	v := &DocumentAttributeImageSize{}
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeImageSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeImageSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeImageSize(r)
 	}
 }
@@ -735,13 +896,13 @@ func (v *DocumentAttributeAnimated) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAnimated deserializes a DocumentAttributeAnimated from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAnimated(r io.Reader) (*DocumentAttributeAnimated, error) {
+func DecodeDocumentAttributeAnimated(r *Reader) (*DocumentAttributeAnimated, error) {
 	v := &DocumentAttributeAnimated{}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAnimatedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeAnimatedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeAnimated(r)
 	}
 }
@@ -786,26 +947,36 @@ func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeSticker deserializes a DocumentAttributeSticker from a reader using the TL binary protocol.
-func DecodeDocumentAttributeSticker(r io.Reader) (*DocumentAttributeSticker, error) {
+func DecodeDocumentAttributeSticker(r *Reader) (*DocumentAttributeSticker, error) {
 	v := &DocumentAttributeSticker{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Mask = v.Flags.Has(1)
-	v.Alt = ReadString(r)
-	_objStickerset, _ := ReadTLObject(r)
+	_rAlt, _eAlt := r.ReadString()
+	if _eAlt != nil {
+		return nil, _eAlt
+	}
+	v.Alt = _rAlt
+	_objStickerset, _errStickerset := ReadTLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(InputStickerSetClass)
 	if v.Flags.Has(0) {
-		_objMaskCoords, _ := ReadTLObject(r)
+		_objMaskCoords, _errMaskCoords := ReadTLObject(r)
+		if _errMaskCoords != nil {
+			return nil, _errMaskCoords
+		}
 		v.MaskCoords = _objMaskCoords.(*MaskCoords)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeStickerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeStickerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeSticker(r)
 	}
 }
@@ -874,33 +1045,57 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeVideo deserializes a DocumentAttributeVideo from a reader using the TL binary protocol.
-func DecodeDocumentAttributeVideo(r io.Reader) (*DocumentAttributeVideo, error) {
+func DecodeDocumentAttributeVideo(r *Reader) (*DocumentAttributeVideo, error) {
 	v := &DocumentAttributeVideo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.RoundMessage = v.Flags.Has(0)
 	v.SupportsStreaming = v.Flags.Has(1)
 	v.Nosound = v.Flags.Has(3)
-	v.Duration = ReadDouble(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
+	_rDuration, _eDuration := r.ReadFloat64()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	if v.Flags.Has(2) {
-		v.PreloadPrefixSize = int32(ReadInt(r))
+		_rPreloadPrefixSize, _ePreloadPrefixSize := r.ReadInt32()
+		if _ePreloadPrefixSize != nil {
+			return nil, _ePreloadPrefixSize
+		}
+		v.PreloadPrefixSize = _rPreloadPrefixSize
 	}
 	if v.Flags.Has(4) {
-		v.VideoStartTs = ReadDouble(r)
+		_rVideoStartTs, _eVideoStartTs := r.ReadFloat64()
+		if _eVideoStartTs != nil {
+			return nil, _eVideoStartTs
+		}
+		v.VideoStartTs = _rVideoStartTs
 	}
 	if v.Flags.Has(5) {
-		v.VideoCodec = ReadString(r)
+		_rVideoCodec, _eVideoCodec := r.ReadString()
+		if _eVideoCodec != nil {
+			return nil, _eVideoCodec
+		}
+		v.VideoCodec = _rVideoCodec
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeVideoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeVideoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeVideo(r)
 	}
 }
@@ -957,29 +1152,45 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeAudio deserializes a DocumentAttributeAudio from a reader using the TL binary protocol.
-func DecodeDocumentAttributeAudio(r io.Reader) (*DocumentAttributeAudio, error) {
+func DecodeDocumentAttributeAudio(r *Reader) (*DocumentAttributeAudio, error) {
 	v := &DocumentAttributeAudio{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Voice = v.Flags.Has(10)
-	v.Duration = int32(ReadInt(r))
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
 	if v.Flags.Has(0) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Performer = ReadString(r)
+		_rPerformer, _ePerformer := r.ReadString()
+		if _ePerformer != nil {
+			return nil, _ePerformer
+		}
+		v.Performer = _rPerformer
 	}
 	if v.Flags.Has(2) {
-		v.Waveform = ReadBytes(r)
+		_rWaveform, _eWaveform := r.ReadBytes()
+		if _eWaveform != nil {
+			return nil, _eWaveform
+		}
+		v.Waveform = _rWaveform
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeAudioTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeAudioTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeAudio(r)
 	}
 }
@@ -1004,14 +1215,18 @@ func (v *DocumentAttributeFilename) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeFilename deserializes a DocumentAttributeFilename from a reader using the TL binary protocol.
-func DecodeDocumentAttributeFilename(r io.Reader) (*DocumentAttributeFilename, error) {
+func DecodeDocumentAttributeFilename(r *Reader) (*DocumentAttributeFilename, error) {
 	v := &DocumentAttributeFilename{}
-	v.FileName = ReadString(r)
+	_rFileName, _eFileName := r.ReadString()
+	if _eFileName != nil {
+		return nil, _eFileName
+	}
+	v.FileName = _rFileName
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeFilenameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeFilenameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeFilename(r)
 	}
 }
@@ -1034,13 +1249,13 @@ func (v *DocumentAttributeHasStickers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeHasStickers deserializes a DocumentAttributeHasStickers from a reader using the TL binary protocol.
-func DecodeDocumentAttributeHasStickers(r io.Reader) (*DocumentAttributeHasStickers, error) {
+func DecodeDocumentAttributeHasStickers(r *Reader) (*DocumentAttributeHasStickers, error) {
 	v := &DocumentAttributeHasStickers{}
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeHasStickersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeHasStickersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeHasStickers(r)
 	}
 }
@@ -1082,23 +1297,30 @@ func (v *DocumentAttributeCustomEmoji) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDocumentAttributeCustomEmoji deserializes a DocumentAttributeCustomEmoji from a reader using the TL binary protocol.
-func DecodeDocumentAttributeCustomEmoji(r io.Reader) (*DocumentAttributeCustomEmoji, error) {
+func DecodeDocumentAttributeCustomEmoji(r *Reader) (*DocumentAttributeCustomEmoji, error) {
 	v := &DocumentAttributeCustomEmoji{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Free = v.Flags.Has(0)
 	v.TextColor = v.Flags.Has(1)
-	v.Alt = ReadString(r)
-	_objStickerset, _ := ReadTLObject(r)
+	_rAlt, _eAlt := r.ReadString()
+	if _eAlt != nil {
+		return nil, _eAlt
+	}
+	v.Alt = _rAlt
+	_objStickerset, _errStickerset := ReadTLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(InputStickerSetClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DocumentAttributeCustomEmojiTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[DocumentAttributeCustomEmojiTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeDocumentAttributeCustomEmoji(r)
 	}
 }
@@ -1132,17 +1354,33 @@ func (v *MaskCoords) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMaskCoords deserializes a MaskCoords from a reader using the TL binary protocol.
-func DecodeMaskCoords(r io.Reader) (*MaskCoords, error) {
+func DecodeMaskCoords(r *Reader) (*MaskCoords, error) {
 	v := &MaskCoords{}
-	v.N = int32(ReadInt(r))
-	v.X = ReadDouble(r)
-	v.Y = ReadDouble(r)
-	v.Zoom = ReadDouble(r)
+	_rN, _eN := r.ReadInt32()
+	if _eN != nil {
+		return nil, _eN
+	}
+	v.N = _rN
+	_rX, _eX := r.ReadFloat64()
+	if _eX != nil {
+		return nil, _eX
+	}
+	v.X = _rX
+	_rY, _eY := r.ReadFloat64()
+	if _eY != nil {
+		return nil, _eY
+	}
+	v.Y = _rY
+	_rZoom, _eZoom := r.ReadFloat64()
+	if _eZoom != nil {
+		return nil, _eZoom
+	}
+	v.Zoom = _rZoom
 	return v, nil
 }
 
 func init() {
-	Registry[MaskCoordsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MaskCoordsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMaskCoords(r)
 	}
 }
@@ -1199,27 +1437,53 @@ func (v *WebDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebDocument deserializes a WebDocument from a reader using the TL binary protocol.
-func DecodeWebDocument(r io.Reader) (*WebDocument, error) {
+func DecodeWebDocument(r *Reader) (*WebDocument, error) {
 	v := &WebDocument{}
-	v.URL = ReadString(r)
-	v.AccessHash = ReadLong(r)
-	v.Size = int32(ReadInt(r))
-	v.MimeType = ReadString(r)
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[WebDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebDocument(r)
 	}
 }
@@ -1254,26 +1518,48 @@ func (v *WebDocumentNoProxy) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebDocumentNoProxy deserializes a WebDocumentNoProxy from a reader using the TL binary protocol.
-func DecodeWebDocumentNoProxy(r io.Reader) (*WebDocumentNoProxy, error) {
+func DecodeWebDocumentNoProxy(r *Reader) (*WebDocumentNoProxy, error) {
 	v := &WebDocumentNoProxy{}
-	v.URL = ReadString(r)
-	v.Size = int32(ReadInt(r))
-	v.MimeType = ReadString(r)
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[WebDocumentNoProxyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebDocumentNoProxyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebDocumentNoProxy(r)
 	}
 }
@@ -1311,26 +1597,48 @@ func (v *InputWebDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputWebDocument deserializes a InputWebDocument from a reader using the TL binary protocol.
-func DecodeInputWebDocument(r io.Reader) (*InputWebDocument, error) {
+func DecodeInputWebDocument(r *Reader) (*InputWebDocument, error) {
 	v := &InputWebDocument{}
-	v.URL = ReadString(r)
-	v.Size = int32(ReadInt(r))
-	v.MimeType = ReadString(r)
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[InputWebDocumentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputWebDocumentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputWebDocument(r)
 	}
 }
@@ -1428,34 +1736,47 @@ func (v *WebPageAttributeTheme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeTheme deserializes a WebPageAttributeTheme from a reader using the TL binary protocol.
-func DecodeWebPageAttributeTheme(r io.Reader) (*WebPageAttributeTheme, error) {
+func DecodeWebPageAttributeTheme(r *Reader) (*WebPageAttributeTheme, error) {
 	v := &WebPageAttributeTheme{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntDocuments := ReadInt(r)
-		if err := checkVectorCount(_cntDocuments); err != nil {
-			return nil, err
+		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+		if _ehdrDocuments != nil {
+			return nil, _ehdrDocuments
+		}
+		_cntDocuments, _ecntDocuments := r.ReadUint32()
+		if _ecntDocuments != nil {
+			return nil, _ecntDocuments
+		}
+		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+			return nil, _errDocuments
 		}
 		v.Documents = make([]DocumentClass, _cntDocuments)
 		for _iDocuments := range v.Documents {
-			_objDocuments, _ := ReadTLObject(r)
+			_objDocuments, _errDocuments := ReadTLObject(r)
+			if _errDocuments != nil {
+				return nil, _errDocuments
+			}
 			v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
 		}
+		_ = _vhdrDocuments
 	}
 	if v.Flags.Has(1) {
-		_objSettings, _ := ReadTLObject(r)
+		_objSettings, _errSettings := ReadTLObject(r)
+		if _errSettings != nil {
+			return nil, _errSettings
+		}
 		v.Settings = _objSettings.(*ThemeSettings)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeTheme(r)
 	}
 }
@@ -1496,25 +1817,35 @@ func (v *WebPageAttributeStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeStory deserializes a WebPageAttributeStory from a reader using the TL binary protocol.
-func DecodeWebPageAttributeStory(r io.Reader) (*WebPageAttributeStory, error) {
+func DecodeWebPageAttributeStory(r *Reader) (*WebPageAttributeStory, error) {
 	v := &WebPageAttributeStory{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.ID = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(0) {
-		_objStory, _ := ReadTLObject(r)
+		_objStory, _errStory := ReadTLObject(r)
+		if _errStory != nil {
+			return nil, _errStory
+		}
 		v.Story = _objStory.(StoryItemClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeStory(r)
 	}
 }
@@ -1558,30 +1889,40 @@ func (v *WebPageAttributeStickerSet) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeStickerSet deserializes a WebPageAttributeStickerSet from a reader using the TL binary protocol.
-func DecodeWebPageAttributeStickerSet(r io.Reader) (*WebPageAttributeStickerSet, error) {
+func DecodeWebPageAttributeStickerSet(r *Reader) (*WebPageAttributeStickerSet, error) {
 	v := &WebPageAttributeStickerSet{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Emojis = v.Flags.Has(0)
 	v.TextColor = v.Flags.Has(1)
-	ReadInt(r)
-	_cntStickers := ReadInt(r)
-	if err := checkVectorCount(_cntStickers); err != nil {
-		return nil, err
+	_vhdrStickers, _ehdrStickers := r.ReadUint32()
+	if _ehdrStickers != nil {
+		return nil, _ehdrStickers
+	}
+	_cntStickers, _ecntStickers := r.ReadUint32()
+	if _ecntStickers != nil {
+		return nil, _ecntStickers
+	}
+	if _errStickers := checkVectorCount(_cntStickers); _errStickers != nil {
+		return nil, _errStickers
 	}
 	v.Stickers = make([]DocumentClass, _cntStickers)
 	for _iStickers := range v.Stickers {
-		_objStickers, _ := ReadTLObject(r)
+		_objStickers, _errStickers := ReadTLObject(r)
+		if _errStickers != nil {
+			return nil, _errStickers
+		}
 		v.Stickers[_iStickers] = _objStickers.(DocumentClass)
 	}
+	_ = _vhdrStickers
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeStickerSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeStickerSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeStickerSet(r)
 	}
 }
@@ -1606,15 +1947,18 @@ func (v *WebPageAttributeUniqueStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeUniqueStarGift deserializes a WebPageAttributeUniqueStarGift from a reader using the TL binary protocol.
-func DecodeWebPageAttributeUniqueStarGift(r io.Reader) (*WebPageAttributeUniqueStarGift, error) {
+func DecodeWebPageAttributeUniqueStarGift(r *Reader) (*WebPageAttributeUniqueStarGift, error) {
 	v := &WebPageAttributeUniqueStarGift{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeUniqueStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeUniqueStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeUniqueStarGift(r)
 	}
 }
@@ -1643,23 +1987,33 @@ func (v *WebPageAttributeStarGiftCollection) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeStarGiftCollection deserializes a WebPageAttributeStarGiftCollection from a reader using the TL binary protocol.
-func DecodeWebPageAttributeStarGiftCollection(r io.Reader) (*WebPageAttributeStarGiftCollection, error) {
+func DecodeWebPageAttributeStarGiftCollection(r *Reader) (*WebPageAttributeStarGiftCollection, error) {
 	v := &WebPageAttributeStarGiftCollection{}
-	ReadInt(r)
-	_cntIcons := ReadInt(r)
-	if err := checkVectorCount(_cntIcons); err != nil {
-		return nil, err
+	_vhdrIcons, _ehdrIcons := r.ReadUint32()
+	if _ehdrIcons != nil {
+		return nil, _ehdrIcons
+	}
+	_cntIcons, _ecntIcons := r.ReadUint32()
+	if _ecntIcons != nil {
+		return nil, _ecntIcons
+	}
+	if _errIcons := checkVectorCount(_cntIcons); _errIcons != nil {
+		return nil, _errIcons
 	}
 	v.Icons = make([]DocumentClass, _cntIcons)
 	for _iIcons := range v.Icons {
-		_objIcons, _ := ReadTLObject(r)
+		_objIcons, _errIcons := ReadTLObject(r)
+		if _errIcons != nil {
+			return nil, _errIcons
+		}
 		v.Icons[_iIcons] = _objIcons.(DocumentClass)
 	}
+	_ = _vhdrIcons
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeStarGiftCollectionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeStarGiftCollectionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeStarGiftCollection(r)
 	}
 }
@@ -1686,16 +2040,23 @@ func (v *WebPageAttributeStarGiftAuction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeStarGiftAuction deserializes a WebPageAttributeStarGiftAuction from a reader using the TL binary protocol.
-func DecodeWebPageAttributeStarGiftAuction(r io.Reader) (*WebPageAttributeStarGiftAuction, error) {
+func DecodeWebPageAttributeStarGiftAuction(r *Reader) (*WebPageAttributeStarGiftAuction, error) {
 	v := &WebPageAttributeStarGiftAuction{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
-	v.EndDate = int32(ReadInt(r))
+	_rEndDate, _eEndDate := r.ReadInt32()
+	if _eEndDate != nil {
+		return nil, _eEndDate
+	}
+	v.EndDate = _rEndDate
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeStarGiftAuctionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeStarGiftAuctionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeStarGiftAuction(r)
 	}
 }
@@ -1720,14 +2081,18 @@ func (v *WebPageAttributeAiComposeTone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebPageAttributeAiComposeTone deserializes a WebPageAttributeAiComposeTone from a reader using the TL binary protocol.
-func DecodeWebPageAttributeAiComposeTone(r io.Reader) (*WebPageAttributeAiComposeTone, error) {
+func DecodeWebPageAttributeAiComposeTone(r *Reader) (*WebPageAttributeAiComposeTone, error) {
 	v := &WebPageAttributeAiComposeTone{}
-	v.EmojiID = ReadLong(r)
+	_rEmojiID, _eEmojiID := r.ReadInt64()
+	if _eEmojiID != nil {
+		return nil, _eEmojiID
+	}
+	v.EmojiID = _rEmojiID
 	return v, nil
 }
 
 func init() {
-	Registry[WebPageAttributeAiComposeToneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebPageAttributeAiComposeToneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebPageAttributeAiComposeTone(r)
 	}
 }
@@ -1798,25 +2163,45 @@ func (v *VideoSize) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeVideoSize deserializes a VideoSize from a reader using the TL binary protocol.
-func DecodeVideoSize(r io.Reader) (*VideoSize, error) {
+func DecodeVideoSize(r *Reader) (*VideoSize, error) {
 	v := &VideoSize{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Type = ReadString(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	v.Size = int32(ReadInt(r))
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
 	if v.Flags.Has(0) {
-		v.VideoStartTs = ReadDouble(r)
+		_rVideoStartTs, _eVideoStartTs := r.ReadFloat64()
+		if _eVideoStartTs != nil {
+			return nil, _eVideoStartTs
+		}
+		v.VideoStartTs = _rVideoStartTs
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[VideoSizeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[VideoSizeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeVideoSize(r)
 	}
 }
@@ -1843,15 +2228,23 @@ func (v *VideoSizeEmojiMarkup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeVideoSizeEmojiMarkup deserializes a VideoSizeEmojiMarkup from a reader using the TL binary protocol.
-func DecodeVideoSizeEmojiMarkup(r io.Reader) (*VideoSizeEmojiMarkup, error) {
+func DecodeVideoSizeEmojiMarkup(r *Reader) (*VideoSizeEmojiMarkup, error) {
 	v := &VideoSizeEmojiMarkup{}
-	v.EmojiID = ReadLong(r)
-	v.BackgroundColors = ReadVectorInt(r)
+	_rEmojiID, _eEmojiID := r.ReadInt64()
+	if _eEmojiID != nil {
+		return nil, _eEmojiID
+	}
+	v.EmojiID = _rEmojiID
+	_vvBackgroundColors, _veBackgroundColors := r.ReadVectorInt()
+	if _veBackgroundColors != nil {
+		return nil, _veBackgroundColors
+	}
+	v.BackgroundColors = _vvBackgroundColors
 	return v, nil
 }
 
 func init() {
-	Registry[VideoSizeEmojiMarkupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[VideoSizeEmojiMarkupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeVideoSizeEmojiMarkup(r)
 	}
 }
@@ -1880,17 +2273,28 @@ func (v *VideoSizeStickerMarkup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeVideoSizeStickerMarkup deserializes a VideoSizeStickerMarkup from a reader using the TL binary protocol.
-func DecodeVideoSizeStickerMarkup(r io.Reader) (*VideoSizeStickerMarkup, error) {
+func DecodeVideoSizeStickerMarkup(r *Reader) (*VideoSizeStickerMarkup, error) {
 	v := &VideoSizeStickerMarkup{}
-	_objStickerset, _ := ReadTLObject(r)
+	_objStickerset, _errStickerset := ReadTLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(InputStickerSetClass)
-	v.StickerID = ReadLong(r)
-	v.BackgroundColors = ReadVectorInt(r)
+	_rStickerID, _eStickerID := r.ReadInt64()
+	if _eStickerID != nil {
+		return nil, _eStickerID
+	}
+	v.StickerID = _rStickerID
+	_vvBackgroundColors, _veBackgroundColors := r.ReadVectorInt()
+	if _veBackgroundColors != nil {
+		return nil, _veBackgroundColors
+	}
+	v.BackgroundColors = _vvBackgroundColors
 	return v, nil
 }
 
 func init() {
-	Registry[VideoSizeStickerMarkupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[VideoSizeStickerMarkupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeVideoSizeStickerMarkup(r)
 	}
 }

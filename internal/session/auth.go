@@ -56,7 +56,9 @@ func (a *Auth) serializeTL(obj tg.TLObject) ([]byte, error) {
 }
 
 func (a *Auth) deserializeTL(data []byte) (tg.TLObject, error) {
-	obj, err := tg.ReadTLObject(bytes.NewReader(data))
+	r := tg.NewReader(data)
+	defer tg.ReleaseReader(r)
+	obj, err := tg.ReadTLObject(r)
 	if err != nil {
 		return nil, fmt.Errorf("deserializeTL: %w", err)
 	}
