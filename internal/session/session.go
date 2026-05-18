@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -53,6 +54,12 @@ func getSendJob() *sendJob {
 func putSendJob(job *sendJob) {
 	job.encrypted = nil
 	sendJobPool.Put(job)
+}
+
+// hasPendingResults returns true if any goroutine is waiting for an RPC result
+// (TL or raw). When true, incoming messages must be fully decoded for dispatch.
+func (s *Session) hasPendingResults() bool {
+	return s.pendingResults.Load() > 0
 }
 
 // AuthFunc is a function that performs key generation/authentication against
@@ -101,6 +108,10 @@ type Session struct {
 	// response bytes (body only, no MTProto framing).
 	rawResults   map[int64]chan []byte
 	rawResultsMu sync.Mutex
+
+	// pendingResults counts active RPC result listeners (both TL and raw).
+	// Non-zero means readLoop must decode incoming messages for dispatch.
+	pendingResults atomic.Int64
 
 	// acks accumulates message IDs that need to be acknowledged.
 	acks []int64
@@ -197,11 +208,13 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 func (s *Session) registerResult(msgID int64) chan tg.TLObject {
 	ch := make(chan tg.TLObject, 1)
 	s.results.Store(msgID, ch)
+	s.pendingResults.Add(1)
 	return ch
 }
 
 func (s *Session) unregisterResult(msgID int64) {
 	s.results.Delete(msgID)
+	s.pendingResults.Add(-1)
 }
 
 func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
@@ -220,6 +233,7 @@ func (s *Session) registerRawResult(msgID int64) chan []byte {
 	s.rawResultsMu.Lock()
 	s.rawResults[msgID] = ch
 	s.rawResultsMu.Unlock()
+	s.pendingResults.Add(1)
 	return ch
 }
 
@@ -227,6 +241,7 @@ func (s *Session) unregisterRawResult(msgID int64) {
 	s.rawResultsMu.Lock()
 	delete(s.rawResults, msgID)
 	s.rawResultsMu.Unlock()
+	s.pendingResults.Add(-1)
 }
 
 func (s *Session) deliverRawResult(msgID int64, data []byte) {
@@ -483,13 +498,7 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 	}
 }
 
-func unpackIncomingMessage(data, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessage, []byte, error) {
-	msg, decrypted, err := crypto.Unpack(data, sessionID, authKey, authKeyID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("session: unpack incoming message: %w", err)
-	}
-	return msg, decrypted, nil
-}
+
 
 // SendRaw encrypts and sends raw body bytes as a single MTProto message,
 // then waits for the server's raw response bytes. Unlike [Send], it bypasses
@@ -818,46 +827,51 @@ func (s *Session) readLoop() {
 			}
 			continue
 		}
-		msg, decrypted, err := unpackIncomingMessage(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 		if err != nil {
 			continue
 		}
 
-		// Deliver raw body bytes to any registered raw result channel.
-		// Copy the sub-slice since the decrypted buffer will be released.
-		if len(decrypted) >= 32 {
-			bodyLen := int(decrypted[28]) | int(decrypted[29])<<8 |
-				int(decrypted[30])<<16 | int(decrypted[31])<<24
-			if bodyLen > 0 && 32+bodyLen <= len(decrypted) {
-				bodyBytes := make([]byte, bodyLen)
-				copy(bodyBytes, decrypted[32:32+bodyLen])
-				s.deliverRawResult(msg.MsgID, bodyBytes)
-				if bodyLen >= 12 {
-					reqMsgID := int64(binary.LittleEndian.Uint64(bodyBytes[4:12]))
-					s.deliverRawResult(reqMsgID, bodyBytes)
-				}
+		s.addAck(raw.MsgID)
+
+		// Deliver raw body bytes to registered raw result channels.
+		if len(raw.BodyRaw) > 0 {
+			bodyCopy := make([]byte, len(raw.BodyRaw))
+			copy(bodyCopy, raw.BodyRaw)
+			s.deliverRawResult(raw.MsgID, bodyCopy)
+			if len(bodyCopy) >= 12 {
+				reqMsgID := int64(binary.LittleEndian.Uint64(bodyCopy[4:12]))
+				s.deliverRawResult(reqMsgID, bodyCopy)
 			}
 		}
 
 		crypto.ReleaseAESBuf(decrypted)
 
-		select {
-		case s.dispatchSem <- struct{}{}:
-			go func(m *tg.MTProtoMessage) {
-				defer func() { <-s.dispatchSem }()
-				defer func() {
-					if r := recover(); r != nil {
-						if s.onPanic != nil {
-							s.onPanic(r)
-						} else {
-							log.Printf("session: readLoop dispatch panic: %v", r)
+		// Only decode the TL body if there are result listeners or update handlers.
+		if s.hasPendingResults() || s.onUpdate != nil {
+			select {
+			case s.dispatchSem <- struct{}{}:
+				go func(rawMsg *tg.MTProtoMessageRaw) {
+					defer func() { <-s.dispatchSem }()
+					defer func() {
+						if r := recover(); r != nil {
+							if s.onPanic != nil {
+								s.onPanic(r)
+							} else {
+								log.Printf("session: readLoop dispatch panic: %v", r)
+							}
 						}
+					}()
+					bodyReader := tg.NewReader(rawMsg.BodyRaw)
+					defer tg.ReleaseReader(bodyReader)
+					body, err := tg.ReadTLObject(bodyReader)
+					if err != nil {
+						return
 					}
-				}()
-				s.processIncoming(m)
-			}(msg)
-		default:
-			log.Printf("session: readLoop: dispatch panic semaphore full, dropping message")
+					s.processIncoming(&tg.MTProtoMessage{MsgID: rawMsg.MsgID, SeqNo: rawMsg.SeqNo, Body: body})
+				}(raw)
+			default:
+			}
 		}
 	}
 }
@@ -954,4 +968,12 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 		s.msgFactory.UpdateServerTime(time.Unix(int64(result.ServerTime), 0))
 	}
 	return s.Start(timeout)
+}
+
+func unpackIncomingMessageEnvelope(data, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessageRaw, []byte, error) {
+	raw, decrypted, err := crypto.UnpackEnvelope(data, sessionID, authKey, authKeyID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("session: unpack envelope: %w", err)
+	}
+	return raw, decrypted, nil
 }

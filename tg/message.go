@@ -54,12 +54,42 @@ func DecodeMTProtoMessage(r *Reader) (*MTProtoMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg := &MTProtoMessage{
-		MsgID: msgID,
-		SeqNo: seqNo,
-		Body:  obj,
+	return &MTProtoMessage{MsgID: msgID, SeqNo: seqNo, Body: obj}, nil
+}
+
+// MTProtoMessageRaw is like MTProtoMessage but holds the raw body bytes
+// instead of a decoded TLObject, avoiding the expensive TL deserialization.
+type MTProtoMessageRaw struct {
+	MsgID   int64
+	SeqNo   uint32
+	BodyRaw []byte // raw TL bytes for the body (includes constructor ID prefix)
+}
+
+// DecodeMTProtoMessageRaw decodes only the MTProto envelope (msgID, seqNo,
+// body length) and returns the raw body bytes without TL deserialization.
+// Use this when the caller only needs raw bytes, e.g. for diff-based polling
+// or InvokeWithRawByte where the full decode is unnecessary.
+func DecodeMTProtoMessageRaw(r *Reader) (*MTProtoMessageRaw, error) {
+	msgID, err := r.ReadInt64()
+	if err != nil {
+		return nil, err
 	}
-	return msg, nil
+	seqNo, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	length, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	if length > 1<<20 {
+		return nil, fmt.Errorf("message body too large: %d bytes", length)
+	}
+	bodyData, err := r.ReadRawBytes(int(length))
+	if err != nil {
+		return nil, err
+	}
+	return &MTProtoMessageRaw{MsgID: msgID, SeqNo: seqNo, BodyRaw: bodyData}, nil
 }
 
 func init() {
