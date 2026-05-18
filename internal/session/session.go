@@ -41,10 +41,84 @@ type sendJob struct {
 	done      chan error
 }
 
+const (
+	numFutureSalts       = 4
+	initialSaltFetchWait = 15 * time.Second
+	saltFetchInterval    = time.Hour
+	ackFlushInterval     = 30 * time.Second
+	housekeeperTick      = time.Second
+)
+
 var sendJobPool = sync.Pool{
 	New: func() any {
 		return &sendJob{}
 	},
+}
+
+var defaultHousekeeper = newGlobalHousekeeper()
+
+type globalHousekeeper struct {
+	mu       sync.Mutex
+	sessions map[*Session]struct{}
+	once     sync.Once
+}
+
+func newGlobalHousekeeper() *globalHousekeeper {
+	return &globalHousekeeper{sessions: make(map[*Session]struct{})}
+}
+
+func (h *globalHousekeeper) register(s *Session) {
+	h.mu.Lock()
+	h.sessions[s] = struct{}{}
+	h.mu.Unlock()
+	h.once.Do(func() {
+		go h.run()
+	})
+}
+
+func (h *globalHousekeeper) unregister(s *Session) {
+	h.mu.Lock()
+	delete(h.sessions, s)
+	h.mu.Unlock()
+}
+
+func (h *globalHousekeeper) hasSession(s *Session) bool {
+	h.mu.Lock()
+	_, ok := h.sessions[s]
+	h.mu.Unlock()
+	return ok
+}
+
+func (h *globalHousekeeper) snapshot() []*Session {
+	h.mu.Lock()
+	sessions := make([]*Session, 0, len(h.sessions))
+	for s := range h.sessions {
+		sessions = append(sessions, s)
+	}
+	h.mu.Unlock()
+	return sessions
+}
+
+func (h *globalHousekeeper) run() {
+	ticker := time.NewTicker(housekeeperTick)
+	defer ticker.Stop()
+
+	ackTicker := time.NewTicker(ackFlushInterval)
+	defer ackTicker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			now := time.Now()
+			for _, s := range h.snapshot() {
+				s.runScheduledMaintenance(now)
+			}
+		case <-ackTicker.C:
+			for _, s := range h.snapshot() {
+				s.flushAcks()
+			}
+		}
+	}
 }
 
 func getSendJob() *sendJob {
@@ -137,6 +211,9 @@ type Session struct {
 	sendCh chan *sendJob
 	// pingInterval controls how often keep-alive pings are sent.
 	pingInterval time.Duration
+	// nextPing and nextSaltFetch are maintained by the global housekeeper.
+	nextPing      time.Time
+	nextSaltFetch time.Time
 	// onUpdate is called when the server pushes unsolicited updates.
 	onUpdate func(tg.TLObject)
 	// onDisconnect is called when the transport connection dies (recv error or write failure).
@@ -576,10 +653,6 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 // result:Object payload bytes without gzip unpacking or TL decoding. It retries
 // the request up to retries times with the given per-attempt timeout.
 func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) ([]byte, error) {
-	if retries < 1 {
-		retries = 1
-	}
-
 	var buf bytes.Buffer
 	if err := query.Encode(&buf); err != nil {
 		return nil, fmt.Errorf("session: invoke raw: encode query: %w", err)
@@ -598,6 +671,9 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 		}
 		return data, nil
 	}
+	if lastErr == nil {
+		return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d)", retries)
+	}
 	return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d): %w", retries, lastErr)
 }
 
@@ -605,10 +681,6 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 // It retries the request up to retries times with the given per-attempt
 // timeout. Returns the decoded response object or the last error encountered.
 func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-	if retries < 1 {
-		retries = 1
-	}
-
 	methodName := typeName(query)
 
 	var lastErr error
@@ -648,6 +720,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 
 		return obj, nil
 	}
+	if lastErr == nil {
+		return nil, fmt.Errorf("invoke %s: retries exhausted (%d)", methodName, retries)
+	}
 	return nil, fmt.Errorf("invoke %s: retries exhausted (%d): %w", methodName, retries, lastErr)
 }
 
@@ -663,15 +738,15 @@ func typeName(v tg.TLObject) string {
 	}
 }
 
-// Start launches the receive, writer, and keep-alive ping background workers and
-// performs an initial ping to verify connectivity. Returns an error if the
-// initial ping fails, in which case the session is stopped automatically.
+// Start launches the receive and writer background workers, registers the
+// session with the global housekeeper, and performs an initial ping to verify
+// connectivity. Returns an error if the initial ping fails, in which case the
+// session is stopped automatically.
 func (s *Session) Start(timeout time.Duration) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
 	s.connected = true
 
-	go s.housekeeper()
 	go s.writer()
 	go s.readLoop()
 
@@ -680,6 +755,10 @@ func (s *Session) Start(timeout time.Duration) error {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
 	}
+	now := time.Now()
+	s.nextPing = now.Add(s.pingInterval)
+	s.nextSaltFetch = now.Add(initialSaltFetchWait)
+	defaultHousekeeper.register(s)
 	return nil
 }
 
@@ -687,6 +766,7 @@ func (s *Session) Start(timeout time.Duration) error {
 // and closes the underlying transport.
 func (s *Session) Stop() {
 	s.connected = false
+	defaultHousekeeper.unregister(s)
 	if s.cancel != nil {
 		select {
 		case <-s.cancel:
@@ -707,6 +787,11 @@ func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
 }
 
 func (s *Session) sendServiceMessage(body tg.TLObject) {
+	select {
+	case <-s.cancel:
+		return
+	default:
+	}
 	msgID := s.msgFactory.AllocateMsgID()
 	seqNo := s.msgFactory.AllocateSeqNo(false)
 	message := &tg.MTProtoMessage{
@@ -720,42 +805,42 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 	job.deadline = time.Now().Add(10 * time.Second)
 	select {
 	case s.sendCh <- job:
+	case <-s.cancel:
+		putSendJob(job)
 	default:
 		putSendJob(job)
 	}
 }
 
-// housekeeper consolidates saltLoop, ackLoop, and pingWorker into a single
-// goroutine. It handles periodic salt fetching, ack flushing, and keep-alive
-// pings on staggered timers.
-func (s *Session) housekeeper() {
-	const numSalts = 4
+func (s *Session) runScheduledMaintenance(now time.Time) {
+	select {
+	case <-s.cancel:
+		return
+	default:
+	}
+	if !s.nextSaltFetch.IsZero() && !now.Before(s.nextSaltFetch) {
+		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
+		s.nextSaltFetch = now.Add(saltFetchInterval)
+	}
+	pingInterval := s.pingInterval
+	if pingInterval <= 0 {
+		pingInterval = 60 * time.Second
+	}
+	if !s.nextPing.IsZero() && !now.Before(s.nextPing) {
+		s.sendPing()
+		s.nextPing = now.Add(pingInterval)
+	}
+}
 
-	// Initial salt fetch fires after 15 seconds, then every hour.
-	saltTimer := time.NewTimer(15 * time.Second)
-	defer saltTimer.Stop()
-
-	ackTicker := time.NewTicker(30 * time.Second)
-	defer ackTicker.Stop()
-
-	pingTicker := time.NewTicker(s.pingInterval)
-	defer pingTicker.Stop()
-
-	for {
-		select {
-		case <-s.cancel:
-			return
-		case <-saltTimer.C:
-			s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numSalts})
-			saltTimer.Reset(1 * time.Hour)
-		case <-ackTicker.C:
-			acks := s.drainAcks()
-			if len(acks) > 0 {
-				s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
-			}
-		case <-pingTicker.C:
-			s.sendPing()
-		}
+func (s *Session) flushAcks() {
+	select {
+	case <-s.cancel:
+		return
+	default:
+	}
+	acks := s.drainAcks()
+	if len(acks) > 0 {
+		s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
 	}
 }
 
@@ -795,64 +880,173 @@ func (s *Session) processIncoming(msg *tg.MTProtoMessage) {
 	s.handlePacket(msg.MsgID, msg.SeqNo, msg.Body)
 }
 
-func (s *Session) deliverRawRPCResults(msg *tg.MTProtoMessageRaw) bool {
-	if msg == nil || !s.hasRawResults() {
-		return false
-	}
-	return s.deliverRawRPCResultFromBody(msg.MsgID, msg.BodyRaw)
-}
-
-func (s *Session) deliverRawRPCResultFromBody(msgID int64, body []byte) bool {
+func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 	if len(body) < 4 {
 		return false
 	}
 	constructorID := binary.LittleEndian.Uint32(body[:4])
 	switch constructorID {
 	case tg.RPCResultTypeID:
-		if len(body) < 12 {
-			return false
-		}
-		reqMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
-		if !s.hasRawResultWaiter(reqMsgID) {
-			return false
-		}
-		result := make([]byte, len(body)-12)
-		copy(result, body[12:])
-		s.deliverRawResult(reqMsgID, result)
-		return true
+		s.handleRawRPCResult(body)
+	case tg.GzipPackedID:
+		return s.handleRawGzipPacked(body[4:])
 	case tg.MsgContainerID:
-		return s.deliverRawRPCResultsFromContainer(body[4:])
+		return s.handleRawContainer(body[4:])
+	case tg.PongTypeID:
+		if len(body) < 20 {
+			return false
+		}
+		s.deliverResult(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.Pong{
+			MsgID:  int64(binary.LittleEndian.Uint64(body[4:12])),
+			PingID: int64(binary.LittleEndian.Uint64(body[12:20])),
+		})
+	case tg.BadMsgNotificationTypeID:
+		if len(body) < 20 {
+			return false
+		}
+		s.deliverResult(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.BadMsgNotification{
+			BadMsgID:    int64(binary.LittleEndian.Uint64(body[4:12])),
+			BadMsgSeqno: int32(binary.LittleEndian.Uint32(body[12:16])),
+			ErrorCode:   int32(binary.LittleEndian.Uint32(body[16:20])),
+		})
+	case tg.BadServerSaltTypeID:
+		if len(body) < 28 {
+			return false
+		}
+		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
+		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
+		s.serverSalt = newSalt
+		s.deliverResult(badMsgID, &tg.BadServerSalt{
+			BadMsgID:      badMsgID,
+			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
+			ErrorCode:     int32(binary.LittleEndian.Uint32(body[16:20])),
+			NewServerSalt: newSalt,
+		})
+	case tg.NewSessionCreatedTypeID:
+		if len(body) < 28 {
+			return false
+		}
+		s.serverSalt = int64(binary.LittleEndian.Uint64(body[20:28]))
+	case tg.FutureSaltsTypeID:
+		return s.handleRawFutureSalts(body)
+	case tg.MsgsAckTypeID:
 	default:
 		return false
 	}
+	return true
 }
 
-func (s *Session) deliverRawRPCResultsFromContainer(body []byte) bool {
+func (s *Session) handleRawRPCResult(body []byte) {
+	if len(body) < 12 {
+		return
+	}
+	reqMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
+	payload := body[12:]
+	if s.hasRawResultWaiter(reqMsgID) {
+		result := make([]byte, len(payload))
+		copy(result, payload)
+		s.deliverRawResult(reqMsgID, result)
+	}
+	if _, ok := s.results.Load(reqMsgID); !ok {
+		return
+	}
+	result, err := decodeRawRPCResultPayload(payload)
+	if err != nil {
+		return
+	}
+	s.deliverResult(reqMsgID, result)
+}
+
+func decodeRawRPCResultPayload(payload []byte) (tg.TLObject, error) {
+	r := tg.NewReader(payload)
+	defer tg.ReleaseReader(r)
+	result, err := tg.ReadTLObject(r)
+	if err != nil {
+		return nil, err
+	}
+	if gz, ok := result.(*tg.GzipPacked); ok {
+		return gz.Decode()
+	}
+	return result, nil
+}
+
+func (s *Session) handleRawGzipPacked(body []byte) bool {
+	r := tg.NewReader(body)
+	defer tg.ReleaseReader(r)
+	gz, err := tg.DecodeGzipPacked(r)
+	if err != nil {
+		return false
+	}
+	data, ok := gz.Data.(*tg.GzipPackedData)
+	if !ok {
+		return false
+	}
+	return s.handleRawPacket(0, data.Raw)
+}
+
+func (s *Session) handleRawContainer(body []byte) bool {
 	if len(body) < 4 {
 		return false
 	}
 	count := binary.LittleEndian.Uint32(body[:4])
 	off := 4
-	delivered := false
+	allHandled := true
 	for i := uint32(0); i < count; i++ {
 		if off+16 > len(body) {
-			return delivered
+			return false
 		}
 		msgID := int64(binary.LittleEndian.Uint64(body[off:]))
 		off += 8
-		off += 4 // seqno
+		seqNo := binary.LittleEndian.Uint32(body[off:])
+		off += 4
 		length := int(binary.LittleEndian.Uint32(body[off:]))
 		off += 4
 		if length < 0 || off+length > len(body) {
-			return delivered
+			return false
 		}
 		s.addAck(msgID)
-		if s.deliverRawRPCResultFromBody(msgID, body[off:off+length]) {
-			delivered = true
+		if !s.handleRawPacket(msgID, body[off:off+length]) && !s.decodeRawPacketIfNeeded(msgID, seqNo, body[off:off+length]) {
+			allHandled = false
 		}
 		off += length
 	}
-	return delivered
+	return allHandled
+}
+
+func (s *Session) decodeRawPacketIfNeeded(msgID int64, seqNo uint32, body []byte) bool {
+	if !s.hasDecodedResults() && s.onUpdate == nil {
+		return false
+	}
+	r := tg.NewReader(body)
+	defer tg.ReleaseReader(r)
+	obj, err := tg.ReadTLObject(r)
+	if err != nil {
+		return false
+	}
+	s.processIncoming(&tg.MTProtoMessage{MsgID: msgID, SeqNo: seqNo, Body: obj})
+	return true
+}
+
+func (s *Session) handleRawFutureSalts(body []byte) bool {
+	const firstSaltOffset = 24
+	if len(body) < firstSaltOffset {
+		return false
+	}
+	if binary.LittleEndian.Uint32(body[16:20]) != tg.VectorTypeID {
+		return false
+	}
+	count := binary.LittleEndian.Uint32(body[20:24])
+	if count == 0 {
+		return true
+	}
+	if len(body) < firstSaltOffset+20 {
+		return false
+	}
+	if binary.LittleEndian.Uint32(body[firstSaltOffset:firstSaltOffset+4]) != tg.FutureSaltTypeID {
+		return false
+	}
+	s.serverSalt = int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20]))
+	return true
 }
 
 func (s *Session) readLoop() {
@@ -887,12 +1081,12 @@ func (s *Session) readLoop() {
 
 		s.addAck(raw.MsgID)
 
-		rawDelivered := s.deliverRawRPCResults(raw)
+		rawHandled := s.handleRawPacket(raw.MsgID, raw.BodyRaw)
 		needsDecodedResult := s.hasDecodedResults()
 
 		crypto.ReleaseAESBuf(decrypted)
 
-		if rawDelivered && !needsDecodedResult {
+		if rawHandled || (!needsDecodedResult && s.onUpdate == nil) {
 			continue
 		}
 
