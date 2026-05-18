@@ -25,16 +25,16 @@ var (
 
 	// ErrSHA1Mismatch is returned during the DH key exchange when the SHA1
 	// hash of the received data does not match the expected value.
-	ErrSHA1Mismatch = errors.New("SHA1 hash mismatch")
+	ErrSHA1Mismatch = errors.New("session: sha1 hash mismatch")
 	// ErrNonceMismatch is returned during key exchange step 3 when the
 	// server's response nonce does not match the nonce sent by the client.
 	ErrNonceMismatch = errors.New("step 3: nonce mismatch")
 	// ErrDHParamsFail is returned during key exchange step 8 when the server
 	// responds with a DH parameter failure.
-	ErrDHParamsFail = errors.New("step 8: server DH params fail")
+	ErrDHParamsFail = errors.New("step 8: server dh params fail")
 	// ErrDHNonceMismatch is returned during key exchange step 8 when the
 	// nonce in the DH inner data does not match the expected value.
-	ErrDHNonceMismatch = errors.New("step 8: nonce mismatch in DH inner data")
+	ErrDHNonceMismatch = errors.New("step 8: nonce mismatch in dh inner data")
 	// ErrNewNonceHashMismatch is returned during key exchange step 10 when
 	// the new_nonce_hash1 value does not match the expected hash.
 	ErrNewNonceHashMismatch = errors.New("step 10: new_nonce_hash1 mismatch")
