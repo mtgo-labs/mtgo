@@ -9,7 +9,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 type updateManagerConfig struct {
@@ -59,7 +59,8 @@ type updateManager struct {
 	done      chan struct{}
 	cancel    context.CancelFunc
 
-	mu         sync.Mutex
+	// mu protects state, channels, health, and recoveryTimer.
+	mu sync.RWMutex
 	state      updateState
 	channels   map[int64]channelState
 	recovering bool
@@ -175,8 +176,8 @@ func (m *updateManager) OnReconnect(ctx context.Context, rpc differenceRPC) erro
 }
 
 func (m *updateManager) Health() UpdateHealth {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	h := m.health
 	h.Pts = m.state.Pts
 	h.Qts = m.state.Qts
@@ -261,9 +262,9 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 }
 
 func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateClass, meta updateMeta, container tg.UpdatesClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
-	m.mu.Lock()
+	m.mu.RLock()
 	ch, ok := m.channels[meta.ChannelID]
-	m.mu.Unlock()
+	m.mu.RUnlock()
 
 	if !ok {
 		ch = channelState{ChannelID: meta.ChannelID}
@@ -285,9 +286,9 @@ func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateCla
 			if recErr := m.RecoverChannel(ctx, m.rpc, meta.ChannelID, input); recErr != nil {
 				m.client.Log.Warnf("channel gap recovery failed: %v", recErr)
 			}
-			m.mu.Lock()
+			m.mu.RLock()
 			ch2 := m.channels[meta.ChannelID]
-			m.mu.Unlock()
+			m.mu.RUnlock()
 			retryKind := classifyChannelUpdate(ch2, meta)
 			if retryKind == duplicateUpdate {
 				m.mu.Lock()
@@ -307,19 +308,20 @@ func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateCla
 }
 
 func (m *updateManager) classifyUpdate(meta updateMeta) gapKind {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return classifyAccountUpdate(m.state, meta)
 }
 
 func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	if m.cfg.DurableQueue && meta.Key != "" {
+		nowUnix := time.Now().Unix()
 		record := &storage.DurableUpdate{
 			SessionID: m.sessionID,
 			ID:        meta.Key,
 			Payload:   []byte(meta.Key),
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
+			CreatedAt: nowUnix,
+			UpdatedAt: nowUnix,
 		}
 		if err := m.store.EnqueueDurableUpdate(record); err != nil {
 			m.client.Log.Warnf("durable queue write: %v", err)
@@ -376,7 +378,6 @@ func (m *updateManager) replayDurableQueue() error {
 
 func (m *updateManager) advanceState(meta updateMeta) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	if meta.Pts > 0 {
 		m.state.Pts = meta.Pts
@@ -397,22 +398,34 @@ func (m *updateManager) advanceState(meta updateMeta) {
 		}
 		ch.Pts = meta.ChannelPts
 		m.channels[meta.ChannelID] = ch
-		if err := m.store.SaveChannelUpdateState(&storage.ChannelUpdateState{
-			SessionID: m.sessionID,
-			ChannelID: meta.ChannelID,
-			Pts:       meta.ChannelPts,
-		}); err != nil {
-			m.client.Log.Warnf("save channel update state: %v", err)
-		}
 	}
 
-	if err := m.store.SaveUpdateState(&storage.UpdateState{
+	// Snapshot state under lock, then save to storage without holding the lock
+	// to avoid blocking callers while waiting on I/O.
+	snapshot := storage.UpdateState{
 		SessionID: m.sessionID,
 		Pts:       m.state.Pts,
 		Qts:       m.state.Qts,
 		Date:      m.state.Date,
 		Seq:       m.state.Seq,
-	}); err != nil {
+	}
+	channelStateToSave := meta.IsChannel && meta.ChannelPts > 0
+	var chSnapshot storage.ChannelUpdateState
+	if channelStateToSave {
+		chSnapshot = storage.ChannelUpdateState{
+			SessionID: m.sessionID,
+			ChannelID: meta.ChannelID,
+			Pts:       meta.ChannelPts,
+		}
+	}
+	m.mu.Unlock()
+
+	if channelStateToSave {
+		if err := m.store.SaveChannelUpdateState(&chSnapshot); err != nil {
+			m.client.Log.Warnf("save channel update state: %v", err)
+		}
+	}
+	if err := m.store.SaveUpdateState(&snapshot); err != nil {
 		m.client.Log.Warnf("save update state: %v", err)
 	}
 }

@@ -12,8 +12,8 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/storage"
-	"github.com/mtgo-labs/storage/sqlite"
+	"github.com/mtgo-labs/mtgo/internal/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage/sqlite"
 )
 
 func main() {

@@ -14,7 +14,7 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 // Transport abstracts the underlying network transport used by a Session to
@@ -42,7 +42,7 @@ type sendJob struct {
 
 var sendJobPool = sync.Pool{
 	New: func() any {
-		return &sendJob{done: make(chan error, 1)}
+		return &sendJob{}
 	},
 }
 
@@ -52,7 +52,6 @@ func getSendJob() *sendJob {
 
 func putSendJob(job *sendJob) {
 	job.encrypted = nil
-	job.done = nil
 	sendJobPool.Put(job)
 }
 
@@ -88,6 +87,9 @@ type Session struct {
 	serverSalt int64
 	// sessionID is a random identifier for this session, unique per connection.
 	sessionID int64
+	// sidBytes is the little-endian encoding of sessionID, cached to avoid
+	// allocating on every Send call. Populated at construction time.
+	sidBytes [8]byte
 
 	// msgFactory generates unique message IDs and sequence numbers.
 	msgFactory *MsgFactory
@@ -163,6 +165,9 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		return nil, err
 	}
 
+	var encodedSidBytes [8]byte
+	binary.LittleEndian.PutUint64(encodedSidBytes[:], uint64(sid))
+
 	s := &Session{
 		dc:           dc,
 		storage:      st,
@@ -172,6 +177,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		langCode:     langCode,
 		authKey:      authKey,
 		sessionID:    sid,
+		sidBytes:     encodedSidBytes,
 		msgFactory:   NewMsgFactory(time.Now()),
 		results:      sync.Map{},
 		rawResults:   make(map[int64]chan []byte),
@@ -304,9 +310,7 @@ func (s *Session) SetTransport(t Transport) {
 }
 
 func (s *Session) sessionIDBytes() []byte {
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(s.sessionID))
-	return buf[:]
+	return s.sidBytes[:]
 }
 
 // Send encrypts and sends a TLObject as a single MTProto message, then waits
@@ -338,6 +342,10 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 	job.done = make(chan error, 1)
 	select {
 	case s.sendCh <- job:
+	case <-ctx.Done():
+		putSendJob(job)
+		s.unregisterResult(msgID)
+		return nil, ctx.Err()
 	case <-time.After(timeout):
 		putSendJob(job)
 		s.unregisterResult(msgID)

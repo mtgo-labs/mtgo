@@ -11,7 +11,7 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 func TestNewClientDefaults(t *testing.T) {
@@ -375,7 +375,7 @@ func TestDisconnectTwice(t *testing.T) {
 func TestInvokeNotConnected(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 
-	_, err := c.Invoke(nil, 1, 5*time.Second)
+	_, err := c.Invoke(context.Background(), nil, 1, 5*time.Second)
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("Invoke() = %v, want ErrNotConnected", err)
 	}
@@ -384,7 +384,7 @@ func TestInvokeNotConnected(t *testing.T) {
 func TestInvokeRawNotConnected(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 
-	_, err := c.InvokeRaw(nil, 1, 5*time.Second)
+	_, err := c.InvokeRaw(context.Background(), nil, 1, 5*time.Second)
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("InvokeRaw() = %v, want ErrNotConnected", err)
 	}
@@ -942,12 +942,12 @@ func TestFullLifecycle(t *testing.T) {
 func TestAllMethodsGuardNotConnected(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
 
-	_, err := c.Invoke(nil, 1, 5*time.Second)
+	_, err := c.Invoke(context.Background(), nil, 1, 5*time.Second)
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("Invoke: %v", err)
 	}
 
-	_, err = c.InvokeRaw(nil, 1, 5*time.Second)
+	_, err = c.InvokeRaw(context.Background(), nil, 1, 5*time.Second)
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("InvokeRaw: %v", err)
 	}

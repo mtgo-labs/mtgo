@@ -5,7 +5,6 @@ package params
 
 import (
 	"fmt"
-	"reflect"
 
 	tl "github.com/mtgo-labs/mtgo/tg"
 )
@@ -70,10 +69,6 @@ func GetOptDef[T comparable](def T, opts ...T) T {
 
 func validOpt[T comparable](opt T) bool {
 	var zero T
-	v := reflect.ValueOf(opt)
-	if v.Kind() == reflect.Pointer {
-		return !v.IsNil()
-	}
 	return opt != zero
 }
 

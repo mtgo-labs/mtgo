@@ -18,14 +18,27 @@ type dcSessionEntry struct {
 }
 
 type dcSessions struct {
-	mu      sync.Mutex
-	entries map[int]*dcSessionEntry
+	mu       sync.Mutex
+	entries  map[int]*dcSessionEntry
+	initLocks map[int]*sync.Mutex
 }
 
 func newDCSessions() *dcSessions {
 	return &dcSessions{
-		entries: make(map[int]*dcSessionEntry),
+		entries:   make(map[int]*dcSessionEntry),
+		initLocks: make(map[int]*sync.Mutex),
 	}
+}
+
+func (d *dcSessions) getInitLock(dcID int) *sync.Mutex {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	mu, ok := d.initLocks[dcID]
+	if !ok {
+		mu = &sync.Mutex{}
+		d.initLocks[dcID] = mu
+	}
+	return mu
 }
 
 func (d *dcSessions) get(dcID int) (*dcSessionEntry, bool) {
@@ -69,8 +82,10 @@ func (c *Client) dcRPC(ctx context.Context, dcID int) (*tg.RPCClient, error) {
 		return entry.rpc, nil
 	}
 
-	c.dcMigrateMu.Lock()
-	defer c.dcMigrateMu.Unlock()
+	// Use per-DC mutex to avoid serializing unrelated DC session creations.
+	initMu := c.dcSessions.getInitLock(dcID)
+	initMu.Lock()
+	defer initMu.Unlock()
 
 	if entry, ok := c.dcSessions.get(dcID); ok {
 		return entry.rpc, nil
@@ -207,7 +222,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 		query = wrapInitConnection(d.client.cfg, input)
 	}
 
-	result, err := d.sess.Invoke(context.Background(), query, 2, timeout)
+	result, err := d.sess.Invoke(ctx, query, 2, timeout)
 	if err != nil {
 		return nil, err
 	}

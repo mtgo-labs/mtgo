@@ -227,7 +227,7 @@ func (c *Client) SendInlineBotResult(ctx context.Context, chatID int64, queryID 
 		Silent:   opt.Silent,
 		HideVia:  opt.HideVia,
 		Peer:     peer,
-		RandomID: generateRandomID(),
+		RandomID: c.RandomID(),
 		QueryID:  queryID,
 		ID:       resultID,
 	}

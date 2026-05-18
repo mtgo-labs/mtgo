@@ -33,15 +33,20 @@ const (
 	ParseModeDisabled
 )
 
+var (
+	htmlParser     HTMLParser
+	markdownParser MarkdownParser
+)
+
 // Parse parses text according to the given ParseMode and returns the plain text
 // alongside the resulting Telegram message entities.
 // It returns an error if the mode is not recognized.
 func Parse(mode ParseMode, text string) (string, []tl.MessageEntityClass, error) {
 	switch mode {
 	case ParseModeHTML:
-		return NewHTMLParser().Parse(text)
+		return htmlParser.Parse(text)
 	case ParseModeMarkdown:
-		return NewMarkdownParser().Parse(text)
+		return markdownParser.Parse(text)
 	case ParseModeDisabled, ParseModeDefault:
 		return text, nil, nil
 	default:

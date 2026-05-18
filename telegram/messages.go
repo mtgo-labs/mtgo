@@ -3,8 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/parser"
@@ -152,7 +150,7 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 		Peer:        peer,
 		ReplyTo:     replyTo,
 		Message:     sendText,
-		RandomID:    generateRandomID(),
+		RandomID:    c.RandomID(),
 		ReplyMarkup: opt.ReplyMarkup,
 		Entities:    entities,
 	}
@@ -218,7 +216,7 @@ func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID i
 
 	randomIDs := make([]int64, len(messageIDs))
 	for i := range randomIDs {
-		randomIDs[i] = generateRandomID()
+		randomIDs[i] = c.RandomID()
 	}
 
 	var flags tg.Fields
@@ -570,7 +568,7 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 		Peer:        peer,
 		ReplyTo:     replyTo,
 		Media:       media,
-		RandomID:    generateRandomID(),
+		RandomID:    c.RandomID(),
 		Message:     sendCaption,
 		ReplyMarkup: opt.ReplyMarkup,
 		Entities:    entities,
@@ -590,24 +588,19 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 	return extractSingleMessage(result, c)
 }
 
-func generateRandomID() int64 {
-	return rand.Int63()
-}
-
 func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.Message, error) {
 	switch v := result.(type) {
 	case *tg.Updates:
+		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
 		for _, u := range v.Updates {
 			switch upd := u.(type) {
 			case *tg.UpdateNewMessage:
-				pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
 				m := types.ParseMessage(upd.Message, pm)
 				if m != nil {
 					m.SetBinder(binder)
 				}
 				return m, nil
 			case *tg.UpdateNewChannelMessage:
-				pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
 				m := types.ParseMessage(upd.Message, pm)
 				if m != nil {
 					m.SetBinder(binder)
@@ -615,8 +608,6 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 				return m, nil
 			}
 		}
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		_ = pm
 		return nil, ErrNoMessageUpdates
 	case *tg.UpdateShort:
 		pm := &types.PeerMap{
@@ -643,7 +634,7 @@ func extractMessages(result tg.UpdatesClass, binder types.Binder) ([]*types.Mess
 	switch v := result.(type) {
 	case *tg.Updates:
 		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		var msgs []*types.Message
+		msgs := make([]*types.Message, 0, len(v.Updates))
 		for _, u := range v.Updates {
 			switch upd := u.(type) {
 			case *tg.UpdateNewMessage:
@@ -667,14 +658,11 @@ func extractMessages(result tg.UpdatesClass, binder types.Binder) ([]*types.Mess
 func extractMessagesFromMessagesClass(result tg.MessagesClass, binder types.Binder) ([]*types.Message, error) {
 	switch v := result.(type) {
 	case *tg.MessagesMessages:
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		return parseMessageClasses(v.Messages, pm, binder), nil
+		return parseMessageClasses(v.Messages, types.NewPeerMapFromClasses(v.Users, v.Chats), binder), nil
 	case *tg.MessagesMessagesSlice:
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		return parseMessageClasses(v.Messages, pm, binder), nil
+		return parseMessageClasses(v.Messages, types.NewPeerMapFromClasses(v.Users, v.Chats), binder), nil
 	case *tg.MessagesChannelMessages:
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		return parseMessageClasses(v.Messages, pm, binder), nil
+		return parseMessageClasses(v.Messages, types.NewPeerMapFromClasses(v.Users, v.Chats), binder), nil
 	case *tg.MessagesMessagesNotModified:
 		return nil, nil
 	default:
@@ -691,10 +679,6 @@ func parseMessageClasses(messages []tg.MessageClass, pm *types.PeerMap, binder t
 		}
 	}
 	return result
-}
-
-func init() {
-	_ = time.Now
 }
 
 // GetMediaGroup retrieves all messages belonging to the same album (grouped media)
@@ -737,7 +721,7 @@ func (c *Client) GetMediaGroup(ctx context.Context, chatID int64, messageID int3
 	if err != nil {
 		return nil, err
 	}
-	var group []*types.Message
+	group := make([]*types.Message, 0, len(history))
 	for _, m := range history {
 		if m.GroupedID == groupedID {
 			group = append(group, m)

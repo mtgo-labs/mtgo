@@ -15,6 +15,16 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+// uploadBufPool reuses upload buffers to avoid allocating and copying a 512 KB
+// slice for every upload part. Workers process the data and return the
+// underlying buffer to the pool when the RPC call completes.
+var uploadBufPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, uploadPartSize)
+		return &b
+	},
+}
+
 // UploadResult holds the outcome of a successful file upload to Telegram.
 // It contains the InputFileClass handle needed to reference the uploaded file
 // in subsequent API calls (e.g. sending media messages), along with metadata
@@ -148,6 +158,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 		data      []byte
 		totalSize int64
 		isLast    bool
+		bufPtr    *[]byte // pool buffer to return after RPC (nil for empty/EOF)
 	}
 	type partResult struct {
 		idx int32
@@ -202,6 +213,10 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 					Bytes:          job.data,
 				})
 
+				if job.bufPtr != nil {
+					uploadBufPool.Put(job.bufPtr)
+				}
+
 				if uploadErr != nil {
 					resultsMu.Lock()
 					results = append(results, partResult{idx: job.idx, err: uploadErr})
@@ -222,15 +237,16 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 		}()
 	}
 
-	buf := make([]byte, uploadPartSize)
 	var totalStreamSize int64
 	partIdx := int32(0)
 
 	for !hasErr.Load() {
+		poolBuf := uploadBufPool.Get().(*[]byte)
 
-		n, readErr := io.ReadFull(reader, buf)
+		n, readErr := io.ReadFull(reader, *poolBuf)
 
 		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
+			uploadBufPool.Put(poolBuf)
 			close(jobs)
 			wg.Wait()
 			return nil, 0, fmt.Errorf("upload: read part %d: %w", partIdx, readErr)
@@ -239,25 +255,29 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 		isEOF := readErr == io.EOF || readErr == io.ErrUnexpectedEOF
 
 		if n > 0 {
-			chunk := make([]byte, n)
-			copy(chunk, buf[:n])
 			totalStreamSize += int64(n)
 
 			jobs <- streamPart{
 				idx:       partIdx,
-				data:      chunk,
+				data:      (*poolBuf)[:n],
 				totalSize: totalStreamSize,
 				isLast:    isEOF,
+				bufPtr:    poolBuf,
 			}
 			partIdx++
-		} else if isEOF {
-			jobs <- streamPart{
-				idx:       partIdx,
-				data:      []byte{},
-				totalSize: totalStreamSize,
-				isLast:    true,
+		} else {
+			if poolBuf != nil {
+				uploadBufPool.Put(poolBuf)
 			}
-			partIdx++
+			if isEOF {
+				jobs <- streamPart{
+					idx:       partIdx,
+					data:      []byte{},
+					totalSize: totalStreamSize,
+					isLast:    true,
+				}
+				partIdx++
+			}
 		}
 
 		if isEOF {
@@ -320,34 +340,35 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 	var wg sync.WaitGroup
 	var hasErr atomic.Bool
 
-	buf := make([]byte, uploadPartSize)
 	for i := int32(0); i < totalParts; i++ {
 		if hasErr.Load() {
 			break
 		}
 
-		n, readErr := io.ReadFull(reader, buf)
+		bufPtr := uploadBufPool.Get().(*[]byte)
+		n, readErr := io.ReadFull(reader, *bufPtr)
 		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
 			close(sem)
 			wg.Wait()
 			return nil, 0, fmt.Errorf("upload: read part %d: %w", i, readErr)
 		}
 		if n == 0 {
+			uploadBufPool.Put(bufPtr)
 			break
 		}
 
-		chunk := make([]byte, n)
-		copy(chunk, buf[:n])
+		data := (*bufPtr)[:n]
 		if md5Hash != nil {
-			md5Hash.Write(chunk)
+			md5Hash.Write(data)
 		}
 
 		wg.Add(1)
 		sem <- struct{}{}
 
-		go func(partIdx int32, data []byte) {
+		go func(partIdx int32, data []byte, bufPtr *[]byte) {
 			defer wg.Done()
 			defer func() { <-sem }()
+			defer uploadBufPool.Put(bufPtr)
 			defer func() {
 				if r := recover(); r != nil {
 					results <- partResult{index: partIdx, err: fmt.Errorf("upload part panic: %v", r)}
@@ -400,7 +421,7 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 					IsUpload:      true,
 				})
 			}
-		}(i, chunk)
+		}(i, data, bufPtr)
 	}
 
 	wg.Wait()

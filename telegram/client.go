@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -23,7 +24,7 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/mtproxy"
 
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 
 	sessions "github.com/mtgo-labs/mtgo/session"
 
@@ -80,7 +81,6 @@ type Client struct {
 	storage storage.Storage
 	session *session.Session
 	me      *types.User
-	apiInit bool
 	dialer  transport.Dialer
 	Log     *Logger
 
@@ -90,18 +90,18 @@ type Client struct {
 	handlerDispatcher  *HandlerDispatcher
 	plugins            map[string]Plugin
 	middlewares        []middlewareEntry
-	mwSorted           bool
 	mwCache            []Middleware
 	invokerMiddlewares []InvokerMiddleware
 	invokerCache       *tg.RPCClient
 
-	peerCache     map[int64]tg.InputPeerClass
-	peerCacheMu   sync.RWMutex
-	usernameCache map[string]int64
+	peerCache          map[int64]tg.InputPeerClass
+	peerCacheMu        sync.RWMutex
+	usernameCache      map[string]int64
+	peerCacheOrder     []int64
+	usernameCacheOrder []string
+	resolveCoalescer   resolveCoalescer
 
 	stopCh chan struct{}
-
-	migratingDC bool
 
 	reconnectMgr  *reconnectManager
 	healthCheck   *healthChecker
@@ -114,7 +114,6 @@ type Client struct {
 	secretChatReqHandlers []SecretChatRequestHandler
 
 	dcSessions  *dcSessions
-	dcMigrateMu sync.Mutex
 
 	testStorage  storage.Storage
 	testSession  *session.Session
@@ -122,6 +121,15 @@ type Client struct {
 	testInvoker  tg.Invoker
 	testDialer   transport.Dialer
 	testResolver PeerResolver
+
+	// rng is a per-client random source, avoiding contention on the global
+	// math/rand mutex under high concurrency.
+	rng *rand.Rand
+
+	// Booleans grouped at end to minimize padding on 64-bit.
+	apiInit     bool
+	mwSorted    bool
+	migratingDC bool
 }
 
 // NewClient creates a new Telegram client with the given API credentials and optional configuration.
@@ -287,9 +295,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.ClientPlatform != "" {
 			c.Device.ClientPlatform = cfg.ClientPlatform
 		}
-		if cfg.NetPoll {
-			c.NetPoll = true
-		}
 		if cfg.TransportMode != "" {
 			c.TransportMode = cfg.TransportMode
 		}
@@ -369,9 +374,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	}
 
 	dialer := transport.Dialer(&transport.NetDialer{LocalAddr: c.LocalAddr})
-	if c.NetPoll {
-		dialer = newNetPollDialer()
-	}
 	if c.Proxy != nil {
 		dialer = newProxyDialer(c.Proxy, dialer)
 	}
@@ -386,6 +388,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		handlerDispatcher: NewHandlerDispatcher(),
 		dcSessions:        newDCSessions(),
 		Log:               logger,
+		rng:               rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
 	client.initSecretChats()
@@ -423,6 +426,16 @@ func (c *Client) healthConfig() healthCheckConfig {
 // IsConnected reports whether the client has an active connection to Telegram.
 func (c *Client) IsConnected() bool {
 	return c.state.isConnected()
+}
+
+// RandomID returns a cryptographically-non-secure random int64 suitable for
+// Telegram message random_id fields. Uses a per-client random source to avoid
+// contention on the global math/rand mutex under high concurrency.
+func (c *Client) RandomID() int64 {
+	if c.rng == nil {
+		return rand.Int63()
+	}
+	return c.rng.Int63()
 }
 
 // Me returns the currently authenticated user. If the user has not been cached yet
@@ -1347,7 +1360,7 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 	if retries < 1 {
 		retries = 1
 	}
-	return c.Invoke(query, retries, 30*time.Second)
+	return c.Invoke(context.Background(), query, retries, 30*time.Second)
 }
 
 func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {
@@ -1364,10 +1377,12 @@ func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.
 }
 
 // Invoke sends a TLObject query through the primary session with the given retry count and timeout.
-// It wraps errors from the session with a "client: invoke:" prefix.
+// The provided context is used for cancellation: when cancelled after the message has been sent,
+// an RPCDropAnswerRequest is sent to the server. It wraps errors from the session with a
+// "client: invoke:" prefix.
 //
 // Returns ErrNotConnected if the client is not connected.
-func (c *Client) Invoke(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
+func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
@@ -1380,7 +1395,7 @@ func (c *Client) Invoke(query tg.TLObject, retries int, timeout time.Duration) (
 		return nil, ErrNotConnected
 	}
 
-	result, err := sess.Invoke(context.Background(), query, retries, timeout)
+	result, err := sess.Invoke(ctx, query, retries, timeout)
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
@@ -1393,9 +1408,10 @@ func (c *Client) Invoke(query tg.TLObject, retries int, timeout time.Duration) (
 
 // InvokeRaw sends a TLObject query through the primary session, returning the raw response
 // without wrapping errors. This is useful when the caller needs to inspect the original error.
+// The provided context is used for cancellation.
 //
 // Returns ErrNotConnected if the client is not connected.
-func (c *Client) InvokeRaw(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
+func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
@@ -1408,7 +1424,7 @@ func (c *Client) InvokeRaw(query tg.TLObject, retries int, timeout time.Duration
 		return nil, ErrNotConnected
 	}
 
-	return sess.Invoke(context.Background(), query, retries, timeout)
+	return sess.Invoke(ctx, query, retries, timeout)
 }
 
 // InvokeWithRawByte sends a TLObject query and returns the raw response body bytes
@@ -1622,9 +1638,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		upd.UserStatus = &types.UserStatusUpdated{UserID: v.UserID}
 	case *tg.UpdateUserName:
 		if len(v.Usernames) > 0 {
-			c.peerCacheMu.Lock()
-			c.usernameCache[v.Usernames[0].Username] = v.UserID
-			c.peerCacheMu.Unlock()
+			c.cacheUsernameLocked(v.Usernames[0].Username, v.UserID)
 			if ps, ok := c.storage.(storage.PeerStore); ok {
 				_ = ps.SavePeer(&storage.Peer{
 					ID:        v.UserID,
@@ -2013,10 +2027,44 @@ func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
 
 // CachePeer stores an InputPeer in the client's peer cache keyed by numeric ID.
 // Cached peers are used by ResolvePeerCache to avoid redundant RPC calls.
+// When PeerCacheSize is set and the cache exceeds the limit, the oldest entry
+// is evicted (FIFO) to prevent unbounded growth.
 func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
 	c.peerCacheMu.Lock()
+	if _, exists := c.peerCache[id]; !exists {
+		c.peerCacheOrder = append(c.peerCacheOrder, id)
+	}
 	c.peerCache[id] = peer
+	c.evictOldestPeerLocked()
 	c.peerCacheMu.Unlock()
+}
+
+func (c *Client) evictOldestPeerLocked() {
+	limit := c.cfg.PeerCacheSize
+	if limit <= 0 || len(c.peerCache) <= limit {
+		return
+	}
+	for len(c.peerCache) > limit && len(c.peerCacheOrder) > 0 {
+		oldest := c.peerCacheOrder[0]
+		c.peerCacheOrder = c.peerCacheOrder[1:]
+		delete(c.peerCache, oldest)
+	}
+}
+
+func (c *Client) cacheUsernameLocked(username string, userID int64) {
+	if _, exists := c.usernameCache[username]; !exists {
+		c.usernameCacheOrder = append(c.usernameCacheOrder, username)
+	}
+	c.usernameCache[username] = userID
+	limit := c.cfg.PeerCacheSize
+	if limit <= 0 || len(c.usernameCache) <= limit {
+		return
+	}
+	for len(c.usernameCache) > limit && len(c.usernameCacheOrder) > 0 {
+		oldest := c.usernameCacheOrder[0]
+		c.usernameCacheOrder = c.usernameCacheOrder[1:]
+		delete(c.usernameCache, oldest)
+	}
 }
 
 func (c *Client) clientPeerResolver() PeerResolver {
@@ -2036,9 +2084,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 		c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
 		username := user.Username
 		if username != "" {
-			c.peerCacheMu.Lock()
-			c.usernameCache[username] = user.ID
-			c.peerCacheMu.Unlock()
+			c.cacheUsernameLocked(username, user.ID)
 		}
 		entries = append(entries, &storage.Peer{
 			ID:         user.ID,
@@ -2062,9 +2108,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: accessHash})
 			username := v.Username
 			if username != "" {
-				c.peerCacheMu.Lock()
-				c.usernameCache[username] = v.ID
-				c.peerCacheMu.Unlock()
+				c.cacheUsernameLocked(username, v.ID)
 			}
 			entries = append(entries, &storage.Peer{
 				ID:         v.ID,
@@ -2109,9 +2153,7 @@ func (c *Client) loadPeersFromStorage() {
 		}
 		c.CachePeer(p.ID, peer)
 		if p.Username != "" {
-			c.peerCacheMu.Lock()
-			c.usernameCache[p.Username] = p.ID
-			c.peerCacheMu.Unlock()
+			c.cacheUsernameLocked(p.Username, p.ID)
 		}
 	}
 }

@@ -47,7 +47,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 	ci.client.Log.Debugf("RPC invoke method=%T timeout=%s", input, timeout)
 
-	result, err := ci.client.Invoke(query, retries, timeout)
+	result, err := ci.client.Invoke(ctx, query, retries, timeout)
 	if err != nil {
 		return nil, err
 	}
