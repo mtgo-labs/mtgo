@@ -1411,6 +1411,34 @@ func (c *Client) InvokeRaw(query tg.TLObject, retries int, timeout time.Duration
 	return sess.Invoke(context.Background(), query, retries, timeout)
 }
 
+// InvokeWithRawByte sends a TLObject query and returns the raw response body bytes
+// without TL decoding. Unlike [Client.Invoke], the caller is responsible for
+// deserializing the response.
+func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]byte, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
+
+	c.mu.RLock()
+	sess := c.session
+	c.mu.RUnlock()
+
+	if sess == nil {
+		return nil, ErrNotConnected
+	}
+
+	timeout := c.cfg.ReqTimeout
+	if timeout <= 0 {
+		timeout = 60 * time.Second
+	}
+	retries := c.cfg.Retries
+	if retries < 1 {
+		retries = 1
+	}
+
+	return sess.InvokeRaw(ctx, query, retries, timeout)
+}
+
 // HandleUpdates processes an incoming Telegram UpdatesClass by flattening it
 // into individual updates and dispatching them to registered handlers.
 //

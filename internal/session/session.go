@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha1"
@@ -96,6 +97,11 @@ type Session struct {
 	// resultsMu protects the results map.
 	resultsMu sync.Mutex
 
+	// rawResults maps message IDs to channels that receive raw decrypted
+	// response bytes (body only, no MTProto framing).
+	rawResults   map[int64]chan []byte
+	rawResultsMu sync.Mutex
+
 	// acks accumulates message IDs that need to be acknowledged.
 	acks []int64
 	// acksMu protects the acks slice.
@@ -168,6 +174,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		sessionID:    sid,
 		msgFactory:   NewMsgFactory(time.Now()),
 		results:      make(map[int64]chan tg.TLObject),
+		rawResults:   make(map[int64]chan []byte),
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
@@ -201,6 +208,32 @@ func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
 	if ok {
 		select {
 		case ch <- obj:
+		default:
+		}
+	}
+}
+
+func (s *Session) registerRawResult(msgID int64) chan []byte {
+	ch := make(chan []byte, 1)
+	s.rawResultsMu.Lock()
+	s.rawResults[msgID] = ch
+	s.rawResultsMu.Unlock()
+	return ch
+}
+
+func (s *Session) unregisterRawResult(msgID int64) {
+	s.rawResultsMu.Lock()
+	delete(s.rawResults, msgID)
+	s.rawResultsMu.Unlock()
+}
+
+func (s *Session) deliverRawResult(msgID int64, data []byte) {
+	s.rawResultsMu.Lock()
+	ch, ok := s.rawResults[msgID]
+	s.rawResultsMu.Unlock()
+	if ok {
+		select {
+		case ch <- data:
 		default:
 		}
 	}
@@ -441,6 +474,89 @@ func unpackIncomingMessage(data, sessionID, authKey, authKeyID []byte) (*tg.MTPr
 	return msg, decrypted, nil
 }
 
+// SendRaw encrypts and sends raw body bytes as a single MTProto message,
+// then waits for the server's raw response bytes. Unlike [Send], it bypasses
+// TL serialization and deserialization entirely. Returns the raw decrypted
+// body bytes from the response, or an error.
+func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBytes []byte, timeout time.Duration) ([]byte, error) {
+	if len(s.authKey) == 0 {
+		return nil, ErrAuthKeyNotSet
+	}
+	if s.transport == nil {
+		return nil, ErrTransportNotSet
+	}
+
+	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+
+	ch := s.registerRawResult(msgID)
+
+	job := getSendJob()
+	job.encrypted = encrypted
+	job.deadline = time.Now().Add(timeout)
+	job.done = make(chan error, 1)
+	select {
+	case s.sendCh <- job:
+	case <-time.After(timeout):
+		putSendJob(job)
+		s.unregisterRawResult(msgID)
+		return nil, fmt.Errorf("session: send raw: write queue full: %w", ErrSendTimeout)
+	}
+	if err := <-job.done; err != nil {
+		putSendJob(job)
+		s.unregisterRawResult(msgID)
+		if s.onDisconnect != nil {
+			s.onDisconnect(err)
+		}
+		return nil, fmt.Errorf("session: send raw: %w", err)
+	}
+	putSendJob(job)
+
+	select {
+	case data := <-ch:
+		s.unregisterRawResult(msgID)
+		return data, nil
+	case <-ctx.Done():
+		s.unregisterRawResult(msgID)
+		s.sendRPCDrop(msgID)
+		return nil, ctx.Err()
+	case <-s.cancel:
+		s.unregisterRawResult(msgID)
+		return nil, ErrSessionClosed
+	case <-time.After(timeout):
+		s.unregisterRawResult(msgID)
+		return nil, ErrSendTimeout
+	}
+}
+
+// InvokeRaw sends a TLObject query and returns the raw response body bytes
+// without TL decoding. It retries the request up to retries times with the
+// given per-attempt timeout.
+func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) ([]byte, error) {
+	if retries < 1 {
+		retries = 1
+	}
+
+	var buf bytes.Buffer
+	if err := query.Encode(&buf); err != nil {
+		return nil, fmt.Errorf("session: invoke raw: encode query: %w", err)
+	}
+	bodyBytes := buf.Bytes()
+
+	var lastErr error
+	for i := 0; i < retries; i++ {
+		msgID := s.msgFactory.AllocateMsgID()
+		seqNo := s.msgFactory.AllocateSeqNo(true)
+
+		data, err := s.SendRaw(ctx, msgID, uint32(seqNo), bodyBytes, timeout)
+		if err != nil {
+			lastErr = fmt.Errorf("invoke raw: send: %w", err)
+			continue
+		}
+		return data, nil
+	}
+	return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d): %w", retries, lastErr)
+}
+
 // Invoke sends an RPC query and decodes the response into a TLObject.
 // It retries the request up to retries times with the given per-attempt
 // timeout. Returns the decoded response object or the last error encountered.
@@ -665,9 +781,28 @@ func (s *Session) recvWorker() {
 			}
 			continue
 		}
-		msg, _, err := unpackIncomingMessage(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+		msg, decrypted, err := unpackIncomingMessage(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 		if err != nil {
 			continue
+		}
+
+		// Deliver raw body bytes to any registered raw result channel.
+		if len(decrypted) >= 32 {
+			bodyLen := int(decrypted[28]) | int(decrypted[29])<<8 |
+				int(decrypted[30])<<16 | int(decrypted[31])<<24
+			if bodyLen > 0 && 32+bodyLen <= len(decrypted) {
+				bodyBytes := decrypted[32 : 32+bodyLen]
+				// Deliver to the response msgID (for updates, etc.).
+				s.deliverRawResult(msg.MsgID, bodyBytes)
+				// For RPC responses (Pong, RPCResult, BadMsg*, etc.)
+				// the original request msgID is at offset 4 in the body.
+				// Deliver there so raw callers waiting on the request
+				// msgID also receive the response.
+				if bodyLen >= 12 {
+					reqMsgID := int64(binary.LittleEndian.Uint64(bodyBytes[4:12]))
+					s.deliverRawResult(reqMsgID, bodyBytes)
+				}
+			}
 		}
 
 		func() {

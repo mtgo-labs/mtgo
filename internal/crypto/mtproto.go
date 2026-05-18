@@ -92,6 +92,47 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	return result.Bytes()
 }
 
+// PackRaw is like [Pack] but accepts pre-serialized body bytes instead of a
+// *tg.MTProtoMessage. It manually writes the MTProto envelope (msgID, seqNo,
+// body length prefix) followed by bodyBytes, then applies padding, msgKey
+// computation, and AES-IGE encryption identically to [Pack].
+func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID, authKey, authKeyID []byte) []byte {
+	var dataBuf bytes.Buffer
+	tg.WriteLong(&dataBuf, salt)
+	dataBuf.Write(sessionID)
+	tg.WriteLong(&dataBuf, msgID)
+	tg.WriteInt(&dataBuf, seqNo)
+	tg.WriteInt(&dataBuf, uint32(len(bodyBytes)))
+	dataBuf.Write(bodyBytes)
+
+	paddingLen := (-(len(dataBuf.Bytes())+12)%16 + 12)
+	if paddingLen < 12 {
+		paddingLen += 16
+	}
+	padding := make([]byte, paddingLen)
+	rand.Read(padding)
+	dataBuf.Write(padding)
+
+	data := dataBuf.Bytes()
+
+	hk := sha256.New()
+	hk.Write(authKey[88:120])
+	hk.Write(data)
+	var msgKeyLarge [32]byte
+	hk.Sum(msgKeyLarge[:0])
+	msgKey := msgKeyLarge[8:24]
+
+	aesKey, aesIV := KDF(authKey, msgKey, true)
+	encrypted := IGEEncrypt(data, aesKey, aesIV)
+
+	var result bytes.Buffer
+	result.Write(authKeyID)
+	result.Write(msgKey)
+	result.Write(encrypted)
+
+	return result.Bytes()
+}
+
 // Unpack decrypts and decodes an incoming encrypted message. It verifies
 // authKeyID, decrypts the payload with AES-IGE using KDF-derived keys, validates
 // msgKey against SHA-256(authKey[96:128] + decrypted)[8:24], checks sessionID

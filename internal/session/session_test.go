@@ -267,6 +267,69 @@ func TestSessionSendAndWait(t *testing.T) {
 	close(s.cancel)
 }
 
+func TestSessionSendRawAndWait(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	startTestWorkers(s)
+
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(true)
+	pingID := time.Now().UnixNano()
+	ping := &tg.PingRequest{PingID: pingID}
+
+	var buf bytes.Buffer
+	if err := ping.Encode(&buf); err != nil {
+		t.Fatalf("encode ping: %v", err)
+	}
+
+	sendDone := make(chan struct {
+		data []byte
+		err  error
+	}, 1)
+	go func() {
+		data, err := s.SendRaw(context.Background(), msgID, uint32(seqNo), buf.Bytes(), 5*time.Second)
+		sendDone <- struct {
+			data []byte
+			err  error
+		}{data, err}
+	}()
+
+	<-mt.sendCh
+
+	respMsgID := s.msgFactory.AllocateMsgID()
+	respSeqNo := s.msgFactory.AllocateSeqNo(false)
+	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
+	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
+	mt.recvCh <- encrypted
+
+	select {
+	case result := <-sendDone:
+		if result.err != nil {
+			t.Fatalf("SendRaw() error: %v", result.err)
+		}
+		if len(result.data) == 0 {
+			t.Fatal("SendRaw() returned empty data")
+		}
+		obj, err := tg.ReadTLObject(bytes.NewReader(result.data))
+		if err != nil {
+			t.Fatalf("decode raw response: %v", err)
+		}
+		p, ok := obj.(*tg.Pong)
+		if !ok {
+			t.Fatalf("expected *tg.Pong, got %T", obj)
+		}
+		if p.PingID != pingID {
+			t.Errorf("pong.PingID = %d, want %d", p.PingID, pingID)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("SendRaw() timed out")
+	}
+
+	close(s.cancel)
+}
+
 func TestSessionSendDeliversRpcResultByRequestMsgID(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()

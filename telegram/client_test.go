@@ -390,6 +390,24 @@ func TestInvokeRawNotConnected(t *testing.T) {
 	}
 }
 
+func TestInvokeWithRawByteNotConnected(t *testing.T) {
+	c, _ := NewClient(12345, "hash", nil)
+
+	_, err := c.InvokeWithRawByte(context.Background(), nil)
+	if !errors.Is(err, ErrNotConnected) {
+		t.Errorf("InvokeWithRawByte() = %v, want ErrNotConnected", err)
+	}
+}
+
+func TestInvokeWithRawByte(t *testing.T) {
+	c, _ := NewClient(12345, "hash", &Config{NoUpdates: true})
+
+	_, err := c.InvokeWithRawByte(context.Background(), &tg.PingRequest{})
+	if !errors.Is(err, ErrNotConnected) {
+		t.Errorf("InvokeWithRawByte() = %v, want ErrNotConnected", err)
+	}
+}
+
 func setupTestServerForClient(c *Client, st storage.Storage) *testServer {
 	srv, err := newTestServer(nil)
 	if err != nil {
