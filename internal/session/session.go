@@ -120,7 +120,9 @@ type Session struct {
 	onDisconnect func(error)
 	// updateSem bounds the number of concurrent update dispatch goroutines.
 	updateSem chan struct{}
-	// onPanic is called (if non-nil) when a dispatchUpdate goroutine panics.
+	// dispatchSem bounds the number of concurrent message dispatch goroutines.
+	dispatchSem chan struct{}
+	// onPanic is called (if non-nil) when a dispatch goroutine panics.
 	onPanic func(panicValue any)
 }
 
@@ -171,6 +173,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
+		dispatchSem: make(chan struct{}, 128),
 	}
 
 	if len(authKey) > 0 {
@@ -501,7 +504,7 @@ func (s *Session) Start(timeout time.Duration) error {
 	go s.ackLoop()
 	go s.saltLoop()
 	go s.writer()
-	go s.recvWorker()
+	go s.readLoop()
 	go s.pingWorker()
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
@@ -640,7 +643,7 @@ func (s *Session) processIncoming(msg *tg.MTProtoMessage) {
 	s.handlePacket(msg.MsgID, msg.SeqNo, msg.Body)
 }
 
-func (s *Session) recvWorker() {
+func (s *Session) readLoop() {
 	var lastDisconnect time.Time
 	for {
 		select {
@@ -670,14 +673,24 @@ func (s *Session) recvWorker() {
 			continue
 		}
 
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Printf("session: recvWorker panic: %v", r)
-				}
-			}()
-			s.processIncoming(msg)
-		}()
+		select {
+		case s.dispatchSem <- struct{}{}:
+			go func(m *tg.MTProtoMessage) {
+				defer func() { <-s.dispatchSem }()
+				defer func() {
+					if r := recover(); r != nil {
+						if s.onPanic != nil {
+							s.onPanic(r)
+						} else {
+							log.Printf("session: readLoop dispatch panic: %v", r)
+						}
+					}
+				}()
+				s.processIncoming(m)
+			}(msg)
+		default:
+			log.Printf("session: readLoop: dispatch semaphore full, dropping message")
+		}
 	}
 }
 

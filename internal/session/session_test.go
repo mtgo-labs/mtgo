@@ -227,7 +227,7 @@ func startTestWorkers(s *Session) {
 	s.sendCh = make(chan *sendJob, 64)
 	s.connected = true
 	go s.writer()
-	go s.recvWorker()
+	go s.readLoop()
 }
 
 func TestSessionSendAndWait(t *testing.T) {
