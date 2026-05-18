@@ -226,3 +226,68 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 
 	return message, decrypted, nil
 }
+
+// UnpackEnvelope decrypts and validates an incoming MTProto message but only
+// decodes the envelope (msgID, seqNo, raw body bytes) without TL deserialization.
+func UnpackEnvelope(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessageRaw, []byte, error) {
+	if len(data) < 24 {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data too short"}
+	}
+
+	if !bytes.Equal(data[:8], authKeyID) {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "b.read(8) == auth_key_id"}
+	}
+
+	msgKey := data[8:24]
+	encrypted := data[24:]
+
+	keyArr, ivArr := KDF(authKey, msgKey, false)
+
+	if len(encrypted) == 0 || len(encrypted)%16 != 0 {
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "encrypted data not aligned to 16"}
+	}
+
+	decrypted := IGEDecrypt(encrypted, keyArr[:], ivArr[:])
+
+	if len(decrypted) < 16 {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}
+	}
+
+	hc := sha256.New()
+	hc.Write(authKey[96:128])
+	hc.Write(decrypted)
+	var msgKeyCheck [32]byte
+	hc.Sum(msgKeyCheck[:0])
+	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key check failed"}
+	}
+
+	if !bytes.Equal(decrypted[8:16], sessionID) {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "session_id mismatch"}
+	}
+
+	if len(decrypted) < 32 {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short for header"}
+	}
+	bodyLen := int32(decrypted[28]) | int32(decrypted[29])<<8 |
+		int32(decrypted[30])<<16 | int32(decrypted[31])<<24
+	paddingLen := len(decrypted) - 32 - int(bodyLen)
+	if paddingLen < 12 || paddingLen > 1024 {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "padding length"}
+	}
+
+	r := tg.NewReader(decrypted[16:])
+	defer tg.ReleaseReader(r)
+	raw, err := tg.DecodeMTProtoMessageRaw(r)
+	if err != nil {
+		ReleaseAESBuf(decrypted)
+		return nil, nil, fmt.Errorf("crypto/mtproto: decode envelope: %w", err)
+	}
+
+	return raw, decrypted, nil
+}
