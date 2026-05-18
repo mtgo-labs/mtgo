@@ -389,6 +389,13 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 	}
 }
 
+func sendOrCancel[T any](ctx context.Context, ch chan<- T, v T) {
+	select {
+	case ch <- v:
+	case <-ctx.Done():
+	}
+}
+
 func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
 	chunkSize := int32(downloadChunkSize)
 	if opts != nil && opts.ChunkSize > 0 {
@@ -401,7 +408,7 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 		defer close(ch)
 		defer func() {
 			if r := recover(); r != nil {
-				ch <- FileChunk{Err: fmt.Errorf("download: stream panic: %v", r)}
+				sendOrCancel(ctx, ch, FileChunk{Err: fmt.Errorf("download: stream panic: %v", r)})
 			}
 		}()
 		offset := int64(0)
@@ -410,7 +417,7 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 		for {
 			select {
 			case <-ctx.Done():
-				ch <- FileChunk{Err: ctx.Err()}
+				sendOrCancel(ctx, ch, FileChunk{Err: ctx.Err()})
 				return
 			default:
 			}
@@ -423,13 +430,13 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 
 			result, err := rpc.UploadGetFile(ctx, req)
 			if err != nil {
-				ch <- FileChunk{Err: fmt.Errorf("download: get file at offset %d: %w", offset, err)}
+				sendOrCancel(ctx, ch, FileChunk{Err: fmt.Errorf("download: get file at offset %d: %w", offset, err)})
 				return
 			}
 
 			file, ok := result.(*tg.UploadFile)
 			if !ok {
-				ch <- FileChunk{Err: fmt.Errorf("download: unexpected result type %T", result)}
+				sendOrCancel(ctx, ch, FileChunk{Err: fmt.Errorf("download: unexpected result type %T", result)})
 				return
 			}
 
@@ -439,11 +446,11 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 
 			totalWritten += int64(len(file.Bytes))
 
-			ch <- FileChunk{
+			sendOrCancel(ctx, ch, FileChunk{
 				Data:  file.Bytes,
 				Bytes: totalWritten,
 				Total: fileSize,
-			}
+			})
 
 			offset += int64(len(file.Bytes))
 
@@ -807,7 +814,7 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 		defer close(ch)
 		defer func() {
 			if r := recover(); r != nil {
-				ch <- StreamChunk{Err: fmt.Errorf("stream media: panic: %v", r)}
+				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream media: panic: %v", r)})
 			}
 		}()
 		offset := int64(0)
@@ -815,7 +822,7 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 		for {
 			select {
 			case <-ctx.Done():
-				ch <- StreamChunk{Err: ctx.Err()}
+				sendOrCancel(ctx, ch, StreamChunk{Err: ctx.Err()})
 				return
 			default:
 			}
@@ -828,13 +835,13 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 
 			result, err := rpc.UploadGetFile(ctx, req)
 			if err != nil {
-				ch <- StreamChunk{Err: fmt.Errorf("stream: get file at offset %d: %w", offset, err)}
+				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream: get file at offset %d: %w", offset, err)})
 				return
 			}
 
 			file, ok := result.(*tg.UploadFile)
 			if !ok {
-				ch <- StreamChunk{Err: fmt.Errorf("stream: unexpected result type %T", result)}
+				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream: unexpected result type %T", result)})
 				return
 			}
 
@@ -842,7 +849,7 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 				return
 			}
 
-			ch <- StreamChunk{Data: file.Bytes}
+			sendOrCancel(ctx, ch, StreamChunk{Data: file.Bytes})
 			offset += int64(len(file.Bytes))
 
 			if opts != nil && opts.Progress != nil {

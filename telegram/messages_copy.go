@@ -73,7 +73,7 @@ func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64
 		DropMediaCaptions: opt.Caption != "",
 		FromPeer:          fromPeer,
 		ID:                []int32{messageID},
-		RandomID:          []int64{generateRandomID()},
+		RandomID:          []int64{c.RandomID()},
 		ToPeer:            peer,
 		ReplyTo:           replyTo,
 	}
@@ -151,7 +151,7 @@ func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID in
 
 	randomIDs := make([]int64, len(groupedMsgIDs))
 	for i := range randomIDs {
-		randomIDs[i] = generateRandomID()
+		randomIDs[i] = c.RandomID()
 	}
 
 	req := &tg.MessagesForwardMessagesRequest{

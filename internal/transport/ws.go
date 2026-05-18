@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/coder/websocket"
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 )
 
@@ -29,20 +28,15 @@ func WebsocketListener(addr net.Addr) (net.Listener, http.Handler) {
 }
 
 func (l *wsListener) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		Subprotocols: []string{"binary"},
-	})
+	wsConn, err := wsAccept(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	netConn := websocket.NetConn(context.Background(), wsConn, websocket.MessageBinary)
-
-	obfsConn, err := acceptObfuscated2(netConn)
+	obfsConn, err := acceptObfuscated2(wsConn)
 	if err != nil {
-		netConn.Close()
-		wsConn.Close(websocket.StatusNormalClosure, "close")
+		wsConn.Close()
 		return
 	}
 
@@ -76,33 +70,47 @@ func (l *wsListener) Close() error {
 func (l *wsListener) Addr() net.Addr { return l.addr }
 
 func DialWebsocket(ctx context.Context, addr string) (net.Conn, error) {
-	wsConn, _, err := websocket.Dial(ctx, addr, &websocket.DialOptions{
-		Subprotocols: []string{"binary"},
-	})
+	rawConn, err := dialWebsocketTCP(ctx, addr)
 	if err != nil {
-		return nil, fmt.Errorf("ws: dial: %w", err)
-	}
-
-	netConn := websocket.NetConn(context.Background(), wsConn, websocket.MessageBinary)
-
-	obfsConn, err := dialObfuscated2(netConn, 0xEE)
-	if err != nil {
-		netConn.Close()
-		wsConn.Close(websocket.StatusNormalClosure, "close")
 		return nil, err
 	}
 
-	return &wsConnCloser{Conn: obfsConn, ws: wsConn}, nil
+	wsConn, err := wsDial(rawConn, addr)
+	if err != nil {
+		rawConn.Close()
+		return nil, fmt.Errorf("ws: dial: %w", err)
+	}
+
+	obfsConn, err := dialObfuscated2(wsConn, 0xEE)
+	if err != nil {
+		wsConn.Close()
+		return nil, err
+	}
+
+	return &wsConnCloser{Conn: obfsConn}, nil
+}
+
+func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
+	var d net.Dialer
+	host, port, err := net.SplitHostPort(fromWSScheme(addr))
+	if err != nil {
+		return nil, fmt.Errorf("ws: parse host: %w", err)
+	}
+	return d.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
+}
+
+func fromWSScheme(addr string) string {
+	if len(addr) > 6 && addr[:6] == "wss://" {
+		return addr[6:]
+	}
+	if len(addr) > 5 && addr[:5] == "ws://" {
+		return addr[5:]
+	}
+	return addr
 }
 
 type wsConnCloser struct {
 	net.Conn
-	ws *websocket.Conn
-}
-
-func (c *wsConnCloser) Close() error {
-	_ = c.ws.Close(websocket.StatusNormalClosure, "close")
-	return c.Conn.Close()
 }
 
 type obfsConn struct {

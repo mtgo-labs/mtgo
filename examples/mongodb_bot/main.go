@@ -10,8 +10,8 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/storage"
-	extmongodb "github.com/mtgo-labs/storage/mongodb"
+	"github.com/mtgo-labs/mtgo/internal/storage"
+	extmongodb "github.com/mtgo-labs/mtgo/internal/storage/mongodb"
 )
 
 func main() {

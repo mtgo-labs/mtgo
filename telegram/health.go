@@ -101,7 +101,7 @@ func (hc *healthChecker) sendPing(ctx context.Context) error {
 
 	done := make(chan error, 1)
 	go func() {
-		_, err := sess.Invoke(context.Background(), &tg.PingDelayDisconnectRequest{
+		_, err := sess.Invoke(pingCtx, &tg.PingDelayDisconnectRequest{
 			PingID:          time.Now().UnixNano(),
 			DisconnectDelay: 65,
 		}, 1, hc.cfg.PongTimeout)

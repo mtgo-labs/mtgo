@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 // MemoryStorage implements the storage interface with in-memory maps, suitable for testing
@@ -233,14 +233,34 @@ func (m *MemoryStorage) SaveChannelUpdateState(state *storage.ChannelUpdateState
 	return nil
 }
 
+// maxDedupKeysPerSession caps the number of dedup keys stored per session
+// to prevent unbounded growth in long-running processes.
+const maxDedupKeysPerSession = 10000
+
 func (m *MemoryStorage) SaveUpdateDedupKey(sessionID string, key string) (bool, error) {
-	if m.updateDedup[sessionID] == nil {
-		m.updateDedup[sessionID] = make(map[string]struct{})
+	set := m.updateDedup[sessionID]
+	if set == nil {
+		set = make(map[string]struct{})
+		m.updateDedup[sessionID] = set
 	}
-	if _, ok := m.updateDedup[sessionID][key]; ok {
+	if _, ok := set[key]; ok {
 		return false, nil
 	}
-	m.updateDedup[sessionID][key] = struct{}{}
+	if len(set) >= maxDedupKeysPerSession {
+		// Evict oldest half to prevent unbounded growth; map iteration
+		// order is non-deterministic but provides approximate oldest-first
+		// behavior for a fixed-capacity dedup set.
+		half := maxDedupKeysPerSession / 2
+		cleared := 0
+		for k := range set {
+			delete(set, k)
+			cleared++
+			if cleared >= half {
+				break
+			}
+		}
+	}
+	set[key] = struct{}{}
 	return true, nil
 }
 

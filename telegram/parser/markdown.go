@@ -18,8 +18,7 @@ func NewMarkdownParser() *MarkdownParser {
 // It returns the plain text and corresponding Telegram message entities.
 func (p *MarkdownParser) Parse(md string) (string, []tl.MessageEntityClass, error) {
 	html := mdToHTML(md)
-	hp := NewHTMLParser()
-	return hp.Parse(html)
+	return htmlParser.Parse(html)
 }
 
 func mdToHTML(md string) string {

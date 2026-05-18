@@ -34,11 +34,6 @@ type Context struct {
 	// May be nil if the Context was created outside of an update handler.
 	Update *Update
 
-	// Stopped indicates whether handler chain propagation has been halted.
-	// Set to true by StopPropagation; middleware should check this before
-	// continuing to the next handler.
-	Stopped bool
-
 	// PluginData stores per-request plugin state. Plugins use this to attach
 	// data (like locale, translator) to the current update context.
 	PluginData map[string]interface{}
@@ -154,6 +149,11 @@ type Context struct {
 	// processing. Handlers can inspect this to perform error logging or
 	// recovery before the update is discarded.
 	Error error
+
+	// Stopped indicates whether handler chain propagation has been halted.
+	// Set to true by StopPropagation; middleware should check this before
+	// continuing to the next handler.
+	Stopped bool
 
 	// Connected is set to true when the client has successfully connected to
 	// the Telegram server. Use it in connection-lifecycle handlers to

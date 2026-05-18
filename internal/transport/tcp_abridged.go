@@ -38,12 +38,12 @@ func (t *TCPAbridged) Send(buf *bytes.Buffer) error {
 			return err
 		}
 	} else {
-		header := make([]byte, 4)
+		var header [4]byte
 		header[0] = 0x7f
 		header[1] = byte(length)
 		header[2] = byte(length >> 8)
 		header[3] = byte(length >> 16)
-		if _, err := t.conn.Write(header); err != nil {
+		if _, err := t.conn.Write(header[:]); err != nil {
 			return err
 		}
 	}
