@@ -479,6 +479,41 @@ defer cancel()
 result, err := rpc.MessagesGetMessages(ctx, req)
 ```
 
+### InvokeRaw — skip error wrapping
+
+`client.InvokeRaw(ctx, query, retries, timeout)` sends a TL object and returns the raw response without wrapping or transforming errors. Use this when you need to inspect the original RPC error directly instead of the processed version:
+
+```go
+// Get the raw TL response with original error
+raw, err := client.InvokeRaw(ctx, &tg.MessagesGetHistoryRequest{
+    Peer:  &tg.InputPeerChannel{ChannelID: channelID, AccessHash: hash},
+    Limit: 100,
+}, 3, 10*time.Second)
+```
+
+### InvokeWithRawByte — skip decode (performance)
+
+`client.InvokeWithRawByte(ctx, query)` sends a TL object and returns the raw response **bytes** without running the TL decode algorithm. This saves significant time for high-throughput operations where you don't need the decoded response, or when you want to deserialize manually with a custom decoder:
+
+```go
+// Fast ping — don't waste time decoding the pong
+rawBytes, err := client.InvokeWithRawByte(ctx, &tg.PingRequest{PingID: rand.Int63()})
+
+// Batch operation: check multiple peer access hashes without decode overhead
+for _, peer := range peers {
+    rawBytes, err := client.InvokeWithRawByte(ctx, &tg.MessagesGetHistoryRequest{
+        Peer:  peer.InputPeer(),
+        Limit: 1,
+    })
+    // rawBytes is the undecoded TL response — parse only what you need
+}
+```
+
+Use `InvokeWithRawByte` when:
+- You're doing bulk operations and don't need the full typed response
+- You only need part of the response and want to skip full TL deserialization
+- You're implementing a custom parser that's faster than the generated decoder
+
 ## Userbot Authentication
 
 ### Phone number flow
