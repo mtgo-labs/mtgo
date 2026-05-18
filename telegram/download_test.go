@@ -77,6 +77,10 @@ func (m *mockDownloadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, 
 		Bytes: chunk,
 	}, nil
 }
+func (m *mockDownloadInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
+	return nil, nil
+}
+
 
 func TestDownloadFile_ToBuffer(t *testing.T) {
 	data := make([]byte, downloadChunkSize*2+500)

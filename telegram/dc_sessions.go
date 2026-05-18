@@ -239,6 +239,24 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 	return result, nil
 }
 
+func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
+	query := input
+	if !d.apiInit && needsInitConnection(input) {
+		query = wrapInitConnection(d.client.cfg, input)
+	}
+
+	data, err := d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	if !d.apiInit && needsInitConnection(input) {
+		d.apiInit = true
+	}
+
+	return data, nil
+}
+
 type ioCloser interface {
 	Close() error
 }

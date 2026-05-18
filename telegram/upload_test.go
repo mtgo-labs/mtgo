@@ -75,6 +75,10 @@ func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 	return nil, fmt.Errorf("unexpected request type: %T", input)
 }
+func (m *mockRPCInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
+	return nil, nil
+}
+
 
 func TestUploadFile_SmallFile(t *testing.T) {
 	data := make([]byte, 1024)

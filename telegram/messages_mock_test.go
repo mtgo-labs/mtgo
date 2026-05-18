@@ -31,6 +31,10 @@ func (m *mockMessagesInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, 
 	}
 	return updatesWithMessage(), nil
 }
+func (m *mockMessagesInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
+	return nil, nil
+}
+
 
 func (m *mockMessagesInvoker) lastCall() tg.TLObject {
 	m.mu.Lock()

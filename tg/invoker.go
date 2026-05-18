@@ -6,12 +6,17 @@ import (
 
 type Invoker interface {
 	RPCInvoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
+	RPCInvokeRaw(ctx context.Context, input TLObject) ([]byte, error)
 }
 
 type InvokerFunc func(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
 
 func (f InvokerFunc) RPCInvoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {
 	return f(ctx, input, decode)
+}
+
+func (f InvokerFunc) RPCInvokeRaw(ctx context.Context, input TLObject) ([]byte, error) {
+	return nil, nil
 }
 
 // Client wraps an Invoker and provides a high-level RPC interface.
@@ -30,4 +35,10 @@ func NewClient(invoker Invoker) *Client {
 // Invoke performs an RPC call by delegating to the underlying Invoker.
 func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {
 	return c.rpc.RPCInvoke(ctx, input, decode)
+}
+
+// InvokeWithBytes sends a TLObject query and returns the raw response body
+// bytes without TL decoding.
+func (c *RPCClient) InvokeWithBytes(ctx context.Context, input TLObject) ([]byte, error) {
+	return c.rpc.RPCInvokeRaw(ctx, input)
 }
