@@ -8,6 +8,7 @@ A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mtgo-labs/mtgo.svg)](https://pkg.go.dev/github.com/mtgo-labs/mtgo)
+[![skills.sh](https://skills.sh/b/mtgo-labs/mtgo)](https://skills.sh/mtgo-labs/mtgo)
 
 </div>
 
@@ -31,7 +32,11 @@ A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram
 ## Quick Start
 
 ```bash
+# Install as a Go module
 go get github.com/mtgo-labs/mtgo
+
+# Install the Agent Skill for Claude Code, Codex, Cursor, etc.
+npx skills add mtgo-labs/mtgo
 ```
 
 ```go
