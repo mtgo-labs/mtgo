@@ -282,12 +282,21 @@ func UnpackEnvelope(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTPr
 	}
 
 	r := tg.NewReader(decrypted[16:])
-	defer tg.ReleaseReader(r)
 	raw, err := tg.DecodeMTProtoMessageRaw(r)
 	if err != nil {
+		tg.ReleaseReader(r)
 		ReleaseAESBuf(decrypted)
 		return nil, nil, fmt.Errorf("crypto/mtproto: decode envelope: %w", err)
 	}
+
+	// Copy BodyRaw before releasing the pooled reader — the sub-slice
+	// references the reader's buffer and would be clobbered on reuse.
+	if len(raw.BodyRaw) > 0 {
+		cp := make([]byte, len(raw.BodyRaw))
+		copy(cp, raw.BodyRaw)
+		raw.BodyRaw = cp
+	}
+	tg.ReleaseReader(r)
 
 	return raw, decrypted, nil
 }
