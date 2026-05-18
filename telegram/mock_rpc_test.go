@@ -36,6 +36,10 @@ func (m *mockBotRPCInvoke) RPCInvoke(_ context.Context, req tg.TLObject, decode 
 	return nil, nil
 }
 
+func (m *mockBotRPCInvoke) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
+	return nil, nil
+}
+
 func (m *mockBotRPCInvoke) setResult(constructorID uint32, result tg.TLObject) {
 	m.mu.Lock()
 	m.results[constructorID] = result

@@ -21,6 +21,10 @@ func (m *mockJSONInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, deco
 	}
 	return m.result, nil
 }
+func (m *mockJSONInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
+	return nil, nil
+}
+
 
 func TestInvokeJSONBasic(t *testing.T) {
 	mock := &mockJSONInvoker{

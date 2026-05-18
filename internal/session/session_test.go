@@ -309,7 +309,7 @@ func TestSessionSendRawAndWait(t *testing.T) {
 		if len(result.data) == 0 {
 			t.Fatal("SendRaw() returned empty data")
 		}
-		obj, err := tg.ReadTLObject(bytes.NewReader(result.data))
+		obj, err := tg.ReadTLObject(tg.NewReader(result.data))
 		if err != nil {
 			t.Fatalf("decode raw response: %v", err)
 		}

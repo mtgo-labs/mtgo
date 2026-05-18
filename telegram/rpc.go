@@ -74,6 +74,29 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	return result, nil
 }
 
+func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
+	ci.client.mu.RLock()
+	apiInit := ci.client.apiInit
+	cfg := ci.client.cfg
+	ci.client.mu.RUnlock()
+
+	query := input
+	if !apiInit && needsInitConnection(input) {
+		query = wrapInitConnection(cfg, input)
+	}
+
+	data, err := ci.client.InvokeWithRawByte(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if !apiInit && needsInitConnection(input) {
+		ci.client.mu.Lock()
+		ci.client.apiInit = true
+		ci.client.mu.Unlock()
+	}
+	return data, nil
+}
+
 func shouldReturnMigrationToCaller(input tg.TLObject, err *tgerr.Error) bool {
 	if input == nil || err == nil {
 		return false
