@@ -9,7 +9,15 @@ mtgo is a Go library for building Telegram bots and userbots using the MTProto 2
 
 ## Quick Reference
 
-**Module:** `github.com/mtgo-labs/mtgo`
+**Module:** `github.com/mtgo-labs/mtgo`  
+**API Reference:** <https://pkg.go.dev/github.com/mtgo-labs/mtgo>
+
+Use `go doc` to look up types and methods:
+```
+go doc github.com/mtgo-labs/mtgo/telegram Client
+go doc github.com/mtgo-labs/mtgo/telegram Filter
+go doc github.com/mtgo-labs/mtgo/telegram/params SendMessage
+```
 
 **Key packages:**
 - `telegram` — high-level client, handlers, filters, middleware, keyboards
