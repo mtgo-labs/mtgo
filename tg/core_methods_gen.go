@@ -6,8 +6,441 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
+
+// ReqPQTypeID is the constructor ID for the RPC function req_pq.
+const ReqPQTypeID = 0x60469778
+
+// ReqPQRequest represents TL type `req_pq#60469778`.
+//
+// See https://core.telegram.org/method/req_pq for reference.
+type ReqPQRequest struct {
+	Nonce [16]byte `json:"nonce,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x60469778.
+func (v *ReqPQRequest) ConstructorID() uint32 {
+	return ReqPQTypeID
+}
+
+// Encode serializes ReqPQRequest to a bytes.Buffer using the TL binary protocol.
+func (v *ReqPQRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ReqPQTypeID)
+	WriteInt128(b, v.Nonce)
+	return nil
+}
+
+// ReqPQ invokes the req_pq RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) ReqPQ(ctx context.Context, req *ReqPQRequest) (*ResPQ, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*ResPQ); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// ReqPQMultiTypeID is the constructor ID for the RPC function req_pq_multi.
+const ReqPQMultiTypeID = 0xbe7e8ef1
+
+// ReqPQMultiRequest represents TL type `req_pq_multi#be7e8ef1`.
+//
+// See https://core.telegram.org/method/req_pq_multi for reference.
+type ReqPQMultiRequest struct {
+	Nonce [16]byte `json:"nonce,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xbe7e8ef1.
+func (v *ReqPQMultiRequest) ConstructorID() uint32 {
+	return ReqPQMultiTypeID
+}
+
+// Encode serializes ReqPQMultiRequest to a bytes.Buffer using the TL binary protocol.
+func (v *ReqPQMultiRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ReqPQMultiTypeID)
+	WriteInt128(b, v.Nonce)
+	return nil
+}
+
+// ReqPQMulti invokes the req_pq_multi RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) ReqPQMulti(ctx context.Context, req *ReqPQMultiRequest) (*ResPQ, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*ResPQ); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// ReqDHParamsTypeID is the constructor ID for the RPC function req_DH_params.
+const ReqDHParamsTypeID = 0xd712e4be
+
+// ReqDHParamsRequest represents TL type `req_DH_params#d712e4be`.
+//
+// See https://core.telegram.org/method/req_DH_params for reference.
+type ReqDHParamsRequest struct {
+	Nonce                [16]byte `json:"nonce,omitempty"`
+	ServerNonce          [16]byte `json:"server_nonce,omitempty"`
+	P                    string   `json:"p,omitempty"`
+	Q                    string   `json:"q,omitempty"`
+	PublicKeyFingerprint int64    `json:"public_key_fingerprint,omitempty"`
+	EncryptedData        string   `json:"encrypted_data,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd712e4be.
+func (v *ReqDHParamsRequest) ConstructorID() uint32 {
+	return ReqDHParamsTypeID
+}
+
+// Encode serializes ReqDHParamsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *ReqDHParamsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ReqDHParamsTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteLong(b, v.PublicKeyFingerprint)
+	WriteString(b, v.EncryptedData)
+	return nil
+}
+
+// ReqDHParams invokes the req_DH_params RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) ReqDHParams(ctx context.Context, req *ReqDHParamsRequest) (ServerDHParamsClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(ServerDHParamsClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// SetClientDHParamsTypeID is the constructor ID for the RPC function set_client_DH_params.
+const SetClientDHParamsTypeID = 0xf5045f1f
+
+// SetClientDHParamsRequest represents TL type `set_client_DH_params#f5045f1f`.
+//
+// See https://core.telegram.org/method/set_client_DH_params for reference.
+type SetClientDHParamsRequest struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	EncryptedData string   `json:"encrypted_data,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf5045f1f.
+func (v *SetClientDHParamsRequest) ConstructorID() uint32 {
+	return SetClientDHParamsTypeID
+}
+
+// Encode serializes SetClientDHParamsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *SetClientDHParamsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, SetClientDHParamsTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.EncryptedData)
+	return nil
+}
+
+// SetClientDHParams invokes the set_client_DH_params RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) SetClientDHParams(ctx context.Context, req *SetClientDHParamsRequest) (SetClientDHParamsAnswerClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(SetClientDHParamsAnswerClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// DestroyAuthKeyTypeID is the constructor ID for the RPC function destroy_auth_key.
+const DestroyAuthKeyTypeID = 0xd1435160
+
+// DestroyAuthKeyRequest represents TL type `destroy_auth_key#d1435160`.
+//
+// See https://core.telegram.org/method/destroy_auth_key for reference.
+type DestroyAuthKeyRequest struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xd1435160.
+func (v *DestroyAuthKeyRequest) ConstructorID() uint32 {
+	return DestroyAuthKeyTypeID
+}
+
+// Encode serializes DestroyAuthKeyRequest to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyTypeID)
+	return nil
+}
+
+// DestroyAuthKey invokes the destroy_auth_key RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) DestroyAuthKey(ctx context.Context) (DestroyAuthKeyResClass, error) {
+	result, err := c.invoke(ctx, &DestroyAuthKeyRequest{}, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(DestroyAuthKeyResClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// RPCDropAnswerTypeID is the constructor ID for the RPC function rpc_drop_answer.
+const RPCDropAnswerTypeID = 0x58e4a740
+
+// RPCDropAnswerRequest represents TL type `rpc_drop_answer#58e4a740`.
+//
+// See https://core.telegram.org/method/rpc_drop_answer for reference.
+type RPCDropAnswerRequest struct {
+	ReqMsgID int64 `json:"req_msg_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x58e4a740.
+func (v *RPCDropAnswerRequest) ConstructorID() uint32 {
+	return RPCDropAnswerTypeID
+}
+
+// Encode serializes RPCDropAnswerRequest to a bytes.Buffer using the TL binary protocol.
+func (v *RPCDropAnswerRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCDropAnswerTypeID)
+	WriteLong(b, v.ReqMsgID)
+	return nil
+}
+
+// RPCDropAnswer invokes the rpc_drop_answer RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) RPCDropAnswer(ctx context.Context, req *RPCDropAnswerRequest) (RPCDropAnswerClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(RPCDropAnswerClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// GetFutureSaltsTypeID is the constructor ID for the RPC function get_future_salts.
+const GetFutureSaltsTypeID = 0xb921bd04
+
+// GetFutureSaltsRequest represents TL type `get_future_salts#b921bd04`.
+//
+// See https://core.telegram.org/method/get_future_salts for reference.
+type GetFutureSaltsRequest struct {
+	Num int32 `json:"num,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb921bd04.
+func (v *GetFutureSaltsRequest) ConstructorID() uint32 {
+	return GetFutureSaltsTypeID
+}
+
+// Encode serializes GetFutureSaltsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *GetFutureSaltsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, GetFutureSaltsTypeID)
+	WriteInt(b, uint32(v.Num))
+	return nil
+}
+
+// GetFutureSalts invokes the get_future_salts RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) GetFutureSalts(ctx context.Context, req *GetFutureSaltsRequest) (*FutureSalts, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*FutureSalts); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PingTypeID is the constructor ID for the RPC function ping.
+const PingTypeID = 0x7abe77ec
+
+// PingRequest represents TL type `ping#7abe77ec`.
+//
+// See https://core.telegram.org/method/ping for reference.
+type PingRequest struct {
+	PingID int64 `json:"ping_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7abe77ec.
+func (v *PingRequest) ConstructorID() uint32 {
+	return PingTypeID
+}
+
+// Encode serializes PingRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PingRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PingTypeID)
+	WriteLong(b, v.PingID)
+	return nil
+}
+
+// Ping invokes the ping RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) Ping(ctx context.Context, req *PingRequest) (*Pong, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*Pong); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PingDelayDisconnectTypeID is the constructor ID for the RPC function ping_delay_disconnect.
+const PingDelayDisconnectTypeID = 0xf3427b8c
+
+// PingDelayDisconnectRequest represents TL type `ping_delay_disconnect#f3427b8c`.
+//
+// See https://core.telegram.org/method/ping_delay_disconnect for reference.
+type PingDelayDisconnectRequest struct {
+	PingID          int64 `json:"ping_id,omitempty"`
+	DisconnectDelay int32 `json:"disconnect_delay,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf3427b8c.
+func (v *PingDelayDisconnectRequest) ConstructorID() uint32 {
+	return PingDelayDisconnectTypeID
+}
+
+// Encode serializes PingDelayDisconnectRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PingDelayDisconnectRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PingDelayDisconnectTypeID)
+	WriteLong(b, v.PingID)
+	WriteInt(b, uint32(v.DisconnectDelay))
+	return nil
+}
+
+// PingDelayDisconnect invokes the ping_delay_disconnect RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PingDelayDisconnect(ctx context.Context, req *PingDelayDisconnectRequest) (*Pong, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*Pong); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// DestroySessionTypeID is the constructor ID for the RPC function destroy_session.
+const DestroySessionTypeID = 0xe7512126
+
+// DestroySessionRequest represents TL type `destroy_session#e7512126`.
+//
+// See https://core.telegram.org/method/destroy_session for reference.
+type DestroySessionRequest struct {
+	SessionID int64 `json:"session_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xe7512126.
+func (v *DestroySessionRequest) ConstructorID() uint32 {
+	return DestroySessionTypeID
+}
+
+// Encode serializes DestroySessionRequest to a bytes.Buffer using the TL binary protocol.
+func (v *DestroySessionRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroySessionTypeID)
+	WriteLong(b, v.SessionID)
+	return nil
+}
+
+// DestroySession invokes the destroy_session RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) DestroySession(ctx context.Context, req *DestroySessionRequest) (DestroySessionResClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(DestroySessionResClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
 
 // InvokeAfterMsgTypeID is the constructor ID for the RPC function invokeAfterMsg.
 const InvokeAfterMsgTypeID = 0xcb9f372d
@@ -41,7 +474,7 @@ func (v *InvokeAfterMsgRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeAfterMsg(ctx context.Context, req *InvokeAfterMsgRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -82,7 +515,7 @@ func (v *InvokeAfterMsgsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeAfterMsgs(ctx context.Context, req *InvokeAfterMsgsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -156,7 +589,7 @@ func (v *InitConnectionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InitConnection(ctx context.Context, req *InitConnectionRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -197,7 +630,7 @@ func (v *InvokeWithLayerRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithLayer(ctx context.Context, req *InvokeWithLayerRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -236,7 +669,7 @@ func (v *InvokeWithoutUpdatesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithoutUpdates(ctx context.Context, req *InvokeWithoutUpdatesRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -277,7 +710,7 @@ func (v *InvokeWithMessagesRangeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithMessagesRange(ctx context.Context, req *InvokeWithMessagesRangeRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -318,7 +751,7 @@ func (v *InvokeWithTakeoutRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithTakeout(ctx context.Context, req *InvokeWithTakeoutRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -359,7 +792,7 @@ func (v *InvokeWithBusinessConnectionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithBusinessConnection(ctx context.Context, req *InvokeWithBusinessConnectionRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -402,7 +835,7 @@ func (v *InvokeWithGooglePlayIntegrityRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithGooglePlayIntegrity(ctx context.Context, req *InvokeWithGooglePlayIntegrityRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -445,7 +878,7 @@ func (v *InvokeWithApnsSecretRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithApnsSecret(ctx context.Context, req *InvokeWithApnsSecretRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -486,445 +919,11 @@ func (v *InvokeWithReCaptchaRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) InvokeWithReCaptcha(ctx context.Context, req *InvokeWithReCaptchaRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
-}
-
-// ReqPQTypeID is the constructor ID for the RPC function req_pq.
-const ReqPQTypeID = 0x60469778
-
-// ReqPQRequest represents TL type `req_pq#60469778`.
-//
-// See https://core.telegram.org/method/req_pq for reference.
-type ReqPQRequest struct {
-	Nonce [16]byte `json:"nonce,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x60469778.
-func (v *ReqPQRequest) ConstructorID() uint32 {
-	return ReqPQTypeID
-}
-
-// Encode serializes ReqPQRequest to a bytes.Buffer using the TL binary protocol.
-func (v *ReqPQRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ReqPQTypeID)
-	WriteInt128(b, v.Nonce)
-	return nil
-}
-
-// ReqPQ invokes the req_pq RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) ReqPQ(ctx context.Context, req *ReqPQRequest) (*ResPQ, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(*ResPQ); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// ReqPQMultiTypeID is the constructor ID for the RPC function req_pq_multi.
-const ReqPQMultiTypeID = 0xbe7e8ef1
-
-// ReqPQMultiRequest represents TL type `req_pq_multi#be7e8ef1`.
-//
-// See https://core.telegram.org/method/req_pq_multi for reference.
-type ReqPQMultiRequest struct {
-	Nonce [16]byte `json:"nonce,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xbe7e8ef1.
-func (v *ReqPQMultiRequest) ConstructorID() uint32 {
-	return ReqPQMultiTypeID
-}
-
-// Encode serializes ReqPQMultiRequest to a bytes.Buffer using the TL binary protocol.
-func (v *ReqPQMultiRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ReqPQMultiTypeID)
-	WriteInt128(b, v.Nonce)
-	return nil
-}
-
-// ReqPQMulti invokes the req_pq_multi RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) ReqPQMulti(ctx context.Context, req *ReqPQMultiRequest) (*ResPQ, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(*ResPQ); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// ReqDHParamsTypeID is the constructor ID for the RPC function req_DH_params.
-const ReqDHParamsTypeID = 0xd712e4be
-
-// ReqDHParamsRequest represents TL type `req_DH_params#d712e4be`.
-//
-// See https://core.telegram.org/method/req_DH_params for reference.
-type ReqDHParamsRequest struct {
-	Nonce                [16]byte `json:"nonce,omitempty"`
-	ServerNonce          [16]byte `json:"server_nonce,omitempty"`
-	P                    string   `json:"p,omitempty"`
-	Q                    string   `json:"q,omitempty"`
-	PublicKeyFingerprint int64    `json:"public_key_fingerprint,omitempty"`
-	EncryptedData        string   `json:"encrypted_data,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xd712e4be.
-func (v *ReqDHParamsRequest) ConstructorID() uint32 {
-	return ReqDHParamsTypeID
-}
-
-// Encode serializes ReqDHParamsRequest to a bytes.Buffer using the TL binary protocol.
-func (v *ReqDHParamsRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ReqDHParamsTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteLong(b, v.PublicKeyFingerprint)
-	WriteString(b, v.EncryptedData)
-	return nil
-}
-
-// ReqDHParams invokes the req_DH_params RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) ReqDHParams(ctx context.Context, req *ReqDHParamsRequest) (ServerDHParamsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(ServerDHParamsClass); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// SetClientDHParamsTypeID is the constructor ID for the RPC function set_client_DH_params.
-const SetClientDHParamsTypeID = 0xf5045f1f
-
-// SetClientDHParamsRequest represents TL type `set_client_DH_params#f5045f1f`.
-//
-// See https://core.telegram.org/method/set_client_DH_params for reference.
-type SetClientDHParamsRequest struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	EncryptedData string   `json:"encrypted_data,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xf5045f1f.
-func (v *SetClientDHParamsRequest) ConstructorID() uint32 {
-	return SetClientDHParamsTypeID
-}
-
-// Encode serializes SetClientDHParamsRequest to a bytes.Buffer using the TL binary protocol.
-func (v *SetClientDHParamsRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, SetClientDHParamsTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.EncryptedData)
-	return nil
-}
-
-// SetClientDHParams invokes the set_client_DH_params RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) SetClientDHParams(ctx context.Context, req *SetClientDHParamsRequest) (SetClientDHParamsAnswerClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(SetClientDHParamsAnswerClass); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// DestroyAuthKeyTypeID is the constructor ID for the RPC function destroy_auth_key.
-const DestroyAuthKeyTypeID = 0xd1435160
-
-// DestroyAuthKeyRequest represents TL type `destroy_auth_key#d1435160`.
-//
-// See https://core.telegram.org/method/destroy_auth_key for reference.
-type DestroyAuthKeyRequest struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xd1435160.
-func (v *DestroyAuthKeyRequest) ConstructorID() uint32 {
-	return DestroyAuthKeyTypeID
-}
-
-// Encode serializes DestroyAuthKeyRequest to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyTypeID)
-	return nil
-}
-
-// DestroyAuthKey invokes the destroy_auth_key RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) DestroyAuthKey(ctx context.Context) (DestroyAuthKeyResClass, error) {
-	result, err := c.invoke(ctx, &DestroyAuthKeyRequest{}, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(DestroyAuthKeyResClass); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// RPCDropAnswerTypeID is the constructor ID for the RPC function rpc_drop_answer.
-const RPCDropAnswerTypeID = 0x58e4a740
-
-// RPCDropAnswerRequest represents TL type `rpc_drop_answer#58e4a740`.
-//
-// See https://core.telegram.org/method/rpc_drop_answer for reference.
-type RPCDropAnswerRequest struct {
-	ReqMsgID int64 `json:"req_msg_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x58e4a740.
-func (v *RPCDropAnswerRequest) ConstructorID() uint32 {
-	return RPCDropAnswerTypeID
-}
-
-// Encode serializes RPCDropAnswerRequest to a bytes.Buffer using the TL binary protocol.
-func (v *RPCDropAnswerRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCDropAnswerTypeID)
-	WriteLong(b, v.ReqMsgID)
-	return nil
-}
-
-// RPCDropAnswer invokes the rpc_drop_answer RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) RPCDropAnswer(ctx context.Context, req *RPCDropAnswerRequest) (RPCDropAnswerClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(RPCDropAnswerClass); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// GetFutureSaltsTypeID is the constructor ID for the RPC function get_future_salts.
-const GetFutureSaltsTypeID = 0xb921bd04
-
-// GetFutureSaltsRequest represents TL type `get_future_salts#b921bd04`.
-//
-// See https://core.telegram.org/method/get_future_salts for reference.
-type GetFutureSaltsRequest struct {
-	Num int32 `json:"num,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xb921bd04.
-func (v *GetFutureSaltsRequest) ConstructorID() uint32 {
-	return GetFutureSaltsTypeID
-}
-
-// Encode serializes GetFutureSaltsRequest to a bytes.Buffer using the TL binary protocol.
-func (v *GetFutureSaltsRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, GetFutureSaltsTypeID)
-	WriteInt(b, uint32(v.Num))
-	return nil
-}
-
-// GetFutureSalts invokes the get_future_salts RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) GetFutureSalts(ctx context.Context, req *GetFutureSaltsRequest) (*FutureSalts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(*FutureSalts); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// PingTypeID is the constructor ID for the RPC function ping.
-const PingTypeID = 0x7abe77ec
-
-// PingRequest represents TL type `ping#7abe77ec`.
-//
-// See https://core.telegram.org/method/ping for reference.
-type PingRequest struct {
-	PingID int64 `json:"ping_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x7abe77ec.
-func (v *PingRequest) ConstructorID() uint32 {
-	return PingTypeID
-}
-
-// Encode serializes PingRequest to a bytes.Buffer using the TL binary protocol.
-func (v *PingRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PingTypeID)
-	WriteLong(b, v.PingID)
-	return nil
-}
-
-// Ping invokes the ping RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) Ping(ctx context.Context, req *PingRequest) (*Pong, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(*Pong); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// PingDelayDisconnectTypeID is the constructor ID for the RPC function ping_delay_disconnect.
-const PingDelayDisconnectTypeID = 0xf3427b8c
-
-// PingDelayDisconnectRequest represents TL type `ping_delay_disconnect#f3427b8c`.
-//
-// See https://core.telegram.org/method/ping_delay_disconnect for reference.
-type PingDelayDisconnectRequest struct {
-	PingID          int64 `json:"ping_id,omitempty"`
-	DisconnectDelay int32 `json:"disconnect_delay,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xf3427b8c.
-func (v *PingDelayDisconnectRequest) ConstructorID() uint32 {
-	return PingDelayDisconnectTypeID
-}
-
-// Encode serializes PingDelayDisconnectRequest to a bytes.Buffer using the TL binary protocol.
-func (v *PingDelayDisconnectRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PingDelayDisconnectTypeID)
-	WriteLong(b, v.PingID)
-	WriteInt(b, uint32(v.DisconnectDelay))
-	return nil
-}
-
-// PingDelayDisconnect invokes the ping_delay_disconnect RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) PingDelayDisconnect(ctx context.Context, req *PingDelayDisconnectRequest) (*Pong, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(*Pong); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
-}
-
-// DestroySessionTypeID is the constructor ID for the RPC function destroy_session.
-const DestroySessionTypeID = 0xe7512126
-
-// DestroySessionRequest represents TL type `destroy_session#e7512126`.
-//
-// See https://core.telegram.org/method/destroy_session for reference.
-type DestroySessionRequest struct {
-	SessionID int64 `json:"session_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xe7512126.
-func (v *DestroySessionRequest) ConstructorID() uint32 {
-	return DestroySessionTypeID
-}
-
-// Encode serializes DestroySessionRequest to a bytes.Buffer using the TL binary protocol.
-func (v *DestroySessionRequest) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroySessionTypeID)
-	WriteLong(b, v.SessionID)
-	return nil
-}
-
-// DestroySession invokes the destroy_session RPC method on the server.
-//
-// Parameters:
-//   - ctx: context for cancellation and timeout
-//   - req: the request parameters
-//
-// Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) DestroySession(ctx context.Context, req *DestroySessionRequest) (DestroySessionResClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
-		return ReadTLObject(r)
-	})
-	if err != nil {
-		return nil, err
-	}
-	if _c, _ok := result.(DestroySessionResClass); _ok {
-		return _c, nil
-	}
-	return nil, fmt.Errorf("unexpected result type %T", result)
 }

@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // PollAnswerClass is the interface for TL type PollAnswer.
@@ -77,32 +76,49 @@ func (v *PollAnswer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePollAnswer deserializes a PollAnswer from a reader using the TL binary protocol.
-func DecodePollAnswer(r io.Reader) (*PollAnswer, error) {
+func DecodePollAnswer(r *Reader) (*PollAnswer, error) {
 	v := &PollAnswer{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(*TextWithEntities)
-	v.Option = ReadBytes(r)
+	_rOption, _eOption := r.ReadBytes()
+	if _eOption != nil {
+		return nil, _eOption
+	}
+	v.Option = _rOption
 	if v.Flags.Has(0) {
-		_objMedia, _ := ReadTLObject(r)
+		_objMedia, _errMedia := ReadTLObject(r)
+		if _errMedia != nil {
+			return nil, _errMedia
+		}
 		v.Media = _objMedia.(MessageMediaClass)
 	}
 	if v.Flags.Has(1) {
-		_objAddedBy, _ := ReadTLObject(r)
+		_objAddedBy, _errAddedBy := ReadTLObject(r)
+		if _errAddedBy != nil {
+			return nil, _errAddedBy
+		}
 		v.AddedBy = _objAddedBy.(PeerClass)
 	}
 	if v.Flags.Has(1) {
-		v.Date = int32(ReadInt(r))
+		_rDate, _eDate := r.ReadInt32()
+		if _eDate != nil {
+			return nil, _eDate
+		}
+		v.Date = _rDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PollAnswerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PollAnswerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePollAnswer(r)
 	}
 }
@@ -141,24 +157,30 @@ func (v *InputPollAnswer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPollAnswer deserializes a InputPollAnswer from a reader using the TL binary protocol.
-func DecodeInputPollAnswer(r io.Reader) (*InputPollAnswer, error) {
+func DecodeInputPollAnswer(r *Reader) (*InputPollAnswer, error) {
 	v := &InputPollAnswer{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(*TextWithEntities)
 	if v.Flags.Has(0) {
-		_objMedia, _ := ReadTLObject(r)
+		_objMedia, _errMedia := ReadTLObject(r)
+		if _errMedia != nil {
+			return nil, _errMedia
+		}
 		v.Media = _objMedia.(InputMediaClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPollAnswerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPollAnswerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPollAnswer(r)
 	}
 }
@@ -264,12 +286,16 @@ func (v *Poll) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePoll deserializes a Poll from a reader using the TL binary protocol.
-func DecodePoll(r io.Reader) (*Poll, error) {
+func DecodePoll(r *Reader) (*Poll, error) {
 	v := &Poll{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Closed = v.Flags.Has(0)
@@ -282,33 +308,62 @@ func DecodePoll(r io.Reader) (*Poll, error) {
 	v.HideResultsUntilClose = v.Flags.Has(9)
 	v.Creator = v.Flags.Has(10)
 	v.SubscribersOnly = v.Flags.Has(11)
-	_objQuestion, _ := ReadTLObject(r)
+	_objQuestion, _errQuestion := ReadTLObject(r)
+	if _errQuestion != nil {
+		return nil, _errQuestion
+	}
 	v.Question = _objQuestion.(*TextWithEntities)
-	ReadInt(r)
-	_cntAnswers := ReadInt(r)
-	if err := checkVectorCount(_cntAnswers); err != nil {
-		return nil, err
+	_vhdrAnswers, _ehdrAnswers := r.ReadUint32()
+	if _ehdrAnswers != nil {
+		return nil, _ehdrAnswers
+	}
+	_cntAnswers, _ecntAnswers := r.ReadUint32()
+	if _ecntAnswers != nil {
+		return nil, _ecntAnswers
+	}
+	if _errAnswers := checkVectorCount(_cntAnswers); _errAnswers != nil {
+		return nil, _errAnswers
 	}
 	v.Answers = make([]PollAnswerClass, _cntAnswers)
 	for _iAnswers := range v.Answers {
-		_objAnswers, _ := ReadTLObject(r)
+		_objAnswers, _errAnswers := ReadTLObject(r)
+		if _errAnswers != nil {
+			return nil, _errAnswers
+		}
 		v.Answers[_iAnswers] = _objAnswers.(PollAnswerClass)
 	}
+	_ = _vhdrAnswers
 	if v.Flags.Has(4) {
-		v.ClosePeriod = int32(ReadInt(r))
+		_rClosePeriod, _eClosePeriod := r.ReadInt32()
+		if _eClosePeriod != nil {
+			return nil, _eClosePeriod
+		}
+		v.ClosePeriod = _rClosePeriod
 	}
 	if v.Flags.Has(5) {
-		v.CloseDate = int32(ReadInt(r))
+		_rCloseDate, _eCloseDate := r.ReadInt32()
+		if _eCloseDate != nil {
+			return nil, _eCloseDate
+		}
+		v.CloseDate = _rCloseDate
 	}
 	if v.Flags.Has(12) {
-		v.CountriesIso2 = ReadVectorString(r)
+		_vvCountriesIso2, _veCountriesIso2 := r.ReadVectorString()
+		if _veCountriesIso2 != nil {
+			return nil, _veCountriesIso2
+		}
+		v.CountriesIso2 = _vvCountriesIso2
 	}
-	v.Hash = ReadLong(r)
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[PollTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PollTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePoll(r)
 	}
 }
@@ -369,36 +424,54 @@ func (v *PollAnswerVoters) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePollAnswerVoters deserializes a PollAnswerVoters from a reader using the TL binary protocol.
-func DecodePollAnswerVoters(r io.Reader) (*PollAnswerVoters, error) {
+func DecodePollAnswerVoters(r *Reader) (*PollAnswerVoters, error) {
 	v := &PollAnswerVoters{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Chosen = v.Flags.Has(0)
 	v.Correct = v.Flags.Has(1)
-	v.Option = ReadBytes(r)
+	_rOption, _eOption := r.ReadBytes()
+	if _eOption != nil {
+		return nil, _eOption
+	}
+	v.Option = _rOption
 	if v.Flags.Has(2) {
-		v.Voters = int32(ReadInt(r))
+		_rVoters, _eVoters := r.ReadInt32()
+		if _eVoters != nil {
+			return nil, _eVoters
+		}
+		v.Voters = _rVoters
 	}
 	if v.Flags.Has(2) {
-		ReadInt(r)
-		_cntRecentVoters := ReadInt(r)
-		if err := checkVectorCount(_cntRecentVoters); err != nil {
-			return nil, err
+		_vhdrRecentVoters, _ehdrRecentVoters := r.ReadUint32()
+		if _ehdrRecentVoters != nil {
+			return nil, _ehdrRecentVoters
+		}
+		_cntRecentVoters, _ecntRecentVoters := r.ReadUint32()
+		if _ecntRecentVoters != nil {
+			return nil, _ecntRecentVoters
+		}
+		if _errRecentVoters := checkVectorCount(_cntRecentVoters); _errRecentVoters != nil {
+			return nil, _errRecentVoters
 		}
 		v.RecentVoters = make([]PeerClass, _cntRecentVoters)
 		for _iRecentVoters := range v.RecentVoters {
-			_objRecentVoters, _ := ReadTLObject(r)
+			_objRecentVoters, _errRecentVoters := ReadTLObject(r)
+			if _errRecentVoters != nil {
+				return nil, _errRecentVoters
+			}
 			v.RecentVoters[_iRecentVoters] = _objRecentVoters.(PeerClass)
 		}
+		_ = _vhdrRecentVoters
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PollAnswerVotersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PollAnswerVotersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePollAnswerVoters(r)
 	}
 }
@@ -497,67 +570,108 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePollResults deserializes a PollResults from a reader using the TL binary protocol.
-func DecodePollResults(r io.Reader) (*PollResults, error) {
+func DecodePollResults(r *Reader) (*PollResults, error) {
 	v := &PollResults{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Min = v.Flags.Has(0)
 	v.HasUnreadVotes = v.Flags.Has(6)
 	v.CanViewStats = v.Flags.Has(7)
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntResults := ReadInt(r)
-		if err := checkVectorCount(_cntResults); err != nil {
-			return nil, err
+		_vhdrResults, _ehdrResults := r.ReadUint32()
+		if _ehdrResults != nil {
+			return nil, _ehdrResults
+		}
+		_cntResults, _ecntResults := r.ReadUint32()
+		if _ecntResults != nil {
+			return nil, _ecntResults
+		}
+		if _errResults := checkVectorCount(_cntResults); _errResults != nil {
+			return nil, _errResults
 		}
 		v.Results = make([]*PollAnswerVoters, _cntResults)
 		for _iResults := range v.Results {
-			_objResults, _ := ReadTLObject(r)
+			_objResults, _errResults := ReadTLObject(r)
+			if _errResults != nil {
+				return nil, _errResults
+			}
 			v.Results[_iResults] = _objResults.(*PollAnswerVoters)
 		}
+		_ = _vhdrResults
 	}
 	if v.Flags.Has(2) {
-		v.TotalVoters = int32(ReadInt(r))
+		_rTotalVoters, _eTotalVoters := r.ReadInt32()
+		if _eTotalVoters != nil {
+			return nil, _eTotalVoters
+		}
+		v.TotalVoters = _rTotalVoters
 	}
 	if v.Flags.Has(3) {
-		ReadInt(r)
-		_cntRecentVoters := ReadInt(r)
-		if err := checkVectorCount(_cntRecentVoters); err != nil {
-			return nil, err
+		_vhdrRecentVoters, _ehdrRecentVoters := r.ReadUint32()
+		if _ehdrRecentVoters != nil {
+			return nil, _ehdrRecentVoters
+		}
+		_cntRecentVoters, _ecntRecentVoters := r.ReadUint32()
+		if _ecntRecentVoters != nil {
+			return nil, _ecntRecentVoters
+		}
+		if _errRecentVoters := checkVectorCount(_cntRecentVoters); _errRecentVoters != nil {
+			return nil, _errRecentVoters
 		}
 		v.RecentVoters = make([]PeerClass, _cntRecentVoters)
 		for _iRecentVoters := range v.RecentVoters {
-			_objRecentVoters, _ := ReadTLObject(r)
+			_objRecentVoters, _errRecentVoters := ReadTLObject(r)
+			if _errRecentVoters != nil {
+				return nil, _errRecentVoters
+			}
 			v.RecentVoters[_iRecentVoters] = _objRecentVoters.(PeerClass)
 		}
+		_ = _vhdrRecentVoters
 	}
 	if v.Flags.Has(4) {
-		v.Solution = ReadString(r)
+		_rSolution, _eSolution := r.ReadString()
+		if _eSolution != nil {
+			return nil, _eSolution
+		}
+		v.Solution = _rSolution
 	}
 	if v.Flags.Has(4) {
-		ReadInt(r)
-		_cntSolutionEntities := ReadInt(r)
-		if err := checkVectorCount(_cntSolutionEntities); err != nil {
-			return nil, err
+		_vhdrSolutionEntities, _ehdrSolutionEntities := r.ReadUint32()
+		if _ehdrSolutionEntities != nil {
+			return nil, _ehdrSolutionEntities
+		}
+		_cntSolutionEntities, _ecntSolutionEntities := r.ReadUint32()
+		if _ecntSolutionEntities != nil {
+			return nil, _ecntSolutionEntities
+		}
+		if _errSolutionEntities := checkVectorCount(_cntSolutionEntities); _errSolutionEntities != nil {
+			return nil, _errSolutionEntities
 		}
 		v.SolutionEntities = make([]MessageEntityClass, _cntSolutionEntities)
 		for _iSolutionEntities := range v.SolutionEntities {
-			_objSolutionEntities, _ := ReadTLObject(r)
+			_objSolutionEntities, _errSolutionEntities := ReadTLObject(r)
+			if _errSolutionEntities != nil {
+				return nil, _errSolutionEntities
+			}
 			v.SolutionEntities[_iSolutionEntities] = _objSolutionEntities.(MessageEntityClass)
 		}
+		_ = _vhdrSolutionEntities
 	}
 	if v.Flags.Has(5) {
-		_objSolutionMedia, _ := ReadTLObject(r)
+		_objSolutionMedia, _errSolutionMedia := ReadTLObject(r)
+		if _errSolutionMedia != nil {
+			return nil, _errSolutionMedia
+		}
 		v.SolutionMedia = _objSolutionMedia.(MessageMediaClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PollResultsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PollResultsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePollResults(r)
 	}
 }

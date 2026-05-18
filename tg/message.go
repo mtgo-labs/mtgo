@@ -3,24 +3,18 @@ package tg
 import (
 	"bytes"
 	"fmt"
-	"io"
 )
 
-// MTProtoMessageID is the TL constructor ID for the MTProto message type.
 const MTProtoMessageID = 0x5BB8E511
 
-// MTProtoMessage represents a single MTProto message with its ID, sequence number,
-// and serialized body.
 type MTProtoMessage struct {
 	MsgID int64
 	SeqNo uint32
 	Body  TLObject
 }
 
-// ConstructorID returns the TL constructor ID for MTProtoMessage.
 func (m *MTProtoMessage) ConstructorID() uint32 { return MTProtoMessageID }
 
-// Encode writes the message in TL binary format to b.
 func (m *MTProtoMessage) Encode(b *bytes.Buffer) error {
 	WriteLong(b, m.MsgID)
 	WriteInt(b, m.SeqNo)
@@ -34,29 +28,42 @@ func (m *MTProtoMessage) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
-// DecodeMTProtoMessage reads a single MTProtoMessage from r, decoding its body as a TLObject.
-func DecodeMTProtoMessage(r io.Reader) (*MTProtoMessage, error) {
-	msg := &MTProtoMessage{
-		MsgID: ReadLong(r),
-		SeqNo: ReadInt(r),
+func DecodeMTProtoMessage(r *Reader) (*MTProtoMessage, error) {
+	msgID, err := r.ReadInt64()
+	if err != nil {
+		return nil, err
 	}
-	length := ReadInt(r)
+	seqNo, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	length, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
 	if length > 1<<20 {
 		return nil, fmt.Errorf("message body too large: %d bytes", length)
 	}
-	lr := io.LimitReader(r, int64(length))
-	obj, err := ReadTLObject(lr)
+	bodyData, err := r.ReadRawBytes(int(length))
 	if err != nil {
-		_, _ = io.Copy(io.Discard, lr)
 		return nil, err
 	}
-	_, _ = io.Copy(io.Discard, lr)
-	msg.Body = obj
+	bodyReader := NewReader(bodyData)
+	defer ReleaseReader(bodyReader)
+	obj, err := ReadTLObject(bodyReader)
+	if err != nil {
+		return nil, err
+	}
+	msg := &MTProtoMessage{
+		MsgID: msgID,
+		SeqNo: seqNo,
+		Body:  obj,
+	}
 	return msg, nil
 }
 
 func init() {
-	Registry[MTProtoMessageID] = func(r io.Reader) (TLObject, error) {
+	Registry[MTProtoMessageID] = func(r *Reader) (TLObject, error) {
 		return DecodeMTProtoMessage(r)
 	}
 }

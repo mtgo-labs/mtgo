@@ -17,7 +17,9 @@ func TestMsgContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	decoded, err := DecodeMsgContainer(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	decoded, err := DecodeMsgContainer(r)
 	if err != nil {
 		t.Fatal(err)
 	}

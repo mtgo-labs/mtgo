@@ -33,15 +33,16 @@ func (g *GzipPacked) Decode() (TLObject, error) {
 	if !ok {
 		return nil, &UnknownConstructorError{ID: GzipPackedID}
 	}
-	var buf bytes.Buffer
-	if _, err := buf.Write(data.Raw); err != nil {
-		return nil, err
-	}
-	return ReadTLObject(&buf)
+	r := NewReader(data.Raw)
+	defer ReleaseReader(r)
+	return ReadTLObject(r)
 }
 
-func DecodeGzipPacked(r io.Reader) (*GzipPacked, error) {
-	compressed := ReadString(r)
+func DecodeGzipPacked(r *Reader) (*GzipPacked, error) {
+	compressed, err := r.ReadString()
+	if err != nil {
+		return nil, err
+	}
 	decompressed, err := gzipDecompress([]byte(compressed))
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func gzipDecompress(data []byte) ([]byte, error) {
 }
 
 func init() {
-	Registry[GzipPackedID] = func(r io.Reader) (TLObject, error) {
+	Registry[GzipPackedID] = func(r *Reader) (TLObject, error) {
 		return DecodeGzipPacked(r)
 	}
 }

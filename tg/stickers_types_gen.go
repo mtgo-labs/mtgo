@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // StickersSuggestedShortNameTypeID is the constructor ID for TL type stickers.suggestedShortName.
@@ -30,14 +29,18 @@ func (v *StickersSuggestedShortName) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStickersSuggestedShortName deserializes a StickersSuggestedShortName from a reader using the TL binary protocol.
-func DecodeStickersSuggestedShortName(r io.Reader) (*StickersSuggestedShortName, error) {
+func DecodeStickersSuggestedShortName(r *Reader) (*StickersSuggestedShortName, error) {
 	v := &StickersSuggestedShortName{}
-	v.ShortName = ReadString(r)
+	_rShortName, _eShortName := r.ReadString()
+	if _eShortName != nil {
+		return nil, _eShortName
+	}
+	v.ShortName = _rShortName
 	return v, nil
 }
 
 func init() {
-	Registry[StickersSuggestedShortNameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StickersSuggestedShortNameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStickersSuggestedShortName(r)
 	}
 }

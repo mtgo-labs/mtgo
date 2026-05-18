@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // FileClass is the interface for TL type File.
@@ -51,17 +50,28 @@ func (v *UploadFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUploadFile deserializes a UploadFile from a reader using the TL binary protocol.
-func DecodeUploadFile(r io.Reader) (*UploadFile, error) {
+func DecodeUploadFile(r *Reader) (*UploadFile, error) {
 	v := &UploadFile{}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(FileTypeClass)
-	v.Mtime = int32(ReadInt(r))
-	v.Bytes = ReadBytes(r)
+	_rMtime, _eMtime := r.ReadInt32()
+	if _eMtime != nil {
+		return nil, _eMtime
+	}
+	v.Mtime = _rMtime
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[UploadFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UploadFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUploadFile(r)
 	}
 }
@@ -98,27 +108,53 @@ func (v *UploadFileCDNRedirect) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUploadFileCDNRedirect deserializes a UploadFileCDNRedirect from a reader using the TL binary protocol.
-func DecodeUploadFileCDNRedirect(r io.Reader) (*UploadFileCDNRedirect, error) {
+func DecodeUploadFileCDNRedirect(r *Reader) (*UploadFileCDNRedirect, error) {
 	v := &UploadFileCDNRedirect{}
-	v.DCID = int32(ReadInt(r))
-	v.FileToken = ReadBytes(r)
-	v.EncryptionKey = ReadBytes(r)
-	v.EncryptionIv = ReadBytes(r)
-	ReadInt(r)
-	_cntFileHashes := ReadInt(r)
-	if err := checkVectorCount(_cntFileHashes); err != nil {
-		return nil, err
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rFileToken, _eFileToken := r.ReadBytes()
+	if _eFileToken != nil {
+		return nil, _eFileToken
+	}
+	v.FileToken = _rFileToken
+	_rEncryptionKey, _eEncryptionKey := r.ReadBytes()
+	if _eEncryptionKey != nil {
+		return nil, _eEncryptionKey
+	}
+	v.EncryptionKey = _rEncryptionKey
+	_rEncryptionIv, _eEncryptionIv := r.ReadBytes()
+	if _eEncryptionIv != nil {
+		return nil, _eEncryptionIv
+	}
+	v.EncryptionIv = _rEncryptionIv
+	_vhdrFileHashes, _ehdrFileHashes := r.ReadUint32()
+	if _ehdrFileHashes != nil {
+		return nil, _ehdrFileHashes
+	}
+	_cntFileHashes, _ecntFileHashes := r.ReadUint32()
+	if _ecntFileHashes != nil {
+		return nil, _ecntFileHashes
+	}
+	if _errFileHashes := checkVectorCount(_cntFileHashes); _errFileHashes != nil {
+		return nil, _errFileHashes
 	}
 	v.FileHashes = make([]*FileHash, _cntFileHashes)
 	for _iFileHashes := range v.FileHashes {
-		_objFileHashes, _ := ReadTLObject(r)
+		_objFileHashes, _errFileHashes := ReadTLObject(r)
+		if _errFileHashes != nil {
+			return nil, _errFileHashes
+		}
 		v.FileHashes[_iFileHashes] = _objFileHashes.(*FileHash)
 	}
+	_ = _vhdrFileHashes
 	return v, nil
 }
 
 func init() {
-	Registry[UploadFileCDNRedirectTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UploadFileCDNRedirectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUploadFileCDNRedirect(r)
 	}
 }
@@ -154,19 +190,38 @@ func (v *UploadWebFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUploadWebFile deserializes a UploadWebFile from a reader using the TL binary protocol.
-func DecodeUploadWebFile(r io.Reader) (*UploadWebFile, error) {
+func DecodeUploadWebFile(r *Reader) (*UploadWebFile, error) {
 	v := &UploadWebFile{}
-	v.Size = int32(ReadInt(r))
-	v.MimeType = ReadString(r)
-	_objFileType, _ := ReadTLObject(r)
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_objFileType, _errFileType := ReadTLObject(r)
+	if _errFileType != nil {
+		return nil, _errFileType
+	}
 	v.FileType = _objFileType.(FileTypeClass)
-	v.Mtime = int32(ReadInt(r))
-	v.Bytes = ReadBytes(r)
+	_rMtime, _eMtime := r.ReadInt32()
+	if _eMtime != nil {
+		return nil, _eMtime
+	}
+	v.Mtime = _rMtime
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[UploadWebFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UploadWebFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUploadWebFile(r)
 	}
 }
@@ -211,14 +266,18 @@ func (v *UploadCDNFileReuploadNeeded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUploadCDNFileReuploadNeeded deserializes a UploadCDNFileReuploadNeeded from a reader using the TL binary protocol.
-func DecodeUploadCDNFileReuploadNeeded(r io.Reader) (*UploadCDNFileReuploadNeeded, error) {
+func DecodeUploadCDNFileReuploadNeeded(r *Reader) (*UploadCDNFileReuploadNeeded, error) {
 	v := &UploadCDNFileReuploadNeeded{}
-	v.RequestToken = ReadBytes(r)
+	_rRequestToken, _eRequestToken := r.ReadBytes()
+	if _eRequestToken != nil {
+		return nil, _eRequestToken
+	}
+	v.RequestToken = _rRequestToken
 	return v, nil
 }
 
 func init() {
-	Registry[UploadCDNFileReuploadNeededTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UploadCDNFileReuploadNeededTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUploadCDNFileReuploadNeeded(r)
 	}
 }
@@ -243,14 +302,18 @@ func (v *UploadCDNFile) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUploadCDNFile deserializes a UploadCDNFile from a reader using the TL binary protocol.
-func DecodeUploadCDNFile(r io.Reader) (*UploadCDNFile, error) {
+func DecodeUploadCDNFile(r *Reader) (*UploadCDNFile, error) {
 	v := &UploadCDNFile{}
-	v.Bytes = ReadBytes(r)
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[UploadCDNFileTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UploadCDNFileTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUploadCDNFile(r)
 	}
 }

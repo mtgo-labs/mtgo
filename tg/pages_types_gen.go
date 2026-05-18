@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // RichTextClass is the interface for TL type RichText.
@@ -129,13 +128,13 @@ func (v *TextEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextEmpty deserializes a TextEmpty from a reader using the TL binary protocol.
-func DecodeTextEmpty(r io.Reader) (*TextEmpty, error) {
+func DecodeTextEmpty(r *Reader) (*TextEmpty, error) {
 	v := &TextEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[TextEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextEmpty(r)
 	}
 }
@@ -160,14 +159,18 @@ func (v *TextPlain) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextPlain deserializes a TextPlain from a reader using the TL binary protocol.
-func DecodeTextPlain(r io.Reader) (*TextPlain, error) {
+func DecodeTextPlain(r *Reader) (*TextPlain, error) {
 	v := &TextPlain{}
-	v.Text = ReadString(r)
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[TextPlainTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextPlainTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextPlain(r)
 	}
 }
@@ -192,15 +195,18 @@ func (v *TextBold) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextBold deserializes a TextBold from a reader using the TL binary protocol.
-func DecodeTextBold(r io.Reader) (*TextBold, error) {
+func DecodeTextBold(r *Reader) (*TextBold, error) {
 	v := &TextBold{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextBoldTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextBoldTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextBold(r)
 	}
 }
@@ -225,15 +231,18 @@ func (v *TextItalic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextItalic deserializes a TextItalic from a reader using the TL binary protocol.
-func DecodeTextItalic(r io.Reader) (*TextItalic, error) {
+func DecodeTextItalic(r *Reader) (*TextItalic, error) {
 	v := &TextItalic{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextItalicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextItalicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextItalic(r)
 	}
 }
@@ -258,15 +267,18 @@ func (v *TextUnderline) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextUnderline deserializes a TextUnderline from a reader using the TL binary protocol.
-func DecodeTextUnderline(r io.Reader) (*TextUnderline, error) {
+func DecodeTextUnderline(r *Reader) (*TextUnderline, error) {
 	v := &TextUnderline{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextUnderlineTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextUnderlineTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextUnderline(r)
 	}
 }
@@ -291,15 +303,18 @@ func (v *TextStrike) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextStrike deserializes a TextStrike from a reader using the TL binary protocol.
-func DecodeTextStrike(r io.Reader) (*TextStrike, error) {
+func DecodeTextStrike(r *Reader) (*TextStrike, error) {
 	v := &TextStrike{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextStrikeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextStrikeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextStrike(r)
 	}
 }
@@ -324,15 +339,18 @@ func (v *TextFixed) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextFixed deserializes a TextFixed from a reader using the TL binary protocol.
-func DecodeTextFixed(r io.Reader) (*TextFixed, error) {
+func DecodeTextFixed(r *Reader) (*TextFixed, error) {
 	v := &TextFixed{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextFixedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextFixedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextFixed(r)
 	}
 }
@@ -361,17 +379,28 @@ func (v *TextURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextURL deserializes a TextURL from a reader using the TL binary protocol.
-func DecodeTextURL(r io.Reader) (*TextURL, error) {
+func DecodeTextURL(r *Reader) (*TextURL, error) {
 	v := &TextURL{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	v.URL = ReadString(r)
-	v.WebpageID = ReadLong(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rWebpageID, _eWebpageID := r.ReadInt64()
+	if _eWebpageID != nil {
+		return nil, _eWebpageID
+	}
+	v.WebpageID = _rWebpageID
 	return v, nil
 }
 
 func init() {
-	Registry[TextURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextURL(r)
 	}
 }
@@ -398,16 +427,23 @@ func (v *TextEmail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextEmail deserializes a TextEmail from a reader using the TL binary protocol.
-func DecodeTextEmail(r io.Reader) (*TextEmail, error) {
+func DecodeTextEmail(r *Reader) (*TextEmail, error) {
 	v := &TextEmail{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	v.Email = ReadString(r)
+	_rEmail, _eEmail := r.ReadString()
+	if _eEmail != nil {
+		return nil, _eEmail
+	}
+	v.Email = _rEmail
 	return v, nil
 }
 
 func init() {
-	Registry[TextEmailTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextEmailTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextEmail(r)
 	}
 }
@@ -436,23 +472,33 @@ func (v *TextConcat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextConcat deserializes a TextConcat from a reader using the TL binary protocol.
-func DecodeTextConcat(r io.Reader) (*TextConcat, error) {
+func DecodeTextConcat(r *Reader) (*TextConcat, error) {
 	v := &TextConcat{}
-	ReadInt(r)
-	_cntTexts := ReadInt(r)
-	if err := checkVectorCount(_cntTexts); err != nil {
-		return nil, err
+	_vhdrTexts, _ehdrTexts := r.ReadUint32()
+	if _ehdrTexts != nil {
+		return nil, _ehdrTexts
+	}
+	_cntTexts, _ecntTexts := r.ReadUint32()
+	if _ecntTexts != nil {
+		return nil, _ecntTexts
+	}
+	if _errTexts := checkVectorCount(_cntTexts); _errTexts != nil {
+		return nil, _errTexts
 	}
 	v.Texts = make([]RichTextClass, _cntTexts)
 	for _iTexts := range v.Texts {
-		_objTexts, _ := ReadTLObject(r)
+		_objTexts, _errTexts := ReadTLObject(r)
+		if _errTexts != nil {
+			return nil, _errTexts
+		}
 		v.Texts[_iTexts] = _objTexts.(RichTextClass)
 	}
+	_ = _vhdrTexts
 	return v, nil
 }
 
 func init() {
-	Registry[TextConcatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextConcatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextConcat(r)
 	}
 }
@@ -477,15 +523,18 @@ func (v *TextSubscript) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextSubscript deserializes a TextSubscript from a reader using the TL binary protocol.
-func DecodeTextSubscript(r io.Reader) (*TextSubscript, error) {
+func DecodeTextSubscript(r *Reader) (*TextSubscript, error) {
 	v := &TextSubscript{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextSubscriptTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextSubscriptTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextSubscript(r)
 	}
 }
@@ -510,15 +559,18 @@ func (v *TextSuperscript) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextSuperscript deserializes a TextSuperscript from a reader using the TL binary protocol.
-func DecodeTextSuperscript(r io.Reader) (*TextSuperscript, error) {
+func DecodeTextSuperscript(r *Reader) (*TextSuperscript, error) {
 	v := &TextSuperscript{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextSuperscriptTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextSuperscriptTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextSuperscript(r)
 	}
 }
@@ -543,15 +595,18 @@ func (v *TextMarked) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextMarked deserializes a TextMarked from a reader using the TL binary protocol.
-func DecodeTextMarked(r io.Reader) (*TextMarked, error) {
+func DecodeTextMarked(r *Reader) (*TextMarked, error) {
 	v := &TextMarked{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[TextMarkedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextMarkedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextMarked(r)
 	}
 }
@@ -578,16 +633,23 @@ func (v *TextPhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextPhone deserializes a TextPhone from a reader using the TL binary protocol.
-func DecodeTextPhone(r io.Reader) (*TextPhone, error) {
+func DecodeTextPhone(r *Reader) (*TextPhone, error) {
 	v := &TextPhone{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	v.Phone = ReadString(r)
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
 	return v, nil
 }
 
 func init() {
-	Registry[TextPhoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextPhoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextPhone(r)
 	}
 }
@@ -616,16 +678,28 @@ func (v *TextImage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextImage deserializes a TextImage from a reader using the TL binary protocol.
-func DecodeTextImage(r io.Reader) (*TextImage, error) {
+func DecodeTextImage(r *Reader) (*TextImage, error) {
 	v := &TextImage{}
-	v.DocumentID = ReadLong(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
+	_rDocumentID, _eDocumentID := r.ReadInt64()
+	if _eDocumentID != nil {
+		return nil, _eDocumentID
+	}
+	v.DocumentID = _rDocumentID
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
 	return v, nil
 }
 
 func init() {
-	Registry[TextImageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextImageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextImage(r)
 	}
 }
@@ -652,16 +726,23 @@ func (v *TextAnchor) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTextAnchor deserializes a TextAnchor from a reader using the TL binary protocol.
-func DecodeTextAnchor(r io.Reader) (*TextAnchor, error) {
+func DecodeTextAnchor(r *Reader) (*TextAnchor, error) {
 	v := &TextAnchor{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	v.Name = ReadString(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
 	return v, nil
 }
 
 func init() {
-	Registry[TextAnchorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TextAnchorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextAnchor(r)
 	}
 }
@@ -866,13 +947,13 @@ func (v *PageBlockUnsupported) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockUnsupported deserializes a PageBlockUnsupported from a reader using the TL binary protocol.
-func DecodePageBlockUnsupported(r io.Reader) (*PageBlockUnsupported, error) {
+func DecodePageBlockUnsupported(r *Reader) (*PageBlockUnsupported, error) {
 	v := &PageBlockUnsupported{}
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockUnsupportedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockUnsupportedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockUnsupported(r)
 	}
 }
@@ -897,15 +978,18 @@ func (v *PageBlockTitle) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockTitle deserializes a PageBlockTitle from a reader using the TL binary protocol.
-func DecodePageBlockTitle(r io.Reader) (*PageBlockTitle, error) {
+func DecodePageBlockTitle(r *Reader) (*PageBlockTitle, error) {
 	v := &PageBlockTitle{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockTitleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockTitleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockTitle(r)
 	}
 }
@@ -930,15 +1014,18 @@ func (v *PageBlockSubtitle) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockSubtitle deserializes a PageBlockSubtitle from a reader using the TL binary protocol.
-func DecodePageBlockSubtitle(r io.Reader) (*PageBlockSubtitle, error) {
+func DecodePageBlockSubtitle(r *Reader) (*PageBlockSubtitle, error) {
 	v := &PageBlockSubtitle{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockSubtitleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockSubtitleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockSubtitle(r)
 	}
 }
@@ -965,16 +1052,23 @@ func (v *PageBlockAuthorDate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockAuthorDate deserializes a PageBlockAuthorDate from a reader using the TL binary protocol.
-func DecodePageBlockAuthorDate(r io.Reader) (*PageBlockAuthorDate, error) {
+func DecodePageBlockAuthorDate(r *Reader) (*PageBlockAuthorDate, error) {
 	v := &PageBlockAuthorDate{}
-	_objAuthor, _ := ReadTLObject(r)
+	_objAuthor, _errAuthor := ReadTLObject(r)
+	if _errAuthor != nil {
+		return nil, _errAuthor
+	}
 	v.Author = _objAuthor.(RichTextClass)
-	v.PublishedDate = int32(ReadInt(r))
+	_rPublishedDate, _ePublishedDate := r.ReadInt32()
+	if _ePublishedDate != nil {
+		return nil, _ePublishedDate
+	}
+	v.PublishedDate = _rPublishedDate
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockAuthorDateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockAuthorDateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockAuthorDate(r)
 	}
 }
@@ -999,15 +1093,18 @@ func (v *PageBlockHeader) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockHeader deserializes a PageBlockHeader from a reader using the TL binary protocol.
-func DecodePageBlockHeader(r io.Reader) (*PageBlockHeader, error) {
+func DecodePageBlockHeader(r *Reader) (*PageBlockHeader, error) {
 	v := &PageBlockHeader{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockHeaderTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockHeaderTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockHeader(r)
 	}
 }
@@ -1032,15 +1129,18 @@ func (v *PageBlockSubheader) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockSubheader deserializes a PageBlockSubheader from a reader using the TL binary protocol.
-func DecodePageBlockSubheader(r io.Reader) (*PageBlockSubheader, error) {
+func DecodePageBlockSubheader(r *Reader) (*PageBlockSubheader, error) {
 	v := &PageBlockSubheader{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockSubheaderTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockSubheaderTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockSubheader(r)
 	}
 }
@@ -1065,15 +1165,18 @@ func (v *PageBlockParagraph) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockParagraph deserializes a PageBlockParagraph from a reader using the TL binary protocol.
-func DecodePageBlockParagraph(r io.Reader) (*PageBlockParagraph, error) {
+func DecodePageBlockParagraph(r *Reader) (*PageBlockParagraph, error) {
 	v := &PageBlockParagraph{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockParagraphTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockParagraphTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockParagraph(r)
 	}
 }
@@ -1100,16 +1203,23 @@ func (v *PageBlockPreformatted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockPreformatted deserializes a PageBlockPreformatted from a reader using the TL binary protocol.
-func DecodePageBlockPreformatted(r io.Reader) (*PageBlockPreformatted, error) {
+func DecodePageBlockPreformatted(r *Reader) (*PageBlockPreformatted, error) {
 	v := &PageBlockPreformatted{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	v.Language = ReadString(r)
+	_rLanguage, _eLanguage := r.ReadString()
+	if _eLanguage != nil {
+		return nil, _eLanguage
+	}
+	v.Language = _rLanguage
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockPreformattedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockPreformattedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockPreformatted(r)
 	}
 }
@@ -1134,15 +1244,18 @@ func (v *PageBlockFooter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockFooter deserializes a PageBlockFooter from a reader using the TL binary protocol.
-func DecodePageBlockFooter(r io.Reader) (*PageBlockFooter, error) {
+func DecodePageBlockFooter(r *Reader) (*PageBlockFooter, error) {
 	v := &PageBlockFooter{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockFooterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockFooterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockFooter(r)
 	}
 }
@@ -1165,13 +1278,13 @@ func (v *PageBlockDivider) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockDivider deserializes a PageBlockDivider from a reader using the TL binary protocol.
-func DecodePageBlockDivider(r io.Reader) (*PageBlockDivider, error) {
+func DecodePageBlockDivider(r *Reader) (*PageBlockDivider, error) {
 	v := &PageBlockDivider{}
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockDividerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockDividerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockDivider(r)
 	}
 }
@@ -1196,14 +1309,18 @@ func (v *PageBlockAnchor) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockAnchor deserializes a PageBlockAnchor from a reader using the TL binary protocol.
-func DecodePageBlockAnchor(r io.Reader) (*PageBlockAnchor, error) {
+func DecodePageBlockAnchor(r *Reader) (*PageBlockAnchor, error) {
 	v := &PageBlockAnchor{}
-	v.Name = ReadString(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockAnchorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockAnchorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockAnchor(r)
 	}
 }
@@ -1232,23 +1349,33 @@ func (v *PageBlockList) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockList deserializes a PageBlockList from a reader using the TL binary protocol.
-func DecodePageBlockList(r io.Reader) (*PageBlockList, error) {
+func DecodePageBlockList(r *Reader) (*PageBlockList, error) {
 	v := &PageBlockList{}
-	ReadInt(r)
-	_cntItems := ReadInt(r)
-	if err := checkVectorCount(_cntItems); err != nil {
-		return nil, err
+	_vhdrItems, _ehdrItems := r.ReadUint32()
+	if _ehdrItems != nil {
+		return nil, _ehdrItems
+	}
+	_cntItems, _ecntItems := r.ReadUint32()
+	if _ecntItems != nil {
+		return nil, _ecntItems
+	}
+	if _errItems := checkVectorCount(_cntItems); _errItems != nil {
+		return nil, _errItems
 	}
 	v.Items = make([]PageListItemClass, _cntItems)
 	for _iItems := range v.Items {
-		_objItems, _ := ReadTLObject(r)
+		_objItems, _errItems := ReadTLObject(r)
+		if _errItems != nil {
+			return nil, _errItems
+		}
 		v.Items[_iItems] = _objItems.(PageListItemClass)
 	}
+	_ = _vhdrItems
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockListTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockList(r)
 	}
 }
@@ -1275,17 +1402,23 @@ func (v *PageBlockBlockquote) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockBlockquote deserializes a PageBlockBlockquote from a reader using the TL binary protocol.
-func DecodePageBlockBlockquote(r io.Reader) (*PageBlockBlockquote, error) {
+func DecodePageBlockBlockquote(r *Reader) (*PageBlockBlockquote, error) {
 	v := &PageBlockBlockquote{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	_objCaption, _ := ReadTLObject(r)
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockBlockquoteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockBlockquoteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockBlockquote(r)
 	}
 }
@@ -1312,17 +1445,23 @@ func (v *PageBlockPullquote) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockPullquote deserializes a PageBlockPullquote from a reader using the TL binary protocol.
-func DecodePageBlockPullquote(r io.Reader) (*PageBlockPullquote, error) {
+func DecodePageBlockPullquote(r *Reader) (*PageBlockPullquote, error) {
 	v := &PageBlockPullquote{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	_objCaption, _ := ReadTLObject(r)
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockPullquoteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockPullquoteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockPullquote(r)
 	}
 }
@@ -1370,27 +1509,42 @@ func (v *PageBlockPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockPhoto deserializes a PageBlockPhoto from a reader using the TL binary protocol.
-func DecodePageBlockPhoto(r io.Reader) (*PageBlockPhoto, error) {
+func DecodePageBlockPhoto(r *Reader) (*PageBlockPhoto, error) {
 	v := &PageBlockPhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.PhotoID = ReadLong(r)
-	_objCaption, _ := ReadTLObject(r)
+	_rPhotoID, _ePhotoID := r.ReadInt64()
+	if _ePhotoID != nil {
+		return nil, _ePhotoID
+	}
+	v.PhotoID = _rPhotoID
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	if v.Flags.Has(0) {
-		v.URL = ReadString(r)
+		_rURL, _eURL := r.ReadString()
+		if _eURL != nil {
+			return nil, _eURL
+		}
+		v.URL = _rURL
 	}
 	if v.Flags.Has(0) {
-		v.WebpageID = ReadLong(r)
+		_rWebpageID, _eWebpageID := r.ReadInt64()
+		if _eWebpageID != nil {
+			return nil, _eWebpageID
+		}
+		v.WebpageID = _rWebpageID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockPhoto(r)
 	}
 }
@@ -1432,23 +1586,30 @@ func (v *PageBlockVideo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockVideo deserializes a PageBlockVideo from a reader using the TL binary protocol.
-func DecodePageBlockVideo(r io.Reader) (*PageBlockVideo, error) {
+func DecodePageBlockVideo(r *Reader) (*PageBlockVideo, error) {
 	v := &PageBlockVideo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Autoplay = v.Flags.Has(0)
 	v.Loop = v.Flags.Has(1)
-	v.VideoID = ReadLong(r)
-	_objCaption, _ := ReadTLObject(r)
+	_rVideoID, _eVideoID := r.ReadInt64()
+	if _eVideoID != nil {
+		return nil, _eVideoID
+	}
+	v.VideoID = _rVideoID
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockVideoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockVideoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockVideo(r)
 	}
 }
@@ -1473,15 +1634,18 @@ func (v *PageBlockCover) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockCover deserializes a PageBlockCover from a reader using the TL binary protocol.
-func DecodePageBlockCover(r io.Reader) (*PageBlockCover, error) {
+func DecodePageBlockCover(r *Reader) (*PageBlockCover, error) {
 	v := &PageBlockCover{}
-	_objCover, _ := ReadTLObject(r)
+	_objCover, _errCover := ReadTLObject(r)
+	if _errCover != nil {
+		return nil, _errCover
+	}
 	v.Cover = _objCover.(PageBlockClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockCoverTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockCoverTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockCover(r)
 	}
 }
@@ -1556,37 +1720,60 @@ func (v *PageBlockEmbed) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockEmbed deserializes a PageBlockEmbed from a reader using the TL binary protocol.
-func DecodePageBlockEmbed(r io.Reader) (*PageBlockEmbed, error) {
+func DecodePageBlockEmbed(r *Reader) (*PageBlockEmbed, error) {
 	v := &PageBlockEmbed{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.FullWidth = v.Flags.Has(0)
 	v.AllowScrolling = v.Flags.Has(3)
 	if v.Flags.Has(1) {
-		v.URL = ReadString(r)
+		_rURL, _eURL := r.ReadString()
+		if _eURL != nil {
+			return nil, _eURL
+		}
+		v.URL = _rURL
 	}
 	if v.Flags.Has(2) {
-		v.HTML = ReadString(r)
+		_rHTML, _eHTML := r.ReadString()
+		if _eHTML != nil {
+			return nil, _eHTML
+		}
+		v.HTML = _rHTML
 	}
 	if v.Flags.Has(4) {
-		v.PosterPhotoID = ReadLong(r)
+		_rPosterPhotoID, _ePosterPhotoID := r.ReadInt64()
+		if _ePosterPhotoID != nil {
+			return nil, _ePosterPhotoID
+		}
+		v.PosterPhotoID = _rPosterPhotoID
 	}
 	if v.Flags.Has(5) {
-		v.W = int32(ReadInt(r))
+		_rW, _eW := r.ReadInt32()
+		if _eW != nil {
+			return nil, _eW
+		}
+		v.W = _rW
 	}
 	if v.Flags.Has(5) {
-		v.H = int32(ReadInt(r))
+		_rH, _eH := r.ReadInt32()
+		if _eH != nil {
+			return nil, _eH
+		}
+		v.H = _rH
 	}
-	_objCaption, _ := ReadTLObject(r)
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockEmbedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockEmbedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockEmbed(r)
 	}
 }
@@ -1627,30 +1814,63 @@ func (v *PageBlockEmbedPost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockEmbedPost deserializes a PageBlockEmbedPost from a reader using the TL binary protocol.
-func DecodePageBlockEmbedPost(r io.Reader) (*PageBlockEmbedPost, error) {
+func DecodePageBlockEmbedPost(r *Reader) (*PageBlockEmbedPost, error) {
 	v := &PageBlockEmbedPost{}
-	v.URL = ReadString(r)
-	v.WebpageID = ReadLong(r)
-	v.AuthorPhotoID = ReadLong(r)
-	v.Author = ReadString(r)
-	v.Date = int32(ReadInt(r))
-	ReadInt(r)
-	_cntBlocks := ReadInt(r)
-	if err := checkVectorCount(_cntBlocks); err != nil {
-		return nil, err
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rWebpageID, _eWebpageID := r.ReadInt64()
+	if _eWebpageID != nil {
+		return nil, _eWebpageID
+	}
+	v.WebpageID = _rWebpageID
+	_rAuthorPhotoID, _eAuthorPhotoID := r.ReadInt64()
+	if _eAuthorPhotoID != nil {
+		return nil, _eAuthorPhotoID
+	}
+	v.AuthorPhotoID = _rAuthorPhotoID
+	_rAuthor, _eAuthor := r.ReadString()
+	if _eAuthor != nil {
+		return nil, _eAuthor
+	}
+	v.Author = _rAuthor
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
-		_objBlocks, _ := ReadTLObject(r)
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
 		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
 	}
-	_objCaption, _ := ReadTLObject(r)
+	_ = _vhdrBlocks
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockEmbedPostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockEmbedPostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockEmbedPost(r)
 	}
 }
@@ -1681,25 +1901,38 @@ func (v *PageBlockCollage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockCollage deserializes a PageBlockCollage from a reader using the TL binary protocol.
-func DecodePageBlockCollage(r io.Reader) (*PageBlockCollage, error) {
+func DecodePageBlockCollage(r *Reader) (*PageBlockCollage, error) {
 	v := &PageBlockCollage{}
-	ReadInt(r)
-	_cntItems := ReadInt(r)
-	if err := checkVectorCount(_cntItems); err != nil {
-		return nil, err
+	_vhdrItems, _ehdrItems := r.ReadUint32()
+	if _ehdrItems != nil {
+		return nil, _ehdrItems
+	}
+	_cntItems, _ecntItems := r.ReadUint32()
+	if _ecntItems != nil {
+		return nil, _ecntItems
+	}
+	if _errItems := checkVectorCount(_cntItems); _errItems != nil {
+		return nil, _errItems
 	}
 	v.Items = make([]PageBlockClass, _cntItems)
 	for _iItems := range v.Items {
-		_objItems, _ := ReadTLObject(r)
+		_objItems, _errItems := ReadTLObject(r)
+		if _errItems != nil {
+			return nil, _errItems
+		}
 		v.Items[_iItems] = _objItems.(PageBlockClass)
 	}
-	_objCaption, _ := ReadTLObject(r)
+	_ = _vhdrItems
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockCollageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockCollageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockCollage(r)
 	}
 }
@@ -1730,25 +1963,38 @@ func (v *PageBlockSlideshow) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockSlideshow deserializes a PageBlockSlideshow from a reader using the TL binary protocol.
-func DecodePageBlockSlideshow(r io.Reader) (*PageBlockSlideshow, error) {
+func DecodePageBlockSlideshow(r *Reader) (*PageBlockSlideshow, error) {
 	v := &PageBlockSlideshow{}
-	ReadInt(r)
-	_cntItems := ReadInt(r)
-	if err := checkVectorCount(_cntItems); err != nil {
-		return nil, err
+	_vhdrItems, _ehdrItems := r.ReadUint32()
+	if _ehdrItems != nil {
+		return nil, _ehdrItems
+	}
+	_cntItems, _ecntItems := r.ReadUint32()
+	if _ecntItems != nil {
+		return nil, _ecntItems
+	}
+	if _errItems := checkVectorCount(_cntItems); _errItems != nil {
+		return nil, _errItems
 	}
 	v.Items = make([]PageBlockClass, _cntItems)
 	for _iItems := range v.Items {
-		_objItems, _ := ReadTLObject(r)
+		_objItems, _errItems := ReadTLObject(r)
+		if _errItems != nil {
+			return nil, _errItems
+		}
 		v.Items[_iItems] = _objItems.(PageBlockClass)
 	}
-	_objCaption, _ := ReadTLObject(r)
+	_ = _vhdrItems
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockSlideshowTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockSlideshowTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockSlideshow(r)
 	}
 }
@@ -1773,15 +2019,18 @@ func (v *PageBlockChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockChannel deserializes a PageBlockChannel from a reader using the TL binary protocol.
-func DecodePageBlockChannel(r io.Reader) (*PageBlockChannel, error) {
+func DecodePageBlockChannel(r *Reader) (*PageBlockChannel, error) {
 	v := &PageBlockChannel{}
-	_objChannel, _ := ReadTLObject(r)
+	_objChannel, _errChannel := ReadTLObject(r)
+	if _errChannel != nil {
+		return nil, _errChannel
+	}
 	v.Channel = _objChannel.(ChatClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockChannel(r)
 	}
 }
@@ -1808,16 +2057,23 @@ func (v *PageBlockAudio) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockAudio deserializes a PageBlockAudio from a reader using the TL binary protocol.
-func DecodePageBlockAudio(r io.Reader) (*PageBlockAudio, error) {
+func DecodePageBlockAudio(r *Reader) (*PageBlockAudio, error) {
 	v := &PageBlockAudio{}
-	v.AudioID = ReadLong(r)
-	_objCaption, _ := ReadTLObject(r)
+	_rAudioID, _eAudioID := r.ReadInt64()
+	if _eAudioID != nil {
+		return nil, _eAudioID
+	}
+	v.AudioID = _rAudioID
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockAudioTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockAudioTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockAudio(r)
 	}
 }
@@ -1842,15 +2098,18 @@ func (v *PageBlockKicker) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockKicker deserializes a PageBlockKicker from a reader using the TL binary protocol.
-func DecodePageBlockKicker(r io.Reader) (*PageBlockKicker, error) {
+func DecodePageBlockKicker(r *Reader) (*PageBlockKicker, error) {
 	v := &PageBlockKicker{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockKickerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockKickerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockKicker(r)
 	}
 }
@@ -1896,32 +2155,45 @@ func (v *PageBlockTable) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockTable deserializes a PageBlockTable from a reader using the TL binary protocol.
-func DecodePageBlockTable(r io.Reader) (*PageBlockTable, error) {
+func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 	v := &PageBlockTable{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Bordered = v.Flags.Has(0)
 	v.Striped = v.Flags.Has(1)
-	_objTitle, _ := ReadTLObject(r)
+	_objTitle, _errTitle := ReadTLObject(r)
+	if _errTitle != nil {
+		return nil, _errTitle
+	}
 	v.Title = _objTitle.(RichTextClass)
-	ReadInt(r)
-	_cntRows := ReadInt(r)
-	if err := checkVectorCount(_cntRows); err != nil {
-		return nil, err
+	_vhdrRows, _ehdrRows := r.ReadUint32()
+	if _ehdrRows != nil {
+		return nil, _ehdrRows
+	}
+	_cntRows, _ecntRows := r.ReadUint32()
+	if _ecntRows != nil {
+		return nil, _ecntRows
+	}
+	if _errRows := checkVectorCount(_cntRows); _errRows != nil {
+		return nil, _errRows
 	}
 	v.Rows = make([]*PageTableRow, _cntRows)
 	for _iRows := range v.Rows {
-		_objRows, _ := ReadTLObject(r)
+		_objRows, _errRows := ReadTLObject(r)
+		if _errRows != nil {
+			return nil, _errRows
+		}
 		v.Rows[_iRows] = _objRows.(*PageTableRow)
 	}
+	_ = _vhdrRows
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockTableTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockTableTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockTable(r)
 	}
 }
@@ -1950,23 +2222,33 @@ func (v *PageBlockOrderedList) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockOrderedList deserializes a PageBlockOrderedList from a reader using the TL binary protocol.
-func DecodePageBlockOrderedList(r io.Reader) (*PageBlockOrderedList, error) {
+func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 	v := &PageBlockOrderedList{}
-	ReadInt(r)
-	_cntItems := ReadInt(r)
-	if err := checkVectorCount(_cntItems); err != nil {
-		return nil, err
+	_vhdrItems, _ehdrItems := r.ReadUint32()
+	if _ehdrItems != nil {
+		return nil, _ehdrItems
+	}
+	_cntItems, _ecntItems := r.ReadUint32()
+	if _ecntItems != nil {
+		return nil, _ecntItems
+	}
+	if _errItems := checkVectorCount(_cntItems); _errItems != nil {
+		return nil, _errItems
 	}
 	v.Items = make([]PageListOrderedItemClass, _cntItems)
 	for _iItems := range v.Items {
-		_objItems, _ := ReadTLObject(r)
+		_objItems, _errItems := ReadTLObject(r)
+		if _errItems != nil {
+			return nil, _errItems
+		}
 		v.Items[_iItems] = _objItems.(PageListOrderedItemClass)
 	}
+	_ = _vhdrItems
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockOrderedListTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockOrderedListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockOrderedList(r)
 	}
 }
@@ -2008,31 +2290,44 @@ func (v *PageBlockDetails) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockDetails deserializes a PageBlockDetails from a reader using the TL binary protocol.
-func DecodePageBlockDetails(r io.Reader) (*PageBlockDetails, error) {
+func DecodePageBlockDetails(r *Reader) (*PageBlockDetails, error) {
 	v := &PageBlockDetails{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Open = v.Flags.Has(0)
-	ReadInt(r)
-	_cntBlocks := ReadInt(r)
-	if err := checkVectorCount(_cntBlocks); err != nil {
-		return nil, err
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
-		_objBlocks, _ := ReadTLObject(r)
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
 		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
 	}
-	_objTitle, _ := ReadTLObject(r)
+	_ = _vhdrBlocks
+	_objTitle, _errTitle := ReadTLObject(r)
+	if _errTitle != nil {
+		return nil, _errTitle
+	}
 	v.Title = _objTitle.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockDetailsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockDetailsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockDetails(r)
 	}
 }
@@ -2063,25 +2358,38 @@ func (v *PageBlockRelatedArticles) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockRelatedArticles deserializes a PageBlockRelatedArticles from a reader using the TL binary protocol.
-func DecodePageBlockRelatedArticles(r io.Reader) (*PageBlockRelatedArticles, error) {
+func DecodePageBlockRelatedArticles(r *Reader) (*PageBlockRelatedArticles, error) {
 	v := &PageBlockRelatedArticles{}
-	_objTitle, _ := ReadTLObject(r)
+	_objTitle, _errTitle := ReadTLObject(r)
+	if _errTitle != nil {
+		return nil, _errTitle
+	}
 	v.Title = _objTitle.(RichTextClass)
-	ReadInt(r)
-	_cntArticles := ReadInt(r)
-	if err := checkVectorCount(_cntArticles); err != nil {
-		return nil, err
+	_vhdrArticles, _ehdrArticles := r.ReadUint32()
+	if _ehdrArticles != nil {
+		return nil, _ehdrArticles
+	}
+	_cntArticles, _ecntArticles := r.ReadUint32()
+	if _ecntArticles != nil {
+		return nil, _ecntArticles
+	}
+	if _errArticles := checkVectorCount(_cntArticles); _errArticles != nil {
+		return nil, _errArticles
 	}
 	v.Articles = make([]*PageRelatedArticle, _cntArticles)
 	for _iArticles := range v.Articles {
-		_objArticles, _ := ReadTLObject(r)
+		_objArticles, _errArticles := ReadTLObject(r)
+		if _errArticles != nil {
+			return nil, _errArticles
+		}
 		v.Articles[_iArticles] = _objArticles.(*PageRelatedArticle)
 	}
+	_ = _vhdrArticles
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockRelatedArticlesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockRelatedArticlesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockRelatedArticles(r)
 	}
 }
@@ -2114,20 +2422,38 @@ func (v *PageBlockMap) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageBlockMap deserializes a PageBlockMap from a reader using the TL binary protocol.
-func DecodePageBlockMap(r io.Reader) (*PageBlockMap, error) {
+func DecodePageBlockMap(r *Reader) (*PageBlockMap, error) {
 	v := &PageBlockMap{}
-	_objGeo, _ := ReadTLObject(r)
+	_objGeo, _errGeo := ReadTLObject(r)
+	if _errGeo != nil {
+		return nil, _errGeo
+	}
 	v.Geo = _objGeo.(GeoPointClass)
-	v.Zoom = int32(ReadInt(r))
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	_objCaption, _ := ReadTLObject(r)
+	_rZoom, _eZoom := r.ReadInt32()
+	if _eZoom != nil {
+		return nil, _eZoom
+	}
+	v.Zoom = _rZoom
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
 	v.Caption = _objCaption.(*PageCaption)
 	return v, nil
 }
 
 func init() {
-	Registry[PageBlockMapTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageBlockMapTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockMap(r)
 	}
 }
@@ -2201,11 +2527,11 @@ func (v *PageTableCell) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageTableCell deserializes a PageTableCell from a reader using the TL binary protocol.
-func DecodePageTableCell(r io.Reader) (*PageTableCell, error) {
+func DecodePageTableCell(r *Reader) (*PageTableCell, error) {
 	v := &PageTableCell{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Header = v.Flags.Has(0)
@@ -2214,20 +2540,31 @@ func DecodePageTableCell(r io.Reader) (*PageTableCell, error) {
 	v.ValignMiddle = v.Flags.Has(5)
 	v.ValignBottom = v.Flags.Has(6)
 	if v.Flags.Has(7) {
-		_objText, _ := ReadTLObject(r)
+		_objText, _errText := ReadTLObject(r)
+		if _errText != nil {
+			return nil, _errText
+		}
 		v.Text = _objText.(RichTextClass)
 	}
 	if v.Flags.Has(1) {
-		v.Colspan = int32(ReadInt(r))
+		_rColspan, _eColspan := r.ReadInt32()
+		if _eColspan != nil {
+			return nil, _eColspan
+		}
+		v.Colspan = _rColspan
 	}
 	if v.Flags.Has(2) {
-		v.Rowspan = int32(ReadInt(r))
+		_rRowspan, _eRowspan := r.ReadInt32()
+		if _eRowspan != nil {
+			return nil, _eRowspan
+		}
+		v.Rowspan = _rRowspan
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PageTableCellTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageTableCellTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageTableCell(r)
 	}
 }
@@ -2259,23 +2596,33 @@ func (v *PageTableRow) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageTableRow deserializes a PageTableRow from a reader using the TL binary protocol.
-func DecodePageTableRow(r io.Reader) (*PageTableRow, error) {
+func DecodePageTableRow(r *Reader) (*PageTableRow, error) {
 	v := &PageTableRow{}
-	ReadInt(r)
-	_cntCells := ReadInt(r)
-	if err := checkVectorCount(_cntCells); err != nil {
-		return nil, err
+	_vhdrCells, _ehdrCells := r.ReadUint32()
+	if _ehdrCells != nil {
+		return nil, _ehdrCells
+	}
+	_cntCells, _ecntCells := r.ReadUint32()
+	if _ecntCells != nil {
+		return nil, _ecntCells
+	}
+	if _errCells := checkVectorCount(_cntCells); _errCells != nil {
+		return nil, _errCells
 	}
 	v.Cells = make([]*PageTableCell, _cntCells)
 	for _iCells := range v.Cells {
-		_objCells, _ := ReadTLObject(r)
+		_objCells, _errCells := ReadTLObject(r)
+		if _errCells != nil {
+			return nil, _errCells
+		}
 		v.Cells[_iCells] = _objCells.(*PageTableCell)
 	}
+	_ = _vhdrCells
 	return v, nil
 }
 
 func init() {
-	Registry[PageTableRowTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageTableRowTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageTableRow(r)
 	}
 }
@@ -2305,17 +2652,23 @@ func (v *PageCaption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageCaption deserializes a PageCaption from a reader using the TL binary protocol.
-func DecodePageCaption(r io.Reader) (*PageCaption, error) {
+func DecodePageCaption(r *Reader) (*PageCaption, error) {
 	v := &PageCaption{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
-	_objCredit, _ := ReadTLObject(r)
+	_objCredit, _errCredit := ReadTLObject(r)
+	if _errCredit != nil {
+		return nil, _errCredit
+	}
 	v.Credit = _objCredit.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageCaptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageCaptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageCaption(r)
 	}
 }
@@ -2360,15 +2713,18 @@ func (v *PageListItemText) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageListItemText deserializes a PageListItemText from a reader using the TL binary protocol.
-func DecodePageListItemText(r io.Reader) (*PageListItemText, error) {
+func DecodePageListItemText(r *Reader) (*PageListItemText, error) {
 	v := &PageListItemText{}
-	_objText, _ := ReadTLObject(r)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
 	v.Text = _objText.(RichTextClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PageListItemTextTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageListItemTextTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageListItemText(r)
 	}
 }
@@ -2397,23 +2753,33 @@ func (v *PageListItemBlocks) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageListItemBlocks deserializes a PageListItemBlocks from a reader using the TL binary protocol.
-func DecodePageListItemBlocks(r io.Reader) (*PageListItemBlocks, error) {
+func DecodePageListItemBlocks(r *Reader) (*PageListItemBlocks, error) {
 	v := &PageListItemBlocks{}
-	ReadInt(r)
-	_cntBlocks := ReadInt(r)
-	if err := checkVectorCount(_cntBlocks); err != nil {
-		return nil, err
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
-		_objBlocks, _ := ReadTLObject(r)
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
 		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
 	}
+	_ = _vhdrBlocks
 	return v, nil
 }
 
 func init() {
-	Registry[PageListItemBlocksTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageListItemBlocksTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageListItemBlocks(r)
 	}
 }
@@ -2485,35 +2851,63 @@ func (v *PageRelatedArticle) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePageRelatedArticle deserializes a PageRelatedArticle from a reader using the TL binary protocol.
-func DecodePageRelatedArticle(r io.Reader) (*PageRelatedArticle, error) {
+func DecodePageRelatedArticle(r *Reader) (*PageRelatedArticle, error) {
 	v := &PageRelatedArticle{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.URL = ReadString(r)
-	v.WebpageID = ReadLong(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rWebpageID, _eWebpageID := r.ReadInt64()
+	if _eWebpageID != nil {
+		return nil, _eWebpageID
+	}
+	v.WebpageID = _rWebpageID
 	if v.Flags.Has(0) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Description = ReadString(r)
+		_rDescription, _eDescription := r.ReadString()
+		if _eDescription != nil {
+			return nil, _eDescription
+		}
+		v.Description = _rDescription
 	}
 	if v.Flags.Has(2) {
-		v.PhotoID = ReadLong(r)
+		_rPhotoID, _ePhotoID := r.ReadInt64()
+		if _ePhotoID != nil {
+			return nil, _ePhotoID
+		}
+		v.PhotoID = _rPhotoID
 	}
 	if v.Flags.Has(3) {
-		v.Author = ReadString(r)
+		_rAuthor, _eAuthor := r.ReadString()
+		if _eAuthor != nil {
+			return nil, _eAuthor
+		}
+		v.Author = _rAuthor
 	}
 	if v.Flags.Has(4) {
-		v.PublishedDate = int32(ReadInt(r))
+		_rPublishedDate, _ePublishedDate := r.ReadInt32()
+		if _ePublishedDate != nil {
+			return nil, _ePublishedDate
+		}
+		v.PublishedDate = _rPublishedDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PageRelatedArticleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageRelatedArticleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageRelatedArticle(r)
 	}
 }
@@ -2585,55 +2979,93 @@ func (v *Page) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePage deserializes a Page from a reader using the TL binary protocol.
-func DecodePage(r io.Reader) (*Page, error) {
+func DecodePage(r *Reader) (*Page, error) {
 	v := &Page{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Part = v.Flags.Has(0)
 	v.Rtl = v.Flags.Has(1)
 	v.V2 = v.Flags.Has(2)
-	v.URL = ReadString(r)
-	ReadInt(r)
-	_cntBlocks := ReadInt(r)
-	if err := checkVectorCount(_cntBlocks); err != nil {
-		return nil, err
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	v.Blocks = make([]PageBlockClass, _cntBlocks)
 	for _iBlocks := range v.Blocks {
-		_objBlocks, _ := ReadTLObject(r)
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
 		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
 	}
-	ReadInt(r)
-	_cntPhotos := ReadInt(r)
-	if err := checkVectorCount(_cntPhotos); err != nil {
-		return nil, err
+	_ = _vhdrBlocks
+	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+	if _ehdrPhotos != nil {
+		return nil, _ehdrPhotos
+	}
+	_cntPhotos, _ecntPhotos := r.ReadUint32()
+	if _ecntPhotos != nil {
+		return nil, _ecntPhotos
+	}
+	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+		return nil, _errPhotos
 	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
-		_objPhotos, _ := ReadTLObject(r)
+		_objPhotos, _errPhotos := ReadTLObject(r)
+		if _errPhotos != nil {
+			return nil, _errPhotos
+		}
 		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
 	}
-	ReadInt(r)
-	_cntDocuments := ReadInt(r)
-	if err := checkVectorCount(_cntDocuments); err != nil {
-		return nil, err
+	_ = _vhdrPhotos
+	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+	if _ehdrDocuments != nil {
+		return nil, _ehdrDocuments
+	}
+	_cntDocuments, _ecntDocuments := r.ReadUint32()
+	if _ecntDocuments != nil {
+		return nil, _ecntDocuments
+	}
+	if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
-		_objDocuments, _ := ReadTLObject(r)
+		_objDocuments, _errDocuments := ReadTLObject(r)
+		if _errDocuments != nil {
+			return nil, _errDocuments
+		}
 		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
 	}
+	_ = _vhdrDocuments
 	if v.Flags.Has(3) {
-		v.Views = int32(ReadInt(r))
+		_rViews, _eViews := r.ReadInt32()
+		if _eViews != nil {
+			return nil, _eViews
+		}
+		v.Views = _rViews
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePage(r)
 	}
 }

@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // SmsjobsEligibleToJoinTypeID is the constructor ID for TL type smsjobs.eligibleToJoin.
@@ -32,15 +31,23 @@ func (v *SmsjobsEligibleToJoin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSmsjobsEligibleToJoin deserializes a SmsjobsEligibleToJoin from a reader using the TL binary protocol.
-func DecodeSmsjobsEligibleToJoin(r io.Reader) (*SmsjobsEligibleToJoin, error) {
+func DecodeSmsjobsEligibleToJoin(r *Reader) (*SmsjobsEligibleToJoin, error) {
 	v := &SmsjobsEligibleToJoin{}
-	v.TermsURL = ReadString(r)
-	v.MonthlySentSms = int32(ReadInt(r))
+	_rTermsURL, _eTermsURL := r.ReadString()
+	if _eTermsURL != nil {
+		return nil, _eTermsURL
+	}
+	v.TermsURL = _rTermsURL
+	_rMonthlySentSms, _eMonthlySentSms := r.ReadInt32()
+	if _eMonthlySentSms != nil {
+		return nil, _eMonthlySentSms
+	}
+	v.MonthlySentSms = _rMonthlySentSms
 	return v, nil
 }
 
 func init() {
-	Registry[SmsjobsEligibleToJoinTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SmsjobsEligibleToJoinTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSmsjobsEligibleToJoin(r)
 	}
 }
@@ -96,28 +103,56 @@ func (v *SmsjobsStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSmsjobsStatus deserializes a SmsjobsStatus from a reader using the TL binary protocol.
-func DecodeSmsjobsStatus(r io.Reader) (*SmsjobsStatus, error) {
+func DecodeSmsjobsStatus(r *Reader) (*SmsjobsStatus, error) {
 	v := &SmsjobsStatus{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.AllowInternational = v.Flags.Has(0)
-	v.RecentSent = int32(ReadInt(r))
-	v.RecentSince = int32(ReadInt(r))
-	v.RecentRemains = int32(ReadInt(r))
-	v.TotalSent = int32(ReadInt(r))
-	v.TotalSince = int32(ReadInt(r))
-	if v.Flags.Has(1) {
-		v.LastGiftSlug = ReadString(r)
+	_rRecentSent, _eRecentSent := r.ReadInt32()
+	if _eRecentSent != nil {
+		return nil, _eRecentSent
 	}
-	v.TermsURL = ReadString(r)
+	v.RecentSent = _rRecentSent
+	_rRecentSince, _eRecentSince := r.ReadInt32()
+	if _eRecentSince != nil {
+		return nil, _eRecentSince
+	}
+	v.RecentSince = _rRecentSince
+	_rRecentRemains, _eRecentRemains := r.ReadInt32()
+	if _eRecentRemains != nil {
+		return nil, _eRecentRemains
+	}
+	v.RecentRemains = _rRecentRemains
+	_rTotalSent, _eTotalSent := r.ReadInt32()
+	if _eTotalSent != nil {
+		return nil, _eTotalSent
+	}
+	v.TotalSent = _rTotalSent
+	_rTotalSince, _eTotalSince := r.ReadInt32()
+	if _eTotalSince != nil {
+		return nil, _eTotalSince
+	}
+	v.TotalSince = _rTotalSince
+	if v.Flags.Has(1) {
+		_rLastGiftSlug, _eLastGiftSlug := r.ReadString()
+		if _eLastGiftSlug != nil {
+			return nil, _eLastGiftSlug
+		}
+		v.LastGiftSlug = _rLastGiftSlug
+	}
+	_rTermsURL, _eTermsURL := r.ReadString()
+	if _eTermsURL != nil {
+		return nil, _eTermsURL
+	}
+	v.TermsURL = _rTermsURL
 	return v, nil
 }
 
 func init() {
-	Registry[SmsjobsStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SmsjobsStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSmsjobsStatus(r)
 	}
 }
@@ -149,16 +184,28 @@ func (v *SmsJob) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSmsJob deserializes a SmsJob from a reader using the TL binary protocol.
-func DecodeSmsJob(r io.Reader) (*SmsJob, error) {
+func DecodeSmsJob(r *Reader) (*SmsJob, error) {
 	v := &SmsJob{}
-	v.JobID = ReadString(r)
-	v.PhoneNumber = ReadString(r)
-	v.Text = ReadString(r)
+	_rJobID, _eJobID := r.ReadString()
+	if _eJobID != nil {
+		return nil, _eJobID
+	}
+	v.JobID = _rJobID
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[SmsJobTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SmsJobTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSmsJob(r)
 	}
 }

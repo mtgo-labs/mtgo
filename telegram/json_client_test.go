@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"testing"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -15,7 +14,7 @@ type mockJSONInvoker struct {
 	err     error
 }
 
-func (m *mockJSONInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (m *mockJSONInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	m.lastReq = input
 	if m.err != nil {
 		return nil, m.err

@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"io"
 	"sync"
 	"testing"
 
@@ -23,7 +22,7 @@ func newMockMessagesInvoker(t testing.TB) *mockMessagesInvoker {
 	}
 }
 
-func (m *mockMessagesInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (m *mockMessagesInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.calls = append(m.calls, input)

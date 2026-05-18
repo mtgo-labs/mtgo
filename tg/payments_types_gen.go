@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // InvoiceTypeID is the constructor ID for TL type invoice.
@@ -107,11 +106,11 @@ func (v *Invoice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInvoice deserializes a Invoice from a reader using the TL binary protocol.
-func DecodeInvoice(r io.Reader) (*Invoice, error) {
+func DecodeInvoice(r *Reader) (*Invoice, error) {
 	v := &Invoice{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Test = v.Flags.Has(0)
@@ -123,34 +122,64 @@ func DecodeInvoice(r io.Reader) (*Invoice, error) {
 	v.PhoneToProvider = v.Flags.Has(6)
 	v.EmailToProvider = v.Flags.Has(7)
 	v.Recurring = v.Flags.Has(9)
-	v.Currency = ReadString(r)
-	ReadInt(r)
-	_cntPrices := ReadInt(r)
-	if err := checkVectorCount(_cntPrices); err != nil {
-		return nil, err
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_vhdrPrices, _ehdrPrices := r.ReadUint32()
+	if _ehdrPrices != nil {
+		return nil, _ehdrPrices
+	}
+	_cntPrices, _ecntPrices := r.ReadUint32()
+	if _ecntPrices != nil {
+		return nil, _ecntPrices
+	}
+	if _errPrices := checkVectorCount(_cntPrices); _errPrices != nil {
+		return nil, _errPrices
 	}
 	v.Prices = make([]*LabeledPrice, _cntPrices)
 	for _iPrices := range v.Prices {
-		_objPrices, _ := ReadTLObject(r)
+		_objPrices, _errPrices := ReadTLObject(r)
+		if _errPrices != nil {
+			return nil, _errPrices
+		}
 		v.Prices[_iPrices] = _objPrices.(*LabeledPrice)
 	}
+	_ = _vhdrPrices
 	if v.Flags.Has(8) {
-		v.MaxTipAmount = ReadLong(r)
+		_rMaxTipAmount, _eMaxTipAmount := r.ReadInt64()
+		if _eMaxTipAmount != nil {
+			return nil, _eMaxTipAmount
+		}
+		v.MaxTipAmount = _rMaxTipAmount
 	}
 	if v.Flags.Has(8) {
-		v.SuggestedTipAmounts = ReadVectorLong(r)
+		_vvSuggestedTipAmounts, _veSuggestedTipAmounts := r.ReadVectorLong()
+		if _veSuggestedTipAmounts != nil {
+			return nil, _veSuggestedTipAmounts
+		}
+		v.SuggestedTipAmounts = _vvSuggestedTipAmounts
 	}
 	if v.Flags.Has(10) {
-		v.TermsURL = ReadString(r)
+		_rTermsURL, _eTermsURL := r.ReadString()
+		if _eTermsURL != nil {
+			return nil, _eTermsURL
+		}
+		v.TermsURL = _rTermsURL
 	}
 	if v.Flags.Has(11) {
-		v.SubscriptionPeriod = int32(ReadInt(r))
+		_rSubscriptionPeriod, _eSubscriptionPeriod := r.ReadInt32()
+		if _eSubscriptionPeriod != nil {
+			return nil, _eSubscriptionPeriod
+		}
+		v.SubscriptionPeriod = _rSubscriptionPeriod
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InvoiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InvoiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInvoice(r)
 	}
 }
@@ -180,15 +209,23 @@ func (v *PaymentCharge) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentCharge deserializes a PaymentCharge from a reader using the TL binary protocol.
-func DecodePaymentCharge(r io.Reader) (*PaymentCharge, error) {
+func DecodePaymentCharge(r *Reader) (*PaymentCharge, error) {
 	v := &PaymentCharge{}
-	v.ID = ReadString(r)
-	v.ProviderChargeID = ReadString(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rProviderChargeID, _eProviderChargeID := r.ReadString()
+	if _eProviderChargeID != nil {
+		return nil, _eProviderChargeID
+	}
+	v.ProviderChargeID = _rProviderChargeID
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentChargeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentChargeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentCharge(r)
 	}
 }
@@ -249,31 +286,46 @@ func (v *PaymentRequestedInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentRequestedInfo deserializes a PaymentRequestedInfo from a reader using the TL binary protocol.
-func DecodePaymentRequestedInfo(r io.Reader) (*PaymentRequestedInfo, error) {
+func DecodePaymentRequestedInfo(r *Reader) (*PaymentRequestedInfo, error) {
 	v := &PaymentRequestedInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Name = ReadString(r)
+		_rName, _eName := r.ReadString()
+		if _eName != nil {
+			return nil, _eName
+		}
+		v.Name = _rName
 	}
 	if v.Flags.Has(1) {
-		v.Phone = ReadString(r)
+		_rPhone, _ePhone := r.ReadString()
+		if _ePhone != nil {
+			return nil, _ePhone
+		}
+		v.Phone = _rPhone
 	}
 	if v.Flags.Has(2) {
-		v.Email = ReadString(r)
+		_rEmail, _eEmail := r.ReadString()
+		if _eEmail != nil {
+			return nil, _eEmail
+		}
+		v.Email = _rEmail
 	}
 	if v.Flags.Has(3) {
-		_objShippingAddress, _ := ReadTLObject(r)
+		_objShippingAddress, _errShippingAddress := ReadTLObject(r)
+		if _errShippingAddress != nil {
+			return nil, _errShippingAddress
+		}
 		v.ShippingAddress = _objShippingAddress.(*PostAddress)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentRequestedInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentRequestedInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentRequestedInfo(r)
 	}
 }
@@ -303,15 +355,23 @@ func (v *PaymentSavedCredentialsCard) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentSavedCredentialsCard deserializes a PaymentSavedCredentialsCard from a reader using the TL binary protocol.
-func DecodePaymentSavedCredentialsCard(r io.Reader) (*PaymentSavedCredentialsCard, error) {
+func DecodePaymentSavedCredentialsCard(r *Reader) (*PaymentSavedCredentialsCard, error) {
 	v := &PaymentSavedCredentialsCard{}
-	v.ID = ReadString(r)
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentSavedCredentialsCardTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentSavedCredentialsCardTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentSavedCredentialsCard(r)
 	}
 }
@@ -445,77 +505,147 @@ func (v *PaymentsPaymentForm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentForm deserializes a PaymentsPaymentForm from a reader using the TL binary protocol.
-func DecodePaymentsPaymentForm(r io.Reader) (*PaymentsPaymentForm, error) {
+func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 	v := &PaymentsPaymentForm{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.CanSaveCredentials = v.Flags.Has(2)
 	v.PasswordMissing = v.Flags.Has(3)
-	v.FormID = ReadLong(r)
-	v.BotID = ReadLong(r)
-	v.Title = ReadString(r)
-	v.Description = ReadString(r)
+	_rFormID, _eFormID := r.ReadInt64()
+	if _eFormID != nil {
+		return nil, _eFormID
+	}
+	v.FormID = _rFormID
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rDescription, _eDescription := r.ReadString()
+	if _eDescription != nil {
+		return nil, _eDescription
+	}
+	v.Description = _rDescription
 	if v.Flags.Has(5) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
-	_objInvoice, _ := ReadTLObject(r)
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
+	}
 	v.Invoice = _objInvoice.(*Invoice)
-	v.ProviderID = ReadLong(r)
-	v.URL = ReadString(r)
+	_rProviderID, _eProviderID := r.ReadInt64()
+	if _eProviderID != nil {
+		return nil, _eProviderID
+	}
+	v.ProviderID = _rProviderID
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	if v.Flags.Has(4) {
-		v.NativeProvider = ReadString(r)
+		_rNativeProvider, _eNativeProvider := r.ReadString()
+		if _eNativeProvider != nil {
+			return nil, _eNativeProvider
+		}
+		v.NativeProvider = _rNativeProvider
 	}
 	if v.Flags.Has(4) {
-		_objNativeParams, _ := ReadTLObject(r)
+		_objNativeParams, _errNativeParams := ReadTLObject(r)
+		if _errNativeParams != nil {
+			return nil, _errNativeParams
+		}
 		v.NativeParams = _objNativeParams.(*DataJSON)
 	}
 	if v.Flags.Has(6) {
-		ReadInt(r)
-		_cntAdditionalMethods := ReadInt(r)
-		if err := checkVectorCount(_cntAdditionalMethods); err != nil {
-			return nil, err
+		_vhdrAdditionalMethods, _ehdrAdditionalMethods := r.ReadUint32()
+		if _ehdrAdditionalMethods != nil {
+			return nil, _ehdrAdditionalMethods
+		}
+		_cntAdditionalMethods, _ecntAdditionalMethods := r.ReadUint32()
+		if _ecntAdditionalMethods != nil {
+			return nil, _ecntAdditionalMethods
+		}
+		if _errAdditionalMethods := checkVectorCount(_cntAdditionalMethods); _errAdditionalMethods != nil {
+			return nil, _errAdditionalMethods
 		}
 		v.AdditionalMethods = make([]*PaymentFormMethod, _cntAdditionalMethods)
 		for _iAdditionalMethods := range v.AdditionalMethods {
-			_objAdditionalMethods, _ := ReadTLObject(r)
+			_objAdditionalMethods, _errAdditionalMethods := ReadTLObject(r)
+			if _errAdditionalMethods != nil {
+				return nil, _errAdditionalMethods
+			}
 			v.AdditionalMethods[_iAdditionalMethods] = _objAdditionalMethods.(*PaymentFormMethod)
 		}
+		_ = _vhdrAdditionalMethods
 	}
 	if v.Flags.Has(0) {
-		_objSavedInfo, _ := ReadTLObject(r)
+		_objSavedInfo, _errSavedInfo := ReadTLObject(r)
+		if _errSavedInfo != nil {
+			return nil, _errSavedInfo
+		}
 		v.SavedInfo = _objSavedInfo.(*PaymentRequestedInfo)
 	}
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntSavedCredentials := ReadInt(r)
-		if err := checkVectorCount(_cntSavedCredentials); err != nil {
-			return nil, err
+		_vhdrSavedCredentials, _ehdrSavedCredentials := r.ReadUint32()
+		if _ehdrSavedCredentials != nil {
+			return nil, _ehdrSavedCredentials
+		}
+		_cntSavedCredentials, _ecntSavedCredentials := r.ReadUint32()
+		if _ecntSavedCredentials != nil {
+			return nil, _ecntSavedCredentials
+		}
+		if _errSavedCredentials := checkVectorCount(_cntSavedCredentials); _errSavedCredentials != nil {
+			return nil, _errSavedCredentials
 		}
 		v.SavedCredentials = make([]*PaymentSavedCredentialsCard, _cntSavedCredentials)
 		for _iSavedCredentials := range v.SavedCredentials {
-			_objSavedCredentials, _ := ReadTLObject(r)
+			_objSavedCredentials, _errSavedCredentials := ReadTLObject(r)
+			if _errSavedCredentials != nil {
+				return nil, _errSavedCredentials
+			}
 			v.SavedCredentials[_iSavedCredentials] = _objSavedCredentials.(*PaymentSavedCredentialsCard)
 		}
+		_ = _vhdrSavedCredentials
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentFormTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentFormTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentForm(r)
 	}
 }
@@ -568,38 +698,70 @@ func (v *PaymentsPaymentFormStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentFormStars deserializes a PaymentsPaymentFormStars from a reader using the TL binary protocol.
-func DecodePaymentsPaymentFormStars(r io.Reader) (*PaymentsPaymentFormStars, error) {
+func DecodePaymentsPaymentFormStars(r *Reader) (*PaymentsPaymentFormStars, error) {
 	v := &PaymentsPaymentFormStars{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.FormID = ReadLong(r)
-	v.BotID = ReadLong(r)
-	v.Title = ReadString(r)
-	v.Description = ReadString(r)
+	_rFormID, _eFormID := r.ReadInt64()
+	if _eFormID != nil {
+		return nil, _eFormID
+	}
+	v.FormID = _rFormID
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rDescription, _eDescription := r.ReadString()
+	if _eDescription != nil {
+		return nil, _eDescription
+	}
+	v.Description = _rDescription
 	if v.Flags.Has(5) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
-	_objInvoice, _ := ReadTLObject(r)
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
+	}
 	v.Invoice = _objInvoice.(*Invoice)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentFormStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentFormStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentFormStars(r)
 	}
 }
@@ -626,16 +788,23 @@ func (v *PaymentsPaymentFormStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentFormStarGift deserializes a PaymentsPaymentFormStarGift from a reader using the TL binary protocol.
-func DecodePaymentsPaymentFormStarGift(r io.Reader) (*PaymentsPaymentFormStarGift, error) {
+func DecodePaymentsPaymentFormStarGift(r *Reader) (*PaymentsPaymentFormStarGift, error) {
 	v := &PaymentsPaymentFormStarGift{}
-	v.FormID = ReadLong(r)
-	_objInvoice, _ := ReadTLObject(r)
+	_rFormID, _eFormID := r.ReadInt64()
+	if _eFormID != nil {
+		return nil, _eFormID
+	}
+	v.FormID = _rFormID
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
+	}
 	v.Invoice = _objInvoice.(*Invoice)
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentFormStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentFormStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentFormStarGift(r)
 	}
 }
@@ -686,33 +855,47 @@ func (v *PaymentsValidatedRequestedInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsValidatedRequestedInfo deserializes a PaymentsValidatedRequestedInfo from a reader using the TL binary protocol.
-func DecodePaymentsValidatedRequestedInfo(r io.Reader) (*PaymentsValidatedRequestedInfo, error) {
+func DecodePaymentsValidatedRequestedInfo(r *Reader) (*PaymentsValidatedRequestedInfo, error) {
 	v := &PaymentsValidatedRequestedInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.ID = ReadString(r)
+		_rID, _eID := r.ReadString()
+		if _eID != nil {
+			return nil, _eID
+		}
+		v.ID = _rID
 	}
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntShippingOptions := ReadInt(r)
-		if err := checkVectorCount(_cntShippingOptions); err != nil {
-			return nil, err
+		_vhdrShippingOptions, _ehdrShippingOptions := r.ReadUint32()
+		if _ehdrShippingOptions != nil {
+			return nil, _ehdrShippingOptions
+		}
+		_cntShippingOptions, _ecntShippingOptions := r.ReadUint32()
+		if _ecntShippingOptions != nil {
+			return nil, _ecntShippingOptions
+		}
+		if _errShippingOptions := checkVectorCount(_cntShippingOptions); _errShippingOptions != nil {
+			return nil, _errShippingOptions
 		}
 		v.ShippingOptions = make([]*ShippingOption, _cntShippingOptions)
 		for _iShippingOptions := range v.ShippingOptions {
-			_objShippingOptions, _ := ReadTLObject(r)
+			_objShippingOptions, _errShippingOptions := ReadTLObject(r)
+			if _errShippingOptions != nil {
+				return nil, _errShippingOptions
+			}
 			v.ShippingOptions[_iShippingOptions] = _objShippingOptions.(*ShippingOption)
 		}
+		_ = _vhdrShippingOptions
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsValidatedRequestedInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsValidatedRequestedInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsValidatedRequestedInfo(r)
 	}
 }
@@ -757,15 +940,18 @@ func (v *PaymentsPaymentResult) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentResult deserializes a PaymentsPaymentResult from a reader using the TL binary protocol.
-func DecodePaymentsPaymentResult(r io.Reader) (*PaymentsPaymentResult, error) {
+func DecodePaymentsPaymentResult(r *Reader) (*PaymentsPaymentResult, error) {
 	v := &PaymentsPaymentResult{}
-	_objUpdates, _ := ReadTLObject(r)
+	_objUpdates, _errUpdates := ReadTLObject(r)
+	if _errUpdates != nil {
+		return nil, _errUpdates
+	}
 	v.Updates = _objUpdates.(UpdatesClass)
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentResultTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentResultTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentResult(r)
 	}
 }
@@ -790,14 +976,18 @@ func (v *PaymentsPaymentVerificationNeeded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentVerificationNeeded deserializes a PaymentsPaymentVerificationNeeded from a reader using the TL binary protocol.
-func DecodePaymentsPaymentVerificationNeeded(r io.Reader) (*PaymentsPaymentVerificationNeeded, error) {
+func DecodePaymentsPaymentVerificationNeeded(r *Reader) (*PaymentsPaymentVerificationNeeded, error) {
 	v := &PaymentsPaymentVerificationNeeded{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentVerificationNeededTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentVerificationNeededTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentVerificationNeeded(r)
 	}
 }
@@ -899,53 +1089,111 @@ func (v *PaymentsPaymentReceipt) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentReceipt deserializes a PaymentsPaymentReceipt from a reader using the TL binary protocol.
-func DecodePaymentsPaymentReceipt(r io.Reader) (*PaymentsPaymentReceipt, error) {
+func DecodePaymentsPaymentReceipt(r *Reader) (*PaymentsPaymentReceipt, error) {
 	v := &PaymentsPaymentReceipt{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Date = int32(ReadInt(r))
-	v.BotID = ReadLong(r)
-	v.ProviderID = ReadLong(r)
-	v.Title = ReadString(r)
-	v.Description = ReadString(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rProviderID, _eProviderID := r.ReadInt64()
+	if _eProviderID != nil {
+		return nil, _eProviderID
+	}
+	v.ProviderID = _rProviderID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rDescription, _eDescription := r.ReadString()
+	if _eDescription != nil {
+		return nil, _eDescription
+	}
+	v.Description = _rDescription
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
-	_objInvoice, _ := ReadTLObject(r)
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
+	}
 	v.Invoice = _objInvoice.(*Invoice)
 	if v.Flags.Has(0) {
-		_objInfo, _ := ReadTLObject(r)
+		_objInfo, _errInfo := ReadTLObject(r)
+		if _errInfo != nil {
+			return nil, _errInfo
+		}
 		v.Info = _objInfo.(*PaymentRequestedInfo)
 	}
 	if v.Flags.Has(1) {
-		_objShipping, _ := ReadTLObject(r)
+		_objShipping, _errShipping := ReadTLObject(r)
+		if _errShipping != nil {
+			return nil, _errShipping
+		}
 		v.Shipping = _objShipping.(*ShippingOption)
 	}
 	if v.Flags.Has(3) {
-		v.TipAmount = ReadLong(r)
+		_rTipAmount, _eTipAmount := r.ReadInt64()
+		if _eTipAmount != nil {
+			return nil, _eTipAmount
+		}
+		v.TipAmount = _rTipAmount
 	}
-	v.Currency = ReadString(r)
-	v.TotalAmount = ReadLong(r)
-	v.CredentialsTitle = ReadString(r)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rTotalAmount, _eTotalAmount := r.ReadInt64()
+	if _eTotalAmount != nil {
+		return nil, _eTotalAmount
+	}
+	v.TotalAmount = _rTotalAmount
+	_rCredentialsTitle, _eCredentialsTitle := r.ReadString()
+	if _eCredentialsTitle != nil {
+		return nil, _eCredentialsTitle
+	}
+	v.CredentialsTitle = _rCredentialsTitle
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentReceiptTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentReceiptTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentReceipt(r)
 	}
 }
@@ -1004,41 +1252,85 @@ func (v *PaymentsPaymentReceiptStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsPaymentReceiptStars deserializes a PaymentsPaymentReceiptStars from a reader using the TL binary protocol.
-func DecodePaymentsPaymentReceiptStars(r io.Reader) (*PaymentsPaymentReceiptStars, error) {
+func DecodePaymentsPaymentReceiptStars(r *Reader) (*PaymentsPaymentReceiptStars, error) {
 	v := &PaymentsPaymentReceiptStars{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Date = int32(ReadInt(r))
-	v.BotID = ReadLong(r)
-	v.Title = ReadString(r)
-	v.Description = ReadString(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rDescription, _eDescription := r.ReadString()
+	if _eDescription != nil {
+		return nil, _eDescription
+	}
+	v.Description = _rDescription
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
-	_objInvoice, _ := ReadTLObject(r)
+	_objInvoice, _errInvoice := ReadTLObject(r)
+	if _errInvoice != nil {
+		return nil, _errInvoice
+	}
 	v.Invoice = _objInvoice.(*Invoice)
-	v.Currency = ReadString(r)
-	v.TotalAmount = ReadLong(r)
-	v.TransactionID = ReadString(r)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rTotalAmount, _eTotalAmount := r.ReadInt64()
+	if _eTotalAmount != nil {
+		return nil, _eTotalAmount
+	}
+	v.TotalAmount = _rTotalAmount
+	_rTransactionID, _eTransactionID := r.ReadString()
+	if _eTransactionID != nil {
+		return nil, _eTransactionID
+	}
+	v.TransactionID = _rTransactionID
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsPaymentReceiptStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsPaymentReceiptStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsPaymentReceiptStars(r)
 	}
 }
@@ -1082,23 +1374,26 @@ func (v *PaymentsSavedInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsSavedInfo deserializes a PaymentsSavedInfo from a reader using the TL binary protocol.
-func DecodePaymentsSavedInfo(r io.Reader) (*PaymentsSavedInfo, error) {
+func DecodePaymentsSavedInfo(r *Reader) (*PaymentsSavedInfo, error) {
 	v := &PaymentsSavedInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HasSavedCredentials = v.Flags.Has(1)
 	if v.Flags.Has(0) {
-		_objSavedInfo, _ := ReadTLObject(r)
+		_objSavedInfo, _errSavedInfo := ReadTLObject(r)
+		if _errSavedInfo != nil {
+			return nil, _errSavedInfo
+		}
 		v.SavedInfo = _objSavedInfo.(*PaymentRequestedInfo)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsSavedInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsSavedInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsSavedInfo(r)
 	}
 }
@@ -1157,15 +1452,23 @@ func (v *InputPaymentCredentialsSaved) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPaymentCredentialsSaved deserializes a InputPaymentCredentialsSaved from a reader using the TL binary protocol.
-func DecodeInputPaymentCredentialsSaved(r io.Reader) (*InputPaymentCredentialsSaved, error) {
+func DecodeInputPaymentCredentialsSaved(r *Reader) (*InputPaymentCredentialsSaved, error) {
 	v := &InputPaymentCredentialsSaved{}
-	v.ID = ReadString(r)
-	v.TmpPassword = ReadBytes(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTmpPassword, _eTmpPassword := r.ReadBytes()
+	if _eTmpPassword != nil {
+		return nil, _eTmpPassword
+	}
+	v.TmpPassword = _rTmpPassword
 	return v, nil
 }
 
 func init() {
-	Registry[InputPaymentCredentialsSavedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPaymentCredentialsSavedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPaymentCredentialsSaved(r)
 	}
 }
@@ -1201,21 +1504,24 @@ func (v *InputPaymentCredentials) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPaymentCredentials deserializes a InputPaymentCredentials from a reader using the TL binary protocol.
-func DecodeInputPaymentCredentials(r io.Reader) (*InputPaymentCredentials, error) {
+func DecodeInputPaymentCredentials(r *Reader) (*InputPaymentCredentials, error) {
 	v := &InputPaymentCredentials{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Save = v.Flags.Has(0)
-	_objData, _ := ReadTLObject(r)
+	_objData, _errData := ReadTLObject(r)
+	if _errData != nil {
+		return nil, _errData
+	}
 	v.Data = _objData.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[InputPaymentCredentialsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPaymentCredentialsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPaymentCredentials(r)
 	}
 }
@@ -1240,15 +1546,18 @@ func (v *InputPaymentCredentialsApplePay) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPaymentCredentialsApplePay deserializes a InputPaymentCredentialsApplePay from a reader using the TL binary protocol.
-func DecodeInputPaymentCredentialsApplePay(r io.Reader) (*InputPaymentCredentialsApplePay, error) {
+func DecodeInputPaymentCredentialsApplePay(r *Reader) (*InputPaymentCredentialsApplePay, error) {
 	v := &InputPaymentCredentialsApplePay{}
-	_objPaymentData, _ := ReadTLObject(r)
+	_objPaymentData, _errPaymentData := ReadTLObject(r)
+	if _errPaymentData != nil {
+		return nil, _errPaymentData
+	}
 	v.PaymentData = _objPaymentData.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[InputPaymentCredentialsApplePayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPaymentCredentialsApplePayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPaymentCredentialsApplePay(r)
 	}
 }
@@ -1273,15 +1582,18 @@ func (v *InputPaymentCredentialsGooglePay) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPaymentCredentialsGooglePay deserializes a InputPaymentCredentialsGooglePay from a reader using the TL binary protocol.
-func DecodeInputPaymentCredentialsGooglePay(r io.Reader) (*InputPaymentCredentialsGooglePay, error) {
+func DecodeInputPaymentCredentialsGooglePay(r *Reader) (*InputPaymentCredentialsGooglePay, error) {
 	v := &InputPaymentCredentialsGooglePay{}
-	_objPaymentToken, _ := ReadTLObject(r)
+	_objPaymentToken, _errPaymentToken := ReadTLObject(r)
+	if _errPaymentToken != nil {
+		return nil, _errPaymentToken
+	}
 	v.PaymentToken = _objPaymentToken.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[InputPaymentCredentialsGooglePayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPaymentCredentialsGooglePayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPaymentCredentialsGooglePay(r)
 	}
 }
@@ -1317,25 +1629,43 @@ func (v *ShippingOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeShippingOption deserializes a ShippingOption from a reader using the TL binary protocol.
-func DecodeShippingOption(r io.Reader) (*ShippingOption, error) {
+func DecodeShippingOption(r *Reader) (*ShippingOption, error) {
 	v := &ShippingOption{}
-	v.ID = ReadString(r)
-	v.Title = ReadString(r)
-	ReadInt(r)
-	_cntPrices := ReadInt(r)
-	if err := checkVectorCount(_cntPrices); err != nil {
-		return nil, err
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_vhdrPrices, _ehdrPrices := r.ReadUint32()
+	if _ehdrPrices != nil {
+		return nil, _ehdrPrices
+	}
+	_cntPrices, _ecntPrices := r.ReadUint32()
+	if _ecntPrices != nil {
+		return nil, _ecntPrices
+	}
+	if _errPrices := checkVectorCount(_cntPrices); _errPrices != nil {
+		return nil, _errPrices
 	}
 	v.Prices = make([]*LabeledPrice, _cntPrices)
 	for _iPrices := range v.Prices {
-		_objPrices, _ := ReadTLObject(r)
+		_objPrices, _errPrices := ReadTLObject(r)
+		if _errPrices != nil {
+			return nil, _errPrices
+		}
 		v.Prices[_iPrices] = _objPrices.(*LabeledPrice)
 	}
+	_ = _vhdrPrices
 	return v, nil
 }
 
 func init() {
-	Registry[ShippingOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ShippingOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeShippingOption(r)
 	}
 }
@@ -1365,15 +1695,23 @@ func (v *BankCardOpenURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBankCardOpenURL deserializes a BankCardOpenURL from a reader using the TL binary protocol.
-func DecodeBankCardOpenURL(r io.Reader) (*BankCardOpenURL, error) {
+func DecodeBankCardOpenURL(r *Reader) (*BankCardOpenURL, error) {
 	v := &BankCardOpenURL{}
-	v.URL = ReadString(r)
-	v.Name = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
 	return v, nil
 }
 
 func init() {
-	Registry[BankCardOpenURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BankCardOpenURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBankCardOpenURL(r)
 	}
 }
@@ -1407,24 +1745,38 @@ func (v *PaymentsBankCardData) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsBankCardData deserializes a PaymentsBankCardData from a reader using the TL binary protocol.
-func DecodePaymentsBankCardData(r io.Reader) (*PaymentsBankCardData, error) {
+func DecodePaymentsBankCardData(r *Reader) (*PaymentsBankCardData, error) {
 	v := &PaymentsBankCardData{}
-	v.Title = ReadString(r)
-	ReadInt(r)
-	_cntOpenUrls := ReadInt(r)
-	if err := checkVectorCount(_cntOpenUrls); err != nil {
-		return nil, err
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_vhdrOpenUrls, _ehdrOpenUrls := r.ReadUint32()
+	if _ehdrOpenUrls != nil {
+		return nil, _ehdrOpenUrls
+	}
+	_cntOpenUrls, _ecntOpenUrls := r.ReadUint32()
+	if _ecntOpenUrls != nil {
+		return nil, _ecntOpenUrls
+	}
+	if _errOpenUrls := checkVectorCount(_cntOpenUrls); _errOpenUrls != nil {
+		return nil, _errOpenUrls
 	}
 	v.OpenUrls = make([]*BankCardOpenURL, _cntOpenUrls)
 	for _iOpenUrls := range v.OpenUrls {
-		_objOpenUrls, _ := ReadTLObject(r)
+		_objOpenUrls, _errOpenUrls := ReadTLObject(r)
+		if _errOpenUrls != nil {
+			return nil, _errOpenUrls
+		}
 		v.OpenUrls[_iOpenUrls] = _objOpenUrls.(*BankCardOpenURL)
 	}
+	_ = _vhdrOpenUrls
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsBankCardDataTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsBankCardDataTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsBankCardData(r)
 	}
 }
@@ -1549,16 +1901,23 @@ func (v *InputInvoiceMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceMessage deserializes a InputInvoiceMessage from a reader using the TL binary protocol.
-func DecodeInputInvoiceMessage(r io.Reader) (*InputInvoiceMessage, error) {
+func DecodeInputInvoiceMessage(r *Reader) (*InputInvoiceMessage, error) {
 	v := &InputInvoiceMessage{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceMessage(r)
 	}
 }
@@ -1583,14 +1942,18 @@ func (v *InputInvoiceSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceSlug deserializes a InputInvoiceSlug from a reader using the TL binary protocol.
-func DecodeInputInvoiceSlug(r io.Reader) (*InputInvoiceSlug, error) {
+func DecodeInputInvoiceSlug(r *Reader) (*InputInvoiceSlug, error) {
 	v := &InputInvoiceSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceSlug(r)
 	}
 }
@@ -1617,17 +1980,23 @@ func (v *InputInvoicePremiumGiftCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoicePremiumGiftCode deserializes a InputInvoicePremiumGiftCode from a reader using the TL binary protocol.
-func DecodeInputInvoicePremiumGiftCode(r io.Reader) (*InputInvoicePremiumGiftCode, error) {
+func DecodeInputInvoicePremiumGiftCode(r *Reader) (*InputInvoicePremiumGiftCode, error) {
 	v := &InputInvoicePremiumGiftCode{}
-	_objPurpose, _ := ReadTLObject(r)
+	_objPurpose, _errPurpose := ReadTLObject(r)
+	if _errPurpose != nil {
+		return nil, _errPurpose
+	}
 	v.Purpose = _objPurpose.(InputStorePaymentPurposeClass)
-	_objOption, _ := ReadTLObject(r)
+	_objOption, _errOption := ReadTLObject(r)
+	if _errOption != nil {
+		return nil, _errOption
+	}
 	v.Option = _objOption.(*PremiumGiftCodeOption)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoicePremiumGiftCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoicePremiumGiftCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoicePremiumGiftCode(r)
 	}
 }
@@ -1652,15 +2021,18 @@ func (v *InputInvoiceStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStars deserializes a InputInvoiceStars from a reader using the TL binary protocol.
-func DecodeInputInvoiceStars(r io.Reader) (*InputInvoiceStars, error) {
+func DecodeInputInvoiceStars(r *Reader) (*InputInvoiceStars, error) {
 	v := &InputInvoiceStars{}
-	_objPurpose, _ := ReadTLObject(r)
+	_objPurpose, _errPurpose := ReadTLObject(r)
+	if _errPurpose != nil {
+		return nil, _errPurpose
+	}
 	v.Purpose = _objPurpose.(InputStorePaymentPurposeClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStars(r)
 	}
 }
@@ -1685,14 +2057,18 @@ func (v *InputInvoiceChatInviteSubscription) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceChatInviteSubscription deserializes a InputInvoiceChatInviteSubscription from a reader using the TL binary protocol.
-func DecodeInputInvoiceChatInviteSubscription(r io.Reader) (*InputInvoiceChatInviteSubscription, error) {
+func DecodeInputInvoiceChatInviteSubscription(r *Reader) (*InputInvoiceChatInviteSubscription, error) {
 	v := &InputInvoiceChatInviteSubscription{}
-	v.Hash = ReadString(r)
+	_rHash, _eHash := r.ReadString()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceChatInviteSubscriptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceChatInviteSubscriptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceChatInviteSubscription(r)
 	}
 }
@@ -1741,27 +2117,37 @@ func (v *InputInvoiceStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGift deserializes a InputInvoiceStarGift from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGift(r io.Reader) (*InputInvoiceStarGift, error) {
+func DecodeInputInvoiceStarGift(r *Reader) (*InputInvoiceStarGift, error) {
 	v := &InputInvoiceStarGift{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HideName = v.Flags.Has(0)
 	v.IncludeUpgrade = v.Flags.Has(2)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.GiftID = ReadLong(r)
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
 	if v.Flags.Has(1) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGift(r)
 	}
 }
@@ -1797,21 +2183,24 @@ func (v *InputInvoiceStarGiftUpgrade) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGiftUpgrade deserializes a InputInvoiceStarGiftUpgrade from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftUpgrade(r io.Reader) (*InputInvoiceStarGiftUpgrade, error) {
+func DecodeInputInvoiceStarGiftUpgrade(r *Reader) (*InputInvoiceStarGiftUpgrade, error) {
 	v := &InputInvoiceStarGiftUpgrade{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.KeepOriginalDetails = v.Flags.Has(0)
-	_objStargift, _ := ReadTLObject(r)
+	_objStargift, _errStargift := ReadTLObject(r)
+	if _errStargift != nil {
+		return nil, _errStargift
+	}
 	v.Stargift = _objStargift.(InputSavedStarGiftClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftUpgradeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftUpgradeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftUpgrade(r)
 	}
 }
@@ -1838,17 +2227,23 @@ func (v *InputInvoiceStarGiftTransfer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGiftTransfer deserializes a InputInvoiceStarGiftTransfer from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftTransfer(r io.Reader) (*InputInvoiceStarGiftTransfer, error) {
+func DecodeInputInvoiceStarGiftTransfer(r *Reader) (*InputInvoiceStarGiftTransfer, error) {
 	v := &InputInvoiceStarGiftTransfer{}
-	_objStargift, _ := ReadTLObject(r)
+	_objStargift, _errStargift := ReadTLObject(r)
+	if _errStargift != nil {
+		return nil, _errStargift
+	}
 	v.Stargift = _objStargift.(InputSavedStarGiftClass)
-	_objToID, _ := ReadTLObject(r)
+	_objToID, _errToID := ReadTLObject(r)
+	if _errToID != nil {
+		return nil, _errToID
+	}
 	v.ToID = _objToID.(InputPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftTransferTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftTransferTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftTransfer(r)
 	}
 }
@@ -1889,25 +2284,35 @@ func (v *InputInvoicePremiumGiftStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoicePremiumGiftStars deserializes a InputInvoicePremiumGiftStars from a reader using the TL binary protocol.
-func DecodeInputInvoicePremiumGiftStars(r io.Reader) (*InputInvoicePremiumGiftStars, error) {
+func DecodeInputInvoicePremiumGiftStars(r *Reader) (*InputInvoicePremiumGiftStars, error) {
 	v := &InputInvoicePremiumGiftStars{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objUserID, _ := ReadTLObject(r)
+	_objUserID, _errUserID := ReadTLObject(r)
+	if _errUserID != nil {
+		return nil, _errUserID
+	}
 	v.UserID = _objUserID.(InputUserClass)
-	v.Months = int32(ReadInt(r))
+	_rMonths, _eMonths := r.ReadInt32()
+	if _eMonths != nil {
+		return nil, _eMonths
+	}
+	v.Months = _rMonths
 	if v.Flags.Has(0) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoicePremiumGiftStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoicePremiumGiftStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoicePremiumGiftStars(r)
 	}
 }
@@ -1934,16 +2339,23 @@ func (v *InputInvoiceBusinessBotTransferStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceBusinessBotTransferStars deserializes a InputInvoiceBusinessBotTransferStars from a reader using the TL binary protocol.
-func DecodeInputInvoiceBusinessBotTransferStars(r io.Reader) (*InputInvoiceBusinessBotTransferStars, error) {
+func DecodeInputInvoiceBusinessBotTransferStars(r *Reader) (*InputInvoiceBusinessBotTransferStars, error) {
 	v := &InputInvoiceBusinessBotTransferStars{}
-	_objBot, _ := ReadTLObject(r)
+	_objBot, _errBot := ReadTLObject(r)
+	if _errBot != nil {
+		return nil, _errBot
+	}
 	v.Bot = _objBot.(InputUserClass)
-	v.Stars = ReadLong(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceBusinessBotTransferStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceBusinessBotTransferStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceBusinessBotTransferStars(r)
 	}
 }
@@ -1981,22 +2393,29 @@ func (v *InputInvoiceStarGiftResale) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGiftResale deserializes a InputInvoiceStarGiftResale from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftResale(r io.Reader) (*InputInvoiceStarGiftResale, error) {
+func DecodeInputInvoiceStarGiftResale(r *Reader) (*InputInvoiceStarGiftResale, error) {
 	v := &InputInvoiceStarGiftResale{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Ton = v.Flags.Has(0)
-	v.Slug = ReadString(r)
-	_objToID, _ := ReadTLObject(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
+	_objToID, _errToID := ReadTLObject(r)
+	if _errToID != nil {
+		return nil, _errToID
+	}
 	v.ToID = _objToID.(InputPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftResaleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftResaleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftResale(r)
 	}
 }
@@ -2023,16 +2442,23 @@ func (v *InputInvoiceStarGiftPrepaidUpgrade) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGiftPrepaidUpgrade deserializes a InputInvoiceStarGiftPrepaidUpgrade from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftPrepaidUpgrade(r io.Reader) (*InputInvoiceStarGiftPrepaidUpgrade, error) {
+func DecodeInputInvoiceStarGiftPrepaidUpgrade(r *Reader) (*InputInvoiceStarGiftPrepaidUpgrade, error) {
 	v := &InputInvoiceStarGiftPrepaidUpgrade{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.Hash = ReadString(r)
+	_rHash, _eHash := r.ReadString()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftPrepaidUpgradeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftPrepaidUpgradeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftPrepaidUpgrade(r)
 	}
 }
@@ -2057,15 +2483,18 @@ func (v *InputInvoicePremiumAuthCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoicePremiumAuthCode deserializes a InputInvoicePremiumAuthCode from a reader using the TL binary protocol.
-func DecodeInputInvoicePremiumAuthCode(r io.Reader) (*InputInvoicePremiumAuthCode, error) {
+func DecodeInputInvoicePremiumAuthCode(r *Reader) (*InputInvoicePremiumAuthCode, error) {
 	v := &InputInvoicePremiumAuthCode{}
-	_objPurpose, _ := ReadTLObject(r)
+	_objPurpose, _errPurpose := ReadTLObject(r)
+	if _errPurpose != nil {
+		return nil, _errPurpose
+	}
 	v.Purpose = _objPurpose.(InputStorePaymentPurposeClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoicePremiumAuthCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoicePremiumAuthCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoicePremiumAuthCode(r)
 	}
 }
@@ -2090,15 +2519,18 @@ func (v *InputInvoiceStarGiftDropOriginalDetails) Encode(b *bytes.Buffer) error 
 }
 
 // DecodeInputInvoiceStarGiftDropOriginalDetails deserializes a InputInvoiceStarGiftDropOriginalDetails from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftDropOriginalDetails(r io.Reader) (*InputInvoiceStarGiftDropOriginalDetails, error) {
+func DecodeInputInvoiceStarGiftDropOriginalDetails(r *Reader) (*InputInvoiceStarGiftDropOriginalDetails, error) {
 	v := &InputInvoiceStarGiftDropOriginalDetails{}
-	_objStargift, _ := ReadTLObject(r)
+	_objStargift, _errStargift := ReadTLObject(r)
+	if _errStargift != nil {
+		return nil, _errStargift
+	}
 	v.Stargift = _objStargift.(InputSavedStarGiftClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftDropOriginalDetailsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftDropOriginalDetailsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftDropOriginalDetails(r)
 	}
 }
@@ -2154,30 +2586,44 @@ func (v *InputInvoiceStarGiftAuctionBid) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputInvoiceStarGiftAuctionBid deserializes a InputInvoiceStarGiftAuctionBid from a reader using the TL binary protocol.
-func DecodeInputInvoiceStarGiftAuctionBid(r io.Reader) (*InputInvoiceStarGiftAuctionBid, error) {
+func DecodeInputInvoiceStarGiftAuctionBid(r *Reader) (*InputInvoiceStarGiftAuctionBid, error) {
 	v := &InputInvoiceStarGiftAuctionBid{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HideName = v.Flags.Has(0)
 	v.UpdateBid = v.Flags.Has(2)
 	if v.Flags.Has(3) {
-		_objPeer, _ := ReadTLObject(r)
+		_objPeer, _errPeer := ReadTLObject(r)
+		if _errPeer != nil {
+			return nil, _errPeer
+		}
 		v.Peer = _objPeer.(InputPeerClass)
 	}
-	v.GiftID = ReadLong(r)
-	v.BidAmount = ReadLong(r)
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
+	_rBidAmount, _eBidAmount := r.ReadInt64()
+	if _eBidAmount != nil {
+		return nil, _eBidAmount
+	}
+	v.BidAmount = _rBidAmount
 	if v.Flags.Has(1) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputInvoiceStarGiftAuctionBidTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputInvoiceStarGiftAuctionBidTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputInvoiceStarGiftAuctionBid(r)
 	}
 }
@@ -2205,14 +2651,18 @@ func (v *PaymentsExportedInvoice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsExportedInvoice deserializes a PaymentsExportedInvoice from a reader using the TL binary protocol.
-func DecodePaymentsExportedInvoice(r io.Reader) (*PaymentsExportedInvoice, error) {
+func DecodePaymentsExportedInvoice(r *Reader) (*PaymentsExportedInvoice, error) {
 	v := &PaymentsExportedInvoice{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsExportedInvoiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsExportedInvoiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsExportedInvoice(r)
 	}
 }
@@ -2306,11 +2756,11 @@ func (v *InputStorePaymentPremiumSubscription) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentPremiumSubscription deserializes a InputStorePaymentPremiumSubscription from a reader using the TL binary protocol.
-func DecodeInputStorePaymentPremiumSubscription(r io.Reader) (*InputStorePaymentPremiumSubscription, error) {
+func DecodeInputStorePaymentPremiumSubscription(r *Reader) (*InputStorePaymentPremiumSubscription, error) {
 	v := &InputStorePaymentPremiumSubscription{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Restore = v.Flags.Has(0)
@@ -2319,7 +2769,7 @@ func DecodeInputStorePaymentPremiumSubscription(r io.Reader) (*InputStorePayment
 }
 
 func init() {
-	Registry[InputStorePaymentPremiumSubscriptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentPremiumSubscriptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentPremiumSubscription(r)
 	}
 }
@@ -2348,17 +2798,28 @@ func (v *InputStorePaymentGiftPremium) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentGiftPremium deserializes a InputStorePaymentGiftPremium from a reader using the TL binary protocol.
-func DecodeInputStorePaymentGiftPremium(r io.Reader) (*InputStorePaymentGiftPremium, error) {
+func DecodeInputStorePaymentGiftPremium(r *Reader) (*InputStorePaymentGiftPremium, error) {
 	v := &InputStorePaymentGiftPremium{}
-	_objUserID, _ := ReadTLObject(r)
+	_objUserID, _errUserID := ReadTLObject(r)
+	if _errUserID != nil {
+		return nil, _errUserID
+	}
 	v.UserID = _objUserID.(InputUserClass)
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentGiftPremiumTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentGiftPremiumTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentGiftPremium(r)
 	}
 }
@@ -2412,38 +2873,62 @@ func (v *InputStorePaymentPremiumGiftCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentPremiumGiftCode deserializes a InputStorePaymentPremiumGiftCode from a reader using the TL binary protocol.
-func DecodeInputStorePaymentPremiumGiftCode(r io.Reader) (*InputStorePaymentPremiumGiftCode, error) {
+func DecodeInputStorePaymentPremiumGiftCode(r *Reader) (*InputStorePaymentPremiumGiftCode, error) {
 	v := &InputStorePaymentPremiumGiftCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]InputUserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(InputUserClass)
 	}
+	_ = _vhdrUsers
 	if v.Flags.Has(0) {
-		_objBoostPeer, _ := ReadTLObject(r)
+		_objBoostPeer, _errBoostPeer := ReadTLObject(r)
+		if _errBoostPeer != nil {
+			return nil, _errBoostPeer
+		}
 		v.BoostPeer = _objBoostPeer.(InputPeerClass)
 	}
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	if v.Flags.Has(1) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentPremiumGiftCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentPremiumGiftCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentPremiumGiftCode(r)
 	}
 }
@@ -2516,44 +3001,81 @@ func (v *InputStorePaymentPremiumGiveaway) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentPremiumGiveaway deserializes a InputStorePaymentPremiumGiveaway from a reader using the TL binary protocol.
-func DecodeInputStorePaymentPremiumGiveaway(r io.Reader) (*InputStorePaymentPremiumGiveaway, error) {
+func DecodeInputStorePaymentPremiumGiveaway(r *Reader) (*InputStorePaymentPremiumGiveaway, error) {
 	v := &InputStorePaymentPremiumGiveaway{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.WinnersAreVisible = v.Flags.Has(3)
-	_objBoostPeer, _ := ReadTLObject(r)
+	_objBoostPeer, _errBoostPeer := ReadTLObject(r)
+	if _errBoostPeer != nil {
+		return nil, _errBoostPeer
+	}
 	v.BoostPeer = _objBoostPeer.(InputPeerClass)
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntAdditionalPeers := ReadInt(r)
-		if err := checkVectorCount(_cntAdditionalPeers); err != nil {
-			return nil, err
+		_vhdrAdditionalPeers, _ehdrAdditionalPeers := r.ReadUint32()
+		if _ehdrAdditionalPeers != nil {
+			return nil, _ehdrAdditionalPeers
+		}
+		_cntAdditionalPeers, _ecntAdditionalPeers := r.ReadUint32()
+		if _ecntAdditionalPeers != nil {
+			return nil, _ecntAdditionalPeers
+		}
+		if _errAdditionalPeers := checkVectorCount(_cntAdditionalPeers); _errAdditionalPeers != nil {
+			return nil, _errAdditionalPeers
 		}
 		v.AdditionalPeers = make([]InputPeerClass, _cntAdditionalPeers)
 		for _iAdditionalPeers := range v.AdditionalPeers {
-			_objAdditionalPeers, _ := ReadTLObject(r)
+			_objAdditionalPeers, _errAdditionalPeers := ReadTLObject(r)
+			if _errAdditionalPeers != nil {
+				return nil, _errAdditionalPeers
+			}
 			v.AdditionalPeers[_iAdditionalPeers] = _objAdditionalPeers.(InputPeerClass)
 		}
+		_ = _vhdrAdditionalPeers
 	}
 	if v.Flags.Has(2) {
-		v.CountriesIso2 = ReadVectorString(r)
+		_vvCountriesIso2, _veCountriesIso2 := r.ReadVectorString()
+		if _veCountriesIso2 != nil {
+			return nil, _veCountriesIso2
+		}
+		v.CountriesIso2 = _vvCountriesIso2
 	}
 	if v.Flags.Has(4) {
-		v.PrizeDescription = ReadString(r)
+		_rPrizeDescription, _ePrizeDescription := r.ReadString()
+		if _ePrizeDescription != nil {
+			return nil, _ePrizeDescription
+		}
+		v.PrizeDescription = _rPrizeDescription
 	}
-	v.RandomID = ReadLong(r)
-	v.UntilDate = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rUntilDate, _eUntilDate := r.ReadInt32()
+	if _eUntilDate != nil {
+		return nil, _eUntilDate
+	}
+	v.UntilDate = _rUntilDate
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentPremiumGiveawayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentPremiumGiveawayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentPremiumGiveaway(r)
 	}
 }
@@ -2596,25 +3118,40 @@ func (v *InputStorePaymentStarsTopup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentStarsTopup deserializes a InputStorePaymentStarsTopup from a reader using the TL binary protocol.
-func DecodeInputStorePaymentStarsTopup(r io.Reader) (*InputStorePaymentStarsTopup, error) {
+func DecodeInputStorePaymentStarsTopup(r *Reader) (*InputStorePaymentStarsTopup, error) {
 	v := &InputStorePaymentStarsTopup{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Stars = ReadLong(r)
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	if v.Flags.Has(0) {
-		_objSpendPurposePeer, _ := ReadTLObject(r)
+		_objSpendPurposePeer, _errSpendPurposePeer := ReadTLObject(r)
+		if _errSpendPurposePeer != nil {
+			return nil, _errSpendPurposePeer
+		}
 		v.SpendPurposePeer = _objSpendPurposePeer.(InputPeerClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentStarsTopupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentStarsTopupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentStarsTopup(r)
 	}
 }
@@ -2645,18 +3182,33 @@ func (v *InputStorePaymentStarsGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentStarsGift deserializes a InputStorePaymentStarsGift from a reader using the TL binary protocol.
-func DecodeInputStorePaymentStarsGift(r io.Reader) (*InputStorePaymentStarsGift, error) {
+func DecodeInputStorePaymentStarsGift(r *Reader) (*InputStorePaymentStarsGift, error) {
 	v := &InputStorePaymentStarsGift{}
-	_objUserID, _ := ReadTLObject(r)
+	_objUserID, _errUserID := ReadTLObject(r)
+	if _errUserID != nil {
+		return nil, _errUserID
+	}
 	v.UserID = _objUserID.(InputUserClass)
-	v.Stars = ReadLong(r)
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentStarsGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentStarsGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentStarsGift(r)
 	}
 }
@@ -2733,46 +3285,91 @@ func (v *InputStorePaymentStarsGiveaway) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentStarsGiveaway deserializes a InputStorePaymentStarsGiveaway from a reader using the TL binary protocol.
-func DecodeInputStorePaymentStarsGiveaway(r io.Reader) (*InputStorePaymentStarsGiveaway, error) {
+func DecodeInputStorePaymentStarsGiveaway(r *Reader) (*InputStorePaymentStarsGiveaway, error) {
 	v := &InputStorePaymentStarsGiveaway{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.WinnersAreVisible = v.Flags.Has(3)
-	v.Stars = ReadLong(r)
-	_objBoostPeer, _ := ReadTLObject(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
+	_objBoostPeer, _errBoostPeer := ReadTLObject(r)
+	if _errBoostPeer != nil {
+		return nil, _errBoostPeer
+	}
 	v.BoostPeer = _objBoostPeer.(InputPeerClass)
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntAdditionalPeers := ReadInt(r)
-		if err := checkVectorCount(_cntAdditionalPeers); err != nil {
-			return nil, err
+		_vhdrAdditionalPeers, _ehdrAdditionalPeers := r.ReadUint32()
+		if _ehdrAdditionalPeers != nil {
+			return nil, _ehdrAdditionalPeers
+		}
+		_cntAdditionalPeers, _ecntAdditionalPeers := r.ReadUint32()
+		if _ecntAdditionalPeers != nil {
+			return nil, _ecntAdditionalPeers
+		}
+		if _errAdditionalPeers := checkVectorCount(_cntAdditionalPeers); _errAdditionalPeers != nil {
+			return nil, _errAdditionalPeers
 		}
 		v.AdditionalPeers = make([]InputPeerClass, _cntAdditionalPeers)
 		for _iAdditionalPeers := range v.AdditionalPeers {
-			_objAdditionalPeers, _ := ReadTLObject(r)
+			_objAdditionalPeers, _errAdditionalPeers := ReadTLObject(r)
+			if _errAdditionalPeers != nil {
+				return nil, _errAdditionalPeers
+			}
 			v.AdditionalPeers[_iAdditionalPeers] = _objAdditionalPeers.(InputPeerClass)
 		}
+		_ = _vhdrAdditionalPeers
 	}
 	if v.Flags.Has(2) {
-		v.CountriesIso2 = ReadVectorString(r)
+		_vvCountriesIso2, _veCountriesIso2 := r.ReadVectorString()
+		if _veCountriesIso2 != nil {
+			return nil, _veCountriesIso2
+		}
+		v.CountriesIso2 = _vvCountriesIso2
 	}
 	if v.Flags.Has(4) {
-		v.PrizeDescription = ReadString(r)
+		_rPrizeDescription, _ePrizeDescription := r.ReadString()
+		if _ePrizeDescription != nil {
+			return nil, _ePrizeDescription
+		}
+		v.PrizeDescription = _rPrizeDescription
 	}
-	v.RandomID = ReadLong(r)
-	v.UntilDate = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
-	v.Users = int32(ReadInt(r))
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rUntilDate, _eUntilDate := r.ReadInt32()
+	if _eUntilDate != nil {
+		return nil, _eUntilDate
+	}
+	v.UntilDate = _rUntilDate
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rUsers, _eUsers := r.ReadInt32()
+	if _eUsers != nil {
+		return nil, _eUsers
+	}
+	v.Users = _rUsers
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentStarsGiveawayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentStarsGiveawayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentStarsGiveaway(r)
 	}
 }
@@ -2816,24 +3413,44 @@ func (v *InputStorePaymentAuthCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStorePaymentAuthCode deserializes a InputStorePaymentAuthCode from a reader using the TL binary protocol.
-func DecodeInputStorePaymentAuthCode(r io.Reader) (*InputStorePaymentAuthCode, error) {
+func DecodeInputStorePaymentAuthCode(r *Reader) (*InputStorePaymentAuthCode, error) {
 	v := &InputStorePaymentAuthCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Restore = v.Flags.Has(0)
-	v.PhoneNumber = ReadString(r)
-	v.PhoneCodeHash = ReadString(r)
-	v.PremiumDays = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_rPhoneCodeHash, _ePhoneCodeHash := r.ReadString()
+	if _ePhoneCodeHash != nil {
+		return nil, _ePhoneCodeHash
+	}
+	v.PhoneCodeHash = _rPhoneCodeHash
+	_rPremiumDays, _ePremiumDays := r.ReadInt32()
+	if _ePremiumDays != nil {
+		return nil, _ePremiumDays
+	}
+	v.PremiumDays = _rPremiumDays
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[InputStorePaymentAuthCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStorePaymentAuthCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStorePaymentAuthCode(r)
 	}
 }
@@ -2863,15 +3480,23 @@ func (v *PaymentFormMethod) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentFormMethod deserializes a PaymentFormMethod from a reader using the TL binary protocol.
-func DecodePaymentFormMethod(r io.Reader) (*PaymentFormMethod, error) {
+func DecodePaymentFormMethod(r *Reader) (*PaymentFormMethod, error) {
 	v := &PaymentFormMethod{}
-	v.URL = ReadString(r)
-	v.Title = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentFormMethodTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentFormMethodTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentFormMethod(r)
 	}
 }
@@ -2934,30 +3559,54 @@ func (v *PremiumSubscriptionOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePremiumSubscriptionOption deserializes a PremiumSubscriptionOption from a reader using the TL binary protocol.
-func DecodePremiumSubscriptionOption(r io.Reader) (*PremiumSubscriptionOption, error) {
+func DecodePremiumSubscriptionOption(r *Reader) (*PremiumSubscriptionOption, error) {
 	v := &PremiumSubscriptionOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Current = v.Flags.Has(1)
 	v.CanPurchaseUpgrade = v.Flags.Has(2)
 	if v.Flags.Has(3) {
-		v.Transaction = ReadString(r)
+		_rTransaction, _eTransaction := r.ReadString()
+		if _eTransaction != nil {
+			return nil, _eTransaction
+		}
+		v.Transaction = _rTransaction
 	}
-	v.Months = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
-	v.BotURL = ReadString(r)
+	_rMonths, _eMonths := r.ReadInt32()
+	if _eMonths != nil {
+		return nil, _eMonths
+	}
+	v.Months = _rMonths
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rBotURL, _eBotURL := r.ReadString()
+	if _eBotURL != nil {
+		return nil, _eBotURL
+	}
+	v.BotURL = _rBotURL
 	if v.Flags.Has(0) {
-		v.StoreProduct = ReadString(r)
+		_rStoreProduct, _eStoreProduct := r.ReadString()
+		if _eStoreProduct != nil {
+			return nil, _eStoreProduct
+		}
+		v.StoreProduct = _rStoreProduct
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PremiumSubscriptionOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PremiumSubscriptionOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePremiumSubscriptionOption(r)
 	}
 }
@@ -3012,28 +3661,52 @@ func (v *PremiumGiftCodeOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePremiumGiftCodeOption deserializes a PremiumGiftCodeOption from a reader using the TL binary protocol.
-func DecodePremiumGiftCodeOption(r io.Reader) (*PremiumGiftCodeOption, error) {
+func DecodePremiumGiftCodeOption(r *Reader) (*PremiumGiftCodeOption, error) {
 	v := &PremiumGiftCodeOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Users = int32(ReadInt(r))
-	v.Months = int32(ReadInt(r))
+	_rUsers, _eUsers := r.ReadInt32()
+	if _eUsers != nil {
+		return nil, _eUsers
+	}
+	v.Users = _rUsers
+	_rMonths, _eMonths := r.ReadInt32()
+	if _eMonths != nil {
+		return nil, _eMonths
+	}
+	v.Months = _rMonths
 	if v.Flags.Has(0) {
-		v.StoreProduct = ReadString(r)
+		_rStoreProduct, _eStoreProduct := r.ReadString()
+		if _eStoreProduct != nil {
+			return nil, _eStoreProduct
+		}
+		v.StoreProduct = _rStoreProduct
 	}
 	if v.Flags.Has(1) {
-		v.StoreQuantity = int32(ReadInt(r))
+		_rStoreQuantity, _eStoreQuantity := r.ReadInt32()
+		if _eStoreQuantity != nil {
+			return nil, _eStoreQuantity
+		}
+		v.StoreQuantity = _rStoreQuantity
 	}
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[PremiumGiftCodeOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PremiumGiftCodeOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePremiumGiftCodeOption(r)
 	}
 }
@@ -3114,54 +3787,97 @@ func (v *PaymentsCheckedGiftCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsCheckedGiftCode deserializes a PaymentsCheckedGiftCode from a reader using the TL binary protocol.
-func DecodePaymentsCheckedGiftCode(r io.Reader) (*PaymentsCheckedGiftCode, error) {
+func DecodePaymentsCheckedGiftCode(r *Reader) (*PaymentsCheckedGiftCode, error) {
 	v := &PaymentsCheckedGiftCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ViaGiveaway = v.Flags.Has(2)
 	if v.Flags.Has(4) {
-		_objFromID, _ := ReadTLObject(r)
+		_objFromID, _errFromID := ReadTLObject(r)
+		if _errFromID != nil {
+			return nil, _errFromID
+		}
 		v.FromID = _objFromID.(PeerClass)
 	}
 	if v.Flags.Has(3) {
-		v.GiveawayMsgID = int32(ReadInt(r))
+		_rGiveawayMsgID, _eGiveawayMsgID := r.ReadInt32()
+		if _eGiveawayMsgID != nil {
+			return nil, _eGiveawayMsgID
+		}
+		v.GiveawayMsgID = _rGiveawayMsgID
 	}
 	if v.Flags.Has(0) {
-		v.ToID = ReadLong(r)
+		_rToID, _eToID := r.ReadInt64()
+		if _eToID != nil {
+			return nil, _eToID
+		}
+		v.ToID = _rToID
 	}
-	v.Date = int32(ReadInt(r))
-	v.Days = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rDays, _eDays := r.ReadInt32()
+	if _eDays != nil {
+		return nil, _eDays
+	}
+	v.Days = _rDays
 	if v.Flags.Has(1) {
-		v.UsedDate = int32(ReadInt(r))
+		_rUsedDate, _eUsedDate := r.ReadInt32()
+		if _eUsedDate != nil {
+			return nil, _eUsedDate
+		}
+		v.UsedDate = _rUsedDate
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsCheckedGiftCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsCheckedGiftCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsCheckedGiftCode(r)
 	}
 }
@@ -3242,30 +3958,46 @@ func (v *PaymentsGiveawayInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsGiveawayInfo deserializes a PaymentsGiveawayInfo from a reader using the TL binary protocol.
-func DecodePaymentsGiveawayInfo(r io.Reader) (*PaymentsGiveawayInfo, error) {
+func DecodePaymentsGiveawayInfo(r *Reader) (*PaymentsGiveawayInfo, error) {
 	v := &PaymentsGiveawayInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Participating = v.Flags.Has(0)
 	v.PreparingResults = v.Flags.Has(3)
-	v.StartDate = int32(ReadInt(r))
+	_rStartDate, _eStartDate := r.ReadInt32()
+	if _eStartDate != nil {
+		return nil, _eStartDate
+	}
+	v.StartDate = _rStartDate
 	if v.Flags.Has(1) {
-		v.JoinedTooEarlyDate = int32(ReadInt(r))
+		_rJoinedTooEarlyDate, _eJoinedTooEarlyDate := r.ReadInt32()
+		if _eJoinedTooEarlyDate != nil {
+			return nil, _eJoinedTooEarlyDate
+		}
+		v.JoinedTooEarlyDate = _rJoinedTooEarlyDate
 	}
 	if v.Flags.Has(2) {
-		v.AdminDisallowedChatID = ReadLong(r)
+		_rAdminDisallowedChatID, _eAdminDisallowedChatID := r.ReadInt64()
+		if _eAdminDisallowedChatID != nil {
+			return nil, _eAdminDisallowedChatID
+		}
+		v.AdminDisallowedChatID = _rAdminDisallowedChatID
 	}
 	if v.Flags.Has(4) {
-		v.DisallowedCountry = ReadString(r)
+		_rDisallowedCountry, _eDisallowedCountry := r.ReadString()
+		if _eDisallowedCountry != nil {
+			return nil, _eDisallowedCountry
+		}
+		v.DisallowedCountry = _rDisallowedCountry
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsGiveawayInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsGiveawayInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsGiveawayInfo(r)
 	}
 }
@@ -3330,32 +4062,56 @@ func (v *PaymentsGiveawayInfoResults) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsGiveawayInfoResults deserializes a PaymentsGiveawayInfoResults from a reader using the TL binary protocol.
-func DecodePaymentsGiveawayInfoResults(r io.Reader) (*PaymentsGiveawayInfoResults, error) {
+func DecodePaymentsGiveawayInfoResults(r *Reader) (*PaymentsGiveawayInfoResults, error) {
 	v := &PaymentsGiveawayInfoResults{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Winner = v.Flags.Has(0)
 	v.Refunded = v.Flags.Has(1)
-	v.StartDate = int32(ReadInt(r))
+	_rStartDate, _eStartDate := r.ReadInt32()
+	if _eStartDate != nil {
+		return nil, _eStartDate
+	}
+	v.StartDate = _rStartDate
 	if v.Flags.Has(3) {
-		v.GiftCodeSlug = ReadString(r)
+		_rGiftCodeSlug, _eGiftCodeSlug := r.ReadString()
+		if _eGiftCodeSlug != nil {
+			return nil, _eGiftCodeSlug
+		}
+		v.GiftCodeSlug = _rGiftCodeSlug
 	}
 	if v.Flags.Has(4) {
-		v.StarsPrize = ReadLong(r)
+		_rStarsPrize, _eStarsPrize := r.ReadInt64()
+		if _eStarsPrize != nil {
+			return nil, _eStarsPrize
+		}
+		v.StarsPrize = _rStarsPrize
 	}
-	v.FinishDate = int32(ReadInt(r))
-	v.WinnersCount = int32(ReadInt(r))
+	_rFinishDate, _eFinishDate := r.ReadInt32()
+	if _eFinishDate != nil {
+		return nil, _eFinishDate
+	}
+	v.FinishDate = _rFinishDate
+	_rWinnersCount, _eWinnersCount := r.ReadInt32()
+	if _eWinnersCount != nil {
+		return nil, _eWinnersCount
+	}
+	v.WinnersCount = _rWinnersCount
 	if v.Flags.Has(2) {
-		v.ActivatedCount = int32(ReadInt(r))
+		_rActivatedCount, _eActivatedCount := r.ReadInt32()
+		if _eActivatedCount != nil {
+			return nil, _eActivatedCount
+		}
+		v.ActivatedCount = _rActivatedCount
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsGiveawayInfoResultsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsGiveawayInfoResultsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsGiveawayInfoResults(r)
 	}
 }
@@ -3406,17 +4162,33 @@ func (v *PrepaidGiveaway) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePrepaidGiveaway deserializes a PrepaidGiveaway from a reader using the TL binary protocol.
-func DecodePrepaidGiveaway(r io.Reader) (*PrepaidGiveaway, error) {
+func DecodePrepaidGiveaway(r *Reader) (*PrepaidGiveaway, error) {
 	v := &PrepaidGiveaway{}
-	v.ID = ReadLong(r)
-	v.Months = int32(ReadInt(r))
-	v.Quantity = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rMonths, _eMonths := r.ReadInt32()
+	if _eMonths != nil {
+		return nil, _eMonths
+	}
+	v.Months = _rMonths
+	_rQuantity, _eQuantity := r.ReadInt32()
+	if _eQuantity != nil {
+		return nil, _eQuantity
+	}
+	v.Quantity = _rQuantity
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[PrepaidGiveawayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PrepaidGiveawayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePrepaidGiveaway(r)
 	}
 }
@@ -3449,18 +4221,38 @@ func (v *PrepaidStarsGiveaway) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePrepaidStarsGiveaway deserializes a PrepaidStarsGiveaway from a reader using the TL binary protocol.
-func DecodePrepaidStarsGiveaway(r io.Reader) (*PrepaidStarsGiveaway, error) {
+func DecodePrepaidStarsGiveaway(r *Reader) (*PrepaidStarsGiveaway, error) {
 	v := &PrepaidStarsGiveaway{}
-	v.ID = ReadLong(r)
-	v.Stars = ReadLong(r)
-	v.Quantity = int32(ReadInt(r))
-	v.Boosts = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
+	_rQuantity, _eQuantity := r.ReadInt32()
+	if _eQuantity != nil {
+		return nil, _eQuantity
+	}
+	v.Quantity = _rQuantity
+	_rBoosts, _eBoosts := r.ReadInt32()
+	if _eBoosts != nil {
+		return nil, _eBoosts
+	}
+	v.Boosts = _rBoosts
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[PrepaidStarsGiveawayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PrepaidStarsGiveawayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePrepaidStarsGiveaway(r)
 	}
 }
@@ -3546,39 +4338,71 @@ func (v *Boost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBoost deserializes a Boost from a reader using the TL binary protocol.
-func DecodeBoost(r io.Reader) (*Boost, error) {
+func DecodeBoost(r *Reader) (*Boost, error) {
 	v := &Boost{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Gift = v.Flags.Has(1)
 	v.Giveaway = v.Flags.Has(2)
 	v.Unclaimed = v.Flags.Has(3)
-	v.ID = ReadString(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(0) {
-		v.UserID = ReadLong(r)
+		_rUserID, _eUserID := r.ReadInt64()
+		if _eUserID != nil {
+			return nil, _eUserID
+		}
+		v.UserID = _rUserID
 	}
 	if v.Flags.Has(2) {
-		v.GiveawayMsgID = int32(ReadInt(r))
+		_rGiveawayMsgID, _eGiveawayMsgID := r.ReadInt32()
+		if _eGiveawayMsgID != nil {
+			return nil, _eGiveawayMsgID
+		}
+		v.GiveawayMsgID = _rGiveawayMsgID
 	}
-	v.Date = int32(ReadInt(r))
-	v.Expires = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	if v.Flags.Has(4) {
-		v.UsedGiftSlug = ReadString(r)
+		_rUsedGiftSlug, _eUsedGiftSlug := r.ReadString()
+		if _eUsedGiftSlug != nil {
+			return nil, _eUsedGiftSlug
+		}
+		v.UsedGiftSlug = _rUsedGiftSlug
 	}
 	if v.Flags.Has(5) {
-		v.Multiplier = int32(ReadInt(r))
+		_rMultiplier, _eMultiplier := r.ReadInt32()
+		if _eMultiplier != nil {
+			return nil, _eMultiplier
+		}
+		v.Multiplier = _rMultiplier
 	}
 	if v.Flags.Has(6) {
-		v.Stars = ReadLong(r)
+		_rStars, _eStars := r.ReadInt64()
+		if _eStars != nil {
+			return nil, _eStars
+		}
+		v.Stars = _rStars
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[BoostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BoostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBoost(r)
 	}
 }
@@ -3631,28 +4455,47 @@ func (v *MyBoost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMyBoost deserializes a MyBoost from a reader using the TL binary protocol.
-func DecodeMyBoost(r io.Reader) (*MyBoost, error) {
+func DecodeMyBoost(r *Reader) (*MyBoost, error) {
 	v := &MyBoost{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Slot = int32(ReadInt(r))
+	_rSlot, _eSlot := r.ReadInt32()
+	if _eSlot != nil {
+		return nil, _eSlot
+	}
+	v.Slot = _rSlot
 	if v.Flags.Has(0) {
-		_objPeer, _ := ReadTLObject(r)
+		_objPeer, _errPeer := ReadTLObject(r)
+		if _errPeer != nil {
+			return nil, _errPeer
+		}
 		v.Peer = _objPeer.(PeerClass)
 	}
-	v.Date = int32(ReadInt(r))
-	v.Expires = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	if v.Flags.Has(1) {
-		v.CooldownUntilDate = int32(ReadInt(r))
+		_rCooldownUntilDate, _eCooldownUntilDate := r.ReadInt32()
+		if _eCooldownUntilDate != nil {
+			return nil, _eCooldownUntilDate
+		}
+		v.CooldownUntilDate = _rCooldownUntilDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[MyBoostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MyBoostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMyBoost(r)
 	}
 }
@@ -3702,25 +4545,41 @@ func (v *StarsTopupOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTopupOption deserializes a StarsTopupOption from a reader using the TL binary protocol.
-func DecodeStarsTopupOption(r io.Reader) (*StarsTopupOption, error) {
+func DecodeStarsTopupOption(r *Reader) (*StarsTopupOption, error) {
 	v := &StarsTopupOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Extended = v.Flags.Has(1)
-	v.Stars = ReadLong(r)
-	if v.Flags.Has(0) {
-		v.StoreProduct = ReadString(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
 	}
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	v.Stars = _rStars
+	if v.Flags.Has(0) {
+		_rStoreProduct, _eStoreProduct := r.ReadString()
+		if _eStoreProduct != nil {
+			return nil, _eStoreProduct
+		}
+		v.StoreProduct = _rStoreProduct
+	}
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTopupOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTopupOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTopupOption(r)
 	}
 }
@@ -3954,11 +4813,11 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransaction deserializes a StarsTransaction from a reader using the TL binary protocol.
-func DecodeStarsTransaction(r io.Reader) (*StarsTransaction, error) {
+func DecodeStarsTransaction(r *Reader) (*StarsTransaction, error) {
 	v := &StarsTransaction{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Refund = v.Flags.Has(3)
@@ -3975,87 +4834,179 @@ func DecodeStarsTransaction(r io.Reader) (*StarsTransaction, error) {
 	v.PhonegroupMessage = v.Flags.Has(27)
 	v.StargiftAuctionBid = v.Flags.Has(28)
 	v.Offer = v.Flags.Has(29)
-	v.ID = ReadString(r)
-	_objAmount, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_objAmount, _errAmount := ReadTLObject(r)
+	if _errAmount != nil {
+		return nil, _errAmount
+	}
 	v.Amount = _objAmount.(StarsAmountClass)
-	v.Date = int32(ReadInt(r))
-	_objPeer, _ := ReadTLObject(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(StarsTransactionPeerClass)
 	if v.Flags.Has(0) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Description = ReadString(r)
+		_rDescription, _eDescription := r.ReadString()
+		if _eDescription != nil {
+			return nil, _eDescription
+		}
+		v.Description = _rDescription
 	}
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
 	if v.Flags.Has(5) {
-		v.TransactionDate = int32(ReadInt(r))
+		_rTransactionDate, _eTransactionDate := r.ReadInt32()
+		if _eTransactionDate != nil {
+			return nil, _eTransactionDate
+		}
+		v.TransactionDate = _rTransactionDate
 	}
 	if v.Flags.Has(5) {
-		v.TransactionURL = ReadString(r)
+		_rTransactionURL, _eTransactionURL := r.ReadString()
+		if _eTransactionURL != nil {
+			return nil, _eTransactionURL
+		}
+		v.TransactionURL = _rTransactionURL
 	}
 	if v.Flags.Has(7) {
-		v.BotPayload = ReadBytes(r)
+		_rBotPayload, _eBotPayload := r.ReadBytes()
+		if _eBotPayload != nil {
+			return nil, _eBotPayload
+		}
+		v.BotPayload = _rBotPayload
 	}
 	if v.Flags.Has(8) {
-		v.MsgID = int32(ReadInt(r))
+		_rMsgID, _eMsgID := r.ReadInt32()
+		if _eMsgID != nil {
+			return nil, _eMsgID
+		}
+		v.MsgID = _rMsgID
 	}
 	if v.Flags.Has(9) {
-		ReadInt(r)
-		_cntExtendedMedia := ReadInt(r)
-		if err := checkVectorCount(_cntExtendedMedia); err != nil {
-			return nil, err
+		_vhdrExtendedMedia, _ehdrExtendedMedia := r.ReadUint32()
+		if _ehdrExtendedMedia != nil {
+			return nil, _ehdrExtendedMedia
+		}
+		_cntExtendedMedia, _ecntExtendedMedia := r.ReadUint32()
+		if _ecntExtendedMedia != nil {
+			return nil, _ecntExtendedMedia
+		}
+		if _errExtendedMedia := checkVectorCount(_cntExtendedMedia); _errExtendedMedia != nil {
+			return nil, _errExtendedMedia
 		}
 		v.ExtendedMedia = make([]MessageMediaClass, _cntExtendedMedia)
 		for _iExtendedMedia := range v.ExtendedMedia {
-			_objExtendedMedia, _ := ReadTLObject(r)
+			_objExtendedMedia, _errExtendedMedia := ReadTLObject(r)
+			if _errExtendedMedia != nil {
+				return nil, _errExtendedMedia
+			}
 			v.ExtendedMedia[_iExtendedMedia] = _objExtendedMedia.(MessageMediaClass)
 		}
+		_ = _vhdrExtendedMedia
 	}
 	if v.Flags.Has(12) {
-		v.SubscriptionPeriod = int32(ReadInt(r))
+		_rSubscriptionPeriod, _eSubscriptionPeriod := r.ReadInt32()
+		if _eSubscriptionPeriod != nil {
+			return nil, _eSubscriptionPeriod
+		}
+		v.SubscriptionPeriod = _rSubscriptionPeriod
 	}
 	if v.Flags.Has(13) {
-		v.GiveawayPostID = int32(ReadInt(r))
+		_rGiveawayPostID, _eGiveawayPostID := r.ReadInt32()
+		if _eGiveawayPostID != nil {
+			return nil, _eGiveawayPostID
+		}
+		v.GiveawayPostID = _rGiveawayPostID
 	}
 	if v.Flags.Has(14) {
-		_objStargift, _ := ReadTLObject(r)
+		_objStargift, _errStargift := ReadTLObject(r)
+		if _errStargift != nil {
+			return nil, _errStargift
+		}
 		v.Stargift = _objStargift.(StarGiftClass)
 	}
 	if v.Flags.Has(15) {
-		v.FloodskipNumber = int32(ReadInt(r))
+		_rFloodskipNumber, _eFloodskipNumber := r.ReadInt32()
+		if _eFloodskipNumber != nil {
+			return nil, _eFloodskipNumber
+		}
+		v.FloodskipNumber = _rFloodskipNumber
 	}
 	if v.Flags.Has(16) {
-		v.StarrefCommissionPermille = int32(ReadInt(r))
+		_rStarrefCommissionPermille, _eStarrefCommissionPermille := r.ReadInt32()
+		if _eStarrefCommissionPermille != nil {
+			return nil, _eStarrefCommissionPermille
+		}
+		v.StarrefCommissionPermille = _rStarrefCommissionPermille
 	}
 	if v.Flags.Has(17) {
-		_objStarrefPeer, _ := ReadTLObject(r)
+		_objStarrefPeer, _errStarrefPeer := ReadTLObject(r)
+		if _errStarrefPeer != nil {
+			return nil, _errStarrefPeer
+		}
 		v.StarrefPeer = _objStarrefPeer.(PeerClass)
 	}
 	if v.Flags.Has(17) {
-		_objStarrefAmount, _ := ReadTLObject(r)
+		_objStarrefAmount, _errStarrefAmount := ReadTLObject(r)
+		if _errStarrefAmount != nil {
+			return nil, _errStarrefAmount
+		}
 		v.StarrefAmount = _objStarrefAmount.(StarsAmountClass)
 	}
 	if v.Flags.Has(19) {
-		v.PaidMessages = int32(ReadInt(r))
+		_rPaidMessages, _ePaidMessages := r.ReadInt32()
+		if _ePaidMessages != nil {
+			return nil, _ePaidMessages
+		}
+		v.PaidMessages = _rPaidMessages
 	}
 	if v.Flags.Has(20) {
-		v.PremiumGiftMonths = int32(ReadInt(r))
+		_rPremiumGiftMonths, _ePremiumGiftMonths := r.ReadInt32()
+		if _ePremiumGiftMonths != nil {
+			return nil, _ePremiumGiftMonths
+		}
+		v.PremiumGiftMonths = _rPremiumGiftMonths
 	}
 	if v.Flags.Has(23) {
-		v.AdsProceedsFromDate = int32(ReadInt(r))
+		_rAdsProceedsFromDate, _eAdsProceedsFromDate := r.ReadInt32()
+		if _eAdsProceedsFromDate != nil {
+			return nil, _eAdsProceedsFromDate
+		}
+		v.AdsProceedsFromDate = _rAdsProceedsFromDate
 	}
 	if v.Flags.Has(23) {
-		v.AdsProceedsToDate = int32(ReadInt(r))
+		_rAdsProceedsToDate, _eAdsProceedsToDate := r.ReadInt32()
+		if _eAdsProceedsToDate != nil {
+			return nil, _eAdsProceedsToDate
+		}
+		v.AdsProceedsToDate = _rAdsProceedsToDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransaction(r)
 	}
 }
@@ -4145,73 +5096,128 @@ func (v *PaymentsStarsStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarsStatus deserializes a PaymentsStarsStatus from a reader using the TL binary protocol.
-func DecodePaymentsStarsStatus(r io.Reader) (*PaymentsStarsStatus, error) {
+func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 	v := &PaymentsStarsStatus{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objBalance, _ := ReadTLObject(r)
+	_objBalance, _errBalance := ReadTLObject(r)
+	if _errBalance != nil {
+		return nil, _errBalance
+	}
 	v.Balance = _objBalance.(StarsAmountClass)
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntSubscriptions := ReadInt(r)
-		if err := checkVectorCount(_cntSubscriptions); err != nil {
-			return nil, err
+		_vhdrSubscriptions, _ehdrSubscriptions := r.ReadUint32()
+		if _ehdrSubscriptions != nil {
+			return nil, _ehdrSubscriptions
+		}
+		_cntSubscriptions, _ecntSubscriptions := r.ReadUint32()
+		if _ecntSubscriptions != nil {
+			return nil, _ecntSubscriptions
+		}
+		if _errSubscriptions := checkVectorCount(_cntSubscriptions); _errSubscriptions != nil {
+			return nil, _errSubscriptions
 		}
 		v.Subscriptions = make([]*StarsSubscription, _cntSubscriptions)
 		for _iSubscriptions := range v.Subscriptions {
-			_objSubscriptions, _ := ReadTLObject(r)
+			_objSubscriptions, _errSubscriptions := ReadTLObject(r)
+			if _errSubscriptions != nil {
+				return nil, _errSubscriptions
+			}
 			v.Subscriptions[_iSubscriptions] = _objSubscriptions.(*StarsSubscription)
 		}
+		_ = _vhdrSubscriptions
 	}
 	if v.Flags.Has(2) {
-		v.SubscriptionsNextOffset = ReadString(r)
+		_rSubscriptionsNextOffset, _eSubscriptionsNextOffset := r.ReadString()
+		if _eSubscriptionsNextOffset != nil {
+			return nil, _eSubscriptionsNextOffset
+		}
+		v.SubscriptionsNextOffset = _rSubscriptionsNextOffset
 	}
 	if v.Flags.Has(4) {
-		v.SubscriptionsMissingBalance = ReadLong(r)
+		_rSubscriptionsMissingBalance, _eSubscriptionsMissingBalance := r.ReadInt64()
+		if _eSubscriptionsMissingBalance != nil {
+			return nil, _eSubscriptionsMissingBalance
+		}
+		v.SubscriptionsMissingBalance = _rSubscriptionsMissingBalance
 	}
 	if v.Flags.Has(3) {
-		ReadInt(r)
-		_cntHistory := ReadInt(r)
-		if err := checkVectorCount(_cntHistory); err != nil {
-			return nil, err
+		_vhdrHistory, _ehdrHistory := r.ReadUint32()
+		if _ehdrHistory != nil {
+			return nil, _ehdrHistory
+		}
+		_cntHistory, _ecntHistory := r.ReadUint32()
+		if _ecntHistory != nil {
+			return nil, _ecntHistory
+		}
+		if _errHistory := checkVectorCount(_cntHistory); _errHistory != nil {
+			return nil, _errHistory
 		}
 		v.History = make([]*StarsTransaction, _cntHistory)
 		for _iHistory := range v.History {
-			_objHistory, _ := ReadTLObject(r)
+			_objHistory, _errHistory := ReadTLObject(r)
+			if _errHistory != nil {
+				return nil, _errHistory
+			}
 			v.History[_iHistory] = _objHistory.(*StarsTransaction)
 		}
+		_ = _vhdrHistory
 	}
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarsStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarsStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarsStatus(r)
 	}
 }
@@ -4261,28 +5267,41 @@ func (v *StarsRevenueStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsRevenueStatus deserializes a StarsRevenueStatus from a reader using the TL binary protocol.
-func DecodeStarsRevenueStatus(r io.Reader) (*StarsRevenueStatus, error) {
+func DecodeStarsRevenueStatus(r *Reader) (*StarsRevenueStatus, error) {
 	v := &StarsRevenueStatus{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.WithdrawalEnabled = v.Flags.Has(0)
-	_objCurrentBalance, _ := ReadTLObject(r)
+	_objCurrentBalance, _errCurrentBalance := ReadTLObject(r)
+	if _errCurrentBalance != nil {
+		return nil, _errCurrentBalance
+	}
 	v.CurrentBalance = _objCurrentBalance.(StarsAmountClass)
-	_objAvailableBalance, _ := ReadTLObject(r)
+	_objAvailableBalance, _errAvailableBalance := ReadTLObject(r)
+	if _errAvailableBalance != nil {
+		return nil, _errAvailableBalance
+	}
 	v.AvailableBalance = _objAvailableBalance.(StarsAmountClass)
-	_objOverallRevenue, _ := ReadTLObject(r)
+	_objOverallRevenue, _errOverallRevenue := ReadTLObject(r)
+	if _errOverallRevenue != nil {
+		return nil, _errOverallRevenue
+	}
 	v.OverallRevenue = _objOverallRevenue.(StarsAmountClass)
 	if v.Flags.Has(1) {
-		v.NextWithdrawalAt = int32(ReadInt(r))
+		_rNextWithdrawalAt, _eNextWithdrawalAt := r.ReadInt32()
+		if _eNextWithdrawalAt != nil {
+			return nil, _eNextWithdrawalAt
+		}
+		v.NextWithdrawalAt = _rNextWithdrawalAt
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsRevenueStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsRevenueStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsRevenueStatus(r)
 	}
 }
@@ -4328,27 +5347,40 @@ func (v *PaymentsStarsRevenueStats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarsRevenueStats deserializes a PaymentsStarsRevenueStats from a reader using the TL binary protocol.
-func DecodePaymentsStarsRevenueStats(r io.Reader) (*PaymentsStarsRevenueStats, error) {
+func DecodePaymentsStarsRevenueStats(r *Reader) (*PaymentsStarsRevenueStats, error) {
 	v := &PaymentsStarsRevenueStats{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		_objTopHoursGraph, _ := ReadTLObject(r)
+		_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
+		if _errTopHoursGraph != nil {
+			return nil, _errTopHoursGraph
+		}
 		v.TopHoursGraph = _objTopHoursGraph.(StatsGraphClass)
 	}
-	_objRevenueGraph, _ := ReadTLObject(r)
+	_objRevenueGraph, _errRevenueGraph := ReadTLObject(r)
+	if _errRevenueGraph != nil {
+		return nil, _errRevenueGraph
+	}
 	v.RevenueGraph = _objRevenueGraph.(StatsGraphClass)
-	_objStatus, _ := ReadTLObject(r)
+	_objStatus, _errStatus := ReadTLObject(r)
+	if _errStatus != nil {
+		return nil, _errStatus
+	}
 	v.Status = _objStatus.(*StarsRevenueStatus)
-	v.UsdRate = ReadDouble(r)
+	_rUsdRate, _eUsdRate := r.ReadFloat64()
+	if _eUsdRate != nil {
+		return nil, _eUsdRate
+	}
+	v.UsdRate = _rUsdRate
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarsRevenueStatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarsRevenueStatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarsRevenueStats(r)
 	}
 }
@@ -4376,14 +5408,18 @@ func (v *PaymentsStarsRevenueWithdrawalURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarsRevenueWithdrawalURL deserializes a PaymentsStarsRevenueWithdrawalURL from a reader using the TL binary protocol.
-func DecodePaymentsStarsRevenueWithdrawalURL(r io.Reader) (*PaymentsStarsRevenueWithdrawalURL, error) {
+func DecodePaymentsStarsRevenueWithdrawalURL(r *Reader) (*PaymentsStarsRevenueWithdrawalURL, error) {
 	v := &PaymentsStarsRevenueWithdrawalURL{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarsRevenueWithdrawalURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarsRevenueWithdrawalURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarsRevenueWithdrawalURL(r)
 	}
 }
@@ -4411,14 +5447,18 @@ func (v *PaymentsStarsRevenueAdsAccountURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarsRevenueAdsAccountURL deserializes a PaymentsStarsRevenueAdsAccountURL from a reader using the TL binary protocol.
-func DecodePaymentsStarsRevenueAdsAccountURL(r io.Reader) (*PaymentsStarsRevenueAdsAccountURL, error) {
+func DecodePaymentsStarsRevenueAdsAccountURL(r *Reader) (*PaymentsStarsRevenueAdsAccountURL, error) {
 	v := &PaymentsStarsRevenueAdsAccountURL{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarsRevenueAdsAccountURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarsRevenueAdsAccountURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarsRevenueAdsAccountURL(r)
 	}
 }
@@ -4457,20 +5497,24 @@ func (v *InputStarsTransaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStarsTransaction deserializes a InputStarsTransaction from a reader using the TL binary protocol.
-func DecodeInputStarsTransaction(r io.Reader) (*InputStarsTransaction, error) {
+func DecodeInputStarsTransaction(r *Reader) (*InputStarsTransaction, error) {
 	v := &InputStarsTransaction{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Refund = v.Flags.Has(0)
-	v.ID = ReadString(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[InputStarsTransactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStarsTransactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStarsTransaction(r)
 	}
 }
@@ -4520,25 +5564,41 @@ func (v *StarsGiftOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsGiftOption deserializes a StarsGiftOption from a reader using the TL binary protocol.
-func DecodeStarsGiftOption(r io.Reader) (*StarsGiftOption, error) {
+func DecodeStarsGiftOption(r *Reader) (*StarsGiftOption, error) {
 	v := &StarsGiftOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Extended = v.Flags.Has(1)
-	v.Stars = ReadLong(r)
-	if v.Flags.Has(0) {
-		v.StoreProduct = ReadString(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
 	}
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	v.Stars = _rStars
+	if v.Flags.Has(0) {
+		_rStoreProduct, _eStoreProduct := r.ReadString()
+		if _eStoreProduct != nil {
+			return nil, _eStoreProduct
+		}
+		v.StoreProduct = _rStoreProduct
+	}
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[StarsGiftOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsGiftOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsGiftOption(r)
 	}
 }
@@ -4568,15 +5628,23 @@ func (v *StarsSubscriptionPricing) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsSubscriptionPricing deserializes a StarsSubscriptionPricing from a reader using the TL binary protocol.
-func DecodeStarsSubscriptionPricing(r io.Reader) (*StarsSubscriptionPricing, error) {
+func DecodeStarsSubscriptionPricing(r *Reader) (*StarsSubscriptionPricing, error) {
 	v := &StarsSubscriptionPricing{}
-	v.Period = int32(ReadInt(r))
-	v.Amount = ReadLong(r)
+	_rPeriod, _ePeriod := r.ReadInt32()
+	if _ePeriod != nil {
+		return nil, _ePeriod
+	}
+	v.Period = _rPeriod
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[StarsSubscriptionPricingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsSubscriptionPricingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsSubscriptionPricing(r)
 	}
 }
@@ -4661,41 +5729,70 @@ func (v *StarsSubscription) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsSubscription deserializes a StarsSubscription from a reader using the TL binary protocol.
-func DecodeStarsSubscription(r io.Reader) (*StarsSubscription, error) {
+func DecodeStarsSubscription(r *Reader) (*StarsSubscription, error) {
 	v := &StarsSubscription{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Canceled = v.Flags.Has(0)
 	v.CanRefulfill = v.Flags.Has(1)
 	v.MissingBalance = v.Flags.Has(2)
 	v.BotCanceled = v.Flags.Has(7)
-	v.ID = ReadString(r)
-	_objPeer, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.UntilDate = int32(ReadInt(r))
-	_objPricing, _ := ReadTLObject(r)
+	_rUntilDate, _eUntilDate := r.ReadInt32()
+	if _eUntilDate != nil {
+		return nil, _eUntilDate
+	}
+	v.UntilDate = _rUntilDate
+	_objPricing, _errPricing := ReadTLObject(r)
+	if _errPricing != nil {
+		return nil, _errPricing
+	}
 	v.Pricing = _objPricing.(*StarsSubscriptionPricing)
 	if v.Flags.Has(3) {
-		v.ChatInviteHash = ReadString(r)
+		_rChatInviteHash, _eChatInviteHash := r.ReadString()
+		if _eChatInviteHash != nil {
+			return nil, _eChatInviteHash
+		}
+		v.ChatInviteHash = _rChatInviteHash
 	}
 	if v.Flags.Has(4) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(5) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(WebDocumentClass)
 	}
 	if v.Flags.Has(6) {
-		v.InvoiceSlug = ReadString(r)
+		_rInvoiceSlug, _eInvoiceSlug := r.ReadString()
+		if _eInvoiceSlug != nil {
+			return nil, _eInvoiceSlug
+		}
+		v.InvoiceSlug = _rInvoiceSlug
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsSubscriptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsSubscriptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsSubscription(r)
 	}
 }
@@ -4757,37 +5854,67 @@ func (v *StarsGiveawayOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsGiveawayOption deserializes a StarsGiveawayOption from a reader using the TL binary protocol.
-func DecodeStarsGiveawayOption(r io.Reader) (*StarsGiveawayOption, error) {
+func DecodeStarsGiveawayOption(r *Reader) (*StarsGiveawayOption, error) {
 	v := &StarsGiveawayOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Extended = v.Flags.Has(0)
 	v.Default = v.Flags.Has(1)
-	v.Stars = ReadLong(r)
-	v.YearlyBoosts = int32(ReadInt(r))
-	if v.Flags.Has(2) {
-		v.StoreProduct = ReadString(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
 	}
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
-	ReadInt(r)
-	_cntWinners := ReadInt(r)
-	if err := checkVectorCount(_cntWinners); err != nil {
-		return nil, err
+	v.Stars = _rStars
+	_rYearlyBoosts, _eYearlyBoosts := r.ReadInt32()
+	if _eYearlyBoosts != nil {
+		return nil, _eYearlyBoosts
+	}
+	v.YearlyBoosts = _rYearlyBoosts
+	if v.Flags.Has(2) {
+		_rStoreProduct, _eStoreProduct := r.ReadString()
+		if _eStoreProduct != nil {
+			return nil, _eStoreProduct
+		}
+		v.StoreProduct = _rStoreProduct
+	}
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_vhdrWinners, _ehdrWinners := r.ReadUint32()
+	if _ehdrWinners != nil {
+		return nil, _ehdrWinners
+	}
+	_cntWinners, _ecntWinners := r.ReadUint32()
+	if _ecntWinners != nil {
+		return nil, _ecntWinners
+	}
+	if _errWinners := checkVectorCount(_cntWinners); _errWinners != nil {
+		return nil, _errWinners
 	}
 	v.Winners = make([]*StarsGiveawayWinnersOption, _cntWinners)
 	for _iWinners := range v.Winners {
-		_objWinners, _ := ReadTLObject(r)
+		_objWinners, _errWinners := ReadTLObject(r)
+		if _errWinners != nil {
+			return nil, _errWinners
+		}
 		v.Winners[_iWinners] = _objWinners.(*StarsGiveawayWinnersOption)
 	}
+	_ = _vhdrWinners
 	return v, nil
 }
 
 func init() {
-	Registry[StarsGiveawayOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsGiveawayOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsGiveawayOption(r)
 	}
 }
@@ -4828,21 +5955,29 @@ func (v *StarsGiveawayWinnersOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsGiveawayWinnersOption deserializes a StarsGiveawayWinnersOption from a reader using the TL binary protocol.
-func DecodeStarsGiveawayWinnersOption(r io.Reader) (*StarsGiveawayWinnersOption, error) {
+func DecodeStarsGiveawayWinnersOption(r *Reader) (*StarsGiveawayWinnersOption, error) {
 	v := &StarsGiveawayWinnersOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Default = v.Flags.Has(0)
-	v.Users = int32(ReadInt(r))
-	v.PerUserStars = ReadLong(r)
+	_rUsers, _eUsers := r.ReadInt32()
+	if _eUsers != nil {
+		return nil, _eUsers
+	}
+	v.Users = _rUsers
+	_rPerUserStars, _ePerUserStars := r.ReadInt64()
+	if _ePerUserStars != nil {
+		return nil, _ePerUserStars
+	}
+	v.PerUserStars = _rPerUserStars
 	return v, nil
 }
 
 func init() {
-	Registry[StarsGiveawayWinnersOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsGiveawayWinnersOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsGiveawayWinnersOption(r)
 	}
 }
@@ -5047,11 +6182,11 @@ func (v *StarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGift deserializes a StarGift from a reader using the TL binary protocol.
-func DecodeStarGift(r io.Reader) (*StarGift, error) {
+func DecodeStarGift(r *Reader) (*StarGift, error) {
 	v := &StarGift{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Limited = v.Flags.Has(0)
@@ -5061,69 +6196,150 @@ func DecodeStarGift(r io.Reader) (*StarGift, error) {
 	v.LimitedPerUser = v.Flags.Has(8)
 	v.PeerColorAvailable = v.Flags.Has(10)
 	v.Auction = v.Flags.Has(11)
-	v.ID = ReadLong(r)
-	_objSticker, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_objSticker, _errSticker := ReadTLObject(r)
+	if _errSticker != nil {
+		return nil, _errSticker
+	}
 	v.Sticker = _objSticker.(DocumentClass)
-	v.Stars = ReadLong(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
 	if v.Flags.Has(0) {
-		v.AvailabilityRemains = int32(ReadInt(r))
+		_rAvailabilityRemains, _eAvailabilityRemains := r.ReadInt32()
+		if _eAvailabilityRemains != nil {
+			return nil, _eAvailabilityRemains
+		}
+		v.AvailabilityRemains = _rAvailabilityRemains
 	}
 	if v.Flags.Has(0) {
-		v.AvailabilityTotal = int32(ReadInt(r))
+		_rAvailabilityTotal, _eAvailabilityTotal := r.ReadInt32()
+		if _eAvailabilityTotal != nil {
+			return nil, _eAvailabilityTotal
+		}
+		v.AvailabilityTotal = _rAvailabilityTotal
 	}
 	if v.Flags.Has(4) {
-		v.AvailabilityResale = ReadLong(r)
+		_rAvailabilityResale, _eAvailabilityResale := r.ReadInt64()
+		if _eAvailabilityResale != nil {
+			return nil, _eAvailabilityResale
+		}
+		v.AvailabilityResale = _rAvailabilityResale
 	}
-	v.ConvertStars = ReadLong(r)
+	_rConvertStars, _eConvertStars := r.ReadInt64()
+	if _eConvertStars != nil {
+		return nil, _eConvertStars
+	}
+	v.ConvertStars = _rConvertStars
 	if v.Flags.Has(1) {
-		v.FirstSaleDate = int32(ReadInt(r))
+		_rFirstSaleDate, _eFirstSaleDate := r.ReadInt32()
+		if _eFirstSaleDate != nil {
+			return nil, _eFirstSaleDate
+		}
+		v.FirstSaleDate = _rFirstSaleDate
 	}
 	if v.Flags.Has(1) {
-		v.LastSaleDate = int32(ReadInt(r))
+		_rLastSaleDate, _eLastSaleDate := r.ReadInt32()
+		if _eLastSaleDate != nil {
+			return nil, _eLastSaleDate
+		}
+		v.LastSaleDate = _rLastSaleDate
 	}
 	if v.Flags.Has(3) {
-		v.UpgradeStars = ReadLong(r)
+		_rUpgradeStars, _eUpgradeStars := r.ReadInt64()
+		if _eUpgradeStars != nil {
+			return nil, _eUpgradeStars
+		}
+		v.UpgradeStars = _rUpgradeStars
 	}
 	if v.Flags.Has(4) {
-		v.ResellMinStars = ReadLong(r)
+		_rResellMinStars, _eResellMinStars := r.ReadInt64()
+		if _eResellMinStars != nil {
+			return nil, _eResellMinStars
+		}
+		v.ResellMinStars = _rResellMinStars
 	}
 	if v.Flags.Has(5) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(6) {
-		_objReleasedBy, _ := ReadTLObject(r)
+		_objReleasedBy, _errReleasedBy := ReadTLObject(r)
+		if _errReleasedBy != nil {
+			return nil, _errReleasedBy
+		}
 		v.ReleasedBy = _objReleasedBy.(PeerClass)
 	}
 	if v.Flags.Has(8) {
-		v.PerUserTotal = int32(ReadInt(r))
+		_rPerUserTotal, _ePerUserTotal := r.ReadInt32()
+		if _ePerUserTotal != nil {
+			return nil, _ePerUserTotal
+		}
+		v.PerUserTotal = _rPerUserTotal
 	}
 	if v.Flags.Has(8) {
-		v.PerUserRemains = int32(ReadInt(r))
+		_rPerUserRemains, _ePerUserRemains := r.ReadInt32()
+		if _ePerUserRemains != nil {
+			return nil, _ePerUserRemains
+		}
+		v.PerUserRemains = _rPerUserRemains
 	}
 	if v.Flags.Has(9) {
-		v.LockedUntilDate = int32(ReadInt(r))
+		_rLockedUntilDate, _eLockedUntilDate := r.ReadInt32()
+		if _eLockedUntilDate != nil {
+			return nil, _eLockedUntilDate
+		}
+		v.LockedUntilDate = _rLockedUntilDate
 	}
 	if v.Flags.Has(11) {
-		v.AuctionSlug = ReadString(r)
+		_rAuctionSlug, _eAuctionSlug := r.ReadString()
+		if _eAuctionSlug != nil {
+			return nil, _eAuctionSlug
+		}
+		v.AuctionSlug = _rAuctionSlug
 	}
 	if v.Flags.Has(11) {
-		v.GiftsPerRound = int32(ReadInt(r))
+		_rGiftsPerRound, _eGiftsPerRound := r.ReadInt32()
+		if _eGiftsPerRound != nil {
+			return nil, _eGiftsPerRound
+		}
+		v.GiftsPerRound = _rGiftsPerRound
 	}
 	if v.Flags.Has(11) {
-		v.AuctionStartDate = int32(ReadInt(r))
+		_rAuctionStartDate, _eAuctionStartDate := r.ReadInt32()
+		if _eAuctionStartDate != nil {
+			return nil, _eAuctionStartDate
+		}
+		v.AuctionStartDate = _rAuctionStartDate
 	}
 	if v.Flags.Has(12) {
-		v.UpgradeVariants = int32(ReadInt(r))
+		_rUpgradeVariants, _eUpgradeVariants := r.ReadInt32()
+		if _eUpgradeVariants != nil {
+			return nil, _eUpgradeVariants
+		}
+		v.UpgradeVariants = _rUpgradeVariants
 	}
 	if v.Flags.Has(13) {
-		_objBackground, _ := ReadTLObject(r)
+		_objBackground, _errBackground := ReadTLObject(r)
+		if _errBackground != nil {
+			return nil, _errBackground
+		}
 		v.Background = _objBackground.(*StarGiftBackground)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGift(r)
 	}
 }
@@ -5295,11 +6511,11 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftUnique deserializes a StarGiftUnique from a reader using the TL binary protocol.
-func DecodeStarGiftUnique(r io.Reader) (*StarGiftUnique, error) {
+func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 	v := &StarGiftUnique{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.RequirePremium = v.Flags.Has(6)
@@ -5307,84 +6523,179 @@ func DecodeStarGiftUnique(r io.Reader) (*StarGiftUnique, error) {
 	v.ThemeAvailable = v.Flags.Has(9)
 	v.Burned = v.Flags.Has(14)
 	v.Crafted = v.Flags.Has(15)
-	v.ID = ReadLong(r)
-	v.GiftID = ReadLong(r)
-	v.Title = ReadString(r)
-	v.Slug = ReadString(r)
-	v.Num = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
+	_rNum, _eNum := r.ReadInt32()
+	if _eNum != nil {
+		return nil, _eNum
+	}
+	v.Num = _rNum
 	if v.Flags.Has(0) {
-		_objOwnerID, _ := ReadTLObject(r)
+		_objOwnerID, _errOwnerID := ReadTLObject(r)
+		if _errOwnerID != nil {
+			return nil, _errOwnerID
+		}
 		v.OwnerID = _objOwnerID.(PeerClass)
 	}
 	if v.Flags.Has(1) {
-		v.OwnerName = ReadString(r)
+		_rOwnerName, _eOwnerName := r.ReadString()
+		if _eOwnerName != nil {
+			return nil, _eOwnerName
+		}
+		v.OwnerName = _rOwnerName
 	}
 	if v.Flags.Has(2) {
-		v.OwnerAddress = ReadString(r)
+		_rOwnerAddress, _eOwnerAddress := r.ReadString()
+		if _eOwnerAddress != nil {
+			return nil, _eOwnerAddress
+		}
+		v.OwnerAddress = _rOwnerAddress
 	}
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(StarGiftAttributeClass)
 	}
-	v.AvailabilityIssued = int32(ReadInt(r))
-	v.AvailabilityTotal = int32(ReadInt(r))
+	_ = _vhdrAttributes
+	_rAvailabilityIssued, _eAvailabilityIssued := r.ReadInt32()
+	if _eAvailabilityIssued != nil {
+		return nil, _eAvailabilityIssued
+	}
+	v.AvailabilityIssued = _rAvailabilityIssued
+	_rAvailabilityTotal, _eAvailabilityTotal := r.ReadInt32()
+	if _eAvailabilityTotal != nil {
+		return nil, _eAvailabilityTotal
+	}
+	v.AvailabilityTotal = _rAvailabilityTotal
 	if v.Flags.Has(3) {
-		v.GiftAddress = ReadString(r)
+		_rGiftAddress, _eGiftAddress := r.ReadString()
+		if _eGiftAddress != nil {
+			return nil, _eGiftAddress
+		}
+		v.GiftAddress = _rGiftAddress
 	}
 	if v.Flags.Has(4) {
-		ReadInt(r)
-		_cntResellAmount := ReadInt(r)
-		if err := checkVectorCount(_cntResellAmount); err != nil {
-			return nil, err
+		_vhdrResellAmount, _ehdrResellAmount := r.ReadUint32()
+		if _ehdrResellAmount != nil {
+			return nil, _ehdrResellAmount
+		}
+		_cntResellAmount, _ecntResellAmount := r.ReadUint32()
+		if _ecntResellAmount != nil {
+			return nil, _ecntResellAmount
+		}
+		if _errResellAmount := checkVectorCount(_cntResellAmount); _errResellAmount != nil {
+			return nil, _errResellAmount
 		}
 		v.ResellAmount = make([]StarsAmountClass, _cntResellAmount)
 		for _iResellAmount := range v.ResellAmount {
-			_objResellAmount, _ := ReadTLObject(r)
+			_objResellAmount, _errResellAmount := ReadTLObject(r)
+			if _errResellAmount != nil {
+				return nil, _errResellAmount
+			}
 			v.ResellAmount[_iResellAmount] = _objResellAmount.(StarsAmountClass)
 		}
+		_ = _vhdrResellAmount
 	}
 	if v.Flags.Has(5) {
-		_objReleasedBy, _ := ReadTLObject(r)
+		_objReleasedBy, _errReleasedBy := ReadTLObject(r)
+		if _errReleasedBy != nil {
+			return nil, _errReleasedBy
+		}
 		v.ReleasedBy = _objReleasedBy.(PeerClass)
 	}
 	if v.Flags.Has(8) {
-		v.ValueAmount = ReadLong(r)
+		_rValueAmount, _eValueAmount := r.ReadInt64()
+		if _eValueAmount != nil {
+			return nil, _eValueAmount
+		}
+		v.ValueAmount = _rValueAmount
 	}
 	if v.Flags.Has(8) {
-		v.ValueCurrency = ReadString(r)
+		_rValueCurrency, _eValueCurrency := r.ReadString()
+		if _eValueCurrency != nil {
+			return nil, _eValueCurrency
+		}
+		v.ValueCurrency = _rValueCurrency
 	}
 	if v.Flags.Has(8) {
-		v.ValueUsdAmount = ReadLong(r)
+		_rValueUsdAmount, _eValueUsdAmount := r.ReadInt64()
+		if _eValueUsdAmount != nil {
+			return nil, _eValueUsdAmount
+		}
+		v.ValueUsdAmount = _rValueUsdAmount
 	}
 	if v.Flags.Has(10) {
-		_objThemePeer, _ := ReadTLObject(r)
+		_objThemePeer, _errThemePeer := ReadTLObject(r)
+		if _errThemePeer != nil {
+			return nil, _errThemePeer
+		}
 		v.ThemePeer = _objThemePeer.(PeerClass)
 	}
 	if v.Flags.Has(11) {
-		_objPeerColor, _ := ReadTLObject(r)
+		_objPeerColor, _errPeerColor := ReadTLObject(r)
+		if _errPeerColor != nil {
+			return nil, _errPeerColor
+		}
 		v.PeerColor = _objPeerColor.(PeerColorClass)
 	}
 	if v.Flags.Has(12) {
-		_objHostID, _ := ReadTLObject(r)
+		_objHostID, _errHostID := ReadTLObject(r)
+		if _errHostID != nil {
+			return nil, _errHostID
+		}
 		v.HostID = _objHostID.(PeerClass)
 	}
 	if v.Flags.Has(13) {
-		v.OfferMinStars = int32(ReadInt(r))
+		_rOfferMinStars, _eOfferMinStars := r.ReadInt32()
+		if _eOfferMinStars != nil {
+			return nil, _eOfferMinStars
+		}
+		v.OfferMinStars = _rOfferMinStars
 	}
 	if v.Flags.Has(16) {
-		v.CraftChancePermille = int32(ReadInt(r))
+		_rCraftChancePermille, _eCraftChancePermille := r.ReadInt32()
+		if _eCraftChancePermille != nil {
+			return nil, _eCraftChancePermille
+		}
+		v.CraftChancePermille = _rCraftChancePermille
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftUniqueTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftUniqueTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftUnique(r)
 	}
 }
@@ -5427,13 +6738,13 @@ func (v *PaymentsStarGiftsNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftsNotModified deserializes a PaymentsStarGiftsNotModified from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftsNotModified(r io.Reader) (*PaymentsStarGiftsNotModified, error) {
+func DecodePaymentsStarGiftsNotModified(r *Reader) (*PaymentsStarGiftsNotModified, error) {
 	v := &PaymentsStarGiftsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftsNotModified(r)
 	}
 }
@@ -5476,44 +6787,78 @@ func (v *PaymentsStarGifts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGifts deserializes a PaymentsStarGifts from a reader using the TL binary protocol.
-func DecodePaymentsStarGifts(r io.Reader) (*PaymentsStarGifts, error) {
+func DecodePaymentsStarGifts(r *Reader) (*PaymentsStarGifts, error) {
 	v := &PaymentsStarGifts{}
-	v.Hash = int32(ReadInt(r))
-	ReadInt(r)
-	_cntGifts := ReadInt(r)
-	if err := checkVectorCount(_cntGifts); err != nil {
-		return nil, err
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_vhdrGifts, _ehdrGifts := r.ReadUint32()
+	if _ehdrGifts != nil {
+		return nil, _ehdrGifts
+	}
+	_cntGifts, _ecntGifts := r.ReadUint32()
+	if _ecntGifts != nil {
+		return nil, _ecntGifts
+	}
+	if _errGifts := checkVectorCount(_cntGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	v.Gifts = make([]StarGiftClass, _cntGifts)
 	for _iGifts := range v.Gifts {
-		_objGifts, _ := ReadTLObject(r)
+		_objGifts, _errGifts := ReadTLObject(r)
+		if _errGifts != nil {
+			return nil, _errGifts
+		}
 		v.Gifts[_iGifts] = _objGifts.(StarGiftClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrGifts
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGifts(r)
 	}
 }
@@ -5571,30 +6916,49 @@ func (v *StarRefProgram) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarRefProgram deserializes a StarRefProgram from a reader using the TL binary protocol.
-func DecodeStarRefProgram(r io.Reader) (*StarRefProgram, error) {
+func DecodeStarRefProgram(r *Reader) (*StarRefProgram, error) {
 	v := &StarRefProgram{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.BotID = ReadLong(r)
-	v.CommissionPermille = int32(ReadInt(r))
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rCommissionPermille, _eCommissionPermille := r.ReadInt32()
+	if _eCommissionPermille != nil {
+		return nil, _eCommissionPermille
+	}
+	v.CommissionPermille = _rCommissionPermille
 	if v.Flags.Has(0) {
-		v.DurationMonths = int32(ReadInt(r))
+		_rDurationMonths, _eDurationMonths := r.ReadInt32()
+		if _eDurationMonths != nil {
+			return nil, _eDurationMonths
+		}
+		v.DurationMonths = _rDurationMonths
 	}
 	if v.Flags.Has(1) {
-		v.EndDate = int32(ReadInt(r))
+		_rEndDate, _eEndDate := r.ReadInt32()
+		if _eEndDate != nil {
+			return nil, _eEndDate
+		}
+		v.EndDate = _rEndDate
 	}
 	if v.Flags.Has(2) {
-		_objDailyRevenuePerUser, _ := ReadTLObject(r)
+		_objDailyRevenuePerUser, _errDailyRevenuePerUser := ReadTLObject(r)
+		if _errDailyRevenuePerUser != nil {
+			return nil, _errDailyRevenuePerUser
+		}
 		v.DailyRevenuePerUser = _objDailyRevenuePerUser.(StarsAmountClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarRefProgramTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarRefProgramTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarRefProgram(r)
 	}
 }
@@ -5634,34 +6998,58 @@ func (v *PaymentsConnectedStarRefBots) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsConnectedStarRefBots deserializes a PaymentsConnectedStarRefBots from a reader using the TL binary protocol.
-func DecodePaymentsConnectedStarRefBots(r io.Reader) (*PaymentsConnectedStarRefBots, error) {
+func DecodePaymentsConnectedStarRefBots(r *Reader) (*PaymentsConnectedStarRefBots, error) {
 	v := &PaymentsConnectedStarRefBots{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntConnectedBots := ReadInt(r)
-	if err := checkVectorCount(_cntConnectedBots); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrConnectedBots, _ehdrConnectedBots := r.ReadUint32()
+	if _ehdrConnectedBots != nil {
+		return nil, _ehdrConnectedBots
+	}
+	_cntConnectedBots, _ecntConnectedBots := r.ReadUint32()
+	if _ecntConnectedBots != nil {
+		return nil, _ecntConnectedBots
+	}
+	if _errConnectedBots := checkVectorCount(_cntConnectedBots); _errConnectedBots != nil {
+		return nil, _errConnectedBots
 	}
 	v.ConnectedBots = make([]*ConnectedBotStarRef, _cntConnectedBots)
 	for _iConnectedBots := range v.ConnectedBots {
-		_objConnectedBots, _ := ReadTLObject(r)
+		_objConnectedBots, _errConnectedBots := ReadTLObject(r)
+		if _errConnectedBots != nil {
+			return nil, _errConnectedBots
+		}
 		v.ConnectedBots[_iConnectedBots] = _objConnectedBots.(*ConnectedBotStarRef)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrConnectedBots
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsConnectedStarRefBotsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsConnectedStarRefBotsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsConnectedStarRefBots(r)
 	}
 }
@@ -5715,42 +7103,70 @@ func (v *PaymentsSuggestedStarRefBots) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsSuggestedStarRefBots deserializes a PaymentsSuggestedStarRefBots from a reader using the TL binary protocol.
-func DecodePaymentsSuggestedStarRefBots(r io.Reader) (*PaymentsSuggestedStarRefBots, error) {
+func DecodePaymentsSuggestedStarRefBots(r *Reader) (*PaymentsSuggestedStarRefBots, error) {
 	v := &PaymentsSuggestedStarRefBots{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntSuggestedBots := ReadInt(r)
-	if err := checkVectorCount(_cntSuggestedBots); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrSuggestedBots, _ehdrSuggestedBots := r.ReadUint32()
+	if _ehdrSuggestedBots != nil {
+		return nil, _ehdrSuggestedBots
+	}
+	_cntSuggestedBots, _ecntSuggestedBots := r.ReadUint32()
+	if _ecntSuggestedBots != nil {
+		return nil, _ecntSuggestedBots
+	}
+	if _errSuggestedBots := checkVectorCount(_cntSuggestedBots); _errSuggestedBots != nil {
+		return nil, _errSuggestedBots
 	}
 	v.SuggestedBots = make([]*StarRefProgram, _cntSuggestedBots)
 	for _iSuggestedBots := range v.SuggestedBots {
-		_objSuggestedBots, _ := ReadTLObject(r)
+		_objSuggestedBots, _errSuggestedBots := ReadTLObject(r)
+		if _errSuggestedBots != nil {
+			return nil, _errSuggestedBots
+		}
 		v.SuggestedBots[_iSuggestedBots] = _objSuggestedBots.(*StarRefProgram)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrSuggestedBots
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsSuggestedStarRefBotsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsSuggestedStarRefBotsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsSuggestedStarRefBots(r)
 	}
 }
@@ -5797,15 +7213,23 @@ func (v *StarsAmount) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsAmount deserializes a StarsAmount from a reader using the TL binary protocol.
-func DecodeStarsAmount(r io.Reader) (*StarsAmount, error) {
+func DecodeStarsAmount(r *Reader) (*StarsAmount, error) {
 	v := &StarsAmount{}
-	v.Amount = ReadLong(r)
-	v.Nanos = int32(ReadInt(r))
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rNanos, _eNanos := r.ReadInt32()
+	if _eNanos != nil {
+		return nil, _eNanos
+	}
+	v.Nanos = _rNanos
 	return v, nil
 }
 
 func init() {
-	Registry[StarsAmountTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsAmountTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsAmount(r)
 	}
 }
@@ -5830,14 +7254,18 @@ func (v *StarsTonAmount) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTonAmount deserializes a StarsTonAmount from a reader using the TL binary protocol.
-func DecodeStarsTonAmount(r io.Reader) (*StarsTonAmount, error) {
+func DecodeStarsTonAmount(r *Reader) (*StarsTonAmount, error) {
 	v := &StarsTonAmount{}
-	v.Amount = ReadLong(r)
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTonAmountTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTonAmountTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTonAmount(r)
 	}
 }
@@ -5909,24 +7337,34 @@ func (v *StarGiftAttributeModel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeModel deserializes a StarGiftAttributeModel from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeModel(r io.Reader) (*StarGiftAttributeModel, error) {
+func DecodeStarGiftAttributeModel(r *Reader) (*StarGiftAttributeModel, error) {
 	v := &StarGiftAttributeModel{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Crafted = v.Flags.Has(0)
-	v.Name = ReadString(r)
-	_objDocument, _ := ReadTLObject(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_objDocument, _errDocument := ReadTLObject(r)
+	if _errDocument != nil {
+		return nil, _errDocument
+	}
 	v.Document = _objDocument.(DocumentClass)
-	_objRarity, _ := ReadTLObject(r)
+	_objRarity, _errRarity := ReadTLObject(r)
+	if _errRarity != nil {
+		return nil, _errRarity
+	}
 	v.Rarity = _objRarity.(StarGiftAttributeRarityClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeModelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeModelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeModel(r)
 	}
 }
@@ -5955,18 +7393,28 @@ func (v *StarGiftAttributePattern) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributePattern deserializes a StarGiftAttributePattern from a reader using the TL binary protocol.
-func DecodeStarGiftAttributePattern(r io.Reader) (*StarGiftAttributePattern, error) {
+func DecodeStarGiftAttributePattern(r *Reader) (*StarGiftAttributePattern, error) {
 	v := &StarGiftAttributePattern{}
-	v.Name = ReadString(r)
-	_objDocument, _ := ReadTLObject(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_objDocument, _errDocument := ReadTLObject(r)
+	if _errDocument != nil {
+		return nil, _errDocument
+	}
 	v.Document = _objDocument.(DocumentClass)
-	_objRarity, _ := ReadTLObject(r)
+	_objRarity, _errRarity := ReadTLObject(r)
+	if _errRarity != nil {
+		return nil, _errRarity
+	}
 	v.Rarity = _objRarity.(StarGiftAttributeRarityClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributePatternTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributePatternTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributePattern(r)
 	}
 }
@@ -6003,21 +7451,48 @@ func (v *StarGiftAttributeBackdrop) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeBackdrop deserializes a StarGiftAttributeBackdrop from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeBackdrop(r io.Reader) (*StarGiftAttributeBackdrop, error) {
+func DecodeStarGiftAttributeBackdrop(r *Reader) (*StarGiftAttributeBackdrop, error) {
 	v := &StarGiftAttributeBackdrop{}
-	v.Name = ReadString(r)
-	v.BackdropID = int32(ReadInt(r))
-	v.CenterColor = int32(ReadInt(r))
-	v.EdgeColor = int32(ReadInt(r))
-	v.PatternColor = int32(ReadInt(r))
-	v.TextColor = int32(ReadInt(r))
-	_objRarity, _ := ReadTLObject(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_rBackdropID, _eBackdropID := r.ReadInt32()
+	if _eBackdropID != nil {
+		return nil, _eBackdropID
+	}
+	v.BackdropID = _rBackdropID
+	_rCenterColor, _eCenterColor := r.ReadInt32()
+	if _eCenterColor != nil {
+		return nil, _eCenterColor
+	}
+	v.CenterColor = _rCenterColor
+	_rEdgeColor, _eEdgeColor := r.ReadInt32()
+	if _eEdgeColor != nil {
+		return nil, _eEdgeColor
+	}
+	v.EdgeColor = _rEdgeColor
+	_rPatternColor, _ePatternColor := r.ReadInt32()
+	if _ePatternColor != nil {
+		return nil, _ePatternColor
+	}
+	v.PatternColor = _rPatternColor
+	_rTextColor, _eTextColor := r.ReadInt32()
+	if _eTextColor != nil {
+		return nil, _eTextColor
+	}
+	v.TextColor = _rTextColor
+	_objRarity, _errRarity := ReadTLObject(r)
+	if _errRarity != nil {
+		return nil, _errRarity
+	}
 	v.Rarity = _objRarity.(StarGiftAttributeRarityClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeBackdropTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeBackdropTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeBackdrop(r)
 	}
 }
@@ -6065,29 +7540,42 @@ func (v *StarGiftAttributeOriginalDetails) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeOriginalDetails deserializes a StarGiftAttributeOriginalDetails from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeOriginalDetails(r io.Reader) (*StarGiftAttributeOriginalDetails, error) {
+func DecodeStarGiftAttributeOriginalDetails(r *Reader) (*StarGiftAttributeOriginalDetails, error) {
 	v := &StarGiftAttributeOriginalDetails{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		_objSenderID, _ := ReadTLObject(r)
+		_objSenderID, _errSenderID := ReadTLObject(r)
+		if _errSenderID != nil {
+			return nil, _errSenderID
+		}
 		v.SenderID = _objSenderID.(PeerClass)
 	}
-	_objRecipientID, _ := ReadTLObject(r)
+	_objRecipientID, _errRecipientID := ReadTLObject(r)
+	if _errRecipientID != nil {
+		return nil, _errRecipientID
+	}
 	v.RecipientID = _objRecipientID.(PeerClass)
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(1) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeOriginalDetailsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeOriginalDetailsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeOriginalDetails(r)
 	}
 }
@@ -6131,43 +7619,73 @@ func (v *PaymentsStarGiftUpgradePreview) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftUpgradePreview deserializes a PaymentsStarGiftUpgradePreview from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftUpgradePreview(r io.Reader) (*PaymentsStarGiftUpgradePreview, error) {
+func DecodePaymentsStarGiftUpgradePreview(r *Reader) (*PaymentsStarGiftUpgradePreview, error) {
 	v := &PaymentsStarGiftUpgradePreview{}
-	ReadInt(r)
-	_cntSampleAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntSampleAttributes); err != nil {
-		return nil, err
+	_vhdrSampleAttributes, _ehdrSampleAttributes := r.ReadUint32()
+	if _ehdrSampleAttributes != nil {
+		return nil, _ehdrSampleAttributes
+	}
+	_cntSampleAttributes, _ecntSampleAttributes := r.ReadUint32()
+	if _ecntSampleAttributes != nil {
+		return nil, _ecntSampleAttributes
+	}
+	if _errSampleAttributes := checkVectorCount(_cntSampleAttributes); _errSampleAttributes != nil {
+		return nil, _errSampleAttributes
 	}
 	v.SampleAttributes = make([]StarGiftAttributeClass, _cntSampleAttributes)
 	for _iSampleAttributes := range v.SampleAttributes {
-		_objSampleAttributes, _ := ReadTLObject(r)
+		_objSampleAttributes, _errSampleAttributes := ReadTLObject(r)
+		if _errSampleAttributes != nil {
+			return nil, _errSampleAttributes
+		}
 		v.SampleAttributes[_iSampleAttributes] = _objSampleAttributes.(StarGiftAttributeClass)
 	}
-	ReadInt(r)
-	_cntPrices := ReadInt(r)
-	if err := checkVectorCount(_cntPrices); err != nil {
-		return nil, err
+	_ = _vhdrSampleAttributes
+	_vhdrPrices, _ehdrPrices := r.ReadUint32()
+	if _ehdrPrices != nil {
+		return nil, _ehdrPrices
+	}
+	_cntPrices, _ecntPrices := r.ReadUint32()
+	if _ecntPrices != nil {
+		return nil, _ecntPrices
+	}
+	if _errPrices := checkVectorCount(_cntPrices); _errPrices != nil {
+		return nil, _errPrices
 	}
 	v.Prices = make([]*StarGiftUpgradePrice, _cntPrices)
 	for _iPrices := range v.Prices {
-		_objPrices, _ := ReadTLObject(r)
+		_objPrices, _errPrices := ReadTLObject(r)
+		if _errPrices != nil {
+			return nil, _errPrices
+		}
 		v.Prices[_iPrices] = _objPrices.(*StarGiftUpgradePrice)
 	}
-	ReadInt(r)
-	_cntNextPrices := ReadInt(r)
-	if err := checkVectorCount(_cntNextPrices); err != nil {
-		return nil, err
+	_ = _vhdrPrices
+	_vhdrNextPrices, _ehdrNextPrices := r.ReadUint32()
+	if _ehdrNextPrices != nil {
+		return nil, _ehdrNextPrices
+	}
+	_cntNextPrices, _ecntNextPrices := r.ReadUint32()
+	if _ecntNextPrices != nil {
+		return nil, _ecntNextPrices
+	}
+	if _errNextPrices := checkVectorCount(_cntNextPrices); _errNextPrices != nil {
+		return nil, _errNextPrices
 	}
 	v.NextPrices = make([]*StarGiftUpgradePrice, _cntNextPrices)
 	for _iNextPrices := range v.NextPrices {
-		_objNextPrices, _ := ReadTLObject(r)
+		_objNextPrices, _errNextPrices := ReadTLObject(r)
+		if _errNextPrices != nil {
+			return nil, _errNextPrices
+		}
 		v.NextPrices[_iNextPrices] = _objNextPrices.(*StarGiftUpgradePrice)
 	}
+	_ = _vhdrNextPrices
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftUpgradePreviewTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftUpgradePreviewTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftUpgradePreview(r)
 	}
 }
@@ -6207,35 +7725,58 @@ func (v *PaymentsUniqueStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsUniqueStarGift deserializes a PaymentsUniqueStarGift from a reader using the TL binary protocol.
-func DecodePaymentsUniqueStarGift(r io.Reader) (*PaymentsUniqueStarGift, error) {
+func DecodePaymentsUniqueStarGift(r *Reader) (*PaymentsUniqueStarGift, error) {
 	v := &PaymentsUniqueStarGift{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsUniqueStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsUniqueStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsUniqueStarGift(r)
 	}
 }
@@ -6401,11 +7942,11 @@ func (v *SavedStarGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSavedStarGift deserializes a SavedStarGift from a reader using the TL binary protocol.
-func DecodeSavedStarGift(r io.Reader) (*SavedStarGift, error) {
+func DecodeSavedStarGift(r *Reader) (*SavedStarGift, error) {
 	v := &SavedStarGift{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NameHidden = v.Flags.Has(0)
@@ -6415,60 +7956,125 @@ func DecodeSavedStarGift(r io.Reader) (*SavedStarGift, error) {
 	v.PinnedToTop = v.Flags.Has(12)
 	v.UpgradeSeparate = v.Flags.Has(17)
 	if v.Flags.Has(1) {
-		_objFromID, _ := ReadTLObject(r)
+		_objFromID, _errFromID := ReadTLObject(r)
+		if _errFromID != nil {
+			return nil, _errFromID
+		}
 		v.FromID = _objFromID.(PeerClass)
 	}
-	v.Date = int32(ReadInt(r))
-	_objGift, _ := ReadTLObject(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
 	if v.Flags.Has(2) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	if v.Flags.Has(3) {
-		v.MsgID = int32(ReadInt(r))
+		_rMsgID, _eMsgID := r.ReadInt32()
+		if _eMsgID != nil {
+			return nil, _eMsgID
+		}
+		v.MsgID = _rMsgID
 	}
 	if v.Flags.Has(11) {
-		v.SavedID = ReadLong(r)
+		_rSavedID, _eSavedID := r.ReadInt64()
+		if _eSavedID != nil {
+			return nil, _eSavedID
+		}
+		v.SavedID = _rSavedID
 	}
 	if v.Flags.Has(4) {
-		v.ConvertStars = ReadLong(r)
+		_rConvertStars, _eConvertStars := r.ReadInt64()
+		if _eConvertStars != nil {
+			return nil, _eConvertStars
+		}
+		v.ConvertStars = _rConvertStars
 	}
 	if v.Flags.Has(6) {
-		v.UpgradeStars = ReadLong(r)
+		_rUpgradeStars, _eUpgradeStars := r.ReadInt64()
+		if _eUpgradeStars != nil {
+			return nil, _eUpgradeStars
+		}
+		v.UpgradeStars = _rUpgradeStars
 	}
 	if v.Flags.Has(7) {
-		v.CanExportAt = int32(ReadInt(r))
+		_rCanExportAt, _eCanExportAt := r.ReadInt32()
+		if _eCanExportAt != nil {
+			return nil, _eCanExportAt
+		}
+		v.CanExportAt = _rCanExportAt
 	}
 	if v.Flags.Has(8) {
-		v.TransferStars = ReadLong(r)
+		_rTransferStars, _eTransferStars := r.ReadInt64()
+		if _eTransferStars != nil {
+			return nil, _eTransferStars
+		}
+		v.TransferStars = _rTransferStars
 	}
 	if v.Flags.Has(13) {
-		v.CanTransferAt = int32(ReadInt(r))
+		_rCanTransferAt, _eCanTransferAt := r.ReadInt32()
+		if _eCanTransferAt != nil {
+			return nil, _eCanTransferAt
+		}
+		v.CanTransferAt = _rCanTransferAt
 	}
 	if v.Flags.Has(14) {
-		v.CanResellAt = int32(ReadInt(r))
+		_rCanResellAt, _eCanResellAt := r.ReadInt32()
+		if _eCanResellAt != nil {
+			return nil, _eCanResellAt
+		}
+		v.CanResellAt = _rCanResellAt
 	}
 	if v.Flags.Has(15) {
-		v.CollectionID = ReadVectorInt(r)
+		_vvCollectionID, _veCollectionID := r.ReadVectorInt()
+		if _veCollectionID != nil {
+			return nil, _veCollectionID
+		}
+		v.CollectionID = _vvCollectionID
 	}
 	if v.Flags.Has(16) {
-		v.PrepaidUpgradeHash = ReadString(r)
+		_rPrepaidUpgradeHash, _ePrepaidUpgradeHash := r.ReadString()
+		if _ePrepaidUpgradeHash != nil {
+			return nil, _ePrepaidUpgradeHash
+		}
+		v.PrepaidUpgradeHash = _rPrepaidUpgradeHash
 	}
 	if v.Flags.Has(18) {
-		v.DropOriginalDetailsStars = ReadLong(r)
+		_rDropOriginalDetailsStars, _eDropOriginalDetailsStars := r.ReadInt64()
+		if _eDropOriginalDetailsStars != nil {
+			return nil, _eDropOriginalDetailsStars
+		}
+		v.DropOriginalDetailsStars = _rDropOriginalDetailsStars
 	}
 	if v.Flags.Has(19) {
-		v.GiftNum = int32(ReadInt(r))
+		_rGiftNum, _eGiftNum := r.ReadInt32()
+		if _eGiftNum != nil {
+			return nil, _eGiftNum
+		}
+		v.GiftNum = _rGiftNum
 	}
 	if v.Flags.Has(20) {
-		v.CanCraftAt = int32(ReadInt(r))
+		_rCanCraftAt, _eCanCraftAt := r.ReadInt32()
+		if _eCanCraftAt != nil {
+			return nil, _eCanCraftAt
+		}
+		v.CanCraftAt = _rCanCraftAt
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[SavedStarGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SavedStarGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSavedStarGift(r)
 	}
 }
@@ -6535,55 +8141,97 @@ func (v *PaymentsSavedStarGifts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsSavedStarGifts deserializes a PaymentsSavedStarGifts from a reader using the TL binary protocol.
-func DecodePaymentsSavedStarGifts(r io.Reader) (*PaymentsSavedStarGifts, error) {
+func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 	v := &PaymentsSavedStarGifts{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Count = int32(ReadInt(r))
-	if v.Flags.Has(1) {
-		v.ChatNotificationsEnabled = ReadBool(r)
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
 	}
-	ReadInt(r)
-	_cntGifts := ReadInt(r)
-	if err := checkVectorCount(_cntGifts); err != nil {
-		return nil, err
+	v.Count = _rCount
+	if v.Flags.Has(1) {
+		_rChatNotificationsEnabled, _eChatNotificationsEnabled := r.ReadBool()
+		if _eChatNotificationsEnabled != nil {
+			return nil, _eChatNotificationsEnabled
+		}
+		v.ChatNotificationsEnabled = _rChatNotificationsEnabled
+	}
+	_vhdrGifts, _ehdrGifts := r.ReadUint32()
+	if _ehdrGifts != nil {
+		return nil, _ehdrGifts
+	}
+	_cntGifts, _ecntGifts := r.ReadUint32()
+	if _ecntGifts != nil {
+		return nil, _ecntGifts
+	}
+	if _errGifts := checkVectorCount(_cntGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	v.Gifts = make([]*SavedStarGift, _cntGifts)
 	for _iGifts := range v.Gifts {
-		_objGifts, _ := ReadTLObject(r)
+		_objGifts, _errGifts := ReadTLObject(r)
+		if _errGifts != nil {
+			return nil, _errGifts
+		}
 		v.Gifts[_iGifts] = _objGifts.(*SavedStarGift)
 	}
+	_ = _vhdrGifts
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsSavedStarGiftsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsSavedStarGiftsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsSavedStarGifts(r)
 	}
 }
@@ -6634,14 +8282,18 @@ func (v *InputSavedStarGiftUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSavedStarGiftUser deserializes a InputSavedStarGiftUser from a reader using the TL binary protocol.
-func DecodeInputSavedStarGiftUser(r io.Reader) (*InputSavedStarGiftUser, error) {
+func DecodeInputSavedStarGiftUser(r *Reader) (*InputSavedStarGiftUser, error) {
 	v := &InputSavedStarGiftUser{}
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[InputSavedStarGiftUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSavedStarGiftUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSavedStarGiftUser(r)
 	}
 }
@@ -6668,16 +8320,23 @@ func (v *InputSavedStarGiftChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSavedStarGiftChat deserializes a InputSavedStarGiftChat from a reader using the TL binary protocol.
-func DecodeInputSavedStarGiftChat(r io.Reader) (*InputSavedStarGiftChat, error) {
+func DecodeInputSavedStarGiftChat(r *Reader) (*InputSavedStarGiftChat, error) {
 	v := &InputSavedStarGiftChat{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.SavedID = ReadLong(r)
+	_rSavedID, _eSavedID := r.ReadInt64()
+	if _eSavedID != nil {
+		return nil, _eSavedID
+	}
+	v.SavedID = _rSavedID
 	return v, nil
 }
 
 func init() {
-	Registry[InputSavedStarGiftChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSavedStarGiftChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSavedStarGiftChat(r)
 	}
 }
@@ -6702,14 +8361,18 @@ func (v *InputSavedStarGiftSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSavedStarGiftSlug deserializes a InputSavedStarGiftSlug from a reader using the TL binary protocol.
-func DecodeInputSavedStarGiftSlug(r io.Reader) (*InputSavedStarGiftSlug, error) {
+func DecodeInputSavedStarGiftSlug(r *Reader) (*InputSavedStarGiftSlug, error) {
 	v := &InputSavedStarGiftSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputSavedStarGiftSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSavedStarGiftSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSavedStarGiftSlug(r)
 	}
 }
@@ -6737,14 +8400,18 @@ func (v *PaymentsStarGiftWithdrawalURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftWithdrawalURL deserializes a PaymentsStarGiftWithdrawalURL from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftWithdrawalURL(r io.Reader) (*PaymentsStarGiftWithdrawalURL, error) {
+func DecodePaymentsStarGiftWithdrawalURL(r *Reader) (*PaymentsStarGiftWithdrawalURL, error) {
 	v := &PaymentsStarGiftWithdrawalURL{}
-	v.URL = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftWithdrawalURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftWithdrawalURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftWithdrawalURL(r)
 	}
 }
@@ -6795,14 +8462,18 @@ func (v *StarGiftAttributeIDModel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeIDModel deserializes a StarGiftAttributeIDModel from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeIDModel(r io.Reader) (*StarGiftAttributeIDModel, error) {
+func DecodeStarGiftAttributeIDModel(r *Reader) (*StarGiftAttributeIDModel, error) {
 	v := &StarGiftAttributeIDModel{}
-	v.DocumentID = ReadLong(r)
+	_rDocumentID, _eDocumentID := r.ReadInt64()
+	if _eDocumentID != nil {
+		return nil, _eDocumentID
+	}
+	v.DocumentID = _rDocumentID
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeIDModelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeIDModelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeIDModel(r)
 	}
 }
@@ -6827,14 +8498,18 @@ func (v *StarGiftAttributeIDPattern) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeIDPattern deserializes a StarGiftAttributeIDPattern from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeIDPattern(r io.Reader) (*StarGiftAttributeIDPattern, error) {
+func DecodeStarGiftAttributeIDPattern(r *Reader) (*StarGiftAttributeIDPattern, error) {
 	v := &StarGiftAttributeIDPattern{}
-	v.DocumentID = ReadLong(r)
+	_rDocumentID, _eDocumentID := r.ReadInt64()
+	if _eDocumentID != nil {
+		return nil, _eDocumentID
+	}
+	v.DocumentID = _rDocumentID
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeIDPatternTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeIDPatternTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeIDPattern(r)
 	}
 }
@@ -6859,14 +8534,18 @@ func (v *StarGiftAttributeIDBackdrop) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeIDBackdrop deserializes a StarGiftAttributeIDBackdrop from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeIDBackdrop(r io.Reader) (*StarGiftAttributeIDBackdrop, error) {
+func DecodeStarGiftAttributeIDBackdrop(r *Reader) (*StarGiftAttributeIDBackdrop, error) {
 	v := &StarGiftAttributeIDBackdrop{}
-	v.BackdropID = int32(ReadInt(r))
+	_rBackdropID, _eBackdropID := r.ReadInt32()
+	if _eBackdropID != nil {
+		return nil, _eBackdropID
+	}
+	v.BackdropID = _rBackdropID
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeIDBackdropTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeIDBackdropTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeIDBackdrop(r)
 	}
 }
@@ -6896,16 +8575,23 @@ func (v *StarGiftAttributeCounter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeCounter deserializes a StarGiftAttributeCounter from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeCounter(r io.Reader) (*StarGiftAttributeCounter, error) {
+func DecodeStarGiftAttributeCounter(r *Reader) (*StarGiftAttributeCounter, error) {
 	v := &StarGiftAttributeCounter{}
-	_objAttribute, _ := ReadTLObject(r)
+	_objAttribute, _errAttribute := ReadTLObject(r)
+	if _errAttribute != nil {
+		return nil, _errAttribute
+	}
 	v.Attribute = _objAttribute.(StarGiftAttributeIDClass)
-	v.Count = int32(ReadInt(r))
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeCounterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeCounterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeCounter(r)
 	}
 }
@@ -6994,79 +8680,141 @@ func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsResaleStarGifts deserializes a PaymentsResaleStarGifts from a reader using the TL binary protocol.
-func DecodePaymentsResaleStarGifts(r io.Reader) (*PaymentsResaleStarGifts, error) {
+func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) {
 	v := &PaymentsResaleStarGifts{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntGifts := ReadInt(r)
-	if err := checkVectorCount(_cntGifts); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrGifts, _ehdrGifts := r.ReadUint32()
+	if _ehdrGifts != nil {
+		return nil, _ehdrGifts
+	}
+	_cntGifts, _ecntGifts := r.ReadUint32()
+	if _ecntGifts != nil {
+		return nil, _ecntGifts
+	}
+	if _errGifts := checkVectorCount(_cntGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	v.Gifts = make([]StarGiftClass, _cntGifts)
 	for _iGifts := range v.Gifts {
-		_objGifts, _ := ReadTLObject(r)
+		_objGifts, _errGifts := ReadTLObject(r)
+		if _errGifts != nil {
+			return nil, _errGifts
+		}
 		v.Gifts[_iGifts] = _objGifts.(StarGiftClass)
 	}
+	_ = _vhdrGifts
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntAttributes := ReadInt(r)
-		if err := checkVectorCount(_cntAttributes); err != nil {
-			return nil, err
+		_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+		if _ehdrAttributes != nil {
+			return nil, _ehdrAttributes
+		}
+		_cntAttributes, _ecntAttributes := r.ReadUint32()
+		if _ecntAttributes != nil {
+			return nil, _ecntAttributes
+		}
+		if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+			return nil, _errAttributes
 		}
 		v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 		for _iAttributes := range v.Attributes {
-			_objAttributes, _ := ReadTLObject(r)
+			_objAttributes, _errAttributes := ReadTLObject(r)
+			if _errAttributes != nil {
+				return nil, _errAttributes
+			}
 			v.Attributes[_iAttributes] = _objAttributes.(StarGiftAttributeClass)
 		}
+		_ = _vhdrAttributes
 	}
 	if v.Flags.Has(1) {
-		v.AttributesHash = ReadLong(r)
+		_rAttributesHash, _eAttributesHash := r.ReadInt64()
+		if _eAttributesHash != nil {
+			return nil, _eAttributesHash
+		}
+		v.AttributesHash = _rAttributesHash
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
+	_ = _vhdrChats
 	if v.Flags.Has(2) {
-		ReadInt(r)
-		_cntCounters := ReadInt(r)
-		if err := checkVectorCount(_cntCounters); err != nil {
-			return nil, err
+		_vhdrCounters, _ehdrCounters := r.ReadUint32()
+		if _ehdrCounters != nil {
+			return nil, _ehdrCounters
+		}
+		_cntCounters, _ecntCounters := r.ReadUint32()
+		if _ecntCounters != nil {
+			return nil, _ecntCounters
+		}
+		if _errCounters := checkVectorCount(_cntCounters); _errCounters != nil {
+			return nil, _errCounters
 		}
 		v.Counters = make([]*StarGiftAttributeCounter, _cntCounters)
 		for _iCounters := range v.Counters {
-			_objCounters, _ := ReadTLObject(r)
+			_objCounters, _errCounters := ReadTLObject(r)
+			if _errCounters != nil {
+				return nil, _errCounters
+			}
 			v.Counters[_iCounters] = _objCounters.(*StarGiftAttributeCounter)
 		}
+		_ = _vhdrCounters
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsResaleStarGiftsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsResaleStarGiftsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsResaleStarGifts(r)
 	}
 }
@@ -7112,24 +8860,40 @@ func (v *StarsRating) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsRating deserializes a StarsRating from a reader using the TL binary protocol.
-func DecodeStarsRating(r io.Reader) (*StarsRating, error) {
+func DecodeStarsRating(r *Reader) (*StarsRating, error) {
 	v := &StarsRating{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Level = int32(ReadInt(r))
-	v.CurrentLevelStars = ReadLong(r)
-	v.Stars = ReadLong(r)
+	_rLevel, _eLevel := r.ReadInt32()
+	if _eLevel != nil {
+		return nil, _eLevel
+	}
+	v.Level = _rLevel
+	_rCurrentLevelStars, _eCurrentLevelStars := r.ReadInt64()
+	if _eCurrentLevelStars != nil {
+		return nil, _eCurrentLevelStars
+	}
+	v.CurrentLevelStars = _rCurrentLevelStars
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
 	if v.Flags.Has(0) {
-		v.NextLevelStars = ReadLong(r)
+		_rNextLevelStars, _eNextLevelStars := r.ReadInt64()
+		if _eNextLevelStars != nil {
+			return nil, _eNextLevelStars
+		}
+		v.NextLevelStars = _rNextLevelStars
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsRatingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsRatingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsRating(r)
 	}
 }
@@ -7177,26 +8941,45 @@ func (v *StarGiftCollection) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftCollection deserializes a StarGiftCollection from a reader using the TL binary protocol.
-func DecodeStarGiftCollection(r io.Reader) (*StarGiftCollection, error) {
+func DecodeStarGiftCollection(r *Reader) (*StarGiftCollection, error) {
 	v := &StarGiftCollection{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.CollectionID = int32(ReadInt(r))
-	v.Title = ReadString(r)
+	_rCollectionID, _eCollectionID := r.ReadInt32()
+	if _eCollectionID != nil {
+		return nil, _eCollectionID
+	}
+	v.CollectionID = _rCollectionID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(0) {
-		_objIcon, _ := ReadTLObject(r)
+		_objIcon, _errIcon := ReadTLObject(r)
+		if _errIcon != nil {
+			return nil, _errIcon
+		}
 		v.Icon = _objIcon.(DocumentClass)
 	}
-	v.GiftsCount = int32(ReadInt(r))
-	v.Hash = ReadLong(r)
+	_rGiftsCount, _eGiftsCount := r.ReadInt32()
+	if _eGiftsCount != nil {
+		return nil, _eGiftsCount
+	}
+	v.GiftsCount = _rGiftsCount
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftCollectionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftCollectionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftCollection(r)
 	}
 }
@@ -7239,13 +9022,13 @@ func (v *PaymentsStarGiftCollectionsNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftCollectionsNotModified deserializes a PaymentsStarGiftCollectionsNotModified from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftCollectionsNotModified(r io.Reader) (*PaymentsStarGiftCollectionsNotModified, error) {
+func DecodePaymentsStarGiftCollectionsNotModified(r *Reader) (*PaymentsStarGiftCollectionsNotModified, error) {
 	v := &PaymentsStarGiftCollectionsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftCollectionsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftCollectionsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftCollectionsNotModified(r)
 	}
 }
@@ -7274,23 +9057,33 @@ func (v *PaymentsStarGiftCollections) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftCollections deserializes a PaymentsStarGiftCollections from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftCollections(r io.Reader) (*PaymentsStarGiftCollections, error) {
+func DecodePaymentsStarGiftCollections(r *Reader) (*PaymentsStarGiftCollections, error) {
 	v := &PaymentsStarGiftCollections{}
-	ReadInt(r)
-	_cntCollections := ReadInt(r)
-	if err := checkVectorCount(_cntCollections); err != nil {
-		return nil, err
+	_vhdrCollections, _ehdrCollections := r.ReadUint32()
+	if _ehdrCollections != nil {
+		return nil, _ehdrCollections
+	}
+	_cntCollections, _ecntCollections := r.ReadUint32()
+	if _ecntCollections != nil {
+		return nil, _ecntCollections
+	}
+	if _errCollections := checkVectorCount(_cntCollections); _errCollections != nil {
+		return nil, _errCollections
 	}
 	v.Collections = make([]*StarGiftCollection, _cntCollections)
 	for _iCollections := range v.Collections {
-		_objCollections, _ := ReadTLObject(r)
+		_objCollections, _errCollections := ReadTLObject(r)
+		if _errCollections != nil {
+			return nil, _errCollections
+		}
 		v.Collections[_iCollections] = _objCollections.(*StarGiftCollection)
 	}
+	_ = _vhdrCollections
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftCollectionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftCollectionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftCollections(r)
 	}
 }
@@ -7390,46 +9183,94 @@ func (v *PaymentsUniqueStarGiftValueInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsUniqueStarGiftValueInfo deserializes a PaymentsUniqueStarGiftValueInfo from a reader using the TL binary protocol.
-func DecodePaymentsUniqueStarGiftValueInfo(r io.Reader) (*PaymentsUniqueStarGiftValueInfo, error) {
+func DecodePaymentsUniqueStarGiftValueInfo(r *Reader) (*PaymentsUniqueStarGiftValueInfo, error) {
 	v := &PaymentsUniqueStarGiftValueInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.LastSaleOnFragment = v.Flags.Has(1)
 	v.ValueIsAverage = v.Flags.Has(6)
-	v.Currency = ReadString(r)
-	v.Value = ReadLong(r)
-	v.InitialSaleDate = int32(ReadInt(r))
-	v.InitialSaleStars = ReadLong(r)
-	v.InitialSalePrice = ReadLong(r)
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rValue, _eValue := r.ReadInt64()
+	if _eValue != nil {
+		return nil, _eValue
+	}
+	v.Value = _rValue
+	_rInitialSaleDate, _eInitialSaleDate := r.ReadInt32()
+	if _eInitialSaleDate != nil {
+		return nil, _eInitialSaleDate
+	}
+	v.InitialSaleDate = _rInitialSaleDate
+	_rInitialSaleStars, _eInitialSaleStars := r.ReadInt64()
+	if _eInitialSaleStars != nil {
+		return nil, _eInitialSaleStars
+	}
+	v.InitialSaleStars = _rInitialSaleStars
+	_rInitialSalePrice, _eInitialSalePrice := r.ReadInt64()
+	if _eInitialSalePrice != nil {
+		return nil, _eInitialSalePrice
+	}
+	v.InitialSalePrice = _rInitialSalePrice
 	if v.Flags.Has(0) {
-		v.LastSaleDate = int32(ReadInt(r))
+		_rLastSaleDate, _eLastSaleDate := r.ReadInt32()
+		if _eLastSaleDate != nil {
+			return nil, _eLastSaleDate
+		}
+		v.LastSaleDate = _rLastSaleDate
 	}
 	if v.Flags.Has(0) {
-		v.LastSalePrice = ReadLong(r)
+		_rLastSalePrice, _eLastSalePrice := r.ReadInt64()
+		if _eLastSalePrice != nil {
+			return nil, _eLastSalePrice
+		}
+		v.LastSalePrice = _rLastSalePrice
 	}
 	if v.Flags.Has(2) {
-		v.FloorPrice = ReadLong(r)
+		_rFloorPrice, _eFloorPrice := r.ReadInt64()
+		if _eFloorPrice != nil {
+			return nil, _eFloorPrice
+		}
+		v.FloorPrice = _rFloorPrice
 	}
 	if v.Flags.Has(3) {
-		v.AveragePrice = ReadLong(r)
+		_rAveragePrice, _eAveragePrice := r.ReadInt64()
+		if _eAveragePrice != nil {
+			return nil, _eAveragePrice
+		}
+		v.AveragePrice = _rAveragePrice
 	}
 	if v.Flags.Has(4) {
-		v.ListedCount = int32(ReadInt(r))
+		_rListedCount, _eListedCount := r.ReadInt32()
+		if _eListedCount != nil {
+			return nil, _eListedCount
+		}
+		v.ListedCount = _rListedCount
 	}
 	if v.Flags.Has(5) {
-		v.FragmentListedCount = int32(ReadInt(r))
+		_rFragmentListedCount, _eFragmentListedCount := r.ReadInt32()
+		if _eFragmentListedCount != nil {
+			return nil, _eFragmentListedCount
+		}
+		v.FragmentListedCount = _rFragmentListedCount
 	}
 	if v.Flags.Has(5) {
-		v.FragmentListedURL = ReadString(r)
+		_rFragmentListedURL, _eFragmentListedURL := r.ReadString()
+		if _eFragmentListedURL != nil {
+			return nil, _eFragmentListedURL
+		}
+		v.FragmentListedURL = _rFragmentListedURL
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsUniqueStarGiftValueInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsUniqueStarGiftValueInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsUniqueStarGiftValueInfo(r)
 	}
 }
@@ -7472,13 +9313,13 @@ func (v *PaymentsCheckCanSendGiftResultOk) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsCheckCanSendGiftResultOk deserializes a PaymentsCheckCanSendGiftResultOk from a reader using the TL binary protocol.
-func DecodePaymentsCheckCanSendGiftResultOk(r io.Reader) (*PaymentsCheckCanSendGiftResultOk, error) {
+func DecodePaymentsCheckCanSendGiftResultOk(r *Reader) (*PaymentsCheckCanSendGiftResultOk, error) {
 	v := &PaymentsCheckCanSendGiftResultOk{}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsCheckCanSendGiftResultOkTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsCheckCanSendGiftResultOkTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsCheckCanSendGiftResultOk(r)
 	}
 }
@@ -7503,15 +9344,18 @@ func (v *PaymentsCheckCanSendGiftResultFail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsCheckCanSendGiftResultFail deserializes a PaymentsCheckCanSendGiftResultFail from a reader using the TL binary protocol.
-func DecodePaymentsCheckCanSendGiftResultFail(r io.Reader) (*PaymentsCheckCanSendGiftResultFail, error) {
+func DecodePaymentsCheckCanSendGiftResultFail(r *Reader) (*PaymentsCheckCanSendGiftResultFail, error) {
 	v := &PaymentsCheckCanSendGiftResultFail{}
-	_objReason, _ := ReadTLObject(r)
+	_objReason, _errReason := ReadTLObject(r)
+	if _errReason != nil {
+		return nil, _errReason
+	}
 	v.Reason = _objReason.(*TextWithEntities)
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsCheckCanSendGiftResultFailTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsCheckCanSendGiftResultFailTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsCheckCanSendGiftResultFail(r)
 	}
 }
@@ -7541,15 +9385,23 @@ func (v *StarGiftUpgradePrice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftUpgradePrice deserializes a StarGiftUpgradePrice from a reader using the TL binary protocol.
-func DecodeStarGiftUpgradePrice(r io.Reader) (*StarGiftUpgradePrice, error) {
+func DecodeStarGiftUpgradePrice(r *Reader) (*StarGiftUpgradePrice, error) {
 	v := &StarGiftUpgradePrice{}
-	v.Date = int32(ReadInt(r))
-	v.UpgradeStars = ReadLong(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rUpgradeStars, _eUpgradeStars := r.ReadInt64()
+	if _eUpgradeStars != nil {
+		return nil, _eUpgradeStars
+	}
+	v.UpgradeStars = _rUpgradeStars
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftUpgradePriceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftUpgradePriceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftUpgradePrice(r)
 	}
 }
@@ -7604,13 +9456,13 @@ func (v *StarGiftAuctionStateNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionStateNotModified deserializes a StarGiftAuctionStateNotModified from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionStateNotModified(r io.Reader) (*StarGiftAuctionStateNotModified, error) {
+func DecodeStarGiftAuctionStateNotModified(r *Reader) (*StarGiftAuctionStateNotModified, error) {
 	v := &StarGiftAuctionStateNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionStateNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionStateNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionStateNotModified(r)
 	}
 }
@@ -7665,43 +9517,103 @@ func (v *StarGiftAuctionState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionState deserializes a StarGiftAuctionState from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionState(r io.Reader) (*StarGiftAuctionState, error) {
+func DecodeStarGiftAuctionState(r *Reader) (*StarGiftAuctionState, error) {
 	v := &StarGiftAuctionState{}
-	v.Version = int32(ReadInt(r))
-	v.StartDate = int32(ReadInt(r))
-	v.EndDate = int32(ReadInt(r))
-	v.MinBidAmount = ReadLong(r)
-	ReadInt(r)
-	_cntBidLevels := ReadInt(r)
-	if err := checkVectorCount(_cntBidLevels); err != nil {
-		return nil, err
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
+	_rStartDate, _eStartDate := r.ReadInt32()
+	if _eStartDate != nil {
+		return nil, _eStartDate
+	}
+	v.StartDate = _rStartDate
+	_rEndDate, _eEndDate := r.ReadInt32()
+	if _eEndDate != nil {
+		return nil, _eEndDate
+	}
+	v.EndDate = _rEndDate
+	_rMinBidAmount, _eMinBidAmount := r.ReadInt64()
+	if _eMinBidAmount != nil {
+		return nil, _eMinBidAmount
+	}
+	v.MinBidAmount = _rMinBidAmount
+	_vhdrBidLevels, _ehdrBidLevels := r.ReadUint32()
+	if _ehdrBidLevels != nil {
+		return nil, _ehdrBidLevels
+	}
+	_cntBidLevels, _ecntBidLevels := r.ReadUint32()
+	if _ecntBidLevels != nil {
+		return nil, _ecntBidLevels
+	}
+	if _errBidLevels := checkVectorCount(_cntBidLevels); _errBidLevels != nil {
+		return nil, _errBidLevels
 	}
 	v.BidLevels = make([]*AuctionBidLevel, _cntBidLevels)
 	for _iBidLevels := range v.BidLevels {
-		_objBidLevels, _ := ReadTLObject(r)
+		_objBidLevels, _errBidLevels := ReadTLObject(r)
+		if _errBidLevels != nil {
+			return nil, _errBidLevels
+		}
 		v.BidLevels[_iBidLevels] = _objBidLevels.(*AuctionBidLevel)
 	}
-	v.TopBidders = ReadVectorLong(r)
-	v.NextRoundAt = int32(ReadInt(r))
-	v.LastGiftNum = int32(ReadInt(r))
-	v.GiftsLeft = int32(ReadInt(r))
-	v.CurrentRound = int32(ReadInt(r))
-	v.TotalRounds = int32(ReadInt(r))
-	ReadInt(r)
-	_cntRounds := ReadInt(r)
-	if err := checkVectorCount(_cntRounds); err != nil {
-		return nil, err
+	_ = _vhdrBidLevels
+	_vvTopBidders, _veTopBidders := r.ReadVectorLong()
+	if _veTopBidders != nil {
+		return nil, _veTopBidders
+	}
+	v.TopBidders = _vvTopBidders
+	_rNextRoundAt, _eNextRoundAt := r.ReadInt32()
+	if _eNextRoundAt != nil {
+		return nil, _eNextRoundAt
+	}
+	v.NextRoundAt = _rNextRoundAt
+	_rLastGiftNum, _eLastGiftNum := r.ReadInt32()
+	if _eLastGiftNum != nil {
+		return nil, _eLastGiftNum
+	}
+	v.LastGiftNum = _rLastGiftNum
+	_rGiftsLeft, _eGiftsLeft := r.ReadInt32()
+	if _eGiftsLeft != nil {
+		return nil, _eGiftsLeft
+	}
+	v.GiftsLeft = _rGiftsLeft
+	_rCurrentRound, _eCurrentRound := r.ReadInt32()
+	if _eCurrentRound != nil {
+		return nil, _eCurrentRound
+	}
+	v.CurrentRound = _rCurrentRound
+	_rTotalRounds, _eTotalRounds := r.ReadInt32()
+	if _eTotalRounds != nil {
+		return nil, _eTotalRounds
+	}
+	v.TotalRounds = _rTotalRounds
+	_vhdrRounds, _ehdrRounds := r.ReadUint32()
+	if _ehdrRounds != nil {
+		return nil, _ehdrRounds
+	}
+	_cntRounds, _ecntRounds := r.ReadUint32()
+	if _ecntRounds != nil {
+		return nil, _ecntRounds
+	}
+	if _errRounds := checkVectorCount(_cntRounds); _errRounds != nil {
+		return nil, _errRounds
 	}
 	v.Rounds = make([]StarGiftAuctionRoundClass, _cntRounds)
 	for _iRounds := range v.Rounds {
-		_objRounds, _ := ReadTLObject(r)
+		_objRounds, _errRounds := ReadTLObject(r)
+		if _errRounds != nil {
+			return nil, _errRounds
+		}
 		v.Rounds[_iRounds] = _objRounds.(StarGiftAuctionRoundClass)
 	}
+	_ = _vhdrRounds
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionState(r)
 	}
 }
@@ -7758,30 +9670,54 @@ func (v *StarGiftAuctionStateFinished) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionStateFinished deserializes a StarGiftAuctionStateFinished from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionStateFinished(r io.Reader) (*StarGiftAuctionStateFinished, error) {
+func DecodeStarGiftAuctionStateFinished(r *Reader) (*StarGiftAuctionStateFinished, error) {
 	v := &StarGiftAuctionStateFinished{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.StartDate = int32(ReadInt(r))
-	v.EndDate = int32(ReadInt(r))
-	v.AveragePrice = ReadLong(r)
+	_rStartDate, _eStartDate := r.ReadInt32()
+	if _eStartDate != nil {
+		return nil, _eStartDate
+	}
+	v.StartDate = _rStartDate
+	_rEndDate, _eEndDate := r.ReadInt32()
+	if _eEndDate != nil {
+		return nil, _eEndDate
+	}
+	v.EndDate = _rEndDate
+	_rAveragePrice, _eAveragePrice := r.ReadInt64()
+	if _eAveragePrice != nil {
+		return nil, _eAveragePrice
+	}
+	v.AveragePrice = _rAveragePrice
 	if v.Flags.Has(0) {
-		v.ListedCount = int32(ReadInt(r))
+		_rListedCount, _eListedCount := r.ReadInt32()
+		if _eListedCount != nil {
+			return nil, _eListedCount
+		}
+		v.ListedCount = _rListedCount
 	}
 	if v.Flags.Has(1) {
-		v.FragmentListedCount = int32(ReadInt(r))
+		_rFragmentListedCount, _eFragmentListedCount := r.ReadInt32()
+		if _eFragmentListedCount != nil {
+			return nil, _eFragmentListedCount
+		}
+		v.FragmentListedCount = _rFragmentListedCount
 	}
 	if v.Flags.Has(1) {
-		v.FragmentListedURL = ReadString(r)
+		_rFragmentListedURL, _eFragmentListedURL := r.ReadString()
+		if _eFragmentListedURL != nil {
+			return nil, _eFragmentListedURL
+		}
+		v.FragmentListedURL = _rFragmentListedURL
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionStateFinishedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionStateFinishedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionStateFinished(r)
 	}
 }
@@ -7824,40 +9760,73 @@ func (v *PaymentsStarGiftAuctionState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftAuctionState deserializes a PaymentsStarGiftAuctionState from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftAuctionState(r io.Reader) (*PaymentsStarGiftAuctionState, error) {
+func DecodePaymentsStarGiftAuctionState(r *Reader) (*PaymentsStarGiftAuctionState, error) {
 	v := &PaymentsStarGiftAuctionState{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
-	_objState, _ := ReadTLObject(r)
+	_objState, _errState := ReadTLObject(r)
+	if _errState != nil {
+		return nil, _errState
+	}
 	v.State = _objState.(StarGiftAuctionStateClass)
-	_objUserState, _ := ReadTLObject(r)
+	_objUserState, _errUserState := ReadTLObject(r)
+	if _errUserState != nil {
+		return nil, _errUserState
+	}
 	v.UserState = _objUserState.(*StarGiftAuctionUserState)
-	v.Timeout = int32(ReadInt(r))
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_rTimeout, _eTimeout := r.ReadInt32()
+	if _eTimeout != nil {
+		return nil, _eTimeout
+	}
+	v.Timeout = _rTimeout
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUsers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
+	_ = _vhdrChats
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftAuctionStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftAuctionStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftAuctionState(r)
 	}
 }
@@ -7918,32 +9887,58 @@ func (v *StarGiftAuctionAcquiredGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionAcquiredGift deserializes a StarGiftAuctionAcquiredGift from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionAcquiredGift(r io.Reader) (*StarGiftAuctionAcquiredGift, error) {
+func DecodeStarGiftAuctionAcquiredGift(r *Reader) (*StarGiftAuctionAcquiredGift, error) {
 	v := &StarGiftAuctionAcquiredGift{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NameHidden = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Date = int32(ReadInt(r))
-	v.BidAmount = ReadLong(r)
-	v.Round = int32(ReadInt(r))
-	v.Pos = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rBidAmount, _eBidAmount := r.ReadInt64()
+	if _eBidAmount != nil {
+		return nil, _eBidAmount
+	}
+	v.BidAmount = _rBidAmount
+	_rRound, _eRound := r.ReadInt32()
+	if _eRound != nil {
+		return nil, _eRound
+	}
+	v.Round = _rRound
+	_rPos, _ePos := r.ReadInt32()
+	if _ePos != nil {
+		return nil, _ePos
+	}
+	v.Pos = _rPos
 	if v.Flags.Has(1) {
-		_objMessage, _ := ReadTLObject(r)
+		_objMessage, _errMessage := ReadTLObject(r)
+		if _errMessage != nil {
+			return nil, _errMessage
+		}
 		v.Message = _objMessage.(*TextWithEntities)
 	}
 	if v.Flags.Has(2) {
-		v.GiftNum = int32(ReadInt(r))
+		_rGiftNum, _eGiftNum := r.ReadInt32()
+		if _eGiftNum != nil {
+			return nil, _eGiftNum
+		}
+		v.GiftNum = _rGiftNum
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionAcquiredGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionAcquiredGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionAcquiredGift(r)
 	}
 }
@@ -7987,43 +9982,73 @@ func (v *PaymentsStarGiftAuctionAcquiredGifts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftAuctionAcquiredGifts deserializes a PaymentsStarGiftAuctionAcquiredGifts from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftAuctionAcquiredGifts(r io.Reader) (*PaymentsStarGiftAuctionAcquiredGifts, error) {
+func DecodePaymentsStarGiftAuctionAcquiredGifts(r *Reader) (*PaymentsStarGiftAuctionAcquiredGifts, error) {
 	v := &PaymentsStarGiftAuctionAcquiredGifts{}
-	ReadInt(r)
-	_cntGifts := ReadInt(r)
-	if err := checkVectorCount(_cntGifts); err != nil {
-		return nil, err
+	_vhdrGifts, _ehdrGifts := r.ReadUint32()
+	if _ehdrGifts != nil {
+		return nil, _ehdrGifts
+	}
+	_cntGifts, _ecntGifts := r.ReadUint32()
+	if _ecntGifts != nil {
+		return nil, _ecntGifts
+	}
+	if _errGifts := checkVectorCount(_cntGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	v.Gifts = make([]*StarGiftAuctionAcquiredGift, _cntGifts)
 	for _iGifts := range v.Gifts {
-		_objGifts, _ := ReadTLObject(r)
+		_objGifts, _errGifts := ReadTLObject(r)
+		if _errGifts != nil {
+			return nil, _errGifts
+		}
 		v.Gifts[_iGifts] = _objGifts.(*StarGiftAuctionAcquiredGift)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrGifts
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUsers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
+	_ = _vhdrChats
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftAuctionAcquiredGiftsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftAuctionAcquiredGiftsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftAuctionAcquiredGifts(r)
 	}
 }
@@ -8055,19 +10080,28 @@ func (v *StarGiftActiveAuctionState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftActiveAuctionState deserializes a StarGiftActiveAuctionState from a reader using the TL binary protocol.
-func DecodeStarGiftActiveAuctionState(r io.Reader) (*StarGiftActiveAuctionState, error) {
+func DecodeStarGiftActiveAuctionState(r *Reader) (*StarGiftActiveAuctionState, error) {
 	v := &StarGiftActiveAuctionState{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
-	_objState, _ := ReadTLObject(r)
+	_objState, _errState := ReadTLObject(r)
+	if _errState != nil {
+		return nil, _errState
+	}
 	v.State = _objState.(StarGiftAuctionStateClass)
-	_objUserState, _ := ReadTLObject(r)
+	_objUserState, _errUserState := ReadTLObject(r)
+	if _errUserState != nil {
+		return nil, _errUserState
+	}
 	v.UserState = _objUserState.(*StarGiftAuctionUserState)
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftActiveAuctionStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftActiveAuctionStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftActiveAuctionState(r)
 	}
 }
@@ -8110,13 +10144,13 @@ func (v *PaymentsStarGiftActiveAuctionsNotModified) Encode(b *bytes.Buffer) erro
 }
 
 // DecodePaymentsStarGiftActiveAuctionsNotModified deserializes a PaymentsStarGiftActiveAuctionsNotModified from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftActiveAuctionsNotModified(r io.Reader) (*PaymentsStarGiftActiveAuctionsNotModified, error) {
+func DecodePaymentsStarGiftActiveAuctionsNotModified(r *Reader) (*PaymentsStarGiftActiveAuctionsNotModified, error) {
 	v := &PaymentsStarGiftActiveAuctionsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftActiveAuctionsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftActiveAuctionsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftActiveAuctionsNotModified(r)
 	}
 }
@@ -8157,43 +10191,73 @@ func (v *PaymentsStarGiftActiveAuctions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftActiveAuctions deserializes a PaymentsStarGiftActiveAuctions from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftActiveAuctions(r io.Reader) (*PaymentsStarGiftActiveAuctions, error) {
+func DecodePaymentsStarGiftActiveAuctions(r *Reader) (*PaymentsStarGiftActiveAuctions, error) {
 	v := &PaymentsStarGiftActiveAuctions{}
-	ReadInt(r)
-	_cntAuctions := ReadInt(r)
-	if err := checkVectorCount(_cntAuctions); err != nil {
-		return nil, err
+	_vhdrAuctions, _ehdrAuctions := r.ReadUint32()
+	if _ehdrAuctions != nil {
+		return nil, _ehdrAuctions
+	}
+	_cntAuctions, _ecntAuctions := r.ReadUint32()
+	if _ecntAuctions != nil {
+		return nil, _ecntAuctions
+	}
+	if _errAuctions := checkVectorCount(_cntAuctions); _errAuctions != nil {
+		return nil, _errAuctions
 	}
 	v.Auctions = make([]*StarGiftActiveAuctionState, _cntAuctions)
 	for _iAuctions := range v.Auctions {
-		_objAuctions, _ := ReadTLObject(r)
+		_objAuctions, _errAuctions := ReadTLObject(r)
+		if _errAuctions != nil {
+			return nil, _errAuctions
+		}
 		v.Auctions[_iAuctions] = _objAuctions.(*StarGiftActiveAuctionState)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrAuctions
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUsers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
+	_ = _vhdrChats
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftActiveAuctionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftActiveAuctionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftActiveAuctions(r)
 	}
 }
@@ -8238,14 +10302,18 @@ func (v *InputStarGiftAuction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStarGiftAuction deserializes a InputStarGiftAuction from a reader using the TL binary protocol.
-func DecodeInputStarGiftAuction(r io.Reader) (*InputStarGiftAuction, error) {
+func DecodeInputStarGiftAuction(r *Reader) (*InputStarGiftAuction, error) {
 	v := &InputStarGiftAuction{}
-	v.GiftID = ReadLong(r)
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
 	return v, nil
 }
 
 func init() {
-	Registry[InputStarGiftAuctionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStarGiftAuctionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStarGiftAuction(r)
 	}
 }
@@ -8270,14 +10338,18 @@ func (v *InputStarGiftAuctionSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStarGiftAuctionSlug deserializes a InputStarGiftAuctionSlug from a reader using the TL binary protocol.
-func DecodeInputStarGiftAuctionSlug(r io.Reader) (*InputStarGiftAuctionSlug, error) {
+func DecodeInputStarGiftAuctionSlug(r *Reader) (*InputStarGiftAuctionSlug, error) {
 	v := &InputStarGiftAuctionSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputStarGiftAuctionSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStarGiftAuctionSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStarGiftAuctionSlug(r)
 	}
 }
@@ -8309,16 +10381,28 @@ func (v *StarGiftBackground) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftBackground deserializes a StarGiftBackground from a reader using the TL binary protocol.
-func DecodeStarGiftBackground(r io.Reader) (*StarGiftBackground, error) {
+func DecodeStarGiftBackground(r *Reader) (*StarGiftBackground, error) {
 	v := &StarGiftBackground{}
-	v.CenterColor = int32(ReadInt(r))
-	v.EdgeColor = int32(ReadInt(r))
-	v.TextColor = int32(ReadInt(r))
+	_rCenterColor, _eCenterColor := r.ReadInt32()
+	if _eCenterColor != nil {
+		return nil, _eCenterColor
+	}
+	v.CenterColor = _rCenterColor
+	_rEdgeColor, _eEdgeColor := r.ReadInt32()
+	if _eEdgeColor != nil {
+		return nil, _eEdgeColor
+	}
+	v.EdgeColor = _rEdgeColor
+	_rTextColor, _eTextColor := r.ReadInt32()
+	if _eTextColor != nil {
+		return nil, _eTextColor
+	}
+	v.TextColor = _rTextColor
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftBackgroundTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftBackgroundTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftBackground(r)
 	}
 }
@@ -8365,15 +10449,23 @@ func (v *StarGiftAuctionRound) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionRound deserializes a StarGiftAuctionRound from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionRound(r io.Reader) (*StarGiftAuctionRound, error) {
+func DecodeStarGiftAuctionRound(r *Reader) (*StarGiftAuctionRound, error) {
 	v := &StarGiftAuctionRound{}
-	v.Num = int32(ReadInt(r))
-	v.Duration = int32(ReadInt(r))
+	_rNum, _eNum := r.ReadInt32()
+	if _eNum != nil {
+		return nil, _eNum
+	}
+	v.Num = _rNum
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionRoundTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionRoundTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionRound(r)
 	}
 }
@@ -8404,17 +10496,33 @@ func (v *StarGiftAuctionRoundExtendable) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionRoundExtendable deserializes a StarGiftAuctionRoundExtendable from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionRoundExtendable(r io.Reader) (*StarGiftAuctionRoundExtendable, error) {
+func DecodeStarGiftAuctionRoundExtendable(r *Reader) (*StarGiftAuctionRoundExtendable, error) {
 	v := &StarGiftAuctionRoundExtendable{}
-	v.Num = int32(ReadInt(r))
-	v.Duration = int32(ReadInt(r))
-	v.ExtendTop = int32(ReadInt(r))
-	v.ExtendWindow = int32(ReadInt(r))
+	_rNum, _eNum := r.ReadInt32()
+	if _eNum != nil {
+		return nil, _eNum
+	}
+	v.Num = _rNum
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rExtendTop, _eExtendTop := r.ReadInt32()
+	if _eExtendTop != nil {
+		return nil, _eExtendTop
+	}
+	v.ExtendTop = _rExtendTop
+	_rExtendWindow, _eExtendWindow := r.ReadInt32()
+	if _eExtendWindow != nil {
+		return nil, _eExtendWindow
+	}
+	v.ExtendWindow = _rExtendWindow
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionRoundExtendableTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionRoundExtendableTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionRoundExtendable(r)
 	}
 }
@@ -8446,23 +10554,33 @@ func (v *PaymentsStarGiftUpgradeAttributes) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePaymentsStarGiftUpgradeAttributes deserializes a PaymentsStarGiftUpgradeAttributes from a reader using the TL binary protocol.
-func DecodePaymentsStarGiftUpgradeAttributes(r io.Reader) (*PaymentsStarGiftUpgradeAttributes, error) {
+func DecodePaymentsStarGiftUpgradeAttributes(r *Reader) (*PaymentsStarGiftUpgradeAttributes, error) {
 	v := &PaymentsStarGiftUpgradeAttributes{}
-	ReadInt(r)
-	_cntAttributes := ReadInt(r)
-	if err := checkVectorCount(_cntAttributes); err != nil {
-		return nil, err
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := checkVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	v.Attributes = make([]StarGiftAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadTLObject(r)
+		_objAttributes, _errAttributes := ReadTLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(StarGiftAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[PaymentsStarGiftUpgradeAttributesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PaymentsStarGiftUpgradeAttributesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePaymentsStarGiftUpgradeAttributes(r)
 	}
 }
@@ -8525,14 +10643,18 @@ func (v *StarGiftAttributeRarity) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeRarity deserializes a StarGiftAttributeRarity from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeRarity(r io.Reader) (*StarGiftAttributeRarity, error) {
+func DecodeStarGiftAttributeRarity(r *Reader) (*StarGiftAttributeRarity, error) {
 	v := &StarGiftAttributeRarity{}
-	v.Permille = int32(ReadInt(r))
+	_rPermille, _ePermille := r.ReadInt32()
+	if _ePermille != nil {
+		return nil, _ePermille
+	}
+	v.Permille = _rPermille
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeRarityTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeRarityTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeRarity(r)
 	}
 }
@@ -8555,13 +10677,13 @@ func (v *StarGiftAttributeRarityUncommon) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeRarityUncommon deserializes a StarGiftAttributeRarityUncommon from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeRarityUncommon(r io.Reader) (*StarGiftAttributeRarityUncommon, error) {
+func DecodeStarGiftAttributeRarityUncommon(r *Reader) (*StarGiftAttributeRarityUncommon, error) {
 	v := &StarGiftAttributeRarityUncommon{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeRarityUncommonTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeRarityUncommonTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeRarityUncommon(r)
 	}
 }
@@ -8584,13 +10706,13 @@ func (v *StarGiftAttributeRarityRare) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeRarityRare deserializes a StarGiftAttributeRarityRare from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeRarityRare(r io.Reader) (*StarGiftAttributeRarityRare, error) {
+func DecodeStarGiftAttributeRarityRare(r *Reader) (*StarGiftAttributeRarityRare, error) {
 	v := &StarGiftAttributeRarityRare{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeRarityRareTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeRarityRareTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeRarityRare(r)
 	}
 }
@@ -8613,13 +10735,13 @@ func (v *StarGiftAttributeRarityEpic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeRarityEpic deserializes a StarGiftAttributeRarityEpic from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeRarityEpic(r io.Reader) (*StarGiftAttributeRarityEpic, error) {
+func DecodeStarGiftAttributeRarityEpic(r *Reader) (*StarGiftAttributeRarityEpic, error) {
 	v := &StarGiftAttributeRarityEpic{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeRarityEpicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeRarityEpicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeRarityEpic(r)
 	}
 }
@@ -8642,13 +10764,13 @@ func (v *StarGiftAttributeRarityLegendary) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAttributeRarityLegendary deserializes a StarGiftAttributeRarityLegendary from a reader using the TL binary protocol.
-func DecodeStarGiftAttributeRarityLegendary(r io.Reader) (*StarGiftAttributeRarityLegendary, error) {
+func DecodeStarGiftAttributeRarityLegendary(r *Reader) (*StarGiftAttributeRarityLegendary, error) {
 	v := &StarGiftAttributeRarityLegendary{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAttributeRarityLegendaryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAttributeRarityLegendaryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAttributeRarityLegendary(r)
 	}
 }

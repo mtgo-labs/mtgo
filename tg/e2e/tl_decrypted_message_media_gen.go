@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -129,13 +127,13 @@ func (v *DecryptedMessageMediaEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaEmpty deserializes a DecryptedMessageMediaEmpty from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaEmpty(r io.Reader) (*DecryptedMessageMediaEmpty, error) {
+func DecodeDecryptedMessageMediaEmpty(r *tg.Reader) (*DecryptedMessageMediaEmpty, error) {
 	v := &DecryptedMessageMediaEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaEmptyTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaEmptyTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaEmpty(r)
 	}
 }
@@ -172,21 +170,53 @@ func (v *DecryptedMessageMediaPhoto8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaPhoto8 deserializes a DecryptedMessageMediaPhoto8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaPhoto8(r io.Reader) (*DecryptedMessageMediaPhoto8, error) {
+func DecodeDecryptedMessageMediaPhoto8(r *tg.Reader) (*DecryptedMessageMediaPhoto8, error) {
 	v := &DecryptedMessageMediaPhoto8{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaPhoto8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaPhoto8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaPhoto8(r)
 	}
 }
@@ -225,22 +255,58 @@ func (v *DecryptedMessageMediaVideo8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaVideo8 deserializes a DecryptedMessageMediaVideo8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaVideo8(r io.Reader) (*DecryptedMessageMediaVideo8, error) {
+func DecodeDecryptedMessageMediaVideo8(r *tg.Reader) (*DecryptedMessageMediaVideo8, error) {
 	v := &DecryptedMessageMediaVideo8{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.Duration = int32(tg.ReadInt(r))
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaVideo8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaVideo8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaVideo8(r)
 	}
 }
@@ -265,15 +331,23 @@ func (v *DecryptedMessageMediaGeoPoint) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaGeoPoint deserializes a DecryptedMessageMediaGeoPoint from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaGeoPoint(r io.Reader) (*DecryptedMessageMediaGeoPoint, error) {
+func DecodeDecryptedMessageMediaGeoPoint(r *tg.Reader) (*DecryptedMessageMediaGeoPoint, error) {
 	v := &DecryptedMessageMediaGeoPoint{}
-	v.Lat = tg.ReadDouble(r)
-	v.Long = tg.ReadDouble(r)
+	_rLat, _eLat := r.ReadFloat64()
+	if _eLat != nil {
+		return nil, _eLat
+	}
+	v.Lat = _rLat
+	_rLong, _eLong := r.ReadFloat64()
+	if _eLong != nil {
+		return nil, _eLong
+	}
+	v.Long = _rLong
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaGeoPointTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaGeoPointTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaGeoPoint(r)
 	}
 }
@@ -302,17 +376,33 @@ func (v *DecryptedMessageMediaContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaContact deserializes a DecryptedMessageMediaContact from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaContact(r io.Reader) (*DecryptedMessageMediaContact, error) {
+func DecodeDecryptedMessageMediaContact(r *tg.Reader) (*DecryptedMessageMediaContact, error) {
 	v := &DecryptedMessageMediaContact{}
-	v.PhoneNumber = tg.ReadString(r)
-	v.FirstName = tg.ReadString(r)
-	v.LastName = tg.ReadString(r)
-	v.UserID = int32(tg.ReadInt(r))
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_rFirstName, _eFirstName := r.ReadString()
+	if _eFirstName != nil {
+		return nil, _eFirstName
+	}
+	v.FirstName = _rFirstName
+	_rLastName, _eLastName := r.ReadString()
+	if _eLastName != nil {
+		return nil, _eLastName
+	}
+	v.LastName = _rLastName
+	_rUserID, _eUserID := r.ReadInt32()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaContactTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaContactTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaContact(r)
 	}
 }
@@ -349,21 +439,53 @@ func (v *DecryptedMessageMediaDocument8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaDocument8 deserializes a DecryptedMessageMediaDocument8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaDocument8(r io.Reader) (*DecryptedMessageMediaDocument8, error) {
+func DecodeDecryptedMessageMediaDocument8(r *tg.Reader) (*DecryptedMessageMediaDocument8, error) {
 	v := &DecryptedMessageMediaDocument8{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.FileName = tg.ReadString(r)
-	v.MimeType = tg.ReadString(r)
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rFileName, _eFileName := r.ReadString()
+	if _eFileName != nil {
+		return nil, _eFileName
+	}
+	v.FileName = _rFileName
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaDocument8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaDocument8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaDocument8(r)
 	}
 }
@@ -392,17 +514,33 @@ func (v *DecryptedMessageMediaAudio8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaAudio8 deserializes a DecryptedMessageMediaAudio8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaAudio8(r io.Reader) (*DecryptedMessageMediaAudio8, error) {
+func DecodeDecryptedMessageMediaAudio8(r *tg.Reader) (*DecryptedMessageMediaAudio8, error) {
 	v := &DecryptedMessageMediaAudio8{}
-	v.Duration = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaAudio8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaAudio8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaAudio8(r)
 	}
 }
@@ -443,23 +581,63 @@ func (v *DecryptedMessageMediaVideo23) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaVideo23 deserializes a DecryptedMessageMediaVideo23 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaVideo23(r io.Reader) (*DecryptedMessageMediaVideo23, error) {
+func DecodeDecryptedMessageMediaVideo23(r *tg.Reader) (*DecryptedMessageMediaVideo23, error) {
 	v := &DecryptedMessageMediaVideo23{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.Duration = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaVideo23TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaVideo23TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaVideo23(r)
 	}
 }
@@ -490,18 +668,38 @@ func (v *DecryptedMessageMediaAudio) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaAudio deserializes a DecryptedMessageMediaAudio from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaAudio(r io.Reader) (*DecryptedMessageMediaAudio, error) {
+func DecodeDecryptedMessageMediaAudio(r *tg.Reader) (*DecryptedMessageMediaAudio, error) {
 	v := &DecryptedMessageMediaAudio{}
-	v.Duration = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaAudioTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaAudioTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaAudio(r)
 	}
 }
@@ -542,28 +740,68 @@ func (v *DecryptedMessageMediaExternalDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaExternalDocument deserializes a DecryptedMessageMediaExternalDocument from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaExternalDocument(r io.Reader) (*DecryptedMessageMediaExternalDocument, error) {
+func DecodeDecryptedMessageMediaExternalDocument(r *tg.Reader) (*DecryptedMessageMediaExternalDocument, error) {
 	v := &DecryptedMessageMediaExternalDocument{}
-	v.ID = tg.ReadLong(r)
-	v.AccessHash = tg.ReadLong(r)
-	v.Date = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.Size = int32(tg.ReadInt(r))
-	_objThumb, _ := ReadE2ETLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_objThumb, _errThumb := ReadE2ETLObject(r)
+	if _errThumb != nil {
+		return nil, _errThumb
+	}
 	v.Thumb = _objThumb.(PhotoSizeClass)
-	v.DCID = int32(tg.ReadInt(r))
-	tg.ReadInt(r)
-	_cntAttributes := tg.ReadInt(r)
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := tg.CheckVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadE2ETLObject(r)
+		_objAttributes, _errAttributes := ReadE2ETLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
+	_ = _vhdrAttributes
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaExternalDocumentTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaExternalDocumentTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaExternalDocument(r)
 	}
 }
@@ -602,22 +840,58 @@ func (v *DecryptedMessageMediaPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaPhoto deserializes a DecryptedMessageMediaPhoto from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaPhoto(r io.Reader) (*DecryptedMessageMediaPhoto, error) {
+func DecodeDecryptedMessageMediaPhoto(r *tg.Reader) (*DecryptedMessageMediaPhoto, error) {
 	v := &DecryptedMessageMediaPhoto{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
-	v.Caption = tg.ReadString(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
+	_rCaption, _eCaption := r.ReadString()
+	if _eCaption != nil {
+		return nil, _eCaption
+	}
+	v.Caption = _rCaption
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaPhotoTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaPhotoTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaPhoto(r)
 	}
 }
@@ -660,24 +934,68 @@ func (v *DecryptedMessageMediaVideo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaVideo deserializes a DecryptedMessageMediaVideo from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaVideo(r io.Reader) (*DecryptedMessageMediaVideo, error) {
+func DecodeDecryptedMessageMediaVideo(r *tg.Reader) (*DecryptedMessageMediaVideo, error) {
 	v := &DecryptedMessageMediaVideo{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.Duration = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.W = int32(tg.ReadInt(r))
-	v.H = int32(tg.ReadInt(r))
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
-	v.Caption = tg.ReadString(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
+	_rCaption, _eCaption := r.ReadString()
+	if _eCaption != nil {
+		return nil, _eCaption
+	}
+	v.Caption = _rCaption
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaVideoTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaVideoTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaVideo(r)
 	}
 }
@@ -720,28 +1038,73 @@ func (v *DecryptedMessageMediaDocument46) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaDocument46 deserializes a DecryptedMessageMediaDocument46 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaDocument46(r io.Reader) (*DecryptedMessageMediaDocument46, error) {
+func DecodeDecryptedMessageMediaDocument46(r *tg.Reader) (*DecryptedMessageMediaDocument46, error) {
 	v := &DecryptedMessageMediaDocument46{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.Size = int32(tg.ReadInt(r))
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
-	tg.ReadInt(r)
-	_cntAttributes := tg.ReadInt(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt32()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := tg.CheckVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadE2ETLObject(r)
+		_objAttributes, _errAttributes := ReadE2ETLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
-	v.Caption = tg.ReadString(r)
+	_ = _vhdrAttributes
+	_rCaption, _eCaption := r.ReadString()
+	if _eCaption != nil {
+		return nil, _eCaption
+	}
+	v.Caption = _rCaption
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaDocument46TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaDocument46TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaDocument46(r)
 	}
 }
@@ -774,19 +1137,43 @@ func (v *DecryptedMessageMediaVenue) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaVenue deserializes a DecryptedMessageMediaVenue from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaVenue(r io.Reader) (*DecryptedMessageMediaVenue, error) {
+func DecodeDecryptedMessageMediaVenue(r *tg.Reader) (*DecryptedMessageMediaVenue, error) {
 	v := &DecryptedMessageMediaVenue{}
-	v.Lat = tg.ReadDouble(r)
-	v.Long = tg.ReadDouble(r)
-	v.Title = tg.ReadString(r)
-	v.Address = tg.ReadString(r)
-	v.Provider = tg.ReadString(r)
-	v.VenueID = tg.ReadString(r)
+	_rLat, _eLat := r.ReadFloat64()
+	if _eLat != nil {
+		return nil, _eLat
+	}
+	v.Lat = _rLat
+	_rLong, _eLong := r.ReadFloat64()
+	if _eLong != nil {
+		return nil, _eLong
+	}
+	v.Long = _rLong
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rProvider, _eProvider := r.ReadString()
+	if _eProvider != nil {
+		return nil, _eProvider
+	}
+	v.Provider = _rProvider
+	_rVenueID, _eVenueID := r.ReadString()
+	if _eVenueID != nil {
+		return nil, _eVenueID
+	}
+	v.VenueID = _rVenueID
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaVenueTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaVenueTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaVenue(r)
 	}
 }
@@ -809,14 +1196,18 @@ func (v *DecryptedMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaWebPage deserializes a DecryptedMessageMediaWebPage from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaWebPage(r io.Reader) (*DecryptedMessageMediaWebPage, error) {
+func DecodeDecryptedMessageMediaWebPage(r *tg.Reader) (*DecryptedMessageMediaWebPage, error) {
 	v := &DecryptedMessageMediaWebPage{}
-	v.URL = tg.ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaWebPageTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaWebPageTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaWebPage(r)
 	}
 }
@@ -859,28 +1250,73 @@ func (v *DecryptedMessageMediaDocument) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageMediaDocument deserializes a DecryptedMessageMediaDocument from a reader using the TL binary protocol.
-func DecodeDecryptedMessageMediaDocument(r io.Reader) (*DecryptedMessageMediaDocument, error) {
+func DecodeDecryptedMessageMediaDocument(r *tg.Reader) (*DecryptedMessageMediaDocument, error) {
 	v := &DecryptedMessageMediaDocument{}
-	v.Thumb = tg.ReadBytes(r)
-	v.ThumbW = int32(tg.ReadInt(r))
-	v.ThumbH = int32(tg.ReadInt(r))
-	v.MimeType = tg.ReadString(r)
-	v.Size = tg.ReadLong(r)
-	v.Key = tg.ReadBytes(r)
-	v.Iv = tg.ReadBytes(r)
-	tg.ReadInt(r)
-	_cntAttributes := tg.ReadInt(r)
+	_rThumb, _eThumb := r.ReadBytes()
+	if _eThumb != nil {
+		return nil, _eThumb
+	}
+	v.Thumb = _rThumb
+	_rThumbW, _eThumbW := r.ReadInt32()
+	if _eThumbW != nil {
+		return nil, _eThumbW
+	}
+	v.ThumbW = _rThumbW
+	_rThumbH, _eThumbH := r.ReadInt32()
+	if _eThumbH != nil {
+		return nil, _eThumbH
+	}
+	v.ThumbH = _rThumbH
+	_rMimeType, _eMimeType := r.ReadString()
+	if _eMimeType != nil {
+		return nil, _eMimeType
+	}
+	v.MimeType = _rMimeType
+	_rSize, _eSize := r.ReadInt64()
+	if _eSize != nil {
+		return nil, _eSize
+	}
+	v.Size = _rSize
+	_rKey, _eKey := r.ReadBytes()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
+	_rIv, _eIv := r.ReadBytes()
+	if _eIv != nil {
+		return nil, _eIv
+	}
+	v.Iv = _rIv
+	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
+	if _ehdrAttributes != nil {
+		return nil, _ehdrAttributes
+	}
+	_cntAttributes, _ecntAttributes := r.ReadUint32()
+	if _ecntAttributes != nil {
+		return nil, _ecntAttributes
+	}
+	if _errAttributes := tg.CheckVectorCount(_cntAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	v.Attributes = make([]DocumentAttributeClass, _cntAttributes)
 	for _iAttributes := range v.Attributes {
-		_objAttributes, _ := ReadE2ETLObject(r)
+		_objAttributes, _errAttributes := ReadE2ETLObject(r)
+		if _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
 	}
-	v.Caption = tg.ReadString(r)
+	_ = _vhdrAttributes
+	_rCaption, _eCaption := r.ReadString()
+	if _eCaption != nil {
+		return nil, _eCaption
+	}
+	v.Caption = _rCaption
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageMediaDocumentTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageMediaDocumentTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageMediaDocument(r)
 	}
 }

@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -51,16 +49,28 @@ func (v *FileLocationUnavailable) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFileLocationUnavailable deserializes a FileLocationUnavailable from a reader using the TL binary protocol.
-func DecodeFileLocationUnavailable(r io.Reader) (*FileLocationUnavailable, error) {
+func DecodeFileLocationUnavailable(r *tg.Reader) (*FileLocationUnavailable, error) {
 	v := &FileLocationUnavailable{}
-	v.VolumeID = tg.ReadLong(r)
-	v.LocalID = int32(tg.ReadInt(r))
-	v.Secret = tg.ReadLong(r)
+	_rVolumeID, _eVolumeID := r.ReadInt64()
+	if _eVolumeID != nil {
+		return nil, _eVolumeID
+	}
+	v.VolumeID = _rVolumeID
+	_rLocalID, _eLocalID := r.ReadInt32()
+	if _eLocalID != nil {
+		return nil, _eLocalID
+	}
+	v.LocalID = _rLocalID
+	_rSecret, _eSecret := r.ReadInt64()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[FileLocationUnavailableTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[FileLocationUnavailableTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeFileLocationUnavailable(r)
 	}
 }
@@ -89,17 +99,33 @@ func (v *FileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFileLocation deserializes a FileLocation from a reader using the TL binary protocol.
-func DecodeFileLocation(r io.Reader) (*FileLocation, error) {
+func DecodeFileLocation(r *tg.Reader) (*FileLocation, error) {
 	v := &FileLocation{}
-	v.DCID = int32(tg.ReadInt(r))
-	v.VolumeID = tg.ReadLong(r)
-	v.LocalID = int32(tg.ReadInt(r))
-	v.Secret = tg.ReadLong(r)
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rVolumeID, _eVolumeID := r.ReadInt64()
+	if _eVolumeID != nil {
+		return nil, _eVolumeID
+	}
+	v.VolumeID = _rVolumeID
+	_rLocalID, _eLocalID := r.ReadInt32()
+	if _eLocalID != nil {
+		return nil, _eLocalID
+	}
+	v.LocalID = _rLocalID
+	_rSecret, _eSecret := r.ReadInt64()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[FileLocationTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[FileLocationTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeFileLocation(r)
 	}
 }

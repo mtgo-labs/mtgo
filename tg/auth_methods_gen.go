@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // AuthSendCodeTypeID is the constructor ID for the RPC function auth.sendCode.
@@ -45,7 +44,7 @@ func (v *AuthSendCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthSendCode(ctx context.Context, req *AuthSendCodeRequest) (SentCodeClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -104,7 +103,7 @@ func (v *AuthSignUpRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthSignUp(ctx context.Context, req *AuthSignUpRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -169,7 +168,7 @@ func (v *AuthSignInRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthSignIn(ctx context.Context, req *AuthSignInRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -209,7 +208,7 @@ func (v *AuthLogOutRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthLogOut(ctx context.Context) (*AuthLoggedOut, error) {
-	result, err := c.invoke(ctx, &AuthLogOutRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &AuthLogOutRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -249,7 +248,7 @@ func (v *AuthResetAuthorizationsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthResetAuthorizations(ctx context.Context) (bool, error) {
-	result, err := c.invoke(ctx, &AuthResetAuthorizationsRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &AuthResetAuthorizationsRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -289,7 +288,7 @@ func (v *AuthExportAuthorizationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthExportAuthorization(ctx context.Context, req *AuthExportAuthorizationRequest) (*AuthExportedAuthorization, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -333,7 +332,7 @@ func (v *AuthImportAuthorizationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthImportAuthorization(ctx context.Context, req *AuthImportAuthorizationRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -381,7 +380,7 @@ func (v *AuthBindTempAuthKeyRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthBindTempAuthKey(ctx context.Context, req *AuthBindTempAuthKeyRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -427,7 +426,7 @@ func (v *AuthImportBotAuthorizationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthImportBotAuthorization(ctx context.Context, req *AuthImportBotAuthorizationRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -469,7 +468,7 @@ func (v *AuthCheckPasswordRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthCheckPassword(ctx context.Context, req *AuthCheckPasswordRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -509,7 +508,7 @@ func (v *AuthRequestPasswordRecoveryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthRequestPasswordRecovery(ctx context.Context) (*AuthPasswordRecovery, error) {
-	result, err := c.invoke(ctx, &AuthRequestPasswordRecoveryRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &AuthRequestPasswordRecoveryRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -565,7 +564,7 @@ func (v *AuthRecoverPasswordRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthRecoverPassword(ctx context.Context, req *AuthRecoverPasswordRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -623,7 +622,7 @@ func (v *AuthResendCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthResendCode(ctx context.Context, req *AuthResendCodeRequest) (SentCodeClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -667,7 +666,7 @@ func (v *AuthCancelCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthCancelCode(ctx context.Context, req *AuthCancelCodeRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -707,7 +706,7 @@ func (v *AuthDropTempAuthKeysRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthDropTempAuthKeys(ctx context.Context, req *AuthDropTempAuthKeysRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -751,7 +750,7 @@ func (v *AuthExportLoginTokenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthExportLoginToken(ctx context.Context, req *AuthExportLoginTokenRequest) (LoginTokenClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -793,7 +792,7 @@ func (v *AuthImportLoginTokenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthImportLoginToken(ctx context.Context, req *AuthImportLoginTokenRequest) (LoginTokenClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -835,7 +834,7 @@ func (v *AuthAcceptLoginTokenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthAcceptLoginToken(ctx context.Context, req *AuthAcceptLoginTokenRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -877,7 +876,7 @@ func (v *AuthCheckRecoveryPasswordRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthCheckRecoveryPassword(ctx context.Context, req *AuthCheckRecoveryPasswordRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -921,7 +920,7 @@ func (v *AuthImportWebTokenAuthorizationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthImportWebTokenAuthorization(ctx context.Context, req *AuthImportWebTokenAuthorizationRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -993,7 +992,7 @@ func (v *AuthRequestFirebaseSmsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthRequestFirebaseSms(ctx context.Context, req *AuthRequestFirebaseSmsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1035,7 +1034,7 @@ func (v *AuthResetLoginEmailRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthResetLoginEmail(ctx context.Context, req *AuthResetLoginEmailRequest) (SentCodeClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1081,7 +1080,7 @@ func (v *AuthReportMissingCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthReportMissingCode(ctx context.Context, req *AuthReportMissingCodeRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1125,7 +1124,7 @@ func (v *AuthCheckPaidAuthRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthCheckPaidAuth(ctx context.Context, req *AuthCheckPaidAuthRequest) (SentCodeClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1169,7 +1168,7 @@ func (v *AuthInitPasskeyLoginRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthInitPasskeyLogin(ctx context.Context, req *AuthInitPasskeyLoginRequest) (*AuthPasskeyLoginOptions, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1232,7 +1231,7 @@ func (v *AuthFinishPasskeyLoginRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) AuthFinishPasskeyLogin(ctx context.Context, req *AuthFinishPasskeyLoginRequest) (AuthorizationClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

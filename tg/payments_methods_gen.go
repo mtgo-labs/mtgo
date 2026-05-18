@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // PaymentsGetPaymentFormTypeID is the constructor ID for the RPC function payments.getPaymentForm.
@@ -53,7 +52,7 @@ func (v *PaymentsGetPaymentFormRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetPaymentForm(ctx context.Context, req *PaymentsGetPaymentFormRequest) (PaymentFormClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -97,7 +96,7 @@ func (v *PaymentsGetPaymentReceiptRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetPaymentReceipt(ctx context.Context, req *PaymentsGetPaymentReceiptRequest) (PaymentReceiptClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -152,7 +151,7 @@ func (v *PaymentsValidateRequestedInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsValidateRequestedInfo(ctx context.Context, req *PaymentsValidateRequestedInfoRequest) (*PaymentsValidatedRequestedInfo, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -226,7 +225,7 @@ func (v *PaymentsSendPaymentFormRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsSendPaymentForm(ctx context.Context, req *PaymentsSendPaymentFormRequest) (PaymentResultClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -266,7 +265,7 @@ func (v *PaymentsGetSavedInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetSavedInfo(ctx context.Context) (*PaymentsSavedInfo, error) {
-	result, err := c.invoke(ctx, &PaymentsGetSavedInfoRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &PaymentsGetSavedInfoRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -321,7 +320,7 @@ func (v *PaymentsClearSavedInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsClearSavedInfo(ctx context.Context, req *PaymentsClearSavedInfoRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -361,7 +360,7 @@ func (v *PaymentsGetBankCardDataRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetBankCardData(ctx context.Context, req *PaymentsGetBankCardDataRequest) (*PaymentsBankCardData, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -403,7 +402,7 @@ func (v *PaymentsExportInvoiceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsExportInvoice(ctx context.Context, req *PaymentsExportInvoiceRequest) (*PaymentsExportedInvoice, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -447,7 +446,7 @@ func (v *PaymentsAssignAppStoreTransactionRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsAssignAppStoreTransaction(ctx context.Context, req *PaymentsAssignAppStoreTransactionRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -491,7 +490,7 @@ func (v *PaymentsAssignPlayMarketTransactionRequest) Encode(b *bytes.Buffer) err
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsAssignPlayMarketTransaction(ctx context.Context, req *PaymentsAssignPlayMarketTransactionRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -545,7 +544,7 @@ func (v *PaymentsGetPremiumGiftCodeOptionsRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetPremiumGiftCodeOptions(ctx context.Context, req *PaymentsGetPremiumGiftCodeOptionsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -584,7 +583,7 @@ func (v *PaymentsCheckGiftCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsCheckGiftCode(ctx context.Context, req *PaymentsCheckGiftCodeRequest) (*PaymentsCheckedGiftCode, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -626,7 +625,7 @@ func (v *PaymentsApplyGiftCodeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsApplyGiftCode(ctx context.Context, req *PaymentsApplyGiftCodeRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -670,7 +669,7 @@ func (v *PaymentsGetGiveawayInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetGiveawayInfo(ctx context.Context, req *PaymentsGetGiveawayInfoRequest) (GiveawayInfoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -716,7 +715,7 @@ func (v *PaymentsLaunchPrepaidGiveawayRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsLaunchPrepaidGiveaway(ctx context.Context, req *PaymentsLaunchPrepaidGiveawayRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -756,7 +755,7 @@ func (v *PaymentsGetStarsTopupOptionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsTopupOptions(ctx context.Context) (TLObject, error) {
-	result, err := c.invoke(ctx, &PaymentsGetStarsTopupOptionsRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &PaymentsGetStarsTopupOptionsRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -806,7 +805,7 @@ func (v *PaymentsGetStarsStatusRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsStatus(ctx context.Context, req *PaymentsGetStarsStatusRequest) (*PaymentsStarsStatus, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -882,7 +881,7 @@ func (v *PaymentsGetStarsTransactionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsTransactions(ctx context.Context, req *PaymentsGetStarsTransactionsRequest) (*PaymentsStarsStatus, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -926,7 +925,7 @@ func (v *PaymentsSendStarsFormRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsSendStarsForm(ctx context.Context, req *PaymentsSendStarsFormRequest) (PaymentResultClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -970,7 +969,7 @@ func (v *PaymentsRefundStarsChargeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsRefundStarsCharge(ctx context.Context, req *PaymentsRefundStarsChargeRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1027,7 +1026,7 @@ func (v *PaymentsGetStarsRevenueStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsRevenueStats(ctx context.Context, req *PaymentsGetStarsRevenueStatsRequest) (*PaymentsStarsRevenueStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1089,7 +1088,7 @@ func (v *PaymentsGetStarsRevenueWithdrawalURLRequest) Encode(b *bytes.Buffer) er
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsRevenueWithdrawalURL(ctx context.Context, req *PaymentsGetStarsRevenueWithdrawalURLRequest) (*PaymentsStarsRevenueWithdrawalURL, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1131,7 +1130,7 @@ func (v *PaymentsGetStarsRevenueAdsAccountURLRequest) Encode(b *bytes.Buffer) er
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsRevenueAdsAccountURL(ctx context.Context, req *PaymentsGetStarsRevenueAdsAccountURLRequest) (*PaymentsStarsRevenueAdsAccountURL, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1190,7 +1189,7 @@ func (v *PaymentsGetStarsTransactionsByIDRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsTransactionsByID(ctx context.Context, req *PaymentsGetStarsTransactionsByIDRequest) (*PaymentsStarsStatus, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1244,7 +1243,7 @@ func (v *PaymentsGetStarsGiftOptionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsGiftOptions(ctx context.Context, req *PaymentsGetStarsGiftOptionsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1296,7 +1295,7 @@ func (v *PaymentsGetStarsSubscriptionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsSubscriptions(ctx context.Context, req *PaymentsGetStarsSubscriptionsRequest) (*PaymentsStarsStatus, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1354,7 +1353,7 @@ func (v *PaymentsChangeStarsSubscriptionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsChangeStarsSubscription(ctx context.Context, req *PaymentsChangeStarsSubscriptionRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1396,7 +1395,7 @@ func (v *PaymentsFulfillStarsSubscriptionRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsFulfillStarsSubscription(ctx context.Context, req *PaymentsFulfillStarsSubscriptionRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1434,7 +1433,7 @@ func (v *PaymentsGetStarsGiveawayOptionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarsGiveawayOptions(ctx context.Context) (TLObject, error) {
-	result, err := c.invoke(ctx, &PaymentsGetStarsGiveawayOptionsRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &PaymentsGetStarsGiveawayOptionsRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1473,7 +1472,7 @@ func (v *PaymentsGetStarGiftsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGifts(ctx context.Context, req *PaymentsGetStarGiftsRequest) (StarGiftsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1526,7 +1525,7 @@ func (v *PaymentsSaveStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsSaveStarGift(ctx context.Context, req *PaymentsSaveStarGiftRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1566,7 +1565,7 @@ func (v *PaymentsConvertStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsConvertStarGift(ctx context.Context, req *PaymentsConvertStarGiftRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1619,7 +1618,7 @@ func (v *PaymentsBotCancelStarsSubscriptionRequest) Encode(b *bytes.Buffer) erro
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsBotCancelStarsSubscription(ctx context.Context, req *PaymentsBotCancelStarsSubscriptionRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1682,7 +1681,7 @@ func (v *PaymentsGetConnectedStarRefBotsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetConnectedStarRefBots(ctx context.Context, req *PaymentsGetConnectedStarRefBotsRequest) (*PaymentsConnectedStarRefBots, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1726,7 +1725,7 @@ func (v *PaymentsGetConnectedStarRefBotRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetConnectedStarRefBot(ctx context.Context, req *PaymentsGetConnectedStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1787,7 +1786,7 @@ func (v *PaymentsGetSuggestedStarRefBotsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetSuggestedStarRefBots(ctx context.Context, req *PaymentsGetSuggestedStarRefBotsRequest) (*PaymentsSuggestedStarRefBots, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1831,7 +1830,7 @@ func (v *PaymentsConnectStarRefBotRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsConnectStarRefBot(ctx context.Context, req *PaymentsConnectStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1886,7 +1885,7 @@ func (v *PaymentsEditConnectedStarRefBotRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsEditConnectedStarRefBot(ctx context.Context, req *PaymentsEditConnectedStarRefBotRequest) (*PaymentsConnectedStarRefBots, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1928,7 +1927,7 @@ func (v *PaymentsGetStarGiftUpgradePreviewRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftUpgradePreview(ctx context.Context, req *PaymentsGetStarGiftUpgradePreviewRequest) (*PaymentsStarGiftUpgradePreview, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1981,7 +1980,7 @@ func (v *PaymentsUpgradeStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsUpgradeStarGift(ctx context.Context, req *PaymentsUpgradeStarGiftRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2025,7 +2024,7 @@ func (v *PaymentsTransferStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsTransferStarGift(ctx context.Context, req *PaymentsTransferStarGiftRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2067,7 +2066,7 @@ func (v *PaymentsGetUniqueStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetUniqueStarGift(ctx context.Context, req *PaymentsGetUniqueStarGiftRequest) (*PaymentsUniqueStarGift, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2163,7 +2162,7 @@ func (v *PaymentsGetSavedStarGiftsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetSavedStarGifts(ctx context.Context, req *PaymentsGetSavedStarGiftsRequest) (*PaymentsSavedStarGifts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2209,7 +2208,7 @@ func (v *PaymentsGetSavedStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetSavedStarGift(ctx context.Context, req *PaymentsGetSavedStarGiftRequest) (*PaymentsSavedStarGifts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2253,7 +2252,7 @@ func (v *PaymentsGetStarGiftWithdrawalURLRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftWithdrawalURL(ctx context.Context, req *PaymentsGetStarGiftWithdrawalURLRequest) (*PaymentsStarGiftWithdrawalURL, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2306,7 +2305,7 @@ func (v *PaymentsToggleChatStarGiftNotificationsRequest) Encode(b *bytes.Buffer)
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsToggleChatStarGiftNotifications(ctx context.Context, req *PaymentsToggleChatStarGiftNotificationsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2352,7 +2351,7 @@ func (v *PaymentsToggleStarGiftsPinnedToTopRequest) Encode(b *bytes.Buffer) erro
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsToggleStarGiftsPinnedToTop(ctx context.Context, req *PaymentsToggleStarGiftsPinnedToTopRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2392,7 +2391,7 @@ func (v *PaymentsCanPurchaseStoreRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsCanPurchaseStore(ctx context.Context, req *PaymentsCanPurchaseStoreRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2477,7 +2476,7 @@ func (v *PaymentsGetResaleStarGiftsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetResaleStarGifts(ctx context.Context, req *PaymentsGetResaleStarGiftsRequest) (*PaymentsResaleStarGifts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2521,7 +2520,7 @@ func (v *PaymentsUpdateStarGiftPriceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsUpdateStarGiftPrice(ctx context.Context, req *PaymentsUpdateStarGiftPriceRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2571,7 +2570,7 @@ func (v *PaymentsCreateStarGiftCollectionRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsCreateStarGiftCollection(ctx context.Context, req *PaymentsCreateStarGiftCollectionRequest) (*StarGiftCollection, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2662,7 +2661,7 @@ func (v *PaymentsUpdateStarGiftCollectionRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsUpdateStarGiftCollection(ctx context.Context, req *PaymentsUpdateStarGiftCollectionRequest) (*StarGiftCollection, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2706,7 +2705,7 @@ func (v *PaymentsReorderStarGiftCollectionsRequest) Encode(b *bytes.Buffer) erro
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsReorderStarGiftCollections(ctx context.Context, req *PaymentsReorderStarGiftCollectionsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2748,7 +2747,7 @@ func (v *PaymentsDeleteStarGiftCollectionRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsDeleteStarGiftCollection(ctx context.Context, req *PaymentsDeleteStarGiftCollectionRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2790,7 +2789,7 @@ func (v *PaymentsGetStarGiftCollectionsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftCollections(ctx context.Context, req *PaymentsGetStarGiftCollectionsRequest) (StarGiftCollectionsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2832,7 +2831,7 @@ func (v *PaymentsGetUniqueStarGiftValueInfoRequest) Encode(b *bytes.Buffer) erro
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetUniqueStarGiftValueInfo(ctx context.Context, req *PaymentsGetUniqueStarGiftValueInfoRequest) (*PaymentsUniqueStarGiftValueInfo, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2874,7 +2873,7 @@ func (v *PaymentsCheckCanSendGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsCheckCanSendGift(ctx context.Context, req *PaymentsCheckCanSendGiftRequest) (CheckCanSendGiftResultClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2918,7 +2917,7 @@ func (v *PaymentsGetStarGiftAuctionStateRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftAuctionState(ctx context.Context, req *PaymentsGetStarGiftAuctionStateRequest) (StarGiftAuctionStateClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2960,7 +2959,7 @@ func (v *PaymentsGetStarGiftAuctionAcquiredGiftsRequest) Encode(b *bytes.Buffer)
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftAuctionAcquiredGifts(ctx context.Context, req *PaymentsGetStarGiftAuctionAcquiredGiftsRequest) (*PaymentsStarGiftAuctionAcquiredGifts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3002,7 +3001,7 @@ func (v *PaymentsGetStarGiftActiveAuctionsRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftActiveAuctions(ctx context.Context, req *PaymentsGetStarGiftActiveAuctionsRequest) (StarGiftActiveAuctionsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3055,7 +3054,7 @@ func (v *PaymentsResolveStarGiftOfferRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsResolveStarGiftOffer(ctx context.Context, req *PaymentsResolveStarGiftOfferRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3119,7 +3118,7 @@ func (v *PaymentsSendStarGiftOfferRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsSendStarGiftOffer(ctx context.Context, req *PaymentsSendStarGiftOfferRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3161,7 +3160,7 @@ func (v *PaymentsGetStarGiftUpgradeAttributesRequest) Encode(b *bytes.Buffer) er
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetStarGiftUpgradeAttributes(ctx context.Context, req *PaymentsGetStarGiftUpgradeAttributesRequest) (*PaymentsStarGiftUpgradeAttributes, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3207,7 +3206,7 @@ func (v *PaymentsGetCraftStarGiftsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsGetCraftStarGifts(ctx context.Context, req *PaymentsGetCraftStarGiftsRequest) (*PaymentsSavedStarGifts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -3253,7 +3252,7 @@ func (v *PaymentsCraftStarGiftRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PaymentsCraftStarGift(ctx context.Context, req *PaymentsCraftStarGiftRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

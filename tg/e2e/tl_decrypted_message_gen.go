@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -77,18 +75,33 @@ func (v *DecryptedMessage8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessage8 deserializes a DecryptedMessage8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessage8(r io.Reader) (*DecryptedMessage8, error) {
+func DecodeDecryptedMessage8(r *tg.Reader) (*DecryptedMessage8, error) {
 	v := &DecryptedMessage8{}
-	v.RandomID = tg.ReadLong(r)
-	v.RandomBytes = tg.ReadBytes(r)
-	v.Message = tg.ReadString(r)
-	_objMedia, _ := ReadE2ETLObject(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rRandomBytes, _eRandomBytes := r.ReadBytes()
+	if _eRandomBytes != nil {
+		return nil, _eRandomBytes
+	}
+	v.RandomBytes = _rRandomBytes
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_objMedia, _errMedia := ReadE2ETLObject(r)
+	if _errMedia != nil {
+		return nil, _errMedia
+	}
 	v.Media = _objMedia.(DecryptedMessageMediaClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessage8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessage8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessage8(r)
 	}
 }
@@ -115,17 +128,28 @@ func (v *DecryptedMessageService8) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageService8 deserializes a DecryptedMessageService8 from a reader using the TL binary protocol.
-func DecodeDecryptedMessageService8(r io.Reader) (*DecryptedMessageService8, error) {
+func DecodeDecryptedMessageService8(r *tg.Reader) (*DecryptedMessageService8, error) {
 	v := &DecryptedMessageService8{}
-	v.RandomID = tg.ReadLong(r)
-	v.RandomBytes = tg.ReadBytes(r)
-	_objAction, _ := ReadE2ETLObject(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rRandomBytes, _eRandomBytes := r.ReadBytes()
+	if _eRandomBytes != nil {
+		return nil, _eRandomBytes
+	}
+	v.RandomBytes = _rRandomBytes
+	_objAction, _errAction := ReadE2ETLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(DecryptedMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageService8TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageService8TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageService8(r)
 	}
 }
@@ -154,18 +178,33 @@ func (v *DecryptedMessage23) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessage23 deserializes a DecryptedMessage23 from a reader using the TL binary protocol.
-func DecodeDecryptedMessage23(r io.Reader) (*DecryptedMessage23, error) {
+func DecodeDecryptedMessage23(r *tg.Reader) (*DecryptedMessage23, error) {
 	v := &DecryptedMessage23{}
-	v.RandomID = tg.ReadLong(r)
-	v.TTL = int32(tg.ReadInt(r))
-	v.Message = tg.ReadString(r)
-	_objMedia, _ := ReadE2ETLObject(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rTTL, _eTTL := r.ReadInt32()
+	if _eTTL != nil {
+		return nil, _eTTL
+	}
+	v.TTL = _rTTL
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_objMedia, _errMedia := ReadE2ETLObject(r)
+	if _errMedia != nil {
+		return nil, _errMedia
+	}
 	v.Media = _objMedia.(DecryptedMessageMediaClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessage23TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessage23TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessage23(r)
 	}
 }
@@ -190,16 +229,23 @@ func (v *DecryptedMessageService) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageService deserializes a DecryptedMessageService from a reader using the TL binary protocol.
-func DecodeDecryptedMessageService(r io.Reader) (*DecryptedMessageService, error) {
+func DecodeDecryptedMessageService(r *tg.Reader) (*DecryptedMessageService, error) {
 	v := &DecryptedMessageService{}
-	v.RandomID = tg.ReadLong(r)
-	_objAction, _ := ReadE2ETLObject(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_objAction, _errAction := ReadE2ETLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(DecryptedMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageServiceTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageServiceTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageService(r)
 	}
 }
@@ -265,40 +311,76 @@ func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessage46 deserializes a DecryptedMessage46 from a reader using the TL binary protocol.
-func DecodeDecryptedMessage46(r io.Reader) (*DecryptedMessage46, error) {
+func DecodeDecryptedMessage46(r *tg.Reader) (*DecryptedMessage46, error) {
 	v := &DecryptedMessage46{}
 	{
 		var _f uint32
-		_f, _ = tg.ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = tg.Fields(_f)
 	}
-	v.RandomID = tg.ReadLong(r)
-	v.TTL = int32(tg.ReadInt(r))
-	v.Message = tg.ReadString(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rTTL, _eTTL := r.ReadInt32()
+	if _eTTL != nil {
+		return nil, _eTTL
+	}
+	v.TTL = _rTTL
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(9) {
-		_objMedia, _ := ReadE2ETLObject(r)
+		_objMedia, _errMedia := ReadE2ETLObject(r)
+		if _errMedia != nil {
+			return nil, _errMedia
+		}
 		v.Media = _objMedia.(DecryptedMessageMediaClass)
 	}
 	if v.Flags.Has(7) {
-		tg.ReadInt(r)
-		_cntEntities := tg.ReadInt(r)
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := tg.CheckVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadE2ETLObject(r)
+			_objEntities, _errEntities := ReadE2ETLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(11) {
-		v.ViaBotName = tg.ReadString(r)
+		_rViaBotName, _eViaBotName := r.ReadString()
+		if _eViaBotName != nil {
+			return nil, _eViaBotName
+		}
+		v.ViaBotName = _rViaBotName
 	}
 	if v.Flags.Has(3) {
-		v.ReplyToRandomID = tg.ReadLong(r)
+		_rReplyToRandomID, _eReplyToRandomID := r.ReadInt64()
+		if _eReplyToRandomID != nil {
+			return nil, _eReplyToRandomID
+		}
+		v.ReplyToRandomID = _rReplyToRandomID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessage46TypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessage46TypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessage46(r)
 	}
 }
@@ -375,44 +457,84 @@ func (v *DecryptedMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessage deserializes a DecryptedMessage from a reader using the TL binary protocol.
-func DecodeDecryptedMessage(r io.Reader) (*DecryptedMessage, error) {
+func DecodeDecryptedMessage(r *tg.Reader) (*DecryptedMessage, error) {
 	v := &DecryptedMessage{}
 	{
 		var _f uint32
-		_f, _ = tg.ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = tg.Fields(_f)
 	}
 	v.Silent = v.Flags.Has(5)
-	v.RandomID = tg.ReadLong(r)
-	v.TTL = int32(tg.ReadInt(r))
-	v.Message = tg.ReadString(r)
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_rTTL, _eTTL := r.ReadInt32()
+	if _eTTL != nil {
+		return nil, _eTTL
+	}
+	v.TTL = _rTTL
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(9) {
-		_objMedia, _ := ReadE2ETLObject(r)
+		_objMedia, _errMedia := ReadE2ETLObject(r)
+		if _errMedia != nil {
+			return nil, _errMedia
+		}
 		v.Media = _objMedia.(DecryptedMessageMediaClass)
 	}
 	if v.Flags.Has(7) {
-		tg.ReadInt(r)
-		_cntEntities := tg.ReadInt(r)
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := tg.CheckVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadE2ETLObject(r)
+			_objEntities, _errEntities := ReadE2ETLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(11) {
-		v.ViaBotName = tg.ReadString(r)
+		_rViaBotName, _eViaBotName := r.ReadString()
+		if _eViaBotName != nil {
+			return nil, _eViaBotName
+		}
+		v.ViaBotName = _rViaBotName
 	}
 	if v.Flags.Has(3) {
-		v.ReplyToRandomID = tg.ReadLong(r)
+		_rReplyToRandomID, _eReplyToRandomID := r.ReadInt64()
+		if _eReplyToRandomID != nil {
+			return nil, _eReplyToRandomID
+		}
+		v.ReplyToRandomID = _rReplyToRandomID
 	}
 	if v.Flags.Has(17) {
-		v.GroupedID = tg.ReadLong(r)
+		_rGroupedID, _eGroupedID := r.ReadInt64()
+		if _eGroupedID != nil {
+			return nil, _eGroupedID
+		}
+		v.GroupedID = _rGroupedID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessage(r)
 	}
 }

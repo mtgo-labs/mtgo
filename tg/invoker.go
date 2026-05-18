@@ -2,20 +2,15 @@ package tg
 
 import (
 	"context"
-	"io"
 )
 
-// Invoker is the interface for types that can perform TL RPC calls.
 type Invoker interface {
-	RPCInvoke(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error)
+	RPCInvoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
 }
 
-// InvokerFunc implements Invoker as a function, allowing ordinary functions
-// to be used where an Invoker is expected.
-type InvokerFunc func(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error)
+type InvokerFunc func(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
 
-// RPCInvoke implements Invoker by calling the function itself.
-func (f InvokerFunc) RPCInvoke(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error) {
+func (f InvokerFunc) RPCInvoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {
 	return f(ctx, input, decode)
 }
 
@@ -33,6 +28,6 @@ func NewClient(invoker Invoker) *Client {
 }
 
 // Invoke performs an RPC call by delegating to the underlying Invoker.
-func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error) {
+func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {
 	return c.rpc.RPCInvoke(ctx, input, decode)
 }

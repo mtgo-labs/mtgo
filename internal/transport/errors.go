@@ -13,7 +13,7 @@ var (
 	// ErrCRC32Mismatch is returned when the CRC32 checksum of a received
 	// TCP packet does not match the expected value, indicating data
 	// corruption in transit.
-	ErrCRC32Mismatch = errors.New("tcp_full: CRC32 checksum mismatch")
+	ErrCRC32Mismatch = errors.New("tcp_full: crc32 checksum mismatch")
 	// ErrUnsupportedTransport is returned when the obfuscated transport
 	// handshake detects an inner transport type that is not supported.
 	ErrUnsupportedTransport = errors.New("tcp_obfuscated: unsupported inner transport type")

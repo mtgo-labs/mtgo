@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // PremiumGetBoostsListTypeID is the constructor ID for the RPC function premium.getBoostsList.
@@ -54,7 +53,7 @@ func (v *PremiumGetBoostsListRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PremiumGetBoostsList(ctx context.Context, req *PremiumGetBoostsListRequest) (*PremiumBoostsList, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -94,7 +93,7 @@ func (v *PremiumGetMyBoostsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PremiumGetMyBoosts(ctx context.Context) (*PremiumMyBoosts, error) {
-	result, err := c.invoke(ctx, &PremiumGetMyBoostsRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &PremiumGetMyBoostsRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -150,7 +149,7 @@ func (v *PremiumApplyBoostRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PremiumApplyBoost(ctx context.Context, req *PremiumApplyBoostRequest) (*PremiumMyBoosts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -192,7 +191,7 @@ func (v *PremiumGetBoostsStatusRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PremiumGetBoostsStatus(ctx context.Context, req *PremiumGetBoostsStatusRequest) (*PremiumBoostsStatus, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -236,7 +235,7 @@ func (v *PremiumGetUserBoostsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PremiumGetUserBoosts(ctx context.Context, req *PremiumGetUserBoostsRequest) (*PremiumBoostsList, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

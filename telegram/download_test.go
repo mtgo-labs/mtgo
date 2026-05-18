@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"io"
 	"sync/atomic"
 	"testing"
 
@@ -31,7 +30,7 @@ func newMockDownloadInvoker(data []byte) *mockDownloadInvoker {
 	}
 }
 
-func (m *mockDownloadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (m *mockDownloadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	if m.err != nil {
 		return nil, m.err
 	}

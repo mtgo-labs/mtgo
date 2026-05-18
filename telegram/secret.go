@@ -226,7 +226,7 @@ func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.Dec
 		return nil, fmt.Errorf("telegram: decrypt message: %w", err)
 	}
 
-	obj, err := e2e.ReadE2ETLObject(bytes.NewReader(plaintext))
+	obj, err := e2e.ReadE2ETLObject(tg.NewReader(plaintext))
 	if err != nil {
 		return nil, fmt.Errorf("telegram: decode decrypted message: %w", err)
 	}

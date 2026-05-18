@@ -1,7 +1,6 @@
 package tg
 
 import (
-	"bytes"
 	"testing"
 )
 
@@ -17,8 +16,9 @@ func TestRegistry(t *testing.T) {
 }
 
 func TestReadTLObject_Unknown(t *testing.T) {
-	buf := bytes.NewBuffer([]byte{0xFF, 0xFF, 0xFF, 0xFF})
-	_, err := ReadTLObject(buf)
+	r := NewReader([]byte{0xFF, 0xFF, 0xFF, 0xFF})
+	defer ReleaseReader(r)
+	_, err := ReadTLObject(r)
 	if err == nil {
 		t.Fatal("expected error for unknown constructor")
 	}

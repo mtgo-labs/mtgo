@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // InputGeoPointClass is the interface for TL type InputGeoPoint.
@@ -45,13 +44,13 @@ func (v *InputGeoPointEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGeoPointEmpty deserializes a InputGeoPointEmpty from a reader using the TL binary protocol.
-func DecodeInputGeoPointEmpty(r io.Reader) (*InputGeoPointEmpty, error) {
+func DecodeInputGeoPointEmpty(r *Reader) (*InputGeoPointEmpty, error) {
 	v := &InputGeoPointEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputGeoPointEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGeoPointEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGeoPointEmpty(r)
 	}
 }
@@ -92,23 +91,35 @@ func (v *InputGeoPoint) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGeoPoint deserializes a InputGeoPoint from a reader using the TL binary protocol.
-func DecodeInputGeoPoint(r io.Reader) (*InputGeoPoint, error) {
+func DecodeInputGeoPoint(r *Reader) (*InputGeoPoint, error) {
 	v := &InputGeoPoint{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Lat = ReadDouble(r)
-	v.Long = ReadDouble(r)
+	_rLat, _eLat := r.ReadFloat64()
+	if _eLat != nil {
+		return nil, _eLat
+	}
+	v.Lat = _rLat
+	_rLong, _eLong := r.ReadFloat64()
+	if _eLong != nil {
+		return nil, _eLong
+	}
+	v.Long = _rLong
 	if v.Flags.Has(0) {
-		v.AccuracyRadius = int32(ReadInt(r))
+		_rAccuracyRadius, _eAccuracyRadius := r.ReadInt32()
+		if _eAccuracyRadius != nil {
+			return nil, _eAccuracyRadius
+		}
+		v.AccuracyRadius = _rAccuracyRadius
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputGeoPointTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGeoPointTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGeoPoint(r)
 	}
 }
@@ -207,17 +218,33 @@ func (v *InputFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputFileLocation deserializes a InputFileLocation from a reader using the TL binary protocol.
-func DecodeInputFileLocation(r io.Reader) (*InputFileLocation, error) {
+func DecodeInputFileLocation(r *Reader) (*InputFileLocation, error) {
 	v := &InputFileLocation{}
-	v.VolumeID = ReadLong(r)
-	v.LocalID = int32(ReadInt(r))
-	v.Secret = ReadLong(r)
-	v.FileReference = ReadBytes(r)
+	_rVolumeID, _eVolumeID := r.ReadInt64()
+	if _eVolumeID != nil {
+		return nil, _eVolumeID
+	}
+	v.VolumeID = _rVolumeID
+	_rLocalID, _eLocalID := r.ReadInt32()
+	if _eLocalID != nil {
+		return nil, _eLocalID
+	}
+	v.LocalID = _rLocalID
+	_rSecret, _eSecret := r.ReadInt64()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
 	return v, nil
 }
 
 func init() {
-	Registry[InputFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputFileLocation(r)
 	}
 }
@@ -244,15 +271,23 @@ func (v *InputEncryptedFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedFileLocation deserializes a InputEncryptedFileLocation from a reader using the TL binary protocol.
-func DecodeInputEncryptedFileLocation(r io.Reader) (*InputEncryptedFileLocation, error) {
+func DecodeInputEncryptedFileLocation(r *Reader) (*InputEncryptedFileLocation, error) {
 	v := &InputEncryptedFileLocation{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedFileLocation(r)
 	}
 }
@@ -283,17 +318,33 @@ func (v *InputDocumentFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputDocumentFileLocation deserializes a InputDocumentFileLocation from a reader using the TL binary protocol.
-func DecodeInputDocumentFileLocation(r io.Reader) (*InputDocumentFileLocation, error) {
+func DecodeInputDocumentFileLocation(r *Reader) (*InputDocumentFileLocation, error) {
 	v := &InputDocumentFileLocation{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
-	v.ThumbSize = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
+	_rThumbSize, _eThumbSize := r.ReadString()
+	if _eThumbSize != nil {
+		return nil, _eThumbSize
+	}
+	v.ThumbSize = _rThumbSize
 	return v, nil
 }
 
 func init() {
-	Registry[InputDocumentFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputDocumentFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputDocumentFileLocation(r)
 	}
 }
@@ -320,15 +371,23 @@ func (v *InputSecureFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputSecureFileLocation deserializes a InputSecureFileLocation from a reader using the TL binary protocol.
-func DecodeInputSecureFileLocation(r io.Reader) (*InputSecureFileLocation, error) {
+func DecodeInputSecureFileLocation(r *Reader) (*InputSecureFileLocation, error) {
 	v := &InputSecureFileLocation{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputSecureFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputSecureFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputSecureFileLocation(r)
 	}
 }
@@ -351,13 +410,13 @@ func (v *InputTakeoutFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputTakeoutFileLocation deserializes a InputTakeoutFileLocation from a reader using the TL binary protocol.
-func DecodeInputTakeoutFileLocation(r io.Reader) (*InputTakeoutFileLocation, error) {
+func DecodeInputTakeoutFileLocation(r *Reader) (*InputTakeoutFileLocation, error) {
 	v := &InputTakeoutFileLocation{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputTakeoutFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputTakeoutFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputTakeoutFileLocation(r)
 	}
 }
@@ -388,17 +447,33 @@ func (v *InputPhotoFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhotoFileLocation deserializes a InputPhotoFileLocation from a reader using the TL binary protocol.
-func DecodeInputPhotoFileLocation(r io.Reader) (*InputPhotoFileLocation, error) {
+func DecodeInputPhotoFileLocation(r *Reader) (*InputPhotoFileLocation, error) {
 	v := &InputPhotoFileLocation{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
-	v.ThumbSize = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
+	_rThumbSize, _eThumbSize := r.ReadString()
+	if _eThumbSize != nil {
+		return nil, _eThumbSize
+	}
+	v.ThumbSize = _rThumbSize
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhotoFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhotoFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhotoFileLocation(r)
 	}
 }
@@ -433,19 +508,43 @@ func (v *InputPhotoLegacyFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhotoLegacyFileLocation deserializes a InputPhotoLegacyFileLocation from a reader using the TL binary protocol.
-func DecodeInputPhotoLegacyFileLocation(r io.Reader) (*InputPhotoLegacyFileLocation, error) {
+func DecodeInputPhotoLegacyFileLocation(r *Reader) (*InputPhotoLegacyFileLocation, error) {
 	v := &InputPhotoLegacyFileLocation{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
-	v.VolumeID = ReadLong(r)
-	v.LocalID = int32(ReadInt(r))
-	v.Secret = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
+	_rVolumeID, _eVolumeID := r.ReadInt64()
+	if _eVolumeID != nil {
+		return nil, _eVolumeID
+	}
+	v.VolumeID = _rVolumeID
+	_rLocalID, _eLocalID := r.ReadInt32()
+	if _eLocalID != nil {
+		return nil, _eLocalID
+	}
+	v.LocalID = _rLocalID
+	_rSecret, _eSecret := r.ReadInt64()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhotoLegacyFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhotoLegacyFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhotoLegacyFileLocation(r)
 	}
 }
@@ -483,22 +582,29 @@ func (v *InputPeerPhotoFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerPhotoFileLocation deserializes a InputPeerPhotoFileLocation from a reader using the TL binary protocol.
-func DecodeInputPeerPhotoFileLocation(r io.Reader) (*InputPeerPhotoFileLocation, error) {
+func DecodeInputPeerPhotoFileLocation(r *Reader) (*InputPeerPhotoFileLocation, error) {
 	v := &InputPeerPhotoFileLocation{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Big = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.PhotoID = ReadLong(r)
+	_rPhotoID, _ePhotoID := r.ReadInt64()
+	if _ePhotoID != nil {
+		return nil, _ePhotoID
+	}
+	v.PhotoID = _rPhotoID
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerPhotoFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerPhotoFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerPhotoFileLocation(r)
 	}
 }
@@ -525,16 +631,23 @@ func (v *InputStickerSetThumb) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputStickerSetThumb deserializes a InputStickerSetThumb from a reader using the TL binary protocol.
-func DecodeInputStickerSetThumb(r io.Reader) (*InputStickerSetThumb, error) {
+func DecodeInputStickerSetThumb(r *Reader) (*InputStickerSetThumb, error) {
 	v := &InputStickerSetThumb{}
-	_objStickerset, _ := ReadTLObject(r)
+	_objStickerset, _errStickerset := ReadTLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(InputStickerSetClass)
-	v.ThumbVersion = int32(ReadInt(r))
+	_rThumbVersion, _eThumbVersion := r.ReadInt32()
+	if _eThumbVersion != nil {
+		return nil, _eThumbVersion
+	}
+	v.ThumbVersion = _rThumbVersion
 	return v, nil
 }
 
 func init() {
-	Registry[InputStickerSetThumbTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputStickerSetThumbTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputStickerSetThumb(r)
 	}
 }
@@ -584,28 +697,47 @@ func (v *InputGroupCallStream) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGroupCallStream deserializes a InputGroupCallStream from a reader using the TL binary protocol.
-func DecodeInputGroupCallStream(r io.Reader) (*InputGroupCallStream, error) {
+func DecodeInputGroupCallStream(r *Reader) (*InputGroupCallStream, error) {
 	v := &InputGroupCallStream{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	v.TimeMs = ReadLong(r)
-	v.Scale = int32(ReadInt(r))
+	_rTimeMs, _eTimeMs := r.ReadInt64()
+	if _eTimeMs != nil {
+		return nil, _eTimeMs
+	}
+	v.TimeMs = _rTimeMs
+	_rScale, _eScale := r.ReadInt32()
+	if _eScale != nil {
+		return nil, _eScale
+	}
+	v.Scale = _rScale
 	if v.Flags.Has(0) {
-		v.VideoChannel = int32(ReadInt(r))
+		_rVideoChannel, _eVideoChannel := r.ReadInt32()
+		if _eVideoChannel != nil {
+			return nil, _eVideoChannel
+		}
+		v.VideoChannel = _rVideoChannel
 	}
 	if v.Flags.Has(0) {
-		v.VideoQuality = int32(ReadInt(r))
+		_rVideoQuality, _eVideoQuality := r.ReadInt32()
+		if _eVideoQuality != nil {
+			return nil, _eVideoQuality
+		}
+		v.VideoQuality = _rVideoQuality
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputGroupCallStreamTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGroupCallStreamTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGroupCallStream(r)
 	}
 }
@@ -648,13 +780,13 @@ func (v *GeoPointEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGeoPointEmpty deserializes a GeoPointEmpty from a reader using the TL binary protocol.
-func DecodeGeoPointEmpty(r io.Reader) (*GeoPointEmpty, error) {
+func DecodeGeoPointEmpty(r *Reader) (*GeoPointEmpty, error) {
 	v := &GeoPointEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[GeoPointEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GeoPointEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGeoPointEmpty(r)
 	}
 }
@@ -697,24 +829,40 @@ func (v *GeoPoint) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGeoPoint deserializes a GeoPoint from a reader using the TL binary protocol.
-func DecodeGeoPoint(r io.Reader) (*GeoPoint, error) {
+func DecodeGeoPoint(r *Reader) (*GeoPoint, error) {
 	v := &GeoPoint{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Long = ReadDouble(r)
-	v.Lat = ReadDouble(r)
-	v.AccessHash = ReadLong(r)
+	_rLong, _eLong := r.ReadFloat64()
+	if _eLong != nil {
+		return nil, _eLong
+	}
+	v.Long = _rLong
+	_rLat, _eLat := r.ReadFloat64()
+	if _eLat != nil {
+		return nil, _eLat
+	}
+	v.Lat = _rLat
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	if v.Flags.Has(0) {
-		v.AccuracyRadius = int32(ReadInt(r))
+		_rAccuracyRadius, _eAccuracyRadius := r.ReadInt32()
+		if _eAccuracyRadius != nil {
+			return nil, _eAccuracyRadius
+		}
+		v.AccuracyRadius = _rAccuracyRadius
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[GeoPointTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GeoPointTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGeoPoint(r)
 	}
 }
@@ -767,15 +915,23 @@ func (v *InputWebFileLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputWebFileLocation deserializes a InputWebFileLocation from a reader using the TL binary protocol.
-func DecodeInputWebFileLocation(r io.Reader) (*InputWebFileLocation, error) {
+func DecodeInputWebFileLocation(r *Reader) (*InputWebFileLocation, error) {
 	v := &InputWebFileLocation{}
-	v.URL = ReadString(r)
-	v.AccessHash = ReadLong(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputWebFileLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputWebFileLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputWebFileLocation(r)
 	}
 }
@@ -810,20 +966,43 @@ func (v *InputWebFileGeoPointLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputWebFileGeoPointLocation deserializes a InputWebFileGeoPointLocation from a reader using the TL binary protocol.
-func DecodeInputWebFileGeoPointLocation(r io.Reader) (*InputWebFileGeoPointLocation, error) {
+func DecodeInputWebFileGeoPointLocation(r *Reader) (*InputWebFileGeoPointLocation, error) {
 	v := &InputWebFileGeoPointLocation{}
-	_objGeoPoint, _ := ReadTLObject(r)
+	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
+	if _errGeoPoint != nil {
+		return nil, _errGeoPoint
+	}
 	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
-	v.AccessHash = ReadLong(r)
-	v.W = int32(ReadInt(r))
-	v.H = int32(ReadInt(r))
-	v.Zoom = int32(ReadInt(r))
-	v.Scale = int32(ReadInt(r))
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_rZoom, _eZoom := r.ReadInt32()
+	if _eZoom != nil {
+		return nil, _eZoom
+	}
+	v.Zoom = _rZoom
+	_rScale, _eScale := r.ReadInt32()
+	if _eScale != nil {
+		return nil, _eScale
+	}
+	v.Scale = _rScale
 	return v, nil
 }
 
 func init() {
-	Registry[InputWebFileGeoPointLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputWebFileGeoPointLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputWebFileGeoPointLocation(r)
 	}
 }
@@ -878,29 +1057,40 @@ func (v *InputWebFileAudioAlbumThumbLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputWebFileAudioAlbumThumbLocation deserializes a InputWebFileAudioAlbumThumbLocation from a reader using the TL binary protocol.
-func DecodeInputWebFileAudioAlbumThumbLocation(r io.Reader) (*InputWebFileAudioAlbumThumbLocation, error) {
+func DecodeInputWebFileAudioAlbumThumbLocation(r *Reader) (*InputWebFileAudioAlbumThumbLocation, error) {
 	v := &InputWebFileAudioAlbumThumbLocation{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Small = v.Flags.Has(2)
 	if v.Flags.Has(0) {
-		_objDocument, _ := ReadTLObject(r)
+		_objDocument, _errDocument := ReadTLObject(r)
+		if _errDocument != nil {
+			return nil, _errDocument
+		}
 		v.Document = _objDocument.(InputDocumentClass)
 	}
 	if v.Flags.Has(1) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Performer = ReadString(r)
+		_rPerformer, _ePerformer := r.ReadString()
+		if _ePerformer != nil {
+			return nil, _ePerformer
+		}
+		v.Performer = _rPerformer
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputWebFileAudioAlbumThumbLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputWebFileAudioAlbumThumbLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputWebFileAudioAlbumThumbLocation(r)
 	}
 }
@@ -956,28 +1146,44 @@ func (v *GeoPointAddress) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGeoPointAddress deserializes a GeoPointAddress from a reader using the TL binary protocol.
-func DecodeGeoPointAddress(r io.Reader) (*GeoPointAddress, error) {
+func DecodeGeoPointAddress(r *Reader) (*GeoPointAddress, error) {
 	v := &GeoPointAddress{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.CountryIso2 = ReadString(r)
+	_rCountryIso2, _eCountryIso2 := r.ReadString()
+	if _eCountryIso2 != nil {
+		return nil, _eCountryIso2
+	}
+	v.CountryIso2 = _rCountryIso2
 	if v.Flags.Has(0) {
-		v.State = ReadString(r)
+		_rState, _eState := r.ReadString()
+		if _eState != nil {
+			return nil, _eState
+		}
+		v.State = _rState
 	}
 	if v.Flags.Has(1) {
-		v.City = ReadString(r)
+		_rCity, _eCity := r.ReadString()
+		if _eCity != nil {
+			return nil, _eCity
+		}
+		v.City = _rCity
 	}
 	if v.Flags.Has(2) {
-		v.Street = ReadString(r)
+		_rStreet, _eStreet := r.ReadString()
+		if _eStreet != nil {
+			return nil, _eStreet
+		}
+		v.Street = _rStreet
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[GeoPointAddressTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GeoPointAddressTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGeoPointAddress(r)
 	}
 }

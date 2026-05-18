@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"reflect"
 	"strings"
 
@@ -261,7 +260,7 @@ func (c *JSONClient) InvokeJSON(ctx context.Context, functionName string, payloa
 		setInterfaceFields(req, ifaceJSON)
 	}
 
-	result, err := c.rpc.Invoke(ctx, req, func(r io.Reader) (tg.TLObject, error) {
+	result, err := c.rpc.Invoke(ctx, req, func(r *tg.Reader) (tg.TLObject, error) {
 		return tg.ReadTLObject(r)
 	})
 	if err != nil {

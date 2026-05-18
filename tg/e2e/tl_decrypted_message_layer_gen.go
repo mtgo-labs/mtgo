@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -38,19 +36,38 @@ func (v *DecryptedMessageLayer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeDecryptedMessageLayer deserializes a DecryptedMessageLayer from a reader using the TL binary protocol.
-func DecodeDecryptedMessageLayer(r io.Reader) (*DecryptedMessageLayer, error) {
+func DecodeDecryptedMessageLayer(r *tg.Reader) (*DecryptedMessageLayer, error) {
 	v := &DecryptedMessageLayer{}
-	v.RandomBytes = tg.ReadBytes(r)
-	v.Layer = int32(tg.ReadInt(r))
-	v.InSeqNo = int32(tg.ReadInt(r))
-	v.OutSeqNo = int32(tg.ReadInt(r))
-	_objMessage, _ := ReadE2ETLObject(r)
+	_rRandomBytes, _eRandomBytes := r.ReadBytes()
+	if _eRandomBytes != nil {
+		return nil, _eRandomBytes
+	}
+	v.RandomBytes = _rRandomBytes
+	_rLayer, _eLayer := r.ReadInt32()
+	if _eLayer != nil {
+		return nil, _eLayer
+	}
+	v.Layer = _rLayer
+	_rInSeqNo, _eInSeqNo := r.ReadInt32()
+	if _eInSeqNo != nil {
+		return nil, _eInSeqNo
+	}
+	v.InSeqNo = _rInSeqNo
+	_rOutSeqNo, _eOutSeqNo := r.ReadInt32()
+	if _eOutSeqNo != nil {
+		return nil, _eOutSeqNo
+	}
+	v.OutSeqNo = _rOutSeqNo
+	_objMessage, _errMessage := ReadE2ETLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(DecryptedMessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[DecryptedMessageLayerTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[DecryptedMessageLayerTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeDecryptedMessageLayer(r)
 	}
 }
