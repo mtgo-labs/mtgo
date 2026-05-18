@@ -212,6 +212,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 	case *tg.ServerDHParamsOk:
 		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
 		decrypted := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
+		defer crypto.ReleaseAESBuf(decrypted)
 
 		serverDHData, err := unwrapDataWithHash(decrypted)
 		if err != nil {
@@ -260,6 +261,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		}
 
 		encClientDH := crypto.IGEEncrypt(clientDHWithHash, key, iv)
+		defer crypto.ReleaseAESBuf(encClientDH)
 
 		if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
 			Nonce:         nonce,
