@@ -107,9 +107,9 @@ func (d *HandlerDispatcher) sortedHandlers() []handlerEntry {
 //	disp.AddHandler(&myHandler{}, 0)
 //	disp.Dispatch(client, update)
 func (d *HandlerDispatcher) Dispatch(client *Client, update *Update) {
-	d.mu.RLock()
+	d.mu.Lock()
 	handlers := d.sortedHandlers()
-	d.mu.RUnlock()
+	d.mu.Unlock()
 
 	if client != nil && client.Log != nil {
 		client.Log.Tracef("dispatching update to %d handlers", len(handlers))

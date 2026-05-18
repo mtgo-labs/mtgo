@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -9,58 +8,58 @@ import (
 )
 
 func extractUpdateMeta(update tg.UpdateClass) updateMeta {
-	meta := updateMeta{Key: fmt.Sprintf("type:%08x", update.ConstructorID())}
+	meta := updateMeta{Key: "type:" + formatHex32(update.ConstructorID())}
 	switch u := update.(type) {
 	case *tg.UpdateNewMessage:
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("new-message:%08x:%d:%d", u.ConstructorID(), u.PTS, messageID(u.Message))
+		meta.Key = buildKey("new-message:", formatHex32(u.ConstructorID()), ":", strconv.FormatInt(int64(u.PTS), 10), ":", strconv.FormatInt(int64(messageID(u.Message)), 10))
 	case *tg.UpdateDeleteMessages:
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("delete-messages:%d:%s", u.PTS, int32ListKey(u.Messages))
+		meta.Key = buildKey("delete-messages:", strconv.FormatInt(int64(u.PTS), 10), ":", int32ListKey(u.Messages))
 	case *tg.UpdateEditMessage:
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("edit-message:%d:%d", u.PTS, messageID(u.Message))
+		meta.Key = buildKey("edit-message:", strconv.FormatInt(int64(u.PTS), 10), ":", strconv.FormatInt(int64(messageID(u.Message)), 10))
 	case *tg.UpdateNewChannelMessage:
 		meta.IsChannel = true
 		meta.ChannelID = channelIDFromMessage(u.Message)
 		meta.ChannelPts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("channel-new:%d:%d:%d", meta.ChannelID, u.PTS, messageID(u.Message))
+		meta.Key = buildKey("channel-new:", strconv.FormatInt(meta.ChannelID, 10), ":", strconv.FormatInt(int64(u.PTS), 10), ":", strconv.FormatInt(int64(messageID(u.Message)), 10))
 	case *tg.UpdateEditChannelMessage:
 		meta.IsChannel = true
 		meta.ChannelID = channelIDFromMessage(u.Message)
 		meta.ChannelPts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("channel-edit:%d:%d:%d", meta.ChannelID, u.PTS, messageID(u.Message))
+		meta.Key = buildKey("channel-edit:", strconv.FormatInt(meta.ChannelID, 10), ":", strconv.FormatInt(int64(u.PTS), 10), ":", strconv.FormatInt(int64(messageID(u.Message)), 10))
 	case *tg.UpdateDeleteChannelMessages:
 		meta.IsChannel = true
 		meta.ChannelID = u.ChannelID
 		meta.ChannelPts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("channel-delete:%d:%d:%s", u.ChannelID, u.PTS, int32ListKey(u.Messages))
+		meta.Key = buildKey("channel-delete:", strconv.FormatInt(u.ChannelID, 10), ":", strconv.FormatInt(int64(u.PTS), 10), ":", int32ListKey(u.Messages))
 	case *tg.UpdateChannelWebPage:
 		meta.IsChannel = true
 		meta.ChannelID = u.ChannelID
 		meta.ChannelPts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("channel-webpage:%d:%d", u.ChannelID, u.PTS)
+		meta.Key = buildKey("channel-webpage:", strconv.FormatInt(u.ChannelID, 10), ":", strconv.FormatInt(int64(u.PTS), 10))
 	case *tg.UpdatePinnedChannelMessages:
 		meta.IsChannel = true
 		meta.ChannelID = u.ChannelID
 		meta.ChannelPts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("channel-pinned:%d:%d:%s", u.ChannelID, u.PTS, int32ListKey(u.Messages))
+		meta.Key = buildKey("channel-pinned:", strconv.FormatInt(u.ChannelID, 10), ":", strconv.FormatInt(int64(u.PTS), 10), ":", int32ListKey(u.Messages))
 	case *tg.UpdateChannelTooLong:
 		meta.IsChannel = true
 		meta.ChannelID = u.ChannelID
 		if u.PTS != 0 {
 			meta.ChannelPts = u.PTS
 		}
-		meta.Key = fmt.Sprintf("channel-too-long:%d", u.ChannelID)
+		meta.Key = buildKey("channel-too-long:", strconv.FormatInt(u.ChannelID, 10))
 	case *tg.UpdateWebPage:
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("webpage:%d", u.PTS)
+		meta.Key = buildKey("webpage:", strconv.FormatInt(int64(u.PTS), 10))
 	case *tg.UpdatePinnedMessages:
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
-		meta.Key = fmt.Sprintf("pinned:%d:%s", u.PTS, int32ListKey(u.Messages))
+		meta.Key = buildKey("pinned:", strconv.FormatInt(int64(u.PTS), 10), ":", int32ListKey(u.Messages))
 	case *tg.UpdateNewEncryptedMessage:
 		meta.Qts = u.Qts
-		meta.Key = fmt.Sprintf("encrypted:%d", u.Qts)
+		meta.Key = buildKey("encrypted:", strconv.FormatInt(int64(u.Qts), 10))
 	}
 	return meta
 }
@@ -118,4 +117,27 @@ func int32ListKey(values []int32) string {
 		b.WriteString(strconv.FormatInt(int64(v), 10))
 	}
 	return b.String()
+}
+
+func buildKey(parts ...string) string {
+	var n int
+	for _, p := range parts {
+		n += len(p)
+	}
+	var b strings.Builder
+	b.Grow(n)
+	for _, p := range parts {
+		b.WriteString(p)
+	}
+	return b.String()
+}
+
+func formatHex32(v uint32) string {
+	const hexDigits = "0123456789abcdef"
+	var buf [8]byte
+	for i := 7; i >= 0; i-- {
+		buf[i] = hexDigits[v&0xf]
+		v >>= 4
+	}
+	return string(buf[:])
 }

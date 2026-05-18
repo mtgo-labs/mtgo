@@ -5,7 +5,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 // Proxy holds connection details for routing Telegram traffic through an
@@ -206,6 +206,11 @@ type Config struct {
 	// internal cache. Older entries are evicted when the limit is exceeded.
 	// Defaults to 1000.
 	MaxTopicCacheSize int
+	// PeerCacheSize caps the number of peer and username entries cached in memory.
+	// When the limit is exceeded, the oldest entries are evicted (FIFO).
+	// Setting to 0 (default) disables eviction — the cache grows without bound.
+	// Recommended: 5000.
+	PeerCacheSize int
 	// ParseMode selects the default formatting mode for message text.
 	// Use params.ParseModeMarkdown, params.ParseModeHTML, or a raw string
 	// like "MarkdownV2". Zero value means no parsing.
@@ -270,9 +275,6 @@ type Config struct {
 	// to display timestamps in the correct local time.
 	// Deprecated: use Device.TZOffset instead.
 	TZOffset int
-	// NetPoll enables network-level polling as a fallback transport when the
-	// primary MTProto connection is unreliable.
-	NetPoll bool
 	// TransportMode selects the MTProto TCP framing mode for direct TCP
 	// connections. Valid values are Abridged, Intermediate,
 	// PaddedIntermediate, and Full.
@@ -380,6 +382,7 @@ var DefaultConfig = Config{
 	MaxConcurrentTrans:  1,
 	MaxMessageCacheSize: 1000,
 	MaxTopicCacheSize:   1000,
+	PeerCacheSize:       5000,
 	Device: DeviceConfig{
 		DeviceModel:    "MTGo",
 		SystemVersion:  "1.0.0",

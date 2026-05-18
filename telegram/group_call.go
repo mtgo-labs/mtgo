@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -40,7 +39,7 @@ func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.P
 	rpc := c.Raw()
 	updates, err := rpc.PhoneCreateGroupCall(ctx, &tg.PhoneCreateGroupCallRequest{
 		Peer:       resolved,
-		RandomID:   rand.Int31(),
+		RandomID:   int32(c.RandomID()),
 		RtmpStream: useRtmp,
 	})
 	if err != nil {

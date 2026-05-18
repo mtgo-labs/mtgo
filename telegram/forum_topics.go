@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -31,7 +30,7 @@ func (c *Client) CreateForumTopic(ctx context.Context, chatID int64, title strin
 		Title:       title,
 		IconColor:   iconColorValue,
 		IconEmojiID: iconEmojiIDValue,
-		RandomID:    rand.Int63(),
+		RandomID:    c.RandomID(),
 	})
 	if err != nil {
 		return nil, err

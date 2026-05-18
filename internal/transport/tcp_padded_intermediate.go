@@ -69,8 +69,10 @@ func (t *TCPPaddedIntermediate) Recv() ([]byte, error) {
 	return trimPaddedIntermediatePayload(data), nil
 }
 
+var zeros8 = make([]byte, 8)
+
 func trimPaddedIntermediatePayload(data []byte) []byte {
-	if len(data) >= 20 && bytes.Equal(data[:8], make([]byte, 8)) {
+	if len(data) >= 20 && bytes.Equal(data[:8], zeros8) {
 		msgLen := binary.LittleEndian.Uint32(data[16:20])
 		end := 20 + int(msgLen)
 		if end <= len(data) && len(data)-end <= 15 {

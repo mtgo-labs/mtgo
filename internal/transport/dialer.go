@@ -6,7 +6,7 @@ import (
 )
 
 // Dialer abstracts the creation of network connections with a timeout,
-// allowing different dialer implementations (standard net, netpoll, etc.)
+// allowing different dialer implementations (standard net, proxy, etc.)
 // to be swapped in.
 type Dialer interface {
 	// Dial establishes a new connection to the specified address using the

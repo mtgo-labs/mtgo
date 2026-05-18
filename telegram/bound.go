@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -462,7 +461,7 @@ func (c *Client) BoundSendMediaGroup(chatID int64, media []tg.InputMediaClass, r
 	for i, m := range media {
 		items[i] = &tg.InputSingleMedia{
 			Media:    m,
-			RandomID: rand.Int63(),
+			RandomID: c.RandomID(),
 		}
 	}
 	return c.SendMediaGroup(ctx, chatID, items, opt.ToSendMsg())

@@ -87,6 +87,10 @@ type connStateManager struct {
 	reconnectCount int
 	lastErr        error
 	connectedSince time.Time
+
+	// tsMu protects the four timestamp fields from contention with the
+	// main mu used for state transitions.
+	tsMu sync.Mutex
 }
 
 func newConnStateManager() *connStateManager {
@@ -103,6 +107,8 @@ func (cs *connStateManager) State() ConnState {
 
 func (cs *connStateManager) Health() HealthStatus {
 	cs.mu.RLock()
+	cs.tsMu.Lock()
+	defer cs.tsMu.Unlock()
 	defer cs.mu.RUnlock()
 	return HealthStatus{
 		State:          cs.state,
@@ -169,27 +175,27 @@ func (cs *connStateManager) SetClosed() {
 }
 
 func (cs *connStateManager) RecordRead() {
-	cs.mu.Lock()
+	cs.tsMu.Lock()
 	cs.lastRead = time.Now()
-	cs.mu.Unlock()
+	cs.tsMu.Unlock()
 }
 
 func (cs *connStateManager) RecordWrite() {
-	cs.mu.Lock()
+	cs.tsMu.Lock()
 	cs.lastWrite = time.Now()
-	cs.mu.Unlock()
+	cs.tsMu.Unlock()
 }
 
 func (cs *connStateManager) RecordPing() {
-	cs.mu.Lock()
+	cs.tsMu.Lock()
 	cs.lastPing = time.Now()
-	cs.mu.Unlock()
+	cs.tsMu.Unlock()
 }
 
 func (cs *connStateManager) RecordPong() {
-	cs.mu.Lock()
+	cs.tsMu.Lock()
 	cs.lastPong = time.Now()
-	cs.mu.Unlock()
+	cs.tsMu.Unlock()
 }
 
 func (cs *connStateManager) SetDC(dcID int) {

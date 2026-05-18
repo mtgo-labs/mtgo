@@ -33,10 +33,10 @@ func (t *TCPIntermediate) Connect() error {
 func (t *TCPIntermediate) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 
-	header := make([]byte, 4)
-	binary.LittleEndian.PutUint32(header, uint32(len(data)))
+	var header [4]byte
+	binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
 
-	if _, err := t.conn.Write(header); err != nil {
+	if _, err := t.conn.Write(header[:]); err != nil {
 		return err
 	}
 	_, err := t.conn.Write(data)

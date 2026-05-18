@@ -77,7 +77,7 @@ func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID i
 		Peer:     peer,
 		MsgID:    messageID,
 		Count:    int32(amount),
-		RandomID: generateRandomID(),
+		RandomID: c.RandomID(),
 	})
 	if err != nil {
 	}

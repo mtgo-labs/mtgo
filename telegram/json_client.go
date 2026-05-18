@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -36,18 +37,20 @@ func NewJSONClient(rpc *tg.RPCClient) *JSONClient {
 	return &JSONClient{rpc: rpc}
 }
 
-var idToName map[uint32]string
+var (
+	idToName    map[uint32]string
+	idToNameOnce sync.Once
+)
 
 func getIDToName() map[uint32]string {
-	if idToName != nil {
-		return idToName
-	}
-	m := make(map[uint32]string, len(tg.NamesMap))
-	for name, id := range tg.NamesMap {
-		m[id] = name
-	}
-	idToName = m
-	return m
+	idToNameOnce.Do(func() {
+		m := make(map[uint32]string, len(tg.NamesMap))
+		for name, id := range tg.NamesMap {
+			m[id] = name
+		}
+		idToName = m
+	})
+	return idToName
 }
 
 func findRequestStruct(id uint32) (tg.TLObject, error) {
@@ -93,7 +96,10 @@ func extractInterfaceJSON(raw map[string]interface{}) map[string]json.RawMessage
 			continue
 		}
 		if _, found := findFactory(typeNameStr); found {
-			b, _ := json.Marshal(val)
+			b, err := json.Marshal(val)
+			if err != nil {
+				continue
+			}
 			result[key] = b
 			delete(raw, key)
 		}
@@ -149,21 +155,23 @@ func setInterfaceFields(req tg.TLObject, ifaceJSON map[string]json.RawMessage) {
 }
 
 func camelOrPascalToSnake(s string) string {
+	// TL field names are ASCII-only; iterating over bytes is valid and
+	// avoids allocating a []rune slice.
 	var buf strings.Builder
-	runes := []rune(s)
-	for i, c := range runes {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
 		if i > 0 && c >= 'A' && c <= 'Z' {
-			prev := runes[i-1]
-			nextLower := i+1 < len(runes) && runes[i+1] >= 'a' && runes[i+1] <= 'z'
+			prev := s[i-1]
+			nextLower := i+1 < len(s) && s[i+1] >= 'a' && s[i+1] <= 'z'
 			prevLower := prev >= 'a' && prev <= 'z'
 			if prevLower || nextLower {
 				buf.WriteByte('_')
 			}
 		}
 		if c >= 'A' && c <= 'Z' {
-			buf.WriteByte(byte(c + 32))
+			buf.WriteByte(c + 32)
 		} else {
-			buf.WriteRune(c)
+			buf.WriteByte(c)
 		}
 	}
 	return buf.String()

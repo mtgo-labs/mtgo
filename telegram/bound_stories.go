@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"math/rand"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -38,7 +37,7 @@ func (c *Client) BoundStoryReplyMediaGroup(peerID int64, storyID int32, media []
 	opt := storyReplyOpt(peerID, storyID)
 	items := make([]*tg.InputSingleMedia, len(media))
 	for i, m := range media {
-		items[i] = &tg.InputSingleMedia{Media: m, RandomID: rand.Int63()}
+		items[i] = &tg.InputSingleMedia{Media: m, RandomID: c.RandomID()}
 	}
 	return c.SendMediaGroup(context.Background(), peerID, items, opt)
 }
