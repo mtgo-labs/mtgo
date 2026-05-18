@@ -294,7 +294,7 @@ func (c *Client) SendGiftOffer(ctx context.Context, peerID int64, slug string, p
 		Slug:     slug,
 		Price:    &tg.StarsAmount{Amount: price, Nanos: 0},
 		Duration: duration,
-		RandomID: generateRandomID(),
+		RandomID: c.RandomID(),
 	})
 	if err != nil {
 		return nil, err

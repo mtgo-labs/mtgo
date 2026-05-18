@@ -73,7 +73,7 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 		Noforwards:   opt.NoForwards,
 		Peer:         peer,
 		Media:        media,
-		RandomID:     generateRandomID(),
+		RandomID:     c.RandomID(),
 		PrivacyRules: opt.PrivacyRules,
 	}
 	if opt.Period != nil {
@@ -341,7 +341,7 @@ func (c *Client) ForwardStory(ctx context.Context, targetChatID int64, sourceCha
 	req := &tg.MessagesSendMediaRequest{
 		Peer:     targetPeer,
 		Media:    &tg.InputMediaStory{Peer: sourcePeer, ID: storyID},
-		RandomID: generateRandomID(),
+		RandomID: c.RandomID(),
 	}
 
 	rpc := c.Raw()

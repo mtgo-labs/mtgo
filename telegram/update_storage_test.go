@@ -3,7 +3,7 @@ package telegram
 import (
 	"testing"
 
-	"github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 func TestMemoryStorageUpdateState(t *testing.T) {

@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -52,7 +51,7 @@ func (c *Client) SendInvoice(ctx context.Context, chatID int64, invoice *tg.Inpu
 		Peer:        peer,
 		ReplyTo:     replyTo,
 		Media:       invoice,
-		RandomID:    rand.Int63(),
+		RandomID:    c.RandomID(),
 		Message:     caption,
 		ReplyMarkup: opt.ReplyMarkup,
 	}
