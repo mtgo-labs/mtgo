@@ -116,6 +116,9 @@ type resolveResult struct {
 
 func (r *resolveCoalescer) Do(key string, fn func() (tg.InputPeerClass, error)) (tg.InputPeerClass, error) {
 	r.mu.Lock()
+	if r.inFlight == nil {
+		r.inFlight = make(map[string][]chan resolveResult)
+	}
 	if waiters, ok := r.inFlight[key]; ok {
 		ch := make(chan resolveResult, 1)
 		r.inFlight[key] = append(waiters, ch)
