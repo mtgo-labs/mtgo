@@ -68,7 +68,7 @@ type MTProtoMessageRaw struct {
 // DecodeMTProtoMessageRaw decodes only the MTProto envelope (msgID, seqNo,
 // body length) and returns the raw body bytes without TL deserialization.
 // Use this when the caller only needs raw bytes, e.g. for diff-based polling
-// or InvokeWithRawByte where the full decode is unnecessary.
+// or InvokeWithRawResult where the full decode is unnecessary.
 func DecodeMTProtoMessageRaw(r *Reader) (*MTProtoMessageRaw, error) {
 	msgID, err := r.ReadInt64()
 	if err != nil {

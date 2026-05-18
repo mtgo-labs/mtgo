@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
-	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 // Transport abstracts the underlying network transport used by a Session to
@@ -56,10 +56,15 @@ func putSendJob(job *sendJob) {
 	sendJobPool.Put(job)
 }
 
-// hasPendingResults returns true if any goroutine is waiting for an RPC result
-// (TL or raw). When true, incoming messages must be fully decoded for dispatch.
-func (s *Session) hasPendingResults() bool {
+// hasDecodedResults returns true if any goroutine is waiting for a decoded TL
+// RPC result. Raw result waiters are tracked separately so they do not force
+// TL decoding or gzip unpacking.
+func (s *Session) hasDecodedResults() bool {
 	return s.pendingResults.Load() > 0
+}
+
+func (s *Session) hasRawResults() bool {
+	return s.rawPendingResults.Load() > 0
 }
 
 // AuthFunc is a function that performs key generation/authentication against
@@ -104,14 +109,15 @@ type Session struct {
 	// results maps message IDs to channels that receive RPC response objects.
 	results sync.Map
 
-	// rawResults maps message IDs to channels that receive raw decrypted
-	// response bytes (body only, no MTProto framing).
+	// rawResults maps request message IDs to channels that receive raw
+	// rpc_result payload bytes (the result:Object bytes only).
 	rawResults   map[int64]chan []byte
 	rawResultsMu sync.Mutex
 
-	// pendingResults counts active RPC result listeners (both TL and raw).
-	// Non-zero means readLoop must decode incoming messages for dispatch.
+	// pendingResults counts active decoded TL RPC result listeners.
 	pendingResults atomic.Int64
+	// rawPendingResults counts active raw rpc_result payload listeners.
+	rawPendingResults atomic.Int64
 
 	// acks accumulates message IDs that need to be acknowledged.
 	acks []int64
@@ -195,7 +201,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
-		dispatchSem: make(chan struct{}, 128),
+		dispatchSem:  make(chan struct{}, 128),
 	}
 
 	if len(authKey) > 0 {
@@ -233,7 +239,7 @@ func (s *Session) registerRawResult(msgID int64) chan []byte {
 	s.rawResultsMu.Lock()
 	s.rawResults[msgID] = ch
 	s.rawResultsMu.Unlock()
-	s.pendingResults.Add(1)
+	s.rawPendingResults.Add(1)
 	return ch
 }
 
@@ -241,7 +247,7 @@ func (s *Session) unregisterRawResult(msgID int64) {
 	s.rawResultsMu.Lock()
 	delete(s.rawResults, msgID)
 	s.rawResultsMu.Unlock()
-	s.pendingResults.Add(-1)
+	s.rawPendingResults.Add(-1)
 }
 
 func (s *Session) deliverRawResult(msgID int64, data []byte) {
@@ -254,6 +260,13 @@ func (s *Session) deliverRawResult(msgID int64, data []byte) {
 		default:
 		}
 	}
+}
+
+func (s *Session) hasRawResultWaiter(msgID int64) bool {
+	s.rawResultsMu.Lock()
+	_, ok := s.rawResults[msgID]
+	s.rawResultsMu.Unlock()
+	return ok
 }
 
 func (s *Session) addAck(msgID int64) {
@@ -498,12 +511,10 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 	}
 }
 
-
-
-// SendRaw encrypts and sends raw body bytes as a single MTProto message,
-// then waits for the server's raw response bytes. Unlike [Send], it bypasses
-// TL serialization and deserialization entirely. Returns the raw decrypted
-// body bytes from the response, or an error.
+// SendRaw encrypts and sends raw body bytes as a single MTProto message, then
+// waits for the matching rpc_result and returns its raw result:Object payload
+// bytes. Unlike [Send], the response path does not gzip-unpack or TL-decode the
+// payload.
 func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBytes []byte, timeout time.Duration) ([]byte, error) {
 	if len(s.authKey) == 0 {
 		return nil, ErrAuthKeyNotSet
@@ -561,9 +572,9 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	}
 }
 
-// InvokeRaw sends a TLObject query and returns the raw response body bytes
-// without TL decoding. It retries the request up to retries times with the
-// given per-attempt timeout.
+// InvokeRaw sends a TLObject query and returns the matching rpc_result's raw
+// result:Object payload bytes without gzip unpacking or TL decoding. It retries
+// the request up to retries times with the given per-attempt timeout.
 func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) ([]byte, error) {
 	if retries < 1 {
 		retries = 1
@@ -784,6 +795,66 @@ func (s *Session) processIncoming(msg *tg.MTProtoMessage) {
 	s.handlePacket(msg.MsgID, msg.SeqNo, msg.Body)
 }
 
+func (s *Session) deliverRawRPCResults(msg *tg.MTProtoMessageRaw) bool {
+	if msg == nil || !s.hasRawResults() {
+		return false
+	}
+	return s.deliverRawRPCResultFromBody(msg.MsgID, msg.BodyRaw)
+}
+
+func (s *Session) deliverRawRPCResultFromBody(msgID int64, body []byte) bool {
+	if len(body) < 4 {
+		return false
+	}
+	constructorID := binary.LittleEndian.Uint32(body[:4])
+	switch constructorID {
+	case tg.RPCResultTypeID:
+		if len(body) < 12 {
+			return false
+		}
+		reqMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
+		if !s.hasRawResultWaiter(reqMsgID) {
+			return false
+		}
+		result := make([]byte, len(body)-12)
+		copy(result, body[12:])
+		s.deliverRawResult(reqMsgID, result)
+		return true
+	case tg.MsgContainerID:
+		return s.deliverRawRPCResultsFromContainer(body[4:])
+	default:
+		return false
+	}
+}
+
+func (s *Session) deliverRawRPCResultsFromContainer(body []byte) bool {
+	if len(body) < 4 {
+		return false
+	}
+	count := binary.LittleEndian.Uint32(body[:4])
+	off := 4
+	delivered := false
+	for i := uint32(0); i < count; i++ {
+		if off+16 > len(body) {
+			return delivered
+		}
+		msgID := int64(binary.LittleEndian.Uint64(body[off:]))
+		off += 8
+		off += 4 // seqno
+		length := int(binary.LittleEndian.Uint32(body[off:]))
+		off += 4
+		if length < 0 || off+length > len(body) {
+			return delivered
+		}
+		s.addAck(msgID)
+		if s.deliverRawRPCResultFromBody(msgID, body[off:off+length]) {
+			delivered = true
+		}
+		off += length
+	}
+	return delivered
+}
+
 func (s *Session) readLoop() {
 	var lastDisconnect time.Time
 	for {
@@ -816,21 +887,18 @@ func (s *Session) readLoop() {
 
 		s.addAck(raw.MsgID)
 
-		// Deliver raw body bytes to registered raw result channels.
-		if len(raw.BodyRaw) > 0 {
-			bodyCopy := make([]byte, len(raw.BodyRaw))
-			copy(bodyCopy, raw.BodyRaw)
-			s.deliverRawResult(raw.MsgID, bodyCopy)
-			if len(bodyCopy) >= 12 {
-				reqMsgID := int64(binary.LittleEndian.Uint64(bodyCopy[4:12]))
-				s.deliverRawResult(reqMsgID, bodyCopy)
-			}
-		}
+		rawDelivered := s.deliverRawRPCResults(raw)
+		needsDecodedResult := s.hasDecodedResults()
 
 		crypto.ReleaseAESBuf(decrypted)
 
-		// Only decode the TL body if there are result listeners or update handlers.
-		if s.hasPendingResults() || s.onUpdate != nil {
+		if rawDelivered && !needsDecodedResult {
+			continue
+		}
+
+		// Only decode the TL body if decoded result listeners or update handlers
+		// need the object tree.
+		if needsDecodedResult || s.onUpdate != nil {
 			select {
 			case s.dispatchSem <- struct{}{}:
 				go func(rawMsg *tg.MTProtoMessageRaw) {

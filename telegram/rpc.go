@@ -85,7 +85,7 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 		query = wrapInitConnection(cfg, input)
 	}
 
-	data, err := ci.client.InvokeWithRawByte(ctx, query)
+	data, err := ci.client.InvokeWithRawResult(ctx, query)
 	if err != nil {
 		return nil, err
 	}

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
-	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 func TestNewClientDefaults(t *testing.T) {
@@ -390,21 +390,21 @@ func TestInvokeRawNotConnected(t *testing.T) {
 	}
 }
 
-func TestInvokeWithRawByteNotConnected(t *testing.T) {
+func TestInvokeWithRawResultNotConnected(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 
-	_, err := c.InvokeWithRawByte(context.Background(), nil)
+	_, err := c.InvokeWithRawResult(context.Background(), nil)
 	if !errors.Is(err, ErrNotConnected) {
-		t.Errorf("InvokeWithRawByte() = %v, want ErrNotConnected", err)
+		t.Errorf("InvokeWithRawResult() = %v, want ErrNotConnected", err)
 	}
 }
 
-func TestInvokeWithRawByte(t *testing.T) {
+func TestInvokeWithRawResult(t *testing.T) {
 	c, _ := NewClient(12345, "hash", &Config{NoUpdates: true})
 
-	_, err := c.InvokeWithRawByte(context.Background(), &tg.PingRequest{})
+	_, err := c.InvokeWithRawResult(context.Background(), &tg.PingRequest{})
 	if !errors.Is(err, ErrNotConnected) {
-		t.Errorf("InvokeWithRawByte() = %v, want ErrNotConnected", err)
+		t.Errorf("InvokeWithRawResult() = %v, want ErrNotConnected", err)
 	}
 }
 
