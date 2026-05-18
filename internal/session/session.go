@@ -660,11 +660,9 @@ func (s *Session) Start(timeout time.Duration) error {
 	s.sendCh = make(chan *sendJob, 64)
 	s.connected = true
 
-	go s.ackLoop()
-	go s.saltLoop()
+	go s.housekeeper()
 	go s.writer()
 	go s.readLoop()
-	go s.pingWorker()
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
 	if err != nil {
@@ -716,54 +714,36 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 	}
 }
 
-func (s *Session) saltLoop() {
-	select {
-	case <-s.cancel:
-		return
-	case <-time.After(15 * time.Second):
-	}
-
+// housekeeper consolidates saltLoop, ackLoop, and pingWorker into a single
+// goroutine. It handles periodic salt fetching, ack flushing, and keep-alive
+// pings on staggered timers.
+func (s *Session) housekeeper() {
 	const numSalts = 4
 
-	for {
-		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numSalts})
+	// Initial salt fetch fires after 15 seconds, then every hour.
+	saltTimer := time.NewTimer(15 * time.Second)
+	defer saltTimer.Stop()
 
-		select {
-		case <-s.cancel:
-			return
-		case <-time.After(1 * time.Hour):
-		}
-	}
-}
+	ackTicker := time.NewTicker(30 * time.Second)
+	defer ackTicker.Stop()
 
-func (s *Session) ackLoop() {
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
+	pingTicker := time.NewTicker(s.pingInterval)
+	defer pingTicker.Stop()
+
 	for {
 		select {
 		case <-s.cancel:
 			return
-		case <-ticker.C:
+		case <-saltTimer.C:
+			s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numSalts})
+			saltTimer.Reset(1 * time.Hour)
+		case <-ackTicker.C:
 			acks := s.drainAcks()
-			if len(acks) == 0 {
-				continue
+			if len(acks) > 0 {
+				s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
 			}
-			msgID := s.msgFactory.AllocateMsgID()
-			seqNo := s.msgFactory.AllocateSeqNo(false)
-			message := &tg.MTProtoMessage{
-				MsgID: msgID,
-				SeqNo: uint32(seqNo),
-				Body:  &tg.MsgsAck{MsgIds: acks},
-			}
-			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
-			job := &sendJob{
-				encrypted: encrypted,
-				deadline:  time.Now().Add(10 * time.Second),
-			}
-			select {
-			case s.sendCh <- job:
-			default:
-			}
+		case <-pingTicker.C:
+			s.sendPing()
 		}
 	}
 }
@@ -779,6 +759,8 @@ func (s *Session) writer() {
 			s.transport.SetWriteDeadline(time.Time{})
 			if job.done != nil {
 				job.done <- err
+			} else {
+				putSendJob(job)
 			}
 			if err != nil && s.onDisconnect != nil {
 				s.onDisconnect(err)
@@ -876,50 +858,11 @@ func (s *Session) readLoop() {
 	}
 }
 
-func (s *Session) pingWorker() {
-	ticker := time.NewTicker(s.pingInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-s.cancel:
-			return
-		case <-ticker.C:
-			msgID := s.msgFactory.AllocateMsgID()
-			seqNo := s.msgFactory.AllocateSeqNo(false)
-			ping := &tg.PingDelayDisconnectRequest{
-				PingID:          time.Now().UnixNano(),
-				DisconnectDelay: 65,
-			}
-
-			message := &tg.MTProtoMessage{
-				MsgID: msgID,
-				SeqNo: uint32(seqNo),
-				Body:  ping,
-			}
-
-			encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
-
-			job := getSendJob()
-			job.encrypted = encrypted
-			job.deadline = time.Now().Add(30 * time.Second)
-			job.done = make(chan error, 1)
-			select {
-			case s.sendCh <- job:
-			default:
-				putSendJob(job)
-				continue
-			}
-			if err := <-job.done; err != nil {
-				putSendJob(job)
-				if s.onDisconnect != nil {
-					s.onDisconnect(err)
-				}
-				continue
-			}
-			putSendJob(job)
-		}
-	}
+func (s *Session) sendPing() {
+	s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
+		PingID:          time.Now().UnixNano(),
+		DisconnectDelay: 65,
+	})
 }
 
 func (s *Session) setPingInterval(d time.Duration) {
