@@ -5,10 +5,15 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
+	"sync"
 
 	"github.com/mtgo-labs/mtgo/tg"
 	tgerr "github.com/mtgo-labs/mtgo/tgerr"
 )
+
+var bufPool = sync.Pool{
+	New: func() any { return new(bytes.Buffer) },
+}
 
 // KDF derives the AES key and IV used for message encryption from the
 // authorization key and message key. The outgoing parameter determines which
@@ -18,7 +23,7 @@ import (
 // Returns the 32-byte aesKey and 32-byte aesIV.
 //
 // See https://core.telegram.org/mtproto/description#defining-aes-key-and-initialization-vector.
-func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV []byte) {
+func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV [32]byte) {
 	x := 0
 	if !outgoing {
 		x = 8
@@ -34,15 +39,13 @@ func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV []byte) {
 	copy(tmpB[36:], msgKey)
 	sha256B := sha256.Sum256(tmpB[:])
 
-	aesKey = make([]byte, 0, 32)
-	aesKey = append(aesKey, sha256A[:8]...)
-	aesKey = append(aesKey, sha256B[8:24]...)
-	aesKey = append(aesKey, sha256A[24:32]...)
+	copy(aesKey[0:8], sha256A[:8])
+	copy(aesKey[8:24], sha256B[8:24])
+	copy(aesKey[24:32], sha256A[24:32])
 
-	aesIV = make([]byte, 0, 32)
-	aesIV = append(aesIV, sha256B[:8]...)
-	aesIV = append(aesIV, sha256A[8:24]...)
-	aesIV = append(aesIV, sha256B[24:32]...)
+	copy(aesIV[0:8], sha256B[:8])
+	copy(aesIV[8:24], sha256A[8:24])
+	copy(aesIV[24:32], sha256B[24:32])
 
 	return aesKey, aesIV
 }
@@ -54,17 +57,23 @@ func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV []byte) {
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
 func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, authKeyID []byte) []byte {
-	var dataBuf bytes.Buffer
-	tg.WriteLong(&dataBuf, salt)
+	dataBuf := bufPool.Get().(*bytes.Buffer)
+	dataBuf.Reset()
+	defer bufPool.Put(dataBuf)
+
+	tg.WriteLong(dataBuf, salt)
 	dataBuf.Write(sessionID)
 
-	var msgBuf bytes.Buffer
-	if err := message.Encode(&msgBuf); err != nil {
+	msgBuf := bufPool.Get().(*bytes.Buffer)
+	msgBuf.Reset()
+	if err := message.Encode(msgBuf); err != nil {
+		bufPool.Put(msgBuf)
 		panic("crypto/mtproto: " + err.Error())
 	}
 	dataBuf.Write(msgBuf.Bytes())
+	bufPool.Put(msgBuf)
 
-	paddingLen := (-(len(dataBuf.Bytes())+12)%16 + 12)
+	paddingLen := (-(dataBuf.Len()+12)%16 + 12)
 	if paddingLen < 12 {
 		paddingLen += 16
 	}
@@ -81,15 +90,20 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	hk.Sum(msgKeyLarge[:0])
 	msgKey := msgKeyLarge[8:24]
 
-	aesKey, aesIV := KDF(authKey, msgKey, true)
-	encrypted := IGEEncrypt(data, aesKey, aesIV)
+	keyArr, ivArr := KDF(authKey, msgKey, true)
+	encrypted := IGEEncrypt(data, keyArr[:], ivArr[:])
 
-	var result bytes.Buffer
+	result := bufPool.Get().(*bytes.Buffer)
+	result.Reset()
 	result.Write(authKeyID)
 	result.Write(msgKey)
 	result.Write(encrypted)
+	ReleaseAESBuf(encrypted)
 
-	return result.Bytes()
+	out := make([]byte, result.Len())
+	copy(out, result.Bytes())
+	bufPool.Put(result)
+	return out
 }
 
 // PackRaw is like [Pack] but accepts pre-serialized body bytes instead of a
@@ -97,15 +111,18 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 // body length prefix) followed by bodyBytes, then applies padding, msgKey
 // computation, and AES-IGE encryption identically to [Pack].
 func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID, authKey, authKeyID []byte) []byte {
-	var dataBuf bytes.Buffer
-	tg.WriteLong(&dataBuf, salt)
+	dataBuf := bufPool.Get().(*bytes.Buffer)
+	dataBuf.Reset()
+	defer bufPool.Put(dataBuf)
+
+	tg.WriteLong(dataBuf, salt)
 	dataBuf.Write(sessionID)
-	tg.WriteLong(&dataBuf, msgID)
-	tg.WriteInt(&dataBuf, seqNo)
-	tg.WriteInt(&dataBuf, uint32(len(bodyBytes)))
+	tg.WriteLong(dataBuf, msgID)
+	tg.WriteInt(dataBuf, seqNo)
+	tg.WriteInt(dataBuf, uint32(len(bodyBytes)))
 	dataBuf.Write(bodyBytes)
 
-	paddingLen := (-(len(dataBuf.Bytes())+12)%16 + 12)
+	paddingLen := (-(dataBuf.Len()+12)%16 + 12)
 	if paddingLen < 12 {
 		paddingLen += 16
 	}
@@ -122,15 +139,20 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 	hk.Sum(msgKeyLarge[:0])
 	msgKey := msgKeyLarge[8:24]
 
-	aesKey, aesIV := KDF(authKey, msgKey, true)
-	encrypted := IGEEncrypt(data, aesKey, aesIV)
+	keyArr, ivArr := KDF(authKey, msgKey, true)
+	encrypted := IGEEncrypt(data, keyArr[:], ivArr[:])
 
-	var result bytes.Buffer
+	result := bufPool.Get().(*bytes.Buffer)
+	result.Reset()
 	result.Write(authKeyID)
 	result.Write(msgKey)
 	result.Write(encrypted)
+	ReleaseAESBuf(encrypted)
 
-	return result.Bytes()
+	out := make([]byte, result.Len())
+	copy(out, result.Bytes())
+	bufPool.Put(result)
+	return out
 }
 
 // Unpack decrypts and decodes an incoming encrypted message. It verifies
@@ -154,13 +176,13 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 	msgKey := data[8:24]
 	encrypted := data[24:]
 
-	aesKey, aesIV := KDF(authKey, msgKey, false)
+	keyArr, ivArr := KDF(authKey, msgKey, false)
 
 	if len(encrypted) == 0 || len(encrypted)%16 != 0 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "encrypted data not aligned to 16"}
 	}
 
-	decrypted := IGEDecrypt(encrypted, aesKey, aesIV)
+	decrypted := IGEDecrypt(encrypted, keyArr[:], ivArr[:])
 
 	if len(decrypted) < 16 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}

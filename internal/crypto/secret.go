@@ -147,6 +147,7 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	var result bytes.Buffer
 	result.Write(msgKey)
 	result.Write(encrypted)
+	ReleaseAESBuf(encrypted)
 	return result.Bytes(), nil
 }
 

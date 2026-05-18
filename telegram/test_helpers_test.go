@@ -133,8 +133,8 @@ func unpackSafeNoSessionCheck(data, authKey, authKeyID []byte) (constructorID ui
 	}
 	msgKey := data[8:24]
 	encrypted := data[24:]
-	aesKey, aesIV := crypto.KDF(authKey, msgKey, false)
-	decrypted = crypto.IGEDecrypt(encrypted, aesKey, aesIV)
+	keyArr, ivArr := crypto.KDF(authKey, msgKey, false)
+	decrypted = crypto.IGEDecrypt(encrypted, keyArr[:], ivArr[:])
 	tmpChk := make([]byte, 32+len(decrypted))
 	copy(tmpChk, authKey[96:128])
 	copy(tmpChk[32:], decrypted)

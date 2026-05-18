@@ -3,7 +3,36 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"sync"
 )
+
+var igeBufPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, 0, 4096)
+		return &buf
+	},
+}
+
+func getAESBuf(size int) []byte {
+	bp := igeBufPool.Get().(*[]byte)
+	buf := *bp
+	if cap(buf) < size {
+		buf = make([]byte, size)
+	} else {
+		buf = buf[:size]
+	}
+	*bp = buf
+	return buf
+}
+
+// ReleaseAESBuf returns a buffer obtained from IGEEncrypt or IGEDecrypt
+// back to the pool. Call this after the buffer is no longer needed.
+func ReleaseAESBuf(buf []byte) {
+	if buf == nil {
+		return
+	}
+	igeBufPool.Put(&buf)
+}
 
 func xorInPlace(dst, a, b []byte) {
 	for i := range a {
@@ -22,7 +51,8 @@ func newAESBlock(key []byte) cipher.Block {
 // IGEEncrypt encrypts data using AES-256 in Infinite Garble Extension (IGE)
 // mode. The data length must be a multiple of 16. The key must be 32 bytes and
 // iv must be 32 bytes (split into two 16-byte halves for IGE chaining).
-// Returns the encrypted ciphertext.
+// Returns the encrypted ciphertext. The caller must call ReleaseAESBuf when
+// the returned buffer is no longer needed.
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
 func IGEEncrypt(data, key, iv []byte) []byte {
@@ -38,7 +68,7 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 	copy(iv1, iv[:16])
 	copy(iv2, iv[16:])
 
-	result := make([]byte, len(data))
+	result := getAESBuf(len(data))
 	var xored, encrypted [16]byte
 	for i := 0; i < len(data); i += 16 {
 		chunk := data[i : i+16]
@@ -54,7 +84,8 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 // IGEDecrypt decrypts data using AES-256 in Infinite Garble Extension (IGE)
 // mode. The data length must be a multiple of 16. The key must be 32 bytes and
 // iv must be 32 bytes (split into two 16-byte halves for IGE chaining).
-// Returns the decrypted plaintext.
+// Returns the decrypted plaintext. The caller must call ReleaseAESBuf when
+// the returned buffer is no longer needed.
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
 func IGEDecrypt(data, key, iv []byte) []byte {
@@ -70,7 +101,7 @@ func IGEDecrypt(data, key, iv []byte) []byte {
 	copy(iv1, iv[:16])
 	copy(iv2, iv[16:])
 
-	result := make([]byte, len(data))
+	result := getAESBuf(len(data))
 	var xored, decrypted [16]byte
 	for i := 0; i < len(data); i += 16 {
 		chunk := data[i : i+16]
