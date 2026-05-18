@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // PhoneGetCallConfigTypeID is the constructor ID for the RPC function phone.getCallConfig.
@@ -37,7 +36,7 @@ func (v *PhoneGetCallConfigRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetCallConfig(ctx context.Context) (*DataJSON, error) {
-	result, err := c.invoke(ctx, &PhoneGetCallConfigRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &PhoneGetCallConfigRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -96,7 +95,7 @@ func (v *PhoneRequestCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneRequestCall(ctx context.Context, req *PhoneRequestCallRequest) (PhoneCallClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -142,7 +141,7 @@ func (v *PhoneAcceptCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneAcceptCall(ctx context.Context, req *PhoneAcceptCallRequest) (PhoneCallClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -190,7 +189,7 @@ func (v *PhoneConfirmCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneConfirmCall(ctx context.Context, req *PhoneConfirmCallRequest) (PhoneCallClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -232,7 +231,7 @@ func (v *PhoneReceivedCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneReceivedCall(ctx context.Context, req *PhoneReceivedCallRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -289,7 +288,7 @@ func (v *PhoneDiscardCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDiscardCall(ctx context.Context, req *PhoneDiscardCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -346,7 +345,7 @@ func (v *PhoneSetCallRatingRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSetCallRating(ctx context.Context, req *PhoneSetCallRatingRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -390,7 +389,7 @@ func (v *PhoneSaveCallDebugRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSaveCallDebug(ctx context.Context, req *PhoneSaveCallDebugRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -432,7 +431,7 @@ func (v *PhoneSendSignalingDataRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSendSignalingData(ctx context.Context, req *PhoneSendSignalingDataRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -499,7 +498,7 @@ func (v *PhoneCreateGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneCreateGroupCall(ctx context.Context, req *PhoneCreateGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -581,7 +580,7 @@ func (v *PhoneJoinGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneJoinGroupCall(ctx context.Context, req *PhoneJoinGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -625,7 +624,7 @@ func (v *PhoneLeaveGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneLeaveGroupCall(ctx context.Context, req *PhoneLeaveGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -673,7 +672,7 @@ func (v *PhoneInviteToGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneInviteToGroupCall(ctx context.Context, req *PhoneInviteToGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -715,7 +714,7 @@ func (v *PhoneDiscardGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDiscardGroupCall(ctx context.Context, req *PhoneDiscardGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -789,7 +788,7 @@ func (v *PhoneToggleGroupCallSettingsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneToggleGroupCallSettings(ctx context.Context, req *PhoneToggleGroupCallSettingsRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -833,7 +832,7 @@ func (v *PhoneGetGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCall(ctx context.Context, req *PhoneGetGroupCallRequest) (GroupCallClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -887,7 +886,7 @@ func (v *PhoneGetGroupParticipantsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupParticipants(ctx context.Context, req *PhoneGetGroupParticipantsRequest) (*PhoneGroupParticipants, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -931,7 +930,7 @@ func (v *PhoneCheckGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneCheckGroupCall(ctx context.Context, req *PhoneCheckGroupCallRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -999,7 +998,7 @@ func (v *PhoneToggleGroupCallRecordRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneToggleGroupCallRecord(ctx context.Context, req *PhoneToggleGroupCallRecordRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1092,7 +1091,7 @@ func (v *PhoneEditGroupCallParticipantRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneEditGroupCallParticipant(ctx context.Context, req *PhoneEditGroupCallParticipantRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1136,7 +1135,7 @@ func (v *PhoneEditGroupCallTitleRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneEditGroupCallTitle(ctx context.Context, req *PhoneEditGroupCallTitleRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1178,7 +1177,7 @@ func (v *PhoneGetGroupCallJoinAsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCallJoinAs(ctx context.Context, req *PhoneGetGroupCallJoinAsRequest) (*PhoneJoinAsPeers, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1231,7 +1230,7 @@ func (v *PhoneExportGroupCallInviteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneExportGroupCallInvite(ctx context.Context, req *PhoneExportGroupCallInviteRequest) (*PhoneExportedGroupCallInvite, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1275,7 +1274,7 @@ func (v *PhoneToggleGroupCallStartSubscriptionRequest) Encode(b *bytes.Buffer) e
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneToggleGroupCallStartSubscription(ctx context.Context, req *PhoneToggleGroupCallStartSubscriptionRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1317,7 +1316,7 @@ func (v *PhoneStartScheduledGroupCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneStartScheduledGroupCall(ctx context.Context, req *PhoneStartScheduledGroupCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1361,7 +1360,7 @@ func (v *PhoneSaveDefaultGroupCallJoinAsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSaveDefaultGroupCallJoinAs(ctx context.Context, req *PhoneSaveDefaultGroupCallJoinAsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1403,7 +1402,7 @@ func (v *PhoneJoinGroupCallPresentationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneJoinGroupCallPresentation(ctx context.Context, req *PhoneJoinGroupCallPresentationRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1445,7 +1444,7 @@ func (v *PhoneLeaveGroupCallPresentationRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneLeaveGroupCallPresentation(ctx context.Context, req *PhoneLeaveGroupCallPresentationRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1487,7 +1486,7 @@ func (v *PhoneGetGroupCallStreamChannelsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCallStreamChannels(ctx context.Context, req *PhoneGetGroupCallStreamChannelsRequest) (*PhoneGroupCallStreamChannels, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1542,7 +1541,7 @@ func (v *PhoneGetGroupCallStreamRtmpURLRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCallStreamRtmpURL(ctx context.Context, req *PhoneGetGroupCallStreamRtmpURLRequest) (*PhoneGroupCallStreamRtmpURL, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1586,7 +1585,7 @@ func (v *PhoneSaveCallLogRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSaveCallLog(ctx context.Context, req *PhoneSaveCallLogRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1666,7 +1665,7 @@ func (v *PhoneCreateConferenceCallRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneCreateConferenceCall(ctx context.Context, req *PhoneCreateConferenceCallRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1727,7 +1726,7 @@ func (v *PhoneDeleteConferenceCallParticipantsRequest) Encode(b *bytes.Buffer) e
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDeleteConferenceCallParticipants(ctx context.Context, req *PhoneDeleteConferenceCallParticipantsRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1771,7 +1770,7 @@ func (v *PhoneSendConferenceCallBroadcastRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSendConferenceCallBroadcast(ctx context.Context, req *PhoneSendConferenceCallBroadcastRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1826,7 +1825,7 @@ func (v *PhoneInviteConferenceCallParticipantRequest) Encode(b *bytes.Buffer) er
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneInviteConferenceCallParticipant(ctx context.Context, req *PhoneInviteConferenceCallParticipantRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1868,7 +1867,7 @@ func (v *PhoneDeclineConferenceCallInviteRequest) Encode(b *bytes.Buffer) error 
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDeclineConferenceCallInvite(ctx context.Context, req *PhoneDeclineConferenceCallInviteRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1916,7 +1915,7 @@ func (v *PhoneGetGroupCallChainBlocksRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCallChainBlocks(ctx context.Context, req *PhoneGetGroupCallChainBlocksRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1983,7 +1982,7 @@ func (v *PhoneSendGroupCallMessageRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSendGroupCallMessage(ctx context.Context, req *PhoneSendGroupCallMessageRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2027,7 +2026,7 @@ func (v *PhoneSendGroupCallEncryptedMessageRequest) Encode(b *bytes.Buffer) erro
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSendGroupCallEncryptedMessage(ctx context.Context, req *PhoneSendGroupCallEncryptedMessageRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2080,7 +2079,7 @@ func (v *PhoneDeleteGroupCallMessagesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDeleteGroupCallMessages(ctx context.Context, req *PhoneDeleteGroupCallMessagesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2135,7 +2134,7 @@ func (v *PhoneDeleteGroupCallParticipantMessagesRequest) Encode(b *bytes.Buffer)
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneDeleteGroupCallParticipantMessages(ctx context.Context, req *PhoneDeleteGroupCallParticipantMessagesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2177,7 +2176,7 @@ func (v *PhoneGetGroupCallStarsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneGetGroupCallStars(ctx context.Context, req *PhoneGetGroupCallStarsRequest) (*PhoneGroupCallStars, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -2221,7 +2220,7 @@ func (v *PhoneSaveDefaultSendAsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) PhoneSaveDefaultSendAs(ctx context.Context, req *PhoneSaveDefaultSendAsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

@@ -3,7 +3,6 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
@@ -191,7 +190,7 @@ type dcSessionInvoker struct {
 	apiInit bool
 }
 
-func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	deadline, ok := ctx.Deadline()
 	timeout := time.Duration(0)
 	if ok {

@@ -65,7 +65,7 @@ type Logger struct {
 	// SetLevel. Messages at or above this level are printed; those below are
 	// silently discarded. NoLevel (the default) disables all output.
 	Level    LogLevel
-	nocolor  bool
+	noColor  bool
 	output   *log.Logger
 	file     *os.File
 	filePath string
@@ -100,9 +100,9 @@ func NewLogger(prefix string) *Logger {
 // Returns:
 //   - *Logger: the receiver, for method chaining.
 func (l *Logger) NoColor(v ...bool) *Logger {
-	l.nocolor = true
+	l.noColor = true
 	if len(v) > 0 {
-		l.nocolor = v[0]
+		l.noColor = v[0]
 	}
 	return l
 }
@@ -202,7 +202,7 @@ func (l *Logger) Clone(prefix string) *Logger {
 	cloned := &Logger{
 		prefix:   l.prefix + " " + prefix,
 		Level:    l.Level,
-		nocolor:  l.nocolor,
+		noColor:  l.noColor,
 		filePath: l.filePath,
 		maxSize:  l.maxSize,
 	}
@@ -216,7 +216,7 @@ func (l *Logger) Clone(prefix string) *Logger {
 }
 
 func (l *Logger) colorize(color string, s string) string {
-	if l.nocolor {
+	if l.noColor {
 		return s
 	}
 	return color + s + logColorOff

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // HelpGetConfigTypeID is the constructor ID for the RPC function help.getConfig.
@@ -37,7 +36,7 @@ func (v *HelpGetConfigRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetConfig(ctx context.Context) (*Config, error) {
-	result, err := c.invoke(ctx, &HelpGetConfigRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetConfigRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -77,7 +76,7 @@ func (v *HelpGetNearestDCRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetNearestDC(ctx context.Context) (*NearestDC, error) {
-	result, err := c.invoke(ctx, &HelpGetNearestDCRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetNearestDCRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -119,7 +118,7 @@ func (v *HelpGetAppUpdateRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetAppUpdate(ctx context.Context, req *HelpGetAppUpdateRequest) (AppUpdateClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -159,7 +158,7 @@ func (v *HelpGetInviteTextRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetInviteText(ctx context.Context) (*HelpInviteText, error) {
-	result, err := c.invoke(ctx, &HelpGetInviteTextRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetInviteTextRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -199,7 +198,7 @@ func (v *HelpGetSupportRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetSupport(ctx context.Context) (*HelpSupport, error) {
-	result, err := c.invoke(ctx, &HelpGetSupportRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetSupportRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -243,7 +242,7 @@ func (v *HelpSetBotUpdatesStatusRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpSetBotUpdatesStatus(ctx context.Context, req *HelpSetBotUpdatesStatusRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -281,7 +280,7 @@ func (v *HelpGetCDNConfigRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetCDNConfig(ctx context.Context) (*CDNConfig, error) {
-	result, err := c.invoke(ctx, &HelpGetCDNConfigRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetCDNConfigRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -323,7 +322,7 @@ func (v *HelpGetRecentMeUrlsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetRecentMeUrls(ctx context.Context, req *HelpGetRecentMeUrlsRequest) (*HelpRecentMeUrls, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -363,7 +362,7 @@ func (v *HelpGetTermsOfServiceUpdateRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetTermsOfServiceUpdate(ctx context.Context) (TermsOfServiceUpdateClass, error) {
-	result, err := c.invoke(ctx, &HelpGetTermsOfServiceUpdateRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetTermsOfServiceUpdateRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -405,7 +404,7 @@ func (v *HelpAcceptTermsOfServiceRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpAcceptTermsOfService(ctx context.Context, req *HelpAcceptTermsOfServiceRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -445,7 +444,7 @@ func (v *HelpGetDeepLinkInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetDeepLinkInfo(ctx context.Context, req *HelpGetDeepLinkInfoRequest) (DeepLinkInfoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -487,7 +486,7 @@ func (v *HelpGetAppConfigRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetAppConfig(ctx context.Context, req *HelpGetAppConfigRequest) (AppConfigClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -533,7 +532,7 @@ func (v *HelpSaveAppLogRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpSaveAppLog(ctx context.Context, req *HelpSaveAppLogRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -573,7 +572,7 @@ func (v *HelpGetPassportConfigRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetPassportConfig(ctx context.Context, req *HelpGetPassportConfigRequest) (PassportConfigClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -613,7 +612,7 @@ func (v *HelpGetSupportNameRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetSupportName(ctx context.Context) (*HelpSupportName, error) {
-	result, err := c.invoke(ctx, &HelpGetSupportNameRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetSupportNameRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -655,7 +654,7 @@ func (v *HelpGetUserInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetUserInfo(ctx context.Context, req *HelpGetUserInfoRequest) (UserInfoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -705,7 +704,7 @@ func (v *HelpEditUserInfoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpEditUserInfo(ctx context.Context, req *HelpEditUserInfoRequest) (UserInfoClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -745,7 +744,7 @@ func (v *HelpGetPromoDataRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetPromoData(ctx context.Context) (PromoDataClass, error) {
-	result, err := c.invoke(ctx, &HelpGetPromoDataRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetPromoDataRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -787,7 +786,7 @@ func (v *HelpHidePromoDataRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpHidePromoData(ctx context.Context, req *HelpHidePromoDataRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -829,7 +828,7 @@ func (v *HelpDismissSuggestionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpDismissSuggestion(ctx context.Context, req *HelpDismissSuggestionRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -871,7 +870,7 @@ func (v *HelpGetCountriesListRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetCountriesList(ctx context.Context, req *HelpGetCountriesListRequest) (CountriesListClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -911,7 +910,7 @@ func (v *HelpGetPremiumPromoRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetPremiumPromo(ctx context.Context) (*HelpPremiumPromo, error) {
-	result, err := c.invoke(ctx, &HelpGetPremiumPromoRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &HelpGetPremiumPromoRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -953,7 +952,7 @@ func (v *HelpGetPeerColorsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetPeerColors(ctx context.Context, req *HelpGetPeerColorsRequest) (PeerColorsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -995,7 +994,7 @@ func (v *HelpGetPeerProfileColorsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetPeerProfileColors(ctx context.Context, req *HelpGetPeerProfileColorsRequest) (PeerColorsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1037,7 +1036,7 @@ func (v *HelpGetTimezonesListRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) HelpGetTimezonesList(ctx context.Context, req *HelpGetTimezonesListRequest) (TimezonesListClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

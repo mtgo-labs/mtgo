@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // FragmentCollectibleInfoTypeID is the constructor ID for TL type fragment.collectibleInfo.
@@ -40,19 +39,43 @@ func (v *FragmentCollectibleInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFragmentCollectibleInfo deserializes a FragmentCollectibleInfo from a reader using the TL binary protocol.
-func DecodeFragmentCollectibleInfo(r io.Reader) (*FragmentCollectibleInfo, error) {
+func DecodeFragmentCollectibleInfo(r *Reader) (*FragmentCollectibleInfo, error) {
 	v := &FragmentCollectibleInfo{}
-	v.PurchaseDate = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
-	v.CryptoCurrency = ReadString(r)
-	v.CryptoAmount = ReadLong(r)
-	v.URL = ReadString(r)
+	_rPurchaseDate, _ePurchaseDate := r.ReadInt32()
+	if _ePurchaseDate != nil {
+		return nil, _ePurchaseDate
+	}
+	v.PurchaseDate = _rPurchaseDate
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rCryptoCurrency, _eCryptoCurrency := r.ReadString()
+	if _eCryptoCurrency != nil {
+		return nil, _eCryptoCurrency
+	}
+	v.CryptoCurrency = _rCryptoCurrency
+	_rCryptoAmount, _eCryptoAmount := r.ReadInt64()
+	if _eCryptoAmount != nil {
+		return nil, _eCryptoAmount
+	}
+	v.CryptoAmount = _rCryptoAmount
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[FragmentCollectibleInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[FragmentCollectibleInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeFragmentCollectibleInfo(r)
 	}
 }

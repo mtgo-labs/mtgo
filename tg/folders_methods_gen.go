@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // FoldersEditPeerFoldersTypeID is the constructor ID for the RPC function folders.editPeerFolders.
@@ -43,7 +42,7 @@ func (v *FoldersEditPeerFoldersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) FoldersEditPeerFolders(ctx context.Context, req *FoldersEditPeerFoldersRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

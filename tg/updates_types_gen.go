@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // UpdateClass is the interface for TL type Update.
@@ -975,17 +974,28 @@ func (v *UpdateNewMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewMessage deserializes a UpdateNewMessage from a reader using the TL binary protocol.
-func DecodeUpdateNewMessage(r io.Reader) (*UpdateNewMessage, error) {
+func DecodeUpdateNewMessage(r *Reader) (*UpdateNewMessage, error) {
 	v := &UpdateNewMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewMessage(r)
 	}
 }
@@ -1012,15 +1022,23 @@ func (v *UpdateMessageID) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMessageID deserializes a UpdateMessageID from a reader using the TL binary protocol.
-func DecodeUpdateMessageID(r io.Reader) (*UpdateMessageID, error) {
+func DecodeUpdateMessageID(r *Reader) (*UpdateMessageID, error) {
 	v := &UpdateMessageID{}
-	v.ID = int32(ReadInt(r))
-	v.RandomID = ReadLong(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMessageIDTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMessageIDTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMessageID(r)
 	}
 }
@@ -1049,16 +1067,28 @@ func (v *UpdateDeleteMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteMessages deserializes a UpdateDeleteMessages from a reader using the TL binary protocol.
-func DecodeUpdateDeleteMessages(r io.Reader) (*UpdateDeleteMessages, error) {
+func DecodeUpdateDeleteMessages(r *Reader) (*UpdateDeleteMessages, error) {
 	v := &UpdateDeleteMessages{}
-	v.Messages = ReadVectorInt(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteMessages(r)
 	}
 }
@@ -1099,24 +1129,35 @@ func (v *UpdateUserTyping) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUserTyping deserializes a UpdateUserTyping from a reader using the TL binary protocol.
-func DecodeUpdateUserTyping(r io.Reader) (*UpdateUserTyping, error) {
+func DecodeUpdateUserTyping(r *Reader) (*UpdateUserTyping, error) {
 	v := &UpdateUserTyping{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
 	}
-	_objAction, _ := ReadTLObject(r)
+	v.UserID = _rUserID
+	if v.Flags.Has(0) {
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
+	}
+	_objAction, _errAction := ReadTLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(SendMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserTypingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserTypingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUserTyping(r)
 	}
 }
@@ -1145,18 +1186,28 @@ func (v *UpdateChatUserTyping) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatUserTyping deserializes a UpdateChatUserTyping from a reader using the TL binary protocol.
-func DecodeUpdateChatUserTyping(r io.Reader) (*UpdateChatUserTyping, error) {
+func DecodeUpdateChatUserTyping(r *Reader) (*UpdateChatUserTyping, error) {
 	v := &UpdateChatUserTyping{}
-	v.ChatID = ReadLong(r)
-	_objFromID, _ := ReadTLObject(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_objFromID, _errFromID := ReadTLObject(r)
+	if _errFromID != nil {
+		return nil, _errFromID
+	}
 	v.FromID = _objFromID.(PeerClass)
-	_objAction, _ := ReadTLObject(r)
+	_objAction, _errAction := ReadTLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(SendMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatUserTypingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatUserTypingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatUserTyping(r)
 	}
 }
@@ -1181,15 +1232,18 @@ func (v *UpdateChatParticipants) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipants deserializes a UpdateChatParticipants from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipants(r io.Reader) (*UpdateChatParticipants, error) {
+func DecodeUpdateChatParticipants(r *Reader) (*UpdateChatParticipants, error) {
 	v := &UpdateChatParticipants{}
-	_objParticipants, _ := ReadTLObject(r)
+	_objParticipants, _errParticipants := ReadTLObject(r)
+	if _errParticipants != nil {
+		return nil, _errParticipants
+	}
 	v.Participants = _objParticipants.(ChatParticipantsClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipants(r)
 	}
 }
@@ -1216,16 +1270,23 @@ func (v *UpdateUserStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUserStatus deserializes a UpdateUserStatus from a reader using the TL binary protocol.
-func DecodeUpdateUserStatus(r io.Reader) (*UpdateUserStatus, error) {
+func DecodeUpdateUserStatus(r *Reader) (*UpdateUserStatus, error) {
 	v := &UpdateUserStatus{}
-	v.UserID = ReadLong(r)
-	_objStatus, _ := ReadTLObject(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objStatus, _errStatus := ReadTLObject(r)
+	if _errStatus != nil {
+		return nil, _errStatus
+	}
 	v.Status = _objStatus.(UserStatusClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUserStatus(r)
 	}
 }
@@ -1260,26 +1321,48 @@ func (v *UpdateUserName) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUserName deserializes a UpdateUserName from a reader using the TL binary protocol.
-func DecodeUpdateUserName(r io.Reader) (*UpdateUserName, error) {
+func DecodeUpdateUserName(r *Reader) (*UpdateUserName, error) {
 	v := &UpdateUserName{}
-	v.UserID = ReadLong(r)
-	v.FirstName = ReadString(r)
-	v.LastName = ReadString(r)
-	ReadInt(r)
-	_cntUsernames := ReadInt(r)
-	if err := checkVectorCount(_cntUsernames); err != nil {
-		return nil, err
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rFirstName, _eFirstName := r.ReadString()
+	if _eFirstName != nil {
+		return nil, _eFirstName
+	}
+	v.FirstName = _rFirstName
+	_rLastName, _eLastName := r.ReadString()
+	if _eLastName != nil {
+		return nil, _eLastName
+	}
+	v.LastName = _rLastName
+	_vhdrUsernames, _ehdrUsernames := r.ReadUint32()
+	if _ehdrUsernames != nil {
+		return nil, _ehdrUsernames
+	}
+	_cntUsernames, _ecntUsernames := r.ReadUint32()
+	if _ecntUsernames != nil {
+		return nil, _ecntUsernames
+	}
+	if _errUsernames := checkVectorCount(_cntUsernames); _errUsernames != nil {
+		return nil, _errUsernames
 	}
 	v.Usernames = make([]*Username, _cntUsernames)
 	for _iUsernames := range v.Usernames {
-		_objUsernames, _ := ReadTLObject(r)
+		_objUsernames, _errUsernames := ReadTLObject(r)
+		if _errUsernames != nil {
+			return nil, _errUsernames
+		}
 		v.Usernames[_iUsernames] = _objUsernames.(*Username)
 	}
+	_ = _vhdrUsernames
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserNameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserNameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUserName(r)
 	}
 }
@@ -1336,29 +1419,45 @@ func (v *UpdateNewAuthorization) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewAuthorization deserializes a UpdateNewAuthorization from a reader using the TL binary protocol.
-func DecodeUpdateNewAuthorization(r io.Reader) (*UpdateNewAuthorization, error) {
+func DecodeUpdateNewAuthorization(r *Reader) (*UpdateNewAuthorization, error) {
 	v := &UpdateNewAuthorization{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Unconfirmed = v.Flags.Has(0)
-	v.Hash = ReadLong(r)
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	if v.Flags.Has(0) {
-		v.Date = int32(ReadInt(r))
+		_rDate, _eDate := r.ReadInt32()
+		if _eDate != nil {
+			return nil, _eDate
+		}
+		v.Date = _rDate
 	}
 	if v.Flags.Has(0) {
-		v.Device = ReadString(r)
+		_rDevice, _eDevice := r.ReadString()
+		if _eDevice != nil {
+			return nil, _eDevice
+		}
+		v.Device = _rDevice
 	}
 	if v.Flags.Has(0) {
-		v.Location = ReadString(r)
+		_rLocation, _eLocation := r.ReadString()
+		if _eLocation != nil {
+			return nil, _eLocation
+		}
+		v.Location = _rLocation
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewAuthorizationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewAuthorizationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewAuthorization(r)
 	}
 }
@@ -1385,16 +1484,23 @@ func (v *UpdateNewEncryptedMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewEncryptedMessage deserializes a UpdateNewEncryptedMessage from a reader using the TL binary protocol.
-func DecodeUpdateNewEncryptedMessage(r io.Reader) (*UpdateNewEncryptedMessage, error) {
+func DecodeUpdateNewEncryptedMessage(r *Reader) (*UpdateNewEncryptedMessage, error) {
 	v := &UpdateNewEncryptedMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(EncryptedMessageClass)
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewEncryptedMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewEncryptedMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewEncryptedMessage(r)
 	}
 }
@@ -1419,14 +1525,18 @@ func (v *UpdateEncryptedChatTyping) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEncryptedChatTyping deserializes a UpdateEncryptedChatTyping from a reader using the TL binary protocol.
-func DecodeUpdateEncryptedChatTyping(r io.Reader) (*UpdateEncryptedChatTyping, error) {
+func DecodeUpdateEncryptedChatTyping(r *Reader) (*UpdateEncryptedChatTyping, error) {
 	v := &UpdateEncryptedChatTyping{}
-	v.ChatID = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt32()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEncryptedChatTypingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEncryptedChatTypingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEncryptedChatTyping(r)
 	}
 }
@@ -1453,16 +1563,23 @@ func (v *UpdateEncryption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEncryption deserializes a UpdateEncryption from a reader using the TL binary protocol.
-func DecodeUpdateEncryption(r io.Reader) (*UpdateEncryption, error) {
+func DecodeUpdateEncryption(r *Reader) (*UpdateEncryption, error) {
 	v := &UpdateEncryption{}
-	_objChat, _ := ReadTLObject(r)
+	_objChat, _errChat := ReadTLObject(r)
+	if _errChat != nil {
+		return nil, _errChat
+	}
 	v.Chat = _objChat.(EncryptedChatClass)
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEncryptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEncryptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEncryption(r)
 	}
 }
@@ -1491,16 +1608,28 @@ func (v *UpdateEncryptedMessagesRead) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEncryptedMessagesRead deserializes a UpdateEncryptedMessagesRead from a reader using the TL binary protocol.
-func DecodeUpdateEncryptedMessagesRead(r io.Reader) (*UpdateEncryptedMessagesRead, error) {
+func DecodeUpdateEncryptedMessagesRead(r *Reader) (*UpdateEncryptedMessagesRead, error) {
 	v := &UpdateEncryptedMessagesRead{}
-	v.ChatID = int32(ReadInt(r))
-	v.MaxDate = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt32()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rMaxDate, _eMaxDate := r.ReadInt32()
+	if _eMaxDate != nil {
+		return nil, _eMaxDate
+	}
+	v.MaxDate = _rMaxDate
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEncryptedMessagesReadTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEncryptedMessagesReadTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEncryptedMessagesRead(r)
 	}
 }
@@ -1533,18 +1662,38 @@ func (v *UpdateChatParticipantAdd) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipantAdd deserializes a UpdateChatParticipantAdd from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipantAdd(r io.Reader) (*UpdateChatParticipantAdd, error) {
+func DecodeUpdateChatParticipantAdd(r *Reader) (*UpdateChatParticipantAdd, error) {
 	v := &UpdateChatParticipantAdd{}
-	v.ChatID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.InviterID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.Version = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rInviterID, _eInviterID := r.ReadInt64()
+	if _eInviterID != nil {
+		return nil, _eInviterID
+	}
+	v.InviterID = _rInviterID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantAddTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantAddTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipantAdd(r)
 	}
 }
@@ -1573,16 +1722,28 @@ func (v *UpdateChatParticipantDelete) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipantDelete deserializes a UpdateChatParticipantDelete from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipantDelete(r io.Reader) (*UpdateChatParticipantDelete, error) {
+func DecodeUpdateChatParticipantDelete(r *Reader) (*UpdateChatParticipantDelete, error) {
 	v := &UpdateChatParticipantDelete{}
-	v.ChatID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.Version = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantDeleteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantDeleteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipantDelete(r)
 	}
 }
@@ -1611,23 +1772,33 @@ func (v *UpdateDCOptions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDCOptions deserializes a UpdateDCOptions from a reader using the TL binary protocol.
-func DecodeUpdateDCOptions(r io.Reader) (*UpdateDCOptions, error) {
+func DecodeUpdateDCOptions(r *Reader) (*UpdateDCOptions, error) {
 	v := &UpdateDCOptions{}
-	ReadInt(r)
-	_cntDCOptions := ReadInt(r)
-	if err := checkVectorCount(_cntDCOptions); err != nil {
-		return nil, err
+	_vhdrDCOptions, _ehdrDCOptions := r.ReadUint32()
+	if _ehdrDCOptions != nil {
+		return nil, _ehdrDCOptions
+	}
+	_cntDCOptions, _ecntDCOptions := r.ReadUint32()
+	if _ecntDCOptions != nil {
+		return nil, _ecntDCOptions
+	}
+	if _errDCOptions := checkVectorCount(_cntDCOptions); _errDCOptions != nil {
+		return nil, _errDCOptions
 	}
 	v.DCOptions = make([]*DCOption, _cntDCOptions)
 	for _iDCOptions := range v.DCOptions {
-		_objDCOptions, _ := ReadTLObject(r)
+		_objDCOptions, _errDCOptions := ReadTLObject(r)
+		if _errDCOptions != nil {
+			return nil, _errDCOptions
+		}
 		v.DCOptions[_iDCOptions] = _objDCOptions.(*DCOption)
 	}
+	_ = _vhdrDCOptions
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDCOptionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDCOptionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDCOptions(r)
 	}
 }
@@ -1654,17 +1825,23 @@ func (v *UpdateNotifySettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNotifySettings deserializes a UpdateNotifySettings from a reader using the TL binary protocol.
-func DecodeUpdateNotifySettings(r io.Reader) (*UpdateNotifySettings, error) {
+func DecodeUpdateNotifySettings(r *Reader) (*UpdateNotifySettings, error) {
 	v := &UpdateNotifySettings{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(NotifyPeerClass)
-	_objNotifySettings, _ := ReadTLObject(r)
+	_objNotifySettings, _errNotifySettings := ReadTLObject(r)
+	if _errNotifySettings != nil {
+		return nil, _errNotifySettings
+	}
 	v.NotifySettings = _objNotifySettings.(*PeerNotifySettings)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNotifySettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNotifySettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNotifySettings(r)
 	}
 }
@@ -1721,37 +1898,62 @@ func (v *UpdateServiceNotification) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateServiceNotification deserializes a UpdateServiceNotification from a reader using the TL binary protocol.
-func DecodeUpdateServiceNotification(r io.Reader) (*UpdateServiceNotification, error) {
+func DecodeUpdateServiceNotification(r *Reader) (*UpdateServiceNotification, error) {
 	v := &UpdateServiceNotification{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Popup = v.Flags.Has(0)
 	v.InvertMedia = v.Flags.Has(2)
 	if v.Flags.Has(1) {
-		v.InboxDate = int32(ReadInt(r))
+		_rInboxDate, _eInboxDate := r.ReadInt32()
+		if _eInboxDate != nil {
+			return nil, _eInboxDate
+		}
+		v.InboxDate = _rInboxDate
 	}
-	v.Type = ReadString(r)
-	v.Message = ReadString(r)
-	_objMedia, _ := ReadTLObject(r)
+	_rType, _eType := r.ReadString()
+	if _eType != nil {
+		return nil, _eType
+	}
+	v.Type = _rType
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_objMedia, _errMedia := ReadTLObject(r)
+	if _errMedia != nil {
+		return nil, _errMedia
+	}
 	v.Media = _objMedia.(MessageMediaClass)
-	ReadInt(r)
-	_cntEntities := ReadInt(r)
-	if err := checkVectorCount(_cntEntities); err != nil {
-		return nil, err
+	_vhdrEntities, _ehdrEntities := r.ReadUint32()
+	if _ehdrEntities != nil {
+		return nil, _ehdrEntities
+	}
+	_cntEntities, _ecntEntities := r.ReadUint32()
+	if _ecntEntities != nil {
+		return nil, _ecntEntities
+	}
+	if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
-		_objEntities, _ := ReadTLObject(r)
+		_objEntities, _errEntities := ReadTLObject(r)
+		if _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 	}
+	_ = _vhdrEntities
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateServiceNotificationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateServiceNotificationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateServiceNotification(r)
 	}
 }
@@ -1782,25 +1984,38 @@ func (v *UpdatePrivacy) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePrivacy deserializes a UpdatePrivacy from a reader using the TL binary protocol.
-func DecodeUpdatePrivacy(r io.Reader) (*UpdatePrivacy, error) {
+func DecodeUpdatePrivacy(r *Reader) (*UpdatePrivacy, error) {
 	v := &UpdatePrivacy{}
-	_objKey, _ := ReadTLObject(r)
+	_objKey, _errKey := ReadTLObject(r)
+	if _errKey != nil {
+		return nil, _errKey
+	}
 	v.Key = _objKey.(PrivacyKeyClass)
-	ReadInt(r)
-	_cntRules := ReadInt(r)
-	if err := checkVectorCount(_cntRules); err != nil {
-		return nil, err
+	_vhdrRules, _ehdrRules := r.ReadUint32()
+	if _ehdrRules != nil {
+		return nil, _ehdrRules
+	}
+	_cntRules, _ecntRules := r.ReadUint32()
+	if _ecntRules != nil {
+		return nil, _ecntRules
+	}
+	if _errRules := checkVectorCount(_cntRules); _errRules != nil {
+		return nil, _errRules
 	}
 	v.Rules = make([]PrivacyRuleClass, _cntRules)
 	for _iRules := range v.Rules {
-		_objRules, _ := ReadTLObject(r)
+		_objRules, _errRules := ReadTLObject(r)
+		if _errRules != nil {
+			return nil, _errRules
+		}
 		v.Rules[_iRules] = _objRules.(PrivacyRuleClass)
 	}
+	_ = _vhdrRules
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePrivacyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePrivacyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePrivacy(r)
 	}
 }
@@ -1827,15 +2042,23 @@ func (v *UpdateUserPhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUserPhone deserializes a UpdateUserPhone from a reader using the TL binary protocol.
-func DecodeUpdateUserPhone(r io.Reader) (*UpdateUserPhone, error) {
+func DecodeUpdateUserPhone(r *Reader) (*UpdateUserPhone, error) {
 	v := &UpdateUserPhone{}
-	v.UserID = ReadLong(r)
-	v.Phone = ReadString(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserPhoneTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserPhoneTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUserPhone(r)
 	}
 }
@@ -1889,30 +2112,57 @@ func (v *UpdateReadHistoryInbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadHistoryInbox deserializes a UpdateReadHistoryInbox from a reader using the TL binary protocol.
-func DecodeUpdateReadHistoryInbox(r io.Reader) (*UpdateReadHistoryInbox, error) {
+func DecodeUpdateReadHistoryInbox(r *Reader) (*UpdateReadHistoryInbox, error) {
 	v := &UpdateReadHistoryInbox{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	if v.Flags.Has(1) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
-	v.MaxID = int32(ReadInt(r))
-	v.StillUnreadCount = int32(ReadInt(r))
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rMaxID, _eMaxID := r.ReadInt32()
+	if _eMaxID != nil {
+		return nil, _eMaxID
+	}
+	v.MaxID = _rMaxID
+	_rStillUnreadCount, _eStillUnreadCount := r.ReadInt32()
+	if _eStillUnreadCount != nil {
+		return nil, _eStillUnreadCount
+	}
+	v.StillUnreadCount = _rStillUnreadCount
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadHistoryInboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadHistoryInboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadHistoryInbox(r)
 	}
 }
@@ -1943,18 +2193,33 @@ func (v *UpdateReadHistoryOutbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadHistoryOutbox deserializes a UpdateReadHistoryOutbox from a reader using the TL binary protocol.
-func DecodeUpdateReadHistoryOutbox(r io.Reader) (*UpdateReadHistoryOutbox, error) {
+func DecodeUpdateReadHistoryOutbox(r *Reader) (*UpdateReadHistoryOutbox, error) {
 	v := &UpdateReadHistoryOutbox{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MaxID = int32(ReadInt(r))
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rMaxID, _eMaxID := r.ReadInt32()
+	if _eMaxID != nil {
+		return nil, _eMaxID
+	}
+	v.MaxID = _rMaxID
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadHistoryOutboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadHistoryOutboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadHistoryOutbox(r)
 	}
 }
@@ -1983,17 +2248,28 @@ func (v *UpdateWebPage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateWebPage deserializes a UpdateWebPage from a reader using the TL binary protocol.
-func DecodeUpdateWebPage(r io.Reader) (*UpdateWebPage, error) {
+func DecodeUpdateWebPage(r *Reader) (*UpdateWebPage, error) {
 	v := &UpdateWebPage{}
-	_objWebpage, _ := ReadTLObject(r)
+	_objWebpage, _errWebpage := ReadTLObject(r)
+	if _errWebpage != nil {
+		return nil, _errWebpage
+	}
 	v.Webpage = _objWebpage.(WebPageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateWebPageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateWebPageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateWebPage(r)
 	}
 }
@@ -2036,24 +2312,40 @@ func (v *UpdateReadMessagesContents) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadMessagesContents deserializes a UpdateReadMessagesContents from a reader using the TL binary protocol.
-func DecodeUpdateReadMessagesContents(r io.Reader) (*UpdateReadMessagesContents, error) {
+func DecodeUpdateReadMessagesContents(r *Reader) (*UpdateReadMessagesContents, error) {
 	v := &UpdateReadMessagesContents{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Messages = ReadVectorInt(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	if v.Flags.Has(0) {
-		v.Date = int32(ReadInt(r))
+		_rDate, _eDate := r.ReadInt32()
+		if _eDate != nil {
+			return nil, _eDate
+		}
+		v.Date = _rDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadMessagesContentsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadMessagesContentsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadMessagesContents(r)
 	}
 }
@@ -2092,22 +2384,30 @@ func (v *UpdateChannelTooLong) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelTooLong deserializes a UpdateChannelTooLong from a reader using the TL binary protocol.
-func DecodeUpdateChannelTooLong(r io.Reader) (*UpdateChannelTooLong, error) {
+func DecodeUpdateChannelTooLong(r *Reader) (*UpdateChannelTooLong, error) {
 	v := &UpdateChannelTooLong{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChannelID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	if v.Flags.Has(0) {
-		v.PTS = int32(ReadInt(r))
+		_rPTS, _ePTS := r.ReadInt32()
+		if _ePTS != nil {
+			return nil, _ePTS
+		}
+		v.PTS = _rPTS
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelTooLongTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelTooLongTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelTooLong(r)
 	}
 }
@@ -2132,14 +2432,18 @@ func (v *UpdateChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannel deserializes a UpdateChannel from a reader using the TL binary protocol.
-func DecodeUpdateChannel(r io.Reader) (*UpdateChannel, error) {
+func DecodeUpdateChannel(r *Reader) (*UpdateChannel, error) {
 	v := &UpdateChannel{}
-	v.ChannelID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannel(r)
 	}
 }
@@ -2168,17 +2472,28 @@ func (v *UpdateNewChannelMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewChannelMessage deserializes a UpdateNewChannelMessage from a reader using the TL binary protocol.
-func DecodeUpdateNewChannelMessage(r io.Reader) (*UpdateNewChannelMessage, error) {
+func DecodeUpdateNewChannelMessage(r *Reader) (*UpdateNewChannelMessage, error) {
 	v := &UpdateNewChannelMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewChannelMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewChannelMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewChannelMessage(r)
 	}
 }
@@ -2223,25 +2538,45 @@ func (v *UpdateReadChannelInbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadChannelInbox deserializes a UpdateReadChannelInbox from a reader using the TL binary protocol.
-func DecodeUpdateReadChannelInbox(r io.Reader) (*UpdateReadChannelInbox, error) {
+func DecodeUpdateReadChannelInbox(r *Reader) (*UpdateReadChannelInbox, error) {
 	v := &UpdateReadChannelInbox{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
-	v.ChannelID = ReadLong(r)
-	v.MaxID = int32(ReadInt(r))
-	v.StillUnreadCount = int32(ReadInt(r))
-	v.PTS = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rMaxID, _eMaxID := r.ReadInt32()
+	if _eMaxID != nil {
+		return nil, _eMaxID
+	}
+	v.MaxID = _rMaxID
+	_rStillUnreadCount, _eStillUnreadCount := r.ReadInt32()
+	if _eStillUnreadCount != nil {
+		return nil, _eStillUnreadCount
+	}
+	v.StillUnreadCount = _rStillUnreadCount
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadChannelInboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadChannelInboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadChannelInbox(r)
 	}
 }
@@ -2272,17 +2607,33 @@ func (v *UpdateDeleteChannelMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteChannelMessages deserializes a UpdateDeleteChannelMessages from a reader using the TL binary protocol.
-func DecodeUpdateDeleteChannelMessages(r io.Reader) (*UpdateDeleteChannelMessages, error) {
+func DecodeUpdateDeleteChannelMessages(r *Reader) (*UpdateDeleteChannelMessages, error) {
 	v := &UpdateDeleteChannelMessages{}
-	v.ChannelID = ReadLong(r)
-	v.Messages = ReadVectorInt(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteChannelMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteChannelMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteChannelMessages(r)
 	}
 }
@@ -2311,16 +2662,28 @@ func (v *UpdateChannelMessageViews) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelMessageViews deserializes a UpdateChannelMessageViews from a reader using the TL binary protocol.
-func DecodeUpdateChannelMessageViews(r io.Reader) (*UpdateChannelMessageViews, error) {
+func DecodeUpdateChannelMessageViews(r *Reader) (*UpdateChannelMessageViews, error) {
 	v := &UpdateChannelMessageViews{}
-	v.ChannelID = ReadLong(r)
-	v.ID = int32(ReadInt(r))
-	v.Views = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rViews, _eViews := r.ReadInt32()
+	if _eViews != nil {
+		return nil, _eViews
+	}
+	v.Views = _rViews
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelMessageViewsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelMessageViewsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelMessageViews(r)
 	}
 }
@@ -2351,17 +2714,33 @@ func (v *UpdateChatParticipantAdmin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipantAdmin deserializes a UpdateChatParticipantAdmin from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipantAdmin(r io.Reader) (*UpdateChatParticipantAdmin, error) {
+func DecodeUpdateChatParticipantAdmin(r *Reader) (*UpdateChatParticipantAdmin, error) {
 	v := &UpdateChatParticipantAdmin{}
-	v.ChatID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.IsAdmin = ReadBool(r)
-	v.Version = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rIsAdmin, _eIsAdmin := r.ReadBool()
+	if _eIsAdmin != nil {
+		return nil, _eIsAdmin
+	}
+	v.IsAdmin = _rIsAdmin
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantAdminTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantAdminTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipantAdmin(r)
 	}
 }
@@ -2386,15 +2765,18 @@ func (v *UpdateNewStickerSet) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewStickerSet deserializes a UpdateNewStickerSet from a reader using the TL binary protocol.
-func DecodeUpdateNewStickerSet(r io.Reader) (*UpdateNewStickerSet, error) {
+func DecodeUpdateNewStickerSet(r *Reader) (*UpdateNewStickerSet, error) {
 	v := &UpdateNewStickerSet{}
-	_objStickerset, _ := ReadTLObject(r)
+	_objStickerset, _errStickerset := ReadTLObject(r)
+	if _errStickerset != nil {
+		return nil, _errStickerset
+	}
 	v.Stickerset = _objStickerset.(StickerSetClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewStickerSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewStickerSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewStickerSet(r)
 	}
 }
@@ -2434,21 +2816,25 @@ func (v *UpdateStickerSetsOrder) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStickerSetsOrder deserializes a UpdateStickerSetsOrder from a reader using the TL binary protocol.
-func DecodeUpdateStickerSetsOrder(r io.Reader) (*UpdateStickerSetsOrder, error) {
+func DecodeUpdateStickerSetsOrder(r *Reader) (*UpdateStickerSetsOrder, error) {
 	v := &UpdateStickerSetsOrder{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Masks = v.Flags.Has(0)
 	v.Emojis = v.Flags.Has(1)
-	v.Order = ReadVectorLong(r)
+	_vvOrder, _veOrder := r.ReadVectorLong()
+	if _veOrder != nil {
+		return nil, _veOrder
+	}
+	v.Order = _vvOrder
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStickerSetsOrderTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStickerSetsOrderTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStickerSetsOrder(r)
 	}
 }
@@ -2486,11 +2872,11 @@ func (v *UpdateStickerSets) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStickerSets deserializes a UpdateStickerSets from a reader using the TL binary protocol.
-func DecodeUpdateStickerSets(r io.Reader) (*UpdateStickerSets, error) {
+func DecodeUpdateStickerSets(r *Reader) (*UpdateStickerSets, error) {
 	v := &UpdateStickerSets{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Masks = v.Flags.Has(0)
@@ -2499,7 +2885,7 @@ func DecodeUpdateStickerSets(r io.Reader) (*UpdateStickerSets, error) {
 }
 
 func init() {
-	Registry[UpdateStickerSetsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStickerSetsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStickerSets(r)
 	}
 }
@@ -2522,13 +2908,13 @@ func (v *UpdateSavedGifs) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSavedGifs deserializes a UpdateSavedGifs from a reader using the TL binary protocol.
-func DecodeUpdateSavedGifs(r io.Reader) (*UpdateSavedGifs, error) {
+func DecodeUpdateSavedGifs(r *Reader) (*UpdateSavedGifs, error) {
 	v := &UpdateSavedGifs{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSavedGifsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSavedGifsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSavedGifs(r)
 	}
 }
@@ -2580,30 +2966,52 @@ func (v *UpdateBotInlineQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotInlineQuery deserializes a UpdateBotInlineQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotInlineQuery(r io.Reader) (*UpdateBotInlineQuery, error) {
+func DecodeUpdateBotInlineQuery(r *Reader) (*UpdateBotInlineQuery, error) {
 	v := &UpdateBotInlineQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.Query = ReadString(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rQuery, _eQuery := r.ReadString()
+	if _eQuery != nil {
+		return nil, _eQuery
+	}
+	v.Query = _rQuery
 	if v.Flags.Has(0) {
-		_objGeo, _ := ReadTLObject(r)
+		_objGeo, _errGeo := ReadTLObject(r)
+		if _errGeo != nil {
+			return nil, _errGeo
+		}
 		v.Geo = _objGeo.(GeoPointClass)
 	}
 	if v.Flags.Has(1) {
-		_objPeerType, _ := ReadTLObject(r)
+		_objPeerType, _errPeerType := ReadTLObject(r)
+		if _errPeerType != nil {
+			return nil, _errPeerType
+		}
 		v.PeerType = _objPeerType.(InlineQueryPeerTypeClass)
 	}
-	v.Offset = ReadString(r)
+	_rOffset, _eOffset := r.ReadString()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotInlineQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotInlineQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotInlineQuery(r)
 	}
 }
@@ -2653,29 +3061,47 @@ func (v *UpdateBotInlineSend) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotInlineSend deserializes a UpdateBotInlineSend from a reader using the TL binary protocol.
-func DecodeUpdateBotInlineSend(r io.Reader) (*UpdateBotInlineSend, error) {
+func DecodeUpdateBotInlineSend(r *Reader) (*UpdateBotInlineSend, error) {
 	v := &UpdateBotInlineSend{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	v.Query = ReadString(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rQuery, _eQuery := r.ReadString()
+	if _eQuery != nil {
+		return nil, _eQuery
+	}
+	v.Query = _rQuery
 	if v.Flags.Has(0) {
-		_objGeo, _ := ReadTLObject(r)
+		_objGeo, _errGeo := ReadTLObject(r)
+		if _errGeo != nil {
+			return nil, _errGeo
+		}
 		v.Geo = _objGeo.(GeoPointClass)
 	}
-	v.ID = ReadString(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(1) {
-		_objMsgID, _ := ReadTLObject(r)
+		_objMsgID, _errMsgID := ReadTLObject(r)
+		if _errMsgID != nil {
+			return nil, _errMsgID
+		}
 		v.MsgID = _objMsgID.(InputBotInlineMessageIDClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotInlineSendTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotInlineSendTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotInlineSend(r)
 	}
 }
@@ -2704,17 +3130,28 @@ func (v *UpdateEditChannelMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEditChannelMessage deserializes a UpdateEditChannelMessage from a reader using the TL binary protocol.
-func DecodeUpdateEditChannelMessage(r io.Reader) (*UpdateEditChannelMessage, error) {
+func DecodeUpdateEditChannelMessage(r *Reader) (*UpdateEditChannelMessage, error) {
 	v := &UpdateEditChannelMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEditChannelMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEditChannelMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEditChannelMessage(r)
 	}
 }
@@ -2768,30 +3205,57 @@ func (v *UpdateBotCallbackQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotCallbackQuery deserializes a UpdateBotCallbackQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotCallbackQuery(r io.Reader) (*UpdateBotCallbackQuery, error) {
+func DecodeUpdateBotCallbackQuery(r *Reader) (*UpdateBotCallbackQuery, error) {
 	v := &UpdateBotCallbackQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	_objPeer, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.ChatInstance = ReadLong(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rChatInstance, _eChatInstance := r.ReadInt64()
+	if _eChatInstance != nil {
+		return nil, _eChatInstance
+	}
+	v.ChatInstance = _rChatInstance
 	if v.Flags.Has(0) {
-		v.Data = ReadBytes(r)
+		_rData, _eData := r.ReadBytes()
+		if _eData != nil {
+			return nil, _eData
+		}
+		v.Data = _rData
 	}
 	if v.Flags.Has(1) {
-		v.GameShortName = ReadString(r)
+		_rGameShortName, _eGameShortName := r.ReadString()
+		if _eGameShortName != nil {
+			return nil, _eGameShortName
+		}
+		v.GameShortName = _rGameShortName
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotCallbackQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotCallbackQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotCallbackQuery(r)
 	}
 }
@@ -2820,17 +3284,28 @@ func (v *UpdateEditMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEditMessage deserializes a UpdateEditMessage from a reader using the TL binary protocol.
-func DecodeUpdateEditMessage(r io.Reader) (*UpdateEditMessage, error) {
+func DecodeUpdateEditMessage(r *Reader) (*UpdateEditMessage, error) {
 	v := &UpdateEditMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEditMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEditMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEditMessage(r)
 	}
 }
@@ -2882,29 +3357,52 @@ func (v *UpdateInlineBotCallbackQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateInlineBotCallbackQuery deserializes a UpdateInlineBotCallbackQuery from a reader using the TL binary protocol.
-func DecodeUpdateInlineBotCallbackQuery(r io.Reader) (*UpdateInlineBotCallbackQuery, error) {
+func DecodeUpdateInlineBotCallbackQuery(r *Reader) (*UpdateInlineBotCallbackQuery, error) {
 	v := &UpdateInlineBotCallbackQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	_objMsgID, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objMsgID, _errMsgID := ReadTLObject(r)
+	if _errMsgID != nil {
+		return nil, _errMsgID
+	}
 	v.MsgID = _objMsgID.(InputBotInlineMessageIDClass)
-	v.ChatInstance = ReadLong(r)
+	_rChatInstance, _eChatInstance := r.ReadInt64()
+	if _eChatInstance != nil {
+		return nil, _eChatInstance
+	}
+	v.ChatInstance = _rChatInstance
 	if v.Flags.Has(0) {
-		v.Data = ReadBytes(r)
+		_rData, _eData := r.ReadBytes()
+		if _eData != nil {
+			return nil, _eData
+		}
+		v.Data = _rData
 	}
 	if v.Flags.Has(1) {
-		v.GameShortName = ReadString(r)
+		_rGameShortName, _eGameShortName := r.ReadString()
+		if _eGameShortName != nil {
+			return nil, _eGameShortName
+		}
+		v.GameShortName = _rGameShortName
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateInlineBotCallbackQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateInlineBotCallbackQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateInlineBotCallbackQuery(r)
 	}
 }
@@ -2931,15 +3429,23 @@ func (v *UpdateReadChannelOutbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadChannelOutbox deserializes a UpdateReadChannelOutbox from a reader using the TL binary protocol.
-func DecodeUpdateReadChannelOutbox(r io.Reader) (*UpdateReadChannelOutbox, error) {
+func DecodeUpdateReadChannelOutbox(r *Reader) (*UpdateReadChannelOutbox, error) {
 	v := &UpdateReadChannelOutbox{}
-	v.ChannelID = ReadLong(r)
-	v.MaxID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rMaxID, _eMaxID := r.ReadInt32()
+	if _eMaxID != nil {
+		return nil, _eMaxID
+	}
+	v.MaxID = _rMaxID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadChannelOutboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadChannelOutboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadChannelOutbox(r)
 	}
 }
@@ -2987,29 +3493,42 @@ func (v *UpdateDraftMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDraftMessage deserializes a UpdateDraftMessage from a reader using the TL binary protocol.
-func DecodeUpdateDraftMessage(r io.Reader) (*UpdateDraftMessage, error) {
+func DecodeUpdateDraftMessage(r *Reader) (*UpdateDraftMessage, error) {
 	v := &UpdateDraftMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
 	if v.Flags.Has(1) {
-		_objSavedPeerID, _ := ReadTLObject(r)
+		_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+		if _errSavedPeerID != nil {
+			return nil, _errSavedPeerID
+		}
 		v.SavedPeerID = _objSavedPeerID.(PeerClass)
 	}
-	_objDraft, _ := ReadTLObject(r)
+	_objDraft, _errDraft := ReadTLObject(r)
+	if _errDraft != nil {
+		return nil, _errDraft
+	}
 	v.Draft = _objDraft.(DraftMessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDraftMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDraftMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDraftMessage(r)
 	}
 }
@@ -3032,13 +3551,13 @@ func (v *UpdateReadFeaturedStickers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadFeaturedStickers deserializes a UpdateReadFeaturedStickers from a reader using the TL binary protocol.
-func DecodeUpdateReadFeaturedStickers(r io.Reader) (*UpdateReadFeaturedStickers, error) {
+func DecodeUpdateReadFeaturedStickers(r *Reader) (*UpdateReadFeaturedStickers, error) {
 	v := &UpdateReadFeaturedStickers{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadFeaturedStickersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadFeaturedStickersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadFeaturedStickers(r)
 	}
 }
@@ -3061,13 +3580,13 @@ func (v *UpdateRecentStickers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateRecentStickers deserializes a UpdateRecentStickers from a reader using the TL binary protocol.
-func DecodeUpdateRecentStickers(r io.Reader) (*UpdateRecentStickers, error) {
+func DecodeUpdateRecentStickers(r *Reader) (*UpdateRecentStickers, error) {
 	v := &UpdateRecentStickers{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateRecentStickersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateRecentStickersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateRecentStickers(r)
 	}
 }
@@ -3090,13 +3609,13 @@ func (v *UpdateConfig) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateConfig deserializes a UpdateConfig from a reader using the TL binary protocol.
-func DecodeUpdateConfig(r io.Reader) (*UpdateConfig, error) {
+func DecodeUpdateConfig(r *Reader) (*UpdateConfig, error) {
 	v := &UpdateConfig{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateConfigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateConfigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateConfig(r)
 	}
 }
@@ -3119,13 +3638,13 @@ func (v *UpdatePTSChanged) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePTSChanged deserializes a UpdatePTSChanged from a reader using the TL binary protocol.
-func DecodeUpdatePTSChanged(r io.Reader) (*UpdatePTSChanged, error) {
+func DecodeUpdatePTSChanged(r *Reader) (*UpdatePTSChanged, error) {
 	v := &UpdatePTSChanged{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePTSChangedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePTSChangedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePTSChanged(r)
 	}
 }
@@ -3156,18 +3675,33 @@ func (v *UpdateChannelWebPage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelWebPage deserializes a UpdateChannelWebPage from a reader using the TL binary protocol.
-func DecodeUpdateChannelWebPage(r io.Reader) (*UpdateChannelWebPage, error) {
+func DecodeUpdateChannelWebPage(r *Reader) (*UpdateChannelWebPage, error) {
 	v := &UpdateChannelWebPage{}
-	v.ChannelID = ReadLong(r)
-	_objWebpage, _ := ReadTLObject(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_objWebpage, _errWebpage := ReadTLObject(r)
+	if _errWebpage != nil {
+		return nil, _errWebpage
+	}
 	v.Webpage = _objWebpage.(WebPageClass)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelWebPageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelWebPageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelWebPage(r)
 	}
 }
@@ -3210,24 +3744,31 @@ func (v *UpdateDialogPinned) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDialogPinned deserializes a UpdateDialogPinned from a reader using the TL binary protocol.
-func DecodeUpdateDialogPinned(r io.Reader) (*UpdateDialogPinned, error) {
+func DecodeUpdateDialogPinned(r *Reader) (*UpdateDialogPinned, error) {
 	v := &UpdateDialogPinned{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pinned = v.Flags.Has(0)
 	if v.Flags.Has(1) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(DialogPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDialogPinnedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDialogPinnedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDialogPinned(r)
 	}
 }
@@ -3275,33 +3816,47 @@ func (v *UpdatePinnedDialogs) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedDialogs deserializes a UpdatePinnedDialogs from a reader using the TL binary protocol.
-func DecodeUpdatePinnedDialogs(r io.Reader) (*UpdatePinnedDialogs, error) {
+func DecodeUpdatePinnedDialogs(r *Reader) (*UpdatePinnedDialogs, error) {
 	v := &UpdatePinnedDialogs{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(1) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntOrder := ReadInt(r)
-		if err := checkVectorCount(_cntOrder); err != nil {
-			return nil, err
+		_vhdrOrder, _ehdrOrder := r.ReadUint32()
+		if _ehdrOrder != nil {
+			return nil, _ehdrOrder
+		}
+		_cntOrder, _ecntOrder := r.ReadUint32()
+		if _ecntOrder != nil {
+			return nil, _ecntOrder
+		}
+		if _errOrder := checkVectorCount(_cntOrder); _errOrder != nil {
+			return nil, _errOrder
 		}
 		v.Order = make([]DialogPeerClass, _cntOrder)
 		for _iOrder := range v.Order {
-			_objOrder, _ := ReadTLObject(r)
+			_objOrder, _errOrder := ReadTLObject(r)
+			if _errOrder != nil {
+				return nil, _errOrder
+			}
 			v.Order[_iOrder] = _objOrder.(DialogPeerClass)
 		}
+		_ = _vhdrOrder
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedDialogsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedDialogsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedDialogs(r)
 	}
 }
@@ -3326,15 +3881,18 @@ func (v *UpdateBotWebhookJSON) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotWebhookJSON deserializes a UpdateBotWebhookJSON from a reader using the TL binary protocol.
-func DecodeUpdateBotWebhookJSON(r io.Reader) (*UpdateBotWebhookJSON, error) {
+func DecodeUpdateBotWebhookJSON(r *Reader) (*UpdateBotWebhookJSON, error) {
 	v := &UpdateBotWebhookJSON{}
-	_objData, _ := ReadTLObject(r)
+	_objData, _errData := ReadTLObject(r)
+	if _errData != nil {
+		return nil, _errData
+	}
 	v.Data = _objData.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotWebhookJSONTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotWebhookJSONTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotWebhookJSON(r)
 	}
 }
@@ -3363,17 +3921,28 @@ func (v *UpdateBotWebhookJSONQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotWebhookJSONQuery deserializes a UpdateBotWebhookJSONQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotWebhookJSONQuery(r io.Reader) (*UpdateBotWebhookJSONQuery, error) {
+func DecodeUpdateBotWebhookJSONQuery(r *Reader) (*UpdateBotWebhookJSONQuery, error) {
 	v := &UpdateBotWebhookJSONQuery{}
-	v.QueryID = ReadLong(r)
-	_objData, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objData, _errData := ReadTLObject(r)
+	if _errData != nil {
+		return nil, _errData
+	}
 	v.Data = _objData.(*DataJSON)
-	v.Timeout = int32(ReadInt(r))
+	_rTimeout, _eTimeout := r.ReadInt32()
+	if _eTimeout != nil {
+		return nil, _eTimeout
+	}
+	v.Timeout = _rTimeout
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotWebhookJSONQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotWebhookJSONQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotWebhookJSONQuery(r)
 	}
 }
@@ -3404,18 +3973,33 @@ func (v *UpdateBotShippingQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotShippingQuery deserializes a UpdateBotShippingQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotShippingQuery(r io.Reader) (*UpdateBotShippingQuery, error) {
+func DecodeUpdateBotShippingQuery(r *Reader) (*UpdateBotShippingQuery, error) {
 	v := &UpdateBotShippingQuery{}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.Payload = ReadBytes(r)
-	_objShippingAddress, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	_objShippingAddress, _errShippingAddress := ReadTLObject(r)
+	if _errShippingAddress != nil {
+		return nil, _errShippingAddress
+	}
 	v.ShippingAddress = _objShippingAddress.(*PostAddress)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotShippingQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotShippingQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotShippingQuery(r)
 	}
 }
@@ -3469,30 +4053,57 @@ func (v *UpdateBotPrecheckoutQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotPrecheckoutQuery deserializes a UpdateBotPrecheckoutQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotPrecheckoutQuery(r io.Reader) (*UpdateBotPrecheckoutQuery, error) {
+func DecodeUpdateBotPrecheckoutQuery(r *Reader) (*UpdateBotPrecheckoutQuery, error) {
 	v := &UpdateBotPrecheckoutQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.Payload = ReadBytes(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
 	if v.Flags.Has(0) {
-		_objInfo, _ := ReadTLObject(r)
+		_objInfo, _errInfo := ReadTLObject(r)
+		if _errInfo != nil {
+			return nil, _errInfo
+		}
 		v.Info = _objInfo.(*PaymentRequestedInfo)
 	}
 	if v.Flags.Has(1) {
-		v.ShippingOptionID = ReadString(r)
+		_rShippingOptionID, _eShippingOptionID := r.ReadString()
+		if _eShippingOptionID != nil {
+			return nil, _eShippingOptionID
+		}
+		v.ShippingOptionID = _rShippingOptionID
 	}
-	v.Currency = ReadString(r)
-	v.TotalAmount = ReadLong(r)
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rTotalAmount, _eTotalAmount := r.ReadInt64()
+	if _eTotalAmount != nil {
+		return nil, _eTotalAmount
+	}
+	v.TotalAmount = _rTotalAmount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotPrecheckoutQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotPrecheckoutQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotPrecheckoutQuery(r)
 	}
 }
@@ -3517,15 +4128,18 @@ func (v *UpdatePhoneCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePhoneCall deserializes a UpdatePhoneCall from a reader using the TL binary protocol.
-func DecodeUpdatePhoneCall(r io.Reader) (*UpdatePhoneCall, error) {
+func DecodeUpdatePhoneCall(r *Reader) (*UpdatePhoneCall, error) {
 	v := &UpdatePhoneCall{}
-	_objPhoneCall, _ := ReadTLObject(r)
+	_objPhoneCall, _errPhoneCall := ReadTLObject(r)
+	if _errPhoneCall != nil {
+		return nil, _errPhoneCall
+	}
 	v.PhoneCall = _objPhoneCall.(PhoneCallClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePhoneCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePhoneCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePhoneCall(r)
 	}
 }
@@ -3550,14 +4164,18 @@ func (v *UpdateLangPackTooLong) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateLangPackTooLong deserializes a UpdateLangPackTooLong from a reader using the TL binary protocol.
-func DecodeUpdateLangPackTooLong(r io.Reader) (*UpdateLangPackTooLong, error) {
+func DecodeUpdateLangPackTooLong(r *Reader) (*UpdateLangPackTooLong, error) {
 	v := &UpdateLangPackTooLong{}
-	v.LangCode = ReadString(r)
+	_rLangCode, _eLangCode := r.ReadString()
+	if _eLangCode != nil {
+		return nil, _eLangCode
+	}
+	v.LangCode = _rLangCode
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateLangPackTooLongTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateLangPackTooLongTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateLangPackTooLong(r)
 	}
 }
@@ -3582,15 +4200,18 @@ func (v *UpdateLangPack) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateLangPack deserializes a UpdateLangPack from a reader using the TL binary protocol.
-func DecodeUpdateLangPack(r io.Reader) (*UpdateLangPack, error) {
+func DecodeUpdateLangPack(r *Reader) (*UpdateLangPack, error) {
 	v := &UpdateLangPack{}
-	_objDifference, _ := ReadTLObject(r)
+	_objDifference, _errDifference := ReadTLObject(r)
+	if _errDifference != nil {
+		return nil, _errDifference
+	}
 	v.Difference = _objDifference.(*LangPackDifference)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateLangPackTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateLangPackTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateLangPack(r)
 	}
 }
@@ -3613,13 +4234,13 @@ func (v *UpdateFavedStickers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateFavedStickers deserializes a UpdateFavedStickers from a reader using the TL binary protocol.
-func DecodeUpdateFavedStickers(r io.Reader) (*UpdateFavedStickers, error) {
+func DecodeUpdateFavedStickers(r *Reader) (*UpdateFavedStickers, error) {
 	v := &UpdateFavedStickers{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateFavedStickersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateFavedStickersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateFavedStickers(r)
 	}
 }
@@ -3667,27 +4288,42 @@ func (v *UpdateChannelReadMessagesContents) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelReadMessagesContents deserializes a UpdateChannelReadMessagesContents from a reader using the TL binary protocol.
-func DecodeUpdateChannelReadMessagesContents(r io.Reader) (*UpdateChannelReadMessagesContents, error) {
+func DecodeUpdateChannelReadMessagesContents(r *Reader) (*UpdateChannelReadMessagesContents, error) {
 	v := &UpdateChannelReadMessagesContents{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChannelID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
 	if v.Flags.Has(1) {
-		_objSavedPeerID, _ := ReadTLObject(r)
+		_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+		if _errSavedPeerID != nil {
+			return nil, _errSavedPeerID
+		}
 		v.SavedPeerID = _objSavedPeerID.(PeerClass)
 	}
-	v.Messages = ReadVectorInt(r)
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelReadMessagesContentsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelReadMessagesContentsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelReadMessagesContents(r)
 	}
 }
@@ -3710,13 +4346,13 @@ func (v *UpdateContactsReset) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateContactsReset deserializes a UpdateContactsReset from a reader using the TL binary protocol.
-func DecodeUpdateContactsReset(r io.Reader) (*UpdateContactsReset, error) {
+func DecodeUpdateContactsReset(r *Reader) (*UpdateContactsReset, error) {
 	v := &UpdateContactsReset{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateContactsResetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateContactsResetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateContactsReset(r)
 	}
 }
@@ -3743,15 +4379,23 @@ func (v *UpdateChannelAvailableMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelAvailableMessages deserializes a UpdateChannelAvailableMessages from a reader using the TL binary protocol.
-func DecodeUpdateChannelAvailableMessages(r io.Reader) (*UpdateChannelAvailableMessages, error) {
+func DecodeUpdateChannelAvailableMessages(r *Reader) (*UpdateChannelAvailableMessages, error) {
 	v := &UpdateChannelAvailableMessages{}
-	v.ChannelID = ReadLong(r)
-	v.AvailableMinID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rAvailableMinID, _eAvailableMinID := r.ReadInt32()
+	if _eAvailableMinID != nil {
+		return nil, _eAvailableMinID
+	}
+	v.AvailableMinID = _rAvailableMinID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelAvailableMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelAvailableMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelAvailableMessages(r)
 	}
 }
@@ -3794,25 +4438,31 @@ func (v *UpdateDialogUnreadMark) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDialogUnreadMark deserializes a UpdateDialogUnreadMark from a reader using the TL binary protocol.
-func DecodeUpdateDialogUnreadMark(r io.Reader) (*UpdateDialogUnreadMark, error) {
+func DecodeUpdateDialogUnreadMark(r *Reader) (*UpdateDialogUnreadMark, error) {
 	v := &UpdateDialogUnreadMark{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Unread = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(DialogPeerClass)
 	if v.Flags.Has(1) {
-		_objSavedPeerID, _ := ReadTLObject(r)
+		_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+		if _errSavedPeerID != nil {
+			return nil, _errSavedPeerID
+		}
 		v.SavedPeerID = _objSavedPeerID.(PeerClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDialogUnreadMarkTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDialogUnreadMarkTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDialogUnreadMark(r)
 	}
 }
@@ -3874,35 +4524,56 @@ func (v *UpdateMessagePoll) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMessagePoll deserializes a UpdateMessagePoll from a reader using the TL binary protocol.
-func DecodeUpdateMessagePoll(r io.Reader) (*UpdateMessagePoll, error) {
+func DecodeUpdateMessagePoll(r *Reader) (*UpdateMessagePoll, error) {
 	v := &UpdateMessagePoll{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(1) {
-		_objPeer, _ := ReadTLObject(r)
+		_objPeer, _errPeer := ReadTLObject(r)
+		if _errPeer != nil {
+			return nil, _errPeer
+		}
 		v.Peer = _objPeer.(PeerClass)
 	}
 	if v.Flags.Has(1) {
-		v.MsgID = int32(ReadInt(r))
+		_rMsgID, _eMsgID := r.ReadInt32()
+		if _eMsgID != nil {
+			return nil, _eMsgID
+		}
+		v.MsgID = _rMsgID
 	}
 	if v.Flags.Has(2) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
-	v.PollID = ReadLong(r)
+	_rPollID, _ePollID := r.ReadInt64()
+	if _ePollID != nil {
+		return nil, _ePollID
+	}
+	v.PollID = _rPollID
 	if v.Flags.Has(0) {
-		_objPoll, _ := ReadTLObject(r)
+		_objPoll, _errPoll := ReadTLObject(r)
+		if _errPoll != nil {
+			return nil, _errPoll
+		}
 		v.Poll = _objPoll.(*Poll)
 	}
-	_objResults, _ := ReadTLObject(r)
+	_objResults, _errResults := ReadTLObject(r)
+	if _errResults != nil {
+		return nil, _errResults
+	}
 	v.Results = _objResults.(*PollResults)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMessagePollTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMessagePollTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMessagePoll(r)
 	}
 }
@@ -3931,18 +4602,28 @@ func (v *UpdateChatDefaultBannedRights) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatDefaultBannedRights deserializes a UpdateChatDefaultBannedRights from a reader using the TL binary protocol.
-func DecodeUpdateChatDefaultBannedRights(r io.Reader) (*UpdateChatDefaultBannedRights, error) {
+func DecodeUpdateChatDefaultBannedRights(r *Reader) (*UpdateChatDefaultBannedRights, error) {
 	v := &UpdateChatDefaultBannedRights{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objDefaultBannedRights, _ := ReadTLObject(r)
+	_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
+	if _errDefaultBannedRights != nil {
+		return nil, _errDefaultBannedRights
+	}
 	v.DefaultBannedRights = _objDefaultBannedRights.(*ChatBannedRights)
-	v.Version = int32(ReadInt(r))
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatDefaultBannedRightsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatDefaultBannedRightsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatDefaultBannedRights(r)
 	}
 }
@@ -3975,25 +4656,43 @@ func (v *UpdateFolderPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateFolderPeers deserializes a UpdateFolderPeers from a reader using the TL binary protocol.
-func DecodeUpdateFolderPeers(r io.Reader) (*UpdateFolderPeers, error) {
+func DecodeUpdateFolderPeers(r *Reader) (*UpdateFolderPeers, error) {
 	v := &UpdateFolderPeers{}
-	ReadInt(r)
-	_cntFolderPeers := ReadInt(r)
-	if err := checkVectorCount(_cntFolderPeers); err != nil {
-		return nil, err
+	_vhdrFolderPeers, _ehdrFolderPeers := r.ReadUint32()
+	if _ehdrFolderPeers != nil {
+		return nil, _ehdrFolderPeers
+	}
+	_cntFolderPeers, _ecntFolderPeers := r.ReadUint32()
+	if _ecntFolderPeers != nil {
+		return nil, _ecntFolderPeers
+	}
+	if _errFolderPeers := checkVectorCount(_cntFolderPeers); _errFolderPeers != nil {
+		return nil, _errFolderPeers
 	}
 	v.FolderPeers = make([]*FolderPeer, _cntFolderPeers)
 	for _iFolderPeers := range v.FolderPeers {
-		_objFolderPeers, _ := ReadTLObject(r)
+		_objFolderPeers, _errFolderPeers := ReadTLObject(r)
+		if _errFolderPeers != nil {
+			return nil, _errFolderPeers
+		}
 		v.FolderPeers[_iFolderPeers] = _objFolderPeers.(*FolderPeer)
 	}
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_ = _vhdrFolderPeers
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateFolderPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateFolderPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateFolderPeers(r)
 	}
 }
@@ -4020,17 +4719,23 @@ func (v *UpdatePeerSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePeerSettings deserializes a UpdatePeerSettings from a reader using the TL binary protocol.
-func DecodeUpdatePeerSettings(r io.Reader) (*UpdatePeerSettings, error) {
+func DecodeUpdatePeerSettings(r *Reader) (*UpdatePeerSettings, error) {
 	v := &UpdatePeerSettings{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objSettings, _ := ReadTLObject(r)
+	_objSettings, _errSettings := ReadTLObject(r)
+	if _errSettings != nil {
+		return nil, _errSettings
+	}
 	v.Settings = _objSettings.(PeerSettingsClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePeerSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePeerSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePeerSettings(r)
 	}
 }
@@ -4059,23 +4764,33 @@ func (v *UpdatePeerLocated) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePeerLocated deserializes a UpdatePeerLocated from a reader using the TL binary protocol.
-func DecodeUpdatePeerLocated(r io.Reader) (*UpdatePeerLocated, error) {
+func DecodeUpdatePeerLocated(r *Reader) (*UpdatePeerLocated, error) {
 	v := &UpdatePeerLocated{}
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]PeerLocatedClass, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(PeerLocatedClass)
 	}
+	_ = _vhdrPeers
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePeerLocatedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePeerLocatedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePeerLocated(r)
 	}
 }
@@ -4100,15 +4815,18 @@ func (v *UpdateNewScheduledMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewScheduledMessage deserializes a UpdateNewScheduledMessage from a reader using the TL binary protocol.
-func DecodeUpdateNewScheduledMessage(r io.Reader) (*UpdateNewScheduledMessage, error) {
+func DecodeUpdateNewScheduledMessage(r *Reader) (*UpdateNewScheduledMessage, error) {
 	v := &UpdateNewScheduledMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewScheduledMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewScheduledMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewScheduledMessage(r)
 	}
 }
@@ -4149,24 +4867,35 @@ func (v *UpdateDeleteScheduledMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteScheduledMessages deserializes a UpdateDeleteScheduledMessages from a reader using the TL binary protocol.
-func DecodeUpdateDeleteScheduledMessages(r io.Reader) (*UpdateDeleteScheduledMessages, error) {
+func DecodeUpdateDeleteScheduledMessages(r *Reader) (*UpdateDeleteScheduledMessages, error) {
 	v := &UpdateDeleteScheduledMessages{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Messages = ReadVectorInt(r)
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
 	if v.Flags.Has(0) {
-		v.SentMessages = ReadVectorInt(r)
+		_vvSentMessages, _veSentMessages := r.ReadVectorInt()
+		if _veSentMessages != nil {
+			return nil, _veSentMessages
+		}
+		v.SentMessages = _vvSentMessages
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteScheduledMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteScheduledMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteScheduledMessages(r)
 	}
 }
@@ -4191,15 +4920,18 @@ func (v *UpdateTheme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateTheme deserializes a UpdateTheme from a reader using the TL binary protocol.
-func DecodeUpdateTheme(r io.Reader) (*UpdateTheme, error) {
+func DecodeUpdateTheme(r *Reader) (*UpdateTheme, error) {
 	v := &UpdateTheme{}
-	_objTheme, _ := ReadTLObject(r)
+	_objTheme, _errTheme := ReadTLObject(r)
+	if _errTheme != nil {
+		return nil, _errTheme
+	}
 	v.Theme = _objTheme.(*Theme)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateTheme(r)
 	}
 }
@@ -4226,16 +4958,23 @@ func (v *UpdateGeoLiveViewed) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGeoLiveViewed deserializes a UpdateGeoLiveViewed from a reader using the TL binary protocol.
-func DecodeUpdateGeoLiveViewed(r io.Reader) (*UpdateGeoLiveViewed, error) {
+func DecodeUpdateGeoLiveViewed(r *Reader) (*UpdateGeoLiveViewed, error) {
 	v := &UpdateGeoLiveViewed{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGeoLiveViewedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGeoLiveViewedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGeoLiveViewed(r)
 	}
 }
@@ -4258,13 +4997,13 @@ func (v *UpdateLoginToken) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateLoginToken deserializes a UpdateLoginToken from a reader using the TL binary protocol.
-func DecodeUpdateLoginToken(r io.Reader) (*UpdateLoginToken, error) {
+func DecodeUpdateLoginToken(r *Reader) (*UpdateLoginToken, error) {
 	v := &UpdateLoginToken{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateLoginTokenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateLoginTokenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateLoginToken(r)
 	}
 }
@@ -4297,19 +5036,38 @@ func (v *UpdateMessagePollVote) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMessagePollVote deserializes a UpdateMessagePollVote from a reader using the TL binary protocol.
-func DecodeUpdateMessagePollVote(r io.Reader) (*UpdateMessagePollVote, error) {
+func DecodeUpdateMessagePollVote(r *Reader) (*UpdateMessagePollVote, error) {
 	v := &UpdateMessagePollVote{}
-	v.PollID = ReadLong(r)
-	_objPeer, _ := ReadTLObject(r)
+	_rPollID, _ePollID := r.ReadInt64()
+	if _ePollID != nil {
+		return nil, _ePollID
+	}
+	v.PollID = _rPollID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Options = ReadVectorBytes(r)
-	v.Positions = ReadVectorInt(r)
-	v.Qts = int32(ReadInt(r))
+	_vvOptions, _veOptions := r.ReadVectorBytes()
+	if _veOptions != nil {
+		return nil, _veOptions
+	}
+	v.Options = _vvOptions
+	_vvPositions, _vePositions := r.ReadVectorInt()
+	if _vePositions != nil {
+		return nil, _vePositions
+	}
+	v.Positions = _vvPositions
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMessagePollVoteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMessagePollVoteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMessagePollVote(r)
 	}
 }
@@ -4348,23 +5106,30 @@ func (v *UpdateDialogFilter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDialogFilter deserializes a UpdateDialogFilter from a reader using the TL binary protocol.
-func DecodeUpdateDialogFilter(r io.Reader) (*UpdateDialogFilter, error) {
+func DecodeUpdateDialogFilter(r *Reader) (*UpdateDialogFilter, error) {
 	v := &UpdateDialogFilter{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ID = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(0) {
-		_objFilter, _ := ReadTLObject(r)
+		_objFilter, _errFilter := ReadTLObject(r)
+		if _errFilter != nil {
+			return nil, _errFilter
+		}
 		v.Filter = _objFilter.(DialogFilterClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDialogFilterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDialogFilterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDialogFilter(r)
 	}
 }
@@ -4389,14 +5154,18 @@ func (v *UpdateDialogFilterOrder) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDialogFilterOrder deserializes a UpdateDialogFilterOrder from a reader using the TL binary protocol.
-func DecodeUpdateDialogFilterOrder(r io.Reader) (*UpdateDialogFilterOrder, error) {
+func DecodeUpdateDialogFilterOrder(r *Reader) (*UpdateDialogFilterOrder, error) {
 	v := &UpdateDialogFilterOrder{}
-	v.Order = ReadVectorInt(r)
+	_vvOrder, _veOrder := r.ReadVectorInt()
+	if _veOrder != nil {
+		return nil, _veOrder
+	}
+	v.Order = _vvOrder
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDialogFilterOrderTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDialogFilterOrderTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDialogFilterOrder(r)
 	}
 }
@@ -4419,13 +5188,13 @@ func (v *UpdateDialogFilters) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDialogFilters deserializes a UpdateDialogFilters from a reader using the TL binary protocol.
-func DecodeUpdateDialogFilters(r io.Reader) (*UpdateDialogFilters, error) {
+func DecodeUpdateDialogFilters(r *Reader) (*UpdateDialogFilters, error) {
 	v := &UpdateDialogFilters{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDialogFiltersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDialogFiltersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDialogFilters(r)
 	}
 }
@@ -4452,15 +5221,23 @@ func (v *UpdatePhoneCallSignalingData) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePhoneCallSignalingData deserializes a UpdatePhoneCallSignalingData from a reader using the TL binary protocol.
-func DecodeUpdatePhoneCallSignalingData(r io.Reader) (*UpdatePhoneCallSignalingData, error) {
+func DecodeUpdatePhoneCallSignalingData(r *Reader) (*UpdatePhoneCallSignalingData, error) {
 	v := &UpdatePhoneCallSignalingData{}
-	v.PhoneCallID = ReadLong(r)
-	v.Data = ReadBytes(r)
+	_rPhoneCallID, _ePhoneCallID := r.ReadInt64()
+	if _ePhoneCallID != nil {
+		return nil, _ePhoneCallID
+	}
+	v.PhoneCallID = _rPhoneCallID
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePhoneCallSignalingDataTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePhoneCallSignalingDataTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePhoneCallSignalingData(r)
 	}
 }
@@ -4489,16 +5266,28 @@ func (v *UpdateChannelMessageForwards) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelMessageForwards deserializes a UpdateChannelMessageForwards from a reader using the TL binary protocol.
-func DecodeUpdateChannelMessageForwards(r io.Reader) (*UpdateChannelMessageForwards, error) {
+func DecodeUpdateChannelMessageForwards(r *Reader) (*UpdateChannelMessageForwards, error) {
 	v := &UpdateChannelMessageForwards{}
-	v.ChannelID = ReadLong(r)
-	v.ID = int32(ReadInt(r))
-	v.Forwards = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rForwards, _eForwards := r.ReadInt32()
+	if _eForwards != nil {
+		return nil, _eForwards
+	}
+	v.Forwards = _rForwards
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelMessageForwardsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelMessageForwardsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelMessageForwards(r)
 	}
 }
@@ -4548,27 +5337,47 @@ func (v *UpdateReadChannelDiscussionInbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadChannelDiscussionInbox deserializes a UpdateReadChannelDiscussionInbox from a reader using the TL binary protocol.
-func DecodeUpdateReadChannelDiscussionInbox(r io.Reader) (*UpdateReadChannelDiscussionInbox, error) {
+func DecodeUpdateReadChannelDiscussionInbox(r *Reader) (*UpdateReadChannelDiscussionInbox, error) {
 	v := &UpdateReadChannelDiscussionInbox{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChannelID = ReadLong(r)
-	v.TopMsgID = int32(ReadInt(r))
-	v.ReadMaxID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rTopMsgID, _eTopMsgID := r.ReadInt32()
+	if _eTopMsgID != nil {
+		return nil, _eTopMsgID
+	}
+	v.TopMsgID = _rTopMsgID
+	_rReadMaxID, _eReadMaxID := r.ReadInt32()
+	if _eReadMaxID != nil {
+		return nil, _eReadMaxID
+	}
+	v.ReadMaxID = _rReadMaxID
 	if v.Flags.Has(0) {
-		v.BroadcastID = ReadLong(r)
+		_rBroadcastID, _eBroadcastID := r.ReadInt64()
+		if _eBroadcastID != nil {
+			return nil, _eBroadcastID
+		}
+		v.BroadcastID = _rBroadcastID
 	}
 	if v.Flags.Has(0) {
-		v.BroadcastPost = int32(ReadInt(r))
+		_rBroadcastPost, _eBroadcastPost := r.ReadInt32()
+		if _eBroadcastPost != nil {
+			return nil, _eBroadcastPost
+		}
+		v.BroadcastPost = _rBroadcastPost
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadChannelDiscussionInboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadChannelDiscussionInboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadChannelDiscussionInbox(r)
 	}
 }
@@ -4597,16 +5406,28 @@ func (v *UpdateReadChannelDiscussionOutbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadChannelDiscussionOutbox deserializes a UpdateReadChannelDiscussionOutbox from a reader using the TL binary protocol.
-func DecodeUpdateReadChannelDiscussionOutbox(r io.Reader) (*UpdateReadChannelDiscussionOutbox, error) {
+func DecodeUpdateReadChannelDiscussionOutbox(r *Reader) (*UpdateReadChannelDiscussionOutbox, error) {
 	v := &UpdateReadChannelDiscussionOutbox{}
-	v.ChannelID = ReadLong(r)
-	v.TopMsgID = int32(ReadInt(r))
-	v.ReadMaxID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rTopMsgID, _eTopMsgID := r.ReadInt32()
+	if _eTopMsgID != nil {
+		return nil, _eTopMsgID
+	}
+	v.TopMsgID = _rTopMsgID
+	_rReadMaxID, _eReadMaxID := r.ReadInt32()
+	if _eReadMaxID != nil {
+		return nil, _eReadMaxID
+	}
+	v.ReadMaxID = _rReadMaxID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadChannelDiscussionOutboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadChannelDiscussionOutboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadChannelDiscussionOutbox(r)
 	}
 }
@@ -4646,22 +5467,25 @@ func (v *UpdatePeerBlocked) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePeerBlocked deserializes a UpdatePeerBlocked from a reader using the TL binary protocol.
-func DecodeUpdatePeerBlocked(r io.Reader) (*UpdatePeerBlocked, error) {
+func DecodeUpdatePeerBlocked(r *Reader) (*UpdatePeerBlocked, error) {
 	v := &UpdatePeerBlocked{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Blocked = v.Flags.Has(0)
 	v.BlockedMyStoriesFrom = v.Flags.Has(1)
-	_objPeerID, _ := ReadTLObject(r)
+	_objPeerID, _errPeerID := ReadTLObject(r)
+	if _errPeerID != nil {
+		return nil, _errPeerID
+	}
 	v.PeerID = _objPeerID.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePeerBlockedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePeerBlockedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePeerBlocked(r)
 	}
 }
@@ -4704,26 +5528,40 @@ func (v *UpdateChannelUserTyping) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelUserTyping deserializes a UpdateChannelUserTyping from a reader using the TL binary protocol.
-func DecodeUpdateChannelUserTyping(r io.Reader) (*UpdateChannelUserTyping, error) {
+func DecodeUpdateChannelUserTyping(r *Reader) (*UpdateChannelUserTyping, error) {
 	v := &UpdateChannelUserTyping{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChannelID = ReadLong(r)
-	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
 	}
-	_objFromID, _ := ReadTLObject(r)
+	v.ChannelID = _rChannelID
+	if v.Flags.Has(0) {
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
+	}
+	_objFromID, _errFromID := ReadTLObject(r)
+	if _errFromID != nil {
+		return nil, _errFromID
+	}
 	v.FromID = _objFromID.(PeerClass)
-	_objAction, _ := ReadTLObject(r)
+	_objAction, _errAction := ReadTLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(SendMessageActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelUserTypingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelUserTypingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelUserTyping(r)
 	}
 }
@@ -4765,24 +5603,39 @@ func (v *UpdatePinnedMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedMessages deserializes a UpdatePinnedMessages from a reader using the TL binary protocol.
-func DecodeUpdatePinnedMessages(r io.Reader) (*UpdatePinnedMessages, error) {
+func DecodeUpdatePinnedMessages(r *Reader) (*UpdatePinnedMessages, error) {
 	v := &UpdatePinnedMessages{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pinned = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Messages = ReadVectorInt(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedMessages(r)
 	}
 }
@@ -4824,23 +5677,39 @@ func (v *UpdatePinnedChannelMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedChannelMessages deserializes a UpdatePinnedChannelMessages from a reader using the TL binary protocol.
-func DecodeUpdatePinnedChannelMessages(r io.Reader) (*UpdatePinnedChannelMessages, error) {
+func DecodeUpdatePinnedChannelMessages(r *Reader) (*UpdatePinnedChannelMessages, error) {
 	v := &UpdatePinnedChannelMessages{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pinned = v.Flags.Has(0)
-	v.ChannelID = ReadLong(r)
-	v.Messages = ReadVectorInt(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedChannelMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedChannelMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedChannelMessages(r)
 	}
 }
@@ -4865,14 +5734,18 @@ func (v *UpdateChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChat deserializes a UpdateChat from a reader using the TL binary protocol.
-func DecodeUpdateChat(r io.Reader) (*UpdateChat, error) {
+func DecodeUpdateChat(r *Reader) (*UpdateChat, error) {
 	v := &UpdateChat{}
-	v.ChatID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChat(r)
 	}
 }
@@ -4905,26 +5778,43 @@ func (v *UpdateGroupCallParticipants) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCallParticipants deserializes a UpdateGroupCallParticipants from a reader using the TL binary protocol.
-func DecodeUpdateGroupCallParticipants(r io.Reader) (*UpdateGroupCallParticipants, error) {
+func DecodeUpdateGroupCallParticipants(r *Reader) (*UpdateGroupCallParticipants, error) {
 	v := &UpdateGroupCallParticipants{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	ReadInt(r)
-	_cntParticipants := ReadInt(r)
-	if err := checkVectorCount(_cntParticipants); err != nil {
-		return nil, err
+	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+	if _ehdrParticipants != nil {
+		return nil, _ehdrParticipants
+	}
+	_cntParticipants, _ecntParticipants := r.ReadUint32()
+	if _ecntParticipants != nil {
+		return nil, _ecntParticipants
+	}
+	if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+		return nil, _errParticipants
 	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
-		_objParticipants, _ := ReadTLObject(r)
+		_objParticipants, _errParticipants := ReadTLObject(r)
+		if _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		v.Participants[_iParticipants] = _objParticipants.(*GroupCallParticipant)
 	}
-	v.Version = int32(ReadInt(r))
+	_ = _vhdrParticipants
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallParticipantsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallParticipantsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCallParticipants(r)
 	}
 }
@@ -4967,25 +5857,31 @@ func (v *UpdateGroupCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCall deserializes a UpdateGroupCall from a reader using the TL binary protocol.
-func DecodeUpdateGroupCall(r io.Reader) (*UpdateGroupCall, error) {
+func DecodeUpdateGroupCall(r *Reader) (*UpdateGroupCall, error) {
 	v := &UpdateGroupCall{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.LiveStory = v.Flags.Has(2)
 	if v.Flags.Has(1) {
-		_objPeer, _ := ReadTLObject(r)
+		_objPeer, _errPeer := ReadTLObject(r)
+		if _errPeer != nil {
+			return nil, _errPeer
+		}
 		v.Peer = _objPeer.(PeerClass)
 	}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(GroupCallClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCall(r)
 	}
 }
@@ -5024,23 +5920,30 @@ func (v *UpdatePeerHistoryTTL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePeerHistoryTTL deserializes a UpdatePeerHistoryTTL from a reader using the TL binary protocol.
-func DecodeUpdatePeerHistoryTTL(r io.Reader) (*UpdatePeerHistoryTTL, error) {
+func DecodeUpdatePeerHistoryTTL(r *Reader) (*UpdatePeerHistoryTTL, error) {
 	v := &UpdatePeerHistoryTTL{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	if v.Flags.Has(0) {
-		v.TTLPeriod = int32(ReadInt(r))
+		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
+		if _eTTLPeriod != nil {
+			return nil, _eTTLPeriod
+		}
+		v.TTLPeriod = _rTTLPeriod
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePeerHistoryTTLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePeerHistoryTTLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePeerHistoryTTL(r)
 	}
 }
@@ -5101,35 +6004,64 @@ func (v *UpdateChatParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipant deserializes a UpdateChatParticipant from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipant(r io.Reader) (*UpdateChatParticipant, error) {
+func DecodeUpdateChatParticipant(r *Reader) (*UpdateChatParticipant, error) {
 	v := &UpdateChatParticipant{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChatID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.ActorID = ReadLong(r)
-	v.UserID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rActorID, _eActorID := r.ReadInt64()
+	if _eActorID != nil {
+		return nil, _eActorID
+	}
+	v.ActorID = _rActorID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	if v.Flags.Has(0) {
-		_objPrevParticipant, _ := ReadTLObject(r)
+		_objPrevParticipant, _errPrevParticipant := ReadTLObject(r)
+		if _errPrevParticipant != nil {
+			return nil, _errPrevParticipant
+		}
 		v.PrevParticipant = _objPrevParticipant.(ChatParticipantClass)
 	}
 	if v.Flags.Has(1) {
-		_objNewParticipant, _ := ReadTLObject(r)
+		_objNewParticipant, _errNewParticipant := ReadTLObject(r)
+		if _errNewParticipant != nil {
+			return nil, _errNewParticipant
+		}
 		v.NewParticipant = _objNewParticipant.(ChatParticipantClass)
 	}
 	if v.Flags.Has(2) {
-		_objInvite, _ := ReadTLObject(r)
+		_objInvite, _errInvite := ReadTLObject(r)
+		if _errInvite != nil {
+			return nil, _errInvite
+		}
 		v.Invite = _objInvite.(ExportedChatInviteClass)
 	}
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipant(r)
 	}
 }
@@ -5194,36 +6126,65 @@ func (v *UpdateChannelParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelParticipant deserializes a UpdateChannelParticipant from a reader using the TL binary protocol.
-func DecodeUpdateChannelParticipant(r io.Reader) (*UpdateChannelParticipant, error) {
+func DecodeUpdateChannelParticipant(r *Reader) (*UpdateChannelParticipant, error) {
 	v := &UpdateChannelParticipant{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ViaChatlist = v.Flags.Has(3)
-	v.ChannelID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.ActorID = ReadLong(r)
-	v.UserID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rActorID, _eActorID := r.ReadInt64()
+	if _eActorID != nil {
+		return nil, _eActorID
+	}
+	v.ActorID = _rActorID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	if v.Flags.Has(0) {
-		_objPrevParticipant, _ := ReadTLObject(r)
+		_objPrevParticipant, _errPrevParticipant := ReadTLObject(r)
+		if _errPrevParticipant != nil {
+			return nil, _errPrevParticipant
+		}
 		v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
 	}
 	if v.Flags.Has(1) {
-		_objNewParticipant, _ := ReadTLObject(r)
+		_objNewParticipant, _errNewParticipant := ReadTLObject(r)
+		if _errNewParticipant != nil {
+			return nil, _errNewParticipant
+		}
 		v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
 	}
 	if v.Flags.Has(2) {
-		_objInvite, _ := ReadTLObject(r)
+		_objInvite, _errInvite := ReadTLObject(r)
+		if _errInvite != nil {
+			return nil, _errInvite
+		}
 		v.Invite = _objInvite.(ExportedChatInviteClass)
 	}
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelParticipant(r)
 	}
 }
@@ -5254,17 +6215,33 @@ func (v *UpdateBotStopped) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotStopped deserializes a UpdateBotStopped from a reader using the TL binary protocol.
-func DecodeUpdateBotStopped(r io.Reader) (*UpdateBotStopped, error) {
+func DecodeUpdateBotStopped(r *Reader) (*UpdateBotStopped, error) {
 	v := &UpdateBotStopped{}
-	v.UserID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.Stopped = ReadBool(r)
-	v.Qts = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rStopped, _eStopped := r.ReadBool()
+	if _eStopped != nil {
+		return nil, _eStopped
+	}
+	v.Stopped = _rStopped
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotStoppedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotStoppedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotStopped(r)
 	}
 }
@@ -5300,21 +6277,24 @@ func (v *UpdateGroupCallConnection) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCallConnection deserializes a UpdateGroupCallConnection from a reader using the TL binary protocol.
-func DecodeUpdateGroupCallConnection(r io.Reader) (*UpdateGroupCallConnection, error) {
+func DecodeUpdateGroupCallConnection(r *Reader) (*UpdateGroupCallConnection, error) {
 	v := &UpdateGroupCallConnection{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Presentation = v.Flags.Has(0)
-	_objParams, _ := ReadTLObject(r)
+	_objParams, _errParams := ReadTLObject(r)
+	if _errParams != nil {
+		return nil, _errParams
+	}
 	v.Params = _objParams.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallConnectionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallConnectionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCallConnection(r)
 	}
 }
@@ -5347,26 +6327,43 @@ func (v *UpdateBotCommands) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotCommands deserializes a UpdateBotCommands from a reader using the TL binary protocol.
-func DecodeUpdateBotCommands(r io.Reader) (*UpdateBotCommands, error) {
+func DecodeUpdateBotCommands(r *Reader) (*UpdateBotCommands, error) {
 	v := &UpdateBotCommands{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.BotID = ReadLong(r)
-	ReadInt(r)
-	_cntCommands := ReadInt(r)
-	if err := checkVectorCount(_cntCommands); err != nil {
-		return nil, err
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_vhdrCommands, _ehdrCommands := r.ReadUint32()
+	if _ehdrCommands != nil {
+		return nil, _ehdrCommands
+	}
+	_cntCommands, _ecntCommands := r.ReadUint32()
+	if _ecntCommands != nil {
+		return nil, _ecntCommands
+	}
+	if _errCommands := checkVectorCount(_cntCommands); _errCommands != nil {
+		return nil, _errCommands
 	}
 	v.Commands = make([]*BotCommand, _cntCommands)
 	for _iCommands := range v.Commands {
-		_objCommands, _ := ReadTLObject(r)
+		_objCommands, _errCommands := ReadTLObject(r)
+		if _errCommands != nil {
+			return nil, _errCommands
+		}
 		v.Commands[_iCommands] = _objCommands.(*BotCommand)
 	}
+	_ = _vhdrCommands
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotCommandsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotCommandsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotCommands(r)
 	}
 }
@@ -5395,17 +6392,28 @@ func (v *UpdatePendingJoinRequests) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePendingJoinRequests deserializes a UpdatePendingJoinRequests from a reader using the TL binary protocol.
-func DecodeUpdatePendingJoinRequests(r io.Reader) (*UpdatePendingJoinRequests, error) {
+func DecodeUpdatePendingJoinRequests(r *Reader) (*UpdatePendingJoinRequests, error) {
 	v := &UpdatePendingJoinRequests{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.RequestsPending = int32(ReadInt(r))
-	v.RecentRequesters = ReadVectorLong(r)
+	_rRequestsPending, _eRequestsPending := r.ReadInt32()
+	if _eRequestsPending != nil {
+		return nil, _eRequestsPending
+	}
+	v.RequestsPending = _rRequestsPending
+	_vvRecentRequesters, _veRecentRequesters := r.ReadVectorLong()
+	if _veRecentRequesters != nil {
+		return nil, _veRecentRequesters
+	}
+	v.RecentRequesters = _vvRecentRequesters
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePendingJoinRequestsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePendingJoinRequestsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePendingJoinRequests(r)
 	}
 }
@@ -5440,21 +6448,43 @@ func (v *UpdateBotChatInviteRequester) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotChatInviteRequester deserializes a UpdateBotChatInviteRequester from a reader using the TL binary protocol.
-func DecodeUpdateBotChatInviteRequester(r io.Reader) (*UpdateBotChatInviteRequester, error) {
+func DecodeUpdateBotChatInviteRequester(r *Reader) (*UpdateBotChatInviteRequester, error) {
 	v := &UpdateBotChatInviteRequester{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Date = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
-	v.About = ReadString(r)
-	_objInvite, _ := ReadTLObject(r)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rAbout, _eAbout := r.ReadString()
+	if _eAbout != nil {
+		return nil, _eAbout
+	}
+	v.About = _rAbout
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatInviteClass)
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotChatInviteRequesterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotChatInviteRequesterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotChatInviteRequester(r)
 	}
 }
@@ -5504,30 +6534,47 @@ func (v *UpdateMessageReactions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMessageReactions deserializes a UpdateMessageReactions from a reader using the TL binary protocol.
-func DecodeUpdateMessageReactions(r io.Reader) (*UpdateMessageReactions, error) {
+func DecodeUpdateMessageReactions(r *Reader) (*UpdateMessageReactions, error) {
 	v := &UpdateMessageReactions{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	if v.Flags.Has(0) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
 	if v.Flags.Has(1) {
-		_objSavedPeerID, _ := ReadTLObject(r)
+		_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+		if _errSavedPeerID != nil {
+			return nil, _errSavedPeerID
+		}
 		v.SavedPeerID = _objSavedPeerID.(PeerClass)
 	}
-	_objReactions, _ := ReadTLObject(r)
+	_objReactions, _errReactions := ReadTLObject(r)
+	if _errReactions != nil {
+		return nil, _errReactions
+	}
 	v.Reactions = _objReactions.(*MessageReactions)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMessageReactionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMessageReactionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMessageReactions(r)
 	}
 }
@@ -5550,13 +6597,13 @@ func (v *UpdateAttachMenuBots) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateAttachMenuBots deserializes a UpdateAttachMenuBots from a reader using the TL binary protocol.
-func DecodeUpdateAttachMenuBots(r io.Reader) (*UpdateAttachMenuBots, error) {
+func DecodeUpdateAttachMenuBots(r *Reader) (*UpdateAttachMenuBots, error) {
 	v := &UpdateAttachMenuBots{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateAttachMenuBotsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateAttachMenuBotsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateAttachMenuBots(r)
 	}
 }
@@ -5581,14 +6628,18 @@ func (v *UpdateWebViewResultSent) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateWebViewResultSent deserializes a UpdateWebViewResultSent from a reader using the TL binary protocol.
-func DecodeUpdateWebViewResultSent(r io.Reader) (*UpdateWebViewResultSent, error) {
+func DecodeUpdateWebViewResultSent(r *Reader) (*UpdateWebViewResultSent, error) {
 	v := &UpdateWebViewResultSent{}
-	v.QueryID = ReadLong(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateWebViewResultSentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateWebViewResultSentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateWebViewResultSent(r)
 	}
 }
@@ -5615,16 +6666,23 @@ func (v *UpdateBotMenuButton) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotMenuButton deserializes a UpdateBotMenuButton from a reader using the TL binary protocol.
-func DecodeUpdateBotMenuButton(r io.Reader) (*UpdateBotMenuButton, error) {
+func DecodeUpdateBotMenuButton(r *Reader) (*UpdateBotMenuButton, error) {
 	v := &UpdateBotMenuButton{}
-	v.BotID = ReadLong(r)
-	_objButton, _ := ReadTLObject(r)
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_objButton, _errButton := ReadTLObject(r)
+	if _errButton != nil {
+		return nil, _errButton
+	}
 	v.Button = _objButton.(BotMenuButtonClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotMenuButtonTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotMenuButtonTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotMenuButton(r)
 	}
 }
@@ -5647,13 +6705,13 @@ func (v *UpdateSavedRingtones) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSavedRingtones deserializes a UpdateSavedRingtones from a reader using the TL binary protocol.
-func DecodeUpdateSavedRingtones(r io.Reader) (*UpdateSavedRingtones, error) {
+func DecodeUpdateSavedRingtones(r *Reader) (*UpdateSavedRingtones, error) {
 	v := &UpdateSavedRingtones{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSavedRingtonesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSavedRingtonesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSavedRingtones(r)
 	}
 }
@@ -5695,24 +6753,39 @@ func (v *UpdateTranscribedAudio) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateTranscribedAudio deserializes a UpdateTranscribedAudio from a reader using the TL binary protocol.
-func DecodeUpdateTranscribedAudio(r io.Reader) (*UpdateTranscribedAudio, error) {
+func DecodeUpdateTranscribedAudio(r *Reader) (*UpdateTranscribedAudio, error) {
 	v := &UpdateTranscribedAudio{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pending = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.TranscriptionID = ReadLong(r)
-	v.Text = ReadString(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rTranscriptionID, _eTranscriptionID := r.ReadInt64()
+	if _eTranscriptionID != nil {
+		return nil, _eTranscriptionID
+	}
+	v.TranscriptionID = _rTranscriptionID
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateTranscribedAudioTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateTranscribedAudioTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateTranscribedAudio(r)
 	}
 }
@@ -5735,13 +6808,13 @@ func (v *UpdateReadFeaturedEmojiStickers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadFeaturedEmojiStickers deserializes a UpdateReadFeaturedEmojiStickers from a reader using the TL binary protocol.
-func DecodeUpdateReadFeaturedEmojiStickers(r io.Reader) (*UpdateReadFeaturedEmojiStickers, error) {
+func DecodeUpdateReadFeaturedEmojiStickers(r *Reader) (*UpdateReadFeaturedEmojiStickers, error) {
 	v := &UpdateReadFeaturedEmojiStickers{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadFeaturedEmojiStickersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadFeaturedEmojiStickersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadFeaturedEmojiStickers(r)
 	}
 }
@@ -5768,16 +6841,23 @@ func (v *UpdateUserEmojiStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUserEmojiStatus deserializes a UpdateUserEmojiStatus from a reader using the TL binary protocol.
-func DecodeUpdateUserEmojiStatus(r io.Reader) (*UpdateUserEmojiStatus, error) {
+func DecodeUpdateUserEmojiStatus(r *Reader) (*UpdateUserEmojiStatus, error) {
 	v := &UpdateUserEmojiStatus{}
-	v.UserID = ReadLong(r)
-	_objEmojiStatus, _ := ReadTLObject(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objEmojiStatus, _errEmojiStatus := ReadTLObject(r)
+	if _errEmojiStatus != nil {
+		return nil, _errEmojiStatus
+	}
 	v.EmojiStatus = _objEmojiStatus.(EmojiStatusClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserEmojiStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserEmojiStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUserEmojiStatus(r)
 	}
 }
@@ -5800,13 +6880,13 @@ func (v *UpdateRecentEmojiStatuses) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateRecentEmojiStatuses deserializes a UpdateRecentEmojiStatuses from a reader using the TL binary protocol.
-func DecodeUpdateRecentEmojiStatuses(r io.Reader) (*UpdateRecentEmojiStatuses, error) {
+func DecodeUpdateRecentEmojiStatuses(r *Reader) (*UpdateRecentEmojiStatuses, error) {
 	v := &UpdateRecentEmojiStatuses{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateRecentEmojiStatusesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateRecentEmojiStatusesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateRecentEmojiStatuses(r)
 	}
 }
@@ -5829,13 +6909,13 @@ func (v *UpdateRecentReactions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateRecentReactions deserializes a UpdateRecentReactions from a reader using the TL binary protocol.
-func DecodeUpdateRecentReactions(r io.Reader) (*UpdateRecentReactions, error) {
+func DecodeUpdateRecentReactions(r *Reader) (*UpdateRecentReactions, error) {
 	v := &UpdateRecentReactions{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateRecentReactionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateRecentReactionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateRecentReactions(r)
 	}
 }
@@ -5875,21 +6955,25 @@ func (v *UpdateMoveStickerSetToTop) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMoveStickerSetToTop deserializes a UpdateMoveStickerSetToTop from a reader using the TL binary protocol.
-func DecodeUpdateMoveStickerSetToTop(r io.Reader) (*UpdateMoveStickerSetToTop, error) {
+func DecodeUpdateMoveStickerSetToTop(r *Reader) (*UpdateMoveStickerSetToTop, error) {
 	v := &UpdateMoveStickerSetToTop{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Masks = v.Flags.Has(0)
 	v.Emojis = v.Flags.Has(1)
-	v.Stickerset = ReadLong(r)
+	_rStickerset, _eStickerset := r.ReadInt64()
+	if _eStickerset != nil {
+		return nil, _eStickerset
+	}
+	v.Stickerset = _rStickerset
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMoveStickerSetToTopTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMoveStickerSetToTopTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMoveStickerSetToTop(r)
 	}
 }
@@ -5922,26 +7006,43 @@ func (v *UpdateMessageExtendedMedia) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMessageExtendedMedia deserializes a UpdateMessageExtendedMedia from a reader using the TL binary protocol.
-func DecodeUpdateMessageExtendedMedia(r io.Reader) (*UpdateMessageExtendedMedia, error) {
+func DecodeUpdateMessageExtendedMedia(r *Reader) (*UpdateMessageExtendedMedia, error) {
 	v := &UpdateMessageExtendedMedia{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
-	ReadInt(r)
-	_cntExtendedMedia := ReadInt(r)
-	if err := checkVectorCount(_cntExtendedMedia); err != nil {
-		return nil, err
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_vhdrExtendedMedia, _ehdrExtendedMedia := r.ReadUint32()
+	if _ehdrExtendedMedia != nil {
+		return nil, _ehdrExtendedMedia
+	}
+	_cntExtendedMedia, _ecntExtendedMedia := r.ReadUint32()
+	if _ecntExtendedMedia != nil {
+		return nil, _ecntExtendedMedia
+	}
+	if _errExtendedMedia := checkVectorCount(_cntExtendedMedia); _errExtendedMedia != nil {
+		return nil, _errExtendedMedia
 	}
 	v.ExtendedMedia = make([]MessageExtendedMediaClass, _cntExtendedMedia)
 	for _iExtendedMedia := range v.ExtendedMedia {
-		_objExtendedMedia, _ := ReadTLObject(r)
+		_objExtendedMedia, _errExtendedMedia := ReadTLObject(r)
+		if _errExtendedMedia != nil {
+			return nil, _errExtendedMedia
+		}
 		v.ExtendedMedia[_iExtendedMedia] = _objExtendedMedia.(MessageExtendedMediaClass)
 	}
+	_ = _vhdrExtendedMedia
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMessageExtendedMediaTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMessageExtendedMediaTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMessageExtendedMedia(r)
 	}
 }
@@ -5966,14 +7067,18 @@ func (v *UpdateUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateUser deserializes a UpdateUser from a reader using the TL binary protocol.
-func DecodeUpdateUser(r io.Reader) (*UpdateUser, error) {
+func DecodeUpdateUser(r *Reader) (*UpdateUser, error) {
 	v := &UpdateUser{}
-	v.UserID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateUser(r)
 	}
 }
@@ -5996,13 +7101,13 @@ func (v *UpdateAutoSaveSettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateAutoSaveSettings deserializes a UpdateAutoSaveSettings from a reader using the TL binary protocol.
-func DecodeUpdateAutoSaveSettings(r io.Reader) (*UpdateAutoSaveSettings, error) {
+func DecodeUpdateAutoSaveSettings(r *Reader) (*UpdateAutoSaveSettings, error) {
 	v := &UpdateAutoSaveSettings{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateAutoSaveSettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateAutoSaveSettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateAutoSaveSettings(r)
 	}
 }
@@ -6029,17 +7134,23 @@ func (v *UpdateStory) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStory deserializes a UpdateStory from a reader using the TL binary protocol.
-func DecodeUpdateStory(r io.Reader) (*UpdateStory, error) {
+func DecodeUpdateStory(r *Reader) (*UpdateStory, error) {
 	v := &UpdateStory{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objStory, _ := ReadTLObject(r)
+	_objStory, _errStory := ReadTLObject(r)
+	if _errStory != nil {
+		return nil, _errStory
+	}
 	v.Story = _objStory.(StoryItemClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStoryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStoryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStory(r)
 	}
 }
@@ -6066,16 +7177,23 @@ func (v *UpdateReadStories) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadStories deserializes a UpdateReadStories from a reader using the TL binary protocol.
-func DecodeUpdateReadStories(r io.Reader) (*UpdateReadStories, error) {
+func DecodeUpdateReadStories(r *Reader) (*UpdateReadStories, error) {
 	v := &UpdateReadStories{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MaxID = int32(ReadInt(r))
+	_rMaxID, _eMaxID := r.ReadInt32()
+	if _eMaxID != nil {
+		return nil, _eMaxID
+	}
+	v.MaxID = _rMaxID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadStoriesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadStoriesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadStories(r)
 	}
 }
@@ -6102,15 +7220,23 @@ func (v *UpdateStoryID) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStoryID deserializes a UpdateStoryID from a reader using the TL binary protocol.
-func DecodeUpdateStoryID(r io.Reader) (*UpdateStoryID, error) {
+func DecodeUpdateStoryID(r *Reader) (*UpdateStoryID, error) {
 	v := &UpdateStoryID{}
-	v.ID = int32(ReadInt(r))
-	v.RandomID = ReadLong(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStoryIDTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStoryIDTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStoryID(r)
 	}
 }
@@ -6135,15 +7261,18 @@ func (v *UpdateStoriesStealthMode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStoriesStealthMode deserializes a UpdateStoriesStealthMode from a reader using the TL binary protocol.
-func DecodeUpdateStoriesStealthMode(r io.Reader) (*UpdateStoriesStealthMode, error) {
+func DecodeUpdateStoriesStealthMode(r *Reader) (*UpdateStoriesStealthMode, error) {
 	v := &UpdateStoriesStealthMode{}
-	_objStealthMode, _ := ReadTLObject(r)
+	_objStealthMode, _errStealthMode := ReadTLObject(r)
+	if _errStealthMode != nil {
+		return nil, _errStealthMode
+	}
 	v.StealthMode = _objStealthMode.(*StoriesStealthMode)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStoriesStealthModeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStoriesStealthModeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStoriesStealthMode(r)
 	}
 }
@@ -6172,18 +7301,28 @@ func (v *UpdateSentStoryReaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSentStoryReaction deserializes a UpdateSentStoryReaction from a reader using the TL binary protocol.
-func DecodeUpdateSentStoryReaction(r io.Reader) (*UpdateSentStoryReaction, error) {
+func DecodeUpdateSentStoryReaction(r *Reader) (*UpdateSentStoryReaction, error) {
 	v := &UpdateSentStoryReaction{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.StoryID = int32(ReadInt(r))
-	_objReaction, _ := ReadTLObject(r)
+	_rStoryID, _eStoryID := r.ReadInt32()
+	if _eStoryID != nil {
+		return nil, _eStoryID
+	}
+	v.StoryID = _rStoryID
+	_objReaction, _errReaction := ReadTLObject(r)
+	if _errReaction != nil {
+		return nil, _errReaction
+	}
 	v.Reaction = _objReaction.(ReactionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSentStoryReactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSentStoryReactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSentStoryReaction(r)
 	}
 }
@@ -6212,18 +7351,28 @@ func (v *UpdateBotChatBoost) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotChatBoost deserializes a UpdateBotChatBoost from a reader using the TL binary protocol.
-func DecodeUpdateBotChatBoost(r io.Reader) (*UpdateBotChatBoost, error) {
+func DecodeUpdateBotChatBoost(r *Reader) (*UpdateBotChatBoost, error) {
 	v := &UpdateBotChatBoost{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objBoost, _ := ReadTLObject(r)
+	_objBoost, _errBoost := ReadTLObject(r)
+	if _errBoost != nil {
+		return nil, _errBoost
+	}
 	v.Boost = _objBoost.(*Boost)
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotChatBoostTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotChatBoostTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotChatBoost(r)
 	}
 }
@@ -6250,15 +7399,23 @@ func (v *UpdateChannelViewForumAsMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChannelViewForumAsMessages deserializes a UpdateChannelViewForumAsMessages from a reader using the TL binary protocol.
-func DecodeUpdateChannelViewForumAsMessages(r io.Reader) (*UpdateChannelViewForumAsMessages, error) {
+func DecodeUpdateChannelViewForumAsMessages(r *Reader) (*UpdateChannelViewForumAsMessages, error) {
 	v := &UpdateChannelViewForumAsMessages{}
-	v.ChannelID = ReadLong(r)
-	v.Enabled = ReadBool(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rEnabled, _eEnabled := r.ReadBool()
+	if _eEnabled != nil {
+		return nil, _eEnabled
+	}
+	v.Enabled = _rEnabled
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChannelViewForumAsMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChannelViewForumAsMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChannelViewForumAsMessages(r)
 	}
 }
@@ -6301,25 +7458,31 @@ func (v *UpdatePeerWallpaper) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePeerWallpaper deserializes a UpdatePeerWallpaper from a reader using the TL binary protocol.
-func DecodeUpdatePeerWallpaper(r io.Reader) (*UpdatePeerWallpaper, error) {
+func DecodeUpdatePeerWallpaper(r *Reader) (*UpdatePeerWallpaper, error) {
 	v := &UpdatePeerWallpaper{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.WallpaperOverridden = v.Flags.Has(1)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	if v.Flags.Has(0) {
-		_objWallpaper, _ := ReadTLObject(r)
+		_objWallpaper, _errWallpaper := ReadTLObject(r)
+		if _errWallpaper != nil {
+			return nil, _errWallpaper
+		}
 		v.Wallpaper = _objWallpaper.(WallPaperClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePeerWallpaperTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePeerWallpaperTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePeerWallpaper(r)
 	}
 }
@@ -6364,40 +7527,78 @@ func (v *UpdateBotMessageReaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotMessageReaction deserializes a UpdateBotMessageReaction from a reader using the TL binary protocol.
-func DecodeUpdateBotMessageReaction(r io.Reader) (*UpdateBotMessageReaction, error) {
+func DecodeUpdateBotMessageReaction(r *Reader) (*UpdateBotMessageReaction, error) {
 	v := &UpdateBotMessageReaction{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	_objActor, _ := ReadTLObject(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objActor, _errActor := ReadTLObject(r)
+	if _errActor != nil {
+		return nil, _errActor
+	}
 	v.Actor = _objActor.(PeerClass)
-	ReadInt(r)
-	_cntOldReactions := ReadInt(r)
-	if err := checkVectorCount(_cntOldReactions); err != nil {
-		return nil, err
+	_vhdrOldReactions, _ehdrOldReactions := r.ReadUint32()
+	if _ehdrOldReactions != nil {
+		return nil, _ehdrOldReactions
+	}
+	_cntOldReactions, _ecntOldReactions := r.ReadUint32()
+	if _ecntOldReactions != nil {
+		return nil, _ecntOldReactions
+	}
+	if _errOldReactions := checkVectorCount(_cntOldReactions); _errOldReactions != nil {
+		return nil, _errOldReactions
 	}
 	v.OldReactions = make([]ReactionClass, _cntOldReactions)
 	for _iOldReactions := range v.OldReactions {
-		_objOldReactions, _ := ReadTLObject(r)
+		_objOldReactions, _errOldReactions := ReadTLObject(r)
+		if _errOldReactions != nil {
+			return nil, _errOldReactions
+		}
 		v.OldReactions[_iOldReactions] = _objOldReactions.(ReactionClass)
 	}
-	ReadInt(r)
-	_cntNewReactions := ReadInt(r)
-	if err := checkVectorCount(_cntNewReactions); err != nil {
-		return nil, err
+	_ = _vhdrOldReactions
+	_vhdrNewReactions, _ehdrNewReactions := r.ReadUint32()
+	if _ehdrNewReactions != nil {
+		return nil, _ehdrNewReactions
+	}
+	_cntNewReactions, _ecntNewReactions := r.ReadUint32()
+	if _ecntNewReactions != nil {
+		return nil, _ecntNewReactions
+	}
+	if _errNewReactions := checkVectorCount(_cntNewReactions); _errNewReactions != nil {
+		return nil, _errNewReactions
 	}
 	v.NewReactions = make([]ReactionClass, _cntNewReactions)
 	for _iNewReactions := range v.NewReactions {
-		_objNewReactions, _ := ReadTLObject(r)
+		_objNewReactions, _errNewReactions := ReadTLObject(r)
+		if _errNewReactions != nil {
+			return nil, _errNewReactions
+		}
 		v.NewReactions[_iNewReactions] = _objNewReactions.(ReactionClass)
 	}
-	v.Qts = int32(ReadInt(r))
+	_ = _vhdrNewReactions
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotMessageReactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotMessageReactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotMessageReaction(r)
 	}
 }
@@ -6434,28 +7635,53 @@ func (v *UpdateBotMessageReactions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotMessageReactions deserializes a UpdateBotMessageReactions from a reader using the TL binary protocol.
-func DecodeUpdateBotMessageReactions(r io.Reader) (*UpdateBotMessageReactions, error) {
+func DecodeUpdateBotMessageReactions(r *Reader) (*UpdateBotMessageReactions, error) {
 	v := &UpdateBotMessageReactions{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	ReadInt(r)
-	_cntReactions := ReadInt(r)
-	if err := checkVectorCount(_cntReactions); err != nil {
-		return nil, err
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_vhdrReactions, _ehdrReactions := r.ReadUint32()
+	if _ehdrReactions != nil {
+		return nil, _ehdrReactions
+	}
+	_cntReactions, _ecntReactions := r.ReadUint32()
+	if _ecntReactions != nil {
+		return nil, _ecntReactions
+	}
+	if _errReactions := checkVectorCount(_cntReactions); _errReactions != nil {
+		return nil, _errReactions
 	}
 	v.Reactions = make([]*ReactionCount, _cntReactions)
 	for _iReactions := range v.Reactions {
-		_objReactions, _ := ReadTLObject(r)
+		_objReactions, _errReactions := ReadTLObject(r)
+		if _errReactions != nil {
+			return nil, _errReactions
+		}
 		v.Reactions[_iReactions] = _objReactions.(*ReactionCount)
 	}
-	v.Qts = int32(ReadInt(r))
+	_ = _vhdrReactions
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotMessageReactionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotMessageReactionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotMessageReactions(r)
 	}
 }
@@ -6491,21 +7717,24 @@ func (v *UpdateSavedDialogPinned) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSavedDialogPinned deserializes a UpdateSavedDialogPinned from a reader using the TL binary protocol.
-func DecodeUpdateSavedDialogPinned(r io.Reader) (*UpdateSavedDialogPinned, error) {
+func DecodeUpdateSavedDialogPinned(r *Reader) (*UpdateSavedDialogPinned, error) {
 	v := &UpdateSavedDialogPinned{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pinned = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(DialogPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSavedDialogPinnedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSavedDialogPinnedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSavedDialogPinned(r)
 	}
 }
@@ -6546,30 +7775,40 @@ func (v *UpdatePinnedSavedDialogs) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedSavedDialogs deserializes a UpdatePinnedSavedDialogs from a reader using the TL binary protocol.
-func DecodeUpdatePinnedSavedDialogs(r io.Reader) (*UpdatePinnedSavedDialogs, error) {
+func DecodeUpdatePinnedSavedDialogs(r *Reader) (*UpdatePinnedSavedDialogs, error) {
 	v := &UpdatePinnedSavedDialogs{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntOrder := ReadInt(r)
-		if err := checkVectorCount(_cntOrder); err != nil {
-			return nil, err
+		_vhdrOrder, _ehdrOrder := r.ReadUint32()
+		if _ehdrOrder != nil {
+			return nil, _ehdrOrder
+		}
+		_cntOrder, _ecntOrder := r.ReadUint32()
+		if _ecntOrder != nil {
+			return nil, _ecntOrder
+		}
+		if _errOrder := checkVectorCount(_cntOrder); _errOrder != nil {
+			return nil, _errOrder
 		}
 		v.Order = make([]DialogPeerClass, _cntOrder)
 		for _iOrder := range v.Order {
-			_objOrder, _ := ReadTLObject(r)
+			_objOrder, _errOrder := ReadTLObject(r)
+			if _errOrder != nil {
+				return nil, _errOrder
+			}
 			v.Order[_iOrder] = _objOrder.(DialogPeerClass)
 		}
+		_ = _vhdrOrder
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedSavedDialogsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedSavedDialogsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedSavedDialogs(r)
 	}
 }
@@ -6592,13 +7831,13 @@ func (v *UpdateSavedReactionTags) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSavedReactionTags deserializes a UpdateSavedReactionTags from a reader using the TL binary protocol.
-func DecodeUpdateSavedReactionTags(r io.Reader) (*UpdateSavedReactionTags, error) {
+func DecodeUpdateSavedReactionTags(r *Reader) (*UpdateSavedReactionTags, error) {
 	v := &UpdateSavedReactionTags{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSavedReactionTagsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSavedReactionTagsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSavedReactionTags(r)
 	}
 }
@@ -6623,14 +7862,18 @@ func (v *UpdateSmsJob) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSmsJob deserializes a UpdateSmsJob from a reader using the TL binary protocol.
-func DecodeUpdateSmsJob(r io.Reader) (*UpdateSmsJob, error) {
+func DecodeUpdateSmsJob(r *Reader) (*UpdateSmsJob, error) {
 	v := &UpdateSmsJob{}
-	v.JobID = ReadString(r)
+	_rJobID, _eJobID := r.ReadString()
+	if _eJobID != nil {
+		return nil, _eJobID
+	}
+	v.JobID = _rJobID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSmsJobTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSmsJobTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSmsJob(r)
 	}
 }
@@ -6659,23 +7902,33 @@ func (v *UpdateQuickReplies) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateQuickReplies deserializes a UpdateQuickReplies from a reader using the TL binary protocol.
-func DecodeUpdateQuickReplies(r io.Reader) (*UpdateQuickReplies, error) {
+func DecodeUpdateQuickReplies(r *Reader) (*UpdateQuickReplies, error) {
 	v := &UpdateQuickReplies{}
-	ReadInt(r)
-	_cntQuickReplies := ReadInt(r)
-	if err := checkVectorCount(_cntQuickReplies); err != nil {
-		return nil, err
+	_vhdrQuickReplies, _ehdrQuickReplies := r.ReadUint32()
+	if _ehdrQuickReplies != nil {
+		return nil, _ehdrQuickReplies
+	}
+	_cntQuickReplies, _ecntQuickReplies := r.ReadUint32()
+	if _ecntQuickReplies != nil {
+		return nil, _ecntQuickReplies
+	}
+	if _errQuickReplies := checkVectorCount(_cntQuickReplies); _errQuickReplies != nil {
+		return nil, _errQuickReplies
 	}
 	v.QuickReplies = make([]*QuickReply, _cntQuickReplies)
 	for _iQuickReplies := range v.QuickReplies {
-		_objQuickReplies, _ := ReadTLObject(r)
+		_objQuickReplies, _errQuickReplies := ReadTLObject(r)
+		if _errQuickReplies != nil {
+			return nil, _errQuickReplies
+		}
 		v.QuickReplies[_iQuickReplies] = _objQuickReplies.(*QuickReply)
 	}
+	_ = _vhdrQuickReplies
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateQuickRepliesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateQuickRepliesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateQuickReplies(r)
 	}
 }
@@ -6700,15 +7953,18 @@ func (v *UpdateNewQuickReply) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewQuickReply deserializes a UpdateNewQuickReply from a reader using the TL binary protocol.
-func DecodeUpdateNewQuickReply(r io.Reader) (*UpdateNewQuickReply, error) {
+func DecodeUpdateNewQuickReply(r *Reader) (*UpdateNewQuickReply, error) {
 	v := &UpdateNewQuickReply{}
-	_objQuickReply, _ := ReadTLObject(r)
+	_objQuickReply, _errQuickReply := ReadTLObject(r)
+	if _errQuickReply != nil {
+		return nil, _errQuickReply
+	}
 	v.QuickReply = _objQuickReply.(*QuickReply)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewQuickReplyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewQuickReplyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewQuickReply(r)
 	}
 }
@@ -6733,14 +7989,18 @@ func (v *UpdateDeleteQuickReply) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteQuickReply deserializes a UpdateDeleteQuickReply from a reader using the TL binary protocol.
-func DecodeUpdateDeleteQuickReply(r io.Reader) (*UpdateDeleteQuickReply, error) {
+func DecodeUpdateDeleteQuickReply(r *Reader) (*UpdateDeleteQuickReply, error) {
 	v := &UpdateDeleteQuickReply{}
-	v.ShortcutID = int32(ReadInt(r))
+	_rShortcutID, _eShortcutID := r.ReadInt32()
+	if _eShortcutID != nil {
+		return nil, _eShortcutID
+	}
+	v.ShortcutID = _rShortcutID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteQuickReplyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteQuickReplyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteQuickReply(r)
 	}
 }
@@ -6765,15 +8025,18 @@ func (v *UpdateQuickReplyMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateQuickReplyMessage deserializes a UpdateQuickReplyMessage from a reader using the TL binary protocol.
-func DecodeUpdateQuickReplyMessage(r io.Reader) (*UpdateQuickReplyMessage, error) {
+func DecodeUpdateQuickReplyMessage(r *Reader) (*UpdateQuickReplyMessage, error) {
 	v := &UpdateQuickReplyMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateQuickReplyMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateQuickReplyMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateQuickReplyMessage(r)
 	}
 }
@@ -6800,15 +8063,23 @@ func (v *UpdateDeleteQuickReplyMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteQuickReplyMessages deserializes a UpdateDeleteQuickReplyMessages from a reader using the TL binary protocol.
-func DecodeUpdateDeleteQuickReplyMessages(r io.Reader) (*UpdateDeleteQuickReplyMessages, error) {
+func DecodeUpdateDeleteQuickReplyMessages(r *Reader) (*UpdateDeleteQuickReplyMessages, error) {
 	v := &UpdateDeleteQuickReplyMessages{}
-	v.ShortcutID = int32(ReadInt(r))
-	v.Messages = ReadVectorInt(r)
+	_rShortcutID, _eShortcutID := r.ReadInt32()
+	if _eShortcutID != nil {
+		return nil, _eShortcutID
+	}
+	v.ShortcutID = _rShortcutID
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteQuickReplyMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteQuickReplyMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteQuickReplyMessages(r)
 	}
 }
@@ -6835,16 +8106,23 @@ func (v *UpdateBotBusinessConnect) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotBusinessConnect deserializes a UpdateBotBusinessConnect from a reader using the TL binary protocol.
-func DecodeUpdateBotBusinessConnect(r io.Reader) (*UpdateBotBusinessConnect, error) {
+func DecodeUpdateBotBusinessConnect(r *Reader) (*UpdateBotBusinessConnect, error) {
 	v := &UpdateBotBusinessConnect{}
-	_objConnection, _ := ReadTLObject(r)
+	_objConnection, _errConnection := ReadTLObject(r)
+	if _errConnection != nil {
+		return nil, _errConnection
+	}
 	v.Connection = _objConnection.(*BotBusinessConnection)
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotBusinessConnectTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotBusinessConnectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotBusinessConnect(r)
 	}
 }
@@ -6887,26 +8165,40 @@ func (v *UpdateBotNewBusinessMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotNewBusinessMessage deserializes a UpdateBotNewBusinessMessage from a reader using the TL binary protocol.
-func DecodeUpdateBotNewBusinessMessage(r io.Reader) (*UpdateBotNewBusinessMessage, error) {
+func DecodeUpdateBotNewBusinessMessage(r *Reader) (*UpdateBotNewBusinessMessage, error) {
 	v := &UpdateBotNewBusinessMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ConnectionID = ReadString(r)
-	_objMessage, _ := ReadTLObject(r)
+	_rConnectionID, _eConnectionID := r.ReadString()
+	if _eConnectionID != nil {
+		return nil, _eConnectionID
+	}
+	v.ConnectionID = _rConnectionID
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	if v.Flags.Has(0) {
-		_objReplyToMessage, _ := ReadTLObject(r)
+		_objReplyToMessage, _errReplyToMessage := ReadTLObject(r)
+		if _errReplyToMessage != nil {
+			return nil, _errReplyToMessage
+		}
 		v.ReplyToMessage = _objReplyToMessage.(MessageClass)
 	}
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotNewBusinessMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotNewBusinessMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotNewBusinessMessage(r)
 	}
 }
@@ -6949,26 +8241,40 @@ func (v *UpdateBotEditBusinessMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotEditBusinessMessage deserializes a UpdateBotEditBusinessMessage from a reader using the TL binary protocol.
-func DecodeUpdateBotEditBusinessMessage(r io.Reader) (*UpdateBotEditBusinessMessage, error) {
+func DecodeUpdateBotEditBusinessMessage(r *Reader) (*UpdateBotEditBusinessMessage, error) {
 	v := &UpdateBotEditBusinessMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ConnectionID = ReadString(r)
-	_objMessage, _ := ReadTLObject(r)
+	_rConnectionID, _eConnectionID := r.ReadString()
+	if _eConnectionID != nil {
+		return nil, _eConnectionID
+	}
+	v.ConnectionID = _rConnectionID
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	if v.Flags.Has(0) {
-		_objReplyToMessage, _ := ReadTLObject(r)
+		_objReplyToMessage, _errReplyToMessage := ReadTLObject(r)
+		if _errReplyToMessage != nil {
+			return nil, _errReplyToMessage
+		}
 		v.ReplyToMessage = _objReplyToMessage.(MessageClass)
 	}
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotEditBusinessMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotEditBusinessMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotEditBusinessMessage(r)
 	}
 }
@@ -6999,18 +8305,33 @@ func (v *UpdateBotDeleteBusinessMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotDeleteBusinessMessage deserializes a UpdateBotDeleteBusinessMessage from a reader using the TL binary protocol.
-func DecodeUpdateBotDeleteBusinessMessage(r io.Reader) (*UpdateBotDeleteBusinessMessage, error) {
+func DecodeUpdateBotDeleteBusinessMessage(r *Reader) (*UpdateBotDeleteBusinessMessage, error) {
 	v := &UpdateBotDeleteBusinessMessage{}
-	v.ConnectionID = ReadString(r)
-	_objPeer, _ := ReadTLObject(r)
+	_rConnectionID, _eConnectionID := r.ReadString()
+	if _eConnectionID != nil {
+		return nil, _eConnectionID
+	}
+	v.ConnectionID = _rConnectionID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Messages = ReadVectorInt(r)
-	v.Qts = int32(ReadInt(r))
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotDeleteBusinessMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotDeleteBusinessMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotDeleteBusinessMessage(r)
 	}
 }
@@ -7039,18 +8360,28 @@ func (v *UpdateNewStoryReaction) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateNewStoryReaction deserializes a UpdateNewStoryReaction from a reader using the TL binary protocol.
-func DecodeUpdateNewStoryReaction(r io.Reader) (*UpdateNewStoryReaction, error) {
+func DecodeUpdateNewStoryReaction(r *Reader) (*UpdateNewStoryReaction, error) {
 	v := &UpdateNewStoryReaction{}
-	v.StoryID = int32(ReadInt(r))
-	_objPeer, _ := ReadTLObject(r)
+	_rStoryID, _eStoryID := r.ReadInt32()
+	if _eStoryID != nil {
+		return nil, _eStoryID
+	}
+	v.StoryID = _rStoryID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objReaction, _ := ReadTLObject(r)
+	_objReaction, _errReaction := ReadTLObject(r)
+	if _errReaction != nil {
+		return nil, _errReaction
+	}
 	v.Reaction = _objReaction.(ReactionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateNewStoryReactionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateNewStoryReactionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateNewStoryReaction(r)
 	}
 }
@@ -7075,15 +8406,18 @@ func (v *UpdateStarsBalance) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStarsBalance deserializes a UpdateStarsBalance from a reader using the TL binary protocol.
-func DecodeUpdateStarsBalance(r io.Reader) (*UpdateStarsBalance, error) {
+func DecodeUpdateStarsBalance(r *Reader) (*UpdateStarsBalance, error) {
 	v := &UpdateStarsBalance{}
-	_objBalance, _ := ReadTLObject(r)
+	_objBalance, _errBalance := ReadTLObject(r)
+	if _errBalance != nil {
+		return nil, _errBalance
+	}
 	v.Balance = _objBalance.(StarsAmountClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStarsBalanceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStarsBalanceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStarsBalance(r)
 	}
 }
@@ -7137,31 +8471,57 @@ func (v *UpdateBusinessBotCallbackQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBusinessBotCallbackQuery deserializes a UpdateBusinessBotCallbackQuery from a reader using the TL binary protocol.
-func DecodeUpdateBusinessBotCallbackQuery(r io.Reader) (*UpdateBusinessBotCallbackQuery, error) {
+func DecodeUpdateBusinessBotCallbackQuery(r *Reader) (*UpdateBusinessBotCallbackQuery, error) {
 	v := &UpdateBusinessBotCallbackQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.ConnectionID = ReadString(r)
-	_objMessage, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rConnectionID, _eConnectionID := r.ReadString()
+	if _eConnectionID != nil {
+		return nil, _eConnectionID
+	}
+	v.ConnectionID = _rConnectionID
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	if v.Flags.Has(2) {
-		_objReplyToMessage, _ := ReadTLObject(r)
+		_objReplyToMessage, _errReplyToMessage := ReadTLObject(r)
+		if _errReplyToMessage != nil {
+			return nil, _errReplyToMessage
+		}
 		v.ReplyToMessage = _objReplyToMessage.(MessageClass)
 	}
-	v.ChatInstance = ReadLong(r)
+	_rChatInstance, _eChatInstance := r.ReadInt64()
+	if _eChatInstance != nil {
+		return nil, _eChatInstance
+	}
+	v.ChatInstance = _rChatInstance
 	if v.Flags.Has(0) {
-		v.Data = ReadBytes(r)
+		_rData, _eData := r.ReadBytes()
+		if _eData != nil {
+			return nil, _eData
+		}
+		v.Data = _rData
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBusinessBotCallbackQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBusinessBotCallbackQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBusinessBotCallbackQuery(r)
 	}
 }
@@ -7188,17 +8548,23 @@ func (v *UpdateStarsRevenueStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStarsRevenueStatus deserializes a UpdateStarsRevenueStatus from a reader using the TL binary protocol.
-func DecodeUpdateStarsRevenueStatus(r io.Reader) (*UpdateStarsRevenueStatus, error) {
+func DecodeUpdateStarsRevenueStatus(r *Reader) (*UpdateStarsRevenueStatus, error) {
 	v := &UpdateStarsRevenueStatus{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	_objStatus, _ := ReadTLObject(r)
+	_objStatus, _errStatus := ReadTLObject(r)
+	if _errStatus != nil {
+		return nil, _errStatus
+	}
 	v.Status = _objStatus.(*StarsRevenueStatus)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStarsRevenueStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStarsRevenueStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStarsRevenueStatus(r)
 	}
 }
@@ -7227,16 +8593,28 @@ func (v *UpdateBotPurchasedPaidMedia) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotPurchasedPaidMedia deserializes a UpdateBotPurchasedPaidMedia from a reader using the TL binary protocol.
-func DecodeUpdateBotPurchasedPaidMedia(r io.Reader) (*UpdateBotPurchasedPaidMedia, error) {
+func DecodeUpdateBotPurchasedPaidMedia(r *Reader) (*UpdateBotPurchasedPaidMedia, error) {
 	v := &UpdateBotPurchasedPaidMedia{}
-	v.UserID = ReadLong(r)
-	v.Payload = ReadString(r)
-	v.Qts = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rPayload, _ePayload := r.ReadString()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotPurchasedPaidMediaTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotPurchasedPaidMediaTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotPurchasedPaidMedia(r)
 	}
 }
@@ -7261,15 +8639,18 @@ func (v *UpdatePaidReactionPrivacy) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePaidReactionPrivacy deserializes a UpdatePaidReactionPrivacy from a reader using the TL binary protocol.
-func DecodeUpdatePaidReactionPrivacy(r io.Reader) (*UpdatePaidReactionPrivacy, error) {
+func DecodeUpdatePaidReactionPrivacy(r *Reader) (*UpdatePaidReactionPrivacy, error) {
 	v := &UpdatePaidReactionPrivacy{}
-	_objPrivate, _ := ReadTLObject(r)
+	_objPrivate, _errPrivate := ReadTLObject(r)
+	if _errPrivate != nil {
+		return nil, _errPrivate
+	}
 	v.Private = _objPrivate.(PaidReactionPrivacyClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePaidReactionPrivacyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePaidReactionPrivacyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePaidReactionPrivacy(r)
 	}
 }
@@ -7294,15 +8675,18 @@ func (v *UpdateSentPhoneCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateSentPhoneCode deserializes a UpdateSentPhoneCode from a reader using the TL binary protocol.
-func DecodeUpdateSentPhoneCode(r io.Reader) (*UpdateSentPhoneCode, error) {
+func DecodeUpdateSentPhoneCode(r *Reader) (*UpdateSentPhoneCode, error) {
 	v := &UpdateSentPhoneCode{}
-	_objSentCode, _ := ReadTLObject(r)
+	_objSentCode, _errSentCode := ReadTLObject(r)
+	if _errSentCode != nil {
+		return nil, _errSentCode
+	}
 	v.SentCode = _objSentCode.(SentCodeClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateSentPhoneCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateSentPhoneCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateSentPhoneCode(r)
 	}
 }
@@ -7333,18 +8717,33 @@ func (v *UpdateGroupCallChainBlocks) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCallChainBlocks deserializes a UpdateGroupCallChainBlocks from a reader using the TL binary protocol.
-func DecodeUpdateGroupCallChainBlocks(r io.Reader) (*UpdateGroupCallChainBlocks, error) {
+func DecodeUpdateGroupCallChainBlocks(r *Reader) (*UpdateGroupCallChainBlocks, error) {
 	v := &UpdateGroupCallChainBlocks{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	v.SubChainID = int32(ReadInt(r))
-	v.Blocks = ReadVectorBytes(r)
-	v.NextOffset = int32(ReadInt(r))
+	_rSubChainID, _eSubChainID := r.ReadInt32()
+	if _eSubChainID != nil {
+		return nil, _eSubChainID
+	}
+	v.SubChainID = _rSubChainID
+	_vvBlocks, _veBlocks := r.ReadVectorBytes()
+	if _veBlocks != nil {
+		return nil, _veBlocks
+	}
+	v.Blocks = _vvBlocks
+	_rNextOffset, _eNextOffset := r.ReadInt32()
+	if _eNextOffset != nil {
+		return nil, _eNextOffset
+	}
+	v.NextOffset = _rNextOffset
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallChainBlocksTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallChainBlocksTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCallChainBlocks(r)
 	}
 }
@@ -7373,17 +8772,28 @@ func (v *UpdateReadMonoForumInbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadMonoForumInbox deserializes a UpdateReadMonoForumInbox from a reader using the TL binary protocol.
-func DecodeUpdateReadMonoForumInbox(r io.Reader) (*UpdateReadMonoForumInbox, error) {
+func DecodeUpdateReadMonoForumInbox(r *Reader) (*UpdateReadMonoForumInbox, error) {
 	v := &UpdateReadMonoForumInbox{}
-	v.ChannelID = ReadLong(r)
-	_objSavedPeerID, _ := ReadTLObject(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+	if _errSavedPeerID != nil {
+		return nil, _errSavedPeerID
+	}
 	v.SavedPeerID = _objSavedPeerID.(PeerClass)
-	v.ReadMaxID = int32(ReadInt(r))
+	_rReadMaxID, _eReadMaxID := r.ReadInt32()
+	if _eReadMaxID != nil {
+		return nil, _eReadMaxID
+	}
+	v.ReadMaxID = _rReadMaxID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadMonoForumInboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadMonoForumInboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadMonoForumInbox(r)
 	}
 }
@@ -7412,17 +8822,28 @@ func (v *UpdateReadMonoForumOutbox) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateReadMonoForumOutbox deserializes a UpdateReadMonoForumOutbox from a reader using the TL binary protocol.
-func DecodeUpdateReadMonoForumOutbox(r io.Reader) (*UpdateReadMonoForumOutbox, error) {
+func DecodeUpdateReadMonoForumOutbox(r *Reader) (*UpdateReadMonoForumOutbox, error) {
 	v := &UpdateReadMonoForumOutbox{}
-	v.ChannelID = ReadLong(r)
-	_objSavedPeerID, _ := ReadTLObject(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+	if _errSavedPeerID != nil {
+		return nil, _errSavedPeerID
+	}
 	v.SavedPeerID = _objSavedPeerID.(PeerClass)
-	v.ReadMaxID = int32(ReadInt(r))
+	_rReadMaxID, _eReadMaxID := r.ReadInt32()
+	if _eReadMaxID != nil {
+		return nil, _eReadMaxID
+	}
+	v.ReadMaxID = _rReadMaxID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateReadMonoForumOutboxTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateReadMonoForumOutboxTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateReadMonoForumOutbox(r)
 	}
 }
@@ -7460,22 +8881,29 @@ func (v *UpdateMonoForumNoPaidException) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateMonoForumNoPaidException deserializes a UpdateMonoForumNoPaidException from a reader using the TL binary protocol.
-func DecodeUpdateMonoForumNoPaidException(r io.Reader) (*UpdateMonoForumNoPaidException, error) {
+func DecodeUpdateMonoForumNoPaidException(r *Reader) (*UpdateMonoForumNoPaidException, error) {
 	v := &UpdateMonoForumNoPaidException{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Exception = v.Flags.Has(0)
-	v.ChannelID = ReadLong(r)
-	_objSavedPeerID, _ := ReadTLObject(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_objSavedPeerID, _errSavedPeerID := ReadTLObject(r)
+	if _errSavedPeerID != nil {
+		return nil, _errSavedPeerID
+	}
 	v.SavedPeerID = _objSavedPeerID.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateMonoForumNoPaidExceptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateMonoForumNoPaidExceptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateMonoForumNoPaidException(r)
 	}
 }
@@ -7502,17 +8930,23 @@ func (v *UpdateGroupCallMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCallMessage deserializes a UpdateGroupCallMessage from a reader using the TL binary protocol.
-func DecodeUpdateGroupCallMessage(r io.Reader) (*UpdateGroupCallMessage, error) {
+func DecodeUpdateGroupCallMessage(r *Reader) (*UpdateGroupCallMessage, error) {
 	v := &UpdateGroupCallMessage{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(*GroupCallMessage)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCallMessage(r)
 	}
 }
@@ -7541,18 +8975,28 @@ func (v *UpdateGroupCallEncryptedMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateGroupCallEncryptedMessage deserializes a UpdateGroupCallEncryptedMessage from a reader using the TL binary protocol.
-func DecodeUpdateGroupCallEncryptedMessage(r io.Reader) (*UpdateGroupCallEncryptedMessage, error) {
+func DecodeUpdateGroupCallEncryptedMessage(r *Reader) (*UpdateGroupCallEncryptedMessage, error) {
 	v := &UpdateGroupCallEncryptedMessage{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	_objFromID, _ := ReadTLObject(r)
+	_objFromID, _errFromID := ReadTLObject(r)
+	if _errFromID != nil {
+		return nil, _errFromID
+	}
 	v.FromID = _objFromID.(PeerClass)
-	v.EncryptedMessage = ReadBytes(r)
+	_rEncryptedMessage, _eEncryptedMessage := r.ReadBytes()
+	if _eEncryptedMessage != nil {
+		return nil, _eEncryptedMessage
+	}
+	v.EncryptedMessage = _rEncryptedMessage
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateGroupCallEncryptedMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateGroupCallEncryptedMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateGroupCallEncryptedMessage(r)
 	}
 }
@@ -7590,22 +9034,29 @@ func (v *UpdatePinnedForumTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedForumTopic deserializes a UpdatePinnedForumTopic from a reader using the TL binary protocol.
-func DecodeUpdatePinnedForumTopic(r io.Reader) (*UpdatePinnedForumTopic, error) {
+func DecodeUpdatePinnedForumTopic(r *Reader) (*UpdatePinnedForumTopic, error) {
 	v := &UpdatePinnedForumTopic{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Pinned = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.TopicID = int32(ReadInt(r))
+	_rTopicID, _eTopicID := r.ReadInt32()
+	if _eTopicID != nil {
+		return nil, _eTopicID
+	}
+	v.TopicID = _rTopicID
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedForumTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedForumTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedForumTopic(r)
 	}
 }
@@ -7644,23 +9095,30 @@ func (v *UpdatePinnedForumTopics) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatePinnedForumTopics deserializes a UpdatePinnedForumTopics from a reader using the TL binary protocol.
-func DecodeUpdatePinnedForumTopics(r io.Reader) (*UpdatePinnedForumTopics, error) {
+func DecodeUpdatePinnedForumTopics(r *Reader) (*UpdatePinnedForumTopics, error) {
 	v := &UpdatePinnedForumTopics{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	if v.Flags.Has(0) {
-		v.Order = ReadVectorInt(r)
+		_vvOrder, _veOrder := r.ReadVectorInt()
+		if _veOrder != nil {
+			return nil, _veOrder
+		}
+		v.Order = _vvOrder
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatePinnedForumTopicsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatePinnedForumTopicsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatePinnedForumTopics(r)
 	}
 }
@@ -7687,16 +9145,23 @@ func (v *UpdateDeleteGroupCallMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateDeleteGroupCallMessages deserializes a UpdateDeleteGroupCallMessages from a reader using the TL binary protocol.
-func DecodeUpdateDeleteGroupCallMessages(r io.Reader) (*UpdateDeleteGroupCallMessages, error) {
+func DecodeUpdateDeleteGroupCallMessages(r *Reader) (*UpdateDeleteGroupCallMessages, error) {
 	v := &UpdateDeleteGroupCallMessages{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
-	v.Messages = ReadVectorInt(r)
+	_vvMessages, _veMessages := r.ReadVectorInt()
+	if _veMessages != nil {
+		return nil, _veMessages
+	}
+	v.Messages = _vvMessages
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateDeleteGroupCallMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateDeleteGroupCallMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateDeleteGroupCallMessages(r)
 	}
 }
@@ -7723,16 +9188,23 @@ func (v *UpdateStarGiftAuctionState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStarGiftAuctionState deserializes a UpdateStarGiftAuctionState from a reader using the TL binary protocol.
-func DecodeUpdateStarGiftAuctionState(r io.Reader) (*UpdateStarGiftAuctionState, error) {
+func DecodeUpdateStarGiftAuctionState(r *Reader) (*UpdateStarGiftAuctionState, error) {
 	v := &UpdateStarGiftAuctionState{}
-	v.GiftID = ReadLong(r)
-	_objState, _ := ReadTLObject(r)
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
+	_objState, _errState := ReadTLObject(r)
+	if _errState != nil {
+		return nil, _errState
+	}
 	v.State = _objState.(StarGiftAuctionStateClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStarGiftAuctionStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStarGiftAuctionStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStarGiftAuctionState(r)
 	}
 }
@@ -7759,16 +9231,23 @@ func (v *UpdateStarGiftAuctionUserState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStarGiftAuctionUserState deserializes a UpdateStarGiftAuctionUserState from a reader using the TL binary protocol.
-func DecodeUpdateStarGiftAuctionUserState(r io.Reader) (*UpdateStarGiftAuctionUserState, error) {
+func DecodeUpdateStarGiftAuctionUserState(r *Reader) (*UpdateStarGiftAuctionUserState, error) {
 	v := &UpdateStarGiftAuctionUserState{}
-	v.GiftID = ReadLong(r)
-	_objUserState, _ := ReadTLObject(r)
+	_rGiftID, _eGiftID := r.ReadInt64()
+	if _eGiftID != nil {
+		return nil, _eGiftID
+	}
+	v.GiftID = _rGiftID
+	_objUserState, _errUserState := ReadTLObject(r)
+	if _errUserState != nil {
+		return nil, _errUserState
+	}
 	v.UserState = _objUserState.(*StarGiftAuctionUserState)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStarGiftAuctionUserStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStarGiftAuctionUserStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStarGiftAuctionUserState(r)
 	}
 }
@@ -7793,15 +9272,18 @@ func (v *UpdateEmojiGameInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateEmojiGameInfo deserializes a UpdateEmojiGameInfo from a reader using the TL binary protocol.
-func DecodeUpdateEmojiGameInfo(r io.Reader) (*UpdateEmojiGameInfo, error) {
+func DecodeUpdateEmojiGameInfo(r *Reader) (*UpdateEmojiGameInfo, error) {
 	v := &UpdateEmojiGameInfo{}
-	_objInfo, _ := ReadTLObject(r)
+	_objInfo, _errInfo := ReadTLObject(r)
+	if _errInfo != nil {
+		return nil, _errInfo
+	}
 	v.Info = _objInfo.(EmojiGameInfoClass)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateEmojiGameInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateEmojiGameInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateEmojiGameInfo(r)
 	}
 }
@@ -7824,13 +9306,13 @@ func (v *UpdateStarGiftCraftFail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateStarGiftCraftFail deserializes a UpdateStarGiftCraftFail from a reader using the TL binary protocol.
-func DecodeUpdateStarGiftCraftFail(r io.Reader) (*UpdateStarGiftCraftFail, error) {
+func DecodeUpdateStarGiftCraftFail(r *Reader) (*UpdateStarGiftCraftFail, error) {
 	v := &UpdateStarGiftCraftFail{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateStarGiftCraftFailTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateStarGiftCraftFailTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateStarGiftCraftFail(r)
 	}
 }
@@ -7861,17 +9343,33 @@ func (v *UpdateChatParticipantRank) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateChatParticipantRank deserializes a UpdateChatParticipantRank from a reader using the TL binary protocol.
-func DecodeUpdateChatParticipantRank(r io.Reader) (*UpdateChatParticipantRank, error) {
+func DecodeUpdateChatParticipantRank(r *Reader) (*UpdateChatParticipantRank, error) {
 	v := &UpdateChatParticipantRank{}
-	v.ChatID = ReadLong(r)
-	v.UserID = ReadLong(r)
-	v.Rank = ReadString(r)
-	v.Version = int32(ReadInt(r))
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rRank, _eRank := r.ReadString()
+	if _eRank != nil {
+		return nil, _eRank
+	}
+	v.Rank = _rRank
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateChatParticipantRankTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateChatParticipantRankTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateChatParticipantRank(r)
 	}
 }
@@ -7900,16 +9398,28 @@ func (v *UpdateManagedBot) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateManagedBot deserializes a UpdateManagedBot from a reader using the TL binary protocol.
-func DecodeUpdateManagedBot(r io.Reader) (*UpdateManagedBot, error) {
+func DecodeUpdateManagedBot(r *Reader) (*UpdateManagedBot, error) {
 	v := &UpdateManagedBot{}
-	v.UserID = ReadLong(r)
-	v.BotID = ReadLong(r)
-	v.Qts = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateManagedBotTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateManagedBotTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateManagedBot(r)
 	}
 }
@@ -7956,34 +9466,55 @@ func (v *UpdateBotGuestChatQuery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateBotGuestChatQuery deserializes a UpdateBotGuestChatQuery from a reader using the TL binary protocol.
-func DecodeUpdateBotGuestChatQuery(r io.Reader) (*UpdateBotGuestChatQuery, error) {
+func DecodeUpdateBotGuestChatQuery(r *Reader) (*UpdateBotGuestChatQuery, error) {
 	v := &UpdateBotGuestChatQuery{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.QueryID = ReadLong(r)
-	_objMessage, _ := ReadTLObject(r)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntReferenceMessages := ReadInt(r)
-		if err := checkVectorCount(_cntReferenceMessages); err != nil {
-			return nil, err
+		_vhdrReferenceMessages, _ehdrReferenceMessages := r.ReadUint32()
+		if _ehdrReferenceMessages != nil {
+			return nil, _ehdrReferenceMessages
+		}
+		_cntReferenceMessages, _ecntReferenceMessages := r.ReadUint32()
+		if _ecntReferenceMessages != nil {
+			return nil, _ecntReferenceMessages
+		}
+		if _errReferenceMessages := checkVectorCount(_cntReferenceMessages); _errReferenceMessages != nil {
+			return nil, _errReferenceMessages
 		}
 		v.ReferenceMessages = make([]MessageClass, _cntReferenceMessages)
 		for _iReferenceMessages := range v.ReferenceMessages {
-			_objReferenceMessages, _ := ReadTLObject(r)
+			_objReferenceMessages, _errReferenceMessages := ReadTLObject(r)
+			if _errReferenceMessages != nil {
+				return nil, _errReferenceMessages
+			}
 			v.ReferenceMessages[_iReferenceMessages] = _objReferenceMessages.(MessageClass)
 		}
+		_ = _vhdrReferenceMessages
 	}
-	v.Qts = int32(ReadInt(r))
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateBotGuestChatQueryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateBotGuestChatQueryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotGuestChatQuery(r)
 	}
 }
@@ -8006,13 +9537,13 @@ func (v *UpdateAiComposeTones) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateAiComposeTones deserializes a UpdateAiComposeTones from a reader using the TL binary protocol.
-func DecodeUpdateAiComposeTones(r io.Reader) (*UpdateAiComposeTones, error) {
+func DecodeUpdateAiComposeTones(r *Reader) (*UpdateAiComposeTones, error) {
 	v := &UpdateAiComposeTones{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateAiComposeTonesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateAiComposeTonesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateAiComposeTones(r)
 	}
 }
@@ -8048,18 +9579,38 @@ func (v *UpdatesState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesState deserializes a UpdatesState from a reader using the TL binary protocol.
-func DecodeUpdatesState(r io.Reader) (*UpdatesState, error) {
+func DecodeUpdatesState(r *Reader) (*UpdatesState, error) {
 	v := &UpdatesState{}
-	v.PTS = int32(ReadInt(r))
-	v.Qts = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	v.Seq = int32(ReadInt(r))
-	v.UnreadCount = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rQts, _eQts := r.ReadInt32()
+	if _eQts != nil {
+		return nil, _eQts
+	}
+	v.Qts = _rQts
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rSeq, _eSeq := r.ReadInt32()
+	if _eSeq != nil {
+		return nil, _eSeq
+	}
+	v.Seq = _rSeq
+	_rUnreadCount, _eUnreadCount := r.ReadInt32()
+	if _eUnreadCount != nil {
+		return nil, _eUnreadCount
+	}
+	v.UnreadCount = _rUnreadCount
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesState(r)
 	}
 }
@@ -8118,15 +9669,23 @@ func (v *UpdatesDifferenceEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesDifferenceEmpty deserializes a UpdatesDifferenceEmpty from a reader using the TL binary protocol.
-func DecodeUpdatesDifferenceEmpty(r io.Reader) (*UpdatesDifferenceEmpty, error) {
+func DecodeUpdatesDifferenceEmpty(r *Reader) (*UpdatesDifferenceEmpty, error) {
 	v := &UpdatesDifferenceEmpty{}
-	v.Date = int32(ReadInt(r))
-	v.Seq = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rSeq, _eSeq := r.ReadInt32()
+	if _eSeq != nil {
+		return nil, _eSeq
+	}
+	v.Seq = _rSeq
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesDifferenceEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesDifferenceEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesDifferenceEmpty(r)
 	}
 }
@@ -8181,65 +9740,118 @@ func (v *UpdatesDifference) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesDifference deserializes a UpdatesDifference from a reader using the TL binary protocol.
-func DecodeUpdatesDifference(r io.Reader) (*UpdatesDifference, error) {
+func DecodeUpdatesDifference(r *Reader) (*UpdatesDifference, error) {
 	v := &UpdatesDifference{}
-	ReadInt(r)
-	_cntNewMessages := ReadInt(r)
-	if err := checkVectorCount(_cntNewMessages); err != nil {
-		return nil, err
+	_vhdrNewMessages, _ehdrNewMessages := r.ReadUint32()
+	if _ehdrNewMessages != nil {
+		return nil, _ehdrNewMessages
+	}
+	_cntNewMessages, _ecntNewMessages := r.ReadUint32()
+	if _ecntNewMessages != nil {
+		return nil, _ecntNewMessages
+	}
+	if _errNewMessages := checkVectorCount(_cntNewMessages); _errNewMessages != nil {
+		return nil, _errNewMessages
 	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
-		_objNewMessages, _ := ReadTLObject(r)
+		_objNewMessages, _errNewMessages := ReadTLObject(r)
+		if _errNewMessages != nil {
+			return nil, _errNewMessages
+		}
 		v.NewMessages[_iNewMessages] = _objNewMessages.(MessageClass)
 	}
-	ReadInt(r)
-	_cntNewEncryptedMessages := ReadInt(r)
-	if err := checkVectorCount(_cntNewEncryptedMessages); err != nil {
-		return nil, err
+	_ = _vhdrNewMessages
+	_vhdrNewEncryptedMessages, _ehdrNewEncryptedMessages := r.ReadUint32()
+	if _ehdrNewEncryptedMessages != nil {
+		return nil, _ehdrNewEncryptedMessages
+	}
+	_cntNewEncryptedMessages, _ecntNewEncryptedMessages := r.ReadUint32()
+	if _ecntNewEncryptedMessages != nil {
+		return nil, _ecntNewEncryptedMessages
+	}
+	if _errNewEncryptedMessages := checkVectorCount(_cntNewEncryptedMessages); _errNewEncryptedMessages != nil {
+		return nil, _errNewEncryptedMessages
 	}
 	v.NewEncryptedMessages = make([]EncryptedMessageClass, _cntNewEncryptedMessages)
 	for _iNewEncryptedMessages := range v.NewEncryptedMessages {
-		_objNewEncryptedMessages, _ := ReadTLObject(r)
+		_objNewEncryptedMessages, _errNewEncryptedMessages := ReadTLObject(r)
+		if _errNewEncryptedMessages != nil {
+			return nil, _errNewEncryptedMessages
+		}
 		v.NewEncryptedMessages[_iNewEncryptedMessages] = _objNewEncryptedMessages.(EncryptedMessageClass)
 	}
-	ReadInt(r)
-	_cntOtherUpdates := ReadInt(r)
-	if err := checkVectorCount(_cntOtherUpdates); err != nil {
-		return nil, err
+	_ = _vhdrNewEncryptedMessages
+	_vhdrOtherUpdates, _ehdrOtherUpdates := r.ReadUint32()
+	if _ehdrOtherUpdates != nil {
+		return nil, _ehdrOtherUpdates
+	}
+	_cntOtherUpdates, _ecntOtherUpdates := r.ReadUint32()
+	if _ecntOtherUpdates != nil {
+		return nil, _ecntOtherUpdates
+	}
+	if _errOtherUpdates := checkVectorCount(_cntOtherUpdates); _errOtherUpdates != nil {
+		return nil, _errOtherUpdates
 	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
-		_objOtherUpdates, _ := ReadTLObject(r)
+		_objOtherUpdates, _errOtherUpdates := ReadTLObject(r)
+		if _errOtherUpdates != nil {
+			return nil, _errOtherUpdates
+		}
 		v.OtherUpdates[_iOtherUpdates] = _objOtherUpdates.(UpdateClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrOtherUpdates
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	_objState, _ := ReadTLObject(r)
+	_ = _vhdrUsers
+	_objState, _errState := ReadTLObject(r)
+	if _errState != nil {
+		return nil, _errState
+	}
 	v.State = _objState.(*UpdatesState)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesDifferenceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesDifferenceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesDifference(r)
 	}
 }
@@ -8294,65 +9906,118 @@ func (v *UpdatesDifferenceSlice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesDifferenceSlice deserializes a UpdatesDifferenceSlice from a reader using the TL binary protocol.
-func DecodeUpdatesDifferenceSlice(r io.Reader) (*UpdatesDifferenceSlice, error) {
+func DecodeUpdatesDifferenceSlice(r *Reader) (*UpdatesDifferenceSlice, error) {
 	v := &UpdatesDifferenceSlice{}
-	ReadInt(r)
-	_cntNewMessages := ReadInt(r)
-	if err := checkVectorCount(_cntNewMessages); err != nil {
-		return nil, err
+	_vhdrNewMessages, _ehdrNewMessages := r.ReadUint32()
+	if _ehdrNewMessages != nil {
+		return nil, _ehdrNewMessages
+	}
+	_cntNewMessages, _ecntNewMessages := r.ReadUint32()
+	if _ecntNewMessages != nil {
+		return nil, _ecntNewMessages
+	}
+	if _errNewMessages := checkVectorCount(_cntNewMessages); _errNewMessages != nil {
+		return nil, _errNewMessages
 	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
-		_objNewMessages, _ := ReadTLObject(r)
+		_objNewMessages, _errNewMessages := ReadTLObject(r)
+		if _errNewMessages != nil {
+			return nil, _errNewMessages
+		}
 		v.NewMessages[_iNewMessages] = _objNewMessages.(MessageClass)
 	}
-	ReadInt(r)
-	_cntNewEncryptedMessages := ReadInt(r)
-	if err := checkVectorCount(_cntNewEncryptedMessages); err != nil {
-		return nil, err
+	_ = _vhdrNewMessages
+	_vhdrNewEncryptedMessages, _ehdrNewEncryptedMessages := r.ReadUint32()
+	if _ehdrNewEncryptedMessages != nil {
+		return nil, _ehdrNewEncryptedMessages
+	}
+	_cntNewEncryptedMessages, _ecntNewEncryptedMessages := r.ReadUint32()
+	if _ecntNewEncryptedMessages != nil {
+		return nil, _ecntNewEncryptedMessages
+	}
+	if _errNewEncryptedMessages := checkVectorCount(_cntNewEncryptedMessages); _errNewEncryptedMessages != nil {
+		return nil, _errNewEncryptedMessages
 	}
 	v.NewEncryptedMessages = make([]EncryptedMessageClass, _cntNewEncryptedMessages)
 	for _iNewEncryptedMessages := range v.NewEncryptedMessages {
-		_objNewEncryptedMessages, _ := ReadTLObject(r)
+		_objNewEncryptedMessages, _errNewEncryptedMessages := ReadTLObject(r)
+		if _errNewEncryptedMessages != nil {
+			return nil, _errNewEncryptedMessages
+		}
 		v.NewEncryptedMessages[_iNewEncryptedMessages] = _objNewEncryptedMessages.(EncryptedMessageClass)
 	}
-	ReadInt(r)
-	_cntOtherUpdates := ReadInt(r)
-	if err := checkVectorCount(_cntOtherUpdates); err != nil {
-		return nil, err
+	_ = _vhdrNewEncryptedMessages
+	_vhdrOtherUpdates, _ehdrOtherUpdates := r.ReadUint32()
+	if _ehdrOtherUpdates != nil {
+		return nil, _ehdrOtherUpdates
+	}
+	_cntOtherUpdates, _ecntOtherUpdates := r.ReadUint32()
+	if _ecntOtherUpdates != nil {
+		return nil, _ecntOtherUpdates
+	}
+	if _errOtherUpdates := checkVectorCount(_cntOtherUpdates); _errOtherUpdates != nil {
+		return nil, _errOtherUpdates
 	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
-		_objOtherUpdates, _ := ReadTLObject(r)
+		_objOtherUpdates, _errOtherUpdates := ReadTLObject(r)
+		if _errOtherUpdates != nil {
+			return nil, _errOtherUpdates
+		}
 		v.OtherUpdates[_iOtherUpdates] = _objOtherUpdates.(UpdateClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrOtherUpdates
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	_objIntermediateState, _ := ReadTLObject(r)
+	_ = _vhdrUsers
+	_objIntermediateState, _errIntermediateState := ReadTLObject(r)
+	if _errIntermediateState != nil {
+		return nil, _errIntermediateState
+	}
 	v.IntermediateState = _objIntermediateState.(*UpdatesState)
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesDifferenceSliceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesDifferenceSliceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesDifferenceSlice(r)
 	}
 }
@@ -8377,14 +10042,18 @@ func (v *UpdatesDifferenceTooLong) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesDifferenceTooLong deserializes a UpdatesDifferenceTooLong from a reader using the TL binary protocol.
-func DecodeUpdatesDifferenceTooLong(r io.Reader) (*UpdatesDifferenceTooLong, error) {
+func DecodeUpdatesDifferenceTooLong(r *Reader) (*UpdatesDifferenceTooLong, error) {
 	v := &UpdatesDifferenceTooLong{}
-	v.PTS = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesDifferenceTooLongTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesDifferenceTooLongTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesDifferenceTooLong(r)
 	}
 }
@@ -8457,13 +10126,13 @@ func (v *UpdatesTooLong) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesTooLong deserializes a UpdatesTooLong from a reader using the TL binary protocol.
-func DecodeUpdatesTooLong(r io.Reader) (*UpdatesTooLong, error) {
+func DecodeUpdatesTooLong(r *Reader) (*UpdatesTooLong, error) {
 	v := &UpdatesTooLong{}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesTooLongTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesTooLongTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesTooLong(r)
 	}
 }
@@ -8560,54 +10229,102 @@ func (v *UpdateShortMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateShortMessage deserializes a UpdateShortMessage from a reader using the TL binary protocol.
-func DecodeUpdateShortMessage(r io.Reader) (*UpdateShortMessage, error) {
+func DecodeUpdateShortMessage(r *Reader) (*UpdateShortMessage, error) {
 	v := &UpdateShortMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Out = v.Flags.Has(1)
 	v.Mentioned = v.Flags.Has(4)
 	v.MediaUnread = v.Flags.Has(5)
 	v.Silent = v.Flags.Has(13)
-	v.ID = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
-	v.Message = ReadString(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(2) {
-		_objFwdFrom, _ := ReadTLObject(r)
+		_objFwdFrom, _errFwdFrom := ReadTLObject(r)
+		if _errFwdFrom != nil {
+			return nil, _errFwdFrom
+		}
 		v.FwdFrom = _objFwdFrom.(*MessageFwdHeader)
 	}
 	if v.Flags.Has(11) {
-		v.ViaBotID = ReadLong(r)
+		_rViaBotID, _eViaBotID := r.ReadInt64()
+		if _eViaBotID != nil {
+			return nil, _eViaBotID
+		}
+		v.ViaBotID = _rViaBotID
 	}
 	if v.Flags.Has(3) {
-		_objReplyTo, _ := ReadTLObject(r)
+		_objReplyTo, _errReplyTo := ReadTLObject(r)
+		if _errReplyTo != nil {
+			return nil, _errReplyTo
+		}
 		v.ReplyTo = _objReplyTo.(MessageReplyHeaderClass)
 	}
 	if v.Flags.Has(7) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(25) {
-		v.TTLPeriod = int32(ReadInt(r))
+		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
+		if _eTTLPeriod != nil {
+			return nil, _eTTLPeriod
+		}
+		v.TTLPeriod = _rTTLPeriod
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateShortMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateShortMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateShortMessage(r)
 	}
 }
@@ -8706,55 +10423,107 @@ func (v *UpdateShortChatMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateShortChatMessage deserializes a UpdateShortChatMessage from a reader using the TL binary protocol.
-func DecodeUpdateShortChatMessage(r io.Reader) (*UpdateShortChatMessage, error) {
+func DecodeUpdateShortChatMessage(r *Reader) (*UpdateShortChatMessage, error) {
 	v := &UpdateShortChatMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Out = v.Flags.Has(1)
 	v.Mentioned = v.Flags.Has(4)
 	v.MediaUnread = v.Flags.Has(5)
 	v.Silent = v.Flags.Has(13)
-	v.ID = int32(ReadInt(r))
-	v.FromID = ReadLong(r)
-	v.ChatID = ReadLong(r)
-	v.Message = ReadString(r)
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rFromID, _eFromID := r.ReadInt64()
+	if _eFromID != nil {
+		return nil, _eFromID
+	}
+	v.FromID = _rFromID
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(2) {
-		_objFwdFrom, _ := ReadTLObject(r)
+		_objFwdFrom, _errFwdFrom := ReadTLObject(r)
+		if _errFwdFrom != nil {
+			return nil, _errFwdFrom
+		}
 		v.FwdFrom = _objFwdFrom.(*MessageFwdHeader)
 	}
 	if v.Flags.Has(11) {
-		v.ViaBotID = ReadLong(r)
+		_rViaBotID, _eViaBotID := r.ReadInt64()
+		if _eViaBotID != nil {
+			return nil, _eViaBotID
+		}
+		v.ViaBotID = _rViaBotID
 	}
 	if v.Flags.Has(3) {
-		_objReplyTo, _ := ReadTLObject(r)
+		_objReplyTo, _errReplyTo := ReadTLObject(r)
+		if _errReplyTo != nil {
+			return nil, _errReplyTo
+		}
 		v.ReplyTo = _objReplyTo.(MessageReplyHeaderClass)
 	}
 	if v.Flags.Has(7) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(25) {
-		v.TTLPeriod = int32(ReadInt(r))
+		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
+		if _eTTLPeriod != nil {
+			return nil, _eTTLPeriod
+		}
+		v.TTLPeriod = _rTTLPeriod
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateShortChatMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateShortChatMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateShortChatMessage(r)
 	}
 }
@@ -8781,16 +10550,23 @@ func (v *UpdateShort) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateShort deserializes a UpdateShort from a reader using the TL binary protocol.
-func DecodeUpdateShort(r io.Reader) (*UpdateShort, error) {
+func DecodeUpdateShort(r *Reader) (*UpdateShort, error) {
 	v := &UpdateShort{}
-	_objUpdate, _ := ReadTLObject(r)
+	_objUpdate, _errUpdate := ReadTLObject(r)
+	if _errUpdate != nil {
+		return nil, _errUpdate
+	}
 	v.Update = _objUpdate.(UpdateClass)
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateShortTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateShortTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateShort(r)
 	}
 }
@@ -8837,46 +10613,88 @@ func (v *UpdatesCombined) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesCombined deserializes a UpdatesCombined from a reader using the TL binary protocol.
-func DecodeUpdatesCombined(r io.Reader) (*UpdatesCombined, error) {
+func DecodeUpdatesCombined(r *Reader) (*UpdatesCombined, error) {
 	v := &UpdatesCombined{}
-	ReadInt(r)
-	_cntUpdates := ReadInt(r)
-	if err := checkVectorCount(_cntUpdates); err != nil {
-		return nil, err
+	_vhdrUpdates, _ehdrUpdates := r.ReadUint32()
+	if _ehdrUpdates != nil {
+		return nil, _ehdrUpdates
+	}
+	_cntUpdates, _ecntUpdates := r.ReadUint32()
+	if _ecntUpdates != nil {
+		return nil, _ecntUpdates
+	}
+	if _errUpdates := checkVectorCount(_cntUpdates); _errUpdates != nil {
+		return nil, _errUpdates
 	}
 	v.Updates = make([]UpdateClass, _cntUpdates)
 	for _iUpdates := range v.Updates {
-		_objUpdates, _ := ReadTLObject(r)
+		_objUpdates, _errUpdates := ReadTLObject(r)
+		if _errUpdates != nil {
+			return nil, _errUpdates
+		}
 		v.Updates[_iUpdates] = _objUpdates.(UpdateClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrUpdates
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUsers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	v.Date = int32(ReadInt(r))
-	v.SeqStart = int32(ReadInt(r))
-	v.Seq = int32(ReadInt(r))
+	_ = _vhdrChats
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rSeqStart, _eSeqStart := r.ReadInt32()
+	if _eSeqStart != nil {
+		return nil, _eSeqStart
+	}
+	v.SeqStart = _rSeqStart
+	_rSeq, _eSeq := r.ReadInt32()
+	if _eSeq != nil {
+		return nil, _eSeq
+	}
+	v.Seq = _rSeq
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesCombinedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesCombinedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesCombined(r)
 	}
 }
@@ -8921,45 +10739,83 @@ func (v *Updates) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdates deserializes a Updates from a reader using the TL binary protocol.
-func DecodeUpdates(r io.Reader) (*Updates, error) {
+func DecodeUpdates(r *Reader) (*Updates, error) {
 	v := &Updates{}
-	ReadInt(r)
-	_cntUpdates := ReadInt(r)
-	if err := checkVectorCount(_cntUpdates); err != nil {
-		return nil, err
+	_vhdrUpdates, _ehdrUpdates := r.ReadUint32()
+	if _ehdrUpdates != nil {
+		return nil, _ehdrUpdates
+	}
+	_cntUpdates, _ecntUpdates := r.ReadUint32()
+	if _ecntUpdates != nil {
+		return nil, _ecntUpdates
+	}
+	if _errUpdates := checkVectorCount(_cntUpdates); _errUpdates != nil {
+		return nil, _errUpdates
 	}
 	v.Updates = make([]UpdateClass, _cntUpdates)
 	for _iUpdates := range v.Updates {
-		_objUpdates, _ := ReadTLObject(r)
+		_objUpdates, _errUpdates := ReadTLObject(r)
+		if _errUpdates != nil {
+			return nil, _errUpdates
+		}
 		v.Updates[_iUpdates] = _objUpdates.(UpdateClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrUpdates
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUsers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	v.Date = int32(ReadInt(r))
-	v.Seq = int32(ReadInt(r))
+	_ = _vhdrChats
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rSeq, _eSeq := r.ReadInt32()
+	if _eSeq != nil {
+		return nil, _eSeq
+	}
+	v.Seq = _rSeq
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdates(r)
 	}
 }
@@ -9026,42 +10882,75 @@ func (v *UpdateShortSentMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdateShortSentMessage deserializes a UpdateShortSentMessage from a reader using the TL binary protocol.
-func DecodeUpdateShortSentMessage(r io.Reader) (*UpdateShortSentMessage, error) {
+func DecodeUpdateShortSentMessage(r *Reader) (*UpdateShortSentMessage, error) {
 	v := &UpdateShortSentMessage{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Out = v.Flags.Has(1)
-	v.ID = int32(ReadInt(r))
-	v.PTS = int32(ReadInt(r))
-	v.PTSCount = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(9) {
-		_objMedia, _ := ReadTLObject(r)
+		_objMedia, _errMedia := ReadTLObject(r)
+		if _errMedia != nil {
+			return nil, _errMedia
+		}
 		v.Media = _objMedia.(MessageMediaClass)
 	}
 	if v.Flags.Has(7) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(25) {
-		v.TTLPeriod = int32(ReadInt(r))
+		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
+		if _eTTLPeriod != nil {
+			return nil, _eTTLPeriod
+		}
+		v.TTLPeriod = _rTTLPeriod
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdateShortSentMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdateShortSentMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateShortSentMessage(r)
 	}
 }
@@ -9130,23 +11019,31 @@ func (v *UpdatesChannelDifferenceEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesChannelDifferenceEmpty deserializes a UpdatesChannelDifferenceEmpty from a reader using the TL binary protocol.
-func DecodeUpdatesChannelDifferenceEmpty(r io.Reader) (*UpdatesChannelDifferenceEmpty, error) {
+func DecodeUpdatesChannelDifferenceEmpty(r *Reader) (*UpdatesChannelDifferenceEmpty, error) {
 	v := &UpdatesChannelDifferenceEmpty{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Final = v.Flags.Has(0)
-	v.PTS = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
 	if v.Flags.Has(1) {
-		v.Timeout = int32(ReadInt(r))
+		_rTimeout, _eTimeout := r.ReadInt32()
+		if _eTimeout != nil {
+			return nil, _eTimeout
+		}
+		v.Timeout = _rTimeout
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesChannelDifferenceEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesChannelDifferenceEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesChannelDifferenceEmpty(r)
 	}
 }
@@ -9207,54 +11104,91 @@ func (v *UpdatesChannelDifferenceTooLong) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesChannelDifferenceTooLong deserializes a UpdatesChannelDifferenceTooLong from a reader using the TL binary protocol.
-func DecodeUpdatesChannelDifferenceTooLong(r io.Reader) (*UpdatesChannelDifferenceTooLong, error) {
+func DecodeUpdatesChannelDifferenceTooLong(r *Reader) (*UpdatesChannelDifferenceTooLong, error) {
 	v := &UpdatesChannelDifferenceTooLong{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Final = v.Flags.Has(0)
 	if v.Flags.Has(1) {
-		v.Timeout = int32(ReadInt(r))
+		_rTimeout, _eTimeout := r.ReadInt32()
+		if _eTimeout != nil {
+			return nil, _eTimeout
+		}
+		v.Timeout = _rTimeout
 	}
-	_objDialog, _ := ReadTLObject(r)
+	_objDialog, _errDialog := ReadTLObject(r)
+	if _errDialog != nil {
+		return nil, _errDialog
+	}
 	v.Dialog = _objDialog.(DialogClass)
-	ReadInt(r)
-	_cntMessages := ReadInt(r)
-	if err := checkVectorCount(_cntMessages); err != nil {
-		return nil, err
+	_vhdrMessages, _ehdrMessages := r.ReadUint32()
+	if _ehdrMessages != nil {
+		return nil, _ehdrMessages
+	}
+	_cntMessages, _ecntMessages := r.ReadUint32()
+	if _ecntMessages != nil {
+		return nil, _ecntMessages
+	}
+	if _errMessages := checkVectorCount(_cntMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	v.Messages = make([]MessageClass, _cntMessages)
 	for _iMessages := range v.Messages {
-		_objMessages, _ := ReadTLObject(r)
+		_objMessages, _errMessages := ReadTLObject(r)
+		if _errMessages != nil {
+			return nil, _errMessages
+		}
 		v.Messages[_iMessages] = _objMessages.(MessageClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrMessages
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesChannelDifferenceTooLongTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesChannelDifferenceTooLongTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesChannelDifferenceTooLong(r)
 	}
 }
@@ -9321,63 +11255,111 @@ func (v *UpdatesChannelDifference) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUpdatesChannelDifference deserializes a UpdatesChannelDifference from a reader using the TL binary protocol.
-func DecodeUpdatesChannelDifference(r io.Reader) (*UpdatesChannelDifference, error) {
+func DecodeUpdatesChannelDifference(r *Reader) (*UpdatesChannelDifference, error) {
 	v := &UpdatesChannelDifference{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Final = v.Flags.Has(0)
-	v.PTS = int32(ReadInt(r))
-	if v.Flags.Has(1) {
-		v.Timeout = int32(ReadInt(r))
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
 	}
-	ReadInt(r)
-	_cntNewMessages := ReadInt(r)
-	if err := checkVectorCount(_cntNewMessages); err != nil {
-		return nil, err
+	v.PTS = _rPTS
+	if v.Flags.Has(1) {
+		_rTimeout, _eTimeout := r.ReadInt32()
+		if _eTimeout != nil {
+			return nil, _eTimeout
+		}
+		v.Timeout = _rTimeout
+	}
+	_vhdrNewMessages, _ehdrNewMessages := r.ReadUint32()
+	if _ehdrNewMessages != nil {
+		return nil, _ehdrNewMessages
+	}
+	_cntNewMessages, _ecntNewMessages := r.ReadUint32()
+	if _ecntNewMessages != nil {
+		return nil, _ecntNewMessages
+	}
+	if _errNewMessages := checkVectorCount(_cntNewMessages); _errNewMessages != nil {
+		return nil, _errNewMessages
 	}
 	v.NewMessages = make([]MessageClass, _cntNewMessages)
 	for _iNewMessages := range v.NewMessages {
-		_objNewMessages, _ := ReadTLObject(r)
+		_objNewMessages, _errNewMessages := ReadTLObject(r)
+		if _errNewMessages != nil {
+			return nil, _errNewMessages
+		}
 		v.NewMessages[_iNewMessages] = _objNewMessages.(MessageClass)
 	}
-	ReadInt(r)
-	_cntOtherUpdates := ReadInt(r)
-	if err := checkVectorCount(_cntOtherUpdates); err != nil {
-		return nil, err
+	_ = _vhdrNewMessages
+	_vhdrOtherUpdates, _ehdrOtherUpdates := r.ReadUint32()
+	if _ehdrOtherUpdates != nil {
+		return nil, _ehdrOtherUpdates
+	}
+	_cntOtherUpdates, _ecntOtherUpdates := r.ReadUint32()
+	if _ecntOtherUpdates != nil {
+		return nil, _ecntOtherUpdates
+	}
+	if _errOtherUpdates := checkVectorCount(_cntOtherUpdates); _errOtherUpdates != nil {
+		return nil, _errOtherUpdates
 	}
 	v.OtherUpdates = make([]UpdateClass, _cntOtherUpdates)
 	for _iOtherUpdates := range v.OtherUpdates {
-		_objOtherUpdates, _ := ReadTLObject(r)
+		_objOtherUpdates, _errOtherUpdates := ReadTLObject(r)
+		if _errOtherUpdates != nil {
+			return nil, _errOtherUpdates
+		}
 		v.OtherUpdates[_iOtherUpdates] = _objOtherUpdates.(UpdateClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrOtherUpdates
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[UpdatesChannelDifferenceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UpdatesChannelDifferenceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdatesChannelDifference(r)
 	}
 }
@@ -9415,26 +11397,48 @@ func (v *LangPackDifference) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeLangPackDifference deserializes a LangPackDifference from a reader using the TL binary protocol.
-func DecodeLangPackDifference(r io.Reader) (*LangPackDifference, error) {
+func DecodeLangPackDifference(r *Reader) (*LangPackDifference, error) {
 	v := &LangPackDifference{}
-	v.LangCode = ReadString(r)
-	v.FromVersion = int32(ReadInt(r))
-	v.Version = int32(ReadInt(r))
-	ReadInt(r)
-	_cntStrings := ReadInt(r)
-	if err := checkVectorCount(_cntStrings); err != nil {
-		return nil, err
+	_rLangCode, _eLangCode := r.ReadString()
+	if _eLangCode != nil {
+		return nil, _eLangCode
+	}
+	v.LangCode = _rLangCode
+	_rFromVersion, _eFromVersion := r.ReadInt32()
+	if _eFromVersion != nil {
+		return nil, _eFromVersion
+	}
+	v.FromVersion = _rFromVersion
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
+	_vhdrStrings, _ehdrStrings := r.ReadUint32()
+	if _ehdrStrings != nil {
+		return nil, _ehdrStrings
+	}
+	_cntStrings, _ecntStrings := r.ReadUint32()
+	if _ecntStrings != nil {
+		return nil, _ecntStrings
+	}
+	if _errStrings := checkVectorCount(_cntStrings); _errStrings != nil {
+		return nil, _errStrings
 	}
 	v.Strings = make([]LangPackStringClass, _cntStrings)
 	for _iStrings := range v.Strings {
-		_objStrings, _ := ReadTLObject(r)
+		_objStrings, _errStrings := ReadTLObject(r)
+		if _errStrings != nil {
+			return nil, _errStrings
+		}
 		v.Strings[_iStrings] = _objStrings.(LangPackStringClass)
 	}
+	_ = _vhdrStrings
 	return v, nil
 }
 
 func init() {
-	Registry[LangPackDifferenceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[LangPackDifferenceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeLangPackDifference(r)
 	}
 }

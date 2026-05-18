@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // StatsGetBroadcastStatsTypeID is the constructor ID for the RPC function stats.getBroadcastStats.
@@ -50,7 +49,7 @@ func (v *StatsGetBroadcastStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetBroadcastStats(ctx context.Context, req *StatsGetBroadcastStatsRequest) (*StatsBroadcastStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -106,7 +105,7 @@ func (v *StatsLoadAsyncGraphRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsLoadAsyncGraph(ctx context.Context, req *StatsLoadAsyncGraphRequest) (StatsGraphClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -159,7 +158,7 @@ func (v *StatsGetMegagroupStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetMegagroupStats(ctx context.Context, req *StatsGetMegagroupStatsRequest) (*StatsMegagroupStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -207,7 +206,7 @@ func (v *StatsGetMessagePublicForwardsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetMessagePublicForwards(ctx context.Context, req *StatsGetMessagePublicForwardsRequest) (*StatsPublicForwards, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -262,7 +261,7 @@ func (v *StatsGetMessageStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetMessageStats(ctx context.Context, req *StatsGetMessageStatsRequest) (*StatsMessageStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -317,7 +316,7 @@ func (v *StatsGetStoryStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetStoryStats(ctx context.Context, req *StatsGetStoryStatsRequest) (*StatsStoryStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -365,7 +364,7 @@ func (v *StatsGetStoryPublicForwardsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetStoryPublicForwards(ctx context.Context, req *StatsGetStoryPublicForwardsRequest) (*StatsPublicForwards, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -420,7 +419,7 @@ func (v *StatsGetPollStatsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StatsGetPollStats(ctx context.Context, req *StatsGetPollStatsRequest) (*StatsPollStats, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

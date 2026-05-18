@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -157,15 +155,23 @@ func (v *MessageEntityUnknown) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityUnknown deserializes a MessageEntityUnknown from a reader using the TL binary protocol.
-func DecodeMessageEntityUnknown(r io.Reader) (*MessageEntityUnknown, error) {
+func DecodeMessageEntityUnknown(r *tg.Reader) (*MessageEntityUnknown, error) {
 	v := &MessageEntityUnknown{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityUnknownTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityUnknownTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityUnknown(r)
 	}
 }
@@ -190,15 +196,23 @@ func (v *MessageEntityMention) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityMention deserializes a MessageEntityMention from a reader using the TL binary protocol.
-func DecodeMessageEntityMention(r io.Reader) (*MessageEntityMention, error) {
+func DecodeMessageEntityMention(r *tg.Reader) (*MessageEntityMention, error) {
 	v := &MessageEntityMention{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityMentionTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityMentionTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityMention(r)
 	}
 }
@@ -223,15 +237,23 @@ func (v *MessageEntityHashtag) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityHashtag deserializes a MessageEntityHashtag from a reader using the TL binary protocol.
-func DecodeMessageEntityHashtag(r io.Reader) (*MessageEntityHashtag, error) {
+func DecodeMessageEntityHashtag(r *tg.Reader) (*MessageEntityHashtag, error) {
 	v := &MessageEntityHashtag{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityHashtagTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityHashtagTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityHashtag(r)
 	}
 }
@@ -256,15 +278,23 @@ func (v *MessageEntityBotCommand) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityBotCommand deserializes a MessageEntityBotCommand from a reader using the TL binary protocol.
-func DecodeMessageEntityBotCommand(r io.Reader) (*MessageEntityBotCommand, error) {
+func DecodeMessageEntityBotCommand(r *tg.Reader) (*MessageEntityBotCommand, error) {
 	v := &MessageEntityBotCommand{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityBotCommandTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityBotCommandTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityBotCommand(r)
 	}
 }
@@ -289,15 +319,23 @@ func (v *MessageEntityURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityURL deserializes a MessageEntityURL from a reader using the TL binary protocol.
-func DecodeMessageEntityURL(r io.Reader) (*MessageEntityURL, error) {
+func DecodeMessageEntityURL(r *tg.Reader) (*MessageEntityURL, error) {
 	v := &MessageEntityURL{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityURLTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityURLTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityURL(r)
 	}
 }
@@ -322,15 +360,23 @@ func (v *MessageEntityEmail) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityEmail deserializes a MessageEntityEmail from a reader using the TL binary protocol.
-func DecodeMessageEntityEmail(r io.Reader) (*MessageEntityEmail, error) {
+func DecodeMessageEntityEmail(r *tg.Reader) (*MessageEntityEmail, error) {
 	v := &MessageEntityEmail{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityEmailTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityEmailTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityEmail(r)
 	}
 }
@@ -355,15 +401,23 @@ func (v *MessageEntityBold) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityBold deserializes a MessageEntityBold from a reader using the TL binary protocol.
-func DecodeMessageEntityBold(r io.Reader) (*MessageEntityBold, error) {
+func DecodeMessageEntityBold(r *tg.Reader) (*MessageEntityBold, error) {
 	v := &MessageEntityBold{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityBoldTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityBoldTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityBold(r)
 	}
 }
@@ -388,15 +442,23 @@ func (v *MessageEntityItalic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityItalic deserializes a MessageEntityItalic from a reader using the TL binary protocol.
-func DecodeMessageEntityItalic(r io.Reader) (*MessageEntityItalic, error) {
+func DecodeMessageEntityItalic(r *tg.Reader) (*MessageEntityItalic, error) {
 	v := &MessageEntityItalic{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityItalicTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityItalicTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityItalic(r)
 	}
 }
@@ -421,15 +483,23 @@ func (v *MessageEntityCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityCode deserializes a MessageEntityCode from a reader using the TL binary protocol.
-func DecodeMessageEntityCode(r io.Reader) (*MessageEntityCode, error) {
+func DecodeMessageEntityCode(r *tg.Reader) (*MessageEntityCode, error) {
 	v := &MessageEntityCode{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityCodeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityCodeTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityCode(r)
 	}
 }
@@ -456,16 +526,28 @@ func (v *MessageEntityPre) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityPre deserializes a MessageEntityPre from a reader using the TL binary protocol.
-func DecodeMessageEntityPre(r io.Reader) (*MessageEntityPre, error) {
+func DecodeMessageEntityPre(r *tg.Reader) (*MessageEntityPre, error) {
 	v := &MessageEntityPre{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
-	v.Language = tg.ReadString(r)
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
+	_rLanguage, _eLanguage := r.ReadString()
+	if _eLanguage != nil {
+		return nil, _eLanguage
+	}
+	v.Language = _rLanguage
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityPreTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityPreTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityPre(r)
 	}
 }
@@ -492,16 +574,28 @@ func (v *MessageEntityTextURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityTextURL deserializes a MessageEntityTextURL from a reader using the TL binary protocol.
-func DecodeMessageEntityTextURL(r io.Reader) (*MessageEntityTextURL, error) {
+func DecodeMessageEntityTextURL(r *tg.Reader) (*MessageEntityTextURL, error) {
 	v := &MessageEntityTextURL{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
-	v.URL = tg.ReadString(r)
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityTextURLTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityTextURLTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityTextURL(r)
 	}
 }
@@ -528,16 +622,28 @@ func (v *MessageEntityMentionName) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityMentionName deserializes a MessageEntityMentionName from a reader using the TL binary protocol.
-func DecodeMessageEntityMentionName(r io.Reader) (*MessageEntityMentionName, error) {
+func DecodeMessageEntityMentionName(r *tg.Reader) (*MessageEntityMentionName, error) {
 	v := &MessageEntityMentionName{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
-	v.UserID = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
+	_rUserID, _eUserID := r.ReadInt32()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityMentionNameTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityMentionNameTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityMentionName(r)
 	}
 }
@@ -562,15 +668,23 @@ func (v *MessageEntityPhone) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityPhone deserializes a MessageEntityPhone from a reader using the TL binary protocol.
-func DecodeMessageEntityPhone(r io.Reader) (*MessageEntityPhone, error) {
+func DecodeMessageEntityPhone(r *tg.Reader) (*MessageEntityPhone, error) {
 	v := &MessageEntityPhone{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityPhoneTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityPhoneTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityPhone(r)
 	}
 }
@@ -595,15 +709,23 @@ func (v *MessageEntityCashtag) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityCashtag deserializes a MessageEntityCashtag from a reader using the TL binary protocol.
-func DecodeMessageEntityCashtag(r io.Reader) (*MessageEntityCashtag, error) {
+func DecodeMessageEntityCashtag(r *tg.Reader) (*MessageEntityCashtag, error) {
 	v := &MessageEntityCashtag{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityCashtagTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityCashtagTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityCashtag(r)
 	}
 }
@@ -628,15 +750,23 @@ func (v *MessageEntityBankCard) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityBankCard deserializes a MessageEntityBankCard from a reader using the TL binary protocol.
-func DecodeMessageEntityBankCard(r io.Reader) (*MessageEntityBankCard, error) {
+func DecodeMessageEntityBankCard(r *tg.Reader) (*MessageEntityBankCard, error) {
 	v := &MessageEntityBankCard{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityBankCardTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityBankCardTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityBankCard(r)
 	}
 }
@@ -661,15 +791,23 @@ func (v *MessageEntityUnderline) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityUnderline deserializes a MessageEntityUnderline from a reader using the TL binary protocol.
-func DecodeMessageEntityUnderline(r io.Reader) (*MessageEntityUnderline, error) {
+func DecodeMessageEntityUnderline(r *tg.Reader) (*MessageEntityUnderline, error) {
 	v := &MessageEntityUnderline{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityUnderlineTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityUnderlineTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityUnderline(r)
 	}
 }
@@ -694,15 +832,23 @@ func (v *MessageEntityStrike) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityStrike deserializes a MessageEntityStrike from a reader using the TL binary protocol.
-func DecodeMessageEntityStrike(r io.Reader) (*MessageEntityStrike, error) {
+func DecodeMessageEntityStrike(r *tg.Reader) (*MessageEntityStrike, error) {
 	v := &MessageEntityStrike{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityStrikeTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityStrikeTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityStrike(r)
 	}
 }
@@ -727,15 +873,23 @@ func (v *MessageEntityBlockquote) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityBlockquote deserializes a MessageEntityBlockquote from a reader using the TL binary protocol.
-func DecodeMessageEntityBlockquote(r io.Reader) (*MessageEntityBlockquote, error) {
+func DecodeMessageEntityBlockquote(r *tg.Reader) (*MessageEntityBlockquote, error) {
 	v := &MessageEntityBlockquote{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityBlockquoteTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityBlockquoteTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityBlockquote(r)
 	}
 }
@@ -760,15 +914,23 @@ func (v *MessageEntitySpoiler) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntitySpoiler deserializes a MessageEntitySpoiler from a reader using the TL binary protocol.
-func DecodeMessageEntitySpoiler(r io.Reader) (*MessageEntitySpoiler, error) {
+func DecodeMessageEntitySpoiler(r *tg.Reader) (*MessageEntitySpoiler, error) {
 	v := &MessageEntitySpoiler{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntitySpoilerTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntitySpoilerTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntitySpoiler(r)
 	}
 }
@@ -795,16 +957,28 @@ func (v *MessageEntityCustomEmoji) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMessageEntityCustomEmoji deserializes a MessageEntityCustomEmoji from a reader using the TL binary protocol.
-func DecodeMessageEntityCustomEmoji(r io.Reader) (*MessageEntityCustomEmoji, error) {
+func DecodeMessageEntityCustomEmoji(r *tg.Reader) (*MessageEntityCustomEmoji, error) {
 	v := &MessageEntityCustomEmoji{}
-	v.Offset = int32(tg.ReadInt(r))
-	v.Length = int32(tg.ReadInt(r))
-	v.DocumentID = tg.ReadLong(r)
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
+	_rDocumentID, _eDocumentID := r.ReadInt64()
+	if _eDocumentID != nil {
+		return nil, _eDocumentID
+	}
+	v.DocumentID = _rDocumentID
 	return v, nil
 }
 
 func init() {
-	Registry[MessageEntityCustomEmojiTypeID] = func(r io.Reader) (tg.TLObject, error) {
+	Registry[MessageEntityCustomEmojiTypeID] = func(r *tg.Reader) (tg.TLObject, error) {
 		return DecodeMessageEntityCustomEmoji(r)
 	}
 }

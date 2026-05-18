@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // FolderTypeID is the constructor ID for TL type folder.
@@ -58,27 +57,38 @@ func (v *Folder) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFolder deserializes a Folder from a reader using the TL binary protocol.
-func DecodeFolder(r io.Reader) (*Folder, error) {
+func DecodeFolder(r *Reader) (*Folder, error) {
 	v := &Folder{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.AutofillNewBroadcasts = v.Flags.Has(0)
 	v.AutofillPublicGroups = v.Flags.Has(1)
 	v.AutofillNewCorrespondents = v.Flags.Has(2)
-	v.ID = int32(ReadInt(r))
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(3) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(ChatPhotoClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[FolderTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[FolderTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeFolder(r)
 	}
 }
@@ -138,30 +148,48 @@ func (v *ExportedChatlistInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeExportedChatlistInvite deserializes a ExportedChatlistInvite from a reader using the TL binary protocol.
-func DecodeExportedChatlistInvite(r io.Reader) (*ExportedChatlistInvite, error) {
+func DecodeExportedChatlistInvite(r *Reader) (*ExportedChatlistInvite, error) {
 	v := &ExportedChatlistInvite{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Title = ReadString(r)
-	v.URL = ReadString(r)
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(PeerClass)
 	}
+	_ = _vhdrPeers
 	return v, nil
 }
 
 func init() {
-	Registry[ExportedChatlistInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ExportedChatlistInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeExportedChatlistInvite(r)
 	}
 }
@@ -188,17 +216,23 @@ func (v *ChatlistsExportedChatlistInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatlistsExportedChatlistInvite deserializes a ChatlistsExportedChatlistInvite from a reader using the TL binary protocol.
-func DecodeChatlistsExportedChatlistInvite(r io.Reader) (*ChatlistsExportedChatlistInvite, error) {
+func DecodeChatlistsExportedChatlistInvite(r *Reader) (*ChatlistsExportedChatlistInvite, error) {
 	v := &ChatlistsExportedChatlistInvite{}
-	_objFilter, _ := ReadTLObject(r)
+	_objFilter, _errFilter := ReadTLObject(r)
+	if _errFilter != nil {
+		return nil, _errFilter
+	}
 	v.Filter = _objFilter.(DialogFilterClass)
-	_objInvite, _ := ReadTLObject(r)
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatlistInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChatlistsExportedChatlistInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatlistsExportedChatlistInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatlistsExportedChatlistInvite(r)
 	}
 }
@@ -242,43 +276,73 @@ func (v *ChatlistsExportedInvites) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatlistsExportedInvites deserializes a ChatlistsExportedInvites from a reader using the TL binary protocol.
-func DecodeChatlistsExportedInvites(r io.Reader) (*ChatlistsExportedInvites, error) {
+func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error) {
 	v := &ChatlistsExportedInvites{}
-	ReadInt(r)
-	_cntInvites := ReadInt(r)
-	if err := checkVectorCount(_cntInvites); err != nil {
-		return nil, err
+	_vhdrInvites, _ehdrInvites := r.ReadUint32()
+	if _ehdrInvites != nil {
+		return nil, _ehdrInvites
+	}
+	_cntInvites, _ecntInvites := r.ReadUint32()
+	if _ecntInvites != nil {
+		return nil, _ecntInvites
+	}
+	if _errInvites := checkVectorCount(_cntInvites); _errInvites != nil {
+		return nil, _errInvites
 	}
 	v.Invites = make([]ExportedChatlistInviteClass, _cntInvites)
 	for _iInvites := range v.Invites {
-		_objInvites, _ := ReadTLObject(r)
+		_objInvites, _errInvites := ReadTLObject(r)
+		if _errInvites != nil {
+			return nil, _errInvites
+		}
 		v.Invites[_iInvites] = _objInvites.(ExportedChatlistInviteClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrInvites
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChatlistsExportedInvitesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatlistsExportedInvitesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatlistsExportedInvites(r)
 	}
 }
@@ -347,54 +411,98 @@ func (v *ChatlistsChatlistInviteAlready) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatlistsChatlistInviteAlready deserializes a ChatlistsChatlistInviteAlready from a reader using the TL binary protocol.
-func DecodeChatlistsChatlistInviteAlready(r io.Reader) (*ChatlistsChatlistInviteAlready, error) {
+func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAlready, error) {
 	v := &ChatlistsChatlistInviteAlready{}
-	v.FilterID = int32(ReadInt(r))
-	ReadInt(r)
-	_cntMissingPeers := ReadInt(r)
-	if err := checkVectorCount(_cntMissingPeers); err != nil {
-		return nil, err
+	_rFilterID, _eFilterID := r.ReadInt32()
+	if _eFilterID != nil {
+		return nil, _eFilterID
+	}
+	v.FilterID = _rFilterID
+	_vhdrMissingPeers, _ehdrMissingPeers := r.ReadUint32()
+	if _ehdrMissingPeers != nil {
+		return nil, _ehdrMissingPeers
+	}
+	_cntMissingPeers, _ecntMissingPeers := r.ReadUint32()
+	if _ecntMissingPeers != nil {
+		return nil, _ecntMissingPeers
+	}
+	if _errMissingPeers := checkVectorCount(_cntMissingPeers); _errMissingPeers != nil {
+		return nil, _errMissingPeers
 	}
 	v.MissingPeers = make([]PeerClass, _cntMissingPeers)
 	for _iMissingPeers := range v.MissingPeers {
-		_objMissingPeers, _ := ReadTLObject(r)
+		_objMissingPeers, _errMissingPeers := ReadTLObject(r)
+		if _errMissingPeers != nil {
+			return nil, _errMissingPeers
+		}
 		v.MissingPeers[_iMissingPeers] = _objMissingPeers.(PeerClass)
 	}
-	ReadInt(r)
-	_cntAlreadyPeers := ReadInt(r)
-	if err := checkVectorCount(_cntAlreadyPeers); err != nil {
-		return nil, err
+	_ = _vhdrMissingPeers
+	_vhdrAlreadyPeers, _ehdrAlreadyPeers := r.ReadUint32()
+	if _ehdrAlreadyPeers != nil {
+		return nil, _ehdrAlreadyPeers
+	}
+	_cntAlreadyPeers, _ecntAlreadyPeers := r.ReadUint32()
+	if _ecntAlreadyPeers != nil {
+		return nil, _ecntAlreadyPeers
+	}
+	if _errAlreadyPeers := checkVectorCount(_cntAlreadyPeers); _errAlreadyPeers != nil {
+		return nil, _errAlreadyPeers
 	}
 	v.AlreadyPeers = make([]PeerClass, _cntAlreadyPeers)
 	for _iAlreadyPeers := range v.AlreadyPeers {
-		_objAlreadyPeers, _ := ReadTLObject(r)
+		_objAlreadyPeers, _errAlreadyPeers := ReadTLObject(r)
+		if _errAlreadyPeers != nil {
+			return nil, _errAlreadyPeers
+		}
 		v.AlreadyPeers[_iAlreadyPeers] = _objAlreadyPeers.(PeerClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrAlreadyPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChatlistsChatlistInviteAlreadyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatlistsChatlistInviteAlreadyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatlistsChatlistInviteAlready(r)
 	}
 }
@@ -455,54 +563,91 @@ func (v *ChatlistsChatlistInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatlistsChatlistInvite deserializes a ChatlistsChatlistInvite from a reader using the TL binary protocol.
-func DecodeChatlistsChatlistInvite(r io.Reader) (*ChatlistsChatlistInvite, error) {
+func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) {
 	v := &ChatlistsChatlistInvite{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.TitleNoanimate = v.Flags.Has(1)
-	_objTitle, _ := ReadTLObject(r)
+	_objTitle, _errTitle := ReadTLObject(r)
+	if _errTitle != nil {
+		return nil, _errTitle
+	}
 	v.Title = _objTitle.(*TextWithEntities)
 	if v.Flags.Has(0) {
-		v.Emoticon = ReadString(r)
+		_rEmoticon, _eEmoticon := r.ReadString()
+		if _eEmoticon != nil {
+			return nil, _eEmoticon
+		}
+		v.Emoticon = _rEmoticon
 	}
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(PeerClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChatlistsChatlistInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatlistsChatlistInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatlistsChatlistInvite(r)
 	}
 }
@@ -546,43 +691,73 @@ func (v *ChatlistsChatlistUpdates) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatlistsChatlistUpdates deserializes a ChatlistsChatlistUpdates from a reader using the TL binary protocol.
-func DecodeChatlistsChatlistUpdates(r io.Reader) (*ChatlistsChatlistUpdates, error) {
+func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error) {
 	v := &ChatlistsChatlistUpdates{}
-	ReadInt(r)
-	_cntMissingPeers := ReadInt(r)
-	if err := checkVectorCount(_cntMissingPeers); err != nil {
-		return nil, err
+	_vhdrMissingPeers, _ehdrMissingPeers := r.ReadUint32()
+	if _ehdrMissingPeers != nil {
+		return nil, _ehdrMissingPeers
+	}
+	_cntMissingPeers, _ecntMissingPeers := r.ReadUint32()
+	if _ecntMissingPeers != nil {
+		return nil, _ecntMissingPeers
+	}
+	if _errMissingPeers := checkVectorCount(_cntMissingPeers); _errMissingPeers != nil {
+		return nil, _errMissingPeers
 	}
 	v.MissingPeers = make([]PeerClass, _cntMissingPeers)
 	for _iMissingPeers := range v.MissingPeers {
-		_objMissingPeers, _ := ReadTLObject(r)
+		_objMissingPeers, _errMissingPeers := ReadTLObject(r)
+		if _errMissingPeers != nil {
+			return nil, _errMissingPeers
+		}
 		v.MissingPeers[_iMissingPeers] = _objMissingPeers.(PeerClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrMissingPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[ChatlistsChatlistUpdatesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatlistsChatlistUpdatesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatlistsChatlistUpdates(r)
 	}
 }

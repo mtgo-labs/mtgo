@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // PhotoClass is the interface for TL type Photo.
@@ -53,14 +52,18 @@ func (v *PhotoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotoEmpty deserializes a PhotoEmpty from a reader using the TL binary protocol.
-func DecodePhotoEmpty(r io.Reader) (*PhotoEmpty, error) {
+func DecodePhotoEmpty(r *Reader) (*PhotoEmpty, error) {
 	v := &PhotoEmpty{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotoEmpty(r)
 	}
 }
@@ -121,46 +124,86 @@ func (v *Photo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoto deserializes a Photo from a reader using the TL binary protocol.
-func DecodePhoto(r io.Reader) (*Photo, error) {
+func DecodePhoto(r *Reader) (*Photo, error) {
 	v := &Photo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HasStickers = v.Flags.Has(0)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.FileReference = ReadBytes(r)
-	v.Date = int32(ReadInt(r))
-	ReadInt(r)
-	_cntSizes := ReadInt(r)
-	if err := checkVectorCount(_cntSizes); err != nil {
-		return nil, err
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rFileReference, _eFileReference := r.ReadBytes()
+	if _eFileReference != nil {
+		return nil, _eFileReference
+	}
+	v.FileReference = _rFileReference
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_vhdrSizes, _ehdrSizes := r.ReadUint32()
+	if _ehdrSizes != nil {
+		return nil, _ehdrSizes
+	}
+	_cntSizes, _ecntSizes := r.ReadUint32()
+	if _ecntSizes != nil {
+		return nil, _ecntSizes
+	}
+	if _errSizes := checkVectorCount(_cntSizes); _errSizes != nil {
+		return nil, _errSizes
 	}
 	v.Sizes = make([]PhotoSizeClass, _cntSizes)
 	for _iSizes := range v.Sizes {
-		_objSizes, _ := ReadTLObject(r)
+		_objSizes, _errSizes := ReadTLObject(r)
+		if _errSizes != nil {
+			return nil, _errSizes
+		}
 		v.Sizes[_iSizes] = _objSizes.(PhotoSizeClass)
 	}
+	_ = _vhdrSizes
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntVideoSizes := ReadInt(r)
-		if err := checkVectorCount(_cntVideoSizes); err != nil {
-			return nil, err
+		_vhdrVideoSizes, _ehdrVideoSizes := r.ReadUint32()
+		if _ehdrVideoSizes != nil {
+			return nil, _ehdrVideoSizes
+		}
+		_cntVideoSizes, _ecntVideoSizes := r.ReadUint32()
+		if _ecntVideoSizes != nil {
+			return nil, _ecntVideoSizes
+		}
+		if _errVideoSizes := checkVectorCount(_cntVideoSizes); _errVideoSizes != nil {
+			return nil, _errVideoSizes
 		}
 		v.VideoSizes = make([]VideoSizeClass, _cntVideoSizes)
 		for _iVideoSizes := range v.VideoSizes {
-			_objVideoSizes, _ := ReadTLObject(r)
+			_objVideoSizes, _errVideoSizes := ReadTLObject(r)
+			if _errVideoSizes != nil {
+				return nil, _errVideoSizes
+			}
 			v.VideoSizes[_iVideoSizes] = _objVideoSizes.(VideoSizeClass)
 		}
+		_ = _vhdrVideoSizes
 	}
-	v.DCID = int32(ReadInt(r))
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
 	return v, nil
 }
 
 func init() {
-	Registry[PhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoto(r)
 	}
 }
@@ -191,25 +234,38 @@ func (v *PhotosPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotosPhoto deserializes a PhotosPhoto from a reader using the TL binary protocol.
-func DecodePhotosPhoto(r io.Reader) (*PhotosPhoto, error) {
+func DecodePhotosPhoto(r *Reader) (*PhotosPhoto, error) {
 	v := &PhotosPhoto{}
-	_objPhoto, _ := ReadTLObject(r)
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
 	v.Photo = _objPhoto.(PhotoClass)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhotosPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotosPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotosPhoto(r)
 	}
 }
@@ -264,33 +320,53 @@ func (v *PhotosPhotos) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotosPhotos deserializes a PhotosPhotos from a reader using the TL binary protocol.
-func DecodePhotosPhotos(r io.Reader) (*PhotosPhotos, error) {
+func DecodePhotosPhotos(r *Reader) (*PhotosPhotos, error) {
 	v := &PhotosPhotos{}
-	ReadInt(r)
-	_cntPhotos := ReadInt(r)
-	if err := checkVectorCount(_cntPhotos); err != nil {
-		return nil, err
+	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+	if _ehdrPhotos != nil {
+		return nil, _ehdrPhotos
+	}
+	_cntPhotos, _ecntPhotos := r.ReadUint32()
+	if _ecntPhotos != nil {
+		return nil, _ecntPhotos
+	}
+	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+		return nil, _errPhotos
 	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
-		_objPhotos, _ := ReadTLObject(r)
+		_objPhotos, _errPhotos := ReadTLObject(r)
+		if _errPhotos != nil {
+			return nil, _errPhotos
+		}
 		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrPhotos
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhotosPhotosTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotosPhotosTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotosPhotos(r)
 	}
 }
@@ -327,34 +403,58 @@ func (v *PhotosPhotosSlice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhotosPhotosSlice deserializes a PhotosPhotosSlice from a reader using the TL binary protocol.
-func DecodePhotosPhotosSlice(r io.Reader) (*PhotosPhotosSlice, error) {
+func DecodePhotosPhotosSlice(r *Reader) (*PhotosPhotosSlice, error) {
 	v := &PhotosPhotosSlice{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntPhotos := ReadInt(r)
-	if err := checkVectorCount(_cntPhotos); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+	if _ehdrPhotos != nil {
+		return nil, _ehdrPhotos
+	}
+	_cntPhotos, _ecntPhotos := r.ReadUint32()
+	if _ecntPhotos != nil {
+		return nil, _ecntPhotos
+	}
+	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+		return nil, _errPhotos
 	}
 	v.Photos = make([]PhotoClass, _cntPhotos)
 	for _iPhotos := range v.Photos {
-		_objPhotos, _ := ReadTLObject(r)
+		_objPhotos, _errPhotos := ReadTLObject(r)
+		if _errPhotos != nil {
+			return nil, _errPhotos
+		}
 		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrPhotos
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhotosPhotosSliceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhotosPhotosSliceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhotosPhotosSlice(r)
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // StoriesCanSendStoryTypeID is the constructor ID for the RPC function stories.canSendStory.
@@ -39,7 +38,7 @@ func (v *StoriesCanSendStoryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesCanSendStory(ctx context.Context, req *StoriesCanSendStoryRequest) (*StoriesCanSendStoryCount, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -174,7 +173,7 @@ func (v *StoriesSendStoryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesSendStory(ctx context.Context, req *StoriesSendStoryRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -279,7 +278,7 @@ func (v *StoriesEditStoryRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesEditStory(ctx context.Context, req *StoriesEditStoryRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -323,7 +322,7 @@ func (v *StoriesDeleteStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesDeleteStories(ctx context.Context, req *StoriesDeleteStoriesRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -366,7 +365,7 @@ func (v *StoriesTogglePinnedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesTogglePinned(ctx context.Context, req *StoriesTogglePinnedRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -425,7 +424,7 @@ func (v *StoriesGetAllStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetAllStories(ctx context.Context, req *StoriesGetAllStoriesRequest) (AllStoriesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -471,7 +470,7 @@ func (v *StoriesGetPinnedStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetPinnedStories(ctx context.Context, req *StoriesGetPinnedStoriesRequest) (*StoriesStories, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -517,7 +516,7 @@ func (v *StoriesGetStoriesArchiveRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetStoriesArchive(ctx context.Context, req *StoriesGetStoriesArchiveRequest) (*StoriesStories, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -561,7 +560,7 @@ func (v *StoriesGetStoriesByIDRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetStoriesByID(ctx context.Context, req *StoriesGetStoriesByIDRequest) (*StoriesStories, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -603,7 +602,7 @@ func (v *StoriesToggleAllStoriesHiddenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesToggleAllStoriesHidden(ctx context.Context, req *StoriesToggleAllStoriesHiddenRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -645,7 +644,7 @@ func (v *StoriesReadStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesReadStories(ctx context.Context, req *StoriesReadStoriesRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -686,7 +685,7 @@ func (v *StoriesIncrementStoryViewsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesIncrementStoryViews(ctx context.Context, req *StoriesIncrementStoryViewsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -758,7 +757,7 @@ func (v *StoriesGetStoryViewsListRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetStoryViewsList(ctx context.Context, req *StoriesGetStoryViewsListRequest) (*StoriesStoryViewsList, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -802,7 +801,7 @@ func (v *StoriesGetStoriesViewsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetStoriesViews(ctx context.Context, req *StoriesGetStoriesViewsRequest) (StoryViewsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -846,7 +845,7 @@ func (v *StoriesExportStoryLinkRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesExportStoryLink(ctx context.Context, req *StoriesExportStoryLinkRequest) (*ExportedStoryLink, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -894,7 +893,7 @@ func (v *StoriesReportRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesReport(ctx context.Context, req *StoriesReportRequest) (ReportResultClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -949,7 +948,7 @@ func (v *StoriesActivateStealthModeRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesActivateStealthMode(ctx context.Context, req *StoriesActivateStealthModeRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1006,7 +1005,7 @@ func (v *StoriesSendReactionRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesSendReaction(ctx context.Context, req *StoriesSendReactionRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1048,7 +1047,7 @@ func (v *StoriesGetPeerStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetPeerStories(ctx context.Context, req *StoriesGetPeerStoriesRequest) (PeerStoriesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1088,7 +1087,7 @@ func (v *StoriesGetAllReadPeerStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetAllReadPeerStories(ctx context.Context) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, &StoriesGetAllReadPeerStoriesRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &StoriesGetAllReadPeerStoriesRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1134,7 +1133,7 @@ func (v *StoriesGetPeerMaxIDsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetPeerMaxIDs(ctx context.Context, req *StoriesGetPeerMaxIDsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1171,7 +1170,7 @@ func (v *StoriesGetChatsToSendRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetChatsToSend(ctx context.Context) (ChatsClass, error) {
-	result, err := c.invoke(ctx, &StoriesGetChatsToSendRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &StoriesGetChatsToSendRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1215,7 +1214,7 @@ func (v *StoriesTogglePeerStoriesHiddenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesTogglePeerStoriesHidden(ctx context.Context, req *StoriesTogglePeerStoriesHiddenRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1284,7 +1283,7 @@ func (v *StoriesGetStoryReactionsListRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetStoryReactionsList(ctx context.Context, req *StoriesGetStoryReactionsListRequest) (*StoriesStoryReactionsList, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1328,7 +1327,7 @@ func (v *StoriesTogglePinnedToTopRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesTogglePinnedToTop(ctx context.Context, req *StoriesTogglePinnedToTopRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1398,7 +1397,7 @@ func (v *StoriesSearchPostsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesSearchPosts(ctx context.Context, req *StoriesSearchPostsRequest) (*StoriesFoundStories, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1444,7 +1443,7 @@ func (v *StoriesCreateAlbumRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesCreateAlbum(ctx context.Context, req *StoriesCreateAlbumRequest) (*StoryAlbum, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1523,7 +1522,7 @@ func (v *StoriesUpdateAlbumRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesUpdateAlbum(ctx context.Context, req *StoriesUpdateAlbumRequest) (*StoryAlbum, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1567,7 +1566,7 @@ func (v *StoriesReorderAlbumsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesReorderAlbums(ctx context.Context, req *StoriesReorderAlbumsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1609,7 +1608,7 @@ func (v *StoriesDeleteAlbumRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesDeleteAlbum(ctx context.Context, req *StoriesDeleteAlbumRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1651,7 +1650,7 @@ func (v *StoriesGetAlbumsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetAlbums(ctx context.Context, req *StoriesGetAlbumsRequest) (AlbumsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1699,7 +1698,7 @@ func (v *StoriesGetAlbumStoriesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesGetAlbumStories(ctx context.Context, req *StoriesGetAlbumStoriesRequest) (*StoriesStories, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1800,7 +1799,7 @@ func (v *StoriesStartLiveRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) StoriesStartLive(ctx context.Context, req *StoriesStartLiveRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

@@ -4,8 +4,187 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
+
+// BindAuthKeyInnerTypeID is the constructor ID for TL type bind_auth_key_inner.
+const BindAuthKeyInnerTypeID = 0x75a3f765
+
+// BindAuthKeyInner represents the TL constructor bind_auth_key_inner (0x75a3f765).
+//
+// See https://core.telegram.org/constructor/bind_auth_key_inner for reference.
+type BindAuthKeyInner struct {
+	Nonce         int64 `json:"nonce,omitempty"`
+	TempAuthKeyID int64 `json:"temp_auth_key_id,omitempty"`
+	PermAuthKeyID int64 `json:"perm_auth_key_id,omitempty"`
+	TempSessionID int64 `json:"temp_session_id,omitempty"`
+	ExpiresAt     int32 `json:"expires_at,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x75a3f765.
+func (v *BindAuthKeyInner) ConstructorID() uint32 {
+	return BindAuthKeyInnerTypeID
+}
+
+// Encode serializes BindAuthKeyInner to a bytes.Buffer using the TL binary protocol.
+func (v *BindAuthKeyInner) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BindAuthKeyInnerTypeID)
+	WriteLong(b, v.Nonce)
+	WriteLong(b, v.TempAuthKeyID)
+	WriteLong(b, v.PermAuthKeyID)
+	WriteLong(b, v.TempSessionID)
+	WriteInt(b, uint32(v.ExpiresAt))
+	return nil
+}
+
+// DecodeBindAuthKeyInner deserializes a BindAuthKeyInner from a reader using the TL binary protocol.
+func DecodeBindAuthKeyInner(r *Reader) (*BindAuthKeyInner, error) {
+	v := &BindAuthKeyInner{}
+	_rNonce, _eNonce := r.ReadInt64()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rTempAuthKeyID, _eTempAuthKeyID := r.ReadInt64()
+	if _eTempAuthKeyID != nil {
+		return nil, _eTempAuthKeyID
+	}
+	v.TempAuthKeyID = _rTempAuthKeyID
+	_rPermAuthKeyID, _ePermAuthKeyID := r.ReadInt64()
+	if _ePermAuthKeyID != nil {
+		return nil, _ePermAuthKeyID
+	}
+	v.PermAuthKeyID = _rPermAuthKeyID
+	_rTempSessionID, _eTempSessionID := r.ReadInt64()
+	if _eTempSessionID != nil {
+		return nil, _eTempSessionID
+	}
+	v.TempSessionID = _rTempSessionID
+	_rExpiresAt, _eExpiresAt := r.ReadInt32()
+	if _eExpiresAt != nil {
+		return nil, _eExpiresAt
+	}
+	v.ExpiresAt = _rExpiresAt
+	return v, nil
+}
+
+func init() {
+	Registry[BindAuthKeyInnerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBindAuthKeyInner(r)
+	}
+}
+
+// DestroyAuthKeyResClass is the interface for TL type DestroyAuthKeyRes.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the DestroyAuthKeyRes TL type.
+type DestroyAuthKeyResClass interface {
+	TLObject
+	isDestroyAuthKeyRes()
+}
+
+// DestroyAuthKeyOkTypeID is the constructor ID for TL type destroy_auth_key_ok.
+const DestroyAuthKeyOkTypeID = 0xf660e1d4
+
+// DestroyAuthKeyNoneTypeID is the constructor ID for TL type destroy_auth_key_none.
+const DestroyAuthKeyNoneTypeID = 0x0a9f2259
+
+// DestroyAuthKeyFailTypeID is the constructor ID for TL type destroy_auth_key_fail.
+const DestroyAuthKeyFailTypeID = 0xea109b13
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyOk as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyOk) isDestroyAuthKeyRes() {}
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyNone as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyNone) isDestroyAuthKeyRes() {}
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyFail as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyFail) isDestroyAuthKeyRes() {}
+
+// DestroyAuthKeyOk represents the TL constructor destroy_auth_key_ok (0xf660e1d4).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_ok for reference.
+type DestroyAuthKeyOk struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xf660e1d4.
+func (v *DestroyAuthKeyOk) ConstructorID() uint32 {
+	return DestroyAuthKeyOkTypeID
+}
+
+// Encode serializes DestroyAuthKeyOk to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyOkTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyOk deserializes a DestroyAuthKeyOk from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyOk(r *Reader) (*DestroyAuthKeyOk, error) {
+	v := &DestroyAuthKeyOk{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyOk(r)
+	}
+}
+
+// DestroyAuthKeyNone represents the TL constructor destroy_auth_key_none (0x0a9f2259).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_none for reference.
+type DestroyAuthKeyNone struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x0a9f2259.
+func (v *DestroyAuthKeyNone) ConstructorID() uint32 {
+	return DestroyAuthKeyNoneTypeID
+}
+
+// Encode serializes DestroyAuthKeyNone to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyNone) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyNoneTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyNone deserializes a DestroyAuthKeyNone from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyNone(r *Reader) (*DestroyAuthKeyNone, error) {
+	v := &DestroyAuthKeyNone{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyNoneTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyNone(r)
+	}
+}
+
+// DestroyAuthKeyFail represents the TL constructor destroy_auth_key_fail (0xea109b13).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_fail for reference.
+type DestroyAuthKeyFail struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xea109b13.
+func (v *DestroyAuthKeyFail) ConstructorID() uint32 {
+	return DestroyAuthKeyFailTypeID
+}
+
+// Encode serializes DestroyAuthKeyFail to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyFailTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyFail deserializes a DestroyAuthKeyFail from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyFail(r *Reader) (*DestroyAuthKeyFail, error) {
+	v := &DestroyAuthKeyFail{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyFail(r)
+	}
+}
 
 // SentCodeClass is the interface for TL type SentCode.
 // Implementations must satisfy TLObject and are used to represent
@@ -76,28 +255,42 @@ func (v *AuthSentCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCode deserializes a AuthSentCode from a reader using the TL binary protocol.
-func DecodeAuthSentCode(r io.Reader) (*AuthSentCode, error) {
+func DecodeAuthSentCode(r *Reader) (*AuthSentCode, error) {
 	v := &AuthSentCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	_objType, _ := ReadTLObject(r)
+	_objType, _errType := ReadTLObject(r)
+	if _errType != nil {
+		return nil, _errType
+	}
 	v.Type = _objType.(SentCodeTypeClass)
-	v.PhoneCodeHash = ReadString(r)
+	_rPhoneCodeHash, _ePhoneCodeHash := r.ReadString()
+	if _ePhoneCodeHash != nil {
+		return nil, _ePhoneCodeHash
+	}
+	v.PhoneCodeHash = _rPhoneCodeHash
 	if v.Flags.Has(1) {
-		_objNextType, _ := ReadTLObject(r)
+		_objNextType, _errNextType := ReadTLObject(r)
+		if _errNextType != nil {
+			return nil, _errNextType
+		}
 		v.NextType = _objNextType.(CodeTypeClass)
 	}
 	if v.Flags.Has(2) {
-		v.Timeout = int32(ReadInt(r))
+		_rTimeout, _eTimeout := r.ReadInt32()
+		if _eTimeout != nil {
+			return nil, _eTimeout
+		}
+		v.Timeout = _rTimeout
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCode(r)
 	}
 }
@@ -122,15 +315,18 @@ func (v *AuthSentCodeSuccess) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeSuccess deserializes a AuthSentCodeSuccess from a reader using the TL binary protocol.
-func DecodeAuthSentCodeSuccess(r io.Reader) (*AuthSentCodeSuccess, error) {
+func DecodeAuthSentCodeSuccess(r *Reader) (*AuthSentCodeSuccess, error) {
 	v := &AuthSentCodeSuccess{}
-	_objAuthorization, _ := ReadTLObject(r)
+	_objAuthorization, _errAuthorization := ReadTLObject(r)
+	if _errAuthorization != nil {
+		return nil, _errAuthorization
+	}
 	v.Authorization = _objAuthorization.(AuthorizationClass)
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeSuccessTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeSuccessTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeSuccess(r)
 	}
 }
@@ -167,20 +363,48 @@ func (v *AuthSentCodePaymentRequired) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodePaymentRequired deserializes a AuthSentCodePaymentRequired from a reader using the TL binary protocol.
-func DecodeAuthSentCodePaymentRequired(r io.Reader) (*AuthSentCodePaymentRequired, error) {
+func DecodeAuthSentCodePaymentRequired(r *Reader) (*AuthSentCodePaymentRequired, error) {
 	v := &AuthSentCodePaymentRequired{}
-	v.StoreProduct = ReadString(r)
-	v.PhoneCodeHash = ReadString(r)
-	v.SupportEmailAddress = ReadString(r)
-	v.SupportEmailSubject = ReadString(r)
-	v.PremiumDays = int32(ReadInt(r))
-	v.Currency = ReadString(r)
-	v.Amount = ReadLong(r)
+	_rStoreProduct, _eStoreProduct := r.ReadString()
+	if _eStoreProduct != nil {
+		return nil, _eStoreProduct
+	}
+	v.StoreProduct = _rStoreProduct
+	_rPhoneCodeHash, _ePhoneCodeHash := r.ReadString()
+	if _ePhoneCodeHash != nil {
+		return nil, _ePhoneCodeHash
+	}
+	v.PhoneCodeHash = _rPhoneCodeHash
+	_rSupportEmailAddress, _eSupportEmailAddress := r.ReadString()
+	if _eSupportEmailAddress != nil {
+		return nil, _eSupportEmailAddress
+	}
+	v.SupportEmailAddress = _rSupportEmailAddress
+	_rSupportEmailSubject, _eSupportEmailSubject := r.ReadString()
+	if _eSupportEmailSubject != nil {
+		return nil, _eSupportEmailSubject
+	}
+	v.SupportEmailSubject = _rSupportEmailSubject
+	_rPremiumDays, _ePremiumDays := r.ReadInt32()
+	if _ePremiumDays != nil {
+		return nil, _ePremiumDays
+	}
+	v.PremiumDays = _rPremiumDays
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodePaymentRequiredTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodePaymentRequiredTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodePaymentRequired(r)
 	}
 }
@@ -263,30 +487,45 @@ func (v *AuthAuthorization) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthAuthorization deserializes a AuthAuthorization from a reader using the TL binary protocol.
-func DecodeAuthAuthorization(r io.Reader) (*AuthAuthorization, error) {
+func DecodeAuthAuthorization(r *Reader) (*AuthAuthorization, error) {
 	v := &AuthAuthorization{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.SetupPasswordRequired = v.Flags.Has(1)
 	if v.Flags.Has(1) {
-		v.OtherwiseReloginDays = int32(ReadInt(r))
+		_rOtherwiseReloginDays, _eOtherwiseReloginDays := r.ReadInt32()
+		if _eOtherwiseReloginDays != nil {
+			return nil, _eOtherwiseReloginDays
+		}
+		v.OtherwiseReloginDays = _rOtherwiseReloginDays
 	}
 	if v.Flags.Has(0) {
-		v.TmpSessions = int32(ReadInt(r))
+		_rTmpSessions, _eTmpSessions := r.ReadInt32()
+		if _eTmpSessions != nil {
+			return nil, _eTmpSessions
+		}
+		v.TmpSessions = _rTmpSessions
 	}
 	if v.Flags.Has(2) {
-		v.FutureAuthToken = ReadBytes(r)
+		_rFutureAuthToken, _eFutureAuthToken := r.ReadBytes()
+		if _eFutureAuthToken != nil {
+			return nil, _eFutureAuthToken
+		}
+		v.FutureAuthToken = _rFutureAuthToken
 	}
-	_objUser, _ := ReadTLObject(r)
+	_objUser, _errUser := ReadTLObject(r)
+	if _errUser != nil {
+		return nil, _errUser
+	}
 	v.User = _objUser.(UserClass)
 	return v, nil
 }
 
 func init() {
-	Registry[AuthAuthorizationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthAuthorizationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthAuthorization(r)
 	}
 }
@@ -323,22 +562,25 @@ func (v *AuthAuthorizationSignUpRequired) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthAuthorizationSignUpRequired deserializes a AuthAuthorizationSignUpRequired from a reader using the TL binary protocol.
-func DecodeAuthAuthorizationSignUpRequired(r io.Reader) (*AuthAuthorizationSignUpRequired, error) {
+func DecodeAuthAuthorizationSignUpRequired(r *Reader) (*AuthAuthorizationSignUpRequired, error) {
 	v := &AuthAuthorizationSignUpRequired{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		_objTermsOfService, _ := ReadTLObject(r)
+		_objTermsOfService, _errTermsOfService := ReadTLObject(r)
+		if _errTermsOfService != nil {
+			return nil, _errTermsOfService
+		}
 		v.TermsOfService = _objTermsOfService.(*HelpTermsOfService)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthAuthorizationSignUpRequiredTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthAuthorizationSignUpRequiredTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthAuthorizationSignUpRequired(r)
 	}
 }
@@ -416,11 +658,11 @@ func (v *Authorization) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthorization deserializes a Authorization from a reader using the TL binary protocol.
-func DecodeAuthorization(r io.Reader) (*Authorization, error) {
+func DecodeAuthorization(r *Reader) (*Authorization, error) {
 	v := &Authorization{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Current = v.Flags.Has(0)
@@ -429,23 +671,71 @@ func DecodeAuthorization(r io.Reader) (*Authorization, error) {
 	v.EncryptedRequestsDisabled = v.Flags.Has(3)
 	v.CallRequestsDisabled = v.Flags.Has(4)
 	v.Unconfirmed = v.Flags.Has(5)
-	v.Hash = ReadLong(r)
-	v.DeviceModel = ReadString(r)
-	v.Platform = ReadString(r)
-	v.SystemVersion = ReadString(r)
-	v.APIID = int32(ReadInt(r))
-	v.AppName = ReadString(r)
-	v.AppVersion = ReadString(r)
-	v.DateCreated = int32(ReadInt(r))
-	v.DateActive = int32(ReadInt(r))
-	v.Ip = ReadString(r)
-	v.Country = ReadString(r)
-	v.Region = ReadString(r)
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_rDeviceModel, _eDeviceModel := r.ReadString()
+	if _eDeviceModel != nil {
+		return nil, _eDeviceModel
+	}
+	v.DeviceModel = _rDeviceModel
+	_rPlatform, _ePlatform := r.ReadString()
+	if _ePlatform != nil {
+		return nil, _ePlatform
+	}
+	v.Platform = _rPlatform
+	_rSystemVersion, _eSystemVersion := r.ReadString()
+	if _eSystemVersion != nil {
+		return nil, _eSystemVersion
+	}
+	v.SystemVersion = _rSystemVersion
+	_rAPIID, _eAPIID := r.ReadInt32()
+	if _eAPIID != nil {
+		return nil, _eAPIID
+	}
+	v.APIID = _rAPIID
+	_rAppName, _eAppName := r.ReadString()
+	if _eAppName != nil {
+		return nil, _eAppName
+	}
+	v.AppName = _rAppName
+	_rAppVersion, _eAppVersion := r.ReadString()
+	if _eAppVersion != nil {
+		return nil, _eAppVersion
+	}
+	v.AppVersion = _rAppVersion
+	_rDateCreated, _eDateCreated := r.ReadInt32()
+	if _eDateCreated != nil {
+		return nil, _eDateCreated
+	}
+	v.DateCreated = _rDateCreated
+	_rDateActive, _eDateActive := r.ReadInt32()
+	if _eDateActive != nil {
+		return nil, _eDateActive
+	}
+	v.DateActive = _rDateActive
+	_rIp, _eIp := r.ReadString()
+	if _eIp != nil {
+		return nil, _eIp
+	}
+	v.Ip = _rIp
+	_rCountry, _eCountry := r.ReadString()
+	if _eCountry != nil {
+		return nil, _eCountry
+	}
+	v.Country = _rCountry
+	_rRegion, _eRegion := r.ReadString()
+	if _eRegion != nil {
+		return nil, _eRegion
+	}
+	v.Region = _rRegion
 	return v, nil
 }
 
 func init() {
-	Registry[AuthorizationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthorizationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthorization(r)
 	}
 }
@@ -475,15 +765,23 @@ func (v *AuthExportedAuthorization) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthExportedAuthorization deserializes a AuthExportedAuthorization from a reader using the TL binary protocol.
-func DecodeAuthExportedAuthorization(r io.Reader) (*AuthExportedAuthorization, error) {
+func DecodeAuthExportedAuthorization(r *Reader) (*AuthExportedAuthorization, error) {
 	v := &AuthExportedAuthorization{}
-	v.ID = ReadLong(r)
-	v.Bytes = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rBytes, _eBytes := r.ReadBytes()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
 	return v, nil
 }
 
 func init() {
-	Registry[AuthExportedAuthorizationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthExportedAuthorizationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthExportedAuthorization(r)
 	}
 }
@@ -511,14 +809,18 @@ func (v *AuthPasswordRecovery) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthPasswordRecovery deserializes a AuthPasswordRecovery from a reader using the TL binary protocol.
-func DecodeAuthPasswordRecovery(r io.Reader) (*AuthPasswordRecovery, error) {
+func DecodeAuthPasswordRecovery(r *Reader) (*AuthPasswordRecovery, error) {
 	v := &AuthPasswordRecovery{}
-	v.EmailPattern = ReadString(r)
+	_rEmailPattern, _eEmailPattern := r.ReadString()
+	if _eEmailPattern != nil {
+		return nil, _eEmailPattern
+	}
+	v.EmailPattern = _rEmailPattern
 	return v, nil
 }
 
 func init() {
-	Registry[AuthPasswordRecoveryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthPasswordRecoveryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthPasswordRecovery(r)
 	}
 }
@@ -579,13 +881,13 @@ func (v *AuthCodeTypeSms) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthCodeTypeSms deserializes a AuthCodeTypeSms from a reader using the TL binary protocol.
-func DecodeAuthCodeTypeSms(r io.Reader) (*AuthCodeTypeSms, error) {
+func DecodeAuthCodeTypeSms(r *Reader) (*AuthCodeTypeSms, error) {
 	v := &AuthCodeTypeSms{}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthCodeTypeSmsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthCodeTypeSmsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthCodeTypeSms(r)
 	}
 }
@@ -608,13 +910,13 @@ func (v *AuthCodeTypeCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthCodeTypeCall deserializes a AuthCodeTypeCall from a reader using the TL binary protocol.
-func DecodeAuthCodeTypeCall(r io.Reader) (*AuthCodeTypeCall, error) {
+func DecodeAuthCodeTypeCall(r *Reader) (*AuthCodeTypeCall, error) {
 	v := &AuthCodeTypeCall{}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthCodeTypeCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthCodeTypeCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthCodeTypeCall(r)
 	}
 }
@@ -637,13 +939,13 @@ func (v *AuthCodeTypeFlashCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthCodeTypeFlashCall deserializes a AuthCodeTypeFlashCall from a reader using the TL binary protocol.
-func DecodeAuthCodeTypeFlashCall(r io.Reader) (*AuthCodeTypeFlashCall, error) {
+func DecodeAuthCodeTypeFlashCall(r *Reader) (*AuthCodeTypeFlashCall, error) {
 	v := &AuthCodeTypeFlashCall{}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthCodeTypeFlashCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthCodeTypeFlashCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthCodeTypeFlashCall(r)
 	}
 }
@@ -666,13 +968,13 @@ func (v *AuthCodeTypeMissedCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthCodeTypeMissedCall deserializes a AuthCodeTypeMissedCall from a reader using the TL binary protocol.
-func DecodeAuthCodeTypeMissedCall(r io.Reader) (*AuthCodeTypeMissedCall, error) {
+func DecodeAuthCodeTypeMissedCall(r *Reader) (*AuthCodeTypeMissedCall, error) {
 	v := &AuthCodeTypeMissedCall{}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthCodeTypeMissedCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthCodeTypeMissedCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthCodeTypeMissedCall(r)
 	}
 }
@@ -695,13 +997,13 @@ func (v *AuthCodeTypeFragmentSms) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthCodeTypeFragmentSms deserializes a AuthCodeTypeFragmentSms from a reader using the TL binary protocol.
-func DecodeAuthCodeTypeFragmentSms(r io.Reader) (*AuthCodeTypeFragmentSms, error) {
+func DecodeAuthCodeTypeFragmentSms(r *Reader) (*AuthCodeTypeFragmentSms, error) {
 	v := &AuthCodeTypeFragmentSms{}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthCodeTypeFragmentSmsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthCodeTypeFragmentSmsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthCodeTypeFragmentSms(r)
 	}
 }
@@ -800,14 +1102,18 @@ func (v *AuthSentCodeTypeApp) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeApp deserializes a AuthSentCodeTypeApp from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeApp(r io.Reader) (*AuthSentCodeTypeApp, error) {
+func DecodeAuthSentCodeTypeApp(r *Reader) (*AuthSentCodeTypeApp, error) {
 	v := &AuthSentCodeTypeApp{}
-	v.Length = int32(ReadInt(r))
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeAppTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeAppTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeApp(r)
 	}
 }
@@ -832,14 +1138,18 @@ func (v *AuthSentCodeTypeSms) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeSms deserializes a AuthSentCodeTypeSms from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeSms(r io.Reader) (*AuthSentCodeTypeSms, error) {
+func DecodeAuthSentCodeTypeSms(r *Reader) (*AuthSentCodeTypeSms, error) {
 	v := &AuthSentCodeTypeSms{}
-	v.Length = int32(ReadInt(r))
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeSmsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeSmsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeSms(r)
 	}
 }
@@ -864,14 +1174,18 @@ func (v *AuthSentCodeTypeCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeCall deserializes a AuthSentCodeTypeCall from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeCall(r io.Reader) (*AuthSentCodeTypeCall, error) {
+func DecodeAuthSentCodeTypeCall(r *Reader) (*AuthSentCodeTypeCall, error) {
 	v := &AuthSentCodeTypeCall{}
-	v.Length = int32(ReadInt(r))
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeCall(r)
 	}
 }
@@ -896,14 +1210,18 @@ func (v *AuthSentCodeTypeFlashCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeFlashCall deserializes a AuthSentCodeTypeFlashCall from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeFlashCall(r io.Reader) (*AuthSentCodeTypeFlashCall, error) {
+func DecodeAuthSentCodeTypeFlashCall(r *Reader) (*AuthSentCodeTypeFlashCall, error) {
 	v := &AuthSentCodeTypeFlashCall{}
-	v.Pattern = ReadString(r)
+	_rPattern, _ePattern := r.ReadString()
+	if _ePattern != nil {
+		return nil, _ePattern
+	}
+	v.Pattern = _rPattern
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeFlashCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeFlashCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeFlashCall(r)
 	}
 }
@@ -930,15 +1248,23 @@ func (v *AuthSentCodeTypeMissedCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeMissedCall deserializes a AuthSentCodeTypeMissedCall from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeMissedCall(r io.Reader) (*AuthSentCodeTypeMissedCall, error) {
+func DecodeAuthSentCodeTypeMissedCall(r *Reader) (*AuthSentCodeTypeMissedCall, error) {
 	v := &AuthSentCodeTypeMissedCall{}
-	v.Prefix = ReadString(r)
-	v.Length = int32(ReadInt(r))
+	_rPrefix, _ePrefix := r.ReadString()
+	if _ePrefix != nil {
+		return nil, _ePrefix
+	}
+	v.Prefix = _rPrefix
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeMissedCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeMissedCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeMissedCall(r)
 	}
 }
@@ -994,28 +1320,44 @@ func (v *AuthSentCodeTypeEmailCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeEmailCode deserializes a AuthSentCodeTypeEmailCode from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeEmailCode(r io.Reader) (*AuthSentCodeTypeEmailCode, error) {
+func DecodeAuthSentCodeTypeEmailCode(r *Reader) (*AuthSentCodeTypeEmailCode, error) {
 	v := &AuthSentCodeTypeEmailCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.AppleSigninAllowed = v.Flags.Has(0)
 	v.GoogleSigninAllowed = v.Flags.Has(1)
-	v.EmailPattern = ReadString(r)
-	v.Length = int32(ReadInt(r))
+	_rEmailPattern, _eEmailPattern := r.ReadString()
+	if _eEmailPattern != nil {
+		return nil, _eEmailPattern
+	}
+	v.EmailPattern = _rEmailPattern
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	if v.Flags.Has(3) {
-		v.ResetAvailablePeriod = int32(ReadInt(r))
+		_rResetAvailablePeriod, _eResetAvailablePeriod := r.ReadInt32()
+		if _eResetAvailablePeriod != nil {
+			return nil, _eResetAvailablePeriod
+		}
+		v.ResetAvailablePeriod = _rResetAvailablePeriod
 	}
 	if v.Flags.Has(4) {
-		v.ResetPendingDate = int32(ReadInt(r))
+		_rResetPendingDate, _eResetPendingDate := r.ReadInt32()
+		if _eResetPendingDate != nil {
+			return nil, _eResetPendingDate
+		}
+		v.ResetPendingDate = _rResetPendingDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeEmailCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeEmailCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeEmailCode(r)
 	}
 }
@@ -1053,11 +1395,11 @@ func (v *AuthSentCodeTypeSetUpEmailRequired) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeSetUpEmailRequired deserializes a AuthSentCodeTypeSetUpEmailRequired from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeSetUpEmailRequired(r io.Reader) (*AuthSentCodeTypeSetUpEmailRequired, error) {
+func DecodeAuthSentCodeTypeSetUpEmailRequired(r *Reader) (*AuthSentCodeTypeSetUpEmailRequired, error) {
 	v := &AuthSentCodeTypeSetUpEmailRequired{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.AppleSigninAllowed = v.Flags.Has(0)
@@ -1066,7 +1408,7 @@ func DecodeAuthSentCodeTypeSetUpEmailRequired(r io.Reader) (*AuthSentCodeTypeSet
 }
 
 func init() {
-	Registry[AuthSentCodeTypeSetUpEmailRequiredTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeSetUpEmailRequiredTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeSetUpEmailRequired(r)
 	}
 }
@@ -1093,15 +1435,23 @@ func (v *AuthSentCodeTypeFragmentSms) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeFragmentSms deserializes a AuthSentCodeTypeFragmentSms from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeFragmentSms(r io.Reader) (*AuthSentCodeTypeFragmentSms, error) {
+func DecodeAuthSentCodeTypeFragmentSms(r *Reader) (*AuthSentCodeTypeFragmentSms, error) {
 	v := &AuthSentCodeTypeFragmentSms{}
-	v.URL = ReadString(r)
-	v.Length = int32(ReadInt(r))
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeFragmentSmsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeFragmentSmsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeFragmentSms(r)
 	}
 }
@@ -1168,34 +1518,58 @@ func (v *AuthSentCodeTypeFirebaseSms) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeFirebaseSms deserializes a AuthSentCodeTypeFirebaseSms from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeFirebaseSms(r io.Reader) (*AuthSentCodeTypeFirebaseSms, error) {
+func DecodeAuthSentCodeTypeFirebaseSms(r *Reader) (*AuthSentCodeTypeFirebaseSms, error) {
 	v := &AuthSentCodeTypeFirebaseSms{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Nonce = ReadBytes(r)
+		_rNonce, _eNonce := r.ReadBytes()
+		if _eNonce != nil {
+			return nil, _eNonce
+		}
+		v.Nonce = _rNonce
 	}
 	if v.Flags.Has(2) {
-		v.PlayIntegrityProjectID = ReadLong(r)
+		_rPlayIntegrityProjectID, _ePlayIntegrityProjectID := r.ReadInt64()
+		if _ePlayIntegrityProjectID != nil {
+			return nil, _ePlayIntegrityProjectID
+		}
+		v.PlayIntegrityProjectID = _rPlayIntegrityProjectID
 	}
 	if v.Flags.Has(2) {
-		v.PlayIntegrityNonce = ReadBytes(r)
+		_rPlayIntegrityNonce, _ePlayIntegrityNonce := r.ReadBytes()
+		if _ePlayIntegrityNonce != nil {
+			return nil, _ePlayIntegrityNonce
+		}
+		v.PlayIntegrityNonce = _rPlayIntegrityNonce
 	}
 	if v.Flags.Has(1) {
-		v.Receipt = ReadString(r)
+		_rReceipt, _eReceipt := r.ReadString()
+		if _eReceipt != nil {
+			return nil, _eReceipt
+		}
+		v.Receipt = _rReceipt
 	}
 	if v.Flags.Has(1) {
-		v.PushTimeout = int32(ReadInt(r))
+		_rPushTimeout, _ePushTimeout := r.ReadInt32()
+		if _ePushTimeout != nil {
+			return nil, _ePushTimeout
+		}
+		v.PushTimeout = _rPushTimeout
 	}
-	v.Length = int32(ReadInt(r))
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeFirebaseSmsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeFirebaseSmsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeFirebaseSms(r)
 	}
 }
@@ -1232,21 +1606,25 @@ func (v *AuthSentCodeTypeSmsWord) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeSmsWord deserializes a AuthSentCodeTypeSmsWord from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeSmsWord(r io.Reader) (*AuthSentCodeTypeSmsWord, error) {
+func DecodeAuthSentCodeTypeSmsWord(r *Reader) (*AuthSentCodeTypeSmsWord, error) {
 	v := &AuthSentCodeTypeSmsWord{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Beginning = ReadString(r)
+		_rBeginning, _eBeginning := r.ReadString()
+		if _eBeginning != nil {
+			return nil, _eBeginning
+		}
+		v.Beginning = _rBeginning
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeSmsWordTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeSmsWordTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeSmsWord(r)
 	}
 }
@@ -1283,21 +1661,25 @@ func (v *AuthSentCodeTypeSmsPhrase) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthSentCodeTypeSmsPhrase deserializes a AuthSentCodeTypeSmsPhrase from a reader using the TL binary protocol.
-func DecodeAuthSentCodeTypeSmsPhrase(r io.Reader) (*AuthSentCodeTypeSmsPhrase, error) {
+func DecodeAuthSentCodeTypeSmsPhrase(r *Reader) (*AuthSentCodeTypeSmsPhrase, error) {
 	v := &AuthSentCodeTypeSmsPhrase{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Beginning = ReadString(r)
+		_rBeginning, _eBeginning := r.ReadString()
+		if _eBeginning != nil {
+			return nil, _eBeginning
+		}
+		v.Beginning = _rBeginning
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthSentCodeTypeSmsPhraseTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthSentCodeTypeSmsPhraseTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthSentCodeTypeSmsPhrase(r)
 	}
 }
@@ -1341,22 +1723,58 @@ func (v *WebAuthorization) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeWebAuthorization deserializes a WebAuthorization from a reader using the TL binary protocol.
-func DecodeWebAuthorization(r io.Reader) (*WebAuthorization, error) {
+func DecodeWebAuthorization(r *Reader) (*WebAuthorization, error) {
 	v := &WebAuthorization{}
-	v.Hash = ReadLong(r)
-	v.BotID = ReadLong(r)
-	v.Domain = ReadString(r)
-	v.Browser = ReadString(r)
-	v.Platform = ReadString(r)
-	v.DateCreated = int32(ReadInt(r))
-	v.DateActive = int32(ReadInt(r))
-	v.Ip = ReadString(r)
-	v.Region = ReadString(r)
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_rDomain, _eDomain := r.ReadString()
+	if _eDomain != nil {
+		return nil, _eDomain
+	}
+	v.Domain = _rDomain
+	_rBrowser, _eBrowser := r.ReadString()
+	if _eBrowser != nil {
+		return nil, _eBrowser
+	}
+	v.Browser = _rBrowser
+	_rPlatform, _ePlatform := r.ReadString()
+	if _ePlatform != nil {
+		return nil, _ePlatform
+	}
+	v.Platform = _rPlatform
+	_rDateCreated, _eDateCreated := r.ReadInt32()
+	if _eDateCreated != nil {
+		return nil, _eDateCreated
+	}
+	v.DateCreated = _rDateCreated
+	_rDateActive, _eDateActive := r.ReadInt32()
+	if _eDateActive != nil {
+		return nil, _eDateActive
+	}
+	v.DateActive = _rDateActive
+	_rIp, _eIp := r.ReadString()
+	if _eIp != nil {
+		return nil, _eIp
+	}
+	v.Ip = _rIp
+	_rRegion, _eRegion := r.ReadString()
+	if _eRegion != nil {
+		return nil, _eRegion
+	}
+	v.Region = _rRegion
 	return v, nil
 }
 
 func init() {
-	Registry[WebAuthorizationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[WebAuthorizationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWebAuthorization(r)
 	}
 }
@@ -1399,13 +1817,13 @@ func (v *PasswordKdfAlgoUnknown) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePasswordKdfAlgoUnknown deserializes a PasswordKdfAlgoUnknown from a reader using the TL binary protocol.
-func DecodePasswordKdfAlgoUnknown(r io.Reader) (*PasswordKdfAlgoUnknown, error) {
+func DecodePasswordKdfAlgoUnknown(r *Reader) (*PasswordKdfAlgoUnknown, error) {
 	v := &PasswordKdfAlgoUnknown{}
 	return v, nil
 }
 
 func init() {
-	Registry[PasswordKdfAlgoUnknownTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PasswordKdfAlgoUnknownTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePasswordKdfAlgoUnknown(r)
 	}
 }
@@ -1436,17 +1854,33 @@ func (v *PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow) Enco
 }
 
 // DecodePasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow deserializes a PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow from a reader using the TL binary protocol.
-func DecodePasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow(r io.Reader) (*PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow, error) {
+func DecodePasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow(r *Reader) (*PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow, error) {
 	v := &PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow{}
-	v.Salt1 = ReadBytes(r)
-	v.Salt2 = ReadBytes(r)
-	v.G = int32(ReadInt(r))
-	v.P = ReadBytes(r)
+	_rSalt1, _eSalt1 := r.ReadBytes()
+	if _eSalt1 != nil {
+		return nil, _eSalt1
+	}
+	v.Salt1 = _rSalt1
+	_rSalt2, _eSalt2 := r.ReadBytes()
+	if _eSalt2 != nil {
+		return nil, _eSalt2
+	}
+	v.Salt2 = _rSalt2
+	_rG, _eG := r.ReadInt32()
+	if _eG != nil {
+		return nil, _eG
+	}
+	v.G = _rG
+	_rP, _eP := r.ReadBytes()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
 	return v, nil
 }
 
 func init() {
-	Registry[PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPowTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPowTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow(r)
 	}
 }
@@ -1495,13 +1929,13 @@ func (v *SecurePasswordKdfAlgoUnknown) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecurePasswordKdfAlgoUnknown deserializes a SecurePasswordKdfAlgoUnknown from a reader using the TL binary protocol.
-func DecodeSecurePasswordKdfAlgoUnknown(r io.Reader) (*SecurePasswordKdfAlgoUnknown, error) {
+func DecodeSecurePasswordKdfAlgoUnknown(r *Reader) (*SecurePasswordKdfAlgoUnknown, error) {
 	v := &SecurePasswordKdfAlgoUnknown{}
 	return v, nil
 }
 
 func init() {
-	Registry[SecurePasswordKdfAlgoUnknownTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecurePasswordKdfAlgoUnknownTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecurePasswordKdfAlgoUnknown(r)
 	}
 }
@@ -1526,14 +1960,18 @@ func (v *SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000) Encode(b *bytes.Buffer
 }
 
 // DecodeSecurePasswordKdfAlgoPbkdf2hmacsha512iter100000 deserializes a SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000 from a reader using the TL binary protocol.
-func DecodeSecurePasswordKdfAlgoPbkdf2hmacsha512iter100000(r io.Reader) (*SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000, error) {
+func DecodeSecurePasswordKdfAlgoPbkdf2hmacsha512iter100000(r *Reader) (*SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000, error) {
 	v := &SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000{}
-	v.Salt = ReadBytes(r)
+	_rSalt, _eSalt := r.ReadBytes()
+	if _eSalt != nil {
+		return nil, _eSalt
+	}
+	v.Salt = _rSalt
 	return v, nil
 }
 
 func init() {
-	Registry[SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000TypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000TypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecurePasswordKdfAlgoPbkdf2hmacsha512iter100000(r)
 	}
 }
@@ -1558,14 +1996,18 @@ func (v *SecurePasswordKdfAlgoSha512) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSecurePasswordKdfAlgoSha512 deserializes a SecurePasswordKdfAlgoSha512 from a reader using the TL binary protocol.
-func DecodeSecurePasswordKdfAlgoSha512(r io.Reader) (*SecurePasswordKdfAlgoSha512, error) {
+func DecodeSecurePasswordKdfAlgoSha512(r *Reader) (*SecurePasswordKdfAlgoSha512, error) {
 	v := &SecurePasswordKdfAlgoSha512{}
-	v.Salt = ReadBytes(r)
+	_rSalt, _eSalt := r.ReadBytes()
+	if _eSalt != nil {
+		return nil, _eSalt
+	}
+	v.Salt = _rSalt
 	return v, nil
 }
 
 func init() {
-	Registry[SecurePasswordKdfAlgoSha512TypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SecurePasswordKdfAlgoSha512TypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSecurePasswordKdfAlgoSha512(r)
 	}
 }
@@ -1608,13 +2050,13 @@ func (v *InputCheckPasswordEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputCheckPasswordEmpty deserializes a InputCheckPasswordEmpty from a reader using the TL binary protocol.
-func DecodeInputCheckPasswordEmpty(r io.Reader) (*InputCheckPasswordEmpty, error) {
+func DecodeInputCheckPasswordEmpty(r *Reader) (*InputCheckPasswordEmpty, error) {
 	v := &InputCheckPasswordEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputCheckPasswordEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputCheckPasswordEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputCheckPasswordEmpty(r)
 	}
 }
@@ -1643,16 +2085,28 @@ func (v *InputCheckPasswordSRP) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputCheckPasswordSRP deserializes a InputCheckPasswordSRP from a reader using the TL binary protocol.
-func DecodeInputCheckPasswordSRP(r io.Reader) (*InputCheckPasswordSRP, error) {
+func DecodeInputCheckPasswordSRP(r *Reader) (*InputCheckPasswordSRP, error) {
 	v := &InputCheckPasswordSRP{}
-	v.SRPID = ReadLong(r)
-	v.A = ReadBytes(r)
-	v.M1 = ReadBytes(r)
+	_rSRPID, _eSRPID := r.ReadInt64()
+	if _eSRPID != nil {
+		return nil, _eSRPID
+	}
+	v.SRPID = _rSRPID
+	_rA, _eA := r.ReadBytes()
+	if _eA != nil {
+		return nil, _eA
+	}
+	v.A = _rA
+	_rM1, _eM1 := r.ReadBytes()
+	if _eM1 != nil {
+		return nil, _eM1
+	}
+	v.M1 = _rM1
 	return v, nil
 }
 
 func init() {
-	Registry[InputCheckPasswordSRPTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputCheckPasswordSRPTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputCheckPasswordSRP(r)
 	}
 }
@@ -1777,46 +2231,81 @@ func (v *URLAuthResultRequest) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeURLAuthResultRequest deserializes a URLAuthResultRequest from a reader using the TL binary protocol.
-func DecodeURLAuthResultRequest(r io.Reader) (*URLAuthResultRequest, error) {
+func DecodeURLAuthResultRequest(r *Reader) (*URLAuthResultRequest, error) {
 	v := &URLAuthResultRequest{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.RequestWriteAccess = v.Flags.Has(0)
 	v.RequestPhoneNumber = v.Flags.Has(1)
 	v.MatchCodesFirst = v.Flags.Has(5)
 	v.IsApp = v.Flags.Has(6)
-	_objBot, _ := ReadTLObject(r)
+	_objBot, _errBot := ReadTLObject(r)
+	if _errBot != nil {
+		return nil, _errBot
+	}
 	v.Bot = _objBot.(UserClass)
-	v.Domain = ReadString(r)
+	_rDomain, _eDomain := r.ReadString()
+	if _eDomain != nil {
+		return nil, _eDomain
+	}
+	v.Domain = _rDomain
 	if v.Flags.Has(2) {
-		v.Browser = ReadString(r)
+		_rBrowser, _eBrowser := r.ReadString()
+		if _eBrowser != nil {
+			return nil, _eBrowser
+		}
+		v.Browser = _rBrowser
 	}
 	if v.Flags.Has(2) {
-		v.Platform = ReadString(r)
+		_rPlatform, _ePlatform := r.ReadString()
+		if _ePlatform != nil {
+			return nil, _ePlatform
+		}
+		v.Platform = _rPlatform
 	}
 	if v.Flags.Has(2) {
-		v.Ip = ReadString(r)
+		_rIp, _eIp := r.ReadString()
+		if _eIp != nil {
+			return nil, _eIp
+		}
+		v.Ip = _rIp
 	}
 	if v.Flags.Has(2) {
-		v.Region = ReadString(r)
+		_rRegion, _eRegion := r.ReadString()
+		if _eRegion != nil {
+			return nil, _eRegion
+		}
+		v.Region = _rRegion
 	}
 	if v.Flags.Has(3) {
-		v.MatchCodes = ReadVectorString(r)
+		_vvMatchCodes, _veMatchCodes := r.ReadVectorString()
+		if _veMatchCodes != nil {
+			return nil, _veMatchCodes
+		}
+		v.MatchCodes = _vvMatchCodes
 	}
 	if v.Flags.Has(4) {
-		v.UserIDHint = ReadLong(r)
+		_rUserIDHint, _eUserIDHint := r.ReadInt64()
+		if _eUserIDHint != nil {
+			return nil, _eUserIDHint
+		}
+		v.UserIDHint = _rUserIDHint
 	}
 	if v.Flags.Has(7) {
-		v.VerifiedAppName = ReadString(r)
+		_rVerifiedAppName, _eVerifiedAppName := r.ReadString()
+		if _eVerifiedAppName != nil {
+			return nil, _eVerifiedAppName
+		}
+		v.VerifiedAppName = _rVerifiedAppName
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[URLAuthResultRequestTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[URLAuthResultRequestTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeURLAuthResultRequest(r)
 	}
 }
@@ -1853,21 +2342,25 @@ func (v *URLAuthResultAccepted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeURLAuthResultAccepted deserializes a URLAuthResultAccepted from a reader using the TL binary protocol.
-func DecodeURLAuthResultAccepted(r io.Reader) (*URLAuthResultAccepted, error) {
+func DecodeURLAuthResultAccepted(r *Reader) (*URLAuthResultAccepted, error) {
 	v := &URLAuthResultAccepted{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.URL = ReadString(r)
+		_rURL, _eURL := r.ReadString()
+		if _eURL != nil {
+			return nil, _eURL
+		}
+		v.URL = _rURL
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[URLAuthResultAcceptedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[URLAuthResultAcceptedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeURLAuthResultAccepted(r)
 	}
 }
@@ -1890,13 +2383,13 @@ func (v *URLAuthResultDefault) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeURLAuthResultDefault deserializes a URLAuthResultDefault from a reader using the TL binary protocol.
-func DecodeURLAuthResultDefault(r io.Reader) (*URLAuthResultDefault, error) {
+func DecodeURLAuthResultDefault(r *Reader) (*URLAuthResultDefault, error) {
 	v := &URLAuthResultDefault{}
 	return v, nil
 }
 
 func init() {
-	Registry[URLAuthResultDefaultTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[URLAuthResultDefaultTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeURLAuthResultDefault(r)
 	}
 }
@@ -1949,15 +2442,23 @@ func (v *AuthLoginToken) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthLoginToken deserializes a AuthLoginToken from a reader using the TL binary protocol.
-func DecodeAuthLoginToken(r io.Reader) (*AuthLoginToken, error) {
+func DecodeAuthLoginToken(r *Reader) (*AuthLoginToken, error) {
 	v := &AuthLoginToken{}
-	v.Expires = int32(ReadInt(r))
-	v.Token = ReadBytes(r)
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_rToken, _eToken := r.ReadBytes()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
 	return v, nil
 }
 
 func init() {
-	Registry[AuthLoginTokenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthLoginTokenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthLoginToken(r)
 	}
 }
@@ -1984,15 +2485,23 @@ func (v *AuthLoginTokenMigrateTo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthLoginTokenMigrateTo deserializes a AuthLoginTokenMigrateTo from a reader using the TL binary protocol.
-func DecodeAuthLoginTokenMigrateTo(r io.Reader) (*AuthLoginTokenMigrateTo, error) {
+func DecodeAuthLoginTokenMigrateTo(r *Reader) (*AuthLoginTokenMigrateTo, error) {
 	v := &AuthLoginTokenMigrateTo{}
-	v.DCID = int32(ReadInt(r))
-	v.Token = ReadBytes(r)
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_rToken, _eToken := r.ReadBytes()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
 	return v, nil
 }
 
 func init() {
-	Registry[AuthLoginTokenMigrateToTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthLoginTokenMigrateToTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthLoginTokenMigrateTo(r)
 	}
 }
@@ -2017,15 +2526,18 @@ func (v *AuthLoginTokenSuccess) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthLoginTokenSuccess deserializes a AuthLoginTokenSuccess from a reader using the TL binary protocol.
-func DecodeAuthLoginTokenSuccess(r io.Reader) (*AuthLoginTokenSuccess, error) {
+func DecodeAuthLoginTokenSuccess(r *Reader) (*AuthLoginTokenSuccess, error) {
 	v := &AuthLoginTokenSuccess{}
-	_objAuthorization, _ := ReadTLObject(r)
+	_objAuthorization, _errAuthorization := ReadTLObject(r)
+	if _errAuthorization != nil {
+		return nil, _errAuthorization
+	}
 	v.Authorization = _objAuthorization.(AuthorizationClass)
 	return v, nil
 }
 
 func init() {
-	Registry[AuthLoginTokenSuccessTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthLoginTokenSuccessTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthLoginTokenSuccess(r)
 	}
 }
@@ -2065,21 +2577,25 @@ func (v *AuthLoggedOut) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthLoggedOut deserializes a AuthLoggedOut from a reader using the TL binary protocol.
-func DecodeAuthLoggedOut(r io.Reader) (*AuthLoggedOut, error) {
+func DecodeAuthLoggedOut(r *Reader) (*AuthLoggedOut, error) {
 	v := &AuthLoggedOut{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.FutureAuthToken = ReadBytes(r)
+		_rFutureAuthToken, _eFutureAuthToken := r.ReadBytes()
+		if _eFutureAuthToken != nil {
+			return nil, _eFutureAuthToken
+		}
+		v.FutureAuthToken = _rFutureAuthToken
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[AuthLoggedOutTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthLoggedOutTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthLoggedOut(r)
 	}
 }
@@ -2132,27 +2648,47 @@ func (v *Passkey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePasskey deserializes a Passkey from a reader using the TL binary protocol.
-func DecodePasskey(r io.Reader) (*Passkey, error) {
+func DecodePasskey(r *Reader) (*Passkey, error) {
 	v := &Passkey{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ID = ReadString(r)
-	v.Name = ReadString(r)
-	v.Date = int32(ReadInt(r))
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(0) {
-		v.SoftwareEmojiID = ReadLong(r)
+		_rSoftwareEmojiID, _eSoftwareEmojiID := r.ReadInt64()
+		if _eSoftwareEmojiID != nil {
+			return nil, _eSoftwareEmojiID
+		}
+		v.SoftwareEmojiID = _rSoftwareEmojiID
 	}
 	if v.Flags.Has(1) {
-		v.LastUsageDate = int32(ReadInt(r))
+		_rLastUsageDate, _eLastUsageDate := r.ReadInt32()
+		if _eLastUsageDate != nil {
+			return nil, _eLastUsageDate
+		}
+		v.LastUsageDate = _rLastUsageDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PasskeyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PasskeyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePasskey(r)
 	}
 }
@@ -2180,15 +2716,18 @@ func (v *AuthPasskeyLoginOptions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAuthPasskeyLoginOptions deserializes a AuthPasskeyLoginOptions from a reader using the TL binary protocol.
-func DecodeAuthPasskeyLoginOptions(r io.Reader) (*AuthPasskeyLoginOptions, error) {
+func DecodeAuthPasskeyLoginOptions(r *Reader) (*AuthPasskeyLoginOptions, error) {
 	v := &AuthPasskeyLoginOptions{}
-	_objOptions, _ := ReadTLObject(r)
+	_objOptions, _errOptions := ReadTLObject(r)
+	if _errOptions != nil {
+		return nil, _errOptions
+	}
 	v.Options = _objOptions.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[AuthPasskeyLoginOptionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AuthPasskeyLoginOptionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthPasskeyLoginOptions(r)
 	}
 }
@@ -2235,16 +2774,23 @@ func (v *InputPasskeyResponseRegister) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPasskeyResponseRegister deserializes a InputPasskeyResponseRegister from a reader using the TL binary protocol.
-func DecodeInputPasskeyResponseRegister(r io.Reader) (*InputPasskeyResponseRegister, error) {
+func DecodeInputPasskeyResponseRegister(r *Reader) (*InputPasskeyResponseRegister, error) {
 	v := &InputPasskeyResponseRegister{}
-	_objClientData, _ := ReadTLObject(r)
+	_objClientData, _errClientData := ReadTLObject(r)
+	if _errClientData != nil {
+		return nil, _errClientData
+	}
 	v.ClientData = _objClientData.(*DataJSON)
-	v.AttestationData = ReadBytes(r)
+	_rAttestationData, _eAttestationData := r.ReadBytes()
+	if _eAttestationData != nil {
+		return nil, _eAttestationData
+	}
+	v.AttestationData = _rAttestationData
 	return v, nil
 }
 
 func init() {
-	Registry[InputPasskeyResponseRegisterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPasskeyResponseRegisterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyResponseRegister(r)
 	}
 }
@@ -2275,18 +2821,33 @@ func (v *InputPasskeyResponseLogin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPasskeyResponseLogin deserializes a InputPasskeyResponseLogin from a reader using the TL binary protocol.
-func DecodeInputPasskeyResponseLogin(r io.Reader) (*InputPasskeyResponseLogin, error) {
+func DecodeInputPasskeyResponseLogin(r *Reader) (*InputPasskeyResponseLogin, error) {
 	v := &InputPasskeyResponseLogin{}
-	_objClientData, _ := ReadTLObject(r)
+	_objClientData, _errClientData := ReadTLObject(r)
+	if _errClientData != nil {
+		return nil, _errClientData
+	}
 	v.ClientData = _objClientData.(*DataJSON)
-	v.AuthenticatorData = ReadBytes(r)
-	v.Signature = ReadBytes(r)
-	v.UserHandle = ReadString(r)
+	_rAuthenticatorData, _eAuthenticatorData := r.ReadBytes()
+	if _eAuthenticatorData != nil {
+		return nil, _eAuthenticatorData
+	}
+	v.AuthenticatorData = _rAuthenticatorData
+	_rSignature, _eSignature := r.ReadBytes()
+	if _eSignature != nil {
+		return nil, _eSignature
+	}
+	v.Signature = _rSignature
+	_rUserHandle, _eUserHandle := r.ReadString()
+	if _eUserHandle != nil {
+		return nil, _eUserHandle
+	}
+	v.UserHandle = _rUserHandle
 	return v, nil
 }
 
 func init() {
-	Registry[InputPasskeyResponseLoginTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPasskeyResponseLoginTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyResponseLogin(r)
 	}
 }
@@ -2335,17 +2896,28 @@ func (v *InputPasskeyCredentialPublicKey) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPasskeyCredentialPublicKey deserializes a InputPasskeyCredentialPublicKey from a reader using the TL binary protocol.
-func DecodeInputPasskeyCredentialPublicKey(r io.Reader) (*InputPasskeyCredentialPublicKey, error) {
+func DecodeInputPasskeyCredentialPublicKey(r *Reader) (*InputPasskeyCredentialPublicKey, error) {
 	v := &InputPasskeyCredentialPublicKey{}
-	v.ID = ReadString(r)
-	v.RawID = ReadString(r)
-	_objResponse, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rRawID, _eRawID := r.ReadString()
+	if _eRawID != nil {
+		return nil, _eRawID
+	}
+	v.RawID = _rRawID
+	_objResponse, _errResponse := ReadTLObject(r)
+	if _errResponse != nil {
+		return nil, _errResponse
+	}
 	v.Response = _objResponse.(InputPasskeyResponseClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputPasskeyCredentialPublicKeyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPasskeyCredentialPublicKeyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyCredentialPublicKey(r)
 	}
 }
@@ -2370,174 +2942,18 @@ func (v *InputPasskeyCredentialFirebasePnv) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPasskeyCredentialFirebasePnv deserializes a InputPasskeyCredentialFirebasePnv from a reader using the TL binary protocol.
-func DecodeInputPasskeyCredentialFirebasePnv(r io.Reader) (*InputPasskeyCredentialFirebasePnv, error) {
+func DecodeInputPasskeyCredentialFirebasePnv(r *Reader) (*InputPasskeyCredentialFirebasePnv, error) {
 	v := &InputPasskeyCredentialFirebasePnv{}
-	v.PnvToken = ReadString(r)
+	_rPnvToken, _ePnvToken := r.ReadString()
+	if _ePnvToken != nil {
+		return nil, _ePnvToken
+	}
+	v.PnvToken = _rPnvToken
 	return v, nil
 }
 
 func init() {
-	Registry[InputPasskeyCredentialFirebasePnvTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPasskeyCredentialFirebasePnvTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyCredentialFirebasePnv(r)
-	}
-}
-
-// BindAuthKeyInnerTypeID is the constructor ID for TL type bind_auth_key_inner.
-const BindAuthKeyInnerTypeID = 0x75a3f765
-
-// BindAuthKeyInner represents the TL constructor bind_auth_key_inner (0x75a3f765).
-//
-// See https://core.telegram.org/constructor/bind_auth_key_inner for reference.
-type BindAuthKeyInner struct {
-	Nonce         int64 `json:"nonce,omitempty"`
-	TempAuthKeyID int64 `json:"temp_auth_key_id,omitempty"`
-	PermAuthKeyID int64 `json:"perm_auth_key_id,omitempty"`
-	TempSessionID int64 `json:"temp_session_id,omitempty"`
-	ExpiresAt     int32 `json:"expires_at,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x75a3f765.
-func (v *BindAuthKeyInner) ConstructorID() uint32 {
-	return BindAuthKeyInnerTypeID
-}
-
-// Encode serializes BindAuthKeyInner to a bytes.Buffer using the TL binary protocol.
-func (v *BindAuthKeyInner) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BindAuthKeyInnerTypeID)
-	WriteLong(b, v.Nonce)
-	WriteLong(b, v.TempAuthKeyID)
-	WriteLong(b, v.PermAuthKeyID)
-	WriteLong(b, v.TempSessionID)
-	WriteInt(b, uint32(v.ExpiresAt))
-	return nil
-}
-
-// DecodeBindAuthKeyInner deserializes a BindAuthKeyInner from a reader using the TL binary protocol.
-func DecodeBindAuthKeyInner(r io.Reader) (*BindAuthKeyInner, error) {
-	v := &BindAuthKeyInner{}
-	v.Nonce = ReadLong(r)
-	v.TempAuthKeyID = ReadLong(r)
-	v.PermAuthKeyID = ReadLong(r)
-	v.TempSessionID = ReadLong(r)
-	v.ExpiresAt = int32(ReadInt(r))
-	return v, nil
-}
-
-func init() {
-	Registry[BindAuthKeyInnerTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeBindAuthKeyInner(r)
-	}
-}
-
-// DestroyAuthKeyResClass is the interface for TL type DestroyAuthKeyRes.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the DestroyAuthKeyRes TL type.
-type DestroyAuthKeyResClass interface {
-	TLObject
-	isDestroyAuthKeyRes()
-}
-
-// DestroyAuthKeyOkTypeID is the constructor ID for TL type destroy_auth_key_ok.
-const DestroyAuthKeyOkTypeID = 0xf660e1d4
-
-// DestroyAuthKeyNoneTypeID is the constructor ID for TL type destroy_auth_key_none.
-const DestroyAuthKeyNoneTypeID = 0x0a9f2259
-
-// DestroyAuthKeyFailTypeID is the constructor ID for TL type destroy_auth_key_fail.
-const DestroyAuthKeyFailTypeID = 0xea109b13
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyOk as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyOk) isDestroyAuthKeyRes() {}
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyNone as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyNone) isDestroyAuthKeyRes() {}
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyFail as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyFail) isDestroyAuthKeyRes() {}
-
-// DestroyAuthKeyOk represents the TL constructor destroy_auth_key_ok (0xf660e1d4).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_ok for reference.
-type DestroyAuthKeyOk struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xf660e1d4.
-func (v *DestroyAuthKeyOk) ConstructorID() uint32 {
-	return DestroyAuthKeyOkTypeID
-}
-
-// Encode serializes DestroyAuthKeyOk to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyOkTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyOk deserializes a DestroyAuthKeyOk from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyOk(r io.Reader) (*DestroyAuthKeyOk, error) {
-	v := &DestroyAuthKeyOk{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyOkTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyOk(r)
-	}
-}
-
-// DestroyAuthKeyNone represents the TL constructor destroy_auth_key_none (0x0a9f2259).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_none for reference.
-type DestroyAuthKeyNone struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0x0a9f2259.
-func (v *DestroyAuthKeyNone) ConstructorID() uint32 {
-	return DestroyAuthKeyNoneTypeID
-}
-
-// Encode serializes DestroyAuthKeyNone to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyNone) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyNoneTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyNone deserializes a DestroyAuthKeyNone from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyNone(r io.Reader) (*DestroyAuthKeyNone, error) {
-	v := &DestroyAuthKeyNone{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyNoneTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyNone(r)
-	}
-}
-
-// DestroyAuthKeyFail represents the TL constructor destroy_auth_key_fail (0xea109b13).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_fail for reference.
-type DestroyAuthKeyFail struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xea109b13.
-func (v *DestroyAuthKeyFail) ConstructorID() uint32 {
-	return DestroyAuthKeyFailTypeID
-}
-
-// Encode serializes DestroyAuthKeyFail to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyFailTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyFail deserializes a DestroyAuthKeyFail from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyFail(r io.Reader) (*DestroyAuthKeyFail, error) {
-	v := &DestroyAuthKeyFail{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyFailTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyFail(r)
 	}
 }

@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // PhoneCallDiscardReasonClass is the interface for TL type PhoneCallDiscardReason.
@@ -63,13 +62,13 @@ func (v *PhoneCallDiscardReasonMissed) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallDiscardReasonMissed deserializes a PhoneCallDiscardReasonMissed from a reader using the TL binary protocol.
-func DecodePhoneCallDiscardReasonMissed(r io.Reader) (*PhoneCallDiscardReasonMissed, error) {
+func DecodePhoneCallDiscardReasonMissed(r *Reader) (*PhoneCallDiscardReasonMissed, error) {
 	v := &PhoneCallDiscardReasonMissed{}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardReasonMissedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardReasonMissedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscardReasonMissed(r)
 	}
 }
@@ -92,13 +91,13 @@ func (v *PhoneCallDiscardReasonDisconnect) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallDiscardReasonDisconnect deserializes a PhoneCallDiscardReasonDisconnect from a reader using the TL binary protocol.
-func DecodePhoneCallDiscardReasonDisconnect(r io.Reader) (*PhoneCallDiscardReasonDisconnect, error) {
+func DecodePhoneCallDiscardReasonDisconnect(r *Reader) (*PhoneCallDiscardReasonDisconnect, error) {
 	v := &PhoneCallDiscardReasonDisconnect{}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardReasonDisconnectTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardReasonDisconnectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscardReasonDisconnect(r)
 	}
 }
@@ -121,13 +120,13 @@ func (v *PhoneCallDiscardReasonHangup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallDiscardReasonHangup deserializes a PhoneCallDiscardReasonHangup from a reader using the TL binary protocol.
-func DecodePhoneCallDiscardReasonHangup(r io.Reader) (*PhoneCallDiscardReasonHangup, error) {
+func DecodePhoneCallDiscardReasonHangup(r *Reader) (*PhoneCallDiscardReasonHangup, error) {
 	v := &PhoneCallDiscardReasonHangup{}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardReasonHangupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardReasonHangupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscardReasonHangup(r)
 	}
 }
@@ -150,13 +149,13 @@ func (v *PhoneCallDiscardReasonBusy) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallDiscardReasonBusy deserializes a PhoneCallDiscardReasonBusy from a reader using the TL binary protocol.
-func DecodePhoneCallDiscardReasonBusy(r io.Reader) (*PhoneCallDiscardReasonBusy, error) {
+func DecodePhoneCallDiscardReasonBusy(r *Reader) (*PhoneCallDiscardReasonBusy, error) {
 	v := &PhoneCallDiscardReasonBusy{}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardReasonBusyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardReasonBusyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscardReasonBusy(r)
 	}
 }
@@ -181,14 +180,18 @@ func (v *PhoneCallDiscardReasonMigrateConferenceCall) Encode(b *bytes.Buffer) er
 }
 
 // DecodePhoneCallDiscardReasonMigrateConferenceCall deserializes a PhoneCallDiscardReasonMigrateConferenceCall from a reader using the TL binary protocol.
-func DecodePhoneCallDiscardReasonMigrateConferenceCall(r io.Reader) (*PhoneCallDiscardReasonMigrateConferenceCall, error) {
+func DecodePhoneCallDiscardReasonMigrateConferenceCall(r *Reader) (*PhoneCallDiscardReasonMigrateConferenceCall, error) {
 	v := &PhoneCallDiscardReasonMigrateConferenceCall{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardReasonMigrateConferenceCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardReasonMigrateConferenceCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscardReasonMigrateConferenceCall(r)
 	}
 }
@@ -218,15 +221,23 @@ func (v *InputPhoneCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhoneCall deserializes a InputPhoneCall from a reader using the TL binary protocol.
-func DecodeInputPhoneCall(r io.Reader) (*InputPhoneCall, error) {
+func DecodeInputPhoneCall(r *Reader) (*InputPhoneCall, error) {
 	v := &InputPhoneCall{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhoneCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhoneCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhoneCall(r)
 	}
 }
@@ -301,14 +312,18 @@ func (v *PhoneCallEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallEmpty deserializes a PhoneCallEmpty from a reader using the TL binary protocol.
-func DecodePhoneCallEmpty(r io.Reader) (*PhoneCallEmpty, error) {
+func DecodePhoneCallEmpty(r *Reader) (*PhoneCallEmpty, error) {
 	v := &PhoneCallEmpty{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallEmpty(r)
 	}
 }
@@ -361,29 +376,56 @@ func (v *PhoneCallWaiting) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallWaiting deserializes a PhoneCallWaiting from a reader using the TL binary protocol.
-func DecodePhoneCallWaiting(r io.Reader) (*PhoneCallWaiting, error) {
+func DecodePhoneCallWaiting(r *Reader) (*PhoneCallWaiting, error) {
 	v := &PhoneCallWaiting{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Video = v.Flags.Has(6)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	_objProtocol, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_objProtocol, _errProtocol := ReadTLObject(r)
+	if _errProtocol != nil {
+		return nil, _errProtocol
+	}
 	v.Protocol = _objProtocol.(*PhoneCallProtocol)
 	if v.Flags.Has(0) {
-		v.ReceiveDate = int32(ReadInt(r))
+		_rReceiveDate, _eReceiveDate := r.ReadInt32()
+		if _eReceiveDate != nil {
+			return nil, _eReceiveDate
+		}
+		v.ReceiveDate = _rReceiveDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallWaitingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallWaitingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallWaiting(r)
 	}
 }
@@ -431,27 +473,54 @@ func (v *PhoneCallRequested) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallRequested deserializes a PhoneCallRequested from a reader using the TL binary protocol.
-func DecodePhoneCallRequested(r io.Reader) (*PhoneCallRequested, error) {
+func DecodePhoneCallRequested(r *Reader) (*PhoneCallRequested, error) {
 	v := &PhoneCallRequested{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Video = v.Flags.Has(6)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	v.GAHash = ReadBytes(r)
-	_objProtocol, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_rGAHash, _eGAHash := r.ReadBytes()
+	if _eGAHash != nil {
+		return nil, _eGAHash
+	}
+	v.GAHash = _rGAHash
+	_objProtocol, _errProtocol := ReadTLObject(r)
+	if _errProtocol != nil {
+		return nil, _errProtocol
+	}
 	v.Protocol = _objProtocol.(*PhoneCallProtocol)
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallRequestedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallRequestedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallRequested(r)
 	}
 }
@@ -499,27 +568,54 @@ func (v *PhoneCallAccepted) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallAccepted deserializes a PhoneCallAccepted from a reader using the TL binary protocol.
-func DecodePhoneCallAccepted(r io.Reader) (*PhoneCallAccepted, error) {
+func DecodePhoneCallAccepted(r *Reader) (*PhoneCallAccepted, error) {
 	v := &PhoneCallAccepted{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Video = v.Flags.Has(6)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	v.GB = ReadBytes(r)
-	_objProtocol, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_rGB, _eGB := r.ReadBytes()
+	if _eGB != nil {
+		return nil, _eGB
+	}
+	v.GB = _rGB
+	_objProtocol, _errProtocol := ReadTLObject(r)
+	if _errProtocol != nil {
+		return nil, _errProtocol
+	}
 	v.Protocol = _objProtocol.(*PhoneCallProtocol)
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallAcceptedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallAcceptedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallAccepted(r)
 	}
 }
@@ -592,45 +688,93 @@ func (v *PhoneCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCall deserializes a PhoneCall from a reader using the TL binary protocol.
-func DecodePhoneCall(r io.Reader) (*PhoneCall, error) {
+func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 	v := &PhoneCall{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.P2pAllowed = v.Flags.Has(5)
 	v.Video = v.Flags.Has(6)
 	v.ConferenceSupported = v.Flags.Has(8)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	v.GAOrB = ReadBytes(r)
-	v.KeyFingerprint = ReadLong(r)
-	_objProtocol, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_rGAOrB, _eGAOrB := r.ReadBytes()
+	if _eGAOrB != nil {
+		return nil, _eGAOrB
+	}
+	v.GAOrB = _rGAOrB
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt64()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
+	_objProtocol, _errProtocol := ReadTLObject(r)
+	if _errProtocol != nil {
+		return nil, _errProtocol
+	}
 	v.Protocol = _objProtocol.(*PhoneCallProtocol)
-	ReadInt(r)
-	_cntConnections := ReadInt(r)
-	if err := checkVectorCount(_cntConnections); err != nil {
-		return nil, err
+	_vhdrConnections, _ehdrConnections := r.ReadUint32()
+	if _ehdrConnections != nil {
+		return nil, _ehdrConnections
+	}
+	_cntConnections, _ecntConnections := r.ReadUint32()
+	if _ecntConnections != nil {
+		return nil, _ecntConnections
+	}
+	if _errConnections := checkVectorCount(_cntConnections); _errConnections != nil {
+		return nil, _errConnections
 	}
 	v.Connections = make([]PhoneConnectionClass, _cntConnections)
 	for _iConnections := range v.Connections {
-		_objConnections, _ := ReadTLObject(r)
+		_objConnections, _errConnections := ReadTLObject(r)
+		if _errConnections != nil {
+			return nil, _errConnections
+		}
 		v.Connections[_iConnections] = _objConnections.(PhoneConnectionClass)
 	}
-	v.StartDate = int32(ReadInt(r))
+	_ = _vhdrConnections
+	_rStartDate, _eStartDate := r.ReadInt32()
+	if _eStartDate != nil {
+		return nil, _eStartDate
+	}
+	v.StartDate = _rStartDate
 	if v.Flags.Has(7) {
-		_objCustomParameters, _ := ReadTLObject(r)
+		_objCustomParameters, _errCustomParameters := ReadTLObject(r)
+		if _errCustomParameters != nil {
+			return nil, _errCustomParameters
+		}
 		v.CustomParameters = _objCustomParameters.(*DataJSON)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCall(r)
 	}
 }
@@ -688,29 +832,40 @@ func (v *PhoneCallDiscarded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallDiscarded deserializes a PhoneCallDiscarded from a reader using the TL binary protocol.
-func DecodePhoneCallDiscarded(r io.Reader) (*PhoneCallDiscarded, error) {
+func DecodePhoneCallDiscarded(r *Reader) (*PhoneCallDiscarded, error) {
 	v := &PhoneCallDiscarded{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.NeedRating = v.Flags.Has(2)
 	v.NeedDebug = v.Flags.Has(3)
 	v.Video = v.Flags.Has(6)
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(0) {
-		_objReason, _ := ReadTLObject(r)
+		_objReason, _errReason := ReadTLObject(r)
+		if _errReason != nil {
+			return nil, _errReason
+		}
 		v.Reason = _objReason.(PhoneCallDiscardReasonClass)
 	}
 	if v.Flags.Has(1) {
-		v.Duration = int32(ReadInt(r))
+		_rDuration, _eDuration := r.ReadInt32()
+		if _eDuration != nil {
+			return nil, _eDuration
+		}
+		v.Duration = _rDuration
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallDiscardedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallDiscardedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallDiscarded(r)
 	}
 }
@@ -741,25 +896,38 @@ func (v *PhonePhoneCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhonePhoneCall deserializes a PhonePhoneCall from a reader using the TL binary protocol.
-func DecodePhonePhoneCall(r io.Reader) (*PhonePhoneCall, error) {
+func DecodePhonePhoneCall(r *Reader) (*PhonePhoneCall, error) {
 	v := &PhonePhoneCall{}
-	_objPhoneCall, _ := ReadTLObject(r)
+	_objPhoneCall, _errPhoneCall := ReadTLObject(r)
+	if _errPhoneCall != nil {
+		return nil, _errPhoneCall
+	}
 	v.PhoneCall = _objPhoneCall.(PhoneCallClass)
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhonePhoneCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhonePhoneCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhonePhoneCall(r)
 	}
 }
@@ -823,24 +991,44 @@ func (v *PhoneConnection) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneConnection deserializes a PhoneConnection from a reader using the TL binary protocol.
-func DecodePhoneConnection(r io.Reader) (*PhoneConnection, error) {
+func DecodePhoneConnection(r *Reader) (*PhoneConnection, error) {
 	v := &PhoneConnection{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.TCP = v.Flags.Has(0)
-	v.ID = ReadLong(r)
-	v.Ip = ReadString(r)
-	v.IPv6 = ReadString(r)
-	v.Port = int32(ReadInt(r))
-	v.PeerTag = ReadBytes(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rIp, _eIp := r.ReadString()
+	if _eIp != nil {
+		return nil, _eIp
+	}
+	v.Ip = _rIp
+	_rIPv6, _eIPv6 := r.ReadString()
+	if _eIPv6 != nil {
+		return nil, _eIPv6
+	}
+	v.IPv6 = _rIPv6
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	_rPeerTag, _ePeerTag := r.ReadBytes()
+	if _ePeerTag != nil {
+		return nil, _ePeerTag
+	}
+	v.PeerTag = _rPeerTag
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneConnectionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneConnectionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneConnection(r)
 	}
 }
@@ -890,26 +1078,50 @@ func (v *PhoneConnectionWebrtc) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneConnectionWebrtc deserializes a PhoneConnectionWebrtc from a reader using the TL binary protocol.
-func DecodePhoneConnectionWebrtc(r io.Reader) (*PhoneConnectionWebrtc, error) {
+func DecodePhoneConnectionWebrtc(r *Reader) (*PhoneConnectionWebrtc, error) {
 	v := &PhoneConnectionWebrtc{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Turn = v.Flags.Has(0)
 	v.Stun = v.Flags.Has(1)
-	v.ID = ReadLong(r)
-	v.Ip = ReadString(r)
-	v.IPv6 = ReadString(r)
-	v.Port = int32(ReadInt(r))
-	v.Username = ReadString(r)
-	v.Password = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rIp, _eIp := r.ReadString()
+	if _eIp != nil {
+		return nil, _eIp
+	}
+	v.Ip = _rIp
+	_rIPv6, _eIPv6 := r.ReadString()
+	if _eIPv6 != nil {
+		return nil, _eIPv6
+	}
+	v.IPv6 = _rIPv6
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	_rUsername, _eUsername := r.ReadString()
+	if _eUsername != nil {
+		return nil, _eUsername
+	}
+	v.Username = _rUsername
+	_rPassword, _ePassword := r.ReadString()
+	if _ePassword != nil {
+		return nil, _ePassword
+	}
+	v.Password = _rPassword
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneConnectionWebrtcTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneConnectionWebrtcTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneConnectionWebrtc(r)
 	}
 }
@@ -956,23 +1168,35 @@ func (v *PhoneCallProtocol) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneCallProtocol deserializes a PhoneCallProtocol from a reader using the TL binary protocol.
-func DecodePhoneCallProtocol(r io.Reader) (*PhoneCallProtocol, error) {
+func DecodePhoneCallProtocol(r *Reader) (*PhoneCallProtocol, error) {
 	v := &PhoneCallProtocol{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.UDPP2p = v.Flags.Has(0)
 	v.UDPReflector = v.Flags.Has(1)
-	v.MinLayer = int32(ReadInt(r))
-	v.MaxLayer = int32(ReadInt(r))
-	v.LibraryVersions = ReadVectorString(r)
+	_rMinLayer, _eMinLayer := r.ReadInt32()
+	if _eMinLayer != nil {
+		return nil, _eMinLayer
+	}
+	v.MinLayer = _rMinLayer
+	_rMaxLayer, _eMaxLayer := r.ReadInt32()
+	if _eMaxLayer != nil {
+		return nil, _eMaxLayer
+	}
+	v.MaxLayer = _rMaxLayer
+	_vvLibraryVersions, _veLibraryVersions := r.ReadVectorString()
+	if _veLibraryVersions != nil {
+		return nil, _veLibraryVersions
+	}
+	v.LibraryVersions = _vvLibraryVersions
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneCallProtocolTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneCallProtocolTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneCallProtocol(r)
 	}
 }
@@ -1027,16 +1251,28 @@ func (v *GroupCallDiscarded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallDiscarded deserializes a GroupCallDiscarded from a reader using the TL binary protocol.
-func DecodeGroupCallDiscarded(r io.Reader) (*GroupCallDiscarded, error) {
+func DecodeGroupCallDiscarded(r *Reader) (*GroupCallDiscarded, error) {
 	v := &GroupCallDiscarded{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Duration = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDuration, _eDuration := r.ReadInt32()
+	if _eDuration != nil {
+		return nil, _eDuration
+	}
+	v.Duration = _rDuration
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallDiscardedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallDiscardedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallDiscarded(r)
 	}
 }
@@ -1184,11 +1420,11 @@ func (v *GroupCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCall deserializes a GroupCall from a reader using the TL binary protocol.
-func DecodeGroupCall(r io.Reader) (*GroupCall, error) {
+func DecodeGroupCall(r *Reader) (*GroupCall, error) {
 	v := &GroupCall{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.JoinMuted = v.Flags.Has(1)
@@ -1204,41 +1440,92 @@ func DecodeGroupCall(r io.Reader) (*GroupCall, error) {
 	v.MessagesEnabled = v.Flags.Has(17)
 	v.CanChangeMessagesEnabled = v.Flags.Has(18)
 	v.Min = v.Flags.Has(19)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.ParticipantsCount = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
+	if _eParticipantsCount != nil {
+		return nil, _eParticipantsCount
+	}
+	v.ParticipantsCount = _rParticipantsCount
 	if v.Flags.Has(3) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(4) {
-		v.StreamDCID = int32(ReadInt(r))
+		_rStreamDCID, _eStreamDCID := r.ReadInt32()
+		if _eStreamDCID != nil {
+			return nil, _eStreamDCID
+		}
+		v.StreamDCID = _rStreamDCID
 	}
 	if v.Flags.Has(5) {
-		v.RecordStartDate = int32(ReadInt(r))
+		_rRecordStartDate, _eRecordStartDate := r.ReadInt32()
+		if _eRecordStartDate != nil {
+			return nil, _eRecordStartDate
+		}
+		v.RecordStartDate = _rRecordStartDate
 	}
 	if v.Flags.Has(7) {
-		v.ScheduleDate = int32(ReadInt(r))
+		_rScheduleDate, _eScheduleDate := r.ReadInt32()
+		if _eScheduleDate != nil {
+			return nil, _eScheduleDate
+		}
+		v.ScheduleDate = _rScheduleDate
 	}
 	if v.Flags.Has(10) {
-		v.UnmutedVideoCount = int32(ReadInt(r))
+		_rUnmutedVideoCount, _eUnmutedVideoCount := r.ReadInt32()
+		if _eUnmutedVideoCount != nil {
+			return nil, _eUnmutedVideoCount
+		}
+		v.UnmutedVideoCount = _rUnmutedVideoCount
 	}
-	v.UnmutedVideoLimit = int32(ReadInt(r))
-	v.Version = int32(ReadInt(r))
+	_rUnmutedVideoLimit, _eUnmutedVideoLimit := r.ReadInt32()
+	if _eUnmutedVideoLimit != nil {
+		return nil, _eUnmutedVideoLimit
+	}
+	v.UnmutedVideoLimit = _rUnmutedVideoLimit
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	if v.Flags.Has(16) {
-		v.InviteLink = ReadString(r)
+		_rInviteLink, _eInviteLink := r.ReadString()
+		if _eInviteLink != nil {
+			return nil, _eInviteLink
+		}
+		v.InviteLink = _rInviteLink
 	}
 	if v.Flags.Has(20) {
-		v.SendPaidMessagesStars = ReadLong(r)
+		_rSendPaidMessagesStars, _eSendPaidMessagesStars := r.ReadInt64()
+		if _eSendPaidMessagesStars != nil {
+			return nil, _eSendPaidMessagesStars
+		}
+		v.SendPaidMessagesStars = _rSendPaidMessagesStars
 	}
 	if v.Flags.Has(21) {
-		_objDefaultSendAs, _ := ReadTLObject(r)
+		_objDefaultSendAs, _errDefaultSendAs := ReadTLObject(r)
+		if _errDefaultSendAs != nil {
+			return nil, _errDefaultSendAs
+		}
 		v.DefaultSendAs = _objDefaultSendAs.(PeerClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCall(r)
 	}
 }
@@ -1283,46 +1570,83 @@ func (v *PhoneGroupCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneGroupCall deserializes a PhoneGroupCall from a reader using the TL binary protocol.
-func DecodePhoneGroupCall(r io.Reader) (*PhoneGroupCall, error) {
+func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 	v := &PhoneGroupCall{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(GroupCallClass)
-	ReadInt(r)
-	_cntParticipants := ReadInt(r)
-	if err := checkVectorCount(_cntParticipants); err != nil {
-		return nil, err
+	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+	if _ehdrParticipants != nil {
+		return nil, _ehdrParticipants
+	}
+	_cntParticipants, _ecntParticipants := r.ReadUint32()
+	if _ecntParticipants != nil {
+		return nil, _ecntParticipants
+	}
+	if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+		return nil, _errParticipants
 	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
-		_objParticipants, _ := ReadTLObject(r)
+		_objParticipants, _errParticipants := ReadTLObject(r)
+		if _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		v.Participants[_iParticipants] = _objParticipants.(*GroupCallParticipant)
 	}
-	v.ParticipantsNextOffset = ReadString(r)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrParticipants
+	_rParticipantsNextOffset, _eParticipantsNextOffset := r.ReadString()
+	if _eParticipantsNextOffset != nil {
+		return nil, _eParticipantsNextOffset
+	}
+	v.ParticipantsNextOffset = _rParticipantsNextOffset
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneGroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneGroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneGroupCall(r)
 	}
 }
@@ -1375,15 +1699,23 @@ func (v *InputGroupCall) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGroupCall deserializes a InputGroupCall from a reader using the TL binary protocol.
-func DecodeInputGroupCall(r io.Reader) (*InputGroupCall, error) {
+func DecodeInputGroupCall(r *Reader) (*InputGroupCall, error) {
 	v := &InputGroupCall{}
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputGroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGroupCall(r)
 	}
 }
@@ -1408,14 +1740,18 @@ func (v *InputGroupCallSlug) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGroupCallSlug deserializes a InputGroupCallSlug from a reader using the TL binary protocol.
-func DecodeInputGroupCallSlug(r io.Reader) (*InputGroupCallSlug, error) {
+func DecodeInputGroupCallSlug(r *Reader) (*InputGroupCallSlug, error) {
 	v := &InputGroupCallSlug{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputGroupCallSlugTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGroupCallSlugTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGroupCallSlug(r)
 	}
 }
@@ -1440,14 +1776,18 @@ func (v *InputGroupCallInviteMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputGroupCallInviteMessage deserializes a InputGroupCallInviteMessage from a reader using the TL binary protocol.
-func DecodeInputGroupCallInviteMessage(r io.Reader) (*InputGroupCallInviteMessage, error) {
+func DecodeInputGroupCallInviteMessage(r *Reader) (*InputGroupCallInviteMessage, error) {
 	v := &InputGroupCallInviteMessage{}
-	v.MsgID = int32(ReadInt(r))
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[InputGroupCallInviteMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputGroupCallInviteMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputGroupCallInviteMessage(r)
 	}
 }
@@ -1497,46 +1837,88 @@ func (v *PhoneGroupParticipants) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneGroupParticipants deserializes a PhoneGroupParticipants from a reader using the TL binary protocol.
-func DecodePhoneGroupParticipants(r io.Reader) (*PhoneGroupParticipants, error) {
+func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 	v := &PhoneGroupParticipants{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntParticipants := ReadInt(r)
-	if err := checkVectorCount(_cntParticipants); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+	if _ehdrParticipants != nil {
+		return nil, _ehdrParticipants
+	}
+	_cntParticipants, _ecntParticipants := r.ReadUint32()
+	if _ecntParticipants != nil {
+		return nil, _ecntParticipants
+	}
+	if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+		return nil, _errParticipants
 	}
 	v.Participants = make([]*GroupCallParticipant, _cntParticipants)
 	for _iParticipants := range v.Participants {
-		_objParticipants, _ := ReadTLObject(r)
+		_objParticipants, _errParticipants := ReadTLObject(r)
+		if _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		v.Participants[_iParticipants] = _objParticipants.(*GroupCallParticipant)
 	}
-	v.NextOffset = ReadString(r)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrParticipants
+	_rNextOffset, _eNextOffset := r.ReadString()
+	if _eNextOffset != nil {
+		return nil, _eNextOffset
+	}
+	v.NextOffset = _rNextOffset
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
-	v.Version = int32(ReadInt(r))
+	_ = _vhdrUsers
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneGroupParticipantsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneGroupParticipantsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneGroupParticipants(r)
 	}
 }
@@ -1580,43 +1962,73 @@ func (v *PhoneJoinAsPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneJoinAsPeers deserializes a PhoneJoinAsPeers from a reader using the TL binary protocol.
-func DecodePhoneJoinAsPeers(r io.Reader) (*PhoneJoinAsPeers, error) {
+func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 	v := &PhoneJoinAsPeers{}
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]PeerClass, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(PeerClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrPeers
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneJoinAsPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneJoinAsPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneJoinAsPeers(r)
 	}
 }
@@ -1644,14 +2056,18 @@ func (v *PhoneExportedGroupCallInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneExportedGroupCallInvite deserializes a PhoneExportedGroupCallInvite from a reader using the TL binary protocol.
-func DecodePhoneExportedGroupCallInvite(r io.Reader) (*PhoneExportedGroupCallInvite, error) {
+func DecodePhoneExportedGroupCallInvite(r *Reader) (*PhoneExportedGroupCallInvite, error) {
 	v := &PhoneExportedGroupCallInvite{}
-	v.Link = ReadString(r)
+	_rLink, _eLink := r.ReadString()
+	if _eLink != nil {
+		return nil, _eLink
+	}
+	v.Link = _rLink
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneExportedGroupCallInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneExportedGroupCallInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneExportedGroupCallInvite(r)
 	}
 }
@@ -1683,23 +2099,33 @@ func (v *PhoneGroupCallStreamChannels) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneGroupCallStreamChannels deserializes a PhoneGroupCallStreamChannels from a reader using the TL binary protocol.
-func DecodePhoneGroupCallStreamChannels(r io.Reader) (*PhoneGroupCallStreamChannels, error) {
+func DecodePhoneGroupCallStreamChannels(r *Reader) (*PhoneGroupCallStreamChannels, error) {
 	v := &PhoneGroupCallStreamChannels{}
-	ReadInt(r)
-	_cntChannels := ReadInt(r)
-	if err := checkVectorCount(_cntChannels); err != nil {
-		return nil, err
+	_vhdrChannels, _ehdrChannels := r.ReadUint32()
+	if _ehdrChannels != nil {
+		return nil, _ehdrChannels
+	}
+	_cntChannels, _ecntChannels := r.ReadUint32()
+	if _ecntChannels != nil {
+		return nil, _ecntChannels
+	}
+	if _errChannels := checkVectorCount(_cntChannels); _errChannels != nil {
+		return nil, _errChannels
 	}
 	v.Channels = make([]*GroupCallStreamChannel, _cntChannels)
 	for _iChannels := range v.Channels {
-		_objChannels, _ := ReadTLObject(r)
+		_objChannels, _errChannels := ReadTLObject(r)
+		if _errChannels != nil {
+			return nil, _errChannels
+		}
 		v.Channels[_iChannels] = _objChannels.(*GroupCallStreamChannel)
 	}
+	_ = _vhdrChannels
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneGroupCallStreamChannelsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneGroupCallStreamChannelsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneGroupCallStreamChannels(r)
 	}
 }
@@ -1729,15 +2155,23 @@ func (v *PhoneGroupCallStreamRtmpURL) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneGroupCallStreamRtmpURL deserializes a PhoneGroupCallStreamRtmpURL from a reader using the TL binary protocol.
-func DecodePhoneGroupCallStreamRtmpURL(r io.Reader) (*PhoneGroupCallStreamRtmpURL, error) {
+func DecodePhoneGroupCallStreamRtmpURL(r *Reader) (*PhoneGroupCallStreamRtmpURL, error) {
 	v := &PhoneGroupCallStreamRtmpURL{}
-	v.URL = ReadString(r)
-	v.Key = ReadString(r)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rKey, _eKey := r.ReadString()
+	if _eKey != nil {
+		return nil, _eKey
+	}
+	v.Key = _rKey
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneGroupCallStreamRtmpURLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneGroupCallStreamRtmpURLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneGroupCallStreamRtmpURL(r)
 	}
 }
@@ -1787,25 +2221,32 @@ func (v *GroupCallDonor) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallDonor deserializes a GroupCallDonor from a reader using the TL binary protocol.
-func DecodeGroupCallDonor(r io.Reader) (*GroupCallDonor, error) {
+func DecodeGroupCallDonor(r *Reader) (*GroupCallDonor, error) {
 	v := &GroupCallDonor{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Top = v.Flags.Has(0)
 	v.My = v.Flags.Has(1)
 	if v.Flags.Has(3) {
-		_objPeerID, _ := ReadTLObject(r)
+		_objPeerID, _errPeerID := ReadTLObject(r)
+		if _errPeerID != nil {
+			return nil, _errPeerID
+		}
 		v.PeerID = _objPeerID.(PeerClass)
 	}
-	v.Stars = ReadLong(r)
+	_rStars, _eStars := r.ReadInt64()
+	if _eStars != nil {
+		return nil, _eStars
+	}
+	v.Stars = _rStars
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallDonorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallDonorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallDonor(r)
 	}
 }
@@ -1851,44 +2292,78 @@ func (v *PhoneGroupCallStars) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePhoneGroupCallStars deserializes a PhoneGroupCallStars from a reader using the TL binary protocol.
-func DecodePhoneGroupCallStars(r io.Reader) (*PhoneGroupCallStars, error) {
+func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 	v := &PhoneGroupCallStars{}
-	v.TotalStars = ReadLong(r)
-	ReadInt(r)
-	_cntTopDonors := ReadInt(r)
-	if err := checkVectorCount(_cntTopDonors); err != nil {
-		return nil, err
+	_rTotalStars, _eTotalStars := r.ReadInt64()
+	if _eTotalStars != nil {
+		return nil, _eTotalStars
+	}
+	v.TotalStars = _rTotalStars
+	_vhdrTopDonors, _ehdrTopDonors := r.ReadUint32()
+	if _ehdrTopDonors != nil {
+		return nil, _ehdrTopDonors
+	}
+	_cntTopDonors, _ecntTopDonors := r.ReadUint32()
+	if _ecntTopDonors != nil {
+		return nil, _ecntTopDonors
+	}
+	if _errTopDonors := checkVectorCount(_cntTopDonors); _errTopDonors != nil {
+		return nil, _errTopDonors
 	}
 	v.TopDonors = make([]*GroupCallDonor, _cntTopDonors)
 	for _iTopDonors := range v.TopDonors {
-		_objTopDonors, _ := ReadTLObject(r)
+		_objTopDonors, _errTopDonors := ReadTLObject(r)
+		if _errTopDonors != nil {
+			return nil, _errTopDonors
+		}
 		v.TopDonors[_iTopDonors] = _objTopDonors.(*GroupCallDonor)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrTopDonors
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PhoneGroupCallStarsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PhoneGroupCallStarsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePhoneGroupCallStars(r)
 	}
 }

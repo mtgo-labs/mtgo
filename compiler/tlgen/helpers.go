@@ -437,7 +437,7 @@ func buildTypeData(c Combinator, section string, baseTypes map[string]bool, type
 			})
 
 			readLines = append(readLines, readLine{
-				Code: fmt.Sprintf("{ var _f uint32; _f, _ = ReadIntErr(r); v.%s = Fields(_f) }", fd.Name),
+				Code: fmt.Sprintf("{ var _f uint32; _f, _ = r.ReadUint32(); v.%s = Fields(_f) }", fd.Name),
 			})
 			continue
 		}
@@ -618,51 +618,49 @@ func buildReadLine(arg Arg, fd fieldData, section string, baseTypes map[string]b
 
 func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator) string {
 	assign := fmt.Sprintf("v.%s", fieldNameFromTL(arg.Name))
+	fname := fieldNameFromTL(arg.Name)
 	argType := normalizeVectorType(arg.Type)
 	argType = stripNamespace(argType)
 
 	switch argType {
 	case "int":
 		if arg.FlagBit >= 0 && strings.HasPrefix(goType, "*") {
-			return fmt.Sprintf("_tmp := int32(ReadInt(r)); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadInt32()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = int32(ReadInt(r))", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadInt32()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "long":
 		if arg.FlagBit >= 0 && strings.HasPrefix(goType, "*") {
-			return fmt.Sprintf("_tmp := ReadLong(r); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadInt64()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = ReadLong(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadInt64()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "int128":
 		if arg.FlagBit >= 0 {
-			return fmt.Sprintf("_tmp := ReadInt128(r); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadInt128()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = ReadInt128(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadInt128()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "int256":
 		if arg.FlagBit >= 0 {
-			return fmt.Sprintf("_tmp := ReadInt256(r); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadInt256()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = ReadInt256(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadInt256()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "double":
 		if arg.FlagBit >= 0 && strings.HasPrefix(goType, "*") {
-			return fmt.Sprintf("_tmp := ReadDouble(r); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadFloat64()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = ReadDouble(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadFloat64()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "string":
 		if arg.FlagBit >= 0 && strings.HasPrefix(goType, "*") {
-			return fmt.Sprintf("_tmp := ReadString(r); %s = &_tmp", assign)
+			return fmt.Sprintf("_r%s, _e%s := r.ReadString()\nif _e%s != nil { return nil, _e%s }\n_tmp := _r%s; %s = &_tmp", fname, fname, fname, fname, fname, assign)
 		}
-		return fmt.Sprintf("%s = ReadString(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadString()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "bytes":
-		if arg.FlagBit >= 0 {
-			return fmt.Sprintf("%s = ReadBytes(r)", assign)
-		}
-		return fmt.Sprintf("%s = ReadBytes(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadBytes()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "Bool":
-		return fmt.Sprintf("%s = ReadBool(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadBool()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "true":
-		return fmt.Sprintf("%s = ReadBool(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadBool()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	case "#":
-		return fmt.Sprintf("%s = ReadInt(r)", assign)
+		return fmt.Sprintf("_r%s, _e%s := r.ReadUint32()\nif _e%s != nil { return nil, _e%s }\n%s = _r%s", fname, fname, fname, fname, assign, fname)
 	}
 
 	if strings.HasPrefix(argType, "Vector<") {
@@ -670,21 +668,33 @@ func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToCons
 		inner = stripNamespace(inner)
 		switch inner {
 		case "int":
-			return fmt.Sprintf("%s = ReadVectorInt(r)", assign)
+			return fmt.Sprintf("_vv%s, _ve%s := r.ReadVectorInt()\nif _ve%s != nil { return nil, _ve%s }\n%s = _vv%s", fname, fname, fname, fname, assign, fname)
 		case "long":
-			return fmt.Sprintf("%s = ReadVectorLong(r)", assign)
+			return fmt.Sprintf("_vv%s, _ve%s := r.ReadVectorLong()\nif _ve%s != nil { return nil, _ve%s }\n%s = _vv%s", fname, fname, fname, fname, assign, fname)
 		case "string":
-			return fmt.Sprintf("%s = ReadVectorString(r)", assign)
+			return fmt.Sprintf("_vv%s, _ve%s := r.ReadVectorString()\nif _ve%s != nil { return nil, _ve%s }\n%s = _vv%s", fname, fname, fname, fname, assign, fname)
 		case "bytes":
-			return fmt.Sprintf("%s = ReadVectorBytes(r)", assign)
+			return fmt.Sprintf("_vv%s, _ve%s := r.ReadVectorBytes()\nif _ve%s != nil { return nil, _ve%s }\n%s = _vv%s", fname, fname, fname, fname, assign, fname)
 		default:
 			elemType := strings.TrimPrefix(goType, "[]")
 			idx := fieldNameFromTL(arg.Name)
-			return fmt.Sprintf("ReadInt(r); _cnt%s := ReadInt(r); if err := checkVectorCount(_cnt%s); err != nil { return nil, err }; %s = make(%s, _cnt%s); for _i%s := range %s { _obj%s, _ := ReadTLObject(r); %s[_i%s] = %s }", idx, idx, assign, goType, idx, idx, assign, idx, assign, idx, typeAssertExpr("_obj"+idx, elemType))
+			var buf strings.Builder
+			fmt.Fprintf(&buf, "_vhdr%s, _ehdr%s := r.ReadUint32()\n", idx, idx)
+			fmt.Fprintf(&buf, "if _ehdr%s != nil { return nil, _ehdr%s }\n", idx, idx)
+			fmt.Fprintf(&buf, "_cnt%s, _ecnt%s := r.ReadUint32()\n", idx, idx)
+			fmt.Fprintf(&buf, "if _ecnt%s != nil { return nil, _ecnt%s }\n", idx, idx)
+			fmt.Fprintf(&buf, "if _err%s := checkVectorCount(_cnt%s); _err%s != nil {\n\treturn nil, _err%s\n}\n", idx, idx, idx, idx)
+			fmt.Fprintf(&buf, "%s = make(%s, _cnt%s)\n", assign, goType, idx)
+			fmt.Fprintf(&buf, "for _i%s := range %s {\n", idx, assign)
+			fmt.Fprintf(&buf, "\t_obj%s, _err%s := ReadTLObject(r)\n", idx, idx)
+			fmt.Fprintf(&buf, "\tif _err%s != nil {\n\t\treturn nil, _err%s\n\t}\n", idx, idx)
+			fmt.Fprintf(&buf, "\t%s[_i%s] = %s\n", assign, idx, typeAssertExpr("_obj"+idx, elemType))
+			fmt.Fprintf(&buf, "}\n_ = _vhdr%s", idx)
+			return buf.String()
 		}
 	}
 
-	return fmt.Sprintf("_obj%s, _ := ReadTLObject(r); %s = %s", fieldNameFromTL(arg.Name), assign, typeAssertExpr("_obj"+fieldNameFromTL(arg.Name), goType))
+	return fmt.Sprintf("_obj%s, _err%s := ReadTLObject(r)\nif _err%s != nil {\n\treturn nil, _err%s\n}\n%s = %s", fname, fname, fname, fname, assign, typeAssertExpr("_obj"+fname, goType))
 }
 
 func typeAssertExpr(varName string, goType string) string {
@@ -708,38 +718,48 @@ func readFuncName(tlType string, section string, baseTypes map[string]bool) stri
 	tlType = normalizeVectorType(tlType)
 	switch tlType {
 	case "int":
-		return "int32(ReadInt(r))"
+		return "r.ReadInt32()"
 	case "long":
-		return "ReadLong(r)"
+		return "r.ReadInt64()"
 	case "int128":
-		return "ReadInt128(r)"
+		return "r.ReadInt128()"
 	case "int256":
-		return "ReadInt256(r)"
+		return "r.ReadInt256()"
 	case "double":
-		return "ReadDouble(r)"
+		return "r.ReadFloat64()"
 	case "string":
-		return "ReadString(r)"
+		return "r.ReadString()"
 	case "bytes":
-		return "ReadBytes(r)"
+		return "r.ReadBytes()"
 	case "Bool", "true":
-		return "ReadBool(r)"
+		return "r.ReadBool()"
 	}
 
 	if strings.HasPrefix(tlType, "Vector<") {
 		inner := strings.TrimSuffix(strings.TrimPrefix(tlType, "Vector<"), ">")
 		switch inner {
 		case "int":
-			return "ReadVectorInt(r)"
+			return "r.ReadVectorInt()"
 		case "long":
-			return "ReadVectorLong(r)"
+			return "r.ReadVectorLong()"
 		case "string":
-			return "ReadVectorString(r)"
+			return "r.ReadVectorString()"
 		case "bytes":
-			return "ReadVectorBytes(r)"
+			return "r.ReadVectorBytes()"
 		default:
 			return "ReadTLObject(r)"
 		}
 	}
 
 	return "ReadTLObject(r)"
+}
+
+func prefixE2EType(goType string) string {
+	replacements := []struct{ from, to string }{
+		{"Fields", "tg.Fields"},
+	}
+	for _, r := range replacements {
+		goType = strings.ReplaceAll(goType, r.from, r.to)
+	}
+	return goType
 }

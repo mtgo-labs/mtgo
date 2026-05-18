@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // InputPeerClass is the interface for TL type InputPeer.
@@ -75,13 +74,13 @@ func (v *InputPeerEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerEmpty deserializes a InputPeerEmpty from a reader using the TL binary protocol.
-func DecodeInputPeerEmpty(r io.Reader) (*InputPeerEmpty, error) {
+func DecodeInputPeerEmpty(r *Reader) (*InputPeerEmpty, error) {
 	v := &InputPeerEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerEmpty(r)
 	}
 }
@@ -104,13 +103,13 @@ func (v *InputPeerSelf) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerSelf deserializes a InputPeerSelf from a reader using the TL binary protocol.
-func DecodeInputPeerSelf(r io.Reader) (*InputPeerSelf, error) {
+func DecodeInputPeerSelf(r *Reader) (*InputPeerSelf, error) {
 	v := &InputPeerSelf{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerSelfTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerSelfTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerSelf(r)
 	}
 }
@@ -135,14 +134,18 @@ func (v *InputPeerChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerChat deserializes a InputPeerChat from a reader using the TL binary protocol.
-func DecodeInputPeerChat(r io.Reader) (*InputPeerChat, error) {
+func DecodeInputPeerChat(r *Reader) (*InputPeerChat, error) {
 	v := &InputPeerChat{}
-	v.ChatID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerChat(r)
 	}
 }
@@ -169,15 +172,23 @@ func (v *InputPeerUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerUser deserializes a InputPeerUser from a reader using the TL binary protocol.
-func DecodeInputPeerUser(r io.Reader) (*InputPeerUser, error) {
+func DecodeInputPeerUser(r *Reader) (*InputPeerUser, error) {
 	v := &InputPeerUser{}
-	v.UserID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerUser(r)
 	}
 }
@@ -204,15 +215,23 @@ func (v *InputPeerChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerChannel deserializes a InputPeerChannel from a reader using the TL binary protocol.
-func DecodeInputPeerChannel(r io.Reader) (*InputPeerChannel, error) {
+func DecodeInputPeerChannel(r *Reader) (*InputPeerChannel, error) {
 	v := &InputPeerChannel{}
-	v.ChannelID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerChannel(r)
 	}
 }
@@ -241,17 +260,28 @@ func (v *InputPeerUserFromMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerUserFromMessage deserializes a InputPeerUserFromMessage from a reader using the TL binary protocol.
-func DecodeInputPeerUserFromMessage(r io.Reader) (*InputPeerUserFromMessage, error) {
+func DecodeInputPeerUserFromMessage(r *Reader) (*InputPeerUserFromMessage, error) {
 	v := &InputPeerUserFromMessage{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerUserFromMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerUserFromMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerUserFromMessage(r)
 	}
 }
@@ -280,17 +310,28 @@ func (v *InputPeerChannelFromMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerChannelFromMessage deserializes a InputPeerChannelFromMessage from a reader using the TL binary protocol.
-func DecodeInputPeerChannelFromMessage(r io.Reader) (*InputPeerChannelFromMessage, error) {
+func DecodeInputPeerChannelFromMessage(r *Reader) (*InputPeerChannelFromMessage, error) {
 	v := &InputPeerChannelFromMessage{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.ChannelID = ReadLong(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerChannelFromMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerChannelFromMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerChannelFromMessage(r)
 	}
 }
@@ -345,13 +386,13 @@ func (v *InputUserEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputUserEmpty deserializes a InputUserEmpty from a reader using the TL binary protocol.
-func DecodeInputUserEmpty(r io.Reader) (*InputUserEmpty, error) {
+func DecodeInputUserEmpty(r *Reader) (*InputUserEmpty, error) {
 	v := &InputUserEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputUserEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputUserEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputUserEmpty(r)
 	}
 }
@@ -374,13 +415,13 @@ func (v *InputUserSelf) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputUserSelf deserializes a InputUserSelf from a reader using the TL binary protocol.
-func DecodeInputUserSelf(r io.Reader) (*InputUserSelf, error) {
+func DecodeInputUserSelf(r *Reader) (*InputUserSelf, error) {
 	v := &InputUserSelf{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputUserSelfTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputUserSelfTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputUserSelf(r)
 	}
 }
@@ -407,15 +448,23 @@ func (v *InputUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputUser deserializes a InputUser from a reader using the TL binary protocol.
-func DecodeInputUser(r io.Reader) (*InputUser, error) {
+func DecodeInputUser(r *Reader) (*InputUser, error) {
 	v := &InputUser{}
-	v.UserID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputUser(r)
 	}
 }
@@ -444,17 +493,28 @@ func (v *InputUserFromMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputUserFromMessage deserializes a InputUserFromMessage from a reader using the TL binary protocol.
-func DecodeInputUserFromMessage(r io.Reader) (*InputUserFromMessage, error) {
+func DecodeInputUserFromMessage(r *Reader) (*InputUserFromMessage, error) {
 	v := &InputUserFromMessage{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[InputUserFromMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputUserFromMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputUserFromMessage(r)
 	}
 }
@@ -502,26 +562,45 @@ func (v *InputPhoneContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPhoneContact deserializes a InputPhoneContact from a reader using the TL binary protocol.
-func DecodeInputPhoneContact(r io.Reader) (*InputPhoneContact, error) {
+func DecodeInputPhoneContact(r *Reader) (*InputPhoneContact, error) {
 	v := &InputPhoneContact{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ClientID = ReadLong(r)
-	v.Phone = ReadString(r)
-	v.FirstName = ReadString(r)
-	v.LastName = ReadString(r)
+	_rClientID, _eClientID := r.ReadInt64()
+	if _eClientID != nil {
+		return nil, _eClientID
+	}
+	v.ClientID = _rClientID
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
+	_rFirstName, _eFirstName := r.ReadString()
+	if _eFirstName != nil {
+		return nil, _eFirstName
+	}
+	v.FirstName = _rFirstName
+	_rLastName, _eLastName := r.ReadString()
+	if _eLastName != nil {
+		return nil, _eLastName
+	}
+	v.LastName = _rLastName
 	if v.Flags.Has(0) {
-		_objNote, _ := ReadTLObject(r)
+		_objNote, _errNote := ReadTLObject(r)
+		if _errNote != nil {
+			return nil, _errNote
+		}
 		v.Note = _objNote.(*TextWithEntities)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPhoneContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPhoneContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPhoneContact(r)
 	}
 }
@@ -570,13 +649,13 @@ func (v *InputChatPhotoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatPhotoEmpty deserializes a InputChatPhotoEmpty from a reader using the TL binary protocol.
-func DecodeInputChatPhotoEmpty(r io.Reader) (*InputChatPhotoEmpty, error) {
+func DecodeInputChatPhotoEmpty(r *Reader) (*InputChatPhotoEmpty, error) {
 	v := &InputChatPhotoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatPhotoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatPhotoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatPhotoEmpty(r)
 	}
 }
@@ -634,33 +713,46 @@ func (v *InputChatUploadedPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatUploadedPhoto deserializes a InputChatUploadedPhoto from a reader using the TL binary protocol.
-func DecodeInputChatUploadedPhoto(r io.Reader) (*InputChatUploadedPhoto, error) {
+func DecodeInputChatUploadedPhoto(r *Reader) (*InputChatUploadedPhoto, error) {
 	v := &InputChatUploadedPhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		_objFile, _ := ReadTLObject(r)
+		_objFile, _errFile := ReadTLObject(r)
+		if _errFile != nil {
+			return nil, _errFile
+		}
 		v.File = _objFile.(InputFileClass)
 	}
 	if v.Flags.Has(1) {
-		_objVideo, _ := ReadTLObject(r)
+		_objVideo, _errVideo := ReadTLObject(r)
+		if _errVideo != nil {
+			return nil, _errVideo
+		}
 		v.Video = _objVideo.(InputFileClass)
 	}
 	if v.Flags.Has(2) {
-		v.VideoStartTs = ReadDouble(r)
+		_rVideoStartTs, _eVideoStartTs := r.ReadFloat64()
+		if _eVideoStartTs != nil {
+			return nil, _eVideoStartTs
+		}
+		v.VideoStartTs = _rVideoStartTs
 	}
 	if v.Flags.Has(3) {
-		_objVideoEmojiMarkup, _ := ReadTLObject(r)
+		_objVideoEmojiMarkup, _errVideoEmojiMarkup := ReadTLObject(r)
+		if _errVideoEmojiMarkup != nil {
+			return nil, _errVideoEmojiMarkup
+		}
 		v.VideoEmojiMarkup = _objVideoEmojiMarkup.(VideoSizeClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatUploadedPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatUploadedPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatUploadedPhoto(r)
 	}
 }
@@ -685,15 +777,18 @@ func (v *InputChatPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatPhoto deserializes a InputChatPhoto from a reader using the TL binary protocol.
-func DecodeInputChatPhoto(r io.Reader) (*InputChatPhoto, error) {
+func DecodeInputChatPhoto(r *Reader) (*InputChatPhoto, error) {
 	v := &InputChatPhoto{}
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(InputPhotoClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatPhoto(r)
 	}
 }
@@ -744,14 +839,18 @@ func (v *PeerUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerUser deserializes a PeerUser from a reader using the TL binary protocol.
-func DecodePeerUser(r io.Reader) (*PeerUser, error) {
+func DecodePeerUser(r *Reader) (*PeerUser, error) {
 	v := &PeerUser{}
-	v.UserID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[PeerUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerUser(r)
 	}
 }
@@ -776,14 +875,18 @@ func (v *PeerChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerChat deserializes a PeerChat from a reader using the TL binary protocol.
-func DecodePeerChat(r io.Reader) (*PeerChat, error) {
+func DecodePeerChat(r *Reader) (*PeerChat, error) {
 	v := &PeerChat{}
-	v.ChatID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	return v, nil
 }
 
 func init() {
-	Registry[PeerChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerChat(r)
 	}
 }
@@ -808,14 +911,18 @@ func (v *PeerChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerChannel deserializes a PeerChannel from a reader using the TL binary protocol.
-func DecodePeerChannel(r io.Reader) (*PeerChannel, error) {
+func DecodePeerChannel(r *Reader) (*PeerChannel, error) {
 	v := &PeerChannel{}
-	v.ChannelID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	return v, nil
 }
 
 func init() {
-	Registry[PeerChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerChannel(r)
 	}
 }
@@ -860,14 +967,18 @@ func (v *UserEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserEmpty deserializes a UserEmpty from a reader using the TL binary protocol.
-func DecodeUserEmpty(r io.Reader) (*UserEmpty, error) {
+func DecodeUserEmpty(r *Reader) (*UserEmpty, error) {
 	v := &UserEmpty{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[UserEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserEmpty(r)
 	}
 }
@@ -1158,11 +1269,11 @@ func (v *User) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUser deserializes a User from a reader using the TL binary protocol.
-func DecodeUser(r io.Reader) (*User, error) {
+func DecodeUser(r *Reader) (*User, error) {
 	v := &User{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Self = v.Flags.Has(10)
@@ -1185,7 +1296,7 @@ func DecodeUser(r io.Reader) (*User, error) {
 	v.AttachMenuEnabled = v.Flags.Has(29)
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags2 = Fields(_f)
 	}
 	v.BotCanEdit = v.Flags2.Has(1)
@@ -1199,93 +1310,179 @@ func DecodeUser(r io.Reader) (*User, error) {
 	v.BotForumCanManageTopics = v.Flags2.Has(17)
 	v.BotCanManageBots = v.Flags2.Has(18)
 	v.BotGuestchat = v.Flags2.Has(19)
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(0) {
-		v.AccessHash = ReadLong(r)
+		_rAccessHash, _eAccessHash := r.ReadInt64()
+		if _eAccessHash != nil {
+			return nil, _eAccessHash
+		}
+		v.AccessHash = _rAccessHash
 	}
 	if v.Flags.Has(1) {
-		v.FirstName = ReadString(r)
+		_rFirstName, _eFirstName := r.ReadString()
+		if _eFirstName != nil {
+			return nil, _eFirstName
+		}
+		v.FirstName = _rFirstName
 	}
 	if v.Flags.Has(2) {
-		v.LastName = ReadString(r)
+		_rLastName, _eLastName := r.ReadString()
+		if _eLastName != nil {
+			return nil, _eLastName
+		}
+		v.LastName = _rLastName
 	}
 	if v.Flags.Has(3) {
-		v.Username = ReadString(r)
+		_rUsername, _eUsername := r.ReadString()
+		if _eUsername != nil {
+			return nil, _eUsername
+		}
+		v.Username = _rUsername
 	}
 	if v.Flags.Has(4) {
-		v.Phone = ReadString(r)
+		_rPhone, _ePhone := r.ReadString()
+		if _ePhone != nil {
+			return nil, _ePhone
+		}
+		v.Phone = _rPhone
 	}
 	if v.Flags.Has(5) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(UserProfilePhotoClass)
 	}
 	if v.Flags.Has(6) {
-		_objStatus, _ := ReadTLObject(r)
+		_objStatus, _errStatus := ReadTLObject(r)
+		if _errStatus != nil {
+			return nil, _errStatus
+		}
 		v.Status = _objStatus.(UserStatusClass)
 	}
 	if v.Flags.Has(14) {
-		v.BotInfoVersion = int32(ReadInt(r))
+		_rBotInfoVersion, _eBotInfoVersion := r.ReadInt32()
+		if _eBotInfoVersion != nil {
+			return nil, _eBotInfoVersion
+		}
+		v.BotInfoVersion = _rBotInfoVersion
 	}
 	if v.Flags.Has(18) {
-		ReadInt(r)
-		_cntRestrictionReason := ReadInt(r)
-		if err := checkVectorCount(_cntRestrictionReason); err != nil {
-			return nil, err
+		_vhdrRestrictionReason, _ehdrRestrictionReason := r.ReadUint32()
+		if _ehdrRestrictionReason != nil {
+			return nil, _ehdrRestrictionReason
+		}
+		_cntRestrictionReason, _ecntRestrictionReason := r.ReadUint32()
+		if _ecntRestrictionReason != nil {
+			return nil, _ecntRestrictionReason
+		}
+		if _errRestrictionReason := checkVectorCount(_cntRestrictionReason); _errRestrictionReason != nil {
+			return nil, _errRestrictionReason
 		}
 		v.RestrictionReason = make([]*RestrictionReason, _cntRestrictionReason)
 		for _iRestrictionReason := range v.RestrictionReason {
-			_objRestrictionReason, _ := ReadTLObject(r)
+			_objRestrictionReason, _errRestrictionReason := ReadTLObject(r)
+			if _errRestrictionReason != nil {
+				return nil, _errRestrictionReason
+			}
 			v.RestrictionReason[_iRestrictionReason] = _objRestrictionReason.(*RestrictionReason)
 		}
+		_ = _vhdrRestrictionReason
 	}
 	if v.Flags.Has(19) {
-		v.BotInlinePlaceholder = ReadString(r)
+		_rBotInlinePlaceholder, _eBotInlinePlaceholder := r.ReadString()
+		if _eBotInlinePlaceholder != nil {
+			return nil, _eBotInlinePlaceholder
+		}
+		v.BotInlinePlaceholder = _rBotInlinePlaceholder
 	}
 	if v.Flags.Has(22) {
-		v.LangCode = ReadString(r)
+		_rLangCode, _eLangCode := r.ReadString()
+		if _eLangCode != nil {
+			return nil, _eLangCode
+		}
+		v.LangCode = _rLangCode
 	}
 	if v.Flags.Has(30) {
-		_objEmojiStatus, _ := ReadTLObject(r)
+		_objEmojiStatus, _errEmojiStatus := ReadTLObject(r)
+		if _errEmojiStatus != nil {
+			return nil, _errEmojiStatus
+		}
 		v.EmojiStatus = _objEmojiStatus.(EmojiStatusClass)
 	}
 	if v.Flags2.Has(0) {
-		ReadInt(r)
-		_cntUsernames := ReadInt(r)
-		if err := checkVectorCount(_cntUsernames); err != nil {
-			return nil, err
+		_vhdrUsernames, _ehdrUsernames := r.ReadUint32()
+		if _ehdrUsernames != nil {
+			return nil, _ehdrUsernames
+		}
+		_cntUsernames, _ecntUsernames := r.ReadUint32()
+		if _ecntUsernames != nil {
+			return nil, _ecntUsernames
+		}
+		if _errUsernames := checkVectorCount(_cntUsernames); _errUsernames != nil {
+			return nil, _errUsernames
 		}
 		v.Usernames = make([]*Username, _cntUsernames)
 		for _iUsernames := range v.Usernames {
-			_objUsernames, _ := ReadTLObject(r)
+			_objUsernames, _errUsernames := ReadTLObject(r)
+			if _errUsernames != nil {
+				return nil, _errUsernames
+			}
 			v.Usernames[_iUsernames] = _objUsernames.(*Username)
 		}
+		_ = _vhdrUsernames
 	}
 	if v.Flags2.Has(5) {
-		_objStoriesMaxID, _ := ReadTLObject(r)
+		_objStoriesMaxID, _errStoriesMaxID := ReadTLObject(r)
+		if _errStoriesMaxID != nil {
+			return nil, _errStoriesMaxID
+		}
 		v.StoriesMaxID = _objStoriesMaxID.(*RecentStory)
 	}
 	if v.Flags2.Has(8) {
-		_objColor, _ := ReadTLObject(r)
+		_objColor, _errColor := ReadTLObject(r)
+		if _errColor != nil {
+			return nil, _errColor
+		}
 		v.Color = _objColor.(PeerColorClass)
 	}
 	if v.Flags2.Has(9) {
-		_objProfileColor, _ := ReadTLObject(r)
+		_objProfileColor, _errProfileColor := ReadTLObject(r)
+		if _errProfileColor != nil {
+			return nil, _errProfileColor
+		}
 		v.ProfileColor = _objProfileColor.(PeerColorClass)
 	}
 	if v.Flags2.Has(12) {
-		v.BotActiveUsers = int32(ReadInt(r))
+		_rBotActiveUsers, _eBotActiveUsers := r.ReadInt32()
+		if _eBotActiveUsers != nil {
+			return nil, _eBotActiveUsers
+		}
+		v.BotActiveUsers = _rBotActiveUsers
 	}
 	if v.Flags2.Has(14) {
-		v.BotVerificationIcon = ReadLong(r)
+		_rBotVerificationIcon, _eBotVerificationIcon := r.ReadInt64()
+		if _eBotVerificationIcon != nil {
+			return nil, _eBotVerificationIcon
+		}
+		v.BotVerificationIcon = _rBotVerificationIcon
 	}
 	if v.Flags2.Has(15) {
-		v.SendPaidMessagesStars = ReadLong(r)
+		_rSendPaidMessagesStars, _eSendPaidMessagesStars := r.ReadInt64()
+		if _eSendPaidMessagesStars != nil {
+			return nil, _eSendPaidMessagesStars
+		}
+		v.SendPaidMessagesStars = _rSendPaidMessagesStars
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUser(r)
 	}
 }
@@ -1328,13 +1525,13 @@ func (v *UserProfilePhotoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserProfilePhotoEmpty deserializes a UserProfilePhotoEmpty from a reader using the TL binary protocol.
-func DecodeUserProfilePhotoEmpty(r io.Reader) (*UserProfilePhotoEmpty, error) {
+func DecodeUserProfilePhotoEmpty(r *Reader) (*UserProfilePhotoEmpty, error) {
 	v := &UserProfilePhotoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[UserProfilePhotoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserProfilePhotoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserProfilePhotoEmpty(r)
 	}
 }
@@ -1383,25 +1580,37 @@ func (v *UserProfilePhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserProfilePhoto deserializes a UserProfilePhoto from a reader using the TL binary protocol.
-func DecodeUserProfilePhoto(r io.Reader) (*UserProfilePhoto, error) {
+func DecodeUserProfilePhoto(r *Reader) (*UserProfilePhoto, error) {
 	v := &UserProfilePhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HasVideo = v.Flags.Has(0)
 	v.Personal = v.Flags.Has(2)
-	v.PhotoID = ReadLong(r)
-	if v.Flags.Has(1) {
-		v.StrippedThumb = ReadBytes(r)
+	_rPhotoID, _ePhotoID := r.ReadInt64()
+	if _ePhotoID != nil {
+		return nil, _ePhotoID
 	}
-	v.DCID = int32(ReadInt(r))
+	v.PhotoID = _rPhotoID
+	if v.Flags.Has(1) {
+		_rStrippedThumb, _eStrippedThumb := r.ReadBytes()
+		if _eStrippedThumb != nil {
+			return nil, _eStrippedThumb
+		}
+		v.StrippedThumb = _rStrippedThumb
+	}
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
 	return v, nil
 }
 
 func init() {
-	Registry[UserProfilePhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserProfilePhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserProfilePhoto(r)
 	}
 }
@@ -1468,13 +1677,13 @@ func (v *UserStatusEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusEmpty deserializes a UserStatusEmpty from a reader using the TL binary protocol.
-func DecodeUserStatusEmpty(r io.Reader) (*UserStatusEmpty, error) {
+func DecodeUserStatusEmpty(r *Reader) (*UserStatusEmpty, error) {
 	v := &UserStatusEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[UserStatusEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusEmpty(r)
 	}
 }
@@ -1499,14 +1708,18 @@ func (v *UserStatusOnline) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusOnline deserializes a UserStatusOnline from a reader using the TL binary protocol.
-func DecodeUserStatusOnline(r io.Reader) (*UserStatusOnline, error) {
+func DecodeUserStatusOnline(r *Reader) (*UserStatusOnline, error) {
 	v := &UserStatusOnline{}
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[UserStatusOnlineTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusOnlineTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusOnline(r)
 	}
 }
@@ -1531,14 +1744,18 @@ func (v *UserStatusOffline) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusOffline deserializes a UserStatusOffline from a reader using the TL binary protocol.
-func DecodeUserStatusOffline(r io.Reader) (*UserStatusOffline, error) {
+func DecodeUserStatusOffline(r *Reader) (*UserStatusOffline, error) {
 	v := &UserStatusOffline{}
-	v.WasOnline = int32(ReadInt(r))
+	_rWasOnline, _eWasOnline := r.ReadInt32()
+	if _eWasOnline != nil {
+		return nil, _eWasOnline
+	}
+	v.WasOnline = _rWasOnline
 	return v, nil
 }
 
 func init() {
-	Registry[UserStatusOfflineTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusOfflineTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusOffline(r)
 	}
 }
@@ -1572,11 +1789,11 @@ func (v *UserStatusRecently) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusRecently deserializes a UserStatusRecently from a reader using the TL binary protocol.
-func DecodeUserStatusRecently(r io.Reader) (*UserStatusRecently, error) {
+func DecodeUserStatusRecently(r *Reader) (*UserStatusRecently, error) {
 	v := &UserStatusRecently{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ByMe = v.Flags.Has(0)
@@ -1584,7 +1801,7 @@ func DecodeUserStatusRecently(r io.Reader) (*UserStatusRecently, error) {
 }
 
 func init() {
-	Registry[UserStatusRecentlyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusRecentlyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusRecently(r)
 	}
 }
@@ -1618,11 +1835,11 @@ func (v *UserStatusLastWeek) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusLastWeek deserializes a UserStatusLastWeek from a reader using the TL binary protocol.
-func DecodeUserStatusLastWeek(r io.Reader) (*UserStatusLastWeek, error) {
+func DecodeUserStatusLastWeek(r *Reader) (*UserStatusLastWeek, error) {
 	v := &UserStatusLastWeek{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ByMe = v.Flags.Has(0)
@@ -1630,7 +1847,7 @@ func DecodeUserStatusLastWeek(r io.Reader) (*UserStatusLastWeek, error) {
 }
 
 func init() {
-	Registry[UserStatusLastWeekTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusLastWeekTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusLastWeek(r)
 	}
 }
@@ -1664,11 +1881,11 @@ func (v *UserStatusLastMonth) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserStatusLastMonth deserializes a UserStatusLastMonth from a reader using the TL binary protocol.
-func DecodeUserStatusLastMonth(r io.Reader) (*UserStatusLastMonth, error) {
+func DecodeUserStatusLastMonth(r *Reader) (*UserStatusLastMonth, error) {
 	v := &UserStatusLastMonth{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ByMe = v.Flags.Has(0)
@@ -1676,7 +1893,7 @@ func DecodeUserStatusLastMonth(r io.Reader) (*UserStatusLastMonth, error) {
 }
 
 func init() {
-	Registry[UserStatusLastMonthTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserStatusLastMonthTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserStatusLastMonth(r)
 	}
 }
@@ -1739,14 +1956,18 @@ func (v *ChatEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatEmpty deserializes a ChatEmpty from a reader using the TL binary protocol.
-func DecodeChatEmpty(r io.Reader) (*ChatEmpty, error) {
+func DecodeChatEmpty(r *Reader) (*ChatEmpty, error) {
 	v := &ChatEmpty{}
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[ChatEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatEmpty(r)
 	}
 }
@@ -1833,11 +2054,11 @@ func (v *Chat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChat deserializes a Chat from a reader using the TL binary protocol.
-func DecodeChat(r io.Reader) (*Chat, error) {
+func DecodeChat(r *Reader) (*Chat, error) {
 	v := &Chat{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
@@ -1846,30 +2067,62 @@ func DecodeChat(r io.Reader) (*Chat, error) {
 	v.CallActive = v.Flags.Has(23)
 	v.CallNotEmpty = v.Flags.Has(24)
 	v.Noforwards = v.Flags.Has(25)
-	v.ID = ReadLong(r)
-	v.Title = ReadString(r)
-	_objPhoto, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
 	v.Photo = _objPhoto.(ChatPhotoClass)
-	v.ParticipantsCount = int32(ReadInt(r))
-	v.Date = int32(ReadInt(r))
-	v.Version = int32(ReadInt(r))
+	_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
+	if _eParticipantsCount != nil {
+		return nil, _eParticipantsCount
+	}
+	v.ParticipantsCount = _rParticipantsCount
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	if v.Flags.Has(6) {
-		_objMigratedTo, _ := ReadTLObject(r)
+		_objMigratedTo, _errMigratedTo := ReadTLObject(r)
+		if _errMigratedTo != nil {
+			return nil, _errMigratedTo
+		}
 		v.MigratedTo = _objMigratedTo.(InputChannelClass)
 	}
 	if v.Flags.Has(14) {
-		_objAdminRights, _ := ReadTLObject(r)
+		_objAdminRights, _errAdminRights := ReadTLObject(r)
+		if _errAdminRights != nil {
+			return nil, _errAdminRights
+		}
 		v.AdminRights = _objAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(18) {
-		_objDefaultBannedRights, _ := ReadTLObject(r)
+		_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
+		if _errDefaultBannedRights != nil {
+			return nil, _errDefaultBannedRights
+		}
 		v.DefaultBannedRights = _objDefaultBannedRights.(*ChatBannedRights)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChat(r)
 	}
 }
@@ -1896,15 +2149,23 @@ func (v *ChatForbidden) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatForbidden deserializes a ChatForbidden from a reader using the TL binary protocol.
-func DecodeChatForbidden(r io.Reader) (*ChatForbidden, error) {
+func DecodeChatForbidden(r *Reader) (*ChatForbidden, error) {
 	v := &ChatForbidden{}
-	v.ID = ReadLong(r)
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	return v, nil
 }
 
 func init() {
-	Registry[ChatForbiddenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatForbiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatForbidden(r)
 	}
 }
@@ -2183,11 +2444,11 @@ func (v *Channel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannel deserializes a Channel from a reader using the TL binary protocol.
-func DecodeChannel(r io.Reader) (*Channel, error) {
+func DecodeChannel(r *Reader) (*Channel, error) {
 	v := &Channel{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
@@ -2212,7 +2473,7 @@ func DecodeChannel(r io.Reader) (*Channel, error) {
 	v.Forum = v.Flags.Has(30)
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags2 = Fields(_f)
 	}
 	v.StoriesHidden = v.Flags2.Has(1)
@@ -2223,92 +2484,180 @@ func DecodeChannel(r io.Reader) (*Channel, error) {
 	v.BroadcastMessagesAllowed = v.Flags2.Has(16)
 	v.Monoforum = v.Flags2.Has(17)
 	v.ForumTabs = v.Flags2.Has(19)
-	v.ID = ReadLong(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	if v.Flags.Has(13) {
-		v.AccessHash = ReadLong(r)
+		_rAccessHash, _eAccessHash := r.ReadInt64()
+		if _eAccessHash != nil {
+			return nil, _eAccessHash
+		}
+		v.AccessHash = _rAccessHash
 	}
-	v.Title = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(6) {
-		v.Username = ReadString(r)
+		_rUsername, _eUsername := r.ReadString()
+		if _eUsername != nil {
+			return nil, _eUsername
+		}
+		v.Username = _rUsername
 	}
-	_objPhoto, _ := ReadTLObject(r)
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
 	v.Photo = _objPhoto.(ChatPhotoClass)
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(9) {
-		ReadInt(r)
-		_cntRestrictionReason := ReadInt(r)
-		if err := checkVectorCount(_cntRestrictionReason); err != nil {
-			return nil, err
+		_vhdrRestrictionReason, _ehdrRestrictionReason := r.ReadUint32()
+		if _ehdrRestrictionReason != nil {
+			return nil, _ehdrRestrictionReason
+		}
+		_cntRestrictionReason, _ecntRestrictionReason := r.ReadUint32()
+		if _ecntRestrictionReason != nil {
+			return nil, _ecntRestrictionReason
+		}
+		if _errRestrictionReason := checkVectorCount(_cntRestrictionReason); _errRestrictionReason != nil {
+			return nil, _errRestrictionReason
 		}
 		v.RestrictionReason = make([]*RestrictionReason, _cntRestrictionReason)
 		for _iRestrictionReason := range v.RestrictionReason {
-			_objRestrictionReason, _ := ReadTLObject(r)
+			_objRestrictionReason, _errRestrictionReason := ReadTLObject(r)
+			if _errRestrictionReason != nil {
+				return nil, _errRestrictionReason
+			}
 			v.RestrictionReason[_iRestrictionReason] = _objRestrictionReason.(*RestrictionReason)
 		}
+		_ = _vhdrRestrictionReason
 	}
 	if v.Flags.Has(14) {
-		_objAdminRights, _ := ReadTLObject(r)
+		_objAdminRights, _errAdminRights := ReadTLObject(r)
+		if _errAdminRights != nil {
+			return nil, _errAdminRights
+		}
 		v.AdminRights = _objAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(15) {
-		_objBannedRights, _ := ReadTLObject(r)
+		_objBannedRights, _errBannedRights := ReadTLObject(r)
+		if _errBannedRights != nil {
+			return nil, _errBannedRights
+		}
 		v.BannedRights = _objBannedRights.(*ChatBannedRights)
 	}
 	if v.Flags.Has(18) {
-		_objDefaultBannedRights, _ := ReadTLObject(r)
+		_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
+		if _errDefaultBannedRights != nil {
+			return nil, _errDefaultBannedRights
+		}
 		v.DefaultBannedRights = _objDefaultBannedRights.(*ChatBannedRights)
 	}
 	if v.Flags.Has(17) {
-		v.ParticipantsCount = int32(ReadInt(r))
+		_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
+		if _eParticipantsCount != nil {
+			return nil, _eParticipantsCount
+		}
+		v.ParticipantsCount = _rParticipantsCount
 	}
 	if v.Flags2.Has(0) {
-		ReadInt(r)
-		_cntUsernames := ReadInt(r)
-		if err := checkVectorCount(_cntUsernames); err != nil {
-			return nil, err
+		_vhdrUsernames, _ehdrUsernames := r.ReadUint32()
+		if _ehdrUsernames != nil {
+			return nil, _ehdrUsernames
+		}
+		_cntUsernames, _ecntUsernames := r.ReadUint32()
+		if _ecntUsernames != nil {
+			return nil, _ecntUsernames
+		}
+		if _errUsernames := checkVectorCount(_cntUsernames); _errUsernames != nil {
+			return nil, _errUsernames
 		}
 		v.Usernames = make([]*Username, _cntUsernames)
 		for _iUsernames := range v.Usernames {
-			_objUsernames, _ := ReadTLObject(r)
+			_objUsernames, _errUsernames := ReadTLObject(r)
+			if _errUsernames != nil {
+				return nil, _errUsernames
+			}
 			v.Usernames[_iUsernames] = _objUsernames.(*Username)
 		}
+		_ = _vhdrUsernames
 	}
 	if v.Flags2.Has(4) {
-		_objStoriesMaxID, _ := ReadTLObject(r)
+		_objStoriesMaxID, _errStoriesMaxID := ReadTLObject(r)
+		if _errStoriesMaxID != nil {
+			return nil, _errStoriesMaxID
+		}
 		v.StoriesMaxID = _objStoriesMaxID.(*RecentStory)
 	}
 	if v.Flags2.Has(7) {
-		_objColor, _ := ReadTLObject(r)
+		_objColor, _errColor := ReadTLObject(r)
+		if _errColor != nil {
+			return nil, _errColor
+		}
 		v.Color = _objColor.(PeerColorClass)
 	}
 	if v.Flags2.Has(8) {
-		_objProfileColor, _ := ReadTLObject(r)
+		_objProfileColor, _errProfileColor := ReadTLObject(r)
+		if _errProfileColor != nil {
+			return nil, _errProfileColor
+		}
 		v.ProfileColor = _objProfileColor.(PeerColorClass)
 	}
 	if v.Flags2.Has(9) {
-		_objEmojiStatus, _ := ReadTLObject(r)
+		_objEmojiStatus, _errEmojiStatus := ReadTLObject(r)
+		if _errEmojiStatus != nil {
+			return nil, _errEmojiStatus
+		}
 		v.EmojiStatus = _objEmojiStatus.(EmojiStatusClass)
 	}
 	if v.Flags2.Has(10) {
-		v.Level = int32(ReadInt(r))
+		_rLevel, _eLevel := r.ReadInt32()
+		if _eLevel != nil {
+			return nil, _eLevel
+		}
+		v.Level = _rLevel
 	}
 	if v.Flags2.Has(11) {
-		v.SubscriptionUntilDate = int32(ReadInt(r))
+		_rSubscriptionUntilDate, _eSubscriptionUntilDate := r.ReadInt32()
+		if _eSubscriptionUntilDate != nil {
+			return nil, _eSubscriptionUntilDate
+		}
+		v.SubscriptionUntilDate = _rSubscriptionUntilDate
 	}
 	if v.Flags2.Has(13) {
-		v.BotVerificationIcon = ReadLong(r)
+		_rBotVerificationIcon, _eBotVerificationIcon := r.ReadInt64()
+		if _eBotVerificationIcon != nil {
+			return nil, _eBotVerificationIcon
+		}
+		v.BotVerificationIcon = _rBotVerificationIcon
 	}
 	if v.Flags2.Has(14) {
-		v.SendPaidMessagesStars = ReadLong(r)
+		_rSendPaidMessagesStars, _eSendPaidMessagesStars := r.ReadInt64()
+		if _eSendPaidMessagesStars != nil {
+			return nil, _eSendPaidMessagesStars
+		}
+		v.SendPaidMessagesStars = _rSendPaidMessagesStars
 	}
 	if v.Flags2.Has(18) {
-		v.LinkedMonoforumID = ReadLong(r)
+		_rLinkedMonoforumID, _eLinkedMonoforumID := r.ReadInt64()
+		if _eLinkedMonoforumID != nil {
+			return nil, _eLinkedMonoforumID
+		}
+		v.LinkedMonoforumID = _rLinkedMonoforumID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannel(r)
 	}
 }
@@ -2363,27 +2712,43 @@ func (v *ChannelForbidden) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelForbidden deserializes a ChannelForbidden from a reader using the TL binary protocol.
-func DecodeChannelForbidden(r io.Reader) (*ChannelForbidden, error) {
+func DecodeChannelForbidden(r *Reader) (*ChannelForbidden, error) {
 	v := &ChannelForbidden{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Broadcast = v.Flags.Has(5)
 	v.Megagroup = v.Flags.Has(8)
 	v.Monoforum = v.Flags.Has(10)
-	v.ID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
-	v.Title = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
 	if v.Flags.Has(16) {
-		v.UntilDate = int32(ReadInt(r))
+		_rUntilDate, _eUntilDate := r.ReadInt32()
+		if _eUntilDate != nil {
+			return nil, _eUntilDate
+		}
+		v.UntilDate = _rUntilDate
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelForbiddenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelForbiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelForbidden(r)
 	}
 }
@@ -2452,24 +2817,40 @@ func (v *ChatParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatParticipant deserializes a ChatParticipant from a reader using the TL binary protocol.
-func DecodeChatParticipant(r io.Reader) (*ChatParticipant, error) {
+func DecodeChatParticipant(r *Reader) (*ChatParticipant, error) {
 	v := &ChatParticipant{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	v.InviterID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rInviterID, _eInviterID := r.ReadInt64()
+	if _eInviterID != nil {
+		return nil, _eInviterID
+	}
+	v.InviterID = _rInviterID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(0) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatParticipant(r)
 	}
 }
@@ -2508,22 +2889,30 @@ func (v *ChatParticipantCreator) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatParticipantCreator deserializes a ChatParticipantCreator from a reader using the TL binary protocol.
-func DecodeChatParticipantCreator(r io.Reader) (*ChatParticipantCreator, error) {
+func DecodeChatParticipantCreator(r *Reader) (*ChatParticipantCreator, error) {
 	v := &ChatParticipantCreator{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	if v.Flags.Has(0) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatParticipantCreatorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatParticipantCreatorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatParticipantCreator(r)
 	}
 }
@@ -2566,24 +2955,40 @@ func (v *ChatParticipantAdmin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatParticipantAdmin deserializes a ChatParticipantAdmin from a reader using the TL binary protocol.
-func DecodeChatParticipantAdmin(r io.Reader) (*ChatParticipantAdmin, error) {
+func DecodeChatParticipantAdmin(r *Reader) (*ChatParticipantAdmin, error) {
 	v := &ChatParticipantAdmin{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
-	v.InviterID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rInviterID, _eInviterID := r.ReadInt64()
+	if _eInviterID != nil {
+		return nil, _eInviterID
+	}
+	v.InviterID = _rInviterID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(0) {
-		v.Rank = ReadString(r)
+		_rRank, _eRank := r.ReadString()
+		if _eRank != nil {
+			return nil, _eRank
+		}
+		v.Rank = _rRank
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatParticipantAdminTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatParticipantAdminTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatParticipantAdmin(r)
 	}
 }
@@ -2642,23 +3047,30 @@ func (v *ChatParticipantsForbidden) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatParticipantsForbidden deserializes a ChatParticipantsForbidden from a reader using the TL binary protocol.
-func DecodeChatParticipantsForbidden(r io.Reader) (*ChatParticipantsForbidden, error) {
+func DecodeChatParticipantsForbidden(r *Reader) (*ChatParticipantsForbidden, error) {
 	v := &ChatParticipantsForbidden{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChatID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	if v.Flags.Has(0) {
-		_objSelfParticipant, _ := ReadTLObject(r)
+		_objSelfParticipant, _errSelfParticipant := ReadTLObject(r)
+		if _errSelfParticipant != nil {
+			return nil, _errSelfParticipant
+		}
 		v.SelfParticipant = _objSelfParticipant.(ChatParticipantClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatParticipantsForbiddenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatParticipantsForbiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatParticipantsForbidden(r)
 	}
 }
@@ -2691,25 +3103,43 @@ func (v *ChatParticipants) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatParticipants deserializes a ChatParticipants from a reader using the TL binary protocol.
-func DecodeChatParticipants(r io.Reader) (*ChatParticipants, error) {
+func DecodeChatParticipants(r *Reader) (*ChatParticipants, error) {
 	v := &ChatParticipants{}
-	v.ChatID = ReadLong(r)
-	ReadInt(r)
-	_cntParticipants := ReadInt(r)
-	if err := checkVectorCount(_cntParticipants); err != nil {
-		return nil, err
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+	if _ehdrParticipants != nil {
+		return nil, _ehdrParticipants
+	}
+	_cntParticipants, _ecntParticipants := r.ReadUint32()
+	if _ecntParticipants != nil {
+		return nil, _ecntParticipants
+	}
+	if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+		return nil, _errParticipants
 	}
 	v.Participants = make([]ChatParticipantClass, _cntParticipants)
 	for _iParticipants := range v.Participants {
-		_objParticipants, _ := ReadTLObject(r)
+		_objParticipants, _errParticipants := ReadTLObject(r)
+		if _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		v.Participants[_iParticipants] = _objParticipants.(ChatParticipantClass)
 	}
-	v.Version = int32(ReadInt(r))
+	_ = _vhdrParticipants
+	_rVersion, _eVersion := r.ReadInt32()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
 	return v, nil
 }
 
 func init() {
-	Registry[ChatParticipantsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatParticipantsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatParticipants(r)
 	}
 }
@@ -2752,13 +3182,13 @@ func (v *ChatPhotoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatPhotoEmpty deserializes a ChatPhotoEmpty from a reader using the TL binary protocol.
-func DecodeChatPhotoEmpty(r io.Reader) (*ChatPhotoEmpty, error) {
+func DecodeChatPhotoEmpty(r *Reader) (*ChatPhotoEmpty, error) {
 	v := &ChatPhotoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatPhotoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatPhotoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatPhotoEmpty(r)
 	}
 }
@@ -2803,24 +3233,36 @@ func (v *ChatPhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatPhoto deserializes a ChatPhoto from a reader using the TL binary protocol.
-func DecodeChatPhoto(r io.Reader) (*ChatPhoto, error) {
+func DecodeChatPhoto(r *Reader) (*ChatPhoto, error) {
 	v := &ChatPhoto{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HasVideo = v.Flags.Has(0)
-	v.PhotoID = ReadLong(r)
-	if v.Flags.Has(1) {
-		v.StrippedThumb = ReadBytes(r)
+	_rPhotoID, _ePhotoID := r.ReadInt64()
+	if _ePhotoID != nil {
+		return nil, _ePhotoID
 	}
-	v.DCID = int32(ReadInt(r))
+	v.PhotoID = _rPhotoID
+	if v.Flags.Has(1) {
+		_rStrippedThumb, _eStrippedThumb := r.ReadBytes()
+		if _eStrippedThumb != nil {
+			return nil, _eStrippedThumb
+		}
+		v.StrippedThumb = _rStrippedThumb
+	}
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
 	return v, nil
 }
 
 func init() {
-	Registry[ChatPhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatPhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatPhoto(r)
 	}
 }
@@ -2883,15 +3325,18 @@ func (v *InputNotifyPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputNotifyPeer deserializes a InputNotifyPeer from a reader using the TL binary protocol.
-func DecodeInputNotifyPeer(r io.Reader) (*InputNotifyPeer, error) {
+func DecodeInputNotifyPeer(r *Reader) (*InputNotifyPeer, error) {
 	v := &InputNotifyPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[InputNotifyPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputNotifyPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyPeer(r)
 	}
 }
@@ -2914,13 +3359,13 @@ func (v *InputNotifyUsers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputNotifyUsers deserializes a InputNotifyUsers from a reader using the TL binary protocol.
-func DecodeInputNotifyUsers(r io.Reader) (*InputNotifyUsers, error) {
+func DecodeInputNotifyUsers(r *Reader) (*InputNotifyUsers, error) {
 	v := &InputNotifyUsers{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputNotifyUsersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputNotifyUsersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyUsers(r)
 	}
 }
@@ -2943,13 +3388,13 @@ func (v *InputNotifyChats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputNotifyChats deserializes a InputNotifyChats from a reader using the TL binary protocol.
-func DecodeInputNotifyChats(r io.Reader) (*InputNotifyChats, error) {
+func DecodeInputNotifyChats(r *Reader) (*InputNotifyChats, error) {
 	v := &InputNotifyChats{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputNotifyChatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputNotifyChatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyChats(r)
 	}
 }
@@ -2972,13 +3417,13 @@ func (v *InputNotifyBroadcasts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputNotifyBroadcasts deserializes a InputNotifyBroadcasts from a reader using the TL binary protocol.
-func DecodeInputNotifyBroadcasts(r io.Reader) (*InputNotifyBroadcasts, error) {
+func DecodeInputNotifyBroadcasts(r *Reader) (*InputNotifyBroadcasts, error) {
 	v := &InputNotifyBroadcasts{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputNotifyBroadcastsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputNotifyBroadcastsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyBroadcasts(r)
 	}
 }
@@ -3005,16 +3450,23 @@ func (v *InputNotifyForumTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputNotifyForumTopic deserializes a InputNotifyForumTopic from a reader using the TL binary protocol.
-func DecodeInputNotifyForumTopic(r io.Reader) (*InputNotifyForumTopic, error) {
+func DecodeInputNotifyForumTopic(r *Reader) (*InputNotifyForumTopic, error) {
 	v := &InputNotifyForumTopic{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.TopMsgID = int32(ReadInt(r))
+	_rTopMsgID, _eTopMsgID := r.ReadInt32()
+	if _eTopMsgID != nil {
+		return nil, _eTopMsgID
+	}
+	v.TopMsgID = _rTopMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[InputNotifyForumTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputNotifyForumTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyForumTopic(r)
 	}
 }
@@ -3096,41 +3548,67 @@ func (v *InputPeerNotifySettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerNotifySettings deserializes a InputPeerNotifySettings from a reader using the TL binary protocol.
-func DecodeInputPeerNotifySettings(r io.Reader) (*InputPeerNotifySettings, error) {
+func DecodeInputPeerNotifySettings(r *Reader) (*InputPeerNotifySettings, error) {
 	v := &InputPeerNotifySettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.ShowPreviews = ReadBool(r)
+		_rShowPreviews, _eShowPreviews := r.ReadBool()
+		if _eShowPreviews != nil {
+			return nil, _eShowPreviews
+		}
+		v.ShowPreviews = _rShowPreviews
 	}
 	if v.Flags.Has(1) {
-		v.Silent = ReadBool(r)
+		_rSilent, _eSilent := r.ReadBool()
+		if _eSilent != nil {
+			return nil, _eSilent
+		}
+		v.Silent = _rSilent
 	}
 	if v.Flags.Has(2) {
-		v.MuteUntil = int32(ReadInt(r))
+		_rMuteUntil, _eMuteUntil := r.ReadInt32()
+		if _eMuteUntil != nil {
+			return nil, _eMuteUntil
+		}
+		v.MuteUntil = _rMuteUntil
 	}
 	if v.Flags.Has(3) {
-		_objSound, _ := ReadTLObject(r)
+		_objSound, _errSound := ReadTLObject(r)
+		if _errSound != nil {
+			return nil, _errSound
+		}
 		v.Sound = _objSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(6) {
-		v.StoriesMuted = ReadBool(r)
+		_rStoriesMuted, _eStoriesMuted := r.ReadBool()
+		if _eStoriesMuted != nil {
+			return nil, _eStoriesMuted
+		}
+		v.StoriesMuted = _rStoriesMuted
 	}
 	if v.Flags.Has(7) {
-		v.StoriesHideSender = ReadBool(r)
+		_rStoriesHideSender, _eStoriesHideSender := r.ReadBool()
+		if _eStoriesHideSender != nil {
+			return nil, _eStoriesHideSender
+		}
+		v.StoriesHideSender = _rStoriesHideSender
 	}
 	if v.Flags.Has(8) {
-		_objStoriesSound, _ := ReadTLObject(r)
+		_objStoriesSound, _errStoriesSound := ReadTLObject(r)
+		if _errStoriesSound != nil {
+			return nil, _errStoriesSound
+		}
 		v.StoriesSound = _objStoriesSound.(NotificationSoundClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerNotifySettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerNotifySettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerNotifySettings(r)
 	}
 }
@@ -3240,57 +3718,95 @@ func (v *PeerNotifySettings) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerNotifySettings deserializes a PeerNotifySettings from a reader using the TL binary protocol.
-func DecodePeerNotifySettings(r io.Reader) (*PeerNotifySettings, error) {
+func DecodePeerNotifySettings(r *Reader) (*PeerNotifySettings, error) {
 	v := &PeerNotifySettings{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.ShowPreviews = ReadBool(r)
+		_rShowPreviews, _eShowPreviews := r.ReadBool()
+		if _eShowPreviews != nil {
+			return nil, _eShowPreviews
+		}
+		v.ShowPreviews = _rShowPreviews
 	}
 	if v.Flags.Has(1) {
-		v.Silent = ReadBool(r)
+		_rSilent, _eSilent := r.ReadBool()
+		if _eSilent != nil {
+			return nil, _eSilent
+		}
+		v.Silent = _rSilent
 	}
 	if v.Flags.Has(2) {
-		v.MuteUntil = int32(ReadInt(r))
+		_rMuteUntil, _eMuteUntil := r.ReadInt32()
+		if _eMuteUntil != nil {
+			return nil, _eMuteUntil
+		}
+		v.MuteUntil = _rMuteUntil
 	}
 	if v.Flags.Has(3) {
-		_objIosSound, _ := ReadTLObject(r)
+		_objIosSound, _errIosSound := ReadTLObject(r)
+		if _errIosSound != nil {
+			return nil, _errIosSound
+		}
 		v.IosSound = _objIosSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(4) {
-		_objAndroidSound, _ := ReadTLObject(r)
+		_objAndroidSound, _errAndroidSound := ReadTLObject(r)
+		if _errAndroidSound != nil {
+			return nil, _errAndroidSound
+		}
 		v.AndroidSound = _objAndroidSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(5) {
-		_objOtherSound, _ := ReadTLObject(r)
+		_objOtherSound, _errOtherSound := ReadTLObject(r)
+		if _errOtherSound != nil {
+			return nil, _errOtherSound
+		}
 		v.OtherSound = _objOtherSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(6) {
-		v.StoriesMuted = ReadBool(r)
+		_rStoriesMuted, _eStoriesMuted := r.ReadBool()
+		if _eStoriesMuted != nil {
+			return nil, _eStoriesMuted
+		}
+		v.StoriesMuted = _rStoriesMuted
 	}
 	if v.Flags.Has(7) {
-		v.StoriesHideSender = ReadBool(r)
+		_rStoriesHideSender, _eStoriesHideSender := r.ReadBool()
+		if _eStoriesHideSender != nil {
+			return nil, _eStoriesHideSender
+		}
+		v.StoriesHideSender = _rStoriesHideSender
 	}
 	if v.Flags.Has(8) {
-		_objStoriesIosSound, _ := ReadTLObject(r)
+		_objStoriesIosSound, _errStoriesIosSound := ReadTLObject(r)
+		if _errStoriesIosSound != nil {
+			return nil, _errStoriesIosSound
+		}
 		v.StoriesIosSound = _objStoriesIosSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(9) {
-		_objStoriesAndroidSound, _ := ReadTLObject(r)
+		_objStoriesAndroidSound, _errStoriesAndroidSound := ReadTLObject(r)
+		if _errStoriesAndroidSound != nil {
+			return nil, _errStoriesAndroidSound
+		}
 		v.StoriesAndroidSound = _objStoriesAndroidSound.(NotificationSoundClass)
 	}
 	if v.Flags.Has(10) {
-		_objStoriesOtherSound, _ := ReadTLObject(r)
+		_objStoriesOtherSound, _errStoriesOtherSound := ReadTLObject(r)
+		if _errStoriesOtherSound != nil {
+			return nil, _errStoriesOtherSound
+		}
 		v.StoriesOtherSound = _objStoriesOtherSound.(NotificationSoundClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PeerNotifySettingsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerNotifySettingsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerNotifySettings(r)
 	}
 }
@@ -3320,15 +3836,23 @@ func (v *Contact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContact deserializes a Contact from a reader using the TL binary protocol.
-func DecodeContact(r io.Reader) (*Contact, error) {
+func DecodeContact(r *Reader) (*Contact, error) {
 	v := &Contact{}
-	v.UserID = ReadLong(r)
-	v.Mutual = ReadBool(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rMutual, _eMutual := r.ReadBool()
+	if _eMutual != nil {
+		return nil, _eMutual
+	}
+	v.Mutual = _rMutual
 	return v, nil
 }
 
 func init() {
-	Registry[ContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContact(r)
 	}
 }
@@ -3358,15 +3882,23 @@ func (v *ImportedContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeImportedContact deserializes a ImportedContact from a reader using the TL binary protocol.
-func DecodeImportedContact(r io.Reader) (*ImportedContact, error) {
+func DecodeImportedContact(r *Reader) (*ImportedContact, error) {
 	v := &ImportedContact{}
-	v.UserID = ReadLong(r)
-	v.ClientID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rClientID, _eClientID := r.ReadInt64()
+	if _eClientID != nil {
+		return nil, _eClientID
+	}
+	v.ClientID = _rClientID
 	return v, nil
 }
 
 func init() {
-	Registry[ImportedContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ImportedContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeImportedContact(r)
 	}
 }
@@ -3396,16 +3928,23 @@ func (v *ContactStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactStatus deserializes a ContactStatus from a reader using the TL binary protocol.
-func DecodeContactStatus(r io.Reader) (*ContactStatus, error) {
+func DecodeContactStatus(r *Reader) (*ContactStatus, error) {
 	v := &ContactStatus{}
-	v.UserID = ReadLong(r)
-	_objStatus, _ := ReadTLObject(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objStatus, _errStatus := ReadTLObject(r)
+	if _errStatus != nil {
+		return nil, _errStatus
+	}
 	v.Status = _objStatus.(UserStatusClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ContactStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactStatus(r)
 	}
 }
@@ -3468,14 +4007,18 @@ func (v *EncryptedChatEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedChatEmpty deserializes a EncryptedChatEmpty from a reader using the TL binary protocol.
-func DecodeEncryptedChatEmpty(r io.Reader) (*EncryptedChatEmpty, error) {
+func DecodeEncryptedChatEmpty(r *Reader) (*EncryptedChatEmpty, error) {
 	v := &EncryptedChatEmpty{}
-	v.ID = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedChatEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedChatEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedChatEmpty(r)
 	}
 }
@@ -3508,18 +4051,38 @@ func (v *EncryptedChatWaiting) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedChatWaiting deserializes a EncryptedChatWaiting from a reader using the TL binary protocol.
-func DecodeEncryptedChatWaiting(r io.Reader) (*EncryptedChatWaiting, error) {
+func DecodeEncryptedChatWaiting(r *Reader) (*EncryptedChatWaiting, error) {
 	v := &EncryptedChatWaiting{}
-	v.ID = int32(ReadInt(r))
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedChatWaitingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedChatWaitingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedChatWaiting(r)
 	}
 }
@@ -3568,27 +4131,55 @@ func (v *EncryptedChatRequested) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedChatRequested deserializes a EncryptedChatRequested from a reader using the TL binary protocol.
-func DecodeEncryptedChatRequested(r io.Reader) (*EncryptedChatRequested, error) {
+func DecodeEncryptedChatRequested(r *Reader) (*EncryptedChatRequested, error) {
 	v := &EncryptedChatRequested{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
-	v.ID = int32(ReadInt(r))
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	v.GA = ReadBytes(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_rGA, _eGA := r.ReadBytes()
+	if _eGA != nil {
+		return nil, _eGA
+	}
+	v.GA = _rGA
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedChatRequestedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedChatRequestedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedChatRequested(r)
 	}
 }
@@ -3625,20 +4216,48 @@ func (v *EncryptedChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedChat deserializes a EncryptedChat from a reader using the TL binary protocol.
-func DecodeEncryptedChat(r io.Reader) (*EncryptedChat, error) {
+func DecodeEncryptedChat(r *Reader) (*EncryptedChat, error) {
 	v := &EncryptedChat{}
-	v.ID = int32(ReadInt(r))
-	v.AccessHash = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.AdminID = ReadLong(r)
-	v.ParticipantID = ReadLong(r)
-	v.GAOrB = ReadBytes(r)
-	v.KeyFingerprint = ReadLong(r)
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rParticipantID, _eParticipantID := r.ReadInt64()
+	if _eParticipantID != nil {
+		return nil, _eParticipantID
+	}
+	v.ParticipantID = _rParticipantID
+	_rGAOrB, _eGAOrB := r.ReadBytes()
+	if _eGAOrB != nil {
+		return nil, _eGAOrB
+	}
+	v.GAOrB = _rGAOrB
+	_rKeyFingerprint, _eKeyFingerprint := r.ReadInt64()
+	if _eKeyFingerprint != nil {
+		return nil, _eKeyFingerprint
+	}
+	v.KeyFingerprint = _rKeyFingerprint
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedChat(r)
 	}
 }
@@ -3674,20 +4293,24 @@ func (v *EncryptedChatDiscarded) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeEncryptedChatDiscarded deserializes a EncryptedChatDiscarded from a reader using the TL binary protocol.
-func DecodeEncryptedChatDiscarded(r io.Reader) (*EncryptedChatDiscarded, error) {
+func DecodeEncryptedChatDiscarded(r *Reader) (*EncryptedChatDiscarded, error) {
 	v := &EncryptedChatDiscarded{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.HistoryDeleted = v.Flags.Has(0)
-	v.ID = int32(ReadInt(r))
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
 	return v, nil
 }
 
 func init() {
-	Registry[EncryptedChatDiscardedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[EncryptedChatDiscardedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeEncryptedChatDiscarded(r)
 	}
 }
@@ -3717,15 +4340,23 @@ func (v *InputEncryptedChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputEncryptedChat deserializes a InputEncryptedChat from a reader using the TL binary protocol.
-func DecodeInputEncryptedChat(r io.Reader) (*InputEncryptedChat, error) {
+func DecodeInputEncryptedChat(r *Reader) (*InputEncryptedChat, error) {
 	v := &InputEncryptedChat{}
-	v.ChatID = int32(ReadInt(r))
-	v.AccessHash = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt32()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputEncryptedChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputEncryptedChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputEncryptedChat(r)
 	}
 }
@@ -3788,15 +4419,18 @@ func (v *NotifyPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotifyPeer deserializes a NotifyPeer from a reader using the TL binary protocol.
-func DecodeNotifyPeer(r io.Reader) (*NotifyPeer, error) {
+func DecodeNotifyPeer(r *Reader) (*NotifyPeer, error) {
 	v := &NotifyPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[NotifyPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotifyPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyPeer(r)
 	}
 }
@@ -3819,13 +4453,13 @@ func (v *NotifyUsers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotifyUsers deserializes a NotifyUsers from a reader using the TL binary protocol.
-func DecodeNotifyUsers(r io.Reader) (*NotifyUsers, error) {
+func DecodeNotifyUsers(r *Reader) (*NotifyUsers, error) {
 	v := &NotifyUsers{}
 	return v, nil
 }
 
 func init() {
-	Registry[NotifyUsersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotifyUsersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyUsers(r)
 	}
 }
@@ -3848,13 +4482,13 @@ func (v *NotifyChats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotifyChats deserializes a NotifyChats from a reader using the TL binary protocol.
-func DecodeNotifyChats(r io.Reader) (*NotifyChats, error) {
+func DecodeNotifyChats(r *Reader) (*NotifyChats, error) {
 	v := &NotifyChats{}
 	return v, nil
 }
 
 func init() {
-	Registry[NotifyChatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotifyChatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyChats(r)
 	}
 }
@@ -3877,13 +4511,13 @@ func (v *NotifyBroadcasts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotifyBroadcasts deserializes a NotifyBroadcasts from a reader using the TL binary protocol.
-func DecodeNotifyBroadcasts(r io.Reader) (*NotifyBroadcasts, error) {
+func DecodeNotifyBroadcasts(r *Reader) (*NotifyBroadcasts, error) {
 	v := &NotifyBroadcasts{}
 	return v, nil
 }
 
 func init() {
-	Registry[NotifyBroadcastsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotifyBroadcastsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyBroadcasts(r)
 	}
 }
@@ -3910,16 +4544,23 @@ func (v *NotifyForumTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeNotifyForumTopic deserializes a NotifyForumTopic from a reader using the TL binary protocol.
-func DecodeNotifyForumTopic(r io.Reader) (*NotifyForumTopic, error) {
+func DecodeNotifyForumTopic(r *Reader) (*NotifyForumTopic, error) {
 	v := &NotifyForumTopic{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.TopMsgID = int32(ReadInt(r))
+	_rTopMsgID, _eTopMsgID := r.ReadInt32()
+	if _eTopMsgID != nil {
+		return nil, _eTopMsgID
+	}
+	v.TopMsgID = _rTopMsgID
 	return v, nil
 }
 
 func init() {
-	Registry[NotifyForumTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[NotifyForumTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyForumTopic(r)
 	}
 }
@@ -3970,15 +4611,18 @@ func (v *ChatInviteAlready) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatInviteAlready deserializes a ChatInviteAlready from a reader using the TL binary protocol.
-func DecodeChatInviteAlready(r io.Reader) (*ChatInviteAlready, error) {
+func DecodeChatInviteAlready(r *Reader) (*ChatInviteAlready, error) {
 	v := &ChatInviteAlready{}
-	_objChat, _ := ReadTLObject(r)
+	_objChat, _errChat := ReadTLObject(r)
+	if _errChat != nil {
+		return nil, _errChat
+	}
 	v.Chat = _objChat.(ChatClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChatInviteAlreadyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatInviteAlreadyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatInviteAlready(r)
 	}
 }
@@ -4091,11 +4735,11 @@ func (v *ChatInvite) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatInvite deserializes a ChatInvite from a reader using the TL binary protocol.
-func DecodeChatInvite(r io.Reader) (*ChatInvite, error) {
+func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 	v := &ChatInvite{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Channel = v.Flags.Has(0)
@@ -4107,42 +4751,81 @@ func DecodeChatInvite(r io.Reader) (*ChatInvite, error) {
 	v.Scam = v.Flags.Has(8)
 	v.Fake = v.Flags.Has(9)
 	v.CanRefulfillSubscription = v.Flags.Has(11)
-	v.Title = ReadString(r)
-	if v.Flags.Has(5) {
-		v.About = ReadString(r)
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
 	}
-	_objPhoto, _ := ReadTLObject(r)
+	v.Title = _rTitle
+	if v.Flags.Has(5) {
+		_rAbout, _eAbout := r.ReadString()
+		if _eAbout != nil {
+			return nil, _eAbout
+		}
+		v.About = _rAbout
+	}
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
 	v.Photo = _objPhoto.(PhotoClass)
-	v.ParticipantsCount = int32(ReadInt(r))
+	_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
+	if _eParticipantsCount != nil {
+		return nil, _eParticipantsCount
+	}
+	v.ParticipantsCount = _rParticipantsCount
 	if v.Flags.Has(4) {
-		ReadInt(r)
-		_cntParticipants := ReadInt(r)
-		if err := checkVectorCount(_cntParticipants); err != nil {
-			return nil, err
+		_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
+		if _ehdrParticipants != nil {
+			return nil, _ehdrParticipants
+		}
+		_cntParticipants, _ecntParticipants := r.ReadUint32()
+		if _ecntParticipants != nil {
+			return nil, _ecntParticipants
+		}
+		if _errParticipants := checkVectorCount(_cntParticipants); _errParticipants != nil {
+			return nil, _errParticipants
 		}
 		v.Participants = make([]UserClass, _cntParticipants)
 		for _iParticipants := range v.Participants {
-			_objParticipants, _ := ReadTLObject(r)
+			_objParticipants, _errParticipants := ReadTLObject(r)
+			if _errParticipants != nil {
+				return nil, _errParticipants
+			}
 			v.Participants[_iParticipants] = _objParticipants.(UserClass)
 		}
+		_ = _vhdrParticipants
 	}
-	v.Color = int32(ReadInt(r))
+	_rColor, _eColor := r.ReadInt32()
+	if _eColor != nil {
+		return nil, _eColor
+	}
+	v.Color = _rColor
 	if v.Flags.Has(10) {
-		_objSubscriptionPricing, _ := ReadTLObject(r)
+		_objSubscriptionPricing, _errSubscriptionPricing := ReadTLObject(r)
+		if _errSubscriptionPricing != nil {
+			return nil, _errSubscriptionPricing
+		}
 		v.SubscriptionPricing = _objSubscriptionPricing.(*StarsSubscriptionPricing)
 	}
 	if v.Flags.Has(12) {
-		v.SubscriptionFormID = ReadLong(r)
+		_rSubscriptionFormID, _eSubscriptionFormID := r.ReadInt64()
+		if _eSubscriptionFormID != nil {
+			return nil, _eSubscriptionFormID
+		}
+		v.SubscriptionFormID = _rSubscriptionFormID
 	}
 	if v.Flags.Has(13) {
-		_objBotVerification, _ := ReadTLObject(r)
+		_objBotVerification, _errBotVerification := ReadTLObject(r)
+		if _errBotVerification != nil {
+			return nil, _errBotVerification
+		}
 		v.BotVerification = _objBotVerification.(*BotVerification)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatInvite(r)
 	}
 }
@@ -4169,16 +4852,23 @@ func (v *ChatInvitePeek) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatInvitePeek deserializes a ChatInvitePeek from a reader using the TL binary protocol.
-func DecodeChatInvitePeek(r io.Reader) (*ChatInvitePeek, error) {
+func DecodeChatInvitePeek(r *Reader) (*ChatInvitePeek, error) {
 	v := &ChatInvitePeek{}
-	_objChat, _ := ReadTLObject(r)
+	_objChat, _errChat := ReadTLObject(r)
+	if _errChat != nil {
+		return nil, _errChat
+	}
 	v.Chat = _objChat.(ChatClass)
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[ChatInvitePeekTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatInvitePeekTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatInvitePeek(r)
 	}
 }
@@ -4227,13 +4917,13 @@ func (v *InputChannelEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChannelEmpty deserializes a InputChannelEmpty from a reader using the TL binary protocol.
-func DecodeInputChannelEmpty(r io.Reader) (*InputChannelEmpty, error) {
+func DecodeInputChannelEmpty(r *Reader) (*InputChannelEmpty, error) {
 	v := &InputChannelEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputChannelEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChannelEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChannelEmpty(r)
 	}
 }
@@ -4260,15 +4950,23 @@ func (v *InputChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChannel deserializes a InputChannel from a reader using the TL binary protocol.
-func DecodeInputChannel(r io.Reader) (*InputChannel, error) {
+func DecodeInputChannel(r *Reader) (*InputChannel, error) {
 	v := &InputChannel{}
-	v.ChannelID = ReadLong(r)
-	v.AccessHash = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rAccessHash, _eAccessHash := r.ReadInt64()
+	if _eAccessHash != nil {
+		return nil, _eAccessHash
+	}
+	v.AccessHash = _rAccessHash
 	return v, nil
 }
 
 func init() {
-	Registry[InputChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChannel(r)
 	}
 }
@@ -4297,17 +4995,28 @@ func (v *InputChannelFromMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChannelFromMessage deserializes a InputChannelFromMessage from a reader using the TL binary protocol.
-func DecodeInputChannelFromMessage(r io.Reader) (*InputChannelFromMessage, error) {
+func DecodeInputChannelFromMessage(r *Reader) (*InputChannelFromMessage, error) {
 	v := &InputChannelFromMessage{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.MsgID = int32(ReadInt(r))
-	v.ChannelID = ReadLong(r)
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	return v, nil
 }
 
 func init() {
-	Registry[InputChannelFromMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChannelFromMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChannelFromMessage(r)
 	}
 }
@@ -4386,13 +5095,13 @@ func (v *ChannelParticipantsRecent) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsRecent deserializes a ChannelParticipantsRecent from a reader using the TL binary protocol.
-func DecodeChannelParticipantsRecent(r io.Reader) (*ChannelParticipantsRecent, error) {
+func DecodeChannelParticipantsRecent(r *Reader) (*ChannelParticipantsRecent, error) {
 	v := &ChannelParticipantsRecent{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsRecentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsRecentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsRecent(r)
 	}
 }
@@ -4415,13 +5124,13 @@ func (v *ChannelParticipantsAdmins) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsAdmins deserializes a ChannelParticipantsAdmins from a reader using the TL binary protocol.
-func DecodeChannelParticipantsAdmins(r io.Reader) (*ChannelParticipantsAdmins, error) {
+func DecodeChannelParticipantsAdmins(r *Reader) (*ChannelParticipantsAdmins, error) {
 	v := &ChannelParticipantsAdmins{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsAdminsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsAdminsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsAdmins(r)
 	}
 }
@@ -4446,14 +5155,18 @@ func (v *ChannelParticipantsKicked) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsKicked deserializes a ChannelParticipantsKicked from a reader using the TL binary protocol.
-func DecodeChannelParticipantsKicked(r io.Reader) (*ChannelParticipantsKicked, error) {
+func DecodeChannelParticipantsKicked(r *Reader) (*ChannelParticipantsKicked, error) {
 	v := &ChannelParticipantsKicked{}
-	v.Q = ReadString(r)
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsKickedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsKickedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsKicked(r)
 	}
 }
@@ -4476,13 +5189,13 @@ func (v *ChannelParticipantsBots) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsBots deserializes a ChannelParticipantsBots from a reader using the TL binary protocol.
-func DecodeChannelParticipantsBots(r io.Reader) (*ChannelParticipantsBots, error) {
+func DecodeChannelParticipantsBots(r *Reader) (*ChannelParticipantsBots, error) {
 	v := &ChannelParticipantsBots{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsBotsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsBotsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsBots(r)
 	}
 }
@@ -4507,14 +5220,18 @@ func (v *ChannelParticipantsBanned) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsBanned deserializes a ChannelParticipantsBanned from a reader using the TL binary protocol.
-func DecodeChannelParticipantsBanned(r io.Reader) (*ChannelParticipantsBanned, error) {
+func DecodeChannelParticipantsBanned(r *Reader) (*ChannelParticipantsBanned, error) {
 	v := &ChannelParticipantsBanned{}
-	v.Q = ReadString(r)
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsBannedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsBannedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsBanned(r)
 	}
 }
@@ -4539,14 +5256,18 @@ func (v *ChannelParticipantsSearch) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsSearch deserializes a ChannelParticipantsSearch from a reader using the TL binary protocol.
-func DecodeChannelParticipantsSearch(r io.Reader) (*ChannelParticipantsSearch, error) {
+func DecodeChannelParticipantsSearch(r *Reader) (*ChannelParticipantsSearch, error) {
 	v := &ChannelParticipantsSearch{}
-	v.Q = ReadString(r)
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsSearchTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsSearchTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsSearch(r)
 	}
 }
@@ -4571,14 +5292,18 @@ func (v *ChannelParticipantsContacts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsContacts deserializes a ChannelParticipantsContacts from a reader using the TL binary protocol.
-func DecodeChannelParticipantsContacts(r io.Reader) (*ChannelParticipantsContacts, error) {
+func DecodeChannelParticipantsContacts(r *Reader) (*ChannelParticipantsContacts, error) {
 	v := &ChannelParticipantsContacts{}
-	v.Q = ReadString(r)
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsContactsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsContactsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsContacts(r)
 	}
 }
@@ -4622,24 +5347,32 @@ func (v *ChannelParticipantsMentions) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelParticipantsMentions deserializes a ChannelParticipantsMentions from a reader using the TL binary protocol.
-func DecodeChannelParticipantsMentions(r io.Reader) (*ChannelParticipantsMentions, error) {
+func DecodeChannelParticipantsMentions(r *Reader) (*ChannelParticipantsMentions, error) {
 	v := &ChannelParticipantsMentions{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Q = ReadString(r)
+		_rQ, _eQ := r.ReadString()
+		if _eQ != nil {
+			return nil, _eQ
+		}
+		v.Q = _rQ
 	}
 	if v.Flags.Has(1) {
-		v.TopMsgID = int32(ReadInt(r))
+		_rTopMsgID, _eTopMsgID := r.ReadInt32()
+		if _eTopMsgID != nil {
+			return nil, _eTopMsgID
+		}
+		v.TopMsgID = _rTopMsgID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelParticipantsMentionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelParticipantsMentionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelParticipantsMentions(r)
 	}
 }
@@ -4669,16 +5402,23 @@ func (v *TopPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeer deserializes a TopPeer from a reader using the TL binary protocol.
-func DecodeTopPeer(r io.Reader) (*TopPeer, error) {
+func DecodeTopPeer(r *Reader) (*TopPeer, error) {
 	v := &TopPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Rating = ReadDouble(r)
+	_rRating, _eRating := r.ReadFloat64()
+	if _eRating != nil {
+		return nil, _eRating
+	}
+	v.Rating = _rRating
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeer(r)
 	}
 }
@@ -4769,13 +5509,13 @@ func (v *TopPeerCategoryBotsPm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryBotsPm deserializes a TopPeerCategoryBotsPm from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryBotsPm(r io.Reader) (*TopPeerCategoryBotsPm, error) {
+func DecodeTopPeerCategoryBotsPm(r *Reader) (*TopPeerCategoryBotsPm, error) {
 	v := &TopPeerCategoryBotsPm{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryBotsPmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryBotsPmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryBotsPm(r)
 	}
 }
@@ -4798,13 +5538,13 @@ func (v *TopPeerCategoryBotsInline) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryBotsInline deserializes a TopPeerCategoryBotsInline from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryBotsInline(r io.Reader) (*TopPeerCategoryBotsInline, error) {
+func DecodeTopPeerCategoryBotsInline(r *Reader) (*TopPeerCategoryBotsInline, error) {
 	v := &TopPeerCategoryBotsInline{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryBotsInlineTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryBotsInlineTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryBotsInline(r)
 	}
 }
@@ -4827,13 +5567,13 @@ func (v *TopPeerCategoryCorrespondents) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryCorrespondents deserializes a TopPeerCategoryCorrespondents from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryCorrespondents(r io.Reader) (*TopPeerCategoryCorrespondents, error) {
+func DecodeTopPeerCategoryCorrespondents(r *Reader) (*TopPeerCategoryCorrespondents, error) {
 	v := &TopPeerCategoryCorrespondents{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryCorrespondentsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryCorrespondentsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryCorrespondents(r)
 	}
 }
@@ -4856,13 +5596,13 @@ func (v *TopPeerCategoryGroups) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryGroups deserializes a TopPeerCategoryGroups from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryGroups(r io.Reader) (*TopPeerCategoryGroups, error) {
+func DecodeTopPeerCategoryGroups(r *Reader) (*TopPeerCategoryGroups, error) {
 	v := &TopPeerCategoryGroups{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryGroupsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryGroupsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryGroups(r)
 	}
 }
@@ -4885,13 +5625,13 @@ func (v *TopPeerCategoryChannels) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryChannels deserializes a TopPeerCategoryChannels from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryChannels(r io.Reader) (*TopPeerCategoryChannels, error) {
+func DecodeTopPeerCategoryChannels(r *Reader) (*TopPeerCategoryChannels, error) {
 	v := &TopPeerCategoryChannels{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryChannelsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryChannelsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryChannels(r)
 	}
 }
@@ -4914,13 +5654,13 @@ func (v *TopPeerCategoryPhoneCalls) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryPhoneCalls deserializes a TopPeerCategoryPhoneCalls from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryPhoneCalls(r io.Reader) (*TopPeerCategoryPhoneCalls, error) {
+func DecodeTopPeerCategoryPhoneCalls(r *Reader) (*TopPeerCategoryPhoneCalls, error) {
 	v := &TopPeerCategoryPhoneCalls{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryPhoneCallsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryPhoneCallsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryPhoneCalls(r)
 	}
 }
@@ -4943,13 +5683,13 @@ func (v *TopPeerCategoryForwardUsers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryForwardUsers deserializes a TopPeerCategoryForwardUsers from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryForwardUsers(r io.Reader) (*TopPeerCategoryForwardUsers, error) {
+func DecodeTopPeerCategoryForwardUsers(r *Reader) (*TopPeerCategoryForwardUsers, error) {
 	v := &TopPeerCategoryForwardUsers{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryForwardUsersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryForwardUsersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryForwardUsers(r)
 	}
 }
@@ -4972,13 +5712,13 @@ func (v *TopPeerCategoryForwardChats) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryForwardChats deserializes a TopPeerCategoryForwardChats from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryForwardChats(r io.Reader) (*TopPeerCategoryForwardChats, error) {
+func DecodeTopPeerCategoryForwardChats(r *Reader) (*TopPeerCategoryForwardChats, error) {
 	v := &TopPeerCategoryForwardChats{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryForwardChatsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryForwardChatsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryForwardChats(r)
 	}
 }
@@ -5001,13 +5741,13 @@ func (v *TopPeerCategoryBotsApp) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryBotsApp deserializes a TopPeerCategoryBotsApp from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryBotsApp(r io.Reader) (*TopPeerCategoryBotsApp, error) {
+func DecodeTopPeerCategoryBotsApp(r *Reader) (*TopPeerCategoryBotsApp, error) {
 	v := &TopPeerCategoryBotsApp{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryBotsAppTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryBotsAppTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryBotsApp(r)
 	}
 }
@@ -5030,13 +5770,13 @@ func (v *TopPeerCategoryBotsGuestChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryBotsGuestChat deserializes a TopPeerCategoryBotsGuestChat from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryBotsGuestChat(r io.Reader) (*TopPeerCategoryBotsGuestChat, error) {
+func DecodeTopPeerCategoryBotsGuestChat(r *Reader) (*TopPeerCategoryBotsGuestChat, error) {
 	v := &TopPeerCategoryBotsGuestChat{}
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryBotsGuestChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryBotsGuestChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryBotsGuestChat(r)
 	}
 }
@@ -5072,26 +5812,43 @@ func (v *TopPeerCategoryPeers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeTopPeerCategoryPeers deserializes a TopPeerCategoryPeers from a reader using the TL binary protocol.
-func DecodeTopPeerCategoryPeers(r io.Reader) (*TopPeerCategoryPeers, error) {
+func DecodeTopPeerCategoryPeers(r *Reader) (*TopPeerCategoryPeers, error) {
 	v := &TopPeerCategoryPeers{}
-	_objCategory, _ := ReadTLObject(r)
+	_objCategory, _errCategory := ReadTLObject(r)
+	if _errCategory != nil {
+		return nil, _errCategory
+	}
 	v.Category = _objCategory.(TopPeerCategoryClass)
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntPeers := ReadInt(r)
-	if err := checkVectorCount(_cntPeers); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrPeers, _ehdrPeers := r.ReadUint32()
+	if _ehdrPeers != nil {
+		return nil, _ehdrPeers
+	}
+	_cntPeers, _ecntPeers := r.ReadUint32()
+	if _ecntPeers != nil {
+		return nil, _ecntPeers
+	}
+	if _errPeers := checkVectorCount(_cntPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	v.Peers = make([]*TopPeer, _cntPeers)
 	for _iPeers := range v.Peers {
-		_objPeers, _ := ReadTLObject(r)
+		_objPeers, _errPeers := ReadTLObject(r)
+		if _errPeers != nil {
+			return nil, _errPeers
+		}
 		v.Peers[_iPeers] = _objPeers.(*TopPeer)
 	}
+	_ = _vhdrPeers
 	return v, nil
 }
 
 func init() {
-	Registry[TopPeerCategoryPeersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[TopPeerCategoryPeersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTopPeerCategoryPeers(r)
 	}
 }
@@ -5438,15 +6195,23 @@ func (v *ChannelAdminLogEventActionChangeTitle) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionChangeTitle deserializes a ChannelAdminLogEventActionChangeTitle from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeTitle(r io.Reader) (*ChannelAdminLogEventActionChangeTitle, error) {
+func DecodeChannelAdminLogEventActionChangeTitle(r *Reader) (*ChannelAdminLogEventActionChangeTitle, error) {
 	v := &ChannelAdminLogEventActionChangeTitle{}
-	v.PrevValue = ReadString(r)
-	v.NewValue = ReadString(r)
+	_rPrevValue, _ePrevValue := r.ReadString()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadString()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeTitleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeTitleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeTitle(r)
 	}
 }
@@ -5473,15 +6238,23 @@ func (v *ChannelAdminLogEventActionChangeAbout) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionChangeAbout deserializes a ChannelAdminLogEventActionChangeAbout from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeAbout(r io.Reader) (*ChannelAdminLogEventActionChangeAbout, error) {
+func DecodeChannelAdminLogEventActionChangeAbout(r *Reader) (*ChannelAdminLogEventActionChangeAbout, error) {
 	v := &ChannelAdminLogEventActionChangeAbout{}
-	v.PrevValue = ReadString(r)
-	v.NewValue = ReadString(r)
+	_rPrevValue, _ePrevValue := r.ReadString()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadString()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeAboutTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeAboutTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeAbout(r)
 	}
 }
@@ -5508,15 +6281,23 @@ func (v *ChannelAdminLogEventActionChangeUsername) Encode(b *bytes.Buffer) error
 }
 
 // DecodeChannelAdminLogEventActionChangeUsername deserializes a ChannelAdminLogEventActionChangeUsername from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeUsername(r io.Reader) (*ChannelAdminLogEventActionChangeUsername, error) {
+func DecodeChannelAdminLogEventActionChangeUsername(r *Reader) (*ChannelAdminLogEventActionChangeUsername, error) {
 	v := &ChannelAdminLogEventActionChangeUsername{}
-	v.PrevValue = ReadString(r)
-	v.NewValue = ReadString(r)
+	_rPrevValue, _ePrevValue := r.ReadString()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadString()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeUsernameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeUsernameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeUsername(r)
 	}
 }
@@ -5543,17 +6324,23 @@ func (v *ChannelAdminLogEventActionChangePhoto) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionChangePhoto deserializes a ChannelAdminLogEventActionChangePhoto from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangePhoto(r io.Reader) (*ChannelAdminLogEventActionChangePhoto, error) {
+func DecodeChannelAdminLogEventActionChangePhoto(r *Reader) (*ChannelAdminLogEventActionChangePhoto, error) {
 	v := &ChannelAdminLogEventActionChangePhoto{}
-	_objPrevPhoto, _ := ReadTLObject(r)
+	_objPrevPhoto, _errPrevPhoto := ReadTLObject(r)
+	if _errPrevPhoto != nil {
+		return nil, _errPrevPhoto
+	}
 	v.PrevPhoto = _objPrevPhoto.(PhotoClass)
-	_objNewPhoto, _ := ReadTLObject(r)
+	_objNewPhoto, _errNewPhoto := ReadTLObject(r)
+	if _errNewPhoto != nil {
+		return nil, _errNewPhoto
+	}
 	v.NewPhoto = _objNewPhoto.(PhotoClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangePhotoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangePhotoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangePhoto(r)
 	}
 }
@@ -5578,14 +6365,18 @@ func (v *ChannelAdminLogEventActionToggleInvites) Encode(b *bytes.Buffer) error 
 }
 
 // DecodeChannelAdminLogEventActionToggleInvites deserializes a ChannelAdminLogEventActionToggleInvites from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleInvites(r io.Reader) (*ChannelAdminLogEventActionToggleInvites, error) {
+func DecodeChannelAdminLogEventActionToggleInvites(r *Reader) (*ChannelAdminLogEventActionToggleInvites, error) {
 	v := &ChannelAdminLogEventActionToggleInvites{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleInvitesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleInvitesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleInvites(r)
 	}
 }
@@ -5610,14 +6401,18 @@ func (v *ChannelAdminLogEventActionToggleSignatures) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionToggleSignatures deserializes a ChannelAdminLogEventActionToggleSignatures from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleSignatures(r io.Reader) (*ChannelAdminLogEventActionToggleSignatures, error) {
+func DecodeChannelAdminLogEventActionToggleSignatures(r *Reader) (*ChannelAdminLogEventActionToggleSignatures, error) {
 	v := &ChannelAdminLogEventActionToggleSignatures{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleSignaturesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleSignaturesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleSignatures(r)
 	}
 }
@@ -5642,15 +6437,18 @@ func (v *ChannelAdminLogEventActionUpdatePinned) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionUpdatePinned deserializes a ChannelAdminLogEventActionUpdatePinned from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionUpdatePinned(r io.Reader) (*ChannelAdminLogEventActionUpdatePinned, error) {
+func DecodeChannelAdminLogEventActionUpdatePinned(r *Reader) (*ChannelAdminLogEventActionUpdatePinned, error) {
 	v := &ChannelAdminLogEventActionUpdatePinned{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionUpdatePinnedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionUpdatePinnedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionUpdatePinned(r)
 	}
 }
@@ -5677,17 +6475,23 @@ func (v *ChannelAdminLogEventActionEditMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionEditMessage deserializes a ChannelAdminLogEventActionEditMessage from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionEditMessage(r io.Reader) (*ChannelAdminLogEventActionEditMessage, error) {
+func DecodeChannelAdminLogEventActionEditMessage(r *Reader) (*ChannelAdminLogEventActionEditMessage, error) {
 	v := &ChannelAdminLogEventActionEditMessage{}
-	_objPrevMessage, _ := ReadTLObject(r)
+	_objPrevMessage, _errPrevMessage := ReadTLObject(r)
+	if _errPrevMessage != nil {
+		return nil, _errPrevMessage
+	}
 	v.PrevMessage = _objPrevMessage.(MessageClass)
-	_objNewMessage, _ := ReadTLObject(r)
+	_objNewMessage, _errNewMessage := ReadTLObject(r)
+	if _errNewMessage != nil {
+		return nil, _errNewMessage
+	}
 	v.NewMessage = _objNewMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionEditMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionEditMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionEditMessage(r)
 	}
 }
@@ -5712,15 +6516,18 @@ func (v *ChannelAdminLogEventActionDeleteMessage) Encode(b *bytes.Buffer) error 
 }
 
 // DecodeChannelAdminLogEventActionDeleteMessage deserializes a ChannelAdminLogEventActionDeleteMessage from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionDeleteMessage(r io.Reader) (*ChannelAdminLogEventActionDeleteMessage, error) {
+func DecodeChannelAdminLogEventActionDeleteMessage(r *Reader) (*ChannelAdminLogEventActionDeleteMessage, error) {
 	v := &ChannelAdminLogEventActionDeleteMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionDeleteMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionDeleteMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionDeleteMessage(r)
 	}
 }
@@ -5743,13 +6550,13 @@ func (v *ChannelAdminLogEventActionParticipantJoin) Encode(b *bytes.Buffer) erro
 }
 
 // DecodeChannelAdminLogEventActionParticipantJoin deserializes a ChannelAdminLogEventActionParticipantJoin from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantJoin(r io.Reader) (*ChannelAdminLogEventActionParticipantJoin, error) {
+func DecodeChannelAdminLogEventActionParticipantJoin(r *Reader) (*ChannelAdminLogEventActionParticipantJoin, error) {
 	v := &ChannelAdminLogEventActionParticipantJoin{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantJoinTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantJoinTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantJoin(r)
 	}
 }
@@ -5772,13 +6579,13 @@ func (v *ChannelAdminLogEventActionParticipantLeave) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionParticipantLeave deserializes a ChannelAdminLogEventActionParticipantLeave from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantLeave(r io.Reader) (*ChannelAdminLogEventActionParticipantLeave, error) {
+func DecodeChannelAdminLogEventActionParticipantLeave(r *Reader) (*ChannelAdminLogEventActionParticipantLeave, error) {
 	v := &ChannelAdminLogEventActionParticipantLeave{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantLeaveTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantLeaveTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantLeave(r)
 	}
 }
@@ -5803,15 +6610,18 @@ func (v *ChannelAdminLogEventActionParticipantInvite) Encode(b *bytes.Buffer) er
 }
 
 // DecodeChannelAdminLogEventActionParticipantInvite deserializes a ChannelAdminLogEventActionParticipantInvite from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantInvite(r io.Reader) (*ChannelAdminLogEventActionParticipantInvite, error) {
+func DecodeChannelAdminLogEventActionParticipantInvite(r *Reader) (*ChannelAdminLogEventActionParticipantInvite, error) {
 	v := &ChannelAdminLogEventActionParticipantInvite{}
-	_objParticipant, _ := ReadTLObject(r)
+	_objParticipant, _errParticipant := ReadTLObject(r)
+	if _errParticipant != nil {
+		return nil, _errParticipant
+	}
 	v.Participant = _objParticipant.(ChannelParticipantClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantInvite(r)
 	}
 }
@@ -5838,17 +6648,23 @@ func (v *ChannelAdminLogEventActionParticipantToggleBan) Encode(b *bytes.Buffer)
 }
 
 // DecodeChannelAdminLogEventActionParticipantToggleBan deserializes a ChannelAdminLogEventActionParticipantToggleBan from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantToggleBan(r io.Reader) (*ChannelAdminLogEventActionParticipantToggleBan, error) {
+func DecodeChannelAdminLogEventActionParticipantToggleBan(r *Reader) (*ChannelAdminLogEventActionParticipantToggleBan, error) {
 	v := &ChannelAdminLogEventActionParticipantToggleBan{}
-	_objPrevParticipant, _ := ReadTLObject(r)
+	_objPrevParticipant, _errPrevParticipant := ReadTLObject(r)
+	if _errPrevParticipant != nil {
+		return nil, _errPrevParticipant
+	}
 	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
-	_objNewParticipant, _ := ReadTLObject(r)
+	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
+	if _errNewParticipant != nil {
+		return nil, _errNewParticipant
+	}
 	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantToggleBanTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantToggleBanTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantToggleBan(r)
 	}
 }
@@ -5875,17 +6691,23 @@ func (v *ChannelAdminLogEventActionParticipantToggleAdmin) Encode(b *bytes.Buffe
 }
 
 // DecodeChannelAdminLogEventActionParticipantToggleAdmin deserializes a ChannelAdminLogEventActionParticipantToggleAdmin from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantToggleAdmin(r io.Reader) (*ChannelAdminLogEventActionParticipantToggleAdmin, error) {
+func DecodeChannelAdminLogEventActionParticipantToggleAdmin(r *Reader) (*ChannelAdminLogEventActionParticipantToggleAdmin, error) {
 	v := &ChannelAdminLogEventActionParticipantToggleAdmin{}
-	_objPrevParticipant, _ := ReadTLObject(r)
+	_objPrevParticipant, _errPrevParticipant := ReadTLObject(r)
+	if _errPrevParticipant != nil {
+		return nil, _errPrevParticipant
+	}
 	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
-	_objNewParticipant, _ := ReadTLObject(r)
+	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
+	if _errNewParticipant != nil {
+		return nil, _errNewParticipant
+	}
 	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantToggleAdminTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantToggleAdminTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantToggleAdmin(r)
 	}
 }
@@ -5912,17 +6734,23 @@ func (v *ChannelAdminLogEventActionChangeStickerSet) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionChangeStickerSet deserializes a ChannelAdminLogEventActionChangeStickerSet from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeStickerSet(r io.Reader) (*ChannelAdminLogEventActionChangeStickerSet, error) {
+func DecodeChannelAdminLogEventActionChangeStickerSet(r *Reader) (*ChannelAdminLogEventActionChangeStickerSet, error) {
 	v := &ChannelAdminLogEventActionChangeStickerSet{}
-	_objPrevStickerset, _ := ReadTLObject(r)
+	_objPrevStickerset, _errPrevStickerset := ReadTLObject(r)
+	if _errPrevStickerset != nil {
+		return nil, _errPrevStickerset
+	}
 	v.PrevStickerset = _objPrevStickerset.(InputStickerSetClass)
-	_objNewStickerset, _ := ReadTLObject(r)
+	_objNewStickerset, _errNewStickerset := ReadTLObject(r)
+	if _errNewStickerset != nil {
+		return nil, _errNewStickerset
+	}
 	v.NewStickerset = _objNewStickerset.(InputStickerSetClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeStickerSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeStickerSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeStickerSet(r)
 	}
 }
@@ -5947,14 +6775,18 @@ func (v *ChannelAdminLogEventActionTogglePreHistoryHidden) Encode(b *bytes.Buffe
 }
 
 // DecodeChannelAdminLogEventActionTogglePreHistoryHidden deserializes a ChannelAdminLogEventActionTogglePreHistoryHidden from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionTogglePreHistoryHidden(r io.Reader) (*ChannelAdminLogEventActionTogglePreHistoryHidden, error) {
+func DecodeChannelAdminLogEventActionTogglePreHistoryHidden(r *Reader) (*ChannelAdminLogEventActionTogglePreHistoryHidden, error) {
 	v := &ChannelAdminLogEventActionTogglePreHistoryHidden{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionTogglePreHistoryHiddenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionTogglePreHistoryHiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionTogglePreHistoryHidden(r)
 	}
 }
@@ -5981,17 +6813,23 @@ func (v *ChannelAdminLogEventActionDefaultBannedRights) Encode(b *bytes.Buffer) 
 }
 
 // DecodeChannelAdminLogEventActionDefaultBannedRights deserializes a ChannelAdminLogEventActionDefaultBannedRights from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionDefaultBannedRights(r io.Reader) (*ChannelAdminLogEventActionDefaultBannedRights, error) {
+func DecodeChannelAdminLogEventActionDefaultBannedRights(r *Reader) (*ChannelAdminLogEventActionDefaultBannedRights, error) {
 	v := &ChannelAdminLogEventActionDefaultBannedRights{}
-	_objPrevBannedRights, _ := ReadTLObject(r)
+	_objPrevBannedRights, _errPrevBannedRights := ReadTLObject(r)
+	if _errPrevBannedRights != nil {
+		return nil, _errPrevBannedRights
+	}
 	v.PrevBannedRights = _objPrevBannedRights.(*ChatBannedRights)
-	_objNewBannedRights, _ := ReadTLObject(r)
+	_objNewBannedRights, _errNewBannedRights := ReadTLObject(r)
+	if _errNewBannedRights != nil {
+		return nil, _errNewBannedRights
+	}
 	v.NewBannedRights = _objNewBannedRights.(*ChatBannedRights)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionDefaultBannedRightsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionDefaultBannedRightsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionDefaultBannedRights(r)
 	}
 }
@@ -6016,15 +6854,18 @@ func (v *ChannelAdminLogEventActionStopPoll) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionStopPoll deserializes a ChannelAdminLogEventActionStopPoll from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionStopPoll(r io.Reader) (*ChannelAdminLogEventActionStopPoll, error) {
+func DecodeChannelAdminLogEventActionStopPoll(r *Reader) (*ChannelAdminLogEventActionStopPoll, error) {
 	v := &ChannelAdminLogEventActionStopPoll{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionStopPollTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionStopPollTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionStopPoll(r)
 	}
 }
@@ -6051,15 +6892,23 @@ func (v *ChannelAdminLogEventActionChangeLinkedChat) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionChangeLinkedChat deserializes a ChannelAdminLogEventActionChangeLinkedChat from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeLinkedChat(r io.Reader) (*ChannelAdminLogEventActionChangeLinkedChat, error) {
+func DecodeChannelAdminLogEventActionChangeLinkedChat(r *Reader) (*ChannelAdminLogEventActionChangeLinkedChat, error) {
 	v := &ChannelAdminLogEventActionChangeLinkedChat{}
-	v.PrevValue = ReadLong(r)
-	v.NewValue = ReadLong(r)
+	_rPrevValue, _ePrevValue := r.ReadInt64()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadInt64()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeLinkedChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeLinkedChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeLinkedChat(r)
 	}
 }
@@ -6086,17 +6935,23 @@ func (v *ChannelAdminLogEventActionChangeLocation) Encode(b *bytes.Buffer) error
 }
 
 // DecodeChannelAdminLogEventActionChangeLocation deserializes a ChannelAdminLogEventActionChangeLocation from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeLocation(r io.Reader) (*ChannelAdminLogEventActionChangeLocation, error) {
+func DecodeChannelAdminLogEventActionChangeLocation(r *Reader) (*ChannelAdminLogEventActionChangeLocation, error) {
 	v := &ChannelAdminLogEventActionChangeLocation{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(ChannelLocationClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(ChannelLocationClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeLocation(r)
 	}
 }
@@ -6123,15 +6978,23 @@ func (v *ChannelAdminLogEventActionToggleSlowMode) Encode(b *bytes.Buffer) error
 }
 
 // DecodeChannelAdminLogEventActionToggleSlowMode deserializes a ChannelAdminLogEventActionToggleSlowMode from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleSlowMode(r io.Reader) (*ChannelAdminLogEventActionToggleSlowMode, error) {
+func DecodeChannelAdminLogEventActionToggleSlowMode(r *Reader) (*ChannelAdminLogEventActionToggleSlowMode, error) {
 	v := &ChannelAdminLogEventActionToggleSlowMode{}
-	v.PrevValue = int32(ReadInt(r))
-	v.NewValue = int32(ReadInt(r))
+	_rPrevValue, _ePrevValue := r.ReadInt32()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadInt32()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleSlowModeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleSlowModeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleSlowMode(r)
 	}
 }
@@ -6156,15 +7019,18 @@ func (v *ChannelAdminLogEventActionStartGroupCall) Encode(b *bytes.Buffer) error
 }
 
 // DecodeChannelAdminLogEventActionStartGroupCall deserializes a ChannelAdminLogEventActionStartGroupCall from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionStartGroupCall(r io.Reader) (*ChannelAdminLogEventActionStartGroupCall, error) {
+func DecodeChannelAdminLogEventActionStartGroupCall(r *Reader) (*ChannelAdminLogEventActionStartGroupCall, error) {
 	v := &ChannelAdminLogEventActionStartGroupCall{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionStartGroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionStartGroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionStartGroupCall(r)
 	}
 }
@@ -6189,15 +7055,18 @@ func (v *ChannelAdminLogEventActionDiscardGroupCall) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionDiscardGroupCall deserializes a ChannelAdminLogEventActionDiscardGroupCall from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionDiscardGroupCall(r io.Reader) (*ChannelAdminLogEventActionDiscardGroupCall, error) {
+func DecodeChannelAdminLogEventActionDiscardGroupCall(r *Reader) (*ChannelAdminLogEventActionDiscardGroupCall, error) {
 	v := &ChannelAdminLogEventActionDiscardGroupCall{}
-	_objCall, _ := ReadTLObject(r)
+	_objCall, _errCall := ReadTLObject(r)
+	if _errCall != nil {
+		return nil, _errCall
+	}
 	v.Call = _objCall.(InputGroupCallClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionDiscardGroupCallTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionDiscardGroupCallTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionDiscardGroupCall(r)
 	}
 }
@@ -6222,15 +7091,18 @@ func (v *ChannelAdminLogEventActionParticipantMute) Encode(b *bytes.Buffer) erro
 }
 
 // DecodeChannelAdminLogEventActionParticipantMute deserializes a ChannelAdminLogEventActionParticipantMute from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantMute(r io.Reader) (*ChannelAdminLogEventActionParticipantMute, error) {
+func DecodeChannelAdminLogEventActionParticipantMute(r *Reader) (*ChannelAdminLogEventActionParticipantMute, error) {
 	v := &ChannelAdminLogEventActionParticipantMute{}
-	_objParticipant, _ := ReadTLObject(r)
+	_objParticipant, _errParticipant := ReadTLObject(r)
+	if _errParticipant != nil {
+		return nil, _errParticipant
+	}
 	v.Participant = _objParticipant.(*GroupCallParticipant)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantMuteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantMuteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantMute(r)
 	}
 }
@@ -6255,15 +7127,18 @@ func (v *ChannelAdminLogEventActionParticipantUnmute) Encode(b *bytes.Buffer) er
 }
 
 // DecodeChannelAdminLogEventActionParticipantUnmute deserializes a ChannelAdminLogEventActionParticipantUnmute from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantUnmute(r io.Reader) (*ChannelAdminLogEventActionParticipantUnmute, error) {
+func DecodeChannelAdminLogEventActionParticipantUnmute(r *Reader) (*ChannelAdminLogEventActionParticipantUnmute, error) {
 	v := &ChannelAdminLogEventActionParticipantUnmute{}
-	_objParticipant, _ := ReadTLObject(r)
+	_objParticipant, _errParticipant := ReadTLObject(r)
+	if _errParticipant != nil {
+		return nil, _errParticipant
+	}
 	v.Participant = _objParticipant.(*GroupCallParticipant)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantUnmuteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantUnmuteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantUnmute(r)
 	}
 }
@@ -6288,14 +7163,18 @@ func (v *ChannelAdminLogEventActionToggleGroupCallSetting) Encode(b *bytes.Buffe
 }
 
 // DecodeChannelAdminLogEventActionToggleGroupCallSetting deserializes a ChannelAdminLogEventActionToggleGroupCallSetting from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleGroupCallSetting(r io.Reader) (*ChannelAdminLogEventActionToggleGroupCallSetting, error) {
+func DecodeChannelAdminLogEventActionToggleGroupCallSetting(r *Reader) (*ChannelAdminLogEventActionToggleGroupCallSetting, error) {
 	v := &ChannelAdminLogEventActionToggleGroupCallSetting{}
-	v.JoinMuted = ReadBool(r)
+	_rJoinMuted, _eJoinMuted := r.ReadBool()
+	if _eJoinMuted != nil {
+		return nil, _eJoinMuted
+	}
+	v.JoinMuted = _rJoinMuted
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleGroupCallSettingTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleGroupCallSettingTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleGroupCallSetting(r)
 	}
 }
@@ -6331,21 +7210,24 @@ func (v *ChannelAdminLogEventActionParticipantJoinByInvite) Encode(b *bytes.Buff
 }
 
 // DecodeChannelAdminLogEventActionParticipantJoinByInvite deserializes a ChannelAdminLogEventActionParticipantJoinByInvite from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantJoinByInvite(r io.Reader) (*ChannelAdminLogEventActionParticipantJoinByInvite, error) {
+func DecodeChannelAdminLogEventActionParticipantJoinByInvite(r *Reader) (*ChannelAdminLogEventActionParticipantJoinByInvite, error) {
 	v := &ChannelAdminLogEventActionParticipantJoinByInvite{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ViaChatlist = v.Flags.Has(0)
-	_objInvite, _ := ReadTLObject(r)
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantJoinByInviteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantJoinByInviteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantJoinByInvite(r)
 	}
 }
@@ -6370,15 +7252,18 @@ func (v *ChannelAdminLogEventActionExportedInviteDelete) Encode(b *bytes.Buffer)
 }
 
 // DecodeChannelAdminLogEventActionExportedInviteDelete deserializes a ChannelAdminLogEventActionExportedInviteDelete from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionExportedInviteDelete(r io.Reader) (*ChannelAdminLogEventActionExportedInviteDelete, error) {
+func DecodeChannelAdminLogEventActionExportedInviteDelete(r *Reader) (*ChannelAdminLogEventActionExportedInviteDelete, error) {
 	v := &ChannelAdminLogEventActionExportedInviteDelete{}
-	_objInvite, _ := ReadTLObject(r)
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionExportedInviteDeleteTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionExportedInviteDeleteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionExportedInviteDelete(r)
 	}
 }
@@ -6403,15 +7288,18 @@ func (v *ChannelAdminLogEventActionExportedInviteRevoke) Encode(b *bytes.Buffer)
 }
 
 // DecodeChannelAdminLogEventActionExportedInviteRevoke deserializes a ChannelAdminLogEventActionExportedInviteRevoke from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionExportedInviteRevoke(r io.Reader) (*ChannelAdminLogEventActionExportedInviteRevoke, error) {
+func DecodeChannelAdminLogEventActionExportedInviteRevoke(r *Reader) (*ChannelAdminLogEventActionExportedInviteRevoke, error) {
 	v := &ChannelAdminLogEventActionExportedInviteRevoke{}
-	_objInvite, _ := ReadTLObject(r)
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionExportedInviteRevokeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionExportedInviteRevokeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionExportedInviteRevoke(r)
 	}
 }
@@ -6438,17 +7326,23 @@ func (v *ChannelAdminLogEventActionExportedInviteEdit) Encode(b *bytes.Buffer) e
 }
 
 // DecodeChannelAdminLogEventActionExportedInviteEdit deserializes a ChannelAdminLogEventActionExportedInviteEdit from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionExportedInviteEdit(r io.Reader) (*ChannelAdminLogEventActionExportedInviteEdit, error) {
+func DecodeChannelAdminLogEventActionExportedInviteEdit(r *Reader) (*ChannelAdminLogEventActionExportedInviteEdit, error) {
 	v := &ChannelAdminLogEventActionExportedInviteEdit{}
-	_objPrevInvite, _ := ReadTLObject(r)
+	_objPrevInvite, _errPrevInvite := ReadTLObject(r)
+	if _errPrevInvite != nil {
+		return nil, _errPrevInvite
+	}
 	v.PrevInvite = _objPrevInvite.(ExportedChatInviteClass)
-	_objNewInvite, _ := ReadTLObject(r)
+	_objNewInvite, _errNewInvite := ReadTLObject(r)
+	if _errNewInvite != nil {
+		return nil, _errNewInvite
+	}
 	v.NewInvite = _objNewInvite.(ExportedChatInviteClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionExportedInviteEditTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionExportedInviteEditTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionExportedInviteEdit(r)
 	}
 }
@@ -6473,15 +7367,18 @@ func (v *ChannelAdminLogEventActionParticipantVolume) Encode(b *bytes.Buffer) er
 }
 
 // DecodeChannelAdminLogEventActionParticipantVolume deserializes a ChannelAdminLogEventActionParticipantVolume from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantVolume(r io.Reader) (*ChannelAdminLogEventActionParticipantVolume, error) {
+func DecodeChannelAdminLogEventActionParticipantVolume(r *Reader) (*ChannelAdminLogEventActionParticipantVolume, error) {
 	v := &ChannelAdminLogEventActionParticipantVolume{}
-	_objParticipant, _ := ReadTLObject(r)
+	_objParticipant, _errParticipant := ReadTLObject(r)
+	if _errParticipant != nil {
+		return nil, _errParticipant
+	}
 	v.Participant = _objParticipant.(*GroupCallParticipant)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantVolumeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantVolumeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantVolume(r)
 	}
 }
@@ -6508,15 +7405,23 @@ func (v *ChannelAdminLogEventActionChangeHistoryTTL) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionChangeHistoryTTL deserializes a ChannelAdminLogEventActionChangeHistoryTTL from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeHistoryTTL(r io.Reader) (*ChannelAdminLogEventActionChangeHistoryTTL, error) {
+func DecodeChannelAdminLogEventActionChangeHistoryTTL(r *Reader) (*ChannelAdminLogEventActionChangeHistoryTTL, error) {
 	v := &ChannelAdminLogEventActionChangeHistoryTTL{}
-	v.PrevValue = int32(ReadInt(r))
-	v.NewValue = int32(ReadInt(r))
+	_rPrevValue, _ePrevValue := r.ReadInt32()
+	if _ePrevValue != nil {
+		return nil, _ePrevValue
+	}
+	v.PrevValue = _rPrevValue
+	_rNewValue, _eNewValue := r.ReadInt32()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeHistoryTTLTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeHistoryTTLTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeHistoryTTL(r)
 	}
 }
@@ -6543,16 +7448,23 @@ func (v *ChannelAdminLogEventActionParticipantJoinByRequest) Encode(b *bytes.Buf
 }
 
 // DecodeChannelAdminLogEventActionParticipantJoinByRequest deserializes a ChannelAdminLogEventActionParticipantJoinByRequest from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantJoinByRequest(r io.Reader) (*ChannelAdminLogEventActionParticipantJoinByRequest, error) {
+func DecodeChannelAdminLogEventActionParticipantJoinByRequest(r *Reader) (*ChannelAdminLogEventActionParticipantJoinByRequest, error) {
 	v := &ChannelAdminLogEventActionParticipantJoinByRequest{}
-	_objInvite, _ := ReadTLObject(r)
+	_objInvite, _errInvite := ReadTLObject(r)
+	if _errInvite != nil {
+		return nil, _errInvite
+	}
 	v.Invite = _objInvite.(ExportedChatInviteClass)
-	v.ApprovedBy = ReadLong(r)
+	_rApprovedBy, _eApprovedBy := r.ReadInt64()
+	if _eApprovedBy != nil {
+		return nil, _eApprovedBy
+	}
+	v.ApprovedBy = _rApprovedBy
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantJoinByRequestTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantJoinByRequestTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantJoinByRequest(r)
 	}
 }
@@ -6577,14 +7489,18 @@ func (v *ChannelAdminLogEventActionToggleNoForwards) Encode(b *bytes.Buffer) err
 }
 
 // DecodeChannelAdminLogEventActionToggleNoForwards deserializes a ChannelAdminLogEventActionToggleNoForwards from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleNoForwards(r io.Reader) (*ChannelAdminLogEventActionToggleNoForwards, error) {
+func DecodeChannelAdminLogEventActionToggleNoForwards(r *Reader) (*ChannelAdminLogEventActionToggleNoForwards, error) {
 	v := &ChannelAdminLogEventActionToggleNoForwards{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleNoForwardsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleNoForwardsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleNoForwards(r)
 	}
 }
@@ -6609,15 +7525,18 @@ func (v *ChannelAdminLogEventActionSendMessage) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionSendMessage deserializes a ChannelAdminLogEventActionSendMessage from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionSendMessage(r io.Reader) (*ChannelAdminLogEventActionSendMessage, error) {
+func DecodeChannelAdminLogEventActionSendMessage(r *Reader) (*ChannelAdminLogEventActionSendMessage, error) {
 	v := &ChannelAdminLogEventActionSendMessage{}
-	_objMessage, _ := ReadTLObject(r)
+	_objMessage, _errMessage := ReadTLObject(r)
+	if _errMessage != nil {
+		return nil, _errMessage
+	}
 	v.Message = _objMessage.(MessageClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionSendMessageTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionSendMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionSendMessage(r)
 	}
 }
@@ -6644,17 +7563,23 @@ func (v *ChannelAdminLogEventActionChangeAvailableReactions) Encode(b *bytes.Buf
 }
 
 // DecodeChannelAdminLogEventActionChangeAvailableReactions deserializes a ChannelAdminLogEventActionChangeAvailableReactions from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeAvailableReactions(r io.Reader) (*ChannelAdminLogEventActionChangeAvailableReactions, error) {
+func DecodeChannelAdminLogEventActionChangeAvailableReactions(r *Reader) (*ChannelAdminLogEventActionChangeAvailableReactions, error) {
 	v := &ChannelAdminLogEventActionChangeAvailableReactions{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(ChatReactionsClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(ChatReactionsClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeAvailableReactionsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeAvailableReactionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeAvailableReactions(r)
 	}
 }
@@ -6681,15 +7606,23 @@ func (v *ChannelAdminLogEventActionChangeUsernames) Encode(b *bytes.Buffer) erro
 }
 
 // DecodeChannelAdminLogEventActionChangeUsernames deserializes a ChannelAdminLogEventActionChangeUsernames from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeUsernames(r io.Reader) (*ChannelAdminLogEventActionChangeUsernames, error) {
+func DecodeChannelAdminLogEventActionChangeUsernames(r *Reader) (*ChannelAdminLogEventActionChangeUsernames, error) {
 	v := &ChannelAdminLogEventActionChangeUsernames{}
-	v.PrevValue = ReadVectorString(r)
-	v.NewValue = ReadVectorString(r)
+	_vvPrevValue, _vePrevValue := r.ReadVectorString()
+	if _vePrevValue != nil {
+		return nil, _vePrevValue
+	}
+	v.PrevValue = _vvPrevValue
+	_vvNewValue, _veNewValue := r.ReadVectorString()
+	if _veNewValue != nil {
+		return nil, _veNewValue
+	}
+	v.NewValue = _vvNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeUsernamesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeUsernamesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeUsernames(r)
 	}
 }
@@ -6714,14 +7647,18 @@ func (v *ChannelAdminLogEventActionToggleForum) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionToggleForum deserializes a ChannelAdminLogEventActionToggleForum from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleForum(r io.Reader) (*ChannelAdminLogEventActionToggleForum, error) {
+func DecodeChannelAdminLogEventActionToggleForum(r *Reader) (*ChannelAdminLogEventActionToggleForum, error) {
 	v := &ChannelAdminLogEventActionToggleForum{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleForumTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleForumTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleForum(r)
 	}
 }
@@ -6746,15 +7683,18 @@ func (v *ChannelAdminLogEventActionCreateTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionCreateTopic deserializes a ChannelAdminLogEventActionCreateTopic from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionCreateTopic(r io.Reader) (*ChannelAdminLogEventActionCreateTopic, error) {
+func DecodeChannelAdminLogEventActionCreateTopic(r *Reader) (*ChannelAdminLogEventActionCreateTopic, error) {
 	v := &ChannelAdminLogEventActionCreateTopic{}
-	_objTopic, _ := ReadTLObject(r)
+	_objTopic, _errTopic := ReadTLObject(r)
+	if _errTopic != nil {
+		return nil, _errTopic
+	}
 	v.Topic = _objTopic.(ForumTopicClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionCreateTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionCreateTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionCreateTopic(r)
 	}
 }
@@ -6781,17 +7721,23 @@ func (v *ChannelAdminLogEventActionEditTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionEditTopic deserializes a ChannelAdminLogEventActionEditTopic from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionEditTopic(r io.Reader) (*ChannelAdminLogEventActionEditTopic, error) {
+func DecodeChannelAdminLogEventActionEditTopic(r *Reader) (*ChannelAdminLogEventActionEditTopic, error) {
 	v := &ChannelAdminLogEventActionEditTopic{}
-	_objPrevTopic, _ := ReadTLObject(r)
+	_objPrevTopic, _errPrevTopic := ReadTLObject(r)
+	if _errPrevTopic != nil {
+		return nil, _errPrevTopic
+	}
 	v.PrevTopic = _objPrevTopic.(ForumTopicClass)
-	_objNewTopic, _ := ReadTLObject(r)
+	_objNewTopic, _errNewTopic := ReadTLObject(r)
+	if _errNewTopic != nil {
+		return nil, _errNewTopic
+	}
 	v.NewTopic = _objNewTopic.(ForumTopicClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionEditTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionEditTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionEditTopic(r)
 	}
 }
@@ -6816,15 +7762,18 @@ func (v *ChannelAdminLogEventActionDeleteTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionDeleteTopic deserializes a ChannelAdminLogEventActionDeleteTopic from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionDeleteTopic(r io.Reader) (*ChannelAdminLogEventActionDeleteTopic, error) {
+func DecodeChannelAdminLogEventActionDeleteTopic(r *Reader) (*ChannelAdminLogEventActionDeleteTopic, error) {
 	v := &ChannelAdminLogEventActionDeleteTopic{}
-	_objTopic, _ := ReadTLObject(r)
+	_objTopic, _errTopic := ReadTLObject(r)
+	if _errTopic != nil {
+		return nil, _errTopic
+	}
 	v.Topic = _objTopic.(ForumTopicClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionDeleteTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionDeleteTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionDeleteTopic(r)
 	}
 }
@@ -6868,26 +7817,32 @@ func (v *ChannelAdminLogEventActionPinTopic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventActionPinTopic deserializes a ChannelAdminLogEventActionPinTopic from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionPinTopic(r io.Reader) (*ChannelAdminLogEventActionPinTopic, error) {
+func DecodeChannelAdminLogEventActionPinTopic(r *Reader) (*ChannelAdminLogEventActionPinTopic, error) {
 	v := &ChannelAdminLogEventActionPinTopic{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		_objPrevTopic, _ := ReadTLObject(r)
+		_objPrevTopic, _errPrevTopic := ReadTLObject(r)
+		if _errPrevTopic != nil {
+			return nil, _errPrevTopic
+		}
 		v.PrevTopic = _objPrevTopic.(ForumTopicClass)
 	}
 	if v.Flags.Has(1) {
-		_objNewTopic, _ := ReadTLObject(r)
+		_objNewTopic, _errNewTopic := ReadTLObject(r)
+		if _errNewTopic != nil {
+			return nil, _errNewTopic
+		}
 		v.NewTopic = _objNewTopic.(ForumTopicClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionPinTopicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionPinTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionPinTopic(r)
 	}
 }
@@ -6912,14 +7867,18 @@ func (v *ChannelAdminLogEventActionToggleAntiSpam) Encode(b *bytes.Buffer) error
 }
 
 // DecodeChannelAdminLogEventActionToggleAntiSpam deserializes a ChannelAdminLogEventActionToggleAntiSpam from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleAntiSpam(r io.Reader) (*ChannelAdminLogEventActionToggleAntiSpam, error) {
+func DecodeChannelAdminLogEventActionToggleAntiSpam(r *Reader) (*ChannelAdminLogEventActionToggleAntiSpam, error) {
 	v := &ChannelAdminLogEventActionToggleAntiSpam{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleAntiSpamTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleAntiSpamTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleAntiSpam(r)
 	}
 }
@@ -6946,17 +7905,23 @@ func (v *ChannelAdminLogEventActionChangePeerColor) Encode(b *bytes.Buffer) erro
 }
 
 // DecodeChannelAdminLogEventActionChangePeerColor deserializes a ChannelAdminLogEventActionChangePeerColor from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangePeerColor(r io.Reader) (*ChannelAdminLogEventActionChangePeerColor, error) {
+func DecodeChannelAdminLogEventActionChangePeerColor(r *Reader) (*ChannelAdminLogEventActionChangePeerColor, error) {
 	v := &ChannelAdminLogEventActionChangePeerColor{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(PeerColorClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(PeerColorClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangePeerColorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangePeerColorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangePeerColor(r)
 	}
 }
@@ -6983,17 +7948,23 @@ func (v *ChannelAdminLogEventActionChangeProfilePeerColor) Encode(b *bytes.Buffe
 }
 
 // DecodeChannelAdminLogEventActionChangeProfilePeerColor deserializes a ChannelAdminLogEventActionChangeProfilePeerColor from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeProfilePeerColor(r io.Reader) (*ChannelAdminLogEventActionChangeProfilePeerColor, error) {
+func DecodeChannelAdminLogEventActionChangeProfilePeerColor(r *Reader) (*ChannelAdminLogEventActionChangeProfilePeerColor, error) {
 	v := &ChannelAdminLogEventActionChangeProfilePeerColor{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(PeerColorClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(PeerColorClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeProfilePeerColorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeProfilePeerColorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeProfilePeerColor(r)
 	}
 }
@@ -7020,17 +7991,23 @@ func (v *ChannelAdminLogEventActionChangeWallpaper) Encode(b *bytes.Buffer) erro
 }
 
 // DecodeChannelAdminLogEventActionChangeWallpaper deserializes a ChannelAdminLogEventActionChangeWallpaper from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeWallpaper(r io.Reader) (*ChannelAdminLogEventActionChangeWallpaper, error) {
+func DecodeChannelAdminLogEventActionChangeWallpaper(r *Reader) (*ChannelAdminLogEventActionChangeWallpaper, error) {
 	v := &ChannelAdminLogEventActionChangeWallpaper{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(WallPaperClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(WallPaperClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeWallpaperTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeWallpaperTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeWallpaper(r)
 	}
 }
@@ -7057,17 +8034,23 @@ func (v *ChannelAdminLogEventActionChangeEmojiStatus) Encode(b *bytes.Buffer) er
 }
 
 // DecodeChannelAdminLogEventActionChangeEmojiStatus deserializes a ChannelAdminLogEventActionChangeEmojiStatus from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeEmojiStatus(r io.Reader) (*ChannelAdminLogEventActionChangeEmojiStatus, error) {
+func DecodeChannelAdminLogEventActionChangeEmojiStatus(r *Reader) (*ChannelAdminLogEventActionChangeEmojiStatus, error) {
 	v := &ChannelAdminLogEventActionChangeEmojiStatus{}
-	_objPrevValue, _ := ReadTLObject(r)
+	_objPrevValue, _errPrevValue := ReadTLObject(r)
+	if _errPrevValue != nil {
+		return nil, _errPrevValue
+	}
 	v.PrevValue = _objPrevValue.(EmojiStatusClass)
-	_objNewValue, _ := ReadTLObject(r)
+	_objNewValue, _errNewValue := ReadTLObject(r)
+	if _errNewValue != nil {
+		return nil, _errNewValue
+	}
 	v.NewValue = _objNewValue.(EmojiStatusClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeEmojiStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeEmojiStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeEmojiStatus(r)
 	}
 }
@@ -7094,17 +8077,23 @@ func (v *ChannelAdminLogEventActionChangeEmojiStickerSet) Encode(b *bytes.Buffer
 }
 
 // DecodeChannelAdminLogEventActionChangeEmojiStickerSet deserializes a ChannelAdminLogEventActionChangeEmojiStickerSet from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionChangeEmojiStickerSet(r io.Reader) (*ChannelAdminLogEventActionChangeEmojiStickerSet, error) {
+func DecodeChannelAdminLogEventActionChangeEmojiStickerSet(r *Reader) (*ChannelAdminLogEventActionChangeEmojiStickerSet, error) {
 	v := &ChannelAdminLogEventActionChangeEmojiStickerSet{}
-	_objPrevStickerset, _ := ReadTLObject(r)
+	_objPrevStickerset, _errPrevStickerset := ReadTLObject(r)
+	if _errPrevStickerset != nil {
+		return nil, _errPrevStickerset
+	}
 	v.PrevStickerset = _objPrevStickerset.(InputStickerSetClass)
-	_objNewStickerset, _ := ReadTLObject(r)
+	_objNewStickerset, _errNewStickerset := ReadTLObject(r)
+	if _errNewStickerset != nil {
+		return nil, _errNewStickerset
+	}
 	v.NewStickerset = _objNewStickerset.(InputStickerSetClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionChangeEmojiStickerSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionChangeEmojiStickerSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionChangeEmojiStickerSet(r)
 	}
 }
@@ -7129,14 +8118,18 @@ func (v *ChannelAdminLogEventActionToggleSignatureProfiles) Encode(b *bytes.Buff
 }
 
 // DecodeChannelAdminLogEventActionToggleSignatureProfiles deserializes a ChannelAdminLogEventActionToggleSignatureProfiles from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleSignatureProfiles(r io.Reader) (*ChannelAdminLogEventActionToggleSignatureProfiles, error) {
+func DecodeChannelAdminLogEventActionToggleSignatureProfiles(r *Reader) (*ChannelAdminLogEventActionToggleSignatureProfiles, error) {
 	v := &ChannelAdminLogEventActionToggleSignatureProfiles{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleSignatureProfilesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleSignatureProfilesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleSignatureProfiles(r)
 	}
 }
@@ -7163,17 +8156,23 @@ func (v *ChannelAdminLogEventActionParticipantSubExtend) Encode(b *bytes.Buffer)
 }
 
 // DecodeChannelAdminLogEventActionParticipantSubExtend deserializes a ChannelAdminLogEventActionParticipantSubExtend from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantSubExtend(r io.Reader) (*ChannelAdminLogEventActionParticipantSubExtend, error) {
+func DecodeChannelAdminLogEventActionParticipantSubExtend(r *Reader) (*ChannelAdminLogEventActionParticipantSubExtend, error) {
 	v := &ChannelAdminLogEventActionParticipantSubExtend{}
-	_objPrevParticipant, _ := ReadTLObject(r)
+	_objPrevParticipant, _errPrevParticipant := ReadTLObject(r)
+	if _errPrevParticipant != nil {
+		return nil, _errPrevParticipant
+	}
 	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
-	_objNewParticipant, _ := ReadTLObject(r)
+	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
+	if _errNewParticipant != nil {
+		return nil, _errNewParticipant
+	}
 	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantSubExtendTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantSubExtendTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantSubExtend(r)
 	}
 }
@@ -7198,14 +8197,18 @@ func (v *ChannelAdminLogEventActionToggleAutotranslation) Encode(b *bytes.Buffer
 }
 
 // DecodeChannelAdminLogEventActionToggleAutotranslation deserializes a ChannelAdminLogEventActionToggleAutotranslation from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionToggleAutotranslation(r io.Reader) (*ChannelAdminLogEventActionToggleAutotranslation, error) {
+func DecodeChannelAdminLogEventActionToggleAutotranslation(r *Reader) (*ChannelAdminLogEventActionToggleAutotranslation, error) {
 	v := &ChannelAdminLogEventActionToggleAutotranslation{}
-	v.NewValue = ReadBool(r)
+	_rNewValue, _eNewValue := r.ReadBool()
+	if _eNewValue != nil {
+		return nil, _eNewValue
+	}
+	v.NewValue = _rNewValue
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionToggleAutotranslationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionToggleAutotranslationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionToggleAutotranslation(r)
 	}
 }
@@ -7234,16 +8237,28 @@ func (v *ChannelAdminLogEventActionParticipantEditRank) Encode(b *bytes.Buffer) 
 }
 
 // DecodeChannelAdminLogEventActionParticipantEditRank deserializes a ChannelAdminLogEventActionParticipantEditRank from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventActionParticipantEditRank(r io.Reader) (*ChannelAdminLogEventActionParticipantEditRank, error) {
+func DecodeChannelAdminLogEventActionParticipantEditRank(r *Reader) (*ChannelAdminLogEventActionParticipantEditRank, error) {
 	v := &ChannelAdminLogEventActionParticipantEditRank{}
-	v.UserID = ReadLong(r)
-	v.PrevRank = ReadString(r)
-	v.NewRank = ReadString(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rPrevRank, _ePrevRank := r.ReadString()
+	if _ePrevRank != nil {
+		return nil, _ePrevRank
+	}
+	v.PrevRank = _rPrevRank
+	_rNewRank, _eNewRank := r.ReadString()
+	if _eNewRank != nil {
+		return nil, _eNewRank
+	}
+	v.NewRank = _rNewRank
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventActionParticipantEditRankTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventActionParticipantEditRankTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventActionParticipantEditRank(r)
 	}
 }
@@ -7277,18 +8292,33 @@ func (v *ChannelAdminLogEvent) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEvent deserializes a ChannelAdminLogEvent from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEvent(r io.Reader) (*ChannelAdminLogEvent, error) {
+func DecodeChannelAdminLogEvent(r *Reader) (*ChannelAdminLogEvent, error) {
 	v := &ChannelAdminLogEvent{}
-	v.ID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
-	v.UserID = ReadLong(r)
-	_objAction, _ := ReadTLObject(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objAction, _errAction := ReadTLObject(r)
+	if _errAction != nil {
+		return nil, _errAction
+	}
 	v.Action = _objAction.(ChannelAdminLogEventActionClass)
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelAdminLogEventTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEvent(r)
 	}
 }
@@ -7401,11 +8431,11 @@ func (v *ChannelAdminLogEventsFilter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelAdminLogEventsFilter deserializes a ChannelAdminLogEventsFilter from a reader using the TL binary protocol.
-func DecodeChannelAdminLogEventsFilter(r io.Reader) (*ChannelAdminLogEventsFilter, error) {
+func DecodeChannelAdminLogEventsFilter(r *Reader) (*ChannelAdminLogEventsFilter, error) {
 	v := &ChannelAdminLogEventsFilter{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Join = v.Flags.Has(0)
@@ -7432,7 +8462,7 @@ func DecodeChannelAdminLogEventsFilter(r io.Reader) (*ChannelAdminLogEventsFilte
 }
 
 func init() {
-	Registry[ChannelAdminLogEventsFilterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelAdminLogEventsFilterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelAdminLogEventsFilter(r)
 	}
 }
@@ -7462,15 +8492,23 @@ func (v *PopularContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePopularContact deserializes a PopularContact from a reader using the TL binary protocol.
-func DecodePopularContact(r io.Reader) (*PopularContact, error) {
+func DecodePopularContact(r *Reader) (*PopularContact, error) {
 	v := &PopularContact{}
-	v.ClientID = ReadLong(r)
-	v.Importers = int32(ReadInt(r))
+	_rClientID, _eClientID := r.ReadInt64()
+	if _eClientID != nil {
+		return nil, _eClientID
+	}
+	v.ClientID = _rClientID
+	_rImporters, _eImporters := r.ReadInt32()
+	if _eImporters != nil {
+		return nil, _eImporters
+	}
+	v.Importers = _rImporters
 	return v, nil
 }
 
 func init() {
-	Registry[PopularContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PopularContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePopularContact(r)
 	}
 }
@@ -7504,17 +8542,33 @@ func (v *SavedPhoneContact) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSavedPhoneContact deserializes a SavedPhoneContact from a reader using the TL binary protocol.
-func DecodeSavedPhoneContact(r io.Reader) (*SavedPhoneContact, error) {
+func DecodeSavedPhoneContact(r *Reader) (*SavedPhoneContact, error) {
 	v := &SavedPhoneContact{}
-	v.Phone = ReadString(r)
-	v.FirstName = ReadString(r)
-	v.LastName = ReadString(r)
-	v.Date = int32(ReadInt(r))
+	_rPhone, _ePhone := r.ReadString()
+	if _ePhone != nil {
+		return nil, _ePhone
+	}
+	v.Phone = _rPhone
+	_rFirstName, _eFirstName := r.ReadString()
+	if _eFirstName != nil {
+		return nil, _eFirstName
+	}
+	v.FirstName = _rFirstName
+	_rLastName, _eLastName := r.ReadString()
+	if _eLastName != nil {
+		return nil, _eLastName
+	}
+	v.LastName = _rLastName
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[SavedPhoneContactTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SavedPhoneContactTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSavedPhoneContact(r)
 	}
 }
@@ -7542,14 +8596,18 @@ func (v *ChatOnlines) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatOnlines deserializes a ChatOnlines from a reader using the TL binary protocol.
-func DecodeChatOnlines(r io.Reader) (*ChatOnlines, error) {
+func DecodeChatOnlines(r *Reader) (*ChatOnlines, error) {
 	v := &ChatOnlines{}
-	v.Onlines = int32(ReadInt(r))
+	_rOnlines, _eOnlines := r.ReadInt32()
+	if _eOnlines != nil {
+		return nil, _eOnlines
+	}
+	v.Onlines = _rOnlines
 	return v, nil
 }
 
 func init() {
-	Registry[ChatOnlinesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatOnlinesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatOnlines(r)
 	}
 }
@@ -7650,11 +8708,11 @@ func (v *ChatAdminRights) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatAdminRights deserializes a ChatAdminRights from a reader using the TL binary protocol.
-func DecodeChatAdminRights(r io.Reader) (*ChatAdminRights, error) {
+func DecodeChatAdminRights(r *Reader) (*ChatAdminRights, error) {
 	v := &ChatAdminRights{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ChangeInfo = v.Flags.Has(0)
@@ -7678,7 +8736,7 @@ func DecodeChatAdminRights(r io.Reader) (*ChatAdminRights, error) {
 }
 
 func init() {
-	Registry[ChatAdminRightsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatAdminRightsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatAdminRights(r)
 	}
 }
@@ -7801,11 +8859,11 @@ func (v *ChatBannedRights) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatBannedRights deserializes a ChatBannedRights from a reader using the TL binary protocol.
-func DecodeChatBannedRights(r io.Reader) (*ChatBannedRights, error) {
+func DecodeChatBannedRights(r *Reader) (*ChatBannedRights, error) {
 	v := &ChatBannedRights{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.ViewMessages = v.Flags.Has(0)
@@ -7830,12 +8888,16 @@ func DecodeChatBannedRights(r io.Reader) (*ChatBannedRights, error) {
 	v.SendPlain = v.Flags.Has(25)
 	v.EditRank = v.Flags.Has(26)
 	v.SendReactions = v.Flags.Has(27)
-	v.UntilDate = int32(ReadInt(r))
+	_rUntilDate, _eUntilDate := r.ReadInt32()
+	if _eUntilDate != nil {
+		return nil, _eUntilDate
+	}
+	v.UntilDate = _rUntilDate
 	return v, nil
 }
 
 func init() {
-	Registry[ChatBannedRightsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatBannedRightsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatBannedRights(r)
 	}
 }
@@ -7865,16 +8927,23 @@ func (v *InputFolderPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputFolderPeer deserializes a InputFolderPeer from a reader using the TL binary protocol.
-func DecodeInputFolderPeer(r io.Reader) (*InputFolderPeer, error) {
+func DecodeInputFolderPeer(r *Reader) (*InputFolderPeer, error) {
 	v := &InputFolderPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(InputPeerClass)
-	v.FolderID = int32(ReadInt(r))
+	_rFolderID, _eFolderID := r.ReadInt32()
+	if _eFolderID != nil {
+		return nil, _eFolderID
+	}
+	v.FolderID = _rFolderID
 	return v, nil
 }
 
 func init() {
-	Registry[InputFolderPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputFolderPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputFolderPeer(r)
 	}
 }
@@ -7904,16 +8973,23 @@ func (v *FolderPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeFolderPeer deserializes a FolderPeer from a reader using the TL binary protocol.
-func DecodeFolderPeer(r io.Reader) (*FolderPeer, error) {
+func DecodeFolderPeer(r *Reader) (*FolderPeer, error) {
 	v := &FolderPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.FolderID = int32(ReadInt(r))
+	_rFolderID, _eFolderID := r.ReadInt32()
+	if _eFolderID != nil {
+		return nil, _eFolderID
+	}
+	v.FolderID = _rFolderID
 	return v, nil
 }
 
 func init() {
-	Registry[FolderPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[FolderPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeFolderPeer(r)
 	}
 }
@@ -7956,13 +9032,13 @@ func (v *ChannelLocationEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelLocationEmpty deserializes a ChannelLocationEmpty from a reader using the TL binary protocol.
-func DecodeChannelLocationEmpty(r io.Reader) (*ChannelLocationEmpty, error) {
+func DecodeChannelLocationEmpty(r *Reader) (*ChannelLocationEmpty, error) {
 	v := &ChannelLocationEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelLocationEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelLocationEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelLocationEmpty(r)
 	}
 }
@@ -7989,16 +9065,23 @@ func (v *ChannelLocation) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChannelLocation deserializes a ChannelLocation from a reader using the TL binary protocol.
-func DecodeChannelLocation(r io.Reader) (*ChannelLocation, error) {
+func DecodeChannelLocation(r *Reader) (*ChannelLocation, error) {
 	v := &ChannelLocation{}
-	_objGeoPoint, _ := ReadTLObject(r)
+	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
+	if _errGeoPoint != nil {
+		return nil, _errGeoPoint
+	}
 	v.GeoPoint = _objGeoPoint.(GeoPointClass)
-	v.Address = ReadString(r)
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
 	return v, nil
 }
 
 func init() {
-	Registry[ChannelLocationTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChannelLocationTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelLocation(r)
 	}
 }
@@ -8047,17 +9130,28 @@ func (v *PeerLocated) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerLocated deserializes a PeerLocated from a reader using the TL binary protocol.
-func DecodePeerLocated(r io.Reader) (*PeerLocated, error) {
+func DecodePeerLocated(r *Reader) (*PeerLocated, error) {
 	v := &PeerLocated{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
-	v.Expires = int32(ReadInt(r))
-	v.Distance = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_rDistance, _eDistance := r.ReadInt32()
+	if _eDistance != nil {
+		return nil, _eDistance
+	}
+	v.Distance = _rDistance
 	return v, nil
 }
 
 func init() {
-	Registry[PeerLocatedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerLocatedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerLocated(r)
 	}
 }
@@ -8082,14 +9176,18 @@ func (v *PeerSelfLocated) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerSelfLocated deserializes a PeerSelfLocated from a reader using the TL binary protocol.
-func DecodePeerSelfLocated(r io.Reader) (*PeerSelfLocated, error) {
+func DecodePeerSelfLocated(r *Reader) (*PeerSelfLocated, error) {
 	v := &PeerSelfLocated{}
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[PeerSelfLocatedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerSelfLocatedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerSelfLocated(r)
 	}
 }
@@ -8123,17 +9221,33 @@ func (v *StatsGroupTopAdmin) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGroupTopAdmin deserializes a StatsGroupTopAdmin from a reader using the TL binary protocol.
-func DecodeStatsGroupTopAdmin(r io.Reader) (*StatsGroupTopAdmin, error) {
+func DecodeStatsGroupTopAdmin(r *Reader) (*StatsGroupTopAdmin, error) {
 	v := &StatsGroupTopAdmin{}
-	v.UserID = ReadLong(r)
-	v.Deleted = int32(ReadInt(r))
-	v.Kicked = int32(ReadInt(r))
-	v.Banned = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rDeleted, _eDeleted := r.ReadInt32()
+	if _eDeleted != nil {
+		return nil, _eDeleted
+	}
+	v.Deleted = _rDeleted
+	_rKicked, _eKicked := r.ReadInt32()
+	if _eKicked != nil {
+		return nil, _eKicked
+	}
+	v.Kicked = _rKicked
+	_rBanned, _eBanned := r.ReadInt32()
+	if _eBanned != nil {
+		return nil, _eBanned
+	}
+	v.Banned = _rBanned
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGroupTopAdminTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGroupTopAdminTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGroupTopAdmin(r)
 	}
 }
@@ -8163,15 +9277,23 @@ func (v *StatsGroupTopInviter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStatsGroupTopInviter deserializes a StatsGroupTopInviter from a reader using the TL binary protocol.
-func DecodeStatsGroupTopInviter(r io.Reader) (*StatsGroupTopInviter, error) {
+func DecodeStatsGroupTopInviter(r *Reader) (*StatsGroupTopInviter, error) {
 	v := &StatsGroupTopInviter{}
-	v.UserID = ReadLong(r)
-	v.Invitations = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rInvitations, _eInvitations := r.ReadInt32()
+	if _eInvitations != nil {
+		return nil, _eInvitations
+	}
+	v.Invitations = _rInvitations
 	return v, nil
 }
 
 func init() {
-	Registry[StatsGroupTopInviterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StatsGroupTopInviterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStatsGroupTopInviter(r)
 	}
 }
@@ -8201,16 +9323,23 @@ func (v *PeerBlocked) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerBlocked deserializes a PeerBlocked from a reader using the TL binary protocol.
-func DecodePeerBlocked(r io.Reader) (*PeerBlocked, error) {
+func DecodePeerBlocked(r *Reader) (*PeerBlocked, error) {
 	v := &PeerBlocked{}
-	_objPeerID, _ := ReadTLObject(r)
+	_objPeerID, _errPeerID := ReadTLObject(r)
+	if _errPeerID != nil {
+		return nil, _errPeerID
+	}
 	v.PeerID = _objPeerID.(PeerClass)
-	v.Date = int32(ReadInt(r))
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[PeerBlockedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerBlockedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerBlocked(r)
 	}
 }
@@ -8338,11 +9467,11 @@ func (v *GroupCallParticipant) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallParticipant deserializes a GroupCallParticipant from a reader using the TL binary protocol.
-func DecodeGroupCallParticipant(r io.Reader) (*GroupCallParticipant, error) {
+func DecodeGroupCallParticipant(r *Reader) (*GroupCallParticipant, error) {
 	v := &GroupCallParticipant{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Muted = v.Flags.Has(0)
@@ -8355,38 +9484,75 @@ func DecodeGroupCallParticipant(r io.Reader) (*GroupCallParticipant, error) {
 	v.VolumeByAdmin = v.Flags.Has(10)
 	v.Self = v.Flags.Has(12)
 	v.VideoJoined = v.Flags.Has(15)
-	_objPeer, _ := ReadTLObject(r)
-	v.Peer = _objPeer.(PeerClass)
-	v.Date = int32(ReadInt(r))
-	if v.Flags.Has(3) {
-		v.ActiveDate = int32(ReadInt(r))
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
 	}
-	v.Source = int32(ReadInt(r))
+	v.Peer = _objPeer.(PeerClass)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	if v.Flags.Has(3) {
+		_rActiveDate, _eActiveDate := r.ReadInt32()
+		if _eActiveDate != nil {
+			return nil, _eActiveDate
+		}
+		v.ActiveDate = _rActiveDate
+	}
+	_rSource, _eSource := r.ReadInt32()
+	if _eSource != nil {
+		return nil, _eSource
+	}
+	v.Source = _rSource
 	if v.Flags.Has(7) {
-		v.Volume = int32(ReadInt(r))
+		_rVolume, _eVolume := r.ReadInt32()
+		if _eVolume != nil {
+			return nil, _eVolume
+		}
+		v.Volume = _rVolume
 	}
 	if v.Flags.Has(11) {
-		v.About = ReadString(r)
+		_rAbout, _eAbout := r.ReadString()
+		if _eAbout != nil {
+			return nil, _eAbout
+		}
+		v.About = _rAbout
 	}
 	if v.Flags.Has(13) {
-		v.RaiseHandRating = ReadLong(r)
+		_rRaiseHandRating, _eRaiseHandRating := r.ReadInt64()
+		if _eRaiseHandRating != nil {
+			return nil, _eRaiseHandRating
+		}
+		v.RaiseHandRating = _rRaiseHandRating
 	}
 	if v.Flags.Has(6) {
-		_objVideo, _ := ReadTLObject(r)
+		_objVideo, _errVideo := ReadTLObject(r)
+		if _errVideo != nil {
+			return nil, _errVideo
+		}
 		v.Video = _objVideo.(*GroupCallParticipantVideo)
 	}
 	if v.Flags.Has(14) {
-		_objPresentation, _ := ReadTLObject(r)
+		_objPresentation, _errPresentation := ReadTLObject(r)
+		if _errPresentation != nil {
+			return nil, _errPresentation
+		}
 		v.Presentation = _objPresentation.(*GroupCallParticipantVideo)
 	}
 	if v.Flags.Has(16) {
-		v.PaidStarsTotal = ReadLong(r)
+		_rPaidStarsTotal, _ePaidStarsTotal := r.ReadInt64()
+		if _ePaidStarsTotal != nil {
+			return nil, _ePaidStarsTotal
+		}
+		v.PaidStarsTotal = _rPaidStarsTotal
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallParticipantTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallParticipantTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallParticipant(r)
 	}
 }
@@ -8453,13 +9619,13 @@ func (v *InlineQueryPeerTypeSameBotPm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypeSameBotPm deserializes a InlineQueryPeerTypeSameBotPm from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypeSameBotPm(r io.Reader) (*InlineQueryPeerTypeSameBotPm, error) {
+func DecodeInlineQueryPeerTypeSameBotPm(r *Reader) (*InlineQueryPeerTypeSameBotPm, error) {
 	v := &InlineQueryPeerTypeSameBotPm{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypeSameBotPmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypeSameBotPmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypeSameBotPm(r)
 	}
 }
@@ -8482,13 +9648,13 @@ func (v *InlineQueryPeerTypePm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypePm deserializes a InlineQueryPeerTypePm from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypePm(r io.Reader) (*InlineQueryPeerTypePm, error) {
+func DecodeInlineQueryPeerTypePm(r *Reader) (*InlineQueryPeerTypePm, error) {
 	v := &InlineQueryPeerTypePm{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypePmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypePmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypePm(r)
 	}
 }
@@ -8511,13 +9677,13 @@ func (v *InlineQueryPeerTypeChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypeChat deserializes a InlineQueryPeerTypeChat from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypeChat(r io.Reader) (*InlineQueryPeerTypeChat, error) {
+func DecodeInlineQueryPeerTypeChat(r *Reader) (*InlineQueryPeerTypeChat, error) {
 	v := &InlineQueryPeerTypeChat{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypeChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypeChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypeChat(r)
 	}
 }
@@ -8540,13 +9706,13 @@ func (v *InlineQueryPeerTypeMegagroup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypeMegagroup deserializes a InlineQueryPeerTypeMegagroup from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypeMegagroup(r io.Reader) (*InlineQueryPeerTypeMegagroup, error) {
+func DecodeInlineQueryPeerTypeMegagroup(r *Reader) (*InlineQueryPeerTypeMegagroup, error) {
 	v := &InlineQueryPeerTypeMegagroup{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypeMegagroupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypeMegagroupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypeMegagroup(r)
 	}
 }
@@ -8569,13 +9735,13 @@ func (v *InlineQueryPeerTypeBroadcast) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypeBroadcast deserializes a InlineQueryPeerTypeBroadcast from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypeBroadcast(r io.Reader) (*InlineQueryPeerTypeBroadcast, error) {
+func DecodeInlineQueryPeerTypeBroadcast(r *Reader) (*InlineQueryPeerTypeBroadcast, error) {
 	v := &InlineQueryPeerTypeBroadcast{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypeBroadcastTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypeBroadcastTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypeBroadcast(r)
 	}
 }
@@ -8598,13 +9764,13 @@ func (v *InlineQueryPeerTypeBotPm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInlineQueryPeerTypeBotPm deserializes a InlineQueryPeerTypeBotPm from a reader using the TL binary protocol.
-func DecodeInlineQueryPeerTypeBotPm(r io.Reader) (*InlineQueryPeerTypeBotPm, error) {
+func DecodeInlineQueryPeerTypeBotPm(r *Reader) (*InlineQueryPeerTypeBotPm, error) {
 	v := &InlineQueryPeerTypeBotPm{}
 	return v, nil
 }
 
 func init() {
-	Registry[InlineQueryPeerTypeBotPmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InlineQueryPeerTypeBotPmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInlineQueryPeerTypeBotPm(r)
 	}
 }
@@ -8663,28 +9829,44 @@ func (v *ChatInviteImporter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatInviteImporter deserializes a ChatInviteImporter from a reader using the TL binary protocol.
-func DecodeChatInviteImporter(r io.Reader) (*ChatInviteImporter, error) {
+func DecodeChatInviteImporter(r *Reader) (*ChatInviteImporter, error) {
 	v := &ChatInviteImporter{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Requested = v.Flags.Has(0)
 	v.ViaChatlist = v.Flags.Has(3)
-	v.UserID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	if v.Flags.Has(2) {
-		v.About = ReadString(r)
+		_rAbout, _eAbout := r.ReadString()
+		if _eAbout != nil {
+			return nil, _eAbout
+		}
+		v.About = _rAbout
 	}
 	if v.Flags.Has(1) {
-		v.ApprovedBy = ReadLong(r)
+		_rApprovedBy, _eApprovedBy := r.ReadInt64()
+		if _eApprovedBy != nil {
+			return nil, _eApprovedBy
+		}
+		v.ApprovedBy = _rApprovedBy
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[ChatInviteImporterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatInviteImporterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatInviteImporter(r)
 	}
 }
@@ -8716,16 +9898,28 @@ func (v *ChatAdminWithInvites) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatAdminWithInvites deserializes a ChatAdminWithInvites from a reader using the TL binary protocol.
-func DecodeChatAdminWithInvites(r io.Reader) (*ChatAdminWithInvites, error) {
+func DecodeChatAdminWithInvites(r *Reader) (*ChatAdminWithInvites, error) {
 	v := &ChatAdminWithInvites{}
-	v.AdminID = ReadLong(r)
-	v.InvitesCount = int32(ReadInt(r))
-	v.RevokedInvitesCount = int32(ReadInt(r))
+	_rAdminID, _eAdminID := r.ReadInt64()
+	if _eAdminID != nil {
+		return nil, _eAdminID
+	}
+	v.AdminID = _rAdminID
+	_rInvitesCount, _eInvitesCount := r.ReadInt32()
+	if _eInvitesCount != nil {
+		return nil, _eInvitesCount
+	}
+	v.InvitesCount = _rInvitesCount
+	_rRevokedInvitesCount, _eRevokedInvitesCount := r.ReadInt32()
+	if _eRevokedInvitesCount != nil {
+		return nil, _eRevokedInvitesCount
+	}
+	v.RevokedInvitesCount = _rRevokedInvitesCount
 	return v, nil
 }
 
 func init() {
-	Registry[ChatAdminWithInvitesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatAdminWithInvitesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatAdminWithInvites(r)
 	}
 }
@@ -8755,15 +9949,23 @@ func (v *GroupCallParticipantVideoSourceGroup) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallParticipantVideoSourceGroup deserializes a GroupCallParticipantVideoSourceGroup from a reader using the TL binary protocol.
-func DecodeGroupCallParticipantVideoSourceGroup(r io.Reader) (*GroupCallParticipantVideoSourceGroup, error) {
+func DecodeGroupCallParticipantVideoSourceGroup(r *Reader) (*GroupCallParticipantVideoSourceGroup, error) {
 	v := &GroupCallParticipantVideoSourceGroup{}
-	v.Semantics = ReadString(r)
-	v.Sources = ReadVectorInt(r)
+	_rSemantics, _eSemantics := r.ReadString()
+	if _eSemantics != nil {
+		return nil, _eSemantics
+	}
+	v.Semantics = _rSemantics
+	_vvSources, _veSources := r.ReadVectorInt()
+	if _veSources != nil {
+		return nil, _veSources
+	}
+	v.Sources = _vvSources
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallParticipantVideoSourceGroupTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallParticipantVideoSourceGroupTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallParticipantVideoSourceGroup(r)
 	}
 }
@@ -8815,33 +10017,51 @@ func (v *GroupCallParticipantVideo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallParticipantVideo deserializes a GroupCallParticipantVideo from a reader using the TL binary protocol.
-func DecodeGroupCallParticipantVideo(r io.Reader) (*GroupCallParticipantVideo, error) {
+func DecodeGroupCallParticipantVideo(r *Reader) (*GroupCallParticipantVideo, error) {
 	v := &GroupCallParticipantVideo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Paused = v.Flags.Has(0)
-	v.Endpoint = ReadString(r)
-	ReadInt(r)
-	_cntSourceGroups := ReadInt(r)
-	if err := checkVectorCount(_cntSourceGroups); err != nil {
-		return nil, err
+	_rEndpoint, _eEndpoint := r.ReadString()
+	if _eEndpoint != nil {
+		return nil, _eEndpoint
+	}
+	v.Endpoint = _rEndpoint
+	_vhdrSourceGroups, _ehdrSourceGroups := r.ReadUint32()
+	if _ehdrSourceGroups != nil {
+		return nil, _ehdrSourceGroups
+	}
+	_cntSourceGroups, _ecntSourceGroups := r.ReadUint32()
+	if _ecntSourceGroups != nil {
+		return nil, _ecntSourceGroups
+	}
+	if _errSourceGroups := checkVectorCount(_cntSourceGroups); _errSourceGroups != nil {
+		return nil, _errSourceGroups
 	}
 	v.SourceGroups = make([]*GroupCallParticipantVideoSourceGroup, _cntSourceGroups)
 	for _iSourceGroups := range v.SourceGroups {
-		_objSourceGroups, _ := ReadTLObject(r)
+		_objSourceGroups, _errSourceGroups := ReadTLObject(r)
+		if _errSourceGroups != nil {
+			return nil, _errSourceGroups
+		}
 		v.SourceGroups[_iSourceGroups] = _objSourceGroups.(*GroupCallParticipantVideoSourceGroup)
 	}
+	_ = _vhdrSourceGroups
 	if v.Flags.Has(1) {
-		v.AudioSource = int32(ReadInt(r))
+		_rAudioSource, _eAudioSource := r.ReadInt32()
+		if _eAudioSource != nil {
+			return nil, _eAudioSource
+		}
+		v.AudioSource = _rAudioSource
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallParticipantVideoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallParticipantVideoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallParticipantVideo(r)
 	}
 }
@@ -8886,14 +10106,18 @@ func (v *ChatTheme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatTheme deserializes a ChatTheme from a reader using the TL binary protocol.
-func DecodeChatTheme(r io.Reader) (*ChatTheme, error) {
+func DecodeChatTheme(r *Reader) (*ChatTheme, error) {
 	v := &ChatTheme{}
-	v.Emoticon = ReadString(r)
+	_rEmoticon, _eEmoticon := r.ReadString()
+	if _eEmoticon != nil {
+		return nil, _eEmoticon
+	}
+	v.Emoticon = _rEmoticon
 	return v, nil
 }
 
 func init() {
-	Registry[ChatThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatTheme(r)
 	}
 }
@@ -8924,25 +10148,38 @@ func (v *ChatThemeUniqueGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeChatThemeUniqueGift deserializes a ChatThemeUniqueGift from a reader using the TL binary protocol.
-func DecodeChatThemeUniqueGift(r io.Reader) (*ChatThemeUniqueGift, error) {
+func DecodeChatThemeUniqueGift(r *Reader) (*ChatThemeUniqueGift, error) {
 	v := &ChatThemeUniqueGift{}
-	_objGift, _ := ReadTLObject(r)
+	_objGift, _errGift := ReadTLObject(r)
+	if _errGift != nil {
+		return nil, _errGift
+	}
 	v.Gift = _objGift.(StarGiftClass)
-	ReadInt(r)
-	_cntThemeSettings := ReadInt(r)
-	if err := checkVectorCount(_cntThemeSettings); err != nil {
-		return nil, err
+	_vhdrThemeSettings, _ehdrThemeSettings := r.ReadUint32()
+	if _ehdrThemeSettings != nil {
+		return nil, _ehdrThemeSettings
+	}
+	_cntThemeSettings, _ecntThemeSettings := r.ReadUint32()
+	if _ecntThemeSettings != nil {
+		return nil, _ecntThemeSettings
+	}
+	if _errThemeSettings := checkVectorCount(_cntThemeSettings); _errThemeSettings != nil {
+		return nil, _errThemeSettings
 	}
 	v.ThemeSettings = make([]*ThemeSettings, _cntThemeSettings)
 	for _iThemeSettings := range v.ThemeSettings {
-		_objThemeSettings, _ := ReadTLObject(r)
+		_objThemeSettings, _errThemeSettings := ReadTLObject(r)
+		if _errThemeSettings != nil {
+			return nil, _errThemeSettings
+		}
 		v.ThemeSettings[_iThemeSettings] = _objThemeSettings.(*ThemeSettings)
 	}
+	_ = _vhdrThemeSettings
 	return v, nil
 }
 
 func init() {
-	Registry[ChatThemeUniqueGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ChatThemeUniqueGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChatThemeUniqueGift(r)
 	}
 }
@@ -8974,16 +10211,28 @@ func (v *GroupCallStreamChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeGroupCallStreamChannel deserializes a GroupCallStreamChannel from a reader using the TL binary protocol.
-func DecodeGroupCallStreamChannel(r io.Reader) (*GroupCallStreamChannel, error) {
+func DecodeGroupCallStreamChannel(r *Reader) (*GroupCallStreamChannel, error) {
 	v := &GroupCallStreamChannel{}
-	v.Channel = int32(ReadInt(r))
-	v.Scale = int32(ReadInt(r))
-	v.LastTimestampMs = ReadLong(r)
+	_rChannel, _eChannel := r.ReadInt32()
+	if _eChannel != nil {
+		return nil, _eChannel
+	}
+	v.Channel = _rChannel
+	_rScale, _eScale := r.ReadInt32()
+	if _eScale != nil {
+		return nil, _eScale
+	}
+	v.Scale = _rScale
+	_rLastTimestampMs, _eLastTimestampMs := r.ReadInt64()
+	if _eLastTimestampMs != nil {
+		return nil, _eLastTimestampMs
+	}
+	v.LastTimestampMs = _rLastTimestampMs
 	return v, nil
 }
 
 func init() {
-	Registry[GroupCallStreamChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[GroupCallStreamChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeGroupCallStreamChannel(r)
 	}
 }
@@ -9044,13 +10293,13 @@ func (v *AttachMenuPeerTypeSameBotPm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAttachMenuPeerTypeSameBotPm deserializes a AttachMenuPeerTypeSameBotPm from a reader using the TL binary protocol.
-func DecodeAttachMenuPeerTypeSameBotPm(r io.Reader) (*AttachMenuPeerTypeSameBotPm, error) {
+func DecodeAttachMenuPeerTypeSameBotPm(r *Reader) (*AttachMenuPeerTypeSameBotPm, error) {
 	v := &AttachMenuPeerTypeSameBotPm{}
 	return v, nil
 }
 
 func init() {
-	Registry[AttachMenuPeerTypeSameBotPmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AttachMenuPeerTypeSameBotPmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAttachMenuPeerTypeSameBotPm(r)
 	}
 }
@@ -9073,13 +10322,13 @@ func (v *AttachMenuPeerTypeBotPm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAttachMenuPeerTypeBotPm deserializes a AttachMenuPeerTypeBotPm from a reader using the TL binary protocol.
-func DecodeAttachMenuPeerTypeBotPm(r io.Reader) (*AttachMenuPeerTypeBotPm, error) {
+func DecodeAttachMenuPeerTypeBotPm(r *Reader) (*AttachMenuPeerTypeBotPm, error) {
 	v := &AttachMenuPeerTypeBotPm{}
 	return v, nil
 }
 
 func init() {
-	Registry[AttachMenuPeerTypeBotPmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AttachMenuPeerTypeBotPmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAttachMenuPeerTypeBotPm(r)
 	}
 }
@@ -9102,13 +10351,13 @@ func (v *AttachMenuPeerTypePm) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAttachMenuPeerTypePm deserializes a AttachMenuPeerTypePm from a reader using the TL binary protocol.
-func DecodeAttachMenuPeerTypePm(r io.Reader) (*AttachMenuPeerTypePm, error) {
+func DecodeAttachMenuPeerTypePm(r *Reader) (*AttachMenuPeerTypePm, error) {
 	v := &AttachMenuPeerTypePm{}
 	return v, nil
 }
 
 func init() {
-	Registry[AttachMenuPeerTypePmTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AttachMenuPeerTypePmTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAttachMenuPeerTypePm(r)
 	}
 }
@@ -9131,13 +10380,13 @@ func (v *AttachMenuPeerTypeChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAttachMenuPeerTypeChat deserializes a AttachMenuPeerTypeChat from a reader using the TL binary protocol.
-func DecodeAttachMenuPeerTypeChat(r io.Reader) (*AttachMenuPeerTypeChat, error) {
+func DecodeAttachMenuPeerTypeChat(r *Reader) (*AttachMenuPeerTypeChat, error) {
 	v := &AttachMenuPeerTypeChat{}
 	return v, nil
 }
 
 func init() {
-	Registry[AttachMenuPeerTypeChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AttachMenuPeerTypeChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAttachMenuPeerTypeChat(r)
 	}
 }
@@ -9160,13 +10409,13 @@ func (v *AttachMenuPeerTypeBroadcast) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeAttachMenuPeerTypeBroadcast deserializes a AttachMenuPeerTypeBroadcast from a reader using the TL binary protocol.
-func DecodeAttachMenuPeerTypeBroadcast(r io.Reader) (*AttachMenuPeerTypeBroadcast, error) {
+func DecodeAttachMenuPeerTypeBroadcast(r *Reader) (*AttachMenuPeerTypeBroadcast, error) {
 	v := &AttachMenuPeerTypeBroadcast{}
 	return v, nil
 }
 
 func init() {
-	Registry[AttachMenuPeerTypeBroadcastTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[AttachMenuPeerTypeBroadcastTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAttachMenuPeerTypeBroadcast(r)
 	}
 }
@@ -9205,21 +10454,24 @@ func (v *SendAsPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeSendAsPeer deserializes a SendAsPeer from a reader using the TL binary protocol.
-func DecodeSendAsPeer(r io.Reader) (*SendAsPeer, error) {
+func DecodeSendAsPeer(r *Reader) (*SendAsPeer, error) {
 	v := &SendAsPeer{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.PremiumRequired = v.Flags.Has(0)
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[SendAsPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[SendAsPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSendAsPeer(r)
 	}
 }
@@ -9262,21 +10514,25 @@ func (v *Username) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsername deserializes a Username from a reader using the TL binary protocol.
-func DecodeUsername(r io.Reader) (*Username, error) {
+func DecodeUsername(r *Reader) (*Username, error) {
 	v := &Username{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Editable = v.Flags.Has(0)
 	v.Active = v.Flags.Has(1)
-	v.Username = ReadString(r)
+	_rUsername, _eUsername := r.ReadString()
+	if _eUsername != nil {
+		return nil, _eUsername
+	}
+	v.Username = _rUsername
 	return v, nil
 }
 
 func init() {
-	Registry[UsernameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsernameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsername(r)
 	}
 }
@@ -9306,15 +10562,23 @@ func (v *ExportedContactToken) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeExportedContactToken deserializes a ExportedContactToken from a reader using the TL binary protocol.
-func DecodeExportedContactToken(r io.Reader) (*ExportedContactToken, error) {
+func DecodeExportedContactToken(r *Reader) (*ExportedContactToken, error) {
 	v := &ExportedContactToken{}
-	v.URL = ReadString(r)
-	v.Expires = int32(ReadInt(r))
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[ExportedContactTokenTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ExportedContactTokenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeExportedContactToken(r)
 	}
 }
@@ -9390,24 +10654,32 @@ func (v *RequestPeerTypeUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestPeerTypeUser deserializes a RequestPeerTypeUser from a reader using the TL binary protocol.
-func DecodeRequestPeerTypeUser(r io.Reader) (*RequestPeerTypeUser, error) {
+func DecodeRequestPeerTypeUser(r *Reader) (*RequestPeerTypeUser, error) {
 	v := &RequestPeerTypeUser{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Bot = ReadBool(r)
+		_rBot, _eBot := r.ReadBool()
+		if _eBot != nil {
+			return nil, _eBot
+		}
+		v.Bot = _rBot
 	}
 	if v.Flags.Has(1) {
-		v.Premium = ReadBool(r)
+		_rPremium, _ePremium := r.ReadBool()
+		if _ePremium != nil {
+			return nil, _ePremium
+		}
+		v.Premium = _rPremium
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestPeerTypeUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestPeerTypeUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestPeerTypeUser(r)
 	}
 }
@@ -9473,34 +10745,48 @@ func (v *RequestPeerTypeChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestPeerTypeChat deserializes a RequestPeerTypeChat from a reader using the TL binary protocol.
-func DecodeRequestPeerTypeChat(r io.Reader) (*RequestPeerTypeChat, error) {
+func DecodeRequestPeerTypeChat(r *Reader) (*RequestPeerTypeChat, error) {
 	v := &RequestPeerTypeChat{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
 	v.BotParticipant = v.Flags.Has(5)
 	if v.Flags.Has(3) {
-		v.HasUsername = ReadBool(r)
+		_rHasUsername, _eHasUsername := r.ReadBool()
+		if _eHasUsername != nil {
+			return nil, _eHasUsername
+		}
+		v.HasUsername = _rHasUsername
 	}
 	if v.Flags.Has(4) {
-		v.Forum = ReadBool(r)
+		_rForum, _eForum := r.ReadBool()
+		if _eForum != nil {
+			return nil, _eForum
+		}
+		v.Forum = _rForum
 	}
 	if v.Flags.Has(1) {
-		_objUserAdminRights, _ := ReadTLObject(r)
+		_objUserAdminRights, _errUserAdminRights := ReadTLObject(r)
+		if _errUserAdminRights != nil {
+			return nil, _errUserAdminRights
+		}
 		v.UserAdminRights = _objUserAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(2) {
-		_objBotAdminRights, _ := ReadTLObject(r)
+		_objBotAdminRights, _errBotAdminRights := ReadTLObject(r)
+		if _errBotAdminRights != nil {
+			return nil, _errBotAdminRights
+		}
 		v.BotAdminRights = _objBotAdminRights.(*ChatAdminRights)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestPeerTypeChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestPeerTypeChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestPeerTypeChat(r)
 	}
 }
@@ -9555,30 +10841,40 @@ func (v *RequestPeerTypeBroadcast) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestPeerTypeBroadcast deserializes a RequestPeerTypeBroadcast from a reader using the TL binary protocol.
-func DecodeRequestPeerTypeBroadcast(r io.Reader) (*RequestPeerTypeBroadcast, error) {
+func DecodeRequestPeerTypeBroadcast(r *Reader) (*RequestPeerTypeBroadcast, error) {
 	v := &RequestPeerTypeBroadcast{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Creator = v.Flags.Has(0)
 	if v.Flags.Has(3) {
-		v.HasUsername = ReadBool(r)
+		_rHasUsername, _eHasUsername := r.ReadBool()
+		if _eHasUsername != nil {
+			return nil, _eHasUsername
+		}
+		v.HasUsername = _rHasUsername
 	}
 	if v.Flags.Has(1) {
-		_objUserAdminRights, _ := ReadTLObject(r)
+		_objUserAdminRights, _errUserAdminRights := ReadTLObject(r)
+		if _errUserAdminRights != nil {
+			return nil, _errUserAdminRights
+		}
 		v.UserAdminRights = _objUserAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(2) {
-		_objBotAdminRights, _ := ReadTLObject(r)
+		_objBotAdminRights, _errBotAdminRights := ReadTLObject(r)
+		if _errBotAdminRights != nil {
+			return nil, _errBotAdminRights
+		}
 		v.BotAdminRights = _objBotAdminRights.(*ChatAdminRights)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestPeerTypeBroadcastTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestPeerTypeBroadcastTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestPeerTypeBroadcast(r)
 	}
 }
@@ -9626,25 +10922,33 @@ func (v *RequestPeerTypeCreateBot) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestPeerTypeCreateBot deserializes a RequestPeerTypeCreateBot from a reader using the TL binary protocol.
-func DecodeRequestPeerTypeCreateBot(r io.Reader) (*RequestPeerTypeCreateBot, error) {
+func DecodeRequestPeerTypeCreateBot(r *Reader) (*RequestPeerTypeCreateBot, error) {
 	v := &RequestPeerTypeCreateBot{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.BotManaged = v.Flags.Has(0)
 	if v.Flags.Has(1) {
-		v.SuggestedName = ReadString(r)
+		_rSuggestedName, _eSuggestedName := r.ReadString()
+		if _eSuggestedName != nil {
+			return nil, _eSuggestedName
+		}
+		v.SuggestedName = _rSuggestedName
 	}
 	if v.Flags.Has(2) {
-		v.SuggestedUsername = ReadString(r)
+		_rSuggestedUsername, _eSuggestedUsername := r.ReadString()
+		if _eSuggestedUsername != nil {
+			return nil, _eSuggestedUsername
+		}
+		v.SuggestedUsername = _rSuggestedUsername
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestPeerTypeCreateBotTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestPeerTypeCreateBotTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestPeerTypeCreateBot(r)
 	}
 }
@@ -9674,15 +10978,23 @@ func (v *ReadParticipantDate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeReadParticipantDate deserializes a ReadParticipantDate from a reader using the TL binary protocol.
-func DecodeReadParticipantDate(r io.Reader) (*ReadParticipantDate, error) {
+func DecodeReadParticipantDate(r *Reader) (*ReadParticipantDate, error) {
 	v := &ReadParticipantDate{}
-	v.UserID = ReadLong(r)
-	v.Date = int32(ReadInt(r))
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[ReadParticipantDateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ReadParticipantDateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeReadParticipantDate(r)
 	}
 }
@@ -9710,14 +11022,18 @@ func (v *InputChatlistDialogFilter) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatlistDialogFilter deserializes a InputChatlistDialogFilter from a reader using the TL binary protocol.
-func DecodeInputChatlistDialogFilter(r io.Reader) (*InputChatlistDialogFilter, error) {
+func DecodeInputChatlistDialogFilter(r *Reader) (*InputChatlistDialogFilter, error) {
 	v := &InputChatlistDialogFilter{}
-	v.FilterID = int32(ReadInt(r))
+	_rFilterID, _eFilterID := r.ReadInt32()
+	if _eFilterID != nil {
+		return nil, _eFilterID
+	}
+	v.FilterID = _rFilterID
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatlistDialogFilterTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatlistDialogFilterTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatlistDialogFilter(r)
 	}
 }
@@ -9787,24 +11103,32 @@ func (v *PeerColor) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerColor deserializes a PeerColor from a reader using the TL binary protocol.
-func DecodePeerColor(r io.Reader) (*PeerColor, error) {
+func DecodePeerColor(r *Reader) (*PeerColor, error) {
 	v := &PeerColor{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	if v.Flags.Has(0) {
-		v.Color = int32(ReadInt(r))
+		_rColor, _eColor := r.ReadInt32()
+		if _eColor != nil {
+			return nil, _eColor
+		}
+		v.Color = _rColor
 	}
 	if v.Flags.Has(1) {
-		v.BackgroundEmojiID = ReadLong(r)
+		_rBackgroundEmojiID, _eBackgroundEmojiID := r.ReadInt64()
+		if _eBackgroundEmojiID != nil {
+			return nil, _eBackgroundEmojiID
+		}
+		v.BackgroundEmojiID = _rBackgroundEmojiID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PeerColorTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerColorTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerColor(r)
 	}
 }
@@ -9858,29 +11182,57 @@ func (v *PeerColorCollectible) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePeerColorCollectible deserializes a PeerColorCollectible from a reader using the TL binary protocol.
-func DecodePeerColorCollectible(r io.Reader) (*PeerColorCollectible, error) {
+func DecodePeerColorCollectible(r *Reader) (*PeerColorCollectible, error) {
 	v := &PeerColorCollectible{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.CollectibleID = ReadLong(r)
-	v.GiftEmojiID = ReadLong(r)
-	v.BackgroundEmojiID = ReadLong(r)
-	v.AccentColor = int32(ReadInt(r))
-	v.Colors = ReadVectorInt(r)
+	_rCollectibleID, _eCollectibleID := r.ReadInt64()
+	if _eCollectibleID != nil {
+		return nil, _eCollectibleID
+	}
+	v.CollectibleID = _rCollectibleID
+	_rGiftEmojiID, _eGiftEmojiID := r.ReadInt64()
+	if _eGiftEmojiID != nil {
+		return nil, _eGiftEmojiID
+	}
+	v.GiftEmojiID = _rGiftEmojiID
+	_rBackgroundEmojiID, _eBackgroundEmojiID := r.ReadInt64()
+	if _eBackgroundEmojiID != nil {
+		return nil, _eBackgroundEmojiID
+	}
+	v.BackgroundEmojiID = _rBackgroundEmojiID
+	_rAccentColor, _eAccentColor := r.ReadInt32()
+	if _eAccentColor != nil {
+		return nil, _eAccentColor
+	}
+	v.AccentColor = _rAccentColor
+	_vvColors, _veColors := r.ReadVectorInt()
+	if _veColors != nil {
+		return nil, _veColors
+	}
+	v.Colors = _vvColors
 	if v.Flags.Has(0) {
-		v.DarkAccentColor = int32(ReadInt(r))
+		_rDarkAccentColor, _eDarkAccentColor := r.ReadInt32()
+		if _eDarkAccentColor != nil {
+			return nil, _eDarkAccentColor
+		}
+		v.DarkAccentColor = _rDarkAccentColor
 	}
 	if v.Flags.Has(1) {
-		v.DarkColors = ReadVectorInt(r)
+		_vvDarkColors, _veDarkColors := r.ReadVectorInt()
+		if _veDarkColors != nil {
+			return nil, _veDarkColors
+		}
+		v.DarkColors = _vvDarkColors
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PeerColorCollectibleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PeerColorCollectibleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePeerColorCollectible(r)
 	}
 }
@@ -9905,14 +11257,18 @@ func (v *InputPeerColorCollectible) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputPeerColorCollectible deserializes a InputPeerColorCollectible from a reader using the TL binary protocol.
-func DecodeInputPeerColorCollectible(r io.Reader) (*InputPeerColorCollectible, error) {
+func DecodeInputPeerColorCollectible(r *Reader) (*InputPeerColorCollectible, error) {
 	v := &InputPeerColorCollectible{}
-	v.CollectibleID = ReadLong(r)
+	_rCollectibleID, _eCollectibleID := r.ReadInt64()
+	if _eCollectibleID != nil {
+		return nil, _eCollectibleID
+	}
+	v.CollectibleID = _rCollectibleID
 	return v, nil
 }
 
 func init() {
-	Registry[InputPeerColorCollectibleTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputPeerColorCollectibleTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPeerColorCollectible(r)
 	}
 }
@@ -9942,16 +11298,23 @@ func (v *ContactBirthday) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeContactBirthday deserializes a ContactBirthday from a reader using the TL binary protocol.
-func DecodeContactBirthday(r io.Reader) (*ContactBirthday, error) {
+func DecodeContactBirthday(r *Reader) (*ContactBirthday, error) {
 	v := &ContactBirthday{}
-	v.ContactID = ReadLong(r)
-	_objBirthday, _ := ReadTLObject(r)
+	_rContactID, _eContactID := r.ReadInt64()
+	if _eContactID != nil {
+		return nil, _eContactID
+	}
+	v.ContactID = _rContactID
+	_objBirthday, _errBirthday := ReadTLObject(r)
+	if _errBirthday != nil {
+		return nil, _errBirthday
+	}
 	v.Birthday = _objBirthday.(*Birthday)
 	return v, nil
 }
 
 func init() {
-	Registry[ContactBirthdayTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[ContactBirthdayTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeContactBirthday(r)
 	}
 }
@@ -9994,21 +11357,25 @@ func (v *MissingInvitee) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeMissingInvitee deserializes a MissingInvitee from a reader using the TL binary protocol.
-func DecodeMissingInvitee(r io.Reader) (*MissingInvitee, error) {
+func DecodeMissingInvitee(r *Reader) (*MissingInvitee, error) {
 	v := &MissingInvitee{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.PremiumWouldAllowInvite = v.Flags.Has(0)
 	v.PremiumRequiredForPm = v.Flags.Has(1)
-	v.UserID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	return v, nil
 }
 
 func init() {
-	Registry[MissingInviteeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[MissingInviteeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMissingInvitee(r)
 	}
 }
@@ -10061,34 +11428,52 @@ func (v *InputBusinessChatLink) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputBusinessChatLink deserializes a InputBusinessChatLink from a reader using the TL binary protocol.
-func DecodeInputBusinessChatLink(r io.Reader) (*InputBusinessChatLink, error) {
+func DecodeInputBusinessChatLink(r *Reader) (*InputBusinessChatLink, error) {
 	v := &InputBusinessChatLink{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Message = ReadString(r)
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(1) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[InputBusinessChatLinkTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputBusinessChatLinkTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputBusinessChatLink(r)
 	}
 }
@@ -10145,36 +11530,62 @@ func (v *BusinessChatLink) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeBusinessChatLink deserializes a BusinessChatLink from a reader using the TL binary protocol.
-func DecodeBusinessChatLink(r io.Reader) (*BusinessChatLink, error) {
+func DecodeBusinessChatLink(r *Reader) (*BusinessChatLink, error) {
 	v := &BusinessChatLink{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Link = ReadString(r)
-	v.Message = ReadString(r)
+	_rLink, _eLink := r.ReadString()
+	if _eLink != nil {
+		return nil, _eLink
+	}
+	v.Link = _rLink
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(0) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	if v.Flags.Has(1) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
-	v.Views = int32(ReadInt(r))
+	_rViews, _eViews := r.ReadInt32()
+	if _eViews != nil {
+		return nil, _eViews
+	}
+	v.Views = _rViews
 	return v, nil
 }
 
 func init() {
-	Registry[BusinessChatLinkTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[BusinessChatLinkTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBusinessChatLink(r)
 	}
 }
@@ -10260,32 +11671,51 @@ func (v *RequestedPeerUser) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestedPeerUser deserializes a RequestedPeerUser from a reader using the TL binary protocol.
-func DecodeRequestedPeerUser(r io.Reader) (*RequestedPeerUser, error) {
+func DecodeRequestedPeerUser(r *Reader) (*RequestedPeerUser, error) {
 	v := &RequestedPeerUser{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.UserID = ReadLong(r)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
 	if v.Flags.Has(0) {
-		v.FirstName = ReadString(r)
+		_rFirstName, _eFirstName := r.ReadString()
+		if _eFirstName != nil {
+			return nil, _eFirstName
+		}
+		v.FirstName = _rFirstName
 	}
 	if v.Flags.Has(0) {
-		v.LastName = ReadString(r)
+		_rLastName, _eLastName := r.ReadString()
+		if _eLastName != nil {
+			return nil, _eLastName
+		}
+		v.LastName = _rLastName
 	}
 	if v.Flags.Has(1) {
-		v.Username = ReadString(r)
+		_rUsername, _eUsername := r.ReadString()
+		if _eUsername != nil {
+			return nil, _eUsername
+		}
+		v.Username = _rUsername
 	}
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(PhotoClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestedPeerUserTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestedPeerUserTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestedPeerUser(r)
 	}
 }
@@ -10331,26 +11761,37 @@ func (v *RequestedPeerChat) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestedPeerChat deserializes a RequestedPeerChat from a reader using the TL binary protocol.
-func DecodeRequestedPeerChat(r io.Reader) (*RequestedPeerChat, error) {
+func DecodeRequestedPeerChat(r *Reader) (*RequestedPeerChat, error) {
 	v := &RequestedPeerChat{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChatID = ReadLong(r)
+	_rChatID, _eChatID := r.ReadInt64()
+	if _eChatID != nil {
+		return nil, _eChatID
+	}
+	v.ChatID = _rChatID
 	if v.Flags.Has(0) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(PhotoClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestedPeerChatTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestedPeerChatTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestedPeerChat(r)
 	}
 }
@@ -10403,29 +11844,44 @@ func (v *RequestedPeerChannel) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequestedPeerChannel deserializes a RequestedPeerChannel from a reader using the TL binary protocol.
-func DecodeRequestedPeerChannel(r io.Reader) (*RequestedPeerChannel, error) {
+func DecodeRequestedPeerChannel(r *Reader) (*RequestedPeerChannel, error) {
 	v := &RequestedPeerChannel{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.ChannelID = ReadLong(r)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
 	if v.Flags.Has(0) {
-		v.Title = ReadString(r)
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
 	}
 	if v.Flags.Has(1) {
-		v.Username = ReadString(r)
+		_rUsername, _eUsername := r.ReadString()
+		if _eUsername != nil {
+			return nil, _eUsername
+		}
+		v.Username = _rUsername
 	}
 	if v.Flags.Has(2) {
-		_objPhoto, _ := ReadTLObject(r)
+		_objPhoto, _errPhoto := ReadTLObject(r)
+		if _errPhoto != nil {
+			return nil, _errPhoto
+		}
 		v.Photo = _objPhoto.(PhotoClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[RequestedPeerChannelTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequestedPeerChannelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequestedPeerChannel(r)
 	}
 }
@@ -10504,13 +11960,13 @@ func (v *StarsTransactionPeerUnsupported) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerUnsupported deserializes a StarsTransactionPeerUnsupported from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerUnsupported(r io.Reader) (*StarsTransactionPeerUnsupported, error) {
+func DecodeStarsTransactionPeerUnsupported(r *Reader) (*StarsTransactionPeerUnsupported, error) {
 	v := &StarsTransactionPeerUnsupported{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerUnsupportedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerUnsupportedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerUnsupported(r)
 	}
 }
@@ -10533,13 +11989,13 @@ func (v *StarsTransactionPeerAppStore) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerAppStore deserializes a StarsTransactionPeerAppStore from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerAppStore(r io.Reader) (*StarsTransactionPeerAppStore, error) {
+func DecodeStarsTransactionPeerAppStore(r *Reader) (*StarsTransactionPeerAppStore, error) {
 	v := &StarsTransactionPeerAppStore{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerAppStoreTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerAppStoreTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerAppStore(r)
 	}
 }
@@ -10562,13 +12018,13 @@ func (v *StarsTransactionPeerPlayMarket) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerPlayMarket deserializes a StarsTransactionPeerPlayMarket from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerPlayMarket(r io.Reader) (*StarsTransactionPeerPlayMarket, error) {
+func DecodeStarsTransactionPeerPlayMarket(r *Reader) (*StarsTransactionPeerPlayMarket, error) {
 	v := &StarsTransactionPeerPlayMarket{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerPlayMarketTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerPlayMarketTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerPlayMarket(r)
 	}
 }
@@ -10591,13 +12047,13 @@ func (v *StarsTransactionPeerPremiumBot) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerPremiumBot deserializes a StarsTransactionPeerPremiumBot from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerPremiumBot(r io.Reader) (*StarsTransactionPeerPremiumBot, error) {
+func DecodeStarsTransactionPeerPremiumBot(r *Reader) (*StarsTransactionPeerPremiumBot, error) {
 	v := &StarsTransactionPeerPremiumBot{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerPremiumBotTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerPremiumBotTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerPremiumBot(r)
 	}
 }
@@ -10620,13 +12076,13 @@ func (v *StarsTransactionPeerFragment) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerFragment deserializes a StarsTransactionPeerFragment from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerFragment(r io.Reader) (*StarsTransactionPeerFragment, error) {
+func DecodeStarsTransactionPeerFragment(r *Reader) (*StarsTransactionPeerFragment, error) {
 	v := &StarsTransactionPeerFragment{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerFragmentTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerFragmentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerFragment(r)
 	}
 }
@@ -10651,15 +12107,18 @@ func (v *StarsTransactionPeer) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeer deserializes a StarsTransactionPeer from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeer(r io.Reader) (*StarsTransactionPeer, error) {
+func DecodeStarsTransactionPeer(r *Reader) (*StarsTransactionPeer, error) {
 	v := &StarsTransactionPeer{}
-	_objPeer, _ := ReadTLObject(r)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
 	v.Peer = _objPeer.(PeerClass)
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeer(r)
 	}
 }
@@ -10682,13 +12141,13 @@ func (v *StarsTransactionPeerAds) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerAds deserializes a StarsTransactionPeerAds from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerAds(r io.Reader) (*StarsTransactionPeerAds, error) {
+func DecodeStarsTransactionPeerAds(r *Reader) (*StarsTransactionPeerAds, error) {
 	v := &StarsTransactionPeerAds{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerAdsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerAdsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerAds(r)
 	}
 }
@@ -10711,13 +12170,13 @@ func (v *StarsTransactionPeerAPI) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarsTransactionPeerAPI deserializes a StarsTransactionPeerAPI from a reader using the TL binary protocol.
-func DecodeStarsTransactionPeerAPI(r io.Reader) (*StarsTransactionPeerAPI, error) {
+func DecodeStarsTransactionPeerAPI(r *Reader) (*StarsTransactionPeerAPI, error) {
 	v := &StarsTransactionPeerAPI{}
 	return v, nil
 }
 
 func init() {
-	Registry[StarsTransactionPeerAPITypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarsTransactionPeerAPITypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarsTransactionPeerAPI(r)
 	}
 }
@@ -10766,13 +12225,13 @@ func (v *RequirementToContactEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequirementToContactEmpty deserializes a RequirementToContactEmpty from a reader using the TL binary protocol.
-func DecodeRequirementToContactEmpty(r io.Reader) (*RequirementToContactEmpty, error) {
+func DecodeRequirementToContactEmpty(r *Reader) (*RequirementToContactEmpty, error) {
 	v := &RequirementToContactEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[RequirementToContactEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequirementToContactEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequirementToContactEmpty(r)
 	}
 }
@@ -10795,13 +12254,13 @@ func (v *RequirementToContactPremium) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequirementToContactPremium deserializes a RequirementToContactPremium from a reader using the TL binary protocol.
-func DecodeRequirementToContactPremium(r io.Reader) (*RequirementToContactPremium, error) {
+func DecodeRequirementToContactPremium(r *Reader) (*RequirementToContactPremium, error) {
 	v := &RequirementToContactPremium{}
 	return v, nil
 }
 
 func init() {
-	Registry[RequirementToContactPremiumTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequirementToContactPremiumTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequirementToContactPremium(r)
 	}
 }
@@ -10826,14 +12285,18 @@ func (v *RequirementToContactPaidMessages) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeRequirementToContactPaidMessages deserializes a RequirementToContactPaidMessages from a reader using the TL binary protocol.
-func DecodeRequirementToContactPaidMessages(r io.Reader) (*RequirementToContactPaidMessages, error) {
+func DecodeRequirementToContactPaidMessages(r *Reader) (*RequirementToContactPaidMessages, error) {
 	v := &RequirementToContactPaidMessages{}
-	v.StarsAmount = ReadLong(r)
+	_rStarsAmount, _eStarsAmount := r.ReadInt64()
+	if _eStarsAmount != nil {
+		return nil, _eStarsAmount
+	}
+	v.StarsAmount = _rStarsAmount
 	return v, nil
 }
 
 func init() {
-	Registry[RequirementToContactPaidMessagesTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[RequirementToContactPaidMessagesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeRequirementToContactPaidMessages(r)
 	}
 }
@@ -10882,13 +12345,13 @@ func (v *InputChatThemeEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatThemeEmpty deserializes a InputChatThemeEmpty from a reader using the TL binary protocol.
-func DecodeInputChatThemeEmpty(r io.Reader) (*InputChatThemeEmpty, error) {
+func DecodeInputChatThemeEmpty(r *Reader) (*InputChatThemeEmpty, error) {
 	v := &InputChatThemeEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatThemeEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatThemeEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatThemeEmpty(r)
 	}
 }
@@ -10913,14 +12376,18 @@ func (v *InputChatTheme) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatTheme deserializes a InputChatTheme from a reader using the TL binary protocol.
-func DecodeInputChatTheme(r io.Reader) (*InputChatTheme, error) {
+func DecodeInputChatTheme(r *Reader) (*InputChatTheme, error) {
 	v := &InputChatTheme{}
-	v.Emoticon = ReadString(r)
+	_rEmoticon, _eEmoticon := r.ReadString()
+	if _eEmoticon != nil {
+		return nil, _eEmoticon
+	}
+	v.Emoticon = _rEmoticon
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatThemeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatThemeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatTheme(r)
 	}
 }
@@ -10945,14 +12412,18 @@ func (v *InputChatThemeUniqueGift) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeInputChatThemeUniqueGift deserializes a InputChatThemeUniqueGift from a reader using the TL binary protocol.
-func DecodeInputChatThemeUniqueGift(r io.Reader) (*InputChatThemeUniqueGift, error) {
+func DecodeInputChatThemeUniqueGift(r *Reader) (*InputChatThemeUniqueGift, error) {
 	v := &InputChatThemeUniqueGift{}
-	v.Slug = ReadString(r)
+	_rSlug, _eSlug := r.ReadString()
+	if _eSlug != nil {
+		return nil, _eSlug
+	}
+	v.Slug = _rSlug
 	return v, nil
 }
 
 func init() {
-	Registry[InputChatThemeUniqueGiftTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[InputChatThemeUniqueGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputChatThemeUniqueGift(r)
 	}
 }
@@ -11019,33 +12490,52 @@ func (v *StarGiftAuctionUserState) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeStarGiftAuctionUserState deserializes a StarGiftAuctionUserState from a reader using the TL binary protocol.
-func DecodeStarGiftAuctionUserState(r io.Reader) (*StarGiftAuctionUserState, error) {
+func DecodeStarGiftAuctionUserState(r *Reader) (*StarGiftAuctionUserState, error) {
 	v := &StarGiftAuctionUserState{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Returned = v.Flags.Has(1)
 	if v.Flags.Has(0) {
-		v.BidAmount = ReadLong(r)
+		_rBidAmount, _eBidAmount := r.ReadInt64()
+		if _eBidAmount != nil {
+			return nil, _eBidAmount
+		}
+		v.BidAmount = _rBidAmount
 	}
 	if v.Flags.Has(0) {
-		v.BidDate = int32(ReadInt(r))
+		_rBidDate, _eBidDate := r.ReadInt32()
+		if _eBidDate != nil {
+			return nil, _eBidDate
+		}
+		v.BidDate = _rBidDate
 	}
 	if v.Flags.Has(0) {
-		v.MinBidAmount = ReadLong(r)
+		_rMinBidAmount, _eMinBidAmount := r.ReadInt64()
+		if _eMinBidAmount != nil {
+			return nil, _eMinBidAmount
+		}
+		v.MinBidAmount = _rMinBidAmount
 	}
 	if v.Flags.Has(0) {
-		_objBidPeer, _ := ReadTLObject(r)
+		_objBidPeer, _errBidPeer := ReadTLObject(r)
+		if _errBidPeer != nil {
+			return nil, _errBidPeer
+		}
 		v.BidPeer = _objBidPeer.(PeerClass)
 	}
-	v.AcquiredCount = int32(ReadInt(r))
+	_rAcquiredCount, _eAcquiredCount := r.ReadInt32()
+	if _eAcquiredCount != nil {
+		return nil, _eAcquiredCount
+	}
+	v.AcquiredCount = _rAcquiredCount
 	return v, nil
 }
 
 func init() {
-	Registry[StarGiftAuctionUserStateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[StarGiftAuctionUserStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionUserState(r)
 	}
 }

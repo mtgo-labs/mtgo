@@ -4,8 +4,79 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
+
+// HelpConfigSimpleTypeID is the constructor ID for TL type help.configSimple.
+const HelpConfigSimpleTypeID = 0x5a592a6c
+
+// HelpConfigSimple represents the TL constructor help.configSimple (0x5a592a6c).
+//
+// See https://core.telegram.org/constructor/help.configSimple for reference.
+type HelpConfigSimple struct {
+	Date    int32              `json:"date,omitempty"`
+	Expires int32              `json:"expires,omitempty"`
+	Rules   []*AccessPointRule `json:"rules,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x5a592a6c.
+func (v *HelpConfigSimple) ConstructorID() uint32 {
+	return HelpConfigSimpleTypeID
+}
+
+// Encode serializes HelpConfigSimple to a bytes.Buffer using the TL binary protocol.
+func (v *HelpConfigSimple) Encode(b *bytes.Buffer) error {
+	WriteInt(b, HelpConfigSimpleTypeID)
+	WriteInt(b, uint32(v.Date))
+	WriteInt(b, uint32(v.Expires))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Rules)))
+	for _, _item := range v.Rules {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeHelpConfigSimple deserializes a HelpConfigSimple from a reader using the TL binary protocol.
+func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
+	v := &HelpConfigSimple{}
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_vhdrRules, _ehdrRules := r.ReadUint32()
+	if _ehdrRules != nil {
+		return nil, _ehdrRules
+	}
+	_cntRules, _ecntRules := r.ReadUint32()
+	if _ecntRules != nil {
+		return nil, _ecntRules
+	}
+	if _errRules := checkVectorCount(_cntRules); _errRules != nil {
+		return nil, _errRules
+	}
+	v.Rules = make([]*AccessPointRule, _cntRules)
+	for _iRules := range v.Rules {
+		_objRules, _errRules := ReadTLObject(r)
+		if _errRules != nil {
+			return nil, _errRules
+		}
+		v.Rules[_iRules] = _objRules.(*AccessPointRule)
+	}
+	_ = _vhdrRules
+	return v, nil
+}
+
+func init() {
+	Registry[HelpConfigSimpleTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeHelpConfigSimple(r)
+	}
+}
 
 // AppUpdateClass is the interface for TL type AppUpdate.
 // Implementations must satisfy TLObject and are used to represent
@@ -89,43 +160,75 @@ func (v *HelpAppUpdate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpAppUpdate deserializes a HelpAppUpdate from a reader using the TL binary protocol.
-func DecodeHelpAppUpdate(r io.Reader) (*HelpAppUpdate, error) {
+func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 	v := &HelpAppUpdate{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.CanNotSkip = v.Flags.Has(0)
-	v.ID = int32(ReadInt(r))
-	v.Version = ReadString(r)
-	v.Text = ReadString(r)
-	ReadInt(r)
-	_cntEntities := ReadInt(r)
-	if err := checkVectorCount(_cntEntities); err != nil {
-		return nil, err
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rVersion, _eVersion := r.ReadString()
+	if _eVersion != nil {
+		return nil, _eVersion
+	}
+	v.Version = _rVersion
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
+	_vhdrEntities, _ehdrEntities := r.ReadUint32()
+	if _ehdrEntities != nil {
+		return nil, _ehdrEntities
+	}
+	_cntEntities, _ecntEntities := r.ReadUint32()
+	if _ecntEntities != nil {
+		return nil, _ecntEntities
+	}
+	if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
-		_objEntities, _ := ReadTLObject(r)
+		_objEntities, _errEntities := ReadTLObject(r)
+		if _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 	}
+	_ = _vhdrEntities
 	if v.Flags.Has(1) {
-		_objDocument, _ := ReadTLObject(r)
+		_objDocument, _errDocument := ReadTLObject(r)
+		if _errDocument != nil {
+			return nil, _errDocument
+		}
 		v.Document = _objDocument.(DocumentClass)
 	}
 	if v.Flags.Has(2) {
-		v.URL = ReadString(r)
+		_rURL, _eURL := r.ReadString()
+		if _eURL != nil {
+			return nil, _eURL
+		}
+		v.URL = _rURL
 	}
 	if v.Flags.Has(3) {
-		_objSticker, _ := ReadTLObject(r)
+		_objSticker, _errSticker := ReadTLObject(r)
+		if _errSticker != nil {
+			return nil, _errSticker
+		}
 		v.Sticker = _objSticker.(DocumentClass)
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpAppUpdateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpAppUpdateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpAppUpdate(r)
 	}
 }
@@ -148,13 +251,13 @@ func (v *HelpNoAppUpdate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpNoAppUpdate deserializes a HelpNoAppUpdate from a reader using the TL binary protocol.
-func DecodeHelpNoAppUpdate(r io.Reader) (*HelpNoAppUpdate, error) {
+func DecodeHelpNoAppUpdate(r *Reader) (*HelpNoAppUpdate, error) {
 	v := &HelpNoAppUpdate{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpNoAppUpdateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpNoAppUpdateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpNoAppUpdate(r)
 	}
 }
@@ -182,14 +285,18 @@ func (v *HelpInviteText) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpInviteText deserializes a HelpInviteText from a reader using the TL binary protocol.
-func DecodeHelpInviteText(r io.Reader) (*HelpInviteText, error) {
+func DecodeHelpInviteText(r *Reader) (*HelpInviteText, error) {
 	v := &HelpInviteText{}
-	v.Message = ReadString(r)
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	return v, nil
 }
 
 func init() {
-	Registry[HelpInviteTextTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpInviteTextTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpInviteText(r)
 	}
 }
@@ -219,16 +326,23 @@ func (v *HelpSupport) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpSupport deserializes a HelpSupport from a reader using the TL binary protocol.
-func DecodeHelpSupport(r io.Reader) (*HelpSupport, error) {
+func DecodeHelpSupport(r *Reader) (*HelpSupport, error) {
 	v := &HelpSupport{}
-	v.PhoneNumber = ReadString(r)
-	_objUser, _ := ReadTLObject(r)
+	_rPhoneNumber, _ePhoneNumber := r.ReadString()
+	if _ePhoneNumber != nil {
+		return nil, _ePhoneNumber
+	}
+	v.PhoneNumber = _rPhoneNumber
+	_objUser, _errUser := ReadTLObject(r)
+	if _errUser != nil {
+		return nil, _errUser
+	}
 	v.User = _objUser.(UserClass)
 	return v, nil
 }
 
 func init() {
-	Registry[HelpSupportTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpSupportTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpSupport(r)
 	}
 }
@@ -282,35 +396,56 @@ func (v *HelpTermsOfService) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpTermsOfService deserializes a HelpTermsOfService from a reader using the TL binary protocol.
-func DecodeHelpTermsOfService(r io.Reader) (*HelpTermsOfService, error) {
+func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 	v := &HelpTermsOfService{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Popup = v.Flags.Has(0)
-	_objID, _ := ReadTLObject(r)
+	_objID, _errID := ReadTLObject(r)
+	if _errID != nil {
+		return nil, _errID
+	}
 	v.ID = _objID.(*DataJSON)
-	v.Text = ReadString(r)
-	ReadInt(r)
-	_cntEntities := ReadInt(r)
-	if err := checkVectorCount(_cntEntities); err != nil {
-		return nil, err
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
+	_vhdrEntities, _ehdrEntities := r.ReadUint32()
+	if _ehdrEntities != nil {
+		return nil, _ehdrEntities
+	}
+	_cntEntities, _ecntEntities := r.ReadUint32()
+	if _ecntEntities != nil {
+		return nil, _ecntEntities
+	}
+	if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
-		_objEntities, _ := ReadTLObject(r)
+		_objEntities, _errEntities := ReadTLObject(r)
+		if _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 	}
+	_ = _vhdrEntities
 	if v.Flags.Has(1) {
-		v.MinAgeConfirm = int32(ReadInt(r))
+		_rMinAgeConfirm, _eMinAgeConfirm := r.ReadInt32()
+		if _eMinAgeConfirm != nil {
+			return nil, _eMinAgeConfirm
+		}
+		v.MinAgeConfirm = _rMinAgeConfirm
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpTermsOfServiceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpTermsOfServiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTermsOfService(r)
 	}
 }
@@ -354,43 +489,73 @@ func (v *HelpRecentMeUrls) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpRecentMeUrls deserializes a HelpRecentMeUrls from a reader using the TL binary protocol.
-func DecodeHelpRecentMeUrls(r io.Reader) (*HelpRecentMeUrls, error) {
+func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 	v := &HelpRecentMeUrls{}
-	ReadInt(r)
-	_cntUrls := ReadInt(r)
-	if err := checkVectorCount(_cntUrls); err != nil {
-		return nil, err
+	_vhdrUrls, _ehdrUrls := r.ReadUint32()
+	if _ehdrUrls != nil {
+		return nil, _ehdrUrls
+	}
+	_cntUrls, _ecntUrls := r.ReadUint32()
+	if _ecntUrls != nil {
+		return nil, _ecntUrls
+	}
+	if _errUrls := checkVectorCount(_cntUrls); _errUrls != nil {
+		return nil, _errUrls
 	}
 	v.Urls = make([]RecentMeURLClass, _cntUrls)
 	for _iUrls := range v.Urls {
-		_objUrls, _ := ReadTLObject(r)
+		_objUrls, _errUrls := ReadTLObject(r)
+		if _errUrls != nil {
+			return nil, _errUrls
+		}
 		v.Urls[_iUrls] = _objUrls.(RecentMeURLClass)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrUrls
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[HelpRecentMeUrlsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpRecentMeUrlsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpRecentMeUrls(r)
 	}
 }
@@ -435,14 +600,18 @@ func (v *HelpTermsOfServiceUpdateEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpTermsOfServiceUpdateEmpty deserializes a HelpTermsOfServiceUpdateEmpty from a reader using the TL binary protocol.
-func DecodeHelpTermsOfServiceUpdateEmpty(r io.Reader) (*HelpTermsOfServiceUpdateEmpty, error) {
+func DecodeHelpTermsOfServiceUpdateEmpty(r *Reader) (*HelpTermsOfServiceUpdateEmpty, error) {
 	v := &HelpTermsOfServiceUpdateEmpty{}
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[HelpTermsOfServiceUpdateEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpTermsOfServiceUpdateEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTermsOfServiceUpdateEmpty(r)
 	}
 }
@@ -469,16 +638,23 @@ func (v *HelpTermsOfServiceUpdate) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpTermsOfServiceUpdate deserializes a HelpTermsOfServiceUpdate from a reader using the TL binary protocol.
-func DecodeHelpTermsOfServiceUpdate(r io.Reader) (*HelpTermsOfServiceUpdate, error) {
+func DecodeHelpTermsOfServiceUpdate(r *Reader) (*HelpTermsOfServiceUpdate, error) {
 	v := &HelpTermsOfServiceUpdate{}
-	v.Expires = int32(ReadInt(r))
-	_objTermsOfService, _ := ReadTLObject(r)
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_objTermsOfService, _errTermsOfService := ReadTLObject(r)
+	if _errTermsOfService != nil {
+		return nil, _errTermsOfService
+	}
 	v.TermsOfService = _objTermsOfService.(*HelpTermsOfService)
 	return v, nil
 }
 
 func init() {
-	Registry[HelpTermsOfServiceUpdateTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpTermsOfServiceUpdateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTermsOfServiceUpdate(r)
 	}
 }
@@ -521,13 +697,13 @@ func (v *HelpDeepLinkInfoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpDeepLinkInfoEmpty deserializes a HelpDeepLinkInfoEmpty from a reader using the TL binary protocol.
-func DecodeHelpDeepLinkInfoEmpty(r io.Reader) (*HelpDeepLinkInfoEmpty, error) {
+func DecodeHelpDeepLinkInfoEmpty(r *Reader) (*HelpDeepLinkInfoEmpty, error) {
 	v := &HelpDeepLinkInfoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpDeepLinkInfoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpDeepLinkInfoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpDeepLinkInfoEmpty(r)
 	}
 }
@@ -574,32 +750,46 @@ func (v *HelpDeepLinkInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpDeepLinkInfo deserializes a HelpDeepLinkInfo from a reader using the TL binary protocol.
-func DecodeHelpDeepLinkInfo(r io.Reader) (*HelpDeepLinkInfo, error) {
+func DecodeHelpDeepLinkInfo(r *Reader) (*HelpDeepLinkInfo, error) {
 	v := &HelpDeepLinkInfo{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.UpdateApp = v.Flags.Has(0)
-	v.Message = ReadString(r)
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
 	if v.Flags.Has(1) {
-		ReadInt(r)
-		_cntEntities := ReadInt(r)
-		if err := checkVectorCount(_cntEntities); err != nil {
-			return nil, err
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		v.Entities = make([]MessageEntityClass, _cntEntities)
 		for _iEntities := range v.Entities {
-			_objEntities, _ := ReadTLObject(r)
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
 			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 		}
+		_ = _vhdrEntities
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpDeepLinkInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpDeepLinkInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpDeepLinkInfo(r)
 	}
 }
@@ -642,13 +832,13 @@ func (v *HelpPassportConfigNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPassportConfigNotModified deserializes a HelpPassportConfigNotModified from a reader using the TL binary protocol.
-func DecodeHelpPassportConfigNotModified(r io.Reader) (*HelpPassportConfigNotModified, error) {
+func DecodeHelpPassportConfigNotModified(r *Reader) (*HelpPassportConfigNotModified, error) {
 	v := &HelpPassportConfigNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPassportConfigNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPassportConfigNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPassportConfigNotModified(r)
 	}
 }
@@ -675,16 +865,23 @@ func (v *HelpPassportConfig) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPassportConfig deserializes a HelpPassportConfig from a reader using the TL binary protocol.
-func DecodeHelpPassportConfig(r io.Reader) (*HelpPassportConfig, error) {
+func DecodeHelpPassportConfig(r *Reader) (*HelpPassportConfig, error) {
 	v := &HelpPassportConfig{}
-	v.Hash = int32(ReadInt(r))
-	_objCountriesLangs, _ := ReadTLObject(r)
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_objCountriesLangs, _errCountriesLangs := ReadTLObject(r)
+	if _errCountriesLangs != nil {
+		return nil, _errCountriesLangs
+	}
 	v.CountriesLangs = _objCountriesLangs.(*DataJSON)
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPassportConfigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPassportConfigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPassportConfig(r)
 	}
 }
@@ -712,14 +909,18 @@ func (v *HelpSupportName) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpSupportName deserializes a HelpSupportName from a reader using the TL binary protocol.
-func DecodeHelpSupportName(r io.Reader) (*HelpSupportName, error) {
+func DecodeHelpSupportName(r *Reader) (*HelpSupportName, error) {
 	v := &HelpSupportName{}
-	v.Name = ReadString(r)
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
 	return v, nil
 }
 
 func init() {
-	Registry[HelpSupportNameTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpSupportNameTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpSupportName(r)
 	}
 }
@@ -762,13 +963,13 @@ func (v *HelpUserInfoEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpUserInfoEmpty deserializes a HelpUserInfoEmpty from a reader using the TL binary protocol.
-func DecodeHelpUserInfoEmpty(r io.Reader) (*HelpUserInfoEmpty, error) {
+func DecodeHelpUserInfoEmpty(r *Reader) (*HelpUserInfoEmpty, error) {
 	v := &HelpUserInfoEmpty{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpUserInfoEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpUserInfoEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpUserInfoEmpty(r)
 	}
 }
@@ -803,26 +1004,48 @@ func (v *HelpUserInfo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpUserInfo deserializes a HelpUserInfo from a reader using the TL binary protocol.
-func DecodeHelpUserInfo(r io.Reader) (*HelpUserInfo, error) {
+func DecodeHelpUserInfo(r *Reader) (*HelpUserInfo, error) {
 	v := &HelpUserInfo{}
-	v.Message = ReadString(r)
-	ReadInt(r)
-	_cntEntities := ReadInt(r)
-	if err := checkVectorCount(_cntEntities); err != nil {
-		return nil, err
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	_vhdrEntities, _ehdrEntities := r.ReadUint32()
+	if _ehdrEntities != nil {
+		return nil, _ehdrEntities
+	}
+	_cntEntities, _ecntEntities := r.ReadUint32()
+	if _ecntEntities != nil {
+		return nil, _ecntEntities
+	}
+	if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	v.Entities = make([]MessageEntityClass, _cntEntities)
 	for _iEntities := range v.Entities {
-		_objEntities, _ := ReadTLObject(r)
+		_objEntities, _errEntities := ReadTLObject(r)
+		if _errEntities != nil {
+			return nil, _errEntities
+		}
 		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
 	}
-	v.Author = ReadString(r)
-	v.Date = int32(ReadInt(r))
+	_ = _vhdrEntities
+	_rAuthor, _eAuthor := r.ReadString()
+	if _eAuthor != nil {
+		return nil, _eAuthor
+	}
+	v.Author = _rAuthor
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
 	return v, nil
 }
 
 func init() {
-	Registry[HelpUserInfoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpUserInfoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpUserInfo(r)
 	}
 }
@@ -867,14 +1090,18 @@ func (v *HelpPromoDataEmpty) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPromoDataEmpty deserializes a HelpPromoDataEmpty from a reader using the TL binary protocol.
-func DecodeHelpPromoDataEmpty(r io.Reader) (*HelpPromoDataEmpty, error) {
+func DecodeHelpPromoDataEmpty(r *Reader) (*HelpPromoDataEmpty, error) {
 	v := &HelpPromoDataEmpty{}
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPromoDataEmptyTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPromoDataEmptyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPromoDataEmpty(r)
 	}
 }
@@ -954,56 +1181,102 @@ func (v *HelpPromoData) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPromoData deserializes a HelpPromoData from a reader using the TL binary protocol.
-func DecodeHelpPromoData(r io.Reader) (*HelpPromoData, error) {
+func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 	v := &HelpPromoData{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Proxy = v.Flags.Has(0)
-	v.Expires = int32(ReadInt(r))
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
 	if v.Flags.Has(3) {
-		_objPeer, _ := ReadTLObject(r)
+		_objPeer, _errPeer := ReadTLObject(r)
+		if _errPeer != nil {
+			return nil, _errPeer
+		}
 		v.Peer = _objPeer.(PeerClass)
 	}
 	if v.Flags.Has(1) {
-		v.PsaType = ReadString(r)
+		_rPsaType, _ePsaType := r.ReadString()
+		if _ePsaType != nil {
+			return nil, _ePsaType
+		}
+		v.PsaType = _rPsaType
 	}
 	if v.Flags.Has(2) {
-		v.PsaMessage = ReadString(r)
+		_rPsaMessage, _ePsaMessage := r.ReadString()
+		if _ePsaMessage != nil {
+			return nil, _ePsaMessage
+		}
+		v.PsaMessage = _rPsaMessage
 	}
-	v.PendingSuggestions = ReadVectorString(r)
-	v.DismissedSuggestions = ReadVectorString(r)
+	_vvPendingSuggestions, _vePendingSuggestions := r.ReadVectorString()
+	if _vePendingSuggestions != nil {
+		return nil, _vePendingSuggestions
+	}
+	v.PendingSuggestions = _vvPendingSuggestions
+	_vvDismissedSuggestions, _veDismissedSuggestions := r.ReadVectorString()
+	if _veDismissedSuggestions != nil {
+		return nil, _veDismissedSuggestions
+	}
+	v.DismissedSuggestions = _vvDismissedSuggestions
 	if v.Flags.Has(4) {
-		_objCustomPendingSuggestion, _ := ReadTLObject(r)
+		_objCustomPendingSuggestion, _errCustomPendingSuggestion := ReadTLObject(r)
+		if _errCustomPendingSuggestion != nil {
+			return nil, _errCustomPendingSuggestion
+		}
 		v.CustomPendingSuggestion = _objCustomPendingSuggestion.(*PendingSuggestion)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPromoDataTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPromoDataTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPromoData(r)
 	}
 }
@@ -1052,25 +1325,37 @@ func (v *HelpCountryCode) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpCountryCode deserializes a HelpCountryCode from a reader using the TL binary protocol.
-func DecodeHelpCountryCode(r io.Reader) (*HelpCountryCode, error) {
+func DecodeHelpCountryCode(r *Reader) (*HelpCountryCode, error) {
 	v := &HelpCountryCode{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.CountryCode = ReadString(r)
+	_rCountryCode, _eCountryCode := r.ReadString()
+	if _eCountryCode != nil {
+		return nil, _eCountryCode
+	}
+	v.CountryCode = _rCountryCode
 	if v.Flags.Has(0) {
-		v.Prefixes = ReadVectorString(r)
+		_vvPrefixes, _vePrefixes := r.ReadVectorString()
+		if _vePrefixes != nil {
+			return nil, _vePrefixes
+		}
+		v.Prefixes = _vvPrefixes
 	}
 	if v.Flags.Has(1) {
-		v.Patterns = ReadVectorString(r)
+		_vvPatterns, _vePatterns := r.ReadVectorString()
+		if _vePatterns != nil {
+			return nil, _vePatterns
+		}
+		v.Patterns = _vvPatterns
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpCountryCodeTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpCountryCodeTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpCountryCode(r)
 	}
 }
@@ -1124,34 +1409,56 @@ func (v *HelpCountry) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpCountry deserializes a HelpCountry from a reader using the TL binary protocol.
-func DecodeHelpCountry(r io.Reader) (*HelpCountry, error) {
+func DecodeHelpCountry(r *Reader) (*HelpCountry, error) {
 	v := &HelpCountry{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Hidden = v.Flags.Has(0)
-	v.Iso2 = ReadString(r)
-	v.DefaultName = ReadString(r)
-	if v.Flags.Has(1) {
-		v.Name = ReadString(r)
+	_rIso2, _eIso2 := r.ReadString()
+	if _eIso2 != nil {
+		return nil, _eIso2
 	}
-	ReadInt(r)
-	_cntCountryCodes := ReadInt(r)
-	if err := checkVectorCount(_cntCountryCodes); err != nil {
-		return nil, err
+	v.Iso2 = _rIso2
+	_rDefaultName, _eDefaultName := r.ReadString()
+	if _eDefaultName != nil {
+		return nil, _eDefaultName
+	}
+	v.DefaultName = _rDefaultName
+	if v.Flags.Has(1) {
+		_rName, _eName := r.ReadString()
+		if _eName != nil {
+			return nil, _eName
+		}
+		v.Name = _rName
+	}
+	_vhdrCountryCodes, _ehdrCountryCodes := r.ReadUint32()
+	if _ehdrCountryCodes != nil {
+		return nil, _ehdrCountryCodes
+	}
+	_cntCountryCodes, _ecntCountryCodes := r.ReadUint32()
+	if _ecntCountryCodes != nil {
+		return nil, _ecntCountryCodes
+	}
+	if _errCountryCodes := checkVectorCount(_cntCountryCodes); _errCountryCodes != nil {
+		return nil, _errCountryCodes
 	}
 	v.CountryCodes = make([]*HelpCountryCode, _cntCountryCodes)
 	for _iCountryCodes := range v.CountryCodes {
-		_objCountryCodes, _ := ReadTLObject(r)
+		_objCountryCodes, _errCountryCodes := ReadTLObject(r)
+		if _errCountryCodes != nil {
+			return nil, _errCountryCodes
+		}
 		v.CountryCodes[_iCountryCodes] = _objCountryCodes.(*HelpCountryCode)
 	}
+	_ = _vhdrCountryCodes
 	return v, nil
 }
 
 func init() {
-	Registry[HelpCountryTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpCountryTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpCountry(r)
 	}
 }
@@ -1194,13 +1501,13 @@ func (v *HelpCountriesListNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpCountriesListNotModified deserializes a HelpCountriesListNotModified from a reader using the TL binary protocol.
-func DecodeHelpCountriesListNotModified(r io.Reader) (*HelpCountriesListNotModified, error) {
+func DecodeHelpCountriesListNotModified(r *Reader) (*HelpCountriesListNotModified, error) {
 	v := &HelpCountriesListNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpCountriesListNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpCountriesListNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpCountriesListNotModified(r)
 	}
 }
@@ -1231,24 +1538,38 @@ func (v *HelpCountriesList) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpCountriesList deserializes a HelpCountriesList from a reader using the TL binary protocol.
-func DecodeHelpCountriesList(r io.Reader) (*HelpCountriesList, error) {
+func DecodeHelpCountriesList(r *Reader) (*HelpCountriesList, error) {
 	v := &HelpCountriesList{}
-	ReadInt(r)
-	_cntCountries := ReadInt(r)
-	if err := checkVectorCount(_cntCountries); err != nil {
-		return nil, err
+	_vhdrCountries, _ehdrCountries := r.ReadUint32()
+	if _ehdrCountries != nil {
+		return nil, _ehdrCountries
+	}
+	_cntCountries, _ecntCountries := r.ReadUint32()
+	if _ecntCountries != nil {
+		return nil, _ecntCountries
+	}
+	if _errCountries := checkVectorCount(_cntCountries); _errCountries != nil {
+		return nil, _errCountries
 	}
 	v.Countries = make([]*HelpCountry, _cntCountries)
 	for _iCountries := range v.Countries {
-		_objCountries, _ := ReadTLObject(r)
+		_objCountries, _errCountries := ReadTLObject(r)
+		if _errCountries != nil {
+			return nil, _errCountries
+		}
 		v.Countries[_iCountries] = _objCountries.(*HelpCountry)
 	}
-	v.Hash = int32(ReadInt(r))
+	_ = _vhdrCountries
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[HelpCountriesListTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpCountriesListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpCountriesList(r)
 	}
 }
@@ -1302,55 +1623,103 @@ func (v *HelpPremiumPromo) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPremiumPromo deserializes a HelpPremiumPromo from a reader using the TL binary protocol.
-func DecodeHelpPremiumPromo(r io.Reader) (*HelpPremiumPromo, error) {
+func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 	v := &HelpPremiumPromo{}
-	v.StatusText = ReadString(r)
-	ReadInt(r)
-	_cntStatusEntities := ReadInt(r)
-	if err := checkVectorCount(_cntStatusEntities); err != nil {
-		return nil, err
+	_rStatusText, _eStatusText := r.ReadString()
+	if _eStatusText != nil {
+		return nil, _eStatusText
+	}
+	v.StatusText = _rStatusText
+	_vhdrStatusEntities, _ehdrStatusEntities := r.ReadUint32()
+	if _ehdrStatusEntities != nil {
+		return nil, _ehdrStatusEntities
+	}
+	_cntStatusEntities, _ecntStatusEntities := r.ReadUint32()
+	if _ecntStatusEntities != nil {
+		return nil, _ecntStatusEntities
+	}
+	if _errStatusEntities := checkVectorCount(_cntStatusEntities); _errStatusEntities != nil {
+		return nil, _errStatusEntities
 	}
 	v.StatusEntities = make([]MessageEntityClass, _cntStatusEntities)
 	for _iStatusEntities := range v.StatusEntities {
-		_objStatusEntities, _ := ReadTLObject(r)
+		_objStatusEntities, _errStatusEntities := ReadTLObject(r)
+		if _errStatusEntities != nil {
+			return nil, _errStatusEntities
+		}
 		v.StatusEntities[_iStatusEntities] = _objStatusEntities.(MessageEntityClass)
 	}
-	v.VideoSections = ReadVectorString(r)
-	ReadInt(r)
-	_cntVideos := ReadInt(r)
-	if err := checkVectorCount(_cntVideos); err != nil {
-		return nil, err
+	_ = _vhdrStatusEntities
+	_vvVideoSections, _veVideoSections := r.ReadVectorString()
+	if _veVideoSections != nil {
+		return nil, _veVideoSections
+	}
+	v.VideoSections = _vvVideoSections
+	_vhdrVideos, _ehdrVideos := r.ReadUint32()
+	if _ehdrVideos != nil {
+		return nil, _ehdrVideos
+	}
+	_cntVideos, _ecntVideos := r.ReadUint32()
+	if _ecntVideos != nil {
+		return nil, _ecntVideos
+	}
+	if _errVideos := checkVectorCount(_cntVideos); _errVideos != nil {
+		return nil, _errVideos
 	}
 	v.Videos = make([]DocumentClass, _cntVideos)
 	for _iVideos := range v.Videos {
-		_objVideos, _ := ReadTLObject(r)
+		_objVideos, _errVideos := ReadTLObject(r)
+		if _errVideos != nil {
+			return nil, _errVideos
+		}
 		v.Videos[_iVideos] = _objVideos.(DocumentClass)
 	}
-	ReadInt(r)
-	_cntPeriodOptions := ReadInt(r)
-	if err := checkVectorCount(_cntPeriodOptions); err != nil {
-		return nil, err
+	_ = _vhdrVideos
+	_vhdrPeriodOptions, _ehdrPeriodOptions := r.ReadUint32()
+	if _ehdrPeriodOptions != nil {
+		return nil, _ehdrPeriodOptions
+	}
+	_cntPeriodOptions, _ecntPeriodOptions := r.ReadUint32()
+	if _ecntPeriodOptions != nil {
+		return nil, _ecntPeriodOptions
+	}
+	if _errPeriodOptions := checkVectorCount(_cntPeriodOptions); _errPeriodOptions != nil {
+		return nil, _errPeriodOptions
 	}
 	v.PeriodOptions = make([]*PremiumSubscriptionOption, _cntPeriodOptions)
 	for _iPeriodOptions := range v.PeriodOptions {
-		_objPeriodOptions, _ := ReadTLObject(r)
+		_objPeriodOptions, _errPeriodOptions := ReadTLObject(r)
+		if _errPeriodOptions != nil {
+			return nil, _errPeriodOptions
+		}
 		v.PeriodOptions[_iPeriodOptions] = _objPeriodOptions.(*PremiumSubscriptionOption)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrPeriodOptions
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPremiumPromoTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPremiumPromoTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPremiumPromo(r)
 	}
 }
@@ -1393,13 +1762,13 @@ func (v *HelpAppConfigNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpAppConfigNotModified deserializes a HelpAppConfigNotModified from a reader using the TL binary protocol.
-func DecodeHelpAppConfigNotModified(r io.Reader) (*HelpAppConfigNotModified, error) {
+func DecodeHelpAppConfigNotModified(r *Reader) (*HelpAppConfigNotModified, error) {
 	v := &HelpAppConfigNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpAppConfigNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpAppConfigNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpAppConfigNotModified(r)
 	}
 }
@@ -1426,16 +1795,23 @@ func (v *HelpAppConfig) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpAppConfig deserializes a HelpAppConfig from a reader using the TL binary protocol.
-func DecodeHelpAppConfig(r io.Reader) (*HelpAppConfig, error) {
+func DecodeHelpAppConfig(r *Reader) (*HelpAppConfig, error) {
 	v := &HelpAppConfig{}
-	v.Hash = int32(ReadInt(r))
-	_objConfig, _ := ReadTLObject(r)
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_objConfig, _errConfig := ReadTLObject(r)
+	if _errConfig != nil {
+		return nil, _errConfig
+	}
 	v.Config = _objConfig.(JSONValueClass)
 	return v, nil
 }
 
 func init() {
-	Registry[HelpAppConfigTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpAppConfigTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpAppConfig(r)
 	}
 }
@@ -1480,14 +1856,18 @@ func (v *HelpPeerColorSet) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPeerColorSet deserializes a HelpPeerColorSet from a reader using the TL binary protocol.
-func DecodeHelpPeerColorSet(r io.Reader) (*HelpPeerColorSet, error) {
+func DecodeHelpPeerColorSet(r *Reader) (*HelpPeerColorSet, error) {
 	v := &HelpPeerColorSet{}
-	v.Colors = ReadVectorInt(r)
+	_vvColors, _veColors := r.ReadVectorInt()
+	if _veColors != nil {
+		return nil, _veColors
+	}
+	v.Colors = _vvColors
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPeerColorSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPeerColorSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPeerColorSet(r)
 	}
 }
@@ -1516,16 +1896,28 @@ func (v *HelpPeerColorProfileSet) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPeerColorProfileSet deserializes a HelpPeerColorProfileSet from a reader using the TL binary protocol.
-func DecodeHelpPeerColorProfileSet(r io.Reader) (*HelpPeerColorProfileSet, error) {
+func DecodeHelpPeerColorProfileSet(r *Reader) (*HelpPeerColorProfileSet, error) {
 	v := &HelpPeerColorProfileSet{}
-	v.PaletteColors = ReadVectorInt(r)
-	v.BgColors = ReadVectorInt(r)
-	v.StoryColors = ReadVectorInt(r)
+	_vvPaletteColors, _vePaletteColors := r.ReadVectorInt()
+	if _vePaletteColors != nil {
+		return nil, _vePaletteColors
+	}
+	v.PaletteColors = _vvPaletteColors
+	_vvBgColors, _veBgColors := r.ReadVectorInt()
+	if _veBgColors != nil {
+		return nil, _veBgColors
+	}
+	v.BgColors = _vvBgColors
+	_vvStoryColors, _veStoryColors := r.ReadVectorInt()
+	if _veStoryColors != nil {
+		return nil, _veStoryColors
+	}
+	v.StoryColors = _vvStoryColors
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPeerColorProfileSetTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPeerColorProfileSetTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPeerColorProfileSet(r)
 	}
 }
@@ -1592,34 +1984,52 @@ func (v *HelpPeerColorOption) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPeerColorOption deserializes a HelpPeerColorOption from a reader using the TL binary protocol.
-func DecodeHelpPeerColorOption(r io.Reader) (*HelpPeerColorOption, error) {
+func DecodeHelpPeerColorOption(r *Reader) (*HelpPeerColorOption, error) {
 	v := &HelpPeerColorOption{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Hidden = v.Flags.Has(0)
-	v.ColorID = int32(ReadInt(r))
+	_rColorID, _eColorID := r.ReadInt32()
+	if _eColorID != nil {
+		return nil, _eColorID
+	}
+	v.ColorID = _rColorID
 	if v.Flags.Has(1) {
-		_objColors, _ := ReadTLObject(r)
+		_objColors, _errColors := ReadTLObject(r)
+		if _errColors != nil {
+			return nil, _errColors
+		}
 		v.Colors = _objColors.(PeerColorSetClass)
 	}
 	if v.Flags.Has(2) {
-		_objDarkColors, _ := ReadTLObject(r)
+		_objDarkColors, _errDarkColors := ReadTLObject(r)
+		if _errDarkColors != nil {
+			return nil, _errDarkColors
+		}
 		v.DarkColors = _objDarkColors.(PeerColorSetClass)
 	}
 	if v.Flags.Has(3) {
-		v.ChannelMinLevel = int32(ReadInt(r))
+		_rChannelMinLevel, _eChannelMinLevel := r.ReadInt32()
+		if _eChannelMinLevel != nil {
+			return nil, _eChannelMinLevel
+		}
+		v.ChannelMinLevel = _rChannelMinLevel
 	}
 	if v.Flags.Has(4) {
-		v.GroupMinLevel = int32(ReadInt(r))
+		_rGroupMinLevel, _eGroupMinLevel := r.ReadInt32()
+		if _eGroupMinLevel != nil {
+			return nil, _eGroupMinLevel
+		}
+		v.GroupMinLevel = _rGroupMinLevel
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPeerColorOptionTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPeerColorOptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPeerColorOption(r)
 	}
 }
@@ -1662,13 +2072,13 @@ func (v *HelpPeerColorsNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPeerColorsNotModified deserializes a HelpPeerColorsNotModified from a reader using the TL binary protocol.
-func DecodeHelpPeerColorsNotModified(r io.Reader) (*HelpPeerColorsNotModified, error) {
+func DecodeHelpPeerColorsNotModified(r *Reader) (*HelpPeerColorsNotModified, error) {
 	v := &HelpPeerColorsNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPeerColorsNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPeerColorsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPeerColorsNotModified(r)
 	}
 }
@@ -1699,24 +2109,38 @@ func (v *HelpPeerColors) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpPeerColors deserializes a HelpPeerColors from a reader using the TL binary protocol.
-func DecodeHelpPeerColors(r io.Reader) (*HelpPeerColors, error) {
+func DecodeHelpPeerColors(r *Reader) (*HelpPeerColors, error) {
 	v := &HelpPeerColors{}
-	v.Hash = int32(ReadInt(r))
-	ReadInt(r)
-	_cntColors := ReadInt(r)
-	if err := checkVectorCount(_cntColors); err != nil {
-		return nil, err
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_vhdrColors, _ehdrColors := r.ReadUint32()
+	if _ehdrColors != nil {
+		return nil, _ehdrColors
+	}
+	_cntColors, _ecntColors := r.ReadUint32()
+	if _ecntColors != nil {
+		return nil, _ecntColors
+	}
+	if _errColors := checkVectorCount(_cntColors); _errColors != nil {
+		return nil, _errColors
 	}
 	v.Colors = make([]*HelpPeerColorOption, _cntColors)
 	for _iColors := range v.Colors {
-		_objColors, _ := ReadTLObject(r)
+		_objColors, _errColors := ReadTLObject(r)
+		if _errColors != nil {
+			return nil, _errColors
+		}
 		v.Colors[_iColors] = _objColors.(*HelpPeerColorOption)
 	}
+	_ = _vhdrColors
 	return v, nil
 }
 
 func init() {
-	Registry[HelpPeerColorsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpPeerColorsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpPeerColors(r)
 	}
 }
@@ -1759,13 +2183,13 @@ func (v *HelpTimezonesListNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpTimezonesListNotModified deserializes a HelpTimezonesListNotModified from a reader using the TL binary protocol.
-func DecodeHelpTimezonesListNotModified(r io.Reader) (*HelpTimezonesListNotModified, error) {
+func DecodeHelpTimezonesListNotModified(r *Reader) (*HelpTimezonesListNotModified, error) {
 	v := &HelpTimezonesListNotModified{}
 	return v, nil
 }
 
 func init() {
-	Registry[HelpTimezonesListNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpTimezonesListNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTimezonesListNotModified(r)
 	}
 }
@@ -1796,78 +2220,38 @@ func (v *HelpTimezonesList) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeHelpTimezonesList deserializes a HelpTimezonesList from a reader using the TL binary protocol.
-func DecodeHelpTimezonesList(r io.Reader) (*HelpTimezonesList, error) {
+func DecodeHelpTimezonesList(r *Reader) (*HelpTimezonesList, error) {
 	v := &HelpTimezonesList{}
-	ReadInt(r)
-	_cntTimezones := ReadInt(r)
-	if err := checkVectorCount(_cntTimezones); err != nil {
-		return nil, err
+	_vhdrTimezones, _ehdrTimezones := r.ReadUint32()
+	if _ehdrTimezones != nil {
+		return nil, _ehdrTimezones
+	}
+	_cntTimezones, _ecntTimezones := r.ReadUint32()
+	if _ecntTimezones != nil {
+		return nil, _ecntTimezones
+	}
+	if _errTimezones := checkVectorCount(_cntTimezones); _errTimezones != nil {
+		return nil, _errTimezones
 	}
 	v.Timezones = make([]*Timezone, _cntTimezones)
 	for _iTimezones := range v.Timezones {
-		_objTimezones, _ := ReadTLObject(r)
+		_objTimezones, _errTimezones := ReadTLObject(r)
+		if _errTimezones != nil {
+			return nil, _errTimezones
+		}
 		v.Timezones[_iTimezones] = _objTimezones.(*Timezone)
 	}
-	v.Hash = int32(ReadInt(r))
+	_ = _vhdrTimezones
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
 	return v, nil
 }
 
 func init() {
-	Registry[HelpTimezonesListTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[HelpTimezonesListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTimezonesList(r)
-	}
-}
-
-// HelpConfigSimpleTypeID is the constructor ID for TL type help.configSimple.
-const HelpConfigSimpleTypeID = 0x5a592a6c
-
-// HelpConfigSimple represents the TL constructor help.configSimple (0x5a592a6c).
-//
-// See https://core.telegram.org/constructor/help.configSimple for reference.
-type HelpConfigSimple struct {
-	Date    int32              `json:"date,omitempty"`
-	Expires int32              `json:"expires,omitempty"`
-	Rules   []*AccessPointRule `json:"rules,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x5a592a6c.
-func (v *HelpConfigSimple) ConstructorID() uint32 {
-	return HelpConfigSimpleTypeID
-}
-
-// Encode serializes HelpConfigSimple to a bytes.Buffer using the TL binary protocol.
-func (v *HelpConfigSimple) Encode(b *bytes.Buffer) error {
-	WriteInt(b, HelpConfigSimpleTypeID)
-	WriteInt(b, uint32(v.Date))
-	WriteInt(b, uint32(v.Expires))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Rules)))
-	for _, _item := range v.Rules {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeHelpConfigSimple deserializes a HelpConfigSimple from a reader using the TL binary protocol.
-func DecodeHelpConfigSimple(r io.Reader) (*HelpConfigSimple, error) {
-	v := &HelpConfigSimple{}
-	v.Date = int32(ReadInt(r))
-	v.Expires = int32(ReadInt(r))
-	ReadInt(r)
-	_cntRules := ReadInt(r)
-	if err := checkVectorCount(_cntRules); err != nil {
-		return nil, err
-	}
-	v.Rules = make([]*AccessPointRule, _cntRules)
-	for _iRules := range v.Rules {
-		_objRules, _ := ReadTLObject(r)
-		v.Rules[_iRules] = _objRules.(*AccessPointRule)
-	}
-	return v, nil
-}
-
-func init() {
-	Registry[HelpConfigSimpleTypeID] = func(r io.Reader) (TLObject, error) {
-		return DecodeHelpConfigSimple(r)
 	}
 }

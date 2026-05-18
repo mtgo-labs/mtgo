@@ -4,19 +4,16 @@ package e2e
 
 import (
 	"bytes"
-	"encoding/binary"
-	"io"
-
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
 // Registry maps TL constructor IDs to factory functions.
-var Registry = map[uint32]func(io.Reader) (tg.TLObject, error){}
+var Registry = map[uint32]func(*tg.Reader) (tg.TLObject, error){}
 
 // ReadE2ETLObject reads a TLObject from r using the e2e Registry.
-func ReadE2ETLObject(r io.Reader) (tg.TLObject, error) {
-	var id uint32
-	if err := binary.Read(r, binary.LittleEndian, &id); err != nil {
+func ReadE2ETLObject(r *tg.Reader) (tg.TLObject, error) {
+	id, err := r.ReadUint32()
+	if err != nil {
 		return nil, err
 	}
 	constructor, ok := Registry[id]

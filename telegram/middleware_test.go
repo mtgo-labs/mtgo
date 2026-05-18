@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"io"
 	"sync"
 	"testing"
 
@@ -299,7 +298,7 @@ func TestInvokerMiddlewareChain(t *testing.T) {
 
 	track := func(label string) InvokerMiddleware {
 		return func(next tg.Invoker) tg.Invoker {
-			return tg.InvokerFunc(func(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+			return tg.InvokerFunc(func(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 				mu.Lock()
 				order = append(order, label)
 				mu.Unlock()

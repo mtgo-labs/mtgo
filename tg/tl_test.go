@@ -2,7 +2,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 	"testing"
 )
 
@@ -21,7 +20,7 @@ func (m *mockTLObject) ConstructorID() uint32 {
 }
 
 func init() {
-	Registry[0xDEADBEEF] = func(r io.Reader) (TLObject, error) {
+	Registry[0xDEADBEEF] = func(r *Reader) (TLObject, error) {
 		return &mockTLObject{}, nil
 	}
 }

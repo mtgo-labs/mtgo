@@ -310,8 +310,11 @@ func WriteVectorObject(b *bytes.Buffer, items []TLObject) error {
 	return nil
 }
 
-func ReadVectorObject(r io.Reader) ([]TLObject, error) {
-	count := ReadInt(r)
+func ReadVectorObject(r *Reader) ([]TLObject, error) {
+	count, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
 	if err := checkVectorCount(count); err != nil {
 		return nil, err
 	}
@@ -327,14 +330,17 @@ func ReadVectorObject(r io.Reader) ([]TLObject, error) {
 }
 
 func init() {
-	Registry[BoolTrueID] = func(r io.Reader) (TLObject, error) {
+	Registry[BoolTrueID] = func(r *Reader) (TLObject, error) {
 		return TLBool(true), nil
 	}
-	Registry[BoolFalseID] = func(r io.Reader) (TLObject, error) {
+	Registry[BoolFalseID] = func(r *Reader) (TLObject, error) {
 		return TLBool(false), nil
 	}
-	Registry[vectorBareID] = func(r io.Reader) (TLObject, error) {
-		count := ReadInt(r)
+	Registry[vectorBareID] = func(r *Reader) (TLObject, error) {
+		count, err := r.ReadUint32()
+		if err != nil {
+			return nil, err
+		}
 		if err := checkVectorCount(count); err != nil {
 			return nil, err
 		}

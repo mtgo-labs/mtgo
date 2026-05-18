@@ -2,8 +2,6 @@ package tg
 
 import (
 	"bytes"
-	"encoding/binary"
-	"io"
 )
 
 // TLObject is the interface implemented by all TL serializable types.
@@ -23,13 +21,13 @@ func EncodeTLObject(b *bytes.Buffer, obj TLObject) error {
 // Registry maps TL constructor IDs to factory functions that decode the
 // corresponding TLObject from a reader. Generated types register themselves
 // during init.
-var Registry = map[uint32]func(io.Reader) (TLObject, error){}
+var Registry = map[uint32]func(*Reader) (TLObject, error){}
 
 // ReadTLObject reads a TLObject from r by looking up the constructor ID in
 // Registry and calling the associated factory function.
-func ReadTLObject(r io.Reader) (TLObject, error) {
-	var id uint32
-	if err := binary.Read(r, binary.LittleEndian, &id); err != nil {
+func ReadTLObject(r *Reader) (TLObject, error) {
+	id, err := r.ReadUint32()
+	if err != nil {
 		return nil, err
 	}
 	constructor, ok := Registry[id]

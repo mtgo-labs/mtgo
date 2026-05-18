@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 )
 
 // ContactsGetContactIDsTypeID is the constructor ID for the RPC function contacts.getContactIDs.
@@ -39,7 +38,7 @@ func (v *ContactsGetContactIDsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetContactIDs(ctx context.Context, req *ContactsGetContactIDsRequest) (TLObject, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -76,7 +75,7 @@ func (v *ContactsGetStatusesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetStatuses(ctx context.Context) (TLObject, error) {
-	result, err := c.invoke(ctx, &ContactsGetStatusesRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ContactsGetStatusesRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -115,7 +114,7 @@ func (v *ContactsGetContactsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetContacts(ctx context.Context, req *ContactsGetContactsRequest) (ContactsClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -161,7 +160,7 @@ func (v *ContactsImportContactsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsImportContacts(ctx context.Context, req *ContactsImportContactsRequest) (*ContactsImportedContacts, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -207,7 +206,7 @@ func (v *ContactsDeleteContactsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsDeleteContacts(ctx context.Context, req *ContactsDeleteContactsRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -249,7 +248,7 @@ func (v *ContactsDeleteByPhonesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsDeleteByPhones(ctx context.Context, req *ContactsDeleteByPhonesRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -300,7 +299,7 @@ func (v *ContactsBlockRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsBlock(ctx context.Context, req *ContactsBlockRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -351,7 +350,7 @@ func (v *ContactsUnblockRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsUnblock(ctx context.Context, req *ContactsUnblockRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -404,7 +403,7 @@ func (v *ContactsGetBlockedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetBlocked(ctx context.Context, req *ContactsGetBlockedRequest) (BlockedClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -448,7 +447,7 @@ func (v *ContactsSearchRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsSearch(ctx context.Context, req *ContactsSearchRequest) (*ContactsFound, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -504,7 +503,7 @@ func (v *ContactsResolveUsernameRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsResolveUsername(ctx context.Context, req *ContactsResolveUsernameRequest) (*ContactsResolvedPeer, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -597,7 +596,7 @@ func (v *ContactsGetTopPeersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetTopPeers(ctx context.Context, req *ContactsGetTopPeersRequest) (TopPeersClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -641,7 +640,7 @@ func (v *ContactsResetTopPeerRatingRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsResetTopPeerRating(ctx context.Context, req *ContactsResetTopPeerRatingRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -679,7 +678,7 @@ func (v *ContactsResetSavedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsResetSaved(ctx context.Context) (bool, error) {
-	result, err := c.invoke(ctx, &ContactsResetSavedRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ContactsResetSavedRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -717,7 +716,7 @@ func (v *ContactsGetSavedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetSaved(ctx context.Context) (TLObject, error) {
-	result, err := c.invoke(ctx, &ContactsGetSavedRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ContactsGetSavedRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -756,7 +755,7 @@ func (v *ContactsToggleTopPeersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsToggleTopPeers(ctx context.Context, req *ContactsToggleTopPeersRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -820,7 +819,7 @@ func (v *ContactsAddContactRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsAddContact(ctx context.Context, req *ContactsAddContactRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -862,7 +861,7 @@ func (v *ContactsAcceptContactRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsAcceptContact(ctx context.Context, req *ContactsAcceptContactRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -922,7 +921,7 @@ func (v *ContactsGetLocatedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetLocated(ctx context.Context, req *ContactsGetLocatedRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -983,7 +982,7 @@ func (v *ContactsBlockFromRepliesRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsBlockFromReplies(ctx context.Context, req *ContactsBlockFromRepliesRequest) (UpdatesClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1025,7 +1024,7 @@ func (v *ContactsResolvePhoneRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsResolvePhone(ctx context.Context, req *ContactsResolvePhoneRequest) (*ContactsResolvedPeer, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1065,7 +1064,7 @@ func (v *ContactsExportContactTokenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsExportContactToken(ctx context.Context) (*ExportedContactToken, error) {
-	result, err := c.invoke(ctx, &ContactsExportContactTokenRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ContactsExportContactTokenRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1107,7 +1106,7 @@ func (v *ContactsImportContactTokenRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsImportContactToken(ctx context.Context, req *ContactsImportContactTokenRequest) (UserClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1149,7 +1148,7 @@ func (v *ContactsEditCloseFriendsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsEditCloseFriends(ctx context.Context, req *ContactsEditCloseFriendsRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1206,7 +1205,7 @@ func (v *ContactsSetBlockedRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsSetBlocked(ctx context.Context, req *ContactsSetBlockedRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1244,7 +1243,7 @@ func (v *ContactsGetBirthdaysRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetBirthdays(ctx context.Context) (*ContactsContactBirthdays, error) {
-	result, err := c.invoke(ctx, &ContactsGetBirthdaysRequest{}, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, &ContactsGetBirthdaysRequest{}, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1286,7 +1285,7 @@ func (v *ContactsGetSponsoredPeersRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsGetSponsoredPeers(ctx context.Context, req *ContactsGetSponsoredPeersRequest) (SponsoredPeersClass, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
@@ -1330,7 +1329,7 @@ func (v *ContactsUpdateContactNoteRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) ContactsUpdateContactNote(ctx context.Context, req *ContactsUpdateContactNoteRequest) (bool, error) {
-	result, err := c.invoke(ctx, req, func(r io.Reader) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {

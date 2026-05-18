@@ -36,14 +36,14 @@ var (
 	// receive a response within the expected timeout.
 	ErrHealthTimeout = errors.New("client: health check timeout")
 	// ErrMigrationFailed is returned when a DC migration attempt fails entirely.
-	ErrMigrationFailed = errors.New("client: DC migration failed")
+	ErrMigrationFailed = errors.New("client: dc migration failed")
 	// ErrMigrationUnsafe is returned when a non-idempotent request (e.g.
 	// ForwardMessages) is interrupted by a DC migration and cannot be safely
 	// retried because it may have already been applied.
-	ErrMigrationUnsafe = errors.New("client: DC migration unsafe for non-idempotent request")
+	ErrMigrationUnsafe = errors.New("client: dc migration unsafe for non-idempotent request")
 	// ErrMigrationUnknown is returned when the server requests migration to an
 	// unknown data center that the client has no configuration for.
-	ErrMigrationUnknown = errors.New("client: DC migration to unknown DC")
+	ErrMigrationUnknown = errors.New("client: dc migration to unknown dc")
 )
 
 // Client initialization and authentication errors.
@@ -65,13 +65,13 @@ var (
 	ErrNoStorage = errors.New("telegram: no storage configured; set Storage, SessionName, or enable InMemory")
 	// ErrAlreadyAuthed is returned when attempting to authenticate a client that
 	// is already authorized (e.g. calling SignIn when already logged in).
-	ErrAlreadyAuthed = errors.New("already authenticated")
+	ErrAlreadyAuthed = errors.New("telegram: already authenticated")
 	// Err2FARequired is returned when SignCheckPassword is needed instead of
 	// SignIn because the account has two-factor authentication enabled.
 	Err2FARequired = errors.New("2FA is enabled: use CheckPassword instead")
 	// ErrSignUpRequired is returned when the phone number is registered but
 	// requires completing the sign-up flow via the SignUp method.
-	ErrSignUpRequired = errors.New("sign up required: use SignUp method")
+	ErrSignUpRequired = errors.New("telegram: sign up required: use SignUp method")
 )
 
 // Context errors returned by context-based helper methods on Message, Chat,
@@ -105,7 +105,7 @@ var (
 	// ErrContextEditInline is returned when trying to edit an inline message
 	// by its numeric message ID, which is not supported. Use the inline
 	// message ID instead.
-	ErrContextEditInline = errors.New("context: cannot edit inline message by ID")
+	ErrContextEditInline = errors.New("context: cannot edit inline message by id")
 )
 
 // Media processing errors.
@@ -165,7 +165,7 @@ var (
 	ErrCaptionRequired = errors.New("caption is required")
 	// ErrStoryIDsRequired is returned when a story method requires one or more
 	// story IDs but the input slice is empty.
-	ErrStoryIDsRequired = errors.New("story IDs are required")
+	ErrStoryIDsRequired = errors.New("story ids are required")
 	// ErrStoryNotInUpdates is returned when the expected story object is not
 	// found in the Updates container returned by the API.
 	ErrStoryNotInUpdates = errors.New("no story found in Updates")
@@ -174,7 +174,7 @@ var (
 	ErrStoryNotInShort = errors.New("no story found in UpdateShort")
 	// ErrStorySchema is returned when a story feature is not supported by the
 	// current TL schema version.
-	ErrStorySchema = errors.New("not available in current TL schema")
+	ErrStorySchema = errors.New("not available in current tl schema")
 )
 
 // Upload, download, and input validation errors.
@@ -200,10 +200,10 @@ var (
 	ErrProxyParamsRequired = errors.New("telegram: tg://proxy requires server, port, and secret")
 	// ErrSocks4Domain is returned when a SOCKS4 proxy receives a domain name
 	// instead of an IP address, which SOCKS4 does not support.
-	ErrSocks4Domain = errors.New("socks4: domain not supported, need IP")
+	ErrSocks4Domain = errors.New("socks4: domain not supported, need ip")
 	// ErrSocks4IPv6 is returned when a SOCKS4 proxy receives an IPv6 address,
 	// which SOCKS4 does not support. Use SOCKS5 for IPv6.
-	ErrSocks4IPv6 = errors.New("socks4: IPv6 not supported")
+	ErrSocks4IPv6 = errors.New("socks4: ipv6 not supported")
 	// ErrProxyResponseTooLarge is returned when the proxy handshake response
 	// exceeds the expected maximum size.
 	ErrProxyResponseTooLarge = errors.New("response too large")
@@ -216,7 +216,7 @@ var (
 	ErrNoSecretChats = errors.New("telegram: no pending secret chats")
 	// ErrBusinessConnIDRequired is returned when a business connection operation
 	// is attempted without providing the required connection ID.
-	ErrBusinessConnIDRequired = errors.New("business: connection ID is required")
+	ErrBusinessConnIDRequired = errors.New("business: connection id is required")
 	// ErrNoBusinessConnection is returned when the expected business connection
 	// cannot be found in the update received from Telegram.
 	ErrNoBusinessConnection = errors.New("business: no business connection found in update")
@@ -339,7 +339,7 @@ type MigrationError struct {
 }
 
 func (e *MigrationError) Error() string {
-	return fmt.Sprintf("client: DC migration to DC %d failed: %v", e.TargetDC, e.Err)
+	return fmt.Sprintf("client: dc migration to dc %d failed: %v", e.TargetDC, e.Err)
 }
 
 func (e *MigrationError) Unwrap() error { return e.Err }
@@ -363,5 +363,5 @@ type UnsafeMigrationError struct {
 }
 
 func (e *UnsafeMigrationError) Error() string {
-	return fmt.Sprintf("client: refusing to retry non-idempotent %q after DC migration to DC %d", e.Method, e.TargetDC)
+	return fmt.Sprintf("client: refusing to retry non-idempotent %q after dc migration to dc %d", e.Method, e.TargetDC)
 }

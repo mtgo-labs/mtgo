@@ -13,7 +13,9 @@ func TestInputPeerUser_RoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	obj, err := ReadTLObject(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	obj, err := ReadTLObject(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +40,9 @@ func TestInputPeerChat_RoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	obj, err := ReadTLObject(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	obj, err := ReadTLObject(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +60,9 @@ func TestInputPeerEmpty_RoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	decoded, err := DecodeInputPeerEmpty(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	decoded, err := DecodeInputPeerEmpty(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +98,9 @@ func TestRegistry_ContainsInputPeerUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	obj, err := ReadTLObject(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	obj, err := ReadTLObject(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +124,9 @@ func TestRegistry_ContainsInputPeerChat(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	obj, err := ReadTLObject(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	obj, err := ReadTLObject(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +145,9 @@ func TestUserEmpty_RoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	obj, err := ReadTLObject(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	obj, err := ReadTLObject(r)
 	if err != nil {
 		t.Fatal(err)
 	}

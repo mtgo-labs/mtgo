@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // PremiumBoostsListTypeID is the constructor ID for TL type premium.boostsList.
@@ -56,42 +55,70 @@ func (v *PremiumBoostsList) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePremiumBoostsList deserializes a PremiumBoostsList from a reader using the TL binary protocol.
-func DecodePremiumBoostsList(r io.Reader) (*PremiumBoostsList, error) {
+func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 	v := &PremiumBoostsList{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntBoosts := ReadInt(r)
-	if err := checkVectorCount(_cntBoosts); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrBoosts, _ehdrBoosts := r.ReadUint32()
+	if _ehdrBoosts != nil {
+		return nil, _ehdrBoosts
+	}
+	_cntBoosts, _ecntBoosts := r.ReadUint32()
+	if _ecntBoosts != nil {
+		return nil, _ecntBoosts
+	}
+	if _errBoosts := checkVectorCount(_cntBoosts); _errBoosts != nil {
+		return nil, _errBoosts
 	}
 	v.Boosts = make([]*Boost, _cntBoosts)
 	for _iBoosts := range v.Boosts {
-		_objBoosts, _ := ReadTLObject(r)
+		_objBoosts, _errBoosts := ReadTLObject(r)
+		if _errBoosts != nil {
+			return nil, _errBoosts
+		}
 		v.Boosts[_iBoosts] = _objBoosts.(*Boost)
 	}
+	_ = _vhdrBoosts
 	if v.Flags.Has(0) {
-		v.NextOffset = ReadString(r)
+		_rNextOffset, _eNextOffset := r.ReadString()
+		if _eNextOffset != nil {
+			return nil, _eNextOffset
+		}
+		v.NextOffset = _rNextOffset
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PremiumBoostsListTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PremiumBoostsListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePremiumBoostsList(r)
 	}
 }
@@ -135,43 +162,73 @@ func (v *PremiumMyBoosts) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePremiumMyBoosts deserializes a PremiumMyBoosts from a reader using the TL binary protocol.
-func DecodePremiumMyBoosts(r io.Reader) (*PremiumMyBoosts, error) {
+func DecodePremiumMyBoosts(r *Reader) (*PremiumMyBoosts, error) {
 	v := &PremiumMyBoosts{}
-	ReadInt(r)
-	_cntMyBoosts := ReadInt(r)
-	if err := checkVectorCount(_cntMyBoosts); err != nil {
-		return nil, err
+	_vhdrMyBoosts, _ehdrMyBoosts := r.ReadUint32()
+	if _ehdrMyBoosts != nil {
+		return nil, _ehdrMyBoosts
+	}
+	_cntMyBoosts, _ecntMyBoosts := r.ReadUint32()
+	if _ecntMyBoosts != nil {
+		return nil, _ecntMyBoosts
+	}
+	if _errMyBoosts := checkVectorCount(_cntMyBoosts); _errMyBoosts != nil {
+		return nil, _errMyBoosts
 	}
 	v.MyBoosts = make([]*MyBoost, _cntMyBoosts)
 	for _iMyBoosts := range v.MyBoosts {
-		_objMyBoosts, _ := ReadTLObject(r)
+		_objMyBoosts, _errMyBoosts := ReadTLObject(r)
+		if _errMyBoosts != nil {
+			return nil, _errMyBoosts
+		}
 		v.MyBoosts[_iMyBoosts] = _objMyBoosts.(*MyBoost)
 	}
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_ = _vhdrMyBoosts
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[PremiumMyBoostsTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PremiumMyBoostsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePremiumMyBoosts(r)
 	}
 }
@@ -255,48 +312,89 @@ func (v *PremiumBoostsStatus) Encode(b *bytes.Buffer) error {
 }
 
 // DecodePremiumBoostsStatus deserializes a PremiumBoostsStatus from a reader using the TL binary protocol.
-func DecodePremiumBoostsStatus(r io.Reader) (*PremiumBoostsStatus, error) {
+func DecodePremiumBoostsStatus(r *Reader) (*PremiumBoostsStatus, error) {
 	v := &PremiumBoostsStatus{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.MyBoost = v.Flags.Has(2)
-	v.Level = int32(ReadInt(r))
-	v.CurrentLevelBoosts = int32(ReadInt(r))
-	v.Boosts = int32(ReadInt(r))
+	_rLevel, _eLevel := r.ReadInt32()
+	if _eLevel != nil {
+		return nil, _eLevel
+	}
+	v.Level = _rLevel
+	_rCurrentLevelBoosts, _eCurrentLevelBoosts := r.ReadInt32()
+	if _eCurrentLevelBoosts != nil {
+		return nil, _eCurrentLevelBoosts
+	}
+	v.CurrentLevelBoosts = _rCurrentLevelBoosts
+	_rBoosts, _eBoosts := r.ReadInt32()
+	if _eBoosts != nil {
+		return nil, _eBoosts
+	}
+	v.Boosts = _rBoosts
 	if v.Flags.Has(4) {
-		v.GiftBoosts = int32(ReadInt(r))
+		_rGiftBoosts, _eGiftBoosts := r.ReadInt32()
+		if _eGiftBoosts != nil {
+			return nil, _eGiftBoosts
+		}
+		v.GiftBoosts = _rGiftBoosts
 	}
 	if v.Flags.Has(0) {
-		v.NextLevelBoosts = int32(ReadInt(r))
+		_rNextLevelBoosts, _eNextLevelBoosts := r.ReadInt32()
+		if _eNextLevelBoosts != nil {
+			return nil, _eNextLevelBoosts
+		}
+		v.NextLevelBoosts = _rNextLevelBoosts
 	}
 	if v.Flags.Has(1) {
-		_objPremiumAudience, _ := ReadTLObject(r)
+		_objPremiumAudience, _errPremiumAudience := ReadTLObject(r)
+		if _errPremiumAudience != nil {
+			return nil, _errPremiumAudience
+		}
 		v.PremiumAudience = _objPremiumAudience.(*StatsPercentValue)
 	}
-	v.BoostURL = ReadString(r)
+	_rBoostURL, _eBoostURL := r.ReadString()
+	if _eBoostURL != nil {
+		return nil, _eBoostURL
+	}
+	v.BoostURL = _rBoostURL
 	if v.Flags.Has(3) {
-		ReadInt(r)
-		_cntPrepaidGiveaways := ReadInt(r)
-		if err := checkVectorCount(_cntPrepaidGiveaways); err != nil {
-			return nil, err
+		_vhdrPrepaidGiveaways, _ehdrPrepaidGiveaways := r.ReadUint32()
+		if _ehdrPrepaidGiveaways != nil {
+			return nil, _ehdrPrepaidGiveaways
+		}
+		_cntPrepaidGiveaways, _ecntPrepaidGiveaways := r.ReadUint32()
+		if _ecntPrepaidGiveaways != nil {
+			return nil, _ecntPrepaidGiveaways
+		}
+		if _errPrepaidGiveaways := checkVectorCount(_cntPrepaidGiveaways); _errPrepaidGiveaways != nil {
+			return nil, _errPrepaidGiveaways
 		}
 		v.PrepaidGiveaways = make([]PrepaidGiveawayClass, _cntPrepaidGiveaways)
 		for _iPrepaidGiveaways := range v.PrepaidGiveaways {
-			_objPrepaidGiveaways, _ := ReadTLObject(r)
+			_objPrepaidGiveaways, _errPrepaidGiveaways := ReadTLObject(r)
+			if _errPrepaidGiveaways != nil {
+				return nil, _errPrepaidGiveaways
+			}
 			v.PrepaidGiveaways[_iPrepaidGiveaways] = _objPrepaidGiveaways.(PrepaidGiveawayClass)
 		}
+		_ = _vhdrPrepaidGiveaways
 	}
 	if v.Flags.Has(2) {
-		v.MyBoostSlots = ReadVectorInt(r)
+		_vvMyBoostSlots, _veMyBoostSlots := r.ReadVectorInt()
+		if _veMyBoostSlots != nil {
+			return nil, _veMyBoostSlots
+		}
+		v.MyBoostSlots = _vvMyBoostSlots
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[PremiumBoostsStatusTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[PremiumBoostsStatusTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePremiumBoostsStatus(r)
 	}
 }

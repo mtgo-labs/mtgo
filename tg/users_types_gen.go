@@ -4,7 +4,6 @@ package tg
 
 import (
 	"bytes"
-	"io"
 )
 
 // UserFullClass is the interface for TL type UserFull.
@@ -380,11 +379,11 @@ func (v *UserFull) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUserFull deserializes a UserFull from a reader using the TL binary protocol.
-func DecodeUserFull(r io.Reader) (*UserFull, error) {
+func DecodeUserFull(r *Reader) (*UserFull, error) {
 	v := &UserFull{}
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
 	v.Blocked = v.Flags.Has(0)
@@ -402,7 +401,7 @@ func DecodeUserFull(r io.Reader) (*UserFull, error) {
 	v.ReadDatesPrivate = v.Flags.Has(30)
 	{
 		var _f uint32
-		_f, _ = ReadIntErr(r)
+		_f, _ = r.ReadUint32()
 		v.Flags2 = Fields(_f)
 	}
 	v.SponsoredEnabled = v.Flags2.Has(7)
@@ -412,142 +411,269 @@ func DecodeUserFull(r io.Reader) (*UserFull, error) {
 	v.NoforwardsMyEnabled = v.Flags2.Has(23)
 	v.NoforwardsPeerEnabled = v.Flags2.Has(24)
 	v.UnofficialSecurityRisk = v.Flags2.Has(26)
-	v.ID = ReadLong(r)
-	if v.Flags.Has(1) {
-		v.About = ReadString(r)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
 	}
-	_objSettings, _ := ReadTLObject(r)
+	v.ID = _rID
+	if v.Flags.Has(1) {
+		_rAbout, _eAbout := r.ReadString()
+		if _eAbout != nil {
+			return nil, _eAbout
+		}
+		v.About = _rAbout
+	}
+	_objSettings, _errSettings := ReadTLObject(r)
+	if _errSettings != nil {
+		return nil, _errSettings
+	}
 	v.Settings = _objSettings.(PeerSettingsClass)
 	if v.Flags.Has(21) {
-		_objPersonalPhoto, _ := ReadTLObject(r)
+		_objPersonalPhoto, _errPersonalPhoto := ReadTLObject(r)
+		if _errPersonalPhoto != nil {
+			return nil, _errPersonalPhoto
+		}
 		v.PersonalPhoto = _objPersonalPhoto.(PhotoClass)
 	}
 	if v.Flags.Has(2) {
-		_objProfilePhoto, _ := ReadTLObject(r)
+		_objProfilePhoto, _errProfilePhoto := ReadTLObject(r)
+		if _errProfilePhoto != nil {
+			return nil, _errProfilePhoto
+		}
 		v.ProfilePhoto = _objProfilePhoto.(PhotoClass)
 	}
 	if v.Flags.Has(22) {
-		_objFallbackPhoto, _ := ReadTLObject(r)
+		_objFallbackPhoto, _errFallbackPhoto := ReadTLObject(r)
+		if _errFallbackPhoto != nil {
+			return nil, _errFallbackPhoto
+		}
 		v.FallbackPhoto = _objFallbackPhoto.(PhotoClass)
 	}
-	_objNotifySettings, _ := ReadTLObject(r)
+	_objNotifySettings, _errNotifySettings := ReadTLObject(r)
+	if _errNotifySettings != nil {
+		return nil, _errNotifySettings
+	}
 	v.NotifySettings = _objNotifySettings.(*PeerNotifySettings)
 	if v.Flags.Has(3) {
-		_objBotInfo, _ := ReadTLObject(r)
+		_objBotInfo, _errBotInfo := ReadTLObject(r)
+		if _errBotInfo != nil {
+			return nil, _errBotInfo
+		}
 		v.BotInfo = _objBotInfo.(BotInfoClass)
 	}
 	if v.Flags.Has(6) {
-		v.PinnedMsgID = int32(ReadInt(r))
+		_rPinnedMsgID, _ePinnedMsgID := r.ReadInt32()
+		if _ePinnedMsgID != nil {
+			return nil, _ePinnedMsgID
+		}
+		v.PinnedMsgID = _rPinnedMsgID
 	}
-	v.CommonChatsCount = int32(ReadInt(r))
+	_rCommonChatsCount, _eCommonChatsCount := r.ReadInt32()
+	if _eCommonChatsCount != nil {
+		return nil, _eCommonChatsCount
+	}
+	v.CommonChatsCount = _rCommonChatsCount
 	if v.Flags.Has(11) {
-		v.FolderID = int32(ReadInt(r))
+		_rFolderID, _eFolderID := r.ReadInt32()
+		if _eFolderID != nil {
+			return nil, _eFolderID
+		}
+		v.FolderID = _rFolderID
 	}
 	if v.Flags.Has(14) {
-		v.TTLPeriod = int32(ReadInt(r))
+		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
+		if _eTTLPeriod != nil {
+			return nil, _eTTLPeriod
+		}
+		v.TTLPeriod = _rTTLPeriod
 	}
 	if v.Flags.Has(15) {
-		_objTheme, _ := ReadTLObject(r)
+		_objTheme, _errTheme := ReadTLObject(r)
+		if _errTheme != nil {
+			return nil, _errTheme
+		}
 		v.Theme = _objTheme.(ChatThemeClass)
 	}
 	if v.Flags.Has(16) {
-		v.PrivateForwardName = ReadString(r)
+		_rPrivateForwardName, _ePrivateForwardName := r.ReadString()
+		if _ePrivateForwardName != nil {
+			return nil, _ePrivateForwardName
+		}
+		v.PrivateForwardName = _rPrivateForwardName
 	}
 	if v.Flags.Has(17) {
-		_objBotGroupAdminRights, _ := ReadTLObject(r)
+		_objBotGroupAdminRights, _errBotGroupAdminRights := ReadTLObject(r)
+		if _errBotGroupAdminRights != nil {
+			return nil, _errBotGroupAdminRights
+		}
 		v.BotGroupAdminRights = _objBotGroupAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(18) {
-		_objBotBroadcastAdminRights, _ := ReadTLObject(r)
+		_objBotBroadcastAdminRights, _errBotBroadcastAdminRights := ReadTLObject(r)
+		if _errBotBroadcastAdminRights != nil {
+			return nil, _errBotBroadcastAdminRights
+		}
 		v.BotBroadcastAdminRights = _objBotBroadcastAdminRights.(*ChatAdminRights)
 	}
 	if v.Flags.Has(24) {
-		_objWallpaper, _ := ReadTLObject(r)
+		_objWallpaper, _errWallpaper := ReadTLObject(r)
+		if _errWallpaper != nil {
+			return nil, _errWallpaper
+		}
 		v.Wallpaper = _objWallpaper.(WallPaperClass)
 	}
 	if v.Flags.Has(25) {
-		_objStories, _ := ReadTLObject(r)
+		_objStories, _errStories := ReadTLObject(r)
+		if _errStories != nil {
+			return nil, _errStories
+		}
 		v.Stories = _objStories.(PeerStoriesClass)
 	}
 	if v.Flags2.Has(0) {
-		_objBusinessWorkHours, _ := ReadTLObject(r)
+		_objBusinessWorkHours, _errBusinessWorkHours := ReadTLObject(r)
+		if _errBusinessWorkHours != nil {
+			return nil, _errBusinessWorkHours
+		}
 		v.BusinessWorkHours = _objBusinessWorkHours.(*BusinessWorkHours)
 	}
 	if v.Flags2.Has(1) {
-		_objBusinessLocation, _ := ReadTLObject(r)
+		_objBusinessLocation, _errBusinessLocation := ReadTLObject(r)
+		if _errBusinessLocation != nil {
+			return nil, _errBusinessLocation
+		}
 		v.BusinessLocation = _objBusinessLocation.(*BusinessLocation)
 	}
 	if v.Flags2.Has(2) {
-		_objBusinessGreetingMessage, _ := ReadTLObject(r)
+		_objBusinessGreetingMessage, _errBusinessGreetingMessage := ReadTLObject(r)
+		if _errBusinessGreetingMessage != nil {
+			return nil, _errBusinessGreetingMessage
+		}
 		v.BusinessGreetingMessage = _objBusinessGreetingMessage.(*BusinessGreetingMessage)
 	}
 	if v.Flags2.Has(3) {
-		_objBusinessAwayMessage, _ := ReadTLObject(r)
+		_objBusinessAwayMessage, _errBusinessAwayMessage := ReadTLObject(r)
+		if _errBusinessAwayMessage != nil {
+			return nil, _errBusinessAwayMessage
+		}
 		v.BusinessAwayMessage = _objBusinessAwayMessage.(*BusinessAwayMessage)
 	}
 	if v.Flags2.Has(4) {
-		_objBusinessIntro, _ := ReadTLObject(r)
+		_objBusinessIntro, _errBusinessIntro := ReadTLObject(r)
+		if _errBusinessIntro != nil {
+			return nil, _errBusinessIntro
+		}
 		v.BusinessIntro = _objBusinessIntro.(*BusinessIntro)
 	}
 	if v.Flags2.Has(5) {
-		_objBirthday, _ := ReadTLObject(r)
+		_objBirthday, _errBirthday := ReadTLObject(r)
+		if _errBirthday != nil {
+			return nil, _errBirthday
+		}
 		v.Birthday = _objBirthday.(*Birthday)
 	}
 	if v.Flags2.Has(6) {
-		v.PersonalChannelID = ReadLong(r)
+		_rPersonalChannelID, _ePersonalChannelID := r.ReadInt64()
+		if _ePersonalChannelID != nil {
+			return nil, _ePersonalChannelID
+		}
+		v.PersonalChannelID = _rPersonalChannelID
 	}
 	if v.Flags2.Has(6) {
-		v.PersonalChannelMessage = int32(ReadInt(r))
+		_rPersonalChannelMessage, _ePersonalChannelMessage := r.ReadInt32()
+		if _ePersonalChannelMessage != nil {
+			return nil, _ePersonalChannelMessage
+		}
+		v.PersonalChannelMessage = _rPersonalChannelMessage
 	}
 	if v.Flags2.Has(8) {
-		v.StargiftsCount = int32(ReadInt(r))
+		_rStargiftsCount, _eStargiftsCount := r.ReadInt32()
+		if _eStargiftsCount != nil {
+			return nil, _eStargiftsCount
+		}
+		v.StargiftsCount = _rStargiftsCount
 	}
 	if v.Flags2.Has(11) {
-		_objStarrefProgram, _ := ReadTLObject(r)
+		_objStarrefProgram, _errStarrefProgram := ReadTLObject(r)
+		if _errStarrefProgram != nil {
+			return nil, _errStarrefProgram
+		}
 		v.StarrefProgram = _objStarrefProgram.(*StarRefProgram)
 	}
 	if v.Flags2.Has(12) {
-		_objBotVerification, _ := ReadTLObject(r)
+		_objBotVerification, _errBotVerification := ReadTLObject(r)
+		if _errBotVerification != nil {
+			return nil, _errBotVerification
+		}
 		v.BotVerification = _objBotVerification.(*BotVerification)
 	}
 	if v.Flags2.Has(14) {
-		v.SendPaidMessagesStars = ReadLong(r)
+		_rSendPaidMessagesStars, _eSendPaidMessagesStars := r.ReadInt64()
+		if _eSendPaidMessagesStars != nil {
+			return nil, _eSendPaidMessagesStars
+		}
+		v.SendPaidMessagesStars = _rSendPaidMessagesStars
 	}
 	if v.Flags2.Has(15) {
-		_objDisallowedGifts, _ := ReadTLObject(r)
+		_objDisallowedGifts, _errDisallowedGifts := ReadTLObject(r)
+		if _errDisallowedGifts != nil {
+			return nil, _errDisallowedGifts
+		}
 		v.DisallowedGifts = _objDisallowedGifts.(*DisallowedGiftsSettings)
 	}
 	if v.Flags2.Has(17) {
-		_objStarsRating, _ := ReadTLObject(r)
+		_objStarsRating, _errStarsRating := ReadTLObject(r)
+		if _errStarsRating != nil {
+			return nil, _errStarsRating
+		}
 		v.StarsRating = _objStarsRating.(*StarsRating)
 	}
 	if v.Flags2.Has(18) {
-		_objStarsMyPendingRating, _ := ReadTLObject(r)
+		_objStarsMyPendingRating, _errStarsMyPendingRating := ReadTLObject(r)
+		if _errStarsMyPendingRating != nil {
+			return nil, _errStarsMyPendingRating
+		}
 		v.StarsMyPendingRating = _objStarsMyPendingRating.(*StarsRating)
 	}
 	if v.Flags2.Has(18) {
-		v.StarsMyPendingRatingDate = int32(ReadInt(r))
+		_rStarsMyPendingRatingDate, _eStarsMyPendingRatingDate := r.ReadInt32()
+		if _eStarsMyPendingRatingDate != nil {
+			return nil, _eStarsMyPendingRatingDate
+		}
+		v.StarsMyPendingRatingDate = _rStarsMyPendingRatingDate
 	}
 	if v.Flags2.Has(20) {
-		_objMainTab, _ := ReadTLObject(r)
+		_objMainTab, _errMainTab := ReadTLObject(r)
+		if _errMainTab != nil {
+			return nil, _errMainTab
+		}
 		v.MainTab = _objMainTab.(ProfileTabClass)
 	}
 	if v.Flags2.Has(21) {
-		_objSavedMusic, _ := ReadTLObject(r)
+		_objSavedMusic, _errSavedMusic := ReadTLObject(r)
+		if _errSavedMusic != nil {
+			return nil, _errSavedMusic
+		}
 		v.SavedMusic = _objSavedMusic.(DocumentClass)
 	}
 	if v.Flags2.Has(22) {
-		_objNote, _ := ReadTLObject(r)
+		_objNote, _errNote := ReadTLObject(r)
+		if _errNote != nil {
+			return nil, _errNote
+		}
 		v.Note = _objNote.(*TextWithEntities)
 	}
 	if v.Flags2.Has(25) {
-		v.BotManagerID = ReadLong(r)
+		_rBotManagerID, _eBotManagerID := r.ReadInt64()
+		if _eBotManagerID != nil {
+			return nil, _eBotManagerID
+		}
+		v.BotManagerID = _rBotManagerID
 	}
 	return v, nil
 }
 
 func init() {
-	Registry[UserFullTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UserFullTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUserFull(r)
 	}
 }
@@ -584,35 +710,58 @@ func (v *UsersUserFull) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsersUserFull deserializes a UsersUserFull from a reader using the TL binary protocol.
-func DecodeUsersUserFull(r io.Reader) (*UsersUserFull, error) {
+func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 	v := &UsersUserFull{}
-	_objFullUser, _ := ReadTLObject(r)
+	_objFullUser, _errFullUser := ReadTLObject(r)
+	if _errFullUser != nil {
+		return nil, _errFullUser
+	}
 	v.FullUser = _objFullUser.(UserFullClass)
-	ReadInt(r)
-	_cntChats := ReadInt(r)
-	if err := checkVectorCount(_cntChats); err != nil {
-		return nil, err
+	_vhdrChats, _ehdrChats := r.ReadUint32()
+	if _ehdrChats != nil {
+		return nil, _ehdrChats
+	}
+	_cntChats, _ecntChats := r.ReadUint32()
+	if _ecntChats != nil {
+		return nil, _ecntChats
+	}
+	if _errChats := checkVectorCount(_cntChats); _errChats != nil {
+		return nil, _errChats
 	}
 	v.Chats = make([]ChatClass, _cntChats)
 	for _iChats := range v.Chats {
-		_objChats, _ := ReadTLObject(r)
+		_objChats, _errChats := ReadTLObject(r)
+		if _errChats != nil {
+			return nil, _errChats
+		}
 		v.Chats[_iChats] = _objChats.(ChatClass)
 	}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_ = _vhdrChats
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[UsersUserFullTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsersUserFullTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsersUserFull(r)
 	}
 }
@@ -661,23 +810,33 @@ func (v *UsersUsers) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsersUsers deserializes a UsersUsers from a reader using the TL binary protocol.
-func DecodeUsersUsers(r io.Reader) (*UsersUsers, error) {
+func DecodeUsersUsers(r *Reader) (*UsersUsers, error) {
 	v := &UsersUsers{}
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[UsersUsersTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsersUsersTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsersUsers(r)
 	}
 }
@@ -708,24 +867,38 @@ func (v *UsersUsersSlice) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsersUsersSlice deserializes a UsersUsersSlice from a reader using the TL binary protocol.
-func DecodeUsersUsersSlice(r io.Reader) (*UsersUsersSlice, error) {
+func DecodeUsersUsersSlice(r *Reader) (*UsersUsersSlice, error) {
 	v := &UsersUsersSlice{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntUsers := ReadInt(r)
-	if err := checkVectorCount(_cntUsers); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	v.Users = make([]UserClass, _cntUsers)
 	for _iUsers := range v.Users {
-		_objUsers, _ := ReadTLObject(r)
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
 		v.Users[_iUsers] = _objUsers.(UserClass)
 	}
+	_ = _vhdrUsers
 	return v, nil
 }
 
 func init() {
-	Registry[UsersUsersSliceTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsersUsersSliceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsersUsersSlice(r)
 	}
 }
@@ -770,14 +943,18 @@ func (v *UsersSavedMusicNotModified) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsersSavedMusicNotModified deserializes a UsersSavedMusicNotModified from a reader using the TL binary protocol.
-func DecodeUsersSavedMusicNotModified(r io.Reader) (*UsersSavedMusicNotModified, error) {
+func DecodeUsersSavedMusicNotModified(r *Reader) (*UsersSavedMusicNotModified, error) {
 	v := &UsersSavedMusicNotModified{}
-	v.Count = int32(ReadInt(r))
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
 	return v, nil
 }
 
 func init() {
-	Registry[UsersSavedMusicNotModifiedTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsersSavedMusicNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsersSavedMusicNotModified(r)
 	}
 }
@@ -808,24 +985,38 @@ func (v *UsersSavedMusic) Encode(b *bytes.Buffer) error {
 }
 
 // DecodeUsersSavedMusic deserializes a UsersSavedMusic from a reader using the TL binary protocol.
-func DecodeUsersSavedMusic(r io.Reader) (*UsersSavedMusic, error) {
+func DecodeUsersSavedMusic(r *Reader) (*UsersSavedMusic, error) {
 	v := &UsersSavedMusic{}
-	v.Count = int32(ReadInt(r))
-	ReadInt(r)
-	_cntDocuments := ReadInt(r)
-	if err := checkVectorCount(_cntDocuments); err != nil {
-		return nil, err
+	_rCount, _eCount := r.ReadInt32()
+	if _eCount != nil {
+		return nil, _eCount
+	}
+	v.Count = _rCount
+	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+	if _ehdrDocuments != nil {
+		return nil, _ehdrDocuments
+	}
+	_cntDocuments, _ecntDocuments := r.ReadUint32()
+	if _ecntDocuments != nil {
+		return nil, _ecntDocuments
+	}
+	if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	v.Documents = make([]DocumentClass, _cntDocuments)
 	for _iDocuments := range v.Documents {
-		_objDocuments, _ := ReadTLObject(r)
+		_objDocuments, _errDocuments := ReadTLObject(r)
+		if _errDocuments != nil {
+			return nil, _errDocuments
+		}
 		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
 	}
+	_ = _vhdrDocuments
 	return v, nil
 }
 
 func init() {
-	Registry[UsersSavedMusicTypeID] = func(r io.Reader) (TLObject, error) {
+	Registry[UsersSavedMusicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUsersSavedMusic(r)
 	}
 }

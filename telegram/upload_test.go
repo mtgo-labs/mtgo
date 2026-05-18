@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/mtgo-labs/mtgo/telegram/params"
-	"io"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -39,7 +38,7 @@ func newMockRPCInvoker() *mockRPCInvoker {
 	}
 }
 
-func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(io.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	m.invokes.Add(1)
 	m.mu.Lock()
 	defer m.mu.Unlock()

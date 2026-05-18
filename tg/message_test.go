@@ -14,7 +14,9 @@ func TestMessage_EncodeDecode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	msg2, err := DecodeMTProtoMessage(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	msg2, err := DecodeMTProtoMessage(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +42,9 @@ func TestDecodeFutureSaltsRejectsHugeVector(t *testing.T) {
 	WriteInt(&buf, vectorBareID)
 	WriteInt(&buf, maxVectorElements+1)
 
-	_, err := DecodeFutureSalts(bytes.NewReader(buf.Bytes()))
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	_, err := DecodeFutureSalts(r)
 	if err == nil {
 		t.Fatal("expected error")
 	}
