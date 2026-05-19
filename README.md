@@ -35,6 +35,9 @@ A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram
 # Install as a Go module
 go get github.com/mtgo-labs/mtgo
 
+# Install the CLI tool
+go install github.com/mtgo-labs/mtgo-cli/cmd/mtgo-cli@latest
+
 # Install the Agent Skill for Claude Code, Codex, Cursor, etc.
 npx skills add mtgo-labs/mtgo
 # or with full URL
@@ -381,6 +384,7 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 | Repository | Description |
 |------------|-------------|
+| [mtgo-cli](https://github.com/mtgo-labs/mtgo-cli) | Fast MTProto CLI — invoke TL methods, test bots, manage groups from the terminal |
 | [storage](https://github.com/mtgo-labs/storage) | Persistent storage adapters (SQLite, PostgreSQL, MongoDB) |
 | [plugins](https://github.com/mtgo-labs/plugins) | Official plugins (conversations, i18n) |
 | [middlewares](https://github.com/mtgo-labs/middlewares) | Invoker middleware (flood wait, rate limiting) |
