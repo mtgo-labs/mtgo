@@ -168,6 +168,48 @@ func TestParseMessageMetadata(t *testing.T) {
 	}
 }
 
+func TestParseMessageAnimatedDocument(t *testing.T) {
+	raw := &tg.Message{
+		ID:     100,
+		PeerID: &tg.PeerChat{ChatID: 10},
+		Date:   1700000000,
+		Media: &tg.MessageMediaDocument{
+			Video: true,
+			Document: &tg.Document{
+				ID:         1,
+				AccessHash: 2,
+				DCID:       4,
+				MimeType:   "video/mp4",
+				Attributes: []tg.DocumentAttributeClass{
+					&tg.DocumentAttributeAnimated{},
+					&tg.DocumentAttributeVideo{
+						Duration: 3,
+						W:        320,
+						H:        240,
+					},
+				},
+			},
+		},
+	}
+
+	message := ParseMessage(raw, nil)
+	if message == nil {
+		t.Fatal("ParseMessage returned nil")
+	}
+	if message.Animation == nil {
+		t.Fatalf("Animation = nil, media=%T document=%+v", message.Media, message.Document)
+	}
+	if message.Video != nil {
+		t.Fatalf("Video = %+v, want nil for animated document", message.Video)
+	}
+	if message.Document == nil || message.Document.MediaType() != MessageMediaTypeAnimation {
+		t.Fatalf("Document media type = %v, want animation", message.Document.MediaType())
+	}
+	if message.Document.FileID == "" || message.Document.FileID == "1_2" {
+		t.Fatalf("FileID = %q, want encoded file_id", message.Document.FileID)
+	}
+}
+
 func TestParseMessageForwardOriginChannel(t *testing.T) {
 	raw := &tg.Message{
 		ID:     100,

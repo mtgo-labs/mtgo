@@ -84,10 +84,11 @@ func ParseSticker(doc *tg.Document) *Sticker {
 		s.Date = time.Unix(int64(doc.Date), 0)
 	}
 	if encoded, err := fileid.Encode(fileid.FileID{
-		Type:       fileid.FileTypeSticker,
-		DCID:       doc.DCID,
-		ID:         doc.ID,
-		AccessHash: doc.AccessHash,
+		Type:          fileid.FileTypeSticker,
+		DCID:          doc.DCID,
+		ID:            doc.ID,
+		AccessHash:    doc.AccessHash,
+		FileReference: doc.FileReference,
 	}); err == nil {
 		s.FileID = encoded
 	}

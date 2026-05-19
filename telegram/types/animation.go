@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -48,7 +49,15 @@ func ParseAnimation(doc *tg.Document) *Animation {
 		Date:     time.Unix(int64(doc.Date), 0),
 		Raw:      doc,
 	}
-	a.FileID = fmt.Sprintf("%d_%d", doc.ID, doc.AccessHash)
+	if encoded, err := fileid.Encode(fileid.FileID{
+		Type:          fileid.FileTypeAnimation,
+		DCID:          doc.DCID,
+		ID:            doc.ID,
+		AccessHash:    doc.AccessHash,
+		FileReference: doc.FileReference,
+	}); err == nil {
+		a.FileID = encoded
+	}
 	a.FileUniqueID = fmt.Sprintf("%d", doc.ID)
 	for _, t := range doc.Thumbs {
 		if th := ParseThumbnail(t); th != nil {
