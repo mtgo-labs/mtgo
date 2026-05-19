@@ -13,6 +13,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 type mockDownloadInvoker struct {
@@ -80,7 +81,6 @@ func (m *mockDownloadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, 
 func (m *mockDownloadInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
 	return nil, nil
 }
-
 
 func TestDownloadFile_ToBuffer(t *testing.T) {
 	data := make([]byte, downloadChunkSize*2+500)
@@ -211,6 +211,37 @@ func TestDownloadFile_RPCError(t *testing.T) {
 	}
 }
 
+func TestDownloadToWriterRetriesFileMigrate(t *testing.T) {
+	data := []byte("migrated file")
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.state.SetDC(2)
+
+	primary := &mockDownloadInvoker{err: tgerr.New(303, "FILE_MIGRATE_4")}
+	migrated := newMockDownloadInvoker(data)
+	c.dcSessions.put(4, &dcSessionEntry{rpc: tg.NewRPCClient(migrated)})
+
+	var buf bytes.Buffer
+	written, err := c.downloadToWriter(
+		context.Background(),
+		tg.NewRPCClient(primary),
+		2,
+		&tg.InputDocumentFileLocation{ID: 100, AccessHash: 200},
+		int64(len(data)),
+		&buf,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("downloadToWriter() error: %v", err)
+	}
+	if written != int64(len(data)) {
+		t.Fatalf("written = %d, want %d", written, len(data))
+	}
+	if got := buf.String(); got != string(data) {
+		t.Fatalf("downloaded %q, want %q", got, data)
+	}
+}
+
 func TestDownloadFile_CDNRedirect(t *testing.T) {
 	data := make([]byte, 1024)
 	_, _ = rand.Read(data)
@@ -278,6 +309,33 @@ func TestStreamFile_StreamsChunks(t *testing.T) {
 
 	if !bytes.Equal(reassembled, data) {
 		t.Errorf("streamed data does not match original (len=%d vs %d)", len(reassembled), len(data))
+	}
+}
+
+func TestStreamFileRetriesFileMigrate(t *testing.T) {
+	data := []byte("migrated stream")
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.state.SetDC(2)
+	c.testInvoker = &mockDownloadInvoker{err: tgerr.New(303, "FILE_MIGRATE_4")}
+	c.dcSessions.put(4, &dcSessionEntry{rpc: tg.NewRPCClient(newMockDownloadInvoker(data))})
+
+	ch, err := c.StreamFile(context.Background(), &tg.InputDocumentFileLocation{
+		ID: 100, AccessHash: 200,
+	}, int64(len(data)), &params.Download{DCID: 2})
+	if err != nil {
+		t.Fatalf("StreamFile() error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	for chunk := range ch {
+		if chunk.Err != nil {
+			t.Fatalf("stream error: %v", chunk.Err)
+		}
+		buf.Write(chunk.Data)
+	}
+	if got := buf.String(); got != string(data) {
+		t.Fatalf("streamed %q, want %q", got, data)
 	}
 }
 

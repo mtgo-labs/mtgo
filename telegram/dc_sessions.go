@@ -74,7 +74,7 @@ func (c *Client) dcRPC(ctx context.Context, dcID int) (*tg.RPCClient, error) {
 	c.mu.RLock()
 	homeDC := c.state.DC()
 	c.mu.RUnlock()
-	if dcID == homeDC {
+	if dcID == homeDC || homeDC == 0 {
 		return c.Raw(), nil
 	}
 

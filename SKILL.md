@@ -455,6 +455,7 @@ result, err := client.UploadFile(ctx, file, filename, fileSize, &telegram.Upload
 When high-level methods aren't enough, use the generated TL RPC methods. For a full list of available Telegram API methods, refer to:
 
 > **https://corefork.telegram.org/methods** — official Telegram API method reference
+> **https://corefork.telegram.org/schema** — raw TL schema for constructors, interfaces, and method signatures
 
 ```go
 rpc := client.Raw() // or client.RPC()

@@ -131,6 +131,34 @@ func TestEditMessageCaption(t *testing.T) {
 	}
 }
 
+func TestGetMessagesUsesChannelsGetMessagesForChannels(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+	inv.setResult(tg.ChannelsGetMessagesTypeID, &tg.MessagesMessages{
+		Messages: []tg.MessageClass{&tg.Message{ID: 42}},
+	})
+
+	msgs, err := c.GetMessages(context.Background(), 10, []int32{42})
+	if err != nil {
+		t.Fatalf("GetMessages() error: %v", err)
+	}
+	if len(msgs) != 1 || msgs[0].ID != 42 {
+		t.Fatalf("GetMessages() = %#v, want message 42", msgs)
+	}
+
+	req, ok := inv.lastCall().(*tg.ChannelsGetMessagesRequest)
+	if !ok {
+		t.Fatalf("expected ChannelsGetMessagesRequest, got %T", inv.lastCall())
+	}
+	ch, ok := req.Channel.(*tg.InputChannel)
+	if !ok {
+		t.Fatalf("expected InputChannel, got %T", req.Channel)
+	}
+	if ch.ChannelID != 10 || ch.AccessHash != 20 {
+		t.Fatalf("channel = (%d, %d), want (10, 20)", ch.ChannelID, ch.AccessHash)
+	}
+}
+
 func TestEditMessageCaptionWithOptions(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})

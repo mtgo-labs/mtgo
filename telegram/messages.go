@@ -419,7 +419,20 @@ func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int
 	}
 
 	rpc := c.Raw()
-	result, err := rpc.MessagesGetMessages(ctx, &tg.MessagesGetMessagesRequest{ID: ids})
+	var result tg.MessagesClass
+	var err error
+	peer, peerErr := resolvePeer(c, chatID)
+	if peerErr != nil {
+		peer, peerErr = c.ResolvePeer(ctx, chatID)
+	}
+	if ch, ok := peer.(*tg.InputPeerChannel); peerErr == nil && ok {
+		result, err = rpc.ChannelsGetMessages(ctx, &tg.ChannelsGetMessagesRequest{
+			Channel: &tg.InputChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash},
+			ID:      ids,
+		})
+	} else {
+		result, err = rpc.MessagesGetMessages(ctx, &tg.MessagesGetMessagesRequest{ID: ids})
+	}
 	if err != nil {
 		return nil, err
 	}
