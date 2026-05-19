@@ -125,7 +125,128 @@ type Message struct {
 	// RepeatPeriod is the repeat period in seconds for scheduled messages.
 	RepeatPeriod int32
 	// SummaryLanguageCode is the language code available for message summaries.
-	SummaryLanguageCode string
+	SummaryLanguageCode                     string
+	GuestQueryID                            string
+	TopicMessage                            bool
+	Topic                                   *ForumTopic
+	MessageThreadID                         int32
+	DirectMessagesTopicID                   int64
+	ReplyToStoryID                          int32
+	ReplyToStoryUserID                      int64
+	ReplyToMessage                          *Message
+	ReplyToStory                            *Story
+	PaidMedia                               *PaidMedia
+	Checklist                               *Checklist
+	ShowCaptionAboveMedia                   bool
+	HasMediaSpoiler                         bool
+	Caption                                 string
+	CaptionEntities                         []*MessageEntity
+	Audio                                   *DocumentMedia
+	Document                                *DocumentMedia
+	Photo                                   *Photo
+	LivePhoto                               *LivePhoto
+	Sticker                                 *Sticker
+	Animation                               *Animation
+	Game                                    *GameMedia
+	Giveaway                                *GiveawayMedia
+	Invoice                                 *InvoiceMedia
+	Story                                   *StoryMedia
+	Video                                   *DocumentMedia
+	Voice                                   *DocumentMedia
+	VideoNote                               *DocumentMedia
+	Contact                                 *ContactMedia
+	Location                                *LocationMedia
+	Venue                                   *VenueMedia
+	WebPage                                 *WebPageMedia
+	LinkPreviewOptions                      *LinkPreviewOptions
+	Poll                                    *PollMedia
+	Dice                                    *DiceMedia
+	UnreadMedia                             bool
+	Legacy                                  bool
+	RestrictionReason                       []*Restriction
+	ExternalReply                           *ExternalReplyInfo
+	Quote                                   *TextQuote
+	Matches                                 []string
+	Command                                 []string
+	FactCheck                               *FactCheck
+	SuggestedPostInfo                       *SuggestedPostInfo
+	ChannelPost                             bool
+	GuestBotCallerUser                      *User
+	GuestBotCallerChat                      *Chat
+	Link                                    string
+	Content                                 string
+	NewChatMembers                          []*User
+	LeftChatMember                          *User
+	ChatOwnerLeft                           *ChatOwnerLeft
+	ChatOwnerChanged                        *ChatOwnerChanged
+	ChatJoinType                            ChatJoinType
+	NewChatTitle                            string
+	NewChatPhoto                            *Photo
+	DeleteChatPhoto                         bool
+	GroupChatCreated                        bool
+	SupergroupChatCreated                   bool
+	ChannelChatCreated                      bool
+	MigrateToChatID                         int64
+	MigrateFromChatID                       int64
+	PinnedMessage                           *Message
+	GameHighScore                           *GameHighScore
+	ForumTopicCreated                       *ForumTopicCreated
+	ForumTopicClosed                        *ForumTopicClosed
+	ForumTopicReopened                      *ForumTopicReopened
+	ForumTopicEdited                        *ForumTopicEdited
+	GeneralForumTopicHidden                 *GeneralForumTopicHidden
+	GeneralForumTopicUnhidden               *GeneralForumTopicUnhidden
+	VideoChatScheduled                      *VideoChatScheduled
+	HistoryCleared                          bool
+	VideoChatStarted                        *VideoChatStarted
+	VideoChatEnded                          *VideoChatEnded
+	VideoChatMembersInvited                 *VideoChatMembersInvited
+	PhoneCallStarted                        *PhoneCallStarted
+	PhoneCallEnded                          *PhoneCallEnded
+	WebAppData                              *WebAppData
+	PaidMessagesRefunded                    *PaidMessagesRefunded
+	PaidMessagesPriceChanged                *PaidMessagesPriceChanged
+	DirectMessagePriceChanged               *DirectMessagePriceChanged
+	ChecklistTasksDone                      *ChecklistTasksDone
+	ChecklistTasksAdded                     *ChecklistTasksAdded
+	PremiumGiftCode                         *PremiumGiftCode
+	GiftedPremium                           *GiftedPremium
+	GiftedStars                             *GiftedStars
+	GiftedTon                               *GiftedTon
+	Gift                                    *Gift
+	IsPrepaidUpgrade                        bool
+	IsFromAuction                           bool
+	SuggestProfilePhoto                     *Photo
+	SuggestBirthday                         *Birthday
+	UsersShared                             *UsersShared
+	ChatShared                              *ChatShared
+	SuccessfulPayment                       *SuccessfulPayment
+	RefundedPayment                         *RefundedPayment
+	SuggestedPostApprovalFailed             *SuggestedPostApprovalFailed
+	SuggestedPostApproved                   *SuggestedPostApproved
+	SuggestedPostDeclined                   *SuggestedPostDeclined
+	SuggestedPostPaid                       *SuggestedPostPaid
+	SuggestedPostRefunded                   *SuggestedPostRefunded
+	GiveawayCreated                         *GiveawayCreated
+	GiveawayWinners                         *GiveawayWinners
+	GiveawayCompleted                       *GiveawayCompleted
+	ManagedBotCreated                       *ManagedBotCreated
+	PollOptionAdded                         *PollOptionAdded
+	PollOptionDeleted                       *PollOptionDeleted
+	ChatSetTheme                            *ChatTheme
+	ChatSetBackground                       *ChatBackground
+	SetMessageAutoDeleteTime                int32
+	ChatBoost                               int32
+	WriteAccessAllowed                      *WriteAccessAllowed
+	ConnectedWebsite                        string
+	ContactRegistered                       *ContactRegistered
+	ProximityAlertTriggered                 *ProximityAlertTriggered
+	GiveawayPrizeStars                      *GiveawayPrizeStars
+	ScreenshotTaken                         *ScreenshotTaken
+	UpgradedGiftPurchaseOffer               *UpgradedGiftPurchaseOffer
+	UpgradedGiftPurchaseOfferRejected       *UpgradedGiftPurchaseOfferRejected
+	ChatHasProtectedContentToggled          *ChatHasProtectedContentToggled
+	ChatHasProtectedContentDisableRequested *ChatHasProtectedContentDisableRequested
 	// Service is non-nil when the message is a service/system message (e.g. group
 	// created, member added).
 	Service *ServiceMessage
@@ -382,12 +503,14 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 	}
 	if raw.ReplyTo != nil {
 		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
+			m.TopicMessage = rt.ForumTopic
 			if rt.ReplyToMsgID != 0 {
 				m.ReplyToID = rt.ReplyToMsgID
 				m.ReplyToMessageID = rt.ReplyToMsgID
 			}
 			if rt.ReplyToTopID != 0 {
 				m.ReplyToTopMessageID = rt.ReplyToTopID
+				m.MessageThreadID = rt.ReplyToTopID
 			}
 			if rt.TodoItemID != 0 {
 				m.ReplyToChecklistTaskID = rt.TodoItemID
@@ -395,10 +518,21 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 			if rt.PollOption != nil {
 				m.ReplyToPollOptionID = string(rt.PollOption)
 			}
+			m.ExternalReply = ParseExternalReplyInfo(rt, pm)
+			m.Quote = parseTextQuote(rt)
+		}
+		if rt, ok := raw.ReplyTo.(*tg.MessageReplyStoryHeader); ok {
+			m.ReplyToStoryID = rt.StoryID
+			m.ReplyToStoryUserID = getPeerID(rt.Peer)
 		}
 	}
 	if raw.Media != nil {
 		m.Media = ParseMedia(raw.Media)
+		m.LinkPreviewOptions = parseLinkPreviewOptions(raw.Media)
+		m.setDirectMediaFields(raw.Media)
+		if raw.Message != "" {
+			m.Caption = raw.Message
+		}
 	}
 	if raw.Entities != nil {
 		var users map[int64]*tg.User
@@ -406,6 +540,9 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 			users = pm.Users
 		}
 		m.Entities = ParseMessageEntitiesWithUsers(raw.Entities, users)
+		if raw.Media != nil {
+			m.CaptionEntities = m.Entities
+		}
 	}
 	if raw.ReplyMarkup != nil {
 		m.ReplyMarkup = ParseReplyMarkup(raw.ReplyMarkup)
@@ -489,6 +626,20 @@ func parseRegularMessage(raw *tg.Message, pm *PeerMap) *Message {
 	if raw.SummaryFromLanguage != "" {
 		m.SummaryLanguageCode = raw.SummaryFromLanguage
 	}
+	if raw.RestrictionReason != nil {
+		m.RestrictionReason = parseRestrictions(raw.RestrictionReason)
+	}
+	if raw.Factcheck != nil {
+		m.FactCheck = ParseFactCheck(raw.Factcheck)
+	}
+	if raw.SuggestedPost != nil {
+		m.SuggestedPostInfo = parseSuggestedPostInfo(raw.SuggestedPost)
+	}
+	m.Content = m.Text
+	if m.Caption != "" {
+		m.Content = m.Caption
+	}
+	m.Link = buildMessageLink(m.Chat, m.ID)
 	return m
 }
 
@@ -525,12 +676,14 @@ func parseServiceMessage(raw *tg.MessageService, pm *PeerMap) *Message {
 	}
 	if raw.ReplyTo != nil {
 		if rt, ok := raw.ReplyTo.(*tg.MessageReplyHeader); ok {
+			m.TopicMessage = rt.ForumTopic
 			if rt.ReplyToMsgID != 0 {
 				m.ReplyToID = rt.ReplyToMsgID
 				m.ReplyToMessageID = rt.ReplyToMsgID
 			}
 			if rt.ReplyToTopID != 0 {
 				m.ReplyToTopMessageID = rt.ReplyToTopID
+				m.MessageThreadID = rt.ReplyToTopID
 			}
 			if rt.TodoItemID != 0 {
 				m.ReplyToChecklistTaskID = rt.TodoItemID
@@ -538,12 +691,291 @@ func parseServiceMessage(raw *tg.MessageService, pm *PeerMap) *Message {
 			if rt.PollOption != nil {
 				m.ReplyToPollOptionID = string(rt.PollOption)
 			}
+			m.ExternalReply = ParseExternalReplyInfo(rt, pm)
+			m.Quote = parseTextQuote(rt)
+		}
+		if rt, ok := raw.ReplyTo.(*tg.MessageReplyStoryHeader); ok {
+			m.ReplyToStoryID = rt.StoryID
+			m.ReplyToStoryUserID = getPeerID(rt.Peer)
 		}
 	}
 	if raw.Action != nil {
 		m.Service = parseServiceAction(raw.Action)
+		m.setDirectServiceFields(raw.Action, pm)
 	}
+	m.Link = buildMessageLink(m.Chat, m.ID)
 	return m
+}
+
+func (m *Message) setDirectMediaFields(raw tg.MessageMediaClass) {
+	if m.Media != nil {
+		switch media := m.Media.(type) {
+		case *PhotoMedia:
+			m.Photo = media.Photo
+			m.HasMediaSpoiler = media.IsSpoiler
+		case *DocumentMedia:
+			m.Document = media
+			m.HasMediaSpoiler = media.IsSpoiler
+			switch media.MediaType() {
+			case MessageMediaTypeAnimation:
+				m.Animation = parseAnimationFromDoc(media)
+			case MessageMediaTypeAudio:
+				m.Audio = media
+			case MessageMediaTypeSticker:
+				m.Sticker = parseStickerFromDoc(media)
+			case MessageMediaTypeVideo:
+				m.Video = media
+			case MessageMediaTypeVideoNote:
+				m.VideoNote = media
+			case MessageMediaTypeVoice:
+				m.Voice = media
+			}
+		case *WebPageMedia:
+			m.WebPage = media
+		case *PollMedia:
+			m.Poll = media
+		case *DiceMedia:
+			m.Dice = media
+		case *GameMedia:
+			m.Game = media
+		case *InvoiceMedia:
+			m.Invoice = media
+		case *StoryMedia:
+			m.Story = media
+		case *GiveawayMedia:
+			m.Giveaway = media
+		case *PaidMedia:
+			m.PaidMedia = media
+		case *ContactMedia:
+			m.Contact = media
+		case *LocationMedia:
+			m.Location = media
+		case *VenueMedia:
+			m.Venue = media
+		}
+	}
+	if todo, ok := raw.(*tg.MessageMediaToDo); ok {
+		m.Checklist = ParseChecklist(todo)
+	}
+}
+
+func (m *Message) setDirectServiceFields(raw tg.MessageActionClass, pm *PeerMap) {
+	switch action := raw.(type) {
+	case *tg.MessageActionChatCreate:
+		m.GroupChatCreated = true
+		m.NewChatTitle = action.Title
+		m.NewChatMembers = usersFromIDs(action.Users, pm)
+	case *tg.MessageActionChatEditTitle:
+		m.NewChatTitle = action.Title
+	case *tg.MessageActionChatEditPhoto:
+		m.NewChatPhoto = photoFromClass(action.Photo)
+	case *tg.MessageActionChatDeletePhoto:
+		m.DeleteChatPhoto = true
+	case *tg.MessageActionChatAddUser:
+		m.NewChatMembers = usersFromIDs(action.Users, pm)
+	case *tg.MessageActionChatDeleteUser:
+		m.LeftChatMember = userFromID(action.UserID, pm)
+	case *tg.MessageActionChannelCreate:
+		m.ChannelChatCreated = true
+		m.NewChatTitle = action.Title
+	case *tg.MessageActionChatMigrateTo:
+		m.MigrateToChatID = channelChatID(action.ChannelID)
+	case *tg.MessageActionChannelMigrateFrom:
+		m.SupergroupChatCreated = true
+		m.MigrateFromChatID = -action.ChatID
+	case *tg.MessageActionPinMessage:
+		m.Pinned = true
+	case *tg.MessageActionHistoryClear:
+		m.HistoryCleared = true
+	case *tg.MessageActionPhoneCall:
+		if action.Duration != 0 || action.Reason != nil {
+			m.PhoneCallEnded = ParsePhoneCallEnded(action)
+		} else {
+			m.PhoneCallStarted = ParsePhoneCallStarted(action)
+		}
+	case *tg.MessageActionScreenshotTaken:
+		m.ScreenshotTaken = &ScreenshotTaken{}
+	case *tg.MessageActionContactSignUp:
+		m.ContactRegistered = &ContactRegistered{}
+	case *tg.MessageActionGeoProximityReached:
+		m.ProximityAlertTriggered = ParseProximityAlertTriggered(action)
+	case *tg.MessageActionGroupCall:
+		if action.Duration != 0 {
+			m.VideoChatEnded = ParseVideoChatEnded(action)
+		} else {
+			m.VideoChatStarted = ParseVideoChatStarted(action)
+		}
+	case *tg.MessageActionInviteToGroupCall:
+		m.VideoChatMembersInvited = ParseVideoChatMembersInvited(action)
+	case *tg.MessageActionSetMessagesTTL:
+		m.SetMessageAutoDeleteTime = action.Period
+	case *tg.MessageActionGroupCallScheduled:
+		m.VideoChatScheduled = ParseVideoChatScheduled(action)
+	case *tg.MessageActionWebViewDataSentMe:
+		m.WebAppData = &WebAppData{Data: action.Data, ButtonText: action.Text}
+	case *tg.MessageActionTopicCreate:
+		m.ForumTopicCreated = &ForumTopicCreated{
+			Title:         action.Title,
+			IconColor:     action.IconColor,
+			CustomEmojiID: fmt.Sprintf("%d", action.IconEmojiID),
+		}
+	case *tg.MessageActionTopicEdit:
+		m.ForumTopicEdited = &ForumTopicEdited{
+			Title:         action.Title,
+			CustomEmojiID: fmt.Sprintf("%d", action.IconEmojiID),
+			IsClosed:      action.Closed,
+			IsHidden:      action.Hidden,
+		}
+		if action.Closed {
+			m.ForumTopicClosed = &ForumTopicClosed{}
+		}
+		if action.Hidden {
+			m.GeneralForumTopicHidden = &GeneralForumTopicHidden{}
+		}
+	case *tg.MessageActionBotAllowed:
+		m.WriteAccessAllowed = ParseWriteAccessAllowed(action)
+	case *tg.MessageActionSetChatWallPaper:
+		m.ChatSetBackground = ParseChatBackground(action)
+	case *tg.MessageActionPaidMessagesRefunded:
+		m.PaidMessagesRefunded = &PaidMessagesRefunded{
+			MessageCount: action.Count,
+			StarCount:    action.Stars,
+		}
+	case *tg.MessageActionPaidMessagesPrice:
+		m.PaidMessagesPriceChanged = &PaidMessagesPriceChanged{Stars: action.Stars}
+	case *tg.MessageActionTodoCompletions:
+		m.ChecklistTasksDone = &ChecklistTasksDone{
+			MarkedAsDoneTaskIDs:    action.Completed,
+			MarkedAsNotDoneTaskIDs: action.Incompleted,
+		}
+	case *tg.MessageActionTodoAppendTasks:
+		m.ChecklistTasksAdded = &ChecklistTasksAdded{
+			Tasks: checklistTasksFromTodoItems(action.List),
+		}
+	case *tg.MessageActionPaymentRefunded:
+		m.RefundedPayment = &RefundedPayment{
+			Currency:    action.Currency,
+			TotalAmount: action.TotalAmount,
+			Payload:     action.Payload,
+		}
+		if action.Charge != nil {
+			m.RefundedPayment.ChargeID = action.Charge.ID
+			m.RefundedPayment.ProviderChargeID = action.Charge.ProviderChargeID
+		}
+	case *tg.MessageActionManagedBotCreated:
+		m.ManagedBotCreated = &ManagedBotCreated{Bot: userFromID(action.BotID, pm)}
+	}
+}
+
+func photoFromClass(raw tg.PhotoClass) *Photo {
+	if raw == nil {
+		return nil
+	}
+	if p, ok := raw.(*tg.Photo); ok {
+		return parsePhoto(p)
+	}
+	return nil
+}
+
+func userFromID(id int64, pm *PeerMap) *User {
+	if id == 0 {
+		return nil
+	}
+	if pm != nil {
+		if u, ok := pm.Users[id]; ok {
+			return parseUserTL(u)
+		}
+	}
+	return &User{ID: id}
+}
+
+func usersFromIDs(ids []int64, pm *PeerMap) []*User {
+	if ids == nil {
+		return nil
+	}
+	users := make([]*User, 0, len(ids))
+	for _, id := range ids {
+		if user := userFromID(id, pm); user != nil {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
+func checklistTasksFromTodoItems(items []*tg.TodoItem) []*ChecklistTask {
+	if items == nil {
+		return nil
+	}
+	tasks := make([]*ChecklistTask, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		task := &ChecklistTask{ID: item.ID}
+		if item.Title != nil {
+			task.Text = item.Title.Text
+			task.Entities = ParseMessageEntities(item.Title.Entities)
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks
+}
+
+func parseTextQuote(raw *tg.MessageReplyHeader) *TextQuote {
+	if raw == nil || raw.QuoteText == "" {
+		return nil
+	}
+	return &TextQuote{
+		Text:     raw.QuoteText,
+		Entities: ParseMessageEntities(raw.QuoteEntities),
+		Offset:   raw.QuoteOffset,
+		Position: raw.QuoteOffset,
+		IsManual: raw.Quote,
+	}
+}
+
+func parseSuggestedPostInfo(raw *tg.SuggestedPost) *SuggestedPostInfo {
+	if raw == nil {
+		return nil
+	}
+	info := &SuggestedPostInfo{State: SuggestedPostStatePending}
+	if raw.Accepted {
+		info.State = SuggestedPostStateApproved
+	}
+	if raw.Rejected {
+		info.State = SuggestedPostStateDeclined
+	}
+	if raw.ScheduleDate != 0 {
+		info.SendDate = time.Unix(int64(raw.ScheduleDate), 0)
+	}
+	if raw.Price != nil {
+		info.Price = suggestedPostPrice(raw.Price)
+	}
+	return info
+}
+
+func suggestedPostPrice(raw tg.StarsAmountClass) *SuggestedPostPrice {
+	switch price := raw.(type) {
+	case *tg.StarsAmount:
+		return &SuggestedPostPrice{
+			Amount:    price.Amount,
+			Currency:  "XTR",
+			StarCount: price.Amount,
+		}
+	case *tg.StarsTonAmount:
+		return &SuggestedPostPrice{
+			Amount:   price.Amount,
+			Currency: "TON",
+		}
+	}
+	return nil
+}
+
+func buildMessageLink(chat *Chat, messageID int32) string {
+	if chat == nil || chat.Username == "" || messageID == 0 {
+		return ""
+	}
+	return fmt.Sprintf("https://t.me/%s/%d", chat.Username, messageID)
 }
 
 func parseServiceAction(raw tg.MessageActionClass) *ServiceMessage {
