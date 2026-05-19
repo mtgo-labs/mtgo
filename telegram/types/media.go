@@ -388,10 +388,16 @@ func parsePhoto(raw *tg.Photo) *Photo {
 	}
 	p.FileUniqueID = fmt.Sprintf("%d", raw.ID)
 	if encoded, err := fileid.Encode(fileid.FileID{
-		Type:       fileid.FileTypePhoto,
-		DCID:       raw.DCID,
-		ID:         raw.ID,
-		AccessHash: raw.AccessHash,
+		Type:          fileid.FileTypePhoto,
+		DCID:          raw.DCID,
+		ID:            raw.ID,
+		AccessHash:    raw.AccessHash,
+		FileReference: raw.FileReference,
+		Source: fileid.PhotoSizeSource{
+			Type:              fileid.ThumbnailSourceThumbnail,
+			ThumbnailFileType: fileid.FileTypePhoto,
+			ThumbnailSize:     int32('x'),
+		},
 	}); err == nil {
 		p.FileID = encoded
 	}
@@ -417,10 +423,9 @@ func parsePhoto(raw *tg.Photo) *Photo {
 
 func parseDocumentMedia(raw *tg.MessageMediaDocument) *DocumentMedia {
 	m := &DocumentMedia{
-		IsSpoiler:   raw.Spoiler,
-		IsVoice:     raw.Voice,
-		IsRound:     raw.Round,
-		IsAnimation: raw.Video && !raw.Voice && !raw.Round,
+		IsSpoiler: raw.Spoiler,
+		IsVoice:   raw.Voice,
+		IsRound:   raw.Round,
 	}
 	if raw.TTLSeconds != 0 {
 		m.TTLSeconds = int(raw.TTLSeconds)
@@ -434,7 +439,6 @@ func parseDocumentMedia(raw *tg.MessageMediaDocument) *DocumentMedia {
 }
 
 func parseDocumentAttrs(doc *tg.Document, m *DocumentMedia) {
-	m.FileID = fmt.Sprintf("%d_%d", doc.ID, doc.AccessHash)
 	m.FileUniqueID = fmt.Sprintf("%d", doc.ID)
 	m.FileSize = doc.Size
 	m.MimeType = doc.MimeType
@@ -475,7 +479,37 @@ func parseDocumentAttrs(doc *tg.Document, m *DocumentMedia) {
 			if a.VideoStartTs != 0 {
 				m.VideoStartTimestamp = int(a.VideoStartTs)
 			}
+		case *tg.DocumentAttributeAnimated:
+			m.IsAnimation = true
 		}
+	}
+	if encoded, err := fileid.Encode(fileid.FileID{
+		Type:          documentFileType(m),
+		DCID:          doc.DCID,
+		ID:            doc.ID,
+		AccessHash:    doc.AccessHash,
+		FileReference: doc.FileReference,
+	}); err == nil {
+		m.FileID = encoded
+	}
+}
+
+func documentFileType(m *DocumentMedia) fileid.FileType {
+	switch m.MediaType() {
+	case MessageMediaTypeVoice:
+		return fileid.FileTypeVoice
+	case MessageMediaTypeVideoNote:
+		return fileid.FileTypeVideoNote
+	case MessageMediaTypeAnimation:
+		return fileid.FileTypeAnimation
+	case MessageMediaTypeAudio:
+		return fileid.FileTypeAudio
+	case MessageMediaTypeVideo:
+		return fileid.FileTypeVideo
+	case MessageMediaTypeSticker:
+		return fileid.FileTypeSticker
+	default:
+		return fileid.FileTypeDocument
 	}
 }
 
