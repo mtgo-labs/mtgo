@@ -82,26 +82,49 @@ func extractInterfaceJSON(raw map[string]interface{}) map[string]json.RawMessage
 		if key == "_" {
 			continue
 		}
+
+		// Handle single interface objects
 		nested, ok := val.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		typeName, hasType := nested["_"]
-		if !hasType {
-			continue
-		}
-		typeNameStr, ok := typeName.(string)
-		if !ok {
-			continue
-		}
-		if _, found := findFactory(typeNameStr); found {
-			b, err := json.Marshal(val)
-			if err != nil {
-				continue
+		if ok {
+			typeName, hasType := nested["_"]
+			if hasType {
+				typeNameStr, ok2 := typeName.(string)
+				if ok2 {
+					if _, found := findFactory(typeNameStr); found {
+						b, err := json.Marshal(val)
+						if err == nil {
+							result[key] = b
+							delete(raw, key)
+						}
+					}
+				}
 			}
-			result[key] = b
-			delete(raw, key)
+			continue
 		}
+
+		// Handle arrays of interface objects (e.g. []InputUserClass)
+		arr, isArr := val.([]interface{})
+		if !isArr {
+			continue
+		}
+		if len(arr) == 0 {
+			continue
+		}
+		firstObj, isObj := arr[0].(map[string]interface{})
+		if !isObj {
+			continue
+		}
+		if _, hasType := firstObj["_"]; !hasType {
+			continue
+		}
+
+		// All elements are interface objects — extract them
+		b, err := json.Marshal(val)
+		if err != nil {
+			continue
+		}
+		result[key] = b
+		delete(raw, key)
 	}
 	return result
 }
@@ -114,10 +137,6 @@ func setInterfaceFields(req tg.TLObject, ifaceJSON map[string]json.RawMessage) {
 		field := v.Field(i)
 		fieldType := t.Field(i)
 
-		if field.Kind() != reflect.Interface {
-			continue
-		}
-
 		jsonTag := fieldType.Tag.Get("json")
 		if jsonTag == "" || jsonTag == "-" {
 			continue
@@ -126,6 +145,44 @@ func setInterfaceFields(req tg.TLObject, ifaceJSON map[string]json.RawMessage) {
 
 		rawMsg, ok := ifaceJSON[tagName]
 		if !ok {
+			continue
+		}
+
+		// Handle slice of interfaces (e.g. []InputUserClass, []InputMessageClass)
+		if field.Kind() == reflect.Slice && field.Type().Elem().Kind() == reflect.Interface {
+			var rawSlice []json.RawMessage
+			if err := json.Unmarshal(rawMsg, &rawSlice); err != nil {
+				continue
+			}
+			sliceVal := reflect.MakeSlice(field.Type(), 0, len(rawSlice))
+			for _, rawItem := range rawSlice {
+				var tmp map[string]interface{}
+				if err := json.Unmarshal(rawItem, &tmp); err != nil {
+					continue
+				}
+				typeName, hasType := tmp["_"]
+				if !hasType {
+					continue
+				}
+				typeNameStr, ok := typeName.(string)
+				if !ok {
+					continue
+				}
+				factory, found := findFactory(typeNameStr)
+				if !found {
+					continue
+				}
+				obj := factory()
+				if err := json.Unmarshal(rawItem, obj); err != nil {
+					continue
+				}
+				sliceVal = reflect.Append(sliceVal, reflect.ValueOf(obj))
+			}
+			field.Set(sliceVal)
+			continue
+		}
+
+		if field.Kind() != reflect.Interface {
 			continue
 		}
 
