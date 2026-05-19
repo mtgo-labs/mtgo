@@ -30,8 +30,10 @@ import (
 var ErrDataTooShort = errors.New("fileid: data too short")
 
 const (
-	fileIDMajor = 4
-	fileIDMinor = 30
+	persistentIDVersion = 4
+	latestSubVersion    = 34
+	webLocationFlag     = 1 << 24
+	fileReferenceFlag   = 1 << 25
 )
 
 // PhotoSizeSource holds the origin metadata for a photo-size file, describing
@@ -56,13 +58,15 @@ type PhotoSizeSource struct {
 // that uniquely identify a file on Telegram's backend: its type, data-center,
 // internal ID, access hash, and optional photo-source metadata.
 type FileID struct {
-	Type       FileType
-	DCID       int32
-	ID         int64
-	AccessHash int64
-	VolumeID   int64
-	LocalID    int32
-	Source     PhotoSizeSource
+	Type          FileType
+	DCID          int32
+	ID            int64
+	AccessHash    int64
+	FileReference []byte
+	URL           string
+	VolumeID      int64
+	LocalID       int32
+	Source        PhotoSizeSource
 }
 
 func rleEncode(data []byte) []byte {
@@ -105,6 +109,10 @@ func packLE(w *bytes.Buffer, v interface{}) {
 	switch x := v.(type) {
 	case int8:
 		w.WriteByte(byte(x))
+	case uint32:
+		var b [4]byte
+		binary.LittleEndian.PutUint32(b[:], x)
+		w.Write(b[:])
 	case int32:
 		var b [4]byte
 		binary.LittleEndian.PutUint32(b[:], uint32(x))
@@ -124,6 +132,12 @@ func unpackLE(r *bytes.Reader, v interface{}) error {
 			return err
 		}
 		*x = int8(b)
+	case *uint32:
+		var b [4]byte
+		if _, err := r.Read(b[:]); err != nil {
+			return err
+		}
+		*x = binary.LittleEndian.Uint32(b[:])
 	case *int32:
 		var b [4]byte
 		if _, err := r.Read(b[:]); err != nil {
@@ -140,43 +154,101 @@ func unpackLE(r *bytes.Reader, v interface{}) error {
 	return nil
 }
 
+func packBytes(w *bytes.Buffer, data []byte) {
+	if len(data) < 254 {
+		w.WriteByte(byte(len(data)))
+		w.Write(data)
+		for w.Len()%4 != 0 {
+			w.WriteByte(0)
+		}
+		return
+	}
+	w.WriteByte(254)
+	w.WriteByte(byte(len(data)))
+	w.WriteByte(byte(len(data) >> 8))
+	w.WriteByte(byte(len(data) >> 16))
+	w.Write(data)
+	for w.Len()%4 != 0 {
+		w.WriteByte(0)
+	}
+}
+
+func unpackBytes(r *bytes.Reader) ([]byte, error) {
+	first, err := r.ReadByte()
+	if err != nil {
+		return nil, err
+	}
+	headerLen := 1
+	size := int(first)
+	if first == 254 {
+		var lenBytes [3]byte
+		if _, err := r.Read(lenBytes[:]); err != nil {
+			return nil, err
+		}
+		headerLen = 4
+		size = int(lenBytes[0]) | int(lenBytes[1])<<8 | int(lenBytes[2])<<16
+	}
+	data := make([]byte, size)
+	if _, err := r.Read(data); err != nil {
+		return nil, err
+	}
+	for (headerLen+size)%4 != 0 {
+		if _, err := r.ReadByte(); err != nil {
+			return nil, err
+		}
+		headerLen++
+	}
+	return data, nil
+}
+
 // Encode serializes a FileID into the Bot API file_id string format used by
-// Telegram (RLE + raw standard base64, version 4.30). It returns the encoded
+// Telegram (RLE + raw URL-safe base64, version 4). It returns the encoded
 // string. The returned error is currently always nil but is reserved for
 // future validation.
 func Encode(f FileID) (string, error) {
 	var buf bytes.Buffer
-	packLE(&buf, int32(f.Type))
-	packLE(&buf, f.DCID)
+	typeID := uint32(f.Type)
+	if f.URL != "" {
+		typeID |= webLocationFlag
+	}
+	if len(f.FileReference) != 0 {
+		typeID |= fileReferenceFlag
+	}
+	packLE(&buf, typeID)
+	packLE(&buf, uint32(f.DCID))
+	if len(f.FileReference) != 0 {
+		packBytes(&buf, f.FileReference)
+	}
+	if f.URL != "" {
+		packBytes(&buf, []byte(f.URL))
+		buf.WriteByte(persistentIDVersion)
+		encoded := base64.RawURLEncoding.EncodeToString(rleEncode(buf.Bytes()))
+		return encoded, nil
+	}
 	packLE(&buf, f.ID)
 	packLE(&buf, f.AccessHash)
 
 	if f.Type.IsPhoto() {
-		packLE(&buf, f.VolumeID)
 		packLE(&buf, int32(f.Source.Type))
 		switch f.Source.Type {
 		case ThumbnailSourceLegacy:
 			packLE(&buf, f.Source.Secret)
-			packLE(&buf, f.Source.LocalID)
 		case ThumbnailSourceThumbnail:
-			packLE(&buf, int32(f.Source.ThumbnailFileType))
+			packLE(&buf, uint32(f.Source.ThumbnailFileType))
 			packLE(&buf, f.Source.ThumbnailSize)
-			packLE(&buf, f.Source.LocalID)
 		case ThumbnailSourceDialogPhotoSmall, ThumbnailSourceDialogPhotoBig:
 			packLE(&buf, f.Source.ChatID)
 			packLE(&buf, f.Source.ChatAccessHash)
-			packLE(&buf, f.Source.LocalID)
 		case ThumbnailSourceStickerSetThumb:
 			packLE(&buf, f.Source.StickerSetID)
 			packLE(&buf, f.Source.StickerSetAccessHash)
-			packLE(&buf, f.Source.LocalID)
 		}
 	}
 
-	packLE(&buf, int8(fileIDMinor))
-	packLE(&buf, int8(fileIDMajor))
+	buf.WriteByte(latestSubVersion)
+	buf.WriteByte(persistentIDVersion)
 
-	encoded := base64.RawStdEncoding.EncodeToString(rleEncode(buf.Bytes()))
+	encoded := base64.RawURLEncoding.EncodeToString(rleEncode(buf.Bytes()))
 	return encoded, nil
 }
 
@@ -184,7 +256,7 @@ func Encode(f FileID) (string, error) {
 // corresponding FileID. It returns an error if the string cannot be base64-
 // decoded, the data is too short, or any required field cannot be read.
 func Decode(s string) (FileID, error) {
-	decoded, err := base64.RawStdEncoding.DecodeString(s)
+	decoded, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return FileID{}, fmt.Errorf("fileid: base64 decode: %w", err)
 	}
@@ -194,23 +266,47 @@ func Decode(s string) (FileID, error) {
 		return FileID{}, ErrDataTooShort
 	}
 
-	major := data[len(data)-1]
-	if major >= 4 {
-		data = data[:len(data)-2]
-	} else {
-		data = data[:len(data)-1]
+	version := data[len(data)-1]
+	if version != persistentIDVersion {
+		return FileID{}, fmt.Errorf("fileid: unsupported version: %d", version)
 	}
+	data = data[:len(data)-1]
+	if len(data) < 1 {
+		return FileID{}, ErrDataTooShort
+	}
+	subVersion := data[len(data)-1]
 
 	r := bytes.NewReader(data)
 
-	var fileType int32
-	if err := unpackLE(r, &fileType); err != nil {
+	var typeID uint32
+	if err := unpackLE(r, &typeID); err != nil {
 		return FileID{}, fmt.Errorf("fileid: read type: %w", err)
 	}
-	f := FileID{Type: FileType(fileType)}
+	hasWebLocation := typeID&webLocationFlag != 0
+	hasReference := typeID&fileReferenceFlag != 0
+	typeID &^= webLocationFlag
+	typeID &^= fileReferenceFlag
+	f := FileID{Type: FileType(typeID)}
 
-	if err := unpackLE(r, &f.DCID); err != nil {
+	var dcID uint32
+	if err := unpackLE(r, &dcID); err != nil {
 		return FileID{}, fmt.Errorf("fileid: read dc_id: %w", err)
+	}
+	f.DCID = int32(dcID)
+	if hasReference {
+		ref, err := unpackBytes(r)
+		if err != nil {
+			return FileID{}, fmt.Errorf("fileid: read file_reference: %w", err)
+		}
+		f.FileReference = ref
+	}
+	if hasWebLocation {
+		url, err := unpackBytes(r)
+		if err != nil {
+			return FileID{}, fmt.Errorf("fileid: read url: %w", err)
+		}
+		f.URL = string(url)
+		return f, nil
 	}
 	if err := unpackLE(r, &f.ID); err != nil {
 		return FileID{}, fmt.Errorf("fileid: read id: %w", err)
@@ -220,10 +316,7 @@ func Decode(s string) (FileID, error) {
 	}
 
 	if f.Type.IsPhoto() {
-		if err := unpackLE(r, &f.VolumeID); err != nil {
-			return FileID{}, fmt.Errorf("fileid: read volume_id: %w", err)
-		}
-		if major >= 4 {
+		if subVersion >= 4 {
 			var srcType int32
 			if err := unpackLE(r, &srcType); err != nil {
 				return FileID{}, fmt.Errorf("fileid: read source type: %w", err)
@@ -235,20 +328,14 @@ func Decode(s string) (FileID, error) {
 				if err := unpackLE(r, &f.Source.Secret); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read secret: %w", err)
 				}
-				if err := unpackLE(r, &f.Source.LocalID); err != nil {
-					return FileID{}, fmt.Errorf("fileid: read local_id: %w", err)
-				}
 			case ThumbnailSourceThumbnail:
-				var thumbFileType int32
+				var thumbFileType uint32
 				if err := unpackLE(r, &thumbFileType); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read thumb file type: %w", err)
 				}
 				f.Source.ThumbnailFileType = FileType(thumbFileType)
 				if err := unpackLE(r, &f.Source.ThumbnailSize); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read thumb size: %w", err)
-				}
-				if err := unpackLE(r, &f.Source.LocalID); err != nil {
-					return FileID{}, fmt.Errorf("fileid: read local_id: %w", err)
 				}
 			case ThumbnailSourceDialogPhotoSmall, ThumbnailSourceDialogPhotoBig:
 				if err := unpackLE(r, &f.Source.ChatID); err != nil {
@@ -257,18 +344,12 @@ func Decode(s string) (FileID, error) {
 				if err := unpackLE(r, &f.Source.ChatAccessHash); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read chat_access_hash: %w", err)
 				}
-				if err := unpackLE(r, &f.Source.LocalID); err != nil {
-					return FileID{}, fmt.Errorf("fileid: read local_id: %w", err)
-				}
 			case ThumbnailSourceStickerSetThumb:
 				if err := unpackLE(r, &f.Source.StickerSetID); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read sticker_set_id: %w", err)
 				}
 				if err := unpackLE(r, &f.Source.StickerSetAccessHash); err != nil {
 					return FileID{}, fmt.Errorf("fileid: read sticker_set_access_hash: %w", err)
-				}
-				if err := unpackLE(r, &f.Source.LocalID); err != nil {
-					return FileID{}, fmt.Errorf("fileid: read local_id: %w", err)
 				}
 			}
 		}
