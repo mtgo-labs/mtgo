@@ -15,6 +15,7 @@ import (
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 // FileChunk represents a single chunk of data received during a streamed file download.
@@ -97,7 +98,7 @@ func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocation
 	if fileSize > 0 {
 		buf.data = make([]byte, 0, fileSize)
 	}
-	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, &buf, opts)
+	_, err = c.downloadToWriter(ctx, rpc, int(dcID), location, fileSize, &buf, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +160,7 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 	}
 	defer f.Close()
 
-	_, err = downloadToFileRPC(ctx, rpc, location, fileSize, f, opts)
+	_, err = c.downloadToWriter(ctx, rpc, int(dcID), location, fileSize, f, opts)
 	if err != nil {
 		os.Remove(filePath)
 		return err
@@ -209,8 +210,6 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 
 	if opts == nil {
 		opts = &params.Download{DCID: dcID}
-	} else if opts.DCID == 0 {
-		opts.DCID = dcID
 	}
 
 	return c.DownloadFile(ctx, location, getMediaFileSize(media), opts)
@@ -257,8 +256,6 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 
 	if opts == nil {
 		opts = &params.Download{DCID: dcID}
-	} else if opts.DCID == 0 {
-		opts.DCID = dcID
 	}
 
 	return c.DownloadToFile(ctx, location, filePath, fileSize, opts)
@@ -312,7 +309,7 @@ func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationCl
 		return nil, fmt.Errorf("download: dc rpc: %w", err)
 	}
 
-	return streamFileRPC(ctx, rpc, location, fileSize, opts)
+	return c.streamFileRPC(ctx, rpc, int(dcID), location, fileSize, opts)
 }
 
 type memoryBuffer struct {
@@ -368,6 +365,11 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 			totalWritten += int64(n)
 			offset += int64(n)
 
+			// Stop if we got less than requested (end of file).
+			if n < int(chunkSize) {
+				return totalWritten, nil
+			}
+
 			if opts != nil && opts.Progress != nil {
 				opts.Progress(params.ProgressInfo{
 					TotalBytes:      fileSize,
@@ -389,6 +391,41 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 	}
 }
 
+func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
+	written, err := downloadToFileRPC(ctx, rpc, location, fileSize, writer, opts)
+	migratedRPC, ok, migrateErr := c.fileMigrationRPC(ctx, dcID, written, err)
+	if migrateErr != nil {
+		return written, migrateErr
+	}
+	if !ok {
+		return written, err
+	}
+
+	return downloadToFileRPC(ctx, migratedRPC, location, fileSize, writer, opts)
+}
+
+func (c *Client) fileMigrationRPC(ctx context.Context, dcID int, written int64, err error) (*tg.RPCClient, bool, error) {
+	if err == nil || written != 0 {
+		return nil, false, nil
+	}
+	rpcErr, ok := tgerr.AsType(err, tgerr.ErrFileMigrate)
+	if !ok || rpcErr.Argument <= 0 || rpcErr.Argument == dcID {
+		return nil, false, nil
+	}
+
+	migratedRPC, dcErr := c.dcRPC(ctx, rpcErr.Argument)
+	if dcErr != nil {
+		return nil, false, fmt.Errorf("download: migrate to dc %d: %w", rpcErr.Argument, dcErr)
+	}
+	return migratedRPC, true, nil
+}
+
+func (c *Client) streamFileRPC(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
+	return streamFileRPCWithMigration(ctx, rpc, location, fileSize, opts, func(written int64, err error) (*tg.RPCClient, bool, error) {
+		return c.fileMigrationRPC(ctx, dcID, written, err)
+	})
+}
+
 func sendOrCancel[T any](ctx context.Context, ch chan<- T, v T) {
 	select {
 	case ch <- v:
@@ -397,6 +434,10 @@ func sendOrCancel[T any](ctx context.Context, ch chan<- T, v T) {
 }
 
 func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
+	return streamFileRPCWithMigration(ctx, rpc, location, fileSize, opts, nil)
+}
+
+func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, opts *params.Download, migrate func(written int64, err error) (*tg.RPCClient, bool, error)) (<-chan FileChunk, error) {
 	chunkSize := int32(downloadChunkSize)
 	if opts != nil && opts.ChunkSize > 0 {
 		chunkSize = opts.ChunkSize
@@ -430,6 +471,17 @@ func streamFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFile
 
 			result, err := rpc.UploadGetFile(ctx, req)
 			if err != nil {
+				if migrate != nil {
+					migratedRPC, ok, migrateErr := migrate(totalWritten, err)
+					if migrateErr != nil {
+						sendOrCancel(ctx, ch, FileChunk{Err: migrateErr})
+						return
+					}
+					if ok {
+						rpc = migratedRPC
+						continue
+					}
+				}
 				sendOrCancel(ctx, ch, FileChunk{Err: fmt.Errorf("download: get file at offset %d: %w", offset, err)})
 				return
 			}
@@ -798,71 +850,20 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 		opts.DCID = dcID
 	}
 
-	rpc, err := c.dcRPC(ctx, int(opts.DCID))
+	fileCh, err := c.StreamFile(ctx, location, info.fileSize, opts)
 	if err != nil {
-		return nil, fmt.Errorf("stream media: dc rpc: %w", err)
-	}
-
-	chunkSize := int32(downloadChunkSize)
-	if opts != nil && opts.ChunkSize > 0 {
-		chunkSize = opts.ChunkSize
+		return nil, fmt.Errorf("stream media: %w", err)
 	}
 
 	ch := make(chan StreamChunk, 2)
-
 	go func() {
 		defer close(ch)
-		defer func() {
-			if r := recover(); r != nil {
-				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream media: panic: %v", r)})
-			}
-		}()
-		offset := int64(0)
-
-		for {
-			select {
-			case <-ctx.Done():
-				sendOrCancel(ctx, ch, StreamChunk{Err: ctx.Err()})
-				return
-			default:
-			}
-
-			req := &tg.UploadGetFileRequest{
-				Location: location,
-				Offset:   offset,
-				Limit:    chunkSize,
-			}
-
-			result, err := rpc.UploadGetFile(ctx, req)
-			if err != nil {
-				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream: get file at offset %d: %w", offset, err)})
+		for chunk := range fileCh {
+			if chunk.Err != nil {
+				sendOrCancel(ctx, ch, StreamChunk{Err: chunk.Err})
 				return
 			}
-
-			file, ok := result.(*tg.UploadFile)
-			if !ok {
-				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream: unexpected result type %T", result)})
-				return
-			}
-
-			if len(file.Bytes) == 0 {
-				return
-			}
-
-			sendOrCancel(ctx, ch, StreamChunk{Data: file.Bytes})
-			offset += int64(len(file.Bytes))
-
-			if opts != nil && opts.Progress != nil {
-				opts.Progress(params.ProgressInfo{
-					TotalBytes:      info.fileSize,
-					DownloadedBytes: offset,
-					IsUpload:        false,
-				})
-			}
-
-			if info.fileSize > 0 && offset >= info.fileSize {
-				return
-			}
+			sendOrCancel(ctx, ch, StreamChunk{Data: chunk.Data})
 		}
 	}()
 
