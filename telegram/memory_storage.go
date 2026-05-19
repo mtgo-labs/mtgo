@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/mtgo-labs/mtgo/internal/storage"
 )
@@ -23,6 +24,7 @@ import (
 //	    APIHash: "your_api_hash",
 //	})
 type MemoryStorage struct {
+	mu            sync.RWMutex
 	dcID          int
 	apiID         int32
 	testMode      bool
@@ -127,6 +129,8 @@ func (m *MemoryStorage) ExportSessionString() (string, error) {
 func (m *MemoryStorage) Close() error { return nil }
 
 func (m *MemoryStorage) SavePeer(p *storage.Peer) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.peers == nil {
 		m.peers = make(map[int64]storage.Peer)
 	}
@@ -135,6 +139,8 @@ func (m *MemoryStorage) SavePeer(p *storage.Peer) error {
 }
 
 func (m *MemoryStorage) GetPeer(id int64) (*storage.Peer, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	p, ok := m.peers[id]
 	if !ok {
 		return nil, nil
@@ -143,6 +149,8 @@ func (m *MemoryStorage) GetPeer(id int64) (*storage.Peer, error) {
 }
 
 func (m *MemoryStorage) GetPeerByUsername(username string) (*storage.Peer, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for _, p := range m.peers {
 		if p.Username == username {
 			return &p, nil
@@ -152,6 +160,8 @@ func (m *MemoryStorage) GetPeerByUsername(username string) (*storage.Peer, error
 }
 
 func (m *MemoryStorage) LoadPeers() ([]*storage.Peer, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.peers == nil {
 		return nil, nil
 	}
@@ -164,6 +174,8 @@ func (m *MemoryStorage) LoadPeers() ([]*storage.Peer, error) {
 }
 
 func (m *MemoryStorage) DeletePeer(id int64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	delete(m.peers, id)
 	return nil
 }
