@@ -2,45 +2,51 @@ package fileid
 
 // FileType enumerates the kinds of files Telegram stores, matching the numeric
 // type codes used in the binary file_id encoding.
-type FileType byte
+type FileType uint32
 
 const (
 	// FileTypeThumbnail represents a thumbnail or preview image.
-	FileTypeThumbnail FileType = 0
+	FileTypeThumbnail FileType = iota
+	// FileTypeProfilePhoto represents a profile photo.
+	FileTypeProfilePhoto
 	// FileTypePhoto represents a full-size photo.
-	FileTypePhoto FileType = 1
+	FileTypePhoto
 	// FileTypeVoice represents a voice message.
-	FileTypeVoice FileType = 2
+	FileTypeVoice
 	// FileTypeVideo represents a video file.
-	FileTypeVideo FileType = 3
+	FileTypeVideo
 	// FileTypeDocument represents a generic document file.
-	FileTypeDocument FileType = 4
+	FileTypeDocument
 	// FileTypeEncrypted represents an end-to-end encrypted file.
-	FileTypeEncrypted FileType = 5
+	FileTypeEncrypted
 	// FileTypeTemp represents a temporary file.
-	FileTypeTemp FileType = 6
+	FileTypeTemp
 	// FileTypeSticker represents a sticker image.
-	FileTypeSticker FileType = 7
+	FileTypeSticker
 	// FileTypeAudio represents an audio file.
-	FileTypeAudio FileType = 8
+	FileTypeAudio
 	// FileTypeAnimation represents a GIF or other animation.
-	FileTypeAnimation FileType = 9
+	FileTypeAnimation
+	// FileTypeEncryptedThumbnail represents an encrypted thumbnail.
+	FileTypeEncryptedThumbnail
+	// FileTypeWallpaper represents a wallpaper.
+	FileTypeWallpaper
 	// FileTypeVideoNote represents a round video note.
-	FileTypeVideoNote FileType = 10
+	FileTypeVideoNote
 	// FileTypeSecureRaw represents a raw secure file upload.
-	FileTypeSecureRaw FileType = 11
+	FileTypeSecureRaw
 	// FileTypeSecureDocument represents a processed secure document.
-	FileTypeSecureDocument FileType = 12
+	FileTypeSecureDocument
 	// FileTypeBackground represents a chat background image.
-	FileTypeBackground FileType = 13
+	FileTypeBackground
 	// FileTypeDocumentPhoto represents a photo sent as a document.
-	FileTypeDocumentPhoto FileType = 14
+	FileTypeDocumentPhoto
 )
 
 // IsPhoto reports whether the FileType represents a photo-like file that
 // includes volume and source metadata in the file_id encoding.
 func (ft FileType) IsPhoto() bool {
-	return ft == FileTypePhoto || ft == FileTypeThumbnail || ft == FileTypeDocumentPhoto
+	return ft == FileTypePhoto || ft == FileTypeThumbnail || ft == FileTypeProfilePhoto
 }
 
 // ThumbnailSource enumerates the possible origins of a photo-size thumbnail,

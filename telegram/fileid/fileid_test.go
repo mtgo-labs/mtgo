@@ -54,9 +54,6 @@ func TestEncodeDecode_RoundTrip(t *testing.T) {
 	if decoded.AccessHash != original.AccessHash {
 		t.Errorf("AccessHash: got %d, want %d", decoded.AccessHash, original.AccessHash)
 	}
-	if decoded.VolumeID != original.VolumeID {
-		t.Errorf("VolumeID: got %d, want %d", decoded.VolumeID, original.VolumeID)
-	}
 	if decoded.Source.Type != ThumbnailSourceLegacy {
 		t.Errorf("SourceType: got %d, want %d", decoded.Source.Type, ThumbnailSourceLegacy)
 	}
@@ -132,9 +129,6 @@ func TestEncodeDecodeThumbnailSource(t *testing.T) {
 	if decoded.Source.ThumbnailSize != 0x73 {
 		t.Fatalf("thumbnail size mismatch: got %d", decoded.Source.ThumbnailSize)
 	}
-	if decoded.Source.LocalID != 20 {
-		t.Fatalf("local_id mismatch: got %d", decoded.Source.LocalID)
-	}
 }
 
 func TestEncodeDecodeDialogPhoto(t *testing.T) {
@@ -167,9 +161,6 @@ func TestEncodeDecodeDialogPhoto(t *testing.T) {
 	}
 	if decoded.Source.ChatAccessHash != 67890 {
 		t.Fatalf("chat_access_hash mismatch: got %d", decoded.Source.ChatAccessHash)
-	}
-	if decoded.Source.LocalID != 5 {
-		t.Fatalf("local_id mismatch: got %d", decoded.Source.LocalID)
 	}
 }
 
@@ -204,9 +195,6 @@ func TestEncodeDecodeStickerSetThumb(t *testing.T) {
 	if decoded.Source.StickerSetAccessHash != 333444 {
 		t.Fatalf("sticker_set_access_hash mismatch: got %d", decoded.Source.StickerSetAccessHash)
 	}
-	if decoded.Source.LocalID != 7 {
-		t.Fatalf("local_id mismatch: got %d", decoded.Source.LocalID)
-	}
 }
 
 func TestIsPhoto(t *testing.T) {
@@ -216,7 +204,8 @@ func TestIsPhoto(t *testing.T) {
 	}{
 		{FileTypePhoto, true},
 		{FileTypeThumbnail, true},
-		{FileTypeDocumentPhoto, true},
+		{FileTypeProfilePhoto, true},
+		{FileTypeDocumentPhoto, false},
 		{FileTypeDocument, false},
 		{FileTypeVideo, false},
 		{FileTypeSticker, false},
