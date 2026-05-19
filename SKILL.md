@@ -1,6 +1,6 @@
 ---
 name: mtgo-mtproto-go
-description: Build Telegram bots and userbots with mtgo (MTProto Go) — a fast, idiomatic Go client for the Telegram MTProto API. Use this skill whenever the user mentions Telegram bots, Telegram bots in Go, userbots, MTProto, mtgo, Telegram client library, or wants to build any Telegram-related application in Go — even if they don't explicitly say "mtgo". Also use when the user asks about Telegram message handlers, inline keyboards, callback queries, media upload/download, session management, Telegram authentication (bot token, phone number, QR login, session strings), MTProxy, middleware, plugins, conversations, i18n, storage backends, or multi-client setups in Go.
+description: Build Telegram bots and userbots with mtgo (MTProto Go) — a fast, idiomatic Go client for the Telegram MTProto API. Use this skill whenever the user mentions Telegram bots, Telegram bots in Go, userbots, MTProto, mtgo, Telegram client library, or wants to build any Telegram-related application in Go — even if they don't explicitly say "mtgo". Also use when the user asks about Telegram message handlers, inline keyboards, callback queries, media upload/download, session management, Telegram authentication (bot token, phone number, QR login, session strings), MTProxy, middleware, plugins, conversations, i18n, storage backends, multi-client setups, creating groups, managing Telegram groups, creating bots via BotFather, testing Telegram bots, or high-performance Telegram operations via mtgo-cli.
 ---
 
 # mtgo — Telegram MTProto Client for Go
@@ -682,4 +682,238 @@ data, err := telegram.ParseWebAppData(secretKey, initData, 5*time.Minute)
 data, err := telegram.ValidateWebAppData(botToken, initData, 5*time.Minute)
 data.User.ID
 data.User.FirstName
+```
+
+## Testing and Operations with mtgo-cli
+
+For fast one-off operations (testing, debugging, group management), use `mtgo-cli` — see the `mtgo-cli` skill for full CLI reference. Install: `go install github.com/mtgo-labs/mtgo-cli/cmd/mtgo-cli@latest`
+
+**Quick patterns:**
+```bash
+export MTGO_CLI_API_ID=12345 MTGO_CLI_API_HASH=... MTGO_CLI_BOT_TOKEN=...
+mtgo-cli get-me --format json                           # identity check
+mtgo-cli invoke users.getFullUser '{"id":{"_":"inputUserSelf"}}'  # raw TL call
+mtgo-cli listen &                                       # persistent listener (reuse connection)
+```
+
+## Creating a Bot via BotFather
+
+Use the raw RPC to interact with BotFather programmatically. Requires a **userbot session** (phone login, not bot token) — bots can't create other bots.
+
+### Step 1: Resolve BotFather
+
+```go
+rpc := client.Raw()
+result, err := rpc.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+    Username: "botfather",
+})
+// BotFather's UserID is typically 93372553
+// Note the UserID and AccessHash from the response for subsequent calls
+```
+
+Or with mtgo-cli:
+```bash
+mtgo-cli invoke contacts.resolveUsername '{"Username":"botfather"}'
+```
+
+### Step 2: Send /newbot
+
+```go
+_, err = rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
+    Peer:     &tg.InputPeerUser{UserID: 93372553, AccessHash: botfatherHash},
+    Message:  "/newbot",
+    RandomID: rand.Int63(),
+})
+```
+
+### Step 3: Send bot display name and username
+
+```go
+// Display name
+rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
+    Peer:     &tg.InputPeerUser{UserID: 93372553, AccessHash: botfatherHash},
+    Message:  "My Test Bot",
+    RandomID: rand.Int63(),
+})
+// Username (must end in "bot")
+rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
+    Peer:     &tg.InputPeerUser{UserID: 93372553, AccessHash: botfatherHash},
+    Message:  "my_test_bot",
+    RandomID: rand.Int63(),
+})
+```
+
+### Step 4: Extract the bot token
+
+```go
+// Read BotFather's response to get the token
+history, err := rpc.MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
+    Peer:  &tg.InputPeerUser{UserID: 93372553, AccessHash: botfatherHash},
+    Limit: 5,
+})
+// Parse history for the message containing "token:"
+```
+
+Or faster with mtgo-cli:
+```bash
+mtgo-cli invoke messages.getHistory '{"peer":{"_":"inputPeerUser","user_id":93372553,"access_hash":'$HASH'},"limit":5}' --format json | jq '.messages[].message' | grep token
+```
+
+## Group Management
+
+Groups require a **userbot session** (not bot token) for creation, adding members, and admin promotion.
+
+### Create a group
+
+```go
+// Create basic group
+result, err := rpc.MessagesCreateChat(ctx, &tg.MessagesCreateChatRequest{
+    Users: []tg.InputUserClass{&tg.InputUserEmpty{}},
+    Title: "Bot Test Suite",
+})
+// result is *tg.Updates — extract chat_id from the update
+
+// Upgrade to supergroup
+for _, u := range result.Updates {
+    if msg, ok := u.(*tg.UpdateNewChat); ok {
+        migrateResult, err := rpc.MessagesMigrateChat(ctx, &tg.MessagesMigrateChatRequest{
+            ChatID: msg.ChatID,
+        })
+        // migrateResult gives channel_id and access_hash
+        _ = migrateResult
+    }
+}
+```
+
+> **Note:** `MessagesMigrateChat` takes a plain `int64` chat_id, NOT an `InputPeer`. Passing a wrapped peer causes `CHAT_ID_INVALID`.
+
+### Add a bot to the group
+
+**For supergroups/channels** (after `MigrateChat`):
+```go
+rpc.ChannelsInviteToChannel(ctx, &tg.ChannelsInviteToChannelRequest{
+    Channel: &tg.InputChannel{ChannelID: channelID, AccessHash: channelHash},
+    Users:   []tg.InputUserClass{
+        &tg.InputUser{UserID: botUserID, AccessHash: botHash},
+    },
+})
+```
+
+**For basic groups** (not migrated):
+```go
+rpc.MessagesAddChatUser(ctx, &tg.MessagesAddChatUserRequest{
+    ChatID: chatID,
+    UserID: &tg.InputUser{UserID: botUserID, AccessHash: botHash},
+    FwdLimit: 100,
+})
+```
+
+### Promote bot to admin (supergroup only)
+
+```go
+rpc.ChannelsEditAdmin(ctx, &tg.ChannelsEditAdminRequest{
+    Channel: &tg.InputChannel{ChannelID: channelID, AccessHash: channelHash},
+    UserID:  &tg.InputUser{UserID: botUserID, AccessHash: botHash},
+    AdminRights: &tg.ChatAdminRights{
+        ChangeInfo:     true,
+        PostMessages:   true,
+        EditMessages:   true,
+        DeleteMessages: true,
+        BanUsers:       true,
+        InviteUsers:    true,
+        PinMessages:    true,
+        ManageTopics:   true,
+    },
+    Rank: "admin",
+})
+```
+
+### Fast group setup with mtgo-cli
+
+For quick one-off operations, mtgo-cli is faster than writing code:
+```bash
+# Create group
+mtgo-cli invoke messages.createChat '{"Users":[{"_":"inputUserEmpty"}],"Title":"Test Group"}'
+# Migrate (use chat_id from response)
+mtgo-cli invoke messages.migrateChat '{"chat_id": CHAT_ID}'
+# Add bot (use channel_id and access_hash from migrate response)
+mtgo-cli invoke channels.inviteToChannel '{"channel":{"_":"inputChannel","channel_id":CID,"access_hash":HASH},"users":[{"_":"inputUser","user_id":BOT_ID,"access_hash":BOT_HASH}]}'
+```
+
+## Testing Bots with Userbots
+
+When you need to test a bot end-to-end, use a userbot session to simulate real user interactions. The bot must already exist and have its `UserID` and `AccessHash` resolved.
+
+### Resolve the bot
+
+```go
+result, err := rpc.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+    Username: "my_test_bot",
+})
+// Extract UserID and AccessHash for all subsequent calls
+```
+
+Or with mtgo-cli:
+```bash
+mtgo-cli get-user my_test_bot --format json
+```
+
+### Send /start in DM
+
+```go
+rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
+    Peer:     &tg.InputPeerUser{UserID: botUserID, AccessHash: botHash},
+    Message:  "/start",
+    RandomID: rand.Int63(),
+})
+```
+
+### Send /start in group
+
+```go
+rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
+    Peer:     &tg.InputPeerChannel{ChannelID: channelID, AccessHash: channelHash},
+    Message:  "/start@my_test_bot",
+    RandomID: rand.Int63(),
+})
+```
+
+### Click inline buttons
+
+```go
+rpc.MessagesGetBotCallbackAnswer(ctx, &tg.MessagesGetBotCallbackAnswerRequest{
+    Peer:   &tg.InputPeerUser{UserID: botUserID, AccessHash: botHash},
+    MsgID:  msgID,
+    Data:   []byte(callbackData),
+})
+```
+
+### Verify bot responses
+
+Use `mtgo-cli trace` to watch all updates in real-time with correlation IDs:
+```bash
+mtgo-cli trace &
+# In another terminal, send test messages — watch the trace output
+mtgo-cli send-message my_test_bot "/start"
+# Trace shows: [1] UPDATE updateNewMessage from bot
+```
+
+The trace output links each RPC call to its response with timing:
+```
+[1] >> messages.sendMessage
+[1] << messages.sendMessage [45ms]
+[2] UPDATE updateNewMessage
+[2]    {Message:{ID:42, Text:"Welcome!"}}
+```
+
+### Testing checklist
+
+After each interaction, verify:
+- Bot responds in DM (check for `updateNewMessage` from bot ID)
+- Bot responds in group context (same check, with `inputPeerChannel`)
+- Inline buttons produce callback queries
+- Error messages are appropriate for invalid input
+- Deep links (e.g., `/start ref_code`) resolve correctly
+
+For more CLI patterns (bulk operations, fast path, trace mode), see the `mtgo-cli` skill.
 ```
