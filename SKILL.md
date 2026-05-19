@@ -605,11 +605,16 @@ for {
 // Export current session
 sessionStr, err := client.ExportSessionString()
 
-// Import — auto-detects format (Telethon, Pyrogram, GramJS, mtcute)
+// Import — auto-detects format (Telethon, Pyrogram, GramJS, mtcute, mtgo)
 import "github.com/mtgo-labs/mtgo/session"
 
+str, err := session.String("AQFvs2s...")
+if err != nil {
+    log.Fatal(err)
+}
+
 client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
-    SessionString: session.MustTelethon("1BVusO..."),
+    SessionString: str,
     InMemory:      true,
     SavePeers:     true,
 })
