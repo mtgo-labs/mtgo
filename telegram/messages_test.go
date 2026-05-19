@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -743,8 +744,18 @@ func TestSendPoll(t *testing.T) {
 func TestSendCachedMedia(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+	cachedFileID, err := fileid.Encode(fileid.FileID{
+		Type:          fileid.FileTypeDocument,
+		DCID:          4,
+		ID:            100,
+		AccessHash:    200,
+		FileReference: []byte{1, 2, 3},
+	})
+	if err != nil {
+		t.Fatalf("encode file_id: %v", err)
+	}
 
-	_, err := c.SendCachedMedia(context.Background(), 10, "cached_file_id",
+	_, err = c.SendCachedMedia(context.Background(), 10, cachedFileID,
 		&params.SendMessage{ReplyToMessageID: 10},
 	)
 	if err != nil {
