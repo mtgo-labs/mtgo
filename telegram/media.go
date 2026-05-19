@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -84,11 +85,18 @@ func getDocumentFileLocation(m *types.DocumentMedia, thumbSize string) (tg.Input
 		fileRef = m.RawDocument.FileReference
 		dcID = m.RawDocument.DCID
 	} else {
-		_, err := fmt.Sscanf(m.FileID, "%d_%d", &id, &accessHash)
-		if err != nil {
-			return nil, 0, fmt.Errorf("media: cannot parse document file_id %q: %w", m.FileID, err)
+		decoded, err := fileid.Decode(m.FileID)
+		if err == nil {
+			id = decoded.ID
+			accessHash = decoded.AccessHash
+			dcID = decoded.DCID
+		} else {
+			_, err := fmt.Sscanf(m.FileID, "%d_%d", &id, &accessHash)
+			if err != nil {
+				return nil, 0, fmt.Errorf("media: cannot parse document file_id %q: %w", m.FileID, err)
+			}
+			dcID = m.DCID
 		}
-		dcID = m.DCID
 	}
 
 	return &tg.InputDocumentFileLocation{

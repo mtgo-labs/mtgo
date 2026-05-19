@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -298,9 +299,13 @@ func (c *Client) SendCachedMedia(ctx context.Context, chatID int64, fileID strin
 }
 
 func resolveCachedFileID(fileID string) (tg.InputDocumentClass, error) {
+	decoded, err := fileid.Decode(fileID)
+	if err != nil {
+		return nil, err
+	}
 	return &tg.InputDocument{
-		ID:            0,
-		AccessHash:    0,
-		FileReference: []byte(fileID),
+		ID:            decoded.ID,
+		AccessHash:    decoded.AccessHash,
+		FileReference: decoded.FileReference,
 	}, nil
 }
