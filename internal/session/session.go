@@ -1076,6 +1076,12 @@ func (s *Session) readLoop() {
 		}
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 		if err != nil {
+			if _, ok := err.(*tgerr.SecurityCheckMismatch); ok {
+				if s.onDisconnect != nil {
+					s.onDisconnect(err)
+				}
+				return
+			}
 			continue
 		}
 
