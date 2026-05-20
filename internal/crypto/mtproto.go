@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"fmt"
 	"sync"
 
@@ -169,7 +170,7 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data too short"}
 	}
 
-	if !bytes.Equal(data[:8], authKeyID) {
+	if subtle.ConstantTimeCompare(data[:8], authKeyID) != 1 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "b.read(8) == auth_key_id"}
 	}
 
@@ -193,11 +194,11 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 	hc.Write(decrypted)
 	var msgKeyCheck [32]byte
 	hc.Sum(msgKeyCheck[:0])
-	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
+	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key == sha256(auth_key[96:128] + data)[8:24]"}
 	}
 
-	if !bytes.Equal(decrypted[8:16], sessionID) {
+	if subtle.ConstantTimeCompare(decrypted[8:16], sessionID) != 1 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data.read(8) == session_id"}
 	}
 
@@ -234,7 +235,7 @@ func UnpackEnvelope(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTPr
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data too short"}
 	}
 
-	if !bytes.Equal(data[:8], authKeyID) {
+	if subtle.ConstantTimeCompare(data[:8], authKeyID) != 1 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "b.read(8) == auth_key_id"}
 	}
 
@@ -259,12 +260,12 @@ func UnpackEnvelope(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTPr
 	hc.Write(decrypted)
 	var msgKeyCheck [32]byte
 	hc.Sum(msgKeyCheck[:0])
-	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
+	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
 		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key check failed"}
 	}
 
-	if !bytes.Equal(decrypted[8:16], sessionID) {
+	if subtle.ConstantTimeCompare(decrypted[8:16], sessionID) != 1 {
 		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "session_id mismatch"}
 	}
