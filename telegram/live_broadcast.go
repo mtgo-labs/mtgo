@@ -568,6 +568,11 @@ func (s *BroadcastStream) startFFmpeg(input string, pipeInput bool) error {
 	if pipeInput && s.src.data != nil {
 		go func() {
 			defer s.stdin.Close()
+			defer func() {
+				if r := recover(); r != nil {
+					s.client.Log.Errorf("broadcast stdin write panic: %v", r)
+				}
+			}()
 			s.stdin.Write(s.src.data)
 		}()
 	}

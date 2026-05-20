@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -37,6 +38,11 @@ func Idle() {
 		wg.Add(1)
 		go func(cl *Client) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					cl.Log.Errorf("Idle goroutine panic: %v", r)
+				}
+			}()
 			cl.Idle()
 		}(c)
 	}
@@ -66,6 +72,16 @@ func Compose(clients ...*Client) error {
 		wg.Add(1)
 		go func(cl *Client) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					err := fmt.Errorf("Compose goroutine panic: %v", r)
+					cl.Log.Errorf("%v", err)
+					select {
+					case errCh <- err:
+					default:
+					}
+				}
+			}()
 			if err := cl.Start(); err != nil {
 				select {
 				case errCh <- err:

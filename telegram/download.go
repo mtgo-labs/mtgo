@@ -858,6 +858,11 @@ func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *param
 	ch := make(chan StreamChunk, 2)
 	go func() {
 		defer close(ch)
+		defer func() {
+			if r := recover(); r != nil {
+				sendOrCancel(ctx, ch, StreamChunk{Err: fmt.Errorf("stream relay panic: %v", r)})
+			}
+		}()
 		for chunk := range fileCh {
 			if chunk.Err != nil {
 				sendOrCancel(ctx, ch, StreamChunk{Err: chunk.Err})
