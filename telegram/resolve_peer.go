@@ -129,7 +129,14 @@ func (r *resolveCoalescer) Do(key string, fn func() (tg.InputPeerClass, error)) 
 	r.inFlight[key] = nil
 	r.mu.Unlock()
 
-	peer, err := fn()
+	peer, err := func() (peer tg.InputPeerClass, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("resolve coalescer panic: %v", r)
+			}
+		}()
+		return fn()
+	}()
 
 	r.mu.Lock()
 	waiters := r.inFlight[key]
