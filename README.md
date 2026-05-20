@@ -9,6 +9,7 @@ A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mtgo-labs/mtgo.svg)](https://pkg.go.dev/github.com/mtgo-labs/mtgo)
 [![skills.sh](https://skills.sh/b/mtgo-labs/mtgo)](https://skills.sh/mtgo-labs/mtgo)
+[![Telegram](https://img.shields.io/badge/chat-%40mtgo__labs-26A5E4.svg?logo=telegram)](https://t.me/mtgo_labs)
 
 </div>
 
