@@ -185,7 +185,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		return nil, fmt.Errorf("step 6: PQInnerData too large (%d bytes)", len(pqInnerBytes))
 	}
 
-	encData, err := crypto.RSAEncryptLegacy(pqInnerBytes, fp)
+	encData, err := crypto.RSAEncrypt(pqInnerBytes, fp)
 	if err != nil {
 		return nil, fmt.Errorf("step 6: RSA encrypt: %w", err)
 	}
