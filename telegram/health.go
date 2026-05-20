@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -101,6 +102,14 @@ func (hc *healthChecker) sendPing(ctx context.Context) error {
 
 	done := make(chan error, 1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				select {
+				case done <- fmt.Errorf("health ping panic: %v", r):
+				default:
+				}
+			}
+		}()
 		_, err := sess.Invoke(pingCtx, &tg.PingDelayDisconnectRequest{
 			PingID:          time.Now().UnixNano(),
 			DisconnectDelay: 65,
