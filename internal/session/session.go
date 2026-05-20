@@ -180,6 +180,10 @@ type Session struct {
 	// msgFactory generates unique message IDs and sequence numbers.
 	msgFactory *MsgFactory
 
+	// msgIDValidator checks incoming server msg_ids for parity, replay,
+	// and temporal validity as required by the MTProto security guidelines.
+	msgIDValidator *msgIDValidator
+
 	// results maps message IDs to channels that receive RPC response objects.
 	results sync.Map
 
@@ -273,6 +277,9 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		sessionID:    sid,
 		sidBytes:     encodedSidBytes,
 		msgFactory:   NewMsgFactory(time.Now()),
+		msgIDValidator: newMsgIDValidator(func() int64 {
+			return time.Now().Unix()
+		}),
 		results:      sync.Map{},
 		rawResults:   make(map[int64]chan []byte),
 		cancel:       make(chan struct{}),
@@ -1076,6 +1083,11 @@ func (s *Session) readLoop() {
 		}
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 		if err != nil {
+			continue
+		}
+
+		if !s.msgIDValidator.Check(raw.MsgID) {
+			crypto.ReleaseAESBuf(decrypted)
 			continue
 		}
 
