@@ -385,6 +385,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		dialer:            dialer,
 		peerCache:         make(map[int64]tg.InputPeerClass),
 		usernameCache:     make(map[string]int64),
+		resolveCoalescer:  resolveCoalescer{inFlight: make(map[string][]chan resolveResult)},
 		handlerDispatcher: NewHandlerDispatcher(),
 		dcSessions:        newDCSessions(),
 		Log:               logger,
