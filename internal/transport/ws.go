@@ -3,9 +3,11 @@ package transport
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -96,7 +98,20 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ws: parse host: %w", err)
 	}
-	return d.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
+	conn, err := d.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasPrefix(addr, "wss://") {
+		conn = tls.Client(conn, &tls.Config{
+			ServerName: host,
+		})
+		if err := conn.(*tls.Conn).HandshakeContext(ctx); err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("ws: tls handshake: %w", err)
+		}
+	}
+	return conn, nil
 }
 
 func fromWSScheme(addr string) string {
