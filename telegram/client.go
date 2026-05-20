@@ -886,16 +886,24 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			return fmt.Errorf("telegram: decode session string: %w", err)
 		}
 		if dc, _ := src.DCID(); dc > 0 {
-			_ = st.SetDCID(dc)
+			if err := st.SetDCID(dc); err != nil {
+				return fmt.Errorf("telegram: import session dc_id: %w", err)
+			}
 		}
 		if addr, _ := src.ServerAddress(); addr != "" {
-			_ = st.SetServerAddress(addr)
+			if err := st.SetServerAddress(addr); err != nil {
+				return fmt.Errorf("telegram: import session address: %w", err)
+			}
 		}
 		if p, _ := src.Port(); p > 0 {
-			_ = st.SetPort(p)
+			if err := st.SetPort(p); err != nil {
+				return fmt.Errorf("telegram: import session port: %w", err)
+			}
 		}
 		if key, _ := src.AuthKey(); len(key) > 0 {
-			_ = st.SetAuthKey(key)
+			if err := st.SetAuthKey(key); err != nil {
+				return fmt.Errorf("telegram: import session auth key: %w", err)
+			}
 		}
 	}
 
