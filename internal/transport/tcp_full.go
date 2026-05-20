@@ -57,6 +57,9 @@ func (t *TCPFull) Recv() ([]byte, error) {
 	if packetLen < 12 {
 		return nil, fmt.Errorf("tcp_full: packet too short: %d", packetLen)
 	}
+	if packetLen-4 > uint32(MaxPayloadLen) {
+		return nil, ErrPayloadTooLarge
+	}
 
 	rest := make([]byte, packetLen-4)
 	if _, err := io.ReadFull(t.conn, rest); err != nil {
