@@ -210,6 +210,12 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 	case *tg.ServerDHParamsFail:
 		return nil, ErrDHParamsFail
 	case *tg.ServerDHParamsOk:
+		if v.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
+		if v.Nonce != nonce {
+			return nil, ErrNonceMismatch
+		}
 		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
 		decrypted := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
 		defer crypto.ReleaseAESBuf(decrypted)
@@ -231,13 +237,39 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		if dhInner.Nonce != nonce {
 			return nil, ErrDHNonceMismatch
 		}
+		if dhInner.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
 
-		b := a.generateRandomBN(2048)
 		dhPrime := new(big.Int).SetBytes([]byte(dhInner.DHPrime))
-		g := big.NewInt(int64(dhInner.G))
-		gB := new(big.Int).Exp(g, b, dhPrime)
+		if dhPrime.BitLen() != 2048 || !dhPrime.ProbablyPrime(20) {
+			return nil, ErrDHPrimeInvalid
+		}
+
+		gVal := int64(dhInner.G)
+		if gVal < 2 || gVal > 7 {
+			return nil, ErrGeneratorInvalid
+		}
 
 		gA := new(big.Int).SetBytes([]byte(dhInner.GA))
+		two := big.NewInt(2)
+		lowerBound := new(big.Int).Lsh(two, 2048-64)
+		upperBound := new(big.Int).Sub(dhPrime, lowerBound)
+		if gA.Cmp(two) < 0 || gA.Cmp(new(big.Int).Sub(dhPrime, two)) > 0 {
+			return nil, ErrGAOutOfRange
+		}
+		if gA.Cmp(lowerBound) < 0 || gA.Cmp(upperBound) > 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		g := big.NewInt(gVal)
+		b := a.generateRandomBN(2048)
+		gB := new(big.Int).Exp(g, b, dhPrime)
+
+		if gB.Cmp(two) < 0 || gB.Cmp(new(big.Int).Sub(dhPrime, two)) > 0 {
+			return nil, ErrGBOutOfRange
+		}
+
 		authKey := computeAuthKey(gA, b, dhPrime)
 
 		clientDHInner := &tg.ClientDHInnerData{
@@ -278,6 +310,12 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 
 		switch v := obj.(type) {
 		case *tg.DHGenOk:
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
+			if v.Nonce != nonce {
+				return nil, ErrNonceMismatch
+			}
 			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
 			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
 				return nil, ErrNewNonceHashMismatch
@@ -300,9 +338,15 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			}, nil
 
 		case *tg.DHGenRetry:
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
 			return nil, ErrDHGenRetry
 
 		case *tg.DHGenFail:
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
 			return nil, ErrDHGenFail
 
 		default:
