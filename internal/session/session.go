@@ -930,6 +930,14 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
+	case tg.MsgDetailedInfoTypeID:
+		if len(body) >= 20 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[12:20])))
+		}
+	case tg.MsgNewDetailedInfoTypeID:
+		if len(body) >= 12 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[4:12])))
+		}
 	default:
 		return false
 	}
