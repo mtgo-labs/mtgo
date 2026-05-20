@@ -839,8 +839,16 @@ func (s *Session) flushAcks() {
 	default:
 	}
 	acks := s.drainAcks()
-	if len(acks) > 0 {
-		s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
+	const maxAckBatch = 8192
+	for len(acks) > 0 {
+		batch := acks
+		if len(batch) > maxAckBatch {
+			batch = batch[:maxAckBatch]
+			acks = acks[maxAckBatch:]
+		} else {
+			acks = nil
+		}
+		s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
 	}
 }
 
@@ -930,6 +938,19 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
+	case tg.MsgDetailedInfoTypeID:
+		if len(body) >= 20 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[12:20])))
+		}
+	case tg.MsgNewDetailedInfoTypeID:
+		if len(body) >= 12 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[4:12])))
+		}
+	case tg.MsgsStateReqTypeID:
+		s.handleRawMsgsStateReq(body[4:])
+	case tg.MsgResendReqTypeID:
+		s.handleRawMsgResendReq(body[4:])
+	case tg.MsgsAllInfoTypeID:
 	default:
 		return false
 	}
@@ -989,6 +1010,9 @@ func (s *Session) handleRawContainer(body []byte) bool {
 		return false
 	}
 	count := binary.LittleEndian.Uint32(body[:4])
+	if count > 1024 {
+		return false
+	}
 	off := 4
 	allHandled := true
 	for i := uint32(0); i < count; i++ {
@@ -1047,6 +1071,43 @@ func (s *Session) handleRawFutureSalts(body []byte) bool {
 	}
 	s.serverSalt = int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20]))
 	return true
+}
+
+func (s *Session) handleRawMsgsStateReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil || len(msgIDs) == 0 {
+		return
+	}
+	info := make([]byte, len(msgIDs))
+	for i := range msgIDs {
+		if _, ok := s.results.Load(msgIDs[i]); ok {
+			info[i] = 0x80 | 0x04
+		} else {
+			info[i] = 0x01
+		}
+	}
+	s.sendServiceMessage(&tg.MsgsStateInfo{
+		ReqMsgID: 0,
+		Info:     string(info),
+	})
+}
+
+func (s *Session) handleRawMsgResendReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil {
+		return
+	}
+	for _, id := range msgIDs {
+		s.addAck(id)
+	}
 }
 
 func (s *Session) readLoop() {
