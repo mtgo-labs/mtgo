@@ -8,9 +8,15 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/storage"
 )
+
+type dedupEntry struct {
+	key string
+	ts  time.Time
+}
 
 // MemoryStorage implements the storage interface with in-memory maps, suitable for testing
 // and ephemeral sessions. It stores peers, DC auth entries, update states, and deduplication
@@ -47,7 +53,8 @@ type MemoryStorage struct {
 	dcAuths        map[int]storage.DCAuthEntry
 	updateStates   map[string]storage.UpdateState
 	channelStates  map[string]map[int64]storage.ChannelUpdateState
-	updateDedup    map[string]map[string]struct{}
+	updateDedup    map[string]map[string]time.Time
+	dedupOrder     map[string][]string
 	durableUpdates map[string]map[string]storage.DurableUpdate
 }
 
@@ -66,7 +73,8 @@ func NewMemoryStorage() *MemoryStorage {
 		dcAuths:        make(map[int]storage.DCAuthEntry),
 		updateStates:   make(map[string]storage.UpdateState),
 		channelStates:  make(map[string]map[int64]storage.ChannelUpdateState),
-		updateDedup:    make(map[string]map[string]struct{}),
+		updateDedup:    make(map[string]map[string]time.Time),
+		dedupOrder:     make(map[string][]string),
 		durableUpdates: make(map[string]map[string]storage.DurableUpdate),
 	}
 }
@@ -267,35 +275,51 @@ func (m *MemoryStorage) SaveChannelUpdateState(state *storage.ChannelUpdateState
 // to prevent unbounded growth in long-running processes.
 const maxDedupKeysPerSession = 10000
 
+// dedupExpiry is the maximum age of a dedup key before it is eligible for
+// timestamp-based eviction.
+const dedupExpiry = 30 * time.Minute
+
 func (m *MemoryStorage) SaveUpdateDedupKey(sessionID string, key string) (bool, error) {
 	set := m.updateDedup[sessionID]
 	if set == nil {
-		set = make(map[string]struct{})
+		set = make(map[string]time.Time)
 		m.updateDedup[sessionID] = set
+		m.dedupOrder[sessionID] = nil
 	}
 	if _, ok := set[key]; ok {
 		return false, nil
 	}
 	if len(set) >= maxDedupKeysPerSession {
-		// Evict oldest half to prevent unbounded growth; map iteration
-		// order is non-deterministic but provides approximate oldest-first
-		// behavior for a fixed-capacity dedup set.
+		order := m.dedupOrder[sessionID]
+		now := time.Now()
 		half := maxDedupKeysPerSession / 2
 		cleared := 0
-		for k := range set {
-			delete(set, k)
+		for len(order) > 0 && cleared < half {
+			oldest := order[0]
+			order = order[1:]
+			ts, ok := set[oldest]
+			if !ok {
+				continue
+			}
+			delete(set, oldest)
 			cleared++
-			if cleared >= half {
+			if now.Sub(ts) < dedupExpiry && cleared >= 1 {
 				break
 			}
 		}
+		m.dedupOrder[sessionID] = order
 	}
-	set[key] = struct{}{}
+	set[key] = time.Now()
+	m.dedupOrder[sessionID] = append(m.dedupOrder[sessionID], key)
 	return true, nil
 }
 
 func (m *MemoryStorage) UpdateDedupKeyExists(sessionID string, key string) (bool, error) {
-	_, ok := m.updateDedup[sessionID][key]
+	_, ok := m.updateDedup[sessionID]
+	if !ok {
+		return false, nil
+	}
+	_, ok = m.updateDedup[sessionID][key]
 	return ok, nil
 }
 
