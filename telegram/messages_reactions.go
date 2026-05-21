@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -28,25 +29,23 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32, reaction ...tg.ReactionClass) error {
+func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32, reaction []tg.ReactionClass, opts ...*params.SendReactionOption) error {
 	c.Log.Debugf("SendReaction chat_id=%d msg_id=%d", chatID, messageID)
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
 
-	var flags tg.Fields
-	flags.Set(0)
+	opt := params.GetOptDef(&params.SendReactionOption{}, opts...)
 
 	rpc := c.Raw()
 	_, err = rpc.MessagesSendReaction(ctx, &tg.MessagesSendReactionRequest{
-		Flags:    flags,
-		Peer:     peer,
-		MsgID:    messageID,
-		Reaction: reaction,
+		Big:         opt.Big,
+		AddToRecent: opt.AddToRecent,
+		Peer:        peer,
+		MsgID:       messageID,
+		Reaction:    reaction,
 	})
-	if err != nil {
-	}
 	return err
 }
 
@@ -65,12 +64,14 @@ func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32
 //   - the user has insufficient Stars balance
 //   - paid reactions are not available for this message
 //   - the RPC call fails
-func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID int32, amount int64) error {
+func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID int32, amount int64, opts ...*params.SendPaidReactionOption) error {
 	c.Log.Debugf("SendPaidReaction chat_id=%d msg_id=%d amount=%d", chatID, messageID, amount)
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
+
+	opt := params.GetOptDef(&params.SendPaidReactionOption{}, opts...)
 
 	rpc := c.Raw()
 	_, err = rpc.MessagesSendPaidReaction(ctx, &tg.MessagesSendPaidReactionRequest{
@@ -78,9 +79,8 @@ func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID i
 		MsgID:    messageID,
 		Count:    int32(amount),
 		RandomID: c.RandomID(),
+		Private:  opt.Private,
 	})
-	if err != nil {
-	}
 	return err
 }
 
