@@ -80,10 +80,13 @@ func TestPackUnpackRoundTrip(t *testing.T) {
 		Body:  tg.TLBool(true),
 	}
 
-	packed := Pack(msg, salt, sessionID, authKey, authKeyIDBytes)
-	if len(packed) < 24 {
-		t.Fatal("packed data too short")
-	}
+	packed, err := Pack(msg, salt, sessionID, authKey, authKeyIDBytes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(packed) < 24 {
+			t.Fatal("packed data too short")
+		}
 
 	if !bytes.Equal(packed[:8], authKeyIDBytes) {
 		t.Fatal("auth_key_id mismatch")
@@ -118,13 +121,16 @@ func TestPackUnpackSecurityChecks(t *testing.T) {
 		Body:  tg.TLBool(true),
 	}
 
-	packed := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
+	packed, err := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	tampered := make([]byte, len(packed))
+		tampered := make([]byte, len(packed))
 	copy(tampered, packed)
 	tampered[0] ^= 0xFF
 
-	_, _, err := Unpack(tampered, sessionID, authKey, authKeyIDBytes)
+	_, _, err = Unpack(tampered, sessionID, authKey, authKeyIDBytes)
 	if err == nil {
 		t.Fatal("expected error on auth_key_id mismatch")
 	}
@@ -142,12 +148,15 @@ func TestPackUnpackSessionIDMismatch(t *testing.T) {
 		Body:  tg.TLBool(true),
 	}
 
-	packed := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
+	packed, err := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	wrongSessionID := make([]byte, 8)
+		wrongSessionID := make([]byte, 8)
 	wrongSessionID[0] = 0xFF
 
-	_, _, err := Unpack(packed, wrongSessionID, authKey, authKeyIDBytes)
+	_, _, err = Unpack(packed, wrongSessionID, authKey, authKeyIDBytes)
 	if err == nil {
 		t.Fatal("expected error on session_id mismatch")
 	}

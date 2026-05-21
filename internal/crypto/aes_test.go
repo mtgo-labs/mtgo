@@ -37,7 +37,10 @@ func TestIGE256EncryptDecryptRoundTrip(t *testing.T) {
 	data := []byte("Hello, MTProto world!!")
 	data = append(data, make([]byte, 10)...)
 
-	encrypted := IGEEncrypt(data, key, iv)
+	encrypted, err := IGEEncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if bytes.Equal(encrypted, data) {
 		t.Fatal("encrypted should differ from plaintext")
 	}
@@ -45,21 +48,30 @@ func TestIGE256EncryptDecryptRoundTrip(t *testing.T) {
 		t.Fatalf("encrypted length %d != data length %d", len(encrypted), len(data))
 	}
 
-	decrypted := IGEDecrypt(encrypted, key, iv)
+	decrypted, err := IGEDecrypt(encrypted, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, data) {
 		t.Fatalf("round-trip failed:\n  want %x\n  got  %x", data, decrypted)
 	}
 }
 
 func TestIGEEncryptEmpty(t *testing.T) {
-	encrypted := IGEEncrypt([]byte{}, make([]byte, 32), make([]byte, 32))
+	encrypted, err := IGEEncrypt([]byte{}, make([]byte, 32), make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(encrypted) != 0 {
 		t.Fatalf("expected empty, got %d bytes", len(encrypted))
 	}
 }
 
 func TestIGEDecryptEmpty(t *testing.T) {
-	decrypted := IGEDecrypt([]byte{}, make([]byte, 32), make([]byte, 32))
+	decrypted, err := IGEDecrypt([]byte{}, make([]byte, 32), make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(decrypted) != 0 {
 		t.Fatalf("expected empty, got %d bytes", len(decrypted))
 	}
@@ -70,34 +82,39 @@ func TestIGE256KnownVector(t *testing.T) {
 	iv := make([]byte, 32)
 	data := make([]byte, 16)
 
-	encrypted := IGEEncrypt(data, key, iv)
-	decrypted := IGEDecrypt(encrypted, key, iv)
+	encrypted, err := IGEEncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decrypted, err := IGEDecrypt(encrypted, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, data) {
 		t.Fatal("known vector round-trip failed")
 	}
 
-	encrypted2 := IGEEncrypt(data, key, iv)
+	encrypted2, err := IGEEncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(encrypted, encrypted2) {
 		t.Fatal("encryption should be deterministic")
 	}
 }
 
 func TestIGEInvalidKeyLength(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("expected panic for invalid key size")
-		}
-	}()
-	IGEEncrypt(make([]byte, 16), make([]byte, 15), make([]byte, 32))
+	_, err := IGEEncrypt(make([]byte, 16), make([]byte, 15), make([]byte, 32))
+	if err == nil {
+		t.Fatal("expected error for invalid key size")
+	}
 }
 
 func TestIGEInvalidDataLength(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("expected panic for non-aligned data")
-		}
-	}()
-	IGEEncrypt(make([]byte, 17), make([]byte, 32), make([]byte, 32))
+	_, err := IGEEncrypt(make([]byte, 17), make([]byte, 32), make([]byte, 32))
+	if err == nil {
+		t.Fatal("expected error for non-aligned data")
+	}
 }
 
 func TestCTREncryptDecryptRoundTrip(t *testing.T) {
@@ -111,7 +128,10 @@ func TestCTREncryptDecryptRoundTrip(t *testing.T) {
 	}
 	data := []byte("CTR mode test data for MTProto obfuscated transport")
 
-	encrypted := CTREncrypt(data, key, iv)
+	encrypted, err := CTREncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if bytes.Equal(encrypted, data) {
 		t.Fatal("encrypted should differ from plaintext")
 	}
@@ -119,14 +139,20 @@ func TestCTREncryptDecryptRoundTrip(t *testing.T) {
 		t.Fatalf("CTR should preserve length: %d != %d", len(encrypted), len(data))
 	}
 
-	decrypted := CTRDecrypt(encrypted, key, iv)
+	decrypted, err := CTRDecrypt(encrypted, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, data) {
 		t.Fatalf("CTR round-trip failed:\n  want %x\n  got  %x", data, decrypted)
 	}
 }
 
 func TestCTREmpty(t *testing.T) {
-	got := CTREncrypt([]byte{}, make([]byte, 32), make([]byte, 16))
+	got, err := CTREncrypt([]byte{}, make([]byte, 32), make([]byte, 16))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(got) != 0 {
 		t.Fatalf("expected empty, got %d bytes", len(got))
 	}
@@ -137,8 +163,14 @@ func TestCTRDeterministic(t *testing.T) {
 	iv := make([]byte, 16)
 	data := []byte("deterministic test")
 
-	e1 := CTREncrypt(data, key, iv)
-	e2 := CTREncrypt(data, key, iv)
+	e1, err := CTREncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e2, err := CTREncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(e1, e2) {
 		t.Fatal("CTR encrypt should be deterministic with same key/iv")
 	}
@@ -152,9 +184,15 @@ func TestCTRCipherStateful(t *testing.T) {
 	}
 	data := []byte("12345678901234567890123456789012")
 
-	allEncrypted := CTREncrypt(data, key, iv)
+	allEncrypted, err := CTREncrypt(data, key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	enc := NewCTRCipher(key, iv)
+	enc, err := NewCTRCipher(key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	part1 := enc.Process(data[:16])
 	part2 := enc.Process(data[16:])
 
@@ -171,11 +209,17 @@ func TestCTRCipherRoundTrip(t *testing.T) {
 		key[i] = byte(i)
 	}
 
-	enc := NewCTRCipher(key, iv)
+	enc, err := NewCTRCipher(key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	data := []byte("stateful cipher test data!")
 	encrypted := enc.Process(data)
 
-	dec := NewCTRCipher(key, iv)
+	dec, err := NewCTRCipher(key, iv)
+	if err != nil {
+		t.Fatal(err)
+	}
 	decrypted := dec.Process(encrypted)
 
 	if !bytes.Equal(decrypted, data) {

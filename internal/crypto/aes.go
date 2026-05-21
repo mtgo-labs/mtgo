@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"fmt"
 	"sync"
 )
 
@@ -31,6 +32,9 @@ func ReleaseAESBuf(buf []byte) {
 	if buf == nil {
 		return
 	}
+	for i := range buf {
+		buf[i] = 0
+	}
 	igeBufPool.Put(&buf)
 }
 
@@ -45,12 +49,12 @@ func xorInPlace(dst, a, b []byte) {
 // and goroutine-safe, callers should cache the block at the session level
 // (e.g. in Session.SetAuthKey) and pass it through to IGEEncrypt/IGEDecrypt
 // instead of passing the raw key.
-func newAESBlock(key []byte) cipher.Block {
+func newAESBlock(key []byte) (cipher.Block, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic("crypto/aes: " + err.Error())
+		return nil, err
 	}
-	return block
+	return block, nil
 }
 
 // IGEEncrypt encrypts data using AES-256 in Infinite Garble Extension (IGE)
@@ -60,14 +64,17 @@ func newAESBlock(key []byte) cipher.Block {
 // the returned buffer is no longer needed.
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
-func IGEEncrypt(data, key, iv []byte) []byte {
+func IGEEncrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
 	if len(data)%16 != 0 {
-		panic("crypto/aes: IGE data length must be multiple of 16")
+		return nil, fmt.Errorf("crypto/aes: IGE data length %d is not a multiple of 16", len(data))
 	}
-	block := newAESBlock(key)
+	block, err := newAESBlock(key)
+	if err != nil {
+		return nil, err
+	}
 	var iv1Buf, iv2Buf [16]byte
 	iv1 := iv1Buf[:]
 	iv2 := iv2Buf[:]
@@ -84,7 +91,7 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 		iv1 = result[i : i+16]
 		iv2 = chunk
 	}
-	return result
+	return result, nil
 }
 
 // IGEDecrypt decrypts data using AES-256 in Infinite Garble Extension (IGE)
@@ -94,14 +101,17 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 // the returned buffer is no longer needed.
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
-func IGEDecrypt(data, key, iv []byte) []byte {
+func IGEDecrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
 	if len(data)%16 != 0 {
-		panic("crypto/aes: IGE data length must be multiple of 16")
+		return nil, fmt.Errorf("crypto/aes: IGE data length %d is not a multiple of 16", len(data))
 	}
-	block := newAESBlock(key)
+	block, err := newAESBlock(key)
+	if err != nil {
+		return nil, err
+	}
 	var iv1Buf, iv2Buf [16]byte
 	iv1 := iv1Buf[:]
 	iv2 := iv2Buf[:]
@@ -118,7 +128,7 @@ func IGEDecrypt(data, key, iv []byte) []byte {
 		iv1 = chunk
 		iv2 = result[i : i+16]
 	}
-	return result
+	return result, nil
 }
 
 func incrementIV(iv []byte) {
@@ -132,21 +142,24 @@ func incrementIV(iv []byte) {
 
 // CTREncrypt encrypts data using AES-256 in counter (CTR) mode with a 16-byte
 // IV that is incremented as a big-endian integer. Returns the encrypted ciphertext.
-func CTREncrypt(data, key, iv []byte) []byte {
+func CTREncrypt(data, key, iv []byte) ([]byte, error) {
 	return ctrCrypt(data, key, iv)
 }
 
 // CTRDecrypt decrypts data using AES-256 in counter (CTR) mode with a 16-byte
 // IV that is incremented as a big-endian integer. Returns the decrypted plaintext.
-func CTRDecrypt(data, key, iv []byte) []byte {
+func CTRDecrypt(data, key, iv []byte) ([]byte, error) {
 	return ctrCrypt(data, key, iv)
 }
 
-func ctrCrypt(data, key, iv []byte) []byte {
+func ctrCrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
-	block := newAESBlock(key)
+	block, err := newAESBlock(key)
+	if err != nil {
+		return nil, err
+	}
 
 	ivCopy := make([]byte, 16)
 	copy(ivCopy, iv)
@@ -165,7 +178,7 @@ func ctrCrypt(data, key, iv []byte) []byte {
 			block.Encrypt(keystream[:], ivCopy)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // CTRCipher implements a stateful AES-256 CTR-mode stream cipher that can
@@ -180,8 +193,11 @@ type CTRCipher struct {
 
 // NewCTRCipher creates a new CTRCipher initialized with the given 32-byte key
 // and 16-byte IV. The cipher is ready to process data immediately.
-func NewCTRCipher(key, iv []byte) *CTRCipher {
-	block := newAESBlock(key)
+func NewCTRCipher(key, iv []byte) (*CTRCipher, error) {
+	block, err := newAESBlock(key)
+	if err != nil {
+		return nil, err
+	}
 	ivCopy := make([]byte, 16)
 	copy(ivCopy, iv)
 	c := &CTRCipher{
@@ -189,7 +205,7 @@ func NewCTRCipher(key, iv []byte) *CTRCipher {
 		iv:    ivCopy,
 	}
 	block.Encrypt(c.keystream[:], c.iv)
-	return c
+	return c, nil
 }
 
 // Process XORs data with the CTR keystream, advancing the IV counter and

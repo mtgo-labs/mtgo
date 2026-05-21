@@ -15,12 +15,9 @@ import (
 )
 
 var (
-	errEmptyPlaintext     = errors.New("crypto/secret: empty plaintext")
-	errCiphertextTooShort = errors.New("crypto/secret: ciphertext too short")
-	errMsgKeyMismatch     = errors.New("crypto/secret: msg_key mismatch")
-	errDecryptedTooShort  = errors.New("crypto/secret: decrypted too short")
-	errInvalidMsgLen      = errors.New("crypto/secret: invalid message length")
-	errFileNotAligned     = errors.New("crypto/secret: encrypted file not aligned to 16")
+	errEmptyPlaintext   = errors.New("crypto/secret: empty plaintext")
+	errDecryptionFailed = errors.New("crypto/secret: decryption failed")
+	errFileNotAligned   = errors.New("crypto/secret: encrypted file not aligned to 16")
 )
 
 const (
@@ -123,7 +120,9 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 		paddingLen += 16 - rem
 	}
 	padding := make([]byte, paddingLen)
-	rand.Read(padding)
+	if _, err := rand.Read(padding); err != nil {
+		return nil, fmt.Errorf("crypto/secret: generate padding: %w", err)
+	}
 	buf.Write(padding)
 
 	data := buf.Bytes()
@@ -146,7 +145,10 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	msgKey := msgKeyLarge[8:24]
 
 	aesKey, aesIV := secretKDF(key, msgKey, x)
-	encrypted := IGEEncrypt(data, aesKey[:], aesIV[:])
+	encrypted, err := IGEEncrypt(data, aesKey[:], aesIV[:])
+	if err != nil {
+		return nil, err
+	}
 
 	var result bytes.Buffer
 	result.Write(msgKey)
@@ -157,7 +159,7 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 
 func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	if len(ciphertext) < 16+16 {
-		return nil, errCiphertextTooShort
+		return nil, errDecryptionFailed
 	}
 
 	msgKey := ciphertext[:16]
@@ -169,7 +171,10 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	}
 
 	aesKey, aesIV := secretKDF(key, msgKey, x)
-	decrypted := IGEDecrypt(encrypted, aesKey[:], aesIV[:])
+	decrypted, err := IGEDecrypt(encrypted, aesKey[:], aesIV[:])
+	if err != nil {
+		return nil, errDecryptionFailed
+	}
 
 	var stackBuf [4096]byte
 	msgKeyLargeInput := stackBuf[:0]
@@ -182,19 +187,19 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	copy(msgKeyLargeInput[32:], decrypted)
 	msgKeyCheck := sha256.Sum256(msgKeyLargeInput)
 	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
-		return nil, errMsgKeyMismatch
+		return nil, errDecryptionFailed
 	}
 
 	if len(decrypted) < 4 {
-		return nil, errDecryptedTooShort
+		return nil, errDecryptionFailed
 	}
 	msgLen := int(binary.LittleEndian.Uint32(decrypted[:4]))
 	if msgLen < 0 || msgLen+4 > len(decrypted) {
-		return nil, errInvalidMsgLen
+		return nil, errDecryptionFailed
 	}
 	paddingLen := len(decrypted) - 4 - msgLen
 	if paddingLen < SecretChatMinPadding || paddingLen > SecretChatMaxPadding {
-		return nil, fmt.Errorf("crypto/secret: invalid padding length %d", paddingLen)
+		return nil, errDecryptionFailed
 	}
 
 	return decrypted[4 : 4+msgLen], nil
@@ -222,7 +227,7 @@ func secretKDF(key, msgKey []byte, x int) (aesKey, aesIV [32]byte) {
 	return aesKey, aesIV
 }
 
-func EncryptFile(data, fileKey, fileIV []byte) []byte {
+func EncryptFile(data, fileKey, fileIV []byte) ([]byte, error) {
 	return IGEEncrypt(padFile(data), fileKey, fileIV)
 }
 
@@ -230,7 +235,7 @@ func DecryptFile(data, fileKey, fileIV []byte) ([]byte, error) {
 	if len(data)%16 != 0 {
 		return nil, errFileNotAligned
 	}
-	return IGEDecrypt(data, fileKey, fileIV), nil
+	return IGEDecrypt(data, fileKey, fileIV)
 }
 
 func FileKeyFingerprint(key, iv []byte) int32 {

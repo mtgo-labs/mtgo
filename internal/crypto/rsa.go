@@ -63,7 +63,10 @@ func rsapad(data []byte, n *big.Int) ([]byte, error) {
 		copy(dataWithHash[:], dataPadReversed)
 		copy(dataWithHash[dataWithPaddingLen:], hash[:])
 
-		aesEncrypted := IGEEncrypt(dataWithHash[:], tempKey[:], zeroIV)
+		aesEncrypted, err := IGEEncrypt(dataWithHash[:], tempKey[:], zeroIV)
+			if err != nil {
+				return nil, err
+			}
 
 		aesHash := sha256.Sum256(aesEncrypted)
 		for i := 0; i < tempKeyLen; i++ {
