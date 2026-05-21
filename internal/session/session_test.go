@@ -271,9 +271,11 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 func startTestWorkers(s *Session) {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
+	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, dispatchQueueSize)
 	s.connected.Store(true)
 	go s.writer()
-	go s.readLoop()
+	s.startDispatchWorkers(context.Background(), 1)
+	go func() { _ = s.receiveLoop(context.Background()) }()
 }
 
 func TestSessionSendAndWait(t *testing.T) {
