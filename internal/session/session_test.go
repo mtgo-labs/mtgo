@@ -216,6 +216,10 @@ func (m *mockTransport) SetWriteDeadline(t time.Time) error {
 	return nil
 }
 
+func (m *mockTransport) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
 func makeAuthKey() []byte {
 	return make([]byte, 256)
 }

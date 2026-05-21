@@ -33,6 +33,8 @@ type Transport interface {
 	IsConnected() bool
 	// SetWriteDeadline sets the write deadline on the underlying connection.
 	SetWriteDeadline(t time.Time) error
+	// SetReadDeadline sets the read deadline on the underlying connection.
+	SetReadDeadline(t time.Time) error
 }
 
 // sendJob is a unit of work for the writer goroutine.
@@ -348,6 +350,11 @@ func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
 		select {
 		case ch <- obj:
 		default:
+			select {
+			case ch <- obj:
+			case <-time.After(5 * time.Second):
+				log.Printf("session: deliverResult: dropping result for msg_id=%d: channel full", msgID)
+			}
 		}
 	}
 }
@@ -376,6 +383,11 @@ func (s *Session) deliverRawResult(msgID int64, data []byte) {
 		select {
 		case ch <- data:
 		default:
+			select {
+			case ch <- data:
+			case <-time.After(5 * time.Second):
+				log.Printf("session: deliverRawResult: dropping result for msg_id=%d: channel full", msgID)
+			}
 		}
 	}
 }
@@ -696,13 +708,25 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 	bodyBytes := buf.Bytes()
 
 	var lastErr error
+	var backoff time.Duration
 	for i := 0; i < retries; i++ {
+		if i > 0 {
+			time.Sleep(backoff)
+		}
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
 		data, err := s.SendRaw(ctx, msgID, uint32(seqNo), bodyBytes, timeout)
 		if err != nil {
 			lastErr = fmt.Errorf("invoke raw: send: %w", err)
+			if backoff == 0 {
+				backoff = 100 * time.Millisecond
+			} else {
+				backoff = backoff * 2
+				if backoff > 2*time.Second {
+					backoff = 2 * time.Second
+				}
+			}
 			continue
 		}
 		return data, nil
@@ -720,13 +744,25 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	methodName := typeName(query)
 
 	var lastErr error
+	var backoff time.Duration
 	for i := 0; i < retries; i++ {
+		if i > 0 {
+			time.Sleep(backoff)
+		}
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
 		obj, err := s.Send(ctx, msgID, uint32(seqNo), query, timeout)
 		if err != nil {
 			lastErr = fmt.Errorf("invoke %s: send: %w", methodName, err)
+			if backoff == 0 {
+				backoff = 100 * time.Millisecond
+			} else {
+				backoff = backoff * 2
+				if backoff > 2*time.Second {
+					backoff = 2 * time.Second
+				}
+			}
 			continue
 		}
 
@@ -738,6 +774,14 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				lastErr = fmt.Errorf("invoke %s: bad server salt (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
 			default:
 				lastErr = fmt.Errorf("invoke %s: bad message notification: %T", methodName, bad)
+			}
+			if backoff == 0 {
+				backoff = 100 * time.Millisecond
+			} else {
+				backoff = backoff * 2
+				if backoff > 2*time.Second {
+					backoff = 2 * time.Second
+				}
 			}
 			continue
 		}
@@ -751,6 +795,14 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return nil, fmt.Errorf("invoke %s: %w", methodName, parsed)
 			}
 			lastErr = fmt.Errorf("invoke %s: %w", methodName, parsed)
+			if backoff == 0 {
+				backoff = 100 * time.Millisecond
+			} else {
+				backoff = backoff * 2
+				if backoff > 2*time.Second {
+					backoff = 2 * time.Second
+				}
+			}
 			continue
 		}
 
@@ -953,6 +1005,19 @@ func (s *Session) writer() {
 			if err != nil {
 				if s.onDisconnect != nil {
 					s.onDisconnect(err)
+				}
+			drain:
+				for {
+					select {
+					case job := <-s.sendCh:
+						select {
+						case job.done <- err:
+						default:
+						}
+						putSendJob(job)
+					default:
+						break drain
+					}
 				}
 				return
 			}
@@ -1240,6 +1305,12 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 
 func (s *Session) receiveLoop(ctx context.Context) error {
 	var lastDisconnect time.Time
+
+	readTimeout := s.pingInterval * 2
+	if readTimeout < 30*time.Second {
+		readTimeout = 30 * time.Second
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -1249,10 +1320,14 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 		default:
 		}
 
+		s.transport.SetReadDeadline(time.Now().Add(readTimeout))
 		data, err := s.transport.Recv()
 		if err != nil {
 			if !s.connected.Load() {
 				return nil
+			}
+			if isTimeoutError(err) {
+				return fmt.Errorf("session: read deadline exceeded: %w", err)
 			}
 			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
 				s.onDisconnect(err)
@@ -1270,6 +1345,7 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 			}
 			continue
 		}
+		s.transport.SetReadDeadline(time.Time{})
 		if len(data) == 4 {
 			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
 			if code < 0 {
@@ -1331,6 +1407,13 @@ func (s *Session) sendPing() {
 
 func (s *Session) setPingInterval(d time.Duration) {
 	s.pingInterval = d
+}
+
+func isTimeoutError(err error) bool {
+	if netErr, ok := err.(interface{ Timeout() bool }); ok && netErr.Timeout() {
+		return true
+	}
+	return false
 }
 
 // SetUpdateHandler registers fn as the callback for unsolicited server

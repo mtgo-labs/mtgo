@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/mtgo-labs/mtgo/internal/storage"
@@ -42,6 +43,7 @@ type MemoryStorage struct {
 	apiHash       string
 
 	peers          map[int64]storage.Peer
+	peerUsernames  map[string]int64
 	dcAuths        map[int]storage.DCAuthEntry
 	updateStates   map[string]storage.UpdateState
 	channelStates  map[string]map[int64]storage.ChannelUpdateState
@@ -60,6 +62,7 @@ type MemoryStorage struct {
 func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
 		peers:          make(map[int64]storage.Peer),
+		peerUsernames:  make(map[string]int64),
 		dcAuths:        make(map[int]storage.DCAuthEntry),
 		updateStates:   make(map[string]storage.UpdateState),
 		channelStates:  make(map[string]map[int64]storage.ChannelUpdateState),
@@ -134,6 +137,15 @@ func (m *MemoryStorage) SavePeer(p *storage.Peer) error {
 	if m.peers == nil {
 		m.peers = make(map[int64]storage.Peer)
 	}
+	if m.peerUsernames == nil {
+		m.peerUsernames = make(map[string]int64)
+	}
+	if old, ok := m.peers[p.ID]; ok && old.Username != "" {
+		delete(m.peerUsernames, strings.ToLower(old.Username))
+	}
+	if p.Username != "" {
+		m.peerUsernames[strings.ToLower(p.Username)] = p.ID
+	}
 	m.peers[p.ID] = *p
 	return nil
 }
@@ -151,12 +163,15 @@ func (m *MemoryStorage) GetPeer(id int64) (*storage.Peer, error) {
 func (m *MemoryStorage) GetPeerByUsername(username string) (*storage.Peer, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	for _, p := range m.peers {
-		if p.Username == username {
-			return &p, nil
-		}
+	id, ok := m.peerUsernames[strings.ToLower(username)]
+	if !ok {
+		return nil, nil
 	}
-	return nil, nil
+	p, ok := m.peers[id]
+	if !ok {
+		return nil, nil
+	}
+	return &p, nil
 }
 
 func (m *MemoryStorage) LoadPeers() ([]*storage.Peer, error) {
@@ -176,6 +191,9 @@ func (m *MemoryStorage) LoadPeers() ([]*storage.Peer, error) {
 func (m *MemoryStorage) DeletePeer(id int64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if old, ok := m.peers[id]; ok && old.Username != "" {
+		delete(m.peerUsernames, strings.ToLower(old.Username))
+	}
 	delete(m.peers, id)
 	return nil
 }

@@ -10,8 +10,9 @@ import (
 )
 
 type TCPFull struct {
-	conn  net.Conn
-	seqNo uint32
+	conn    net.Conn
+	seqNo   uint32
+	readBuf []byte
 }
 
 // NewTCPFull returns a new TCPFull transport wrapping conn.
@@ -48,12 +49,12 @@ func (t *TCPFull) Send(buf *bytes.Buffer) error {
 // verifies the CRC32 checksum and returns the payload bytes without the
 // header and checksum. Returns [ErrCRC32Mismatch] on checksum failure.
 func (t *TCPFull) Recv() ([]byte, error) {
-	lenBytes := make([]byte, 4)
-	if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
+	var lenBytes [4]byte
+	if _, err := io.ReadFull(t.conn, lenBytes[:]); err != nil {
 		return nil, err
 	}
 
-	packetLen := binary.LittleEndian.Uint32(lenBytes)
+	packetLen := binary.LittleEndian.Uint32(lenBytes[:])
 	if packetLen < 12 {
 		return nil, fmt.Errorf("tcp_full: packet too short: %d", packetLen)
 	}
@@ -61,14 +62,21 @@ func (t *TCPFull) Recv() ([]byte, error) {
 		return nil, ErrPayloadTooLarge
 	}
 
-	rest := make([]byte, packetLen-4)
+	restLen := int(packetLen) - 4
+	if cap(t.readBuf) < restLen {
+		t.readBuf = make([]byte, restLen)
+	}
+	rest := t.readBuf[:restLen]
 	if _, err := io.ReadFull(t.conn, rest); err != nil {
 		return nil, err
 	}
 
-	packet := append(lenBytes, rest...)
-	checksum := binary.LittleEndian.Uint32(packet[len(packet)-4:])
-	computed := crc32.ChecksumIEEE(packet[:len(packet)-4])
+	h := crc32.NewIEEE()
+	h.Write(lenBytes[:])
+	h.Write(rest[:len(rest)-4])
+	computed := h.Sum32()
+
+	checksum := binary.LittleEndian.Uint32(rest[len(rest)-4:])
 	if checksum != computed {
 		return nil, ErrCRC32Mismatch
 	}

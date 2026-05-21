@@ -159,7 +159,7 @@ func (c *Client) resolveAndCache(result *tg.ContactsResolvedPeer) {
 		if user.AccessHash != 0 {
 			c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
 			if user.Username != "" {
-				c.cacheUsernameLocked(user.Username, user.ID)
+				c.cacheUsername(user.Username, user.ID)
 			}
 		}
 	}
@@ -171,7 +171,7 @@ func (c *Client) resolveAndCache(result *tg.ContactsResolvedPeer) {
 		if channel.AccessHash != 0 {
 			c.CachePeer(channel.ID, &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash})
 			if channel.Username != "" {
-				c.cacheUsernameLocked(channel.Username, channel.ID)
+				c.cacheUsername(channel.Username, channel.ID)
 			}
 		}
 	}
@@ -200,7 +200,7 @@ func (c *Client) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerCl
 	c.Log.Debug("ResolvePhone")
 	return c.resolveCoalescer.Do("phone:"+phone, func() (tg.InputPeerClass, error) {
 		rpc := c.Raw()
-		result, err := rpc.ContactsResolvePhone(context.Background(), &tg.ContactsResolvePhoneRequest{
+		result, err := rpc.ContactsResolvePhone(ctx, &tg.ContactsResolvePhoneRequest{
 			Phone: phone,
 		})
 		if err != nil {
