@@ -48,7 +48,8 @@ const (
 	saltFetchInterval    = time.Hour
 	ackFlushInterval     = 30 * time.Second
 	housekeeperTick      = time.Second
-	dispatchQueueSize    = 256
+
+	defaultDispatchQueueSize = 256
 )
 
 var sendJobPool = sync.Pool{
@@ -217,6 +218,10 @@ type Session struct {
 	sendCh chan *sendJob
 	// dispatchCh is a bounded queue for raw messages that need TL decoding.
 	dispatchCh chan *tg.MTProtoMessageRaw
+	// dispatchWorkers is the number of workers that decode dispatchCh items.
+	dispatchWorkers int
+	// dispatchQueueSize is the capacity used when creating dispatchCh.
+	dispatchQueueSize int
 	// receiveErr receives the terminal receive loop error, if any.
 	receiveErr chan error
 	// pingInterval controls how often keep-alive pings are sent.
@@ -290,12 +295,38 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
 	}
+	s.SetDispatchConfig(0, 0)
 
 	if len(authKey) > 0 {
 		s.authKeyID = computeAuthKeyID(authKey)
 	}
 
 	return s, nil
+}
+
+// SetDispatchConfig configures the bounded TL decode worker pool used by the
+// receive path. Non-positive values keep the defaults: runtime.GOMAXPROCS(0)
+// workers and a queue capacity of 256.
+func (s *Session) SetDispatchConfig(workers, queueSize int) {
+	s.dispatchWorkers = resolveDispatchWorkers(workers)
+	s.dispatchQueueSize = resolveDispatchQueueSize(queueSize)
+}
+
+func resolveDispatchWorkers(workers int) int {
+	if workers > 0 {
+		return workers
+	}
+	if workers = runtime.GOMAXPROCS(0); workers > 0 {
+		return workers
+	}
+	return 1
+}
+
+func resolveDispatchQueueSize(queueSize int) int {
+	if queueSize > 0 {
+		return queueSize
+	}
+	return defaultDispatchQueueSize
 }
 
 func (s *Session) registerResult(msgID int64) chan tg.TLObject {
@@ -773,12 +804,12 @@ func (s *Session) StartContext(ctx context.Context) error {
 func (s *Session) start(loopCtx, pingCtx context.Context) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, dispatchQueueSize)
+	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.receiveErr = make(chan error, 1)
 	s.connected.Store(true)
 
 	go s.writer()
-	s.startDispatchWorkers(loopCtx, runtime.GOMAXPROCS(0))
+	s.startDispatchWorkers(loopCtx, s.dispatchWorkers)
 	go func() {
 		s.receiveErr <- s.receiveLoop(loopCtx)
 	}()

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"runtime"
 	"testing"
 	"time"
 
@@ -271,11 +272,43 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 func startTestWorkers(s *Session) {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, dispatchQueueSize)
+	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.connected.Store(true)
 	go s.writer()
 	s.startDispatchWorkers(context.Background(), 1)
 	go func() { _ = s.receiveLoop(context.Background()) }()
+}
+
+func TestSessionDispatchConfigDefaults(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+
+	if s.dispatchWorkers != runtime.GOMAXPROCS(0) {
+		t.Fatalf("dispatchWorkers = %d, want %d", s.dispatchWorkers, runtime.GOMAXPROCS(0))
+	}
+	if s.dispatchQueueSize != defaultDispatchQueueSize {
+		t.Fatalf("dispatchQueueSize = %d, want %d", s.dispatchQueueSize, defaultDispatchQueueSize)
+	}
+
+	s.SetDispatchConfig(-1, 0)
+	if s.dispatchWorkers != runtime.GOMAXPROCS(0) {
+		t.Fatalf("dispatchWorkers after negative = %d, want %d", s.dispatchWorkers, runtime.GOMAXPROCS(0))
+	}
+	if s.dispatchQueueSize != defaultDispatchQueueSize {
+		t.Fatalf("dispatchQueueSize after zero = %d, want %d", s.dispatchQueueSize, defaultDispatchQueueSize)
+	}
+}
+
+func TestSessionDispatchConfigCustom(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+
+	s.SetDispatchConfig(7, 33)
+
+	if s.dispatchWorkers != 7 {
+		t.Fatalf("dispatchWorkers = %d, want 7", s.dispatchWorkers)
+	}
+	if s.dispatchQueueSize != 33 {
+		t.Fatalf("dispatchQueueSize = %d, want 33", s.dispatchQueueSize)
+	}
 }
 
 func TestSessionSendAndWait(t *testing.T) {
