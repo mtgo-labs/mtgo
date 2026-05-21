@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -61,11 +62,11 @@ var (
 type Logger struct {
 	mu     sync.Mutex
 	prefix string
-	// Level controls the minimum severity that will be emitted. Set via
+	// level controls the minimum severity that will be emitted. Set via
 	// SetLevel. Messages at or above this level are printed; those below are
 	// silently discarded. NoLevel (the default) disables all output.
-	Level    LogLevel
-	noColor  bool
+	level    atomic.Int32
+	noColor  atomic.Int32
 	output   *log.Logger
 	file     *os.File
 	filePath string
@@ -83,12 +84,13 @@ type Logger struct {
 // Returns:
 //   - *Logger ready for use (level defaults to NoLevel).
 func NewLogger(prefix string) *Logger {
-	return &Logger{
+	l := &Logger{
 		prefix:  prefix,
-		Level:   NoLevel,
 		output:  log.New(os.Stderr, "", 0),
 		maxSize: defaultMaxSize,
 	}
+	l.level.Store(int32(NoLevel))
+	return l
 }
 
 // NoColor controls ANSI color output. Pass true (or no argument) to disable
@@ -100,10 +102,11 @@ func NewLogger(prefix string) *Logger {
 // Returns:
 //   - *Logger: the receiver, for method chaining.
 func (l *Logger) NoColor(v ...bool) *Logger {
-	l.noColor = true
-	if len(v) > 0 {
-		l.noColor = v[0]
+	nc := int32(1)
+	if len(v) > 0 && !v[0] {
+		nc = 0
 	}
+	l.noColor.Store(nc)
 	return l
 }
 
@@ -116,7 +119,7 @@ func (l *Logger) NoColor(v ...bool) *Logger {
 // Returns:
 //   - *Logger: the receiver, for method chaining.
 func (l *Logger) SetLevel(level LogLevel) *Logger {
-	l.Level = level
+	l.level.Store(int32(level))
 	return l
 }
 
@@ -201,11 +204,11 @@ func (l *Logger) Close() error {
 func (l *Logger) Clone(prefix string) *Logger {
 	cloned := &Logger{
 		prefix:   l.prefix + " " + prefix,
-		Level:    l.Level,
-		noColor:  l.noColor,
 		filePath: l.filePath,
 		maxSize:  l.maxSize,
 	}
+	cloned.level.Store(l.level.Load())
+	cloned.noColor.Store(l.noColor.Load())
 	if l.file != nil {
 		cloned.file = l.file
 		cloned.output = log.New(io.MultiWriter(os.Stderr, l.file), "", 0)
@@ -216,7 +219,7 @@ func (l *Logger) Clone(prefix string) *Logger {
 }
 
 func (l *Logger) colorize(color string, s string) string {
-	if l.noColor {
+	if l.noColor.Load() != 0 {
 		return s
 	}
 	return color + s + logColorOff
@@ -226,7 +229,8 @@ func (l *Logger) enabled(level LogLevel) bool {
 	if l == nil {
 		return false
 	}
-	return level >= l.Level && l.Level != NoLevel
+	stored := LogLevel(l.level.Load())
+	return level >= stored && stored != NoLevel
 }
 
 func (l *Logger) maybeRotate() {
