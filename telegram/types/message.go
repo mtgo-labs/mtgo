@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
@@ -328,6 +329,22 @@ func ParseReaction(raw tg.ReactionClass) *Reaction {
 		return &Reaction{IsPaid: true}
 	}
 	return nil
+}
+
+func reactionToTL(r Reaction) tg.ReactionClass {
+	if r.CustomEmojiID != "" {
+		id, _ := strconv.ParseInt(r.CustomEmojiID, 10, 64)
+		return &tg.ReactionCustomEmoji{DocumentID: id}
+	}
+	return &tg.ReactionEmoji{Emoticon: r.Emoji}
+}
+
+func ReactionsToTL(reactions []Reaction) []tg.ReactionClass {
+	out := make([]tg.ReactionClass, len(reactions))
+	for i, r := range reactions {
+		out[i] = reactionToTL(r)
+	}
+	return out
 }
 
 // ServiceMessage wraps a service action type for system-generated messages such

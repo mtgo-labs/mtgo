@@ -4,25 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// GetFullChannel retrieves the full information about a channel or supergroup,
-// including participant count, admin list, banned list, default permissions,
-// and the linked chat/peer. This is useful for admin panels, stats displays,
-// or any feature that needs more than the basic Channel object.
-//
-// Parameters:
-//   - ctx: context for cancellation and deadlines
-//   - chatID: the channel or supergroup ID
-//
-// Returns a ChatFullClass (e.g. *ChannelFull) on success.
-//
-// Returns an error if:
-//   - the peer cannot be resolved or is not a channel
-//   - the user is not a member (for private channels)
-//   - the RPC call fails
-func (c *Client) GetFullChannel(ctx context.Context, chatID int64) (tg.ChatFullClass, error) {
+func (c *Client) GetFullChannel(ctx context.Context, chatID int64) (*types.Chat, error) {
 	c.Log.Debugf("GetFullChannel chat_id=%d", chatID)
 	channel, err := resolveChannelID(c, chatID)
 	if err != nil {
@@ -30,7 +16,17 @@ func (c *Client) GetFullChannel(ctx context.Context, chatID int64) (tg.ChatFullC
 	}
 
 	rpc := c.Raw()
-	return rpc.ChannelsGetFullChannel(ctx, &tg.ChannelsGetFullChannelRequest{
+	full, err := rpc.ChannelsGetFullChannel(ctx, &tg.ChannelsGetFullChannelRequest{
 		Channel: channel,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	chat := &types.Chat{
+		ID:   chatID,
+		Type: types.ChatTypeChannel,
+	}
+	types.EnrichChatFull(chat, full)
+	return chat, nil
 }

@@ -285,9 +285,9 @@ func (c *Context) SendMedia(chatID int64, media tg.InputMediaClass, caption stri
 // Example:
 //
 //	client.OnMessage(func(ctx *telegram.Context) {
-//	    ctx.React(&tg.ReactionEmoji{Emoticon: "👍"})
+//	    ctx.React(types.Reaction{Emoji: "👍"})
 //	})
-func (c *Context) React(reaction ...tg.ReactionClass) error {
+func (c *Context) React(reactions ...types.Reaction) error {
 	if c.Message == nil {
 		return ErrContextNoReact
 	}
@@ -295,7 +295,7 @@ func (c *Context) React(reaction ...tg.ReactionClass) error {
 	if err != nil {
 		return err
 	}
-	return c.Client.SendReaction(c.Ctx, chatID, c.Message.ID, reaction)
+	return c.Client.SendReaction(c.Ctx, chatID, c.Message.ID, reactions)
 }
 
 // Read marks the message that triggered the current context as read. If no specific message

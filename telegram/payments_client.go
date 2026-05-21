@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -31,7 +32,7 @@ type SendPaymentFormOption struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Form ID: %d, title: %s\n", form.GetFormID(), form.GetTitle())
-func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int32, opts ...*GetPaymentFormOption) (tg.PaymentFormClass, error) {
+func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int32, opts ...*GetPaymentFormOption) (*types.PaymentForm, error) {
 	c.Log.Debugf("GetPaymentForm chat_id=%d msg_id=%d", chatID, messageID)
 	opt := params.GetOptDef(&GetPaymentFormOption{}, opts...)
 
@@ -48,7 +49,11 @@ func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int
 	}
 
 	rpc := c.Raw()
-	return rpc.PaymentsGetPaymentForm(ctx, req)
+	raw, err := rpc.PaymentsGetPaymentForm(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return types.ParsePaymentForm(raw), nil
 }
 
 // SendPaymentForm submits payment credentials for a previously retrieved payment form.
@@ -198,7 +203,7 @@ func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*tg.PaymentsStarsStatus, error) {
+func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
 	c.Log.Debugf("GetStarsTransactions chat_id=%d inbound=%v outbound=%v limit=%d", chatID, inbound, outbound, limit)
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
@@ -212,7 +217,7 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 	opt := params.GetOptDef(&params.GetStarsTransactionsOption{}, opts...)
 
 	rpc := c.Raw()
-	return rpc.PaymentsGetStarsTransactions(ctx, &tg.PaymentsGetStarsTransactionsRequest{
+	raw, err := rpc.PaymentsGetStarsTransactions(ctx, &tg.PaymentsGetStarsTransactionsRequest{
 		Inbound:        inbound,
 		Outbound:       outbound,
 		Ascending:      opt.Ascending,
@@ -222,6 +227,10 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 		Offset:         offset,
 		Limit:          limit,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return types.ParseStarsStatus(raw), nil
 }
 
 // RefundStarsCharge refunds a Telegram Stars charge. Bots can use this to refund

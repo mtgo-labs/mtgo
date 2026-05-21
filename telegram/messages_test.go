@@ -6,6 +6,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram/fileid"
 	"github.com/mtgo-labs/mtgo/telegram/params"
+	"github.com/mtgo-labs/mtgo/telegram/types"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -447,7 +448,7 @@ func TestSendReaction(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	err := c.SendReaction(context.Background(), 10, 55, []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F525"}})
+	err := c.SendReaction(context.Background(), 10, 55, []types.Reaction{{Emoji: "\U0001F525"}})
 	if err != nil {
 		t.Fatalf("SendReaction() error: %v", err)
 	}
@@ -468,9 +469,9 @@ func TestSendReactionMultiple(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
 	err := c.SendReaction(context.Background(), 10, 55,
-		[]tg.ReactionClass{
-			&tg.ReactionEmoji{Emoticon: "\U0001F525"},
-			&tg.ReactionCustomEmoji{DocumentID: 12345},
+		[]types.Reaction{
+			{Emoji: "\U0001F525"},
+			{CustomEmojiID: "12345"},
 		},
 	)
 	if err != nil {
@@ -490,7 +491,7 @@ func TestSendReactionWithOptions(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
 	err := c.SendReaction(context.Background(), 10, 55,
-		[]tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F525"}},
+		[]types.Reaction{{Emoji: "\U0001F525"}},
 		&params.SendReactionOption{Big: true, AddToRecent: true},
 	)
 	if err != nil {
@@ -530,7 +531,7 @@ func TestSendPaidReaction(t *testing.T) {
 
 func TestSendReactionPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
-	err := c.SendReaction(context.Background(), 999, 1, []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F44D"}})
+	err := c.SendReaction(context.Background(), 999, 1, []types.Reaction{{Emoji: "\U0001F44D"}})
 	if err == nil {
 		t.Fatal("expected error for unresolved peer")
 	}

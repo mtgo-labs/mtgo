@@ -295,11 +295,8 @@ func (c *Client) BoundPay(chatID int64, msgID int32) (tg.PaymentResultClass, err
 		return nil, err
 	}
 	var formID int64
-	switch f := form.(type) {
-	case *tg.PaymentsPaymentForm:
-		formID = f.FormID
-	case *tg.PaymentsPaymentFormStars:
-		formID = f.FormID
+	if form != nil {
+		formID = form.ID
 	}
 	creds := &tg.InputPaymentCredentials{
 		Data: &tg.DataJSON{Data: "{}"},

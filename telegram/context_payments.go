@@ -24,7 +24,7 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Context) GetPaymentForm(chatID int64, messageID int32, opts ...*GetPaymentFormOption) (tg.PaymentFormClass, error) {
+func (c *Context) GetPaymentForm(chatID int64, messageID int32, opts ...*GetPaymentFormOption) (*types.PaymentForm, error) {
 	if c.Client == nil {
 		return nil, ErrContextNoClient
 	}
