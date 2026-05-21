@@ -6,13 +6,15 @@ import (
 )
 
 func TestServerKeyCount(t *testing.T) {
-	if len(ServerPublicKeys) < 9 {
-		t.Fatalf("expected >= 9 server public keys, got %d", len(ServerPublicKeys))
+	if len(ServerPublicKeys) < 11 {
+		t.Fatalf("expected >= 11 server public keys, got %d", len(ServerPublicKeys))
 	}
 }
 
 func TestServerKeyFingerprints(t *testing.T) {
 	fingerprints := []int64{
+		-5595554452916591101,
+		-3414540481677951611,
 		-4344800451088585951,
 		847625836280919973,
 		1562291298945373506,
