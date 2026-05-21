@@ -769,9 +769,7 @@ func (s *Session) StartContext(ctx context.Context) error {
 
 	go s.writer()
 	go func() {
-		if err := s.receiveLoop(ctx); err != nil && s.connected.Load() && s.onDisconnect != nil {
-			s.onDisconnect(err)
-		}
+		s.readLoop()
 	}()
 
 	timeout := timeoutFromContext(ctx)
