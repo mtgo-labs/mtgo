@@ -16,9 +16,10 @@ func main() {
 	botToken := mustEnv("BOT_TOKEN")
 
 	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
-		BotToken:    botToken,
-		SessionName: "echo_bot",
-		SavePeers:   true,
+		BotToken:          botToken,
+		SessionName:       "echo_bot",
+		SavePeers:         true,
+		DispatchQueueSize: 512,
 	})
 	if err != nil {
 		log.Fatalf("new client: %v", err)
