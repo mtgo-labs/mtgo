@@ -60,11 +60,9 @@ var (
 // It supports concurrent use, file output with automatic rotation, and prefix
 // chaining via Clone for subsystem-scoped loggers (e.g. "session", "auth").
 type Logger struct {
-	mu     sync.Mutex
-	prefix string
-	// level controls the minimum severity that will be emitted. Set via
-	// SetLevel. Messages at or above this level are printed; those below are
-	// silently discarded. NoLevel (the default) disables all output.
+	mu       sync.Mutex
+	rotateMu *sync.Mutex
+	prefix   string
 	level    atomic.Int32
 	noColor  atomic.Int32
 	output   *log.Logger
@@ -85,9 +83,10 @@ type Logger struct {
 //   - *Logger ready for use (level defaults to NoLevel).
 func NewLogger(prefix string) *Logger {
 	l := &Logger{
-		prefix:  prefix,
-		output:  log.New(os.Stderr, "", 0),
-		maxSize: defaultMaxSize,
+		prefix:   prefix,
+		output:   log.New(os.Stderr, "", 0),
+		maxSize:  defaultMaxSize,
+		rotateMu: &sync.Mutex{},
 	}
 	l.level.Store(int32(NoLevel))
 	return l
@@ -206,6 +205,7 @@ func (l *Logger) Clone(prefix string) *Logger {
 		prefix:   l.prefix + " " + prefix,
 		filePath: l.filePath,
 		maxSize:  l.maxSize,
+		rotateMu: l.rotateMu,
 	}
 	cloned.level.Store(l.level.Load())
 	cloned.noColor.Store(l.noColor.Load())
@@ -237,6 +237,8 @@ func (l *Logger) maybeRotate() {
 	if l.filePath == "" || l.file == nil || l.maxSize <= 0 {
 		return
 	}
+	l.rotateMu.Lock()
+	defer l.rotateMu.Unlock()
 	info, err := l.file.Stat()
 	if err != nil {
 		return

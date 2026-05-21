@@ -330,15 +330,84 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 		md5Hash = md5.New()
 	}
 
+	type uploadJob struct {
+		partIdx int32
+		data    []byte
+		bufPtr  *[]byte
+	}
 	type partResult struct {
 		index int32
 		err   error
 	}
 
-	sem := make(chan struct{}, workers)
+	jobs := make(chan uploadJob, workers)
 	results := make(chan partResult, totalParts)
 	var wg sync.WaitGroup
 	var hasErr atomic.Bool
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					results <- partResult{err: fmt.Errorf("upload part panic: %v", r)}
+					hasErr.Store(true)
+				}
+			}()
+			for job := range jobs {
+				if hasErr.Load() {
+					uploadBufPool.Put(job.bufPtr)
+					continue
+				}
+
+				select {
+				case <-ctx.Done():
+					uploadBufPool.Put(job.bufPtr)
+					results <- partResult{index: job.partIdx, err: ctx.Err()}
+					hasErr.Store(true)
+					continue
+				default:
+				}
+
+				var uploadErr error
+				if isBig {
+					_, uploadErr = rpc.UploadSaveBigFilePart(ctx, &tg.UploadSaveBigFilePartRequest{
+						FileID:         fileID,
+						FilePart:       job.partIdx,
+						FileTotalParts: totalParts,
+						Bytes:          job.data,
+					})
+				} else {
+					_, uploadErr = rpc.UploadSaveFilePart(ctx, &tg.UploadSaveFilePartRequest{
+						FileID:   fileID,
+						FilePart: job.partIdx,
+						Bytes:    job.data,
+					})
+				}
+
+				uploadBufPool.Put(job.bufPtr)
+
+				if uploadErr != nil {
+					results <- partResult{index: job.partIdx, err: uploadErr}
+					hasErr.Store(true)
+					continue
+				}
+
+				results <- partResult{index: job.partIdx}
+
+				if opts != nil && opts.Progress != nil {
+					done := min(int64(job.partIdx+1)*uploadPartSize, fileSize)
+					opts.Progress(params.ProgressInfo{
+						FileName:      fileName,
+						TotalBytes:    fileSize,
+						UploadedBytes: done,
+						IsUpload:      true,
+					})
+				}
+			}
+		}()
+	}
 
 	for i := int32(0); i < totalParts; i++ {
 		if hasErr.Load() {
@@ -348,7 +417,7 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 		bufPtr := uploadBufPool.Get().(*[]byte)
 		n, readErr := io.ReadFull(reader, *bufPtr)
 		if readErr != nil && readErr != io.ErrUnexpectedEOF && readErr != io.EOF {
-			close(sem)
+			close(jobs)
 			wg.Wait()
 			return nil, 0, fmt.Errorf("upload: read part %d: %w", i, readErr)
 		}
@@ -362,68 +431,10 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 			md5Hash.Write(data)
 		}
 
-		wg.Add(1)
-		sem <- struct{}{}
-
-		go func(partIdx int32, data []byte, bufPtr *[]byte) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			defer uploadBufPool.Put(bufPtr)
-			defer func() {
-				if r := recover(); r != nil {
-					results <- partResult{index: partIdx, err: fmt.Errorf("upload part panic: %v", r)}
-					hasErr.Store(true)
-				}
-			}()
-
-			if hasErr.Load() {
-				return
-			}
-
-			select {
-			case <-ctx.Done():
-				results <- partResult{index: partIdx, err: ctx.Err()}
-				hasErr.Store(true)
-				return
-			default:
-			}
-
-			var uploadErr error
-			if isBig {
-				_, uploadErr = rpc.UploadSaveBigFilePart(ctx, &tg.UploadSaveBigFilePartRequest{
-					FileID:         fileID,
-					FilePart:       partIdx,
-					FileTotalParts: totalParts,
-					Bytes:          data,
-				})
-			} else {
-				_, uploadErr = rpc.UploadSaveFilePart(ctx, &tg.UploadSaveFilePartRequest{
-					FileID:   fileID,
-					FilePart: partIdx,
-					Bytes:    data,
-				})
-			}
-
-			if uploadErr != nil {
-				results <- partResult{index: partIdx, err: uploadErr}
-				hasErr.Store(true)
-				return
-			}
-
-			results <- partResult{index: partIdx}
-
-			if opts != nil && opts.Progress != nil {
-				done := min(int64(partIdx+1)*uploadPartSize, fileSize)
-				opts.Progress(params.ProgressInfo{
-					FileName:      fileName,
-					TotalBytes:    fileSize,
-					UploadedBytes: done,
-					IsUpload:      true,
-				})
-			}
-		}(i, data, bufPtr)
+		jobs <- uploadJob{partIdx: i, data: data, bufPtr: bufPtr}
 	}
 
+	close(jobs)
 	wg.Wait()
 	close(results)
 

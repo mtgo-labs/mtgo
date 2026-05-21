@@ -827,6 +827,7 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) Stop() {
+	unregisterClient(c)
 	c.mu.Lock()
 	if c.stopCh == nil {
 		c.stopCh = make(chan struct{})
@@ -2116,8 +2117,10 @@ func (c *Client) evictOldestPeerLocked() {
 	}
 	for len(c.peerCache) > limit && len(c.peerCacheOrder) > 0 {
 		oldest := c.peerCacheOrder[0]
-		c.peerCacheOrder = c.peerCacheOrder[1:]
 		delete(c.peerCache, oldest)
+		copy(c.peerCacheOrder, c.peerCacheOrder[1:])
+		c.peerCacheOrder[len(c.peerCacheOrder)-1] = 0
+		c.peerCacheOrder = c.peerCacheOrder[:len(c.peerCacheOrder)-1]
 	}
 }
 
@@ -2134,8 +2137,10 @@ func (c *Client) cacheUsername(username string, userID int64) {
 	}
 	for len(c.usernameCache) > limit && len(c.usernameCacheOrder) > 0 {
 		oldest := c.usernameCacheOrder[0]
-		c.usernameCacheOrder = c.usernameCacheOrder[1:]
 		delete(c.usernameCache, oldest)
+		copy(c.usernameCacheOrder, c.usernameCacheOrder[1:])
+		c.usernameCacheOrder[len(c.usernameCacheOrder)-1] = ""
+		c.usernameCacheOrder = c.usernameCacheOrder[:len(c.usernameCacheOrder)-1]
 	}
 }
 

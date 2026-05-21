@@ -265,6 +265,11 @@ func (rm *reconnectManager) Attempts() int {
 
 func (rm *reconnectManager) loop(ctx context.Context) {
 	defer close(rm.done)
+	timer := time.NewTimer(0)
+	if !timer.Stop() {
+		<-timer.C
+	}
+	defer timer.Stop()
 	for {
 		rm.mu.Lock()
 		rm.attempts++
@@ -284,10 +289,14 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 		delay := rm.cfg.delay(attempt)
 		rm.client.Log.Infof("reconnect attempt %d in %v", attempt, delay)
 
+		timer.Reset(delay)
 		select {
 		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
 			return
-		case <-time.After(delay):
+		case <-timer.C:
 		}
 
 		select {

@@ -16,6 +16,19 @@ func registerClient(c *Client) {
 	globalClientsMu.Unlock()
 }
 
+func unregisterClient(c *Client) {
+	globalClientsMu.Lock()
+	for i, cl := range globalClients {
+		if cl == c {
+			globalClients[i] = globalClients[len(globalClients)-1]
+			globalClients[len(globalClients)-1] = nil
+			globalClients = globalClients[:len(globalClients)-1]
+			break
+		}
+	}
+	globalClientsMu.Unlock()
+}
+
 // Idle blocks the calling goroutine until all registered clients have been
 // stopped. This is the package-level equivalent of calling Client.Idle() on
 // every active client.

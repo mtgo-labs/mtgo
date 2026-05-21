@@ -66,10 +66,15 @@ type globalHousekeeper struct {
 	mu       sync.Mutex
 	sessions map[*Session]struct{}
 	once     sync.Once
+	stopCh   chan struct{}
+	stopped  bool
 }
 
 func newGlobalHousekeeper() *globalHousekeeper {
-	return &globalHousekeeper{sessions: make(map[*Session]struct{})}
+	return &globalHousekeeper{
+		sessions: make(map[*Session]struct{}),
+		stopCh:   make(chan struct{}),
+	}
 }
 
 func (h *globalHousekeeper) register(s *Session) {
@@ -84,6 +89,10 @@ func (h *globalHousekeeper) register(s *Session) {
 func (h *globalHousekeeper) unregister(s *Session) {
 	h.mu.Lock()
 	delete(h.sessions, s)
+	if len(h.sessions) == 0 && !h.stopped {
+		h.stopped = true
+		close(h.stopCh)
+	}
 	h.mu.Unlock()
 }
 
@@ -113,6 +122,8 @@ func (h *globalHousekeeper) run() {
 
 	for {
 		select {
+		case <-h.stopCh:
+			return
 		case <-ticker.C:
 			now := time.Now()
 			for _, s := range h.snapshot() {
@@ -216,6 +227,8 @@ type Session struct {
 	mu sync.RWMutex
 	// stopOnce ensures cancel is closed exactly once.
 	stopOnce sync.Once
+	// wg tracks all goroutines spawned by start so Stop can wait for them.
+	wg sync.WaitGroup
 	// cancel is closed to signal background workers to stop.
 	cancel chan struct{}
 
@@ -598,6 +611,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 	if gz, ok := body.(*tg.GzipPacked); ok {
 		decoded, err := gz.Decode()
 		if err != nil {
+			log.Printf("session: gzip decode failed: %v", err)
 			return
 		}
 		obj = decoded
@@ -624,6 +638,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		if gz, ok := result.(*tg.GzipPacked); ok {
 			decoded, err := gz.Decode()
 			if err != nil {
+				log.Printf("session: gzip decode rpc result failed: %v", err)
 				return
 			}
 			result = decoded
@@ -708,6 +723,11 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	select {
 	case s.sendCh <- job:
 		writeTimer.Stop()
+	case <-ctx.Done():
+		writeTimer.Stop()
+		putSendJob(job)
+		s.unregisterRawResult(msgID)
+		return nil, ctx.Err()
 	case <-writeTimer.C:
 		putSendJob(job)
 		s.unregisterRawResult(msgID)
@@ -898,9 +918,12 @@ func (s *Session) start(loopCtx, pingCtx context.Context) error {
 	s.receiveErr = make(chan error, 1)
 	s.connected.Store(true)
 
+	s.wg.Add(1)
 	go s.writer()
 	s.startDispatchWorkers(loopCtx, s.dispatchWorkers)
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		s.receiveErr <- s.receiveLoop(loopCtx)
 	}()
 
@@ -958,6 +981,16 @@ func (s *Session) Stop() {
 	s.mu.RUnlock()
 	if tp != nil {
 		tp.Close()
+	}
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		log.Printf("session: Stop: timed out waiting for goroutines to exit")
 	}
 }
 
@@ -1045,6 +1078,7 @@ func (s *Session) flushAcks() {
 }
 
 func (s *Session) writer() {
+	defer s.wg.Done()
 	for {
 		select {
 		case <-s.cancel:
@@ -1091,11 +1125,13 @@ func (s *Session) startDispatchWorkers(ctx context.Context, workers int) {
 		workers = 1
 	}
 	for range workers {
+		s.wg.Add(1)
 		go s.dispatchWorker(ctx)
 	}
 }
 
 func (s *Session) dispatchWorker(ctx context.Context) {
+	defer s.wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
@@ -1125,6 +1161,7 @@ func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
 	defer tg.ReleaseReader(bodyReader)
 	body, err := tg.ReadTLObject(bodyReader)
 	if err != nil {
+		log.Printf("session: TL decode failed: %v", err)
 		return
 	}
 	s.processIncoming(&tg.MTProtoMessage{MsgID: raw.MsgID, SeqNo: raw.SeqNo, Body: body})
