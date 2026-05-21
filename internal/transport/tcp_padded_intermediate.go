@@ -55,7 +55,7 @@ func (t *TCPPaddedIntermediate) Recv() ([]byte, error) {
 	}
 
 	length := binary.LittleEndian.Uint32(lenBytes)
-	if length > maxPayloadLen+15 {
+	if length > MaxPayloadLen+15 {
 		return nil, ErrPayloadTooLarge
 	}
 

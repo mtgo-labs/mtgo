@@ -45,6 +45,12 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 		dhPrime = new(big.Int).SetBytes(cfg.P)
 		g = cfg.G
 		dhVersion = cfg.Version
+		if dhPrime.BitLen() < 2048 || !dhPrime.ProbablyPrime(20) {
+			return nil, fmt.Errorf("telegram: server sent invalid DH prime")
+		}
+		if g < 2 || g > 7 {
+			return nil, fmt.Errorf("telegram: invalid DH generator: %d", g)
+		}
 	case *tg.MessagesDHConfigNotModified:
 		dhPrime = crypto.CurrentDHPrime
 		g = 2
@@ -127,6 +133,12 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 		chat.DHPrime = new(big.Int).SetBytes(cfg.P)
 		chat.G = cfg.G
 		chat.DHConfigVersion = cfg.Version
+		if chat.DHPrime.BitLen() < 2048 || !chat.DHPrime.ProbablyPrime(20) {
+			return nil, fmt.Errorf("telegram: server sent invalid DH prime")
+		}
+		if chat.G < 2 || chat.G > 7 {
+			return nil, fmt.Errorf("telegram: invalid DH generator: %d", chat.G)
+		}
 	case *tg.MessagesDHConfigNotModified:
 	}
 

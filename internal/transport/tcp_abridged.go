@@ -73,6 +73,9 @@ func (t *TCPAbridged) Recv() ([]byte, error) {
 	}
 
 	length *= 4
+	if length > MaxPayloadLen {
+		return nil, ErrPayloadTooLarge
+	}
 	if cap(t.readBuf) < length {
 		t.readBuf = make([]byte, length)
 	}

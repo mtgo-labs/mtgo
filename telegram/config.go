@@ -395,6 +395,7 @@ var DefaultConfig = Config{
 	SkipUpdates:           true,
 	TransportMode:         TransportModeAbridged,
 	SavePeers:             true,
+	WebSocketTLS:          true,
 	FetchReplies:          true,
 	FetchTopics:           true,
 	FetchStories:          true,
