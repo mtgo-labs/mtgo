@@ -118,8 +118,15 @@ func (t *TCPObfuscated) Connect() error {
 	copy(decKey[:], reversed[0:32])
 	copy(decIV[:], reversed[32:48])
 
-	t.enc = crypto.NewCTRCipher(encKey[:], encIV[:])
-	t.dec = crypto.NewCTRCipher(decKey[:], decIV[:])
+	var err error
+	t.enc, err = crypto.NewCTRCipher(encKey[:], encIV[:])
+	if err != nil {
+		return fmt.Errorf("tcp_obfuscated: create enc cipher: %w", err)
+	}
+	t.dec, err = crypto.NewCTRCipher(decKey[:], decIV[:])
+	if err != nil {
+		return fmt.Errorf("tcp_obfuscated: create dec cipher: %w", err)
+	}
 
 	encrypted := t.enc.Process(nonce)
 	copy(nonce[56:64], encrypted[56:64])
@@ -150,8 +157,15 @@ func (t *TCPObfuscated) connectReverse() error {
 	copy(decKey[:], nonce[8:40])
 	copy(decIV[:], nonce[40:56])
 
-	t.enc = crypto.NewCTRCipher(encKey[:], encIV[:])
-	t.dec = crypto.NewCTRCipher(decKey[:], decIV[:])
+	var err error
+	t.enc, err = crypto.NewCTRCipher(encKey[:], encIV[:])
+	if err != nil {
+		return fmt.Errorf("tcp_obfuscated: create enc cipher: %w", err)
+	}
+	t.dec, err = crypto.NewCTRCipher(decKey[:], decIV[:])
+	if err != nil {
+		return fmt.Errorf("tcp_obfuscated: create dec cipher: %w", err)
+	}
 
 	t.dec.Process(make([]byte, 64))
 

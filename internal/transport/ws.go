@@ -119,6 +119,7 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 		}
 		conn, err := tls.DialWithDialer(dialer, "tcp", addrHost, &tls.Config{
 			ServerName: host,
+			MinVersion: tls.VersionTLS12,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("ws: tls dial: %w", err)
@@ -196,8 +197,14 @@ func dialObfuscated2(conn net.Conn, marker byte) (*obfsConn, error) {
 	copy(decKey, reversed[0:32])
 	copy(decIV, reversed[32:48])
 
-	enc := crypto.NewCTRCipher(encKey, encIV)
-	dec := crypto.NewCTRCipher(decKey, decIV)
+	enc, err := crypto.NewCTRCipher(encKey, encIV)
+	if err != nil {
+		return nil, fmt.Errorf("obfuscated2: create enc cipher: %w", err)
+	}
+	dec, err := crypto.NewCTRCipher(decKey, decIV)
+	if err != nil {
+		return nil, fmt.Errorf("obfuscated2: create dec cipher: %w", err)
+	}
 
 	encrypted := enc.Process(nonce)
 	copy(nonce[56:64], encrypted[56:64])
@@ -247,8 +254,14 @@ func acceptObfuscated2(conn net.Conn) (*obfsConn, error) {
 	copy(decKey, nonce[8:40])
 	copy(decIV, nonce[40:56])
 
-	enc := crypto.NewCTRCipher(encKey, encIV)
-	dec := crypto.NewCTRCipher(decKey, decIV)
+	enc, err := crypto.NewCTRCipher(encKey, encIV)
+	if err != nil {
+		return nil, fmt.Errorf("obfuscated2: create enc cipher: %w", err)
+	}
+	dec, err := crypto.NewCTRCipher(decKey, decIV)
+	if err != nil {
+		return nil, fmt.Errorf("obfuscated2: create dec cipher: %w", err)
+	}
 
 	dec.Process(make([]byte, 64))
 

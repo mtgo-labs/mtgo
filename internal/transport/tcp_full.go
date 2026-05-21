@@ -7,6 +7,7 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
+	"sync/atomic"
 )
 
 type TCPFull struct {
@@ -23,7 +24,7 @@ func NewTCPFull(conn net.Conn) *TCPFull {
 // Connect resets the internal sequence counter. It does not perform any
 // network I/O because the underlying connection is already established.
 func (t *TCPFull) Connect() error {
-	t.seqNo = 0
+	atomic.StoreUint32(&t.seqNo, 0)
 	return nil
 }
 
@@ -35,11 +36,11 @@ func (t *TCPFull) Send(buf *bytes.Buffer) error {
 
 	packet := make([]byte, 4+4+len(data)+4)
 	binary.LittleEndian.PutUint32(packet[0:4], uint32(len(data)+12))
-	binary.LittleEndian.PutUint32(packet[4:8], t.seqNo)
+	binary.LittleEndian.PutUint32(packet[4:8], atomic.LoadUint32(&t.seqNo))
 	copy(packet[8:8+len(data)], data)
 	binary.LittleEndian.PutUint32(packet[8+len(data):], crc32.ChecksumIEEE(packet[:8+len(data)]))
 
-	t.seqNo++
+	atomic.AddUint32(&t.seqNo, 1)
 
 	_, err := t.conn.Write(packet)
 	return err
@@ -62,7 +63,9 @@ func (t *TCPFull) Recv() ([]byte, error) {
 		return nil, ErrPayloadTooLarge
 	}
 
-	restLen := int(packetLen) - 4
+	// packetLen-4 is guaranteed <= MaxPayloadLen (16 MiB), which fits in int
+	// on all supported platforms.
+	restLen := int(packetLen - 4)
 	if cap(t.readBuf) < restLen {
 		t.readBuf = make([]byte, restLen)
 	}
