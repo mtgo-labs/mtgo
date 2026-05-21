@@ -13,20 +13,20 @@ func TestWSDCAddress(t *testing.T) {
 		{
 			name: "plain",
 			dcID: 4,
-			want: "ws://vesta.web.telegram.org/apiws",
+			want: "ws://vesta.web.telegram.org:80/apiws",
 		},
 		{
 			name: "tls",
 			dcID: 4,
 			tls:  true,
-			want: "wss://vesta.web.telegram.org/apiws",
+			want: "wss://vesta.web.telegram.org:443/apiws",
 		},
 		{
 			name:     "test mode",
 			dcID:     2,
 			testMode: true,
 			tls:      true,
-			want:     "wss://venus.web.telegram.org/apiws",
+			want:     "wss://venus.web.telegram.org:443/apiws_test",
 		},
 	}
 
