@@ -1,9 +1,8 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"math/big"
-	"math/rand"
-	"time"
 )
 
 // CurrentDHPrime is the 2048-bit safe prime used for Diffie-Hellman key exchange
@@ -50,17 +49,24 @@ func Decompose(pq int64) int64 {
 	}
 
 	n := big.NewInt(pq)
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	nMinus1 := new(big.Int).Sub(n, big.NewInt(1))
 	tmp := new(big.Int)
 	bigOne := big.NewInt(1)
 
 	for attempt := 0; attempt < 64; attempt++ {
-		c := new(big.Int).Add(new(big.Int).Rand(rng, nMinus1), bigOne)
+		c, err := rand.Int(rand.Reader, nMinus1)
+		if err != nil {
+			continue
+		}
+		c.Add(c, bigOne)
 		if c.Cmp(bigOne) == 0 {
 			c.SetInt64(2)
 		}
-		y := new(big.Int).Add(new(big.Int).Rand(rng, nMinus1), bigOne)
+		y, err := rand.Int(rand.Reader, nMinus1)
+		if err != nil {
+			continue
+		}
+		y.Add(y, bigOne)
 		g := big.NewInt(1)
 		q := big.NewInt(1)
 		r := int64(1)

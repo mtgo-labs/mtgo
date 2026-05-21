@@ -420,3 +420,32 @@ func TestIsFileReferenceError(t *testing.T) {
 		})
 	}
 }
+
+func TestSanitizeFileName(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"normal", "photo.jpg", "photo.jpg"},
+		{"empty", "", ""},
+		{"path traversal", "../../etc/passwd", "passwd"},
+		{"absolute unix", "/etc/shadow", "shadow"},
+		{"absolute windows", "C:\\Windows\\System32\\config", "C:\\Windows\\System32\\config"},
+		{"double dot only", "..", ""},
+		{"dot only", ".", ""},
+		{"slash only", "/", ""},
+		{"nested traversal", "foo/bar/../../baz", "baz"},
+		{"dotdot in name", "file..name.txt", "filename.txt"},
+		{"null bytes", "file\x00name.txt", "file\x00name.txt"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeFileName(tt.in)
+			if got != tt.want {
+				t.Errorf("sanitizeFileName(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
