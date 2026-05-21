@@ -529,7 +529,10 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		Body:  body,
 	}
 
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	if err != nil {
+		return nil, fmt.Errorf("session: pack message: %w", err)
+	}
 
 	ch := s.registerResult(msgID)
 
@@ -600,7 +603,10 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 		SeqNo: uint32(seqNo),
 		Body:  drop,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	if err != nil {
+		return
+	}
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(5 * time.Second)
@@ -717,7 +723,10 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, ErrTransportNotSet
 	}
 
-	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	if err != nil {
+		return nil, fmt.Errorf("session: send raw: %w", err)
+	}
 
 	ch := s.registerRawResult(msgID)
 
@@ -1027,7 +1036,10 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		SeqNo: uint32(seqNo),
 		Body:  body,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	if err != nil {
+		return
+	}
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(10 * time.Second)

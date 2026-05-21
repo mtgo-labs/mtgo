@@ -114,11 +114,13 @@ func (a *Auth) findKeyFingerprint(fingerprints []int64) (int64, bool) {
 	return 0, false
 }
 
-func (a *Auth) generateRandomBN(bits int) *big.Int {
+func (a *Auth) generateRandomBN(bits int) (*big.Int, error) {
 	b := make([]byte, bits/8)
-	_, _ = rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return nil, fmt.Errorf("session: generate random: %w", err)
+	}
 	b[0] |= 0x80
-	return new(big.Int).SetBytes(b)
+	return new(big.Int).SetBytes(b), nil
 }
 
 // Create performs the complete MTProto key generation handshake over the
@@ -213,10 +215,13 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		return nil, ErrDHParamsFail
 	case *tg.ServerDHParamsOk:
 		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
-		decrypted := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
-		defer crypto.ReleaseAESBuf(decrypted)
+		decrypted, err := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
+			if err != nil {
+				return nil, fmt.Errorf("step 8: decrypt DH params: %w", err)
+			}
+			defer crypto.ReleaseAESBuf(decrypted)
 
-		serverDHData, err := unwrapDataWithHash(decrypted)
+			serverDHData, err := unwrapDataWithHash(decrypted)
 		if err != nil {
 			return nil, fmt.Errorf("step 8: unwrap decrypted DH params: %w", err)
 		}
@@ -246,8 +251,10 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		if dhPrime.BitLen() != 2048 {
 			return nil, fmt.Errorf("%w: bit length %d", ErrDHPrimeInvalid, dhPrime.BitLen())
 		}
-		if !dhPrime.ProbablyPrime(20) {
-			return nil, ErrDHPrimeInvalid
+		if dhPrime.Cmp(crypto.CurrentDHPrime) != 0 {
+			if !dhPrime.ProbablyPrime(20) {
+				return nil, ErrDHPrimeInvalid
+			}
 		}
 
 		g := big.NewInt(int64(dhInner.G))
@@ -267,7 +274,17 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			return nil, ErrGAOutOfRange
 		}
 
-		b := a.generateRandomBN(2048)
+		// B8: verify gA is in the correct subgroup
+		halfPrime := new(big.Int).Rsh(dhPrime, 1)
+		subgroupCheck := new(big.Int).Exp(gA, halfPrime, dhPrime)
+		if subgroupCheck.Cmp(one) != 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		b, err := a.generateRandomBN(2048)
+		if err != nil {
+			return nil, fmt.Errorf("step 9: generate DH secret: %w", err)
+		}
 		gB := new(big.Int).Exp(g, b, dhPrime)
 
 		two := big.NewInt(2)
@@ -305,8 +322,11 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			clientDHWithHash = append(clientDHWithHash, pad...)
 		}
 
-		encClientDH := crypto.IGEEncrypt(clientDHWithHash, key, iv)
-		defer crypto.ReleaseAESBuf(encClientDH)
+		encClientDH, err := crypto.IGEEncrypt(clientDHWithHash, key, iv)
+			if err != nil {
+				return nil, fmt.Errorf("step 9: encrypt client DH: %w", err)
+			}
+			defer crypto.ReleaseAESBuf(encClientDH)
 
 		if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
 			Nonce:         nonce,
@@ -356,7 +376,11 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 				return nil, ErrServerNonceMismatch
 			}
 			retryID = authKeyAuxHash()
-			b = a.generateRandomBN(2048)
+			var retryErr error
+			b, retryErr = a.generateRandomBN(2048)
+			if retryErr != nil {
+				return nil, fmt.Errorf("step 10: retry DH secret: %w", retryErr)
+			}
 			gB = new(big.Int).Exp(g, b, dhPrime)
 			authKey = computeAuthKey(gA, b, dhPrime)
 

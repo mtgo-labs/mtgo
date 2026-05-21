@@ -237,11 +237,19 @@ func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObje
 		SeqNo: seqNo,
 		Body:  body,
 	}
-	return crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	if err != nil {
+		panic("makeEncryptedResponse: " + err.Error())
+	}
+	return encrypted
 }
 
 func makeEncryptedRawResponse(s *Session, msgID int64, seqNo uint32, body []byte) []byte {
-	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted, err := crypto.PackRaw(msgID, seqNo, body, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	if err != nil {
+		panic("makeEncryptedRawResponse: " + err.Error())
+	}
+	return encrypted
 }
 
 func encodeTLObject(t *testing.T, obj tg.TLObject) []byte {
