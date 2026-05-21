@@ -232,12 +232,42 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			return nil, ErrDHNonceMismatch
 		}
 
-		b := a.generateRandomBN(2048)
+		if dhInner.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
+
+		if v.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
+
 		dhPrime := new(big.Int).SetBytes([]byte(dhInner.DHPrime))
+		if dhPrime.BitLen() != 2048 {
+			return nil, fmt.Errorf("%w: bit length %d", ErrDHPrimeInvalid, dhPrime.BitLen())
+		}
+		if !dhPrime.ProbablyPrime(20) {
+			return nil, ErrDHPrimeInvalid
+		}
+
 		g := big.NewInt(int64(dhInner.G))
-		gB := new(big.Int).Exp(g, b, dhPrime)
+		if g.Int64() < 2 || g.Int64() > 7 {
+			return nil, fmt.Errorf("session: invalid DH generator %d", g.Int64())
+		}
 
 		gA := new(big.Int).SetBytes([]byte(dhInner.GA))
+		one := big.NewInt(1)
+		if gA.Cmp(one) <= 0 || gA.Cmp(new(big.Int).Sub(dhPrime, one)) >= 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		lowerBound := new(big.Int).Lsh(big.NewInt(1), 2048-64)
+		upperBound := new(big.Int).Sub(dhPrime, new(big.Int).Lsh(big.NewInt(1), 2048-64))
+		if gA.Cmp(lowerBound) < 0 || gA.Cmp(upperBound) > 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		b := a.generateRandomBN(2048)
+		gB := new(big.Int).Exp(g, b, dhPrime)
+
 		authKey := computeAuthKey(gA, b, dhPrime)
 
 		clientDHInner := &tg.ClientDHInnerData{
@@ -278,6 +308,13 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 
 		switch v := obj.(type) {
 		case *tg.DHGenOk:
+			if v.Nonce != nonce {
+				return nil, ErrNonceMismatch
+			}
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
+
 			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
 			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
 				return nil, ErrNewNonceHashMismatch

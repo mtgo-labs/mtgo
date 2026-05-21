@@ -45,4 +45,14 @@ var (
 	// ErrDHGenFail is returned during key exchange step 10 when the server
 	// responds with dh_gen_fail, indicating the DH key generation failed.
 	ErrDHGenFail = errors.New("step 10: dh_gen_fail")
+
+	// ErrServerNonceMismatch is returned during the DH key exchange when
+	// the server_nonce in a server response does not match the original.
+	ErrServerNonceMismatch = errors.New("session: server_nonce mismatch")
+	// ErrDHPrimeInvalid is returned when the server's dh_prime fails
+	// validation (wrong bit length or not prime).
+	ErrDHPrimeInvalid = errors.New("session: dh_prime validation failed")
+	// ErrGAOutOfRange is returned when the server's g_a falls outside the
+	// required range [2, dh_prime-2].
+	ErrGAOutOfRange = errors.New("session: g_a out of range")
 )

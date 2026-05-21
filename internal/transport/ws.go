@@ -3,9 +3,11 @@ package transport
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -91,22 +93,38 @@ func DialWebsocket(ctx context.Context, addr string) (net.Conn, error) {
 }
 
 func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
-	var d net.Dialer
-	host, port, err := net.SplitHostPort(fromWSScheme(addr))
+	u, err := url.Parse(addr)
 	if err != nil {
-		return nil, fmt.Errorf("ws: parse host: %w", err)
+		return nil, fmt.Errorf("ws: parse addr: %w", err)
 	}
-	return d.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
-}
 
-func fromWSScheme(addr string) string {
-	if len(addr) > 6 && addr[:6] == "wss://" {
-		return addr[6:]
+	host := u.Hostname()
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "wss" {
+			port = "443"
+		} else {
+			port = "80"
+		}
 	}
-	if len(addr) > 5 && addr[:5] == "ws://" {
-		return addr[5:]
+	addrHost := net.JoinHostPort(host, port)
+
+	if u.Scheme == "wss" {
+		conn, err := tls.DialWithDialer(&net.Dialer{}, "tcp", addrHost, &tls.Config{
+			ServerName: host,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("ws: tls dial: %w", err)
+		}
+		return conn, nil
 	}
-	return addr
+
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "tcp", addrHost)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
 type wsConnCloser struct {
