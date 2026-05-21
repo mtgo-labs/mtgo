@@ -208,19 +208,25 @@ func (c *Client) reconnectOnce() error {
 	c.state.SetDC(dcID)
 	c.state.ResetReconnectCount()
 
-	if c.updateManager != nil {
-		if err := c.updateManager.OnReconnect(context.Background(), c.Raw()); err != nil {
+	c.mu.RLock()
+	um := c.updateManager
+	c.mu.RUnlock()
+	if um != nil {
+		if err := um.OnReconnect(context.Background(), c.Raw()); err != nil {
 			c.Log.Warnf("recover updates after reconnect: %v", err)
 		}
 	}
 
+	c.mu.Lock()
 	if c.healthCheck != nil {
 		c.healthCheck.Stop()
 	}
 	if c.healthCheck == nil {
 		c.healthCheck = newHealthChecker(c, c.healthConfig())
 	}
-	c.healthCheck.Start(context.Background())
+	hc := c.healthCheck
+	c.mu.Unlock()
+	hc.Start(context.Background())
 
 	return nil
 }

@@ -101,7 +101,8 @@ type Client struct {
 	usernameCacheOrder []string
 	resolveCoalescer   resolveCoalescer
 
-	stopCh chan struct{}
+	stopCh   chan struct{}
+	stopOnce sync.Once
 
 	reconnectMgr  *reconnectManager
 	healthCheck   *healthChecker
@@ -124,7 +125,8 @@ type Client struct {
 
 	// rng is a per-client random source, avoiding contention on the global
 	// math/rand mutex under high concurrency.
-	rng *rand.Rand
+	rng   *rand.Rand
+	rngMu sync.Mutex
 
 	// Booleans grouped at end to minimize padding on 64-bit.
 	apiInit     bool
@@ -442,7 +444,10 @@ func (c *Client) RandomID() int64 {
 	if c.rng == nil {
 		return rand.Int63()
 	}
-	return c.rng.Int63()
+	c.rngMu.Lock()
+	id := c.rng.Int63()
+	c.rngMu.Unlock()
+	return id
 }
 
 // Me returns the currently authenticated user. If the user has not been cached yet
@@ -810,30 +815,37 @@ func (c *Client) Start() error {
 		return fmt.Errorf("start: %w", err)
 	}
 
+	c.mu.Lock()
 	if c.stopCh == nil {
 		c.stopCh = make(chan struct{})
 	}
+	stopCh := c.stopCh
+	c.mu.Unlock()
 
-	<-c.stopCh
+	<-stopCh
 	return nil
 }
 
 func (c *Client) Stop() {
-	if c.stopCh != nil {
-		select {
-		case <-c.stopCh:
-		default:
-			close(c.stopCh)
-		}
+	c.mu.Lock()
+	if c.stopCh == nil {
+		c.stopCh = make(chan struct{})
 	}
+	stopCh := c.stopCh
+	c.mu.Unlock()
+
+	c.stopOnce.Do(func() { close(stopCh) })
 	_ = c.Disconnect()
 }
 
 func (c *Client) Idle() {
+	c.mu.Lock()
 	if c.stopCh == nil {
 		c.stopCh = make(chan struct{})
 	}
-	<-c.stopCh
+	stopCh := c.stopCh
+	c.mu.Unlock()
+	<-stopCh
 }
 
 func (c *Client) connectToDC(dcID int, timeout time.Duration) error {
@@ -1053,7 +1065,9 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		c.Log.Errorf("session dispatch panic: %v", r)
 	})
 
+	c.mu.Lock()
 	c.apiInit = false
+	c.mu.Unlock()
 	c.Log.Debug("starting encrypted session")
 	if err := sess.Connect(sessionTp, timeout); err != nil {
 		sessionTp.Close()
@@ -1085,13 +1099,16 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		if isUserAccount {
 			c.Log.Debug("session is a user account; skipping bot auth import (remove BOT_TOKEN for userbots)")
 			if uid, _ := st.UserID(); uid != 0 {
-				c.me = &types.User{
+				me := &types.User{
 					ID:        uid,
 					FirstName: func() string { v, _ := st.FirstName(); return v }(),
 					LastName:  func() string { v, _ := st.LastName(); return v }(),
 					Username:  func() string { v, _ := st.Username(); return v }(),
 				}
-				c.Log.Debug("user account restored: id=", c.me.ID, " username=", c.me.Username)
+				c.mu.Lock()
+				c.me = me
+				c.mu.Unlock()
+				c.Log.Debug("user account restored: id=", me.ID, " username=", me.Username)
 			}
 		}
 
@@ -1117,22 +1134,25 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			if auth, ok := authResult.(*tg.AuthAuthorization); ok {
 				if auth.User != nil {
 					if u, ok := auth.User.(*tg.User); ok && u != nil {
-						c.me = types.ParseUser(u)
-						c.Log.Info("bot user: id=", c.me.ID, " username=", c.me.Username)
+						me := types.ParseUser(u)
+						c.mu.Lock()
+						c.me = me
+						c.mu.Unlock()
+						c.Log.Info("bot user: id=", me.ID, " username=", me.Username)
 						if st != nil {
-							if err := st.SetUserID(c.me.ID); err != nil {
+							if err := st.SetUserID(me.ID); err != nil {
 								c.Log.Warnf("save user id: %v", err)
 							}
 							if err := st.SetIsBot(true); err != nil {
 								c.Log.Warnf("save is_bot: %v", err)
 							}
-							if err := st.SetFirstName(c.me.FirstName); err != nil {
+							if err := st.SetFirstName(me.FirstName); err != nil {
 								c.Log.Warnf("save first_name: %v", err)
 							}
-							if err := st.SetLastName(c.me.LastName); err != nil {
+							if err := st.SetLastName(me.LastName); err != nil {
 								c.Log.Warnf("save last_name: %v", err)
 							}
-							if err := st.SetUsername(c.me.Username); err != nil {
+							if err := st.SetUsername(me.Username); err != nil {
 								c.Log.Warnf("save username: %v", err)
 							}
 						}
@@ -1147,17 +1167,23 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}
 
-	if c.me == nil && st != nil {
+	c.mu.RLock()
+	meSet := c.me != nil
+	c.mu.RUnlock()
+	if !meSet && st != nil {
 		if uid, err := st.UserID(); err == nil && uid != 0 {
 			isBot, _ := st.IsBot()
-			c.me = &types.User{
+			me := &types.User{
 				ID:        uid,
 				IsBot:     isBot,
 				FirstName: func() string { v, _ := st.FirstName(); return v }(),
 				LastName:  func() string { v, _ := st.LastName(); return v }(),
 				Username:  func() string { v, _ := st.Username(); return v }(),
 			}
-			c.Log.Debug("user restored from storage: id=", c.me.ID, " username=", c.me.Username)
+			c.mu.Lock()
+			c.me = me
+			c.mu.Unlock()
+			c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
 		}
 	}
 
@@ -1191,17 +1217,22 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			c.Log.Warnf("update recovery start: %v", err)
 		} else {
 			mgr.SetRPC(c.Raw())
+			c.mu.Lock()
 			c.updateManager = mgr
+			c.mu.Unlock()
 			c.Log.Info("update recovery enabled")
 		}
 	}
 
 	if c.cfg.HealthEnabled {
+		c.mu.Lock()
 		if c.healthCheck != nil {
 			c.healthCheck.Stop()
 		}
 		c.healthCheck = newHealthChecker(c, c.healthConfig())
-		c.healthCheck.Start(context.Background())
+		hc := c.healthCheck
+		c.mu.Unlock()
+		hc.Start(context.Background())
 	}
 
 	return nil
@@ -1212,8 +1243,11 @@ func (c *Client) processRawUpdate(obj tg.TLObject) {
 	if !ok {
 		return
 	}
-	if c.updateManager != nil {
-		if err := c.updateManager.EnqueueLive(updates); err != nil {
+	c.mu.RLock()
+	um := c.updateManager
+	c.mu.RUnlock()
+	if um != nil {
+		if err := um.EnqueueLive(updates); err != nil {
 			c.Log.Warnf("enqueue live update: %v", err)
 		}
 		return
@@ -1232,17 +1266,19 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 		shouldCloseStorage = closeStorage[0]
 	}
 
+	c.mu.Lock()
 	if c.updateManager != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		c.updateManager.Stop(ctx)
 		cancel()
 		c.updateManager = nil
 	}
-	if c.reconnectMgr != nil {
-		c.reconnectMgr.Stop()
-	}
 	if c.healthCheck != nil {
 		c.healthCheck.Stop()
+	}
+	c.mu.Unlock()
+	if c.reconnectMgr != nil {
+		c.reconnectMgr.Stop()
 	}
 
 	c.sessionsMu.Lock()
@@ -1281,10 +1317,13 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 
 // UpdateHealth returns a snapshot of the update manager's health metrics.
 func (c *Client) UpdateHealth() UpdateHealth {
-	if c.updateManager == nil {
+	c.mu.RLock()
+	um := c.updateManager
+	c.mu.RUnlock()
+	if um == nil {
 		return UpdateHealth{}
 	}
-	return c.updateManager.Health()
+	return um.Health()
 }
 
 // Disconnect closes all sessions (main and exported), releases storage, and marks the client
@@ -1554,8 +1593,11 @@ func (c *Client) flattenUpdates(updates tg.UpdatesClass) ([]tg.UserClass, []tg.C
 	case *tg.UpdateShortMessage:
 		var fromID, peerID tg.PeerClass
 		if v.Out {
-			if c.me != nil {
-				fromID = &tg.PeerUser{UserID: c.me.ID}
+			c.mu.RLock()
+			me := c.me
+			c.mu.RUnlock()
+			if me != nil {
+				fromID = &tg.PeerUser{UserID: me.ID}
 			}
 			peerID = &tg.PeerUser{UserID: v.UserID}
 		} else {
