@@ -507,9 +507,6 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 	if err := <-job.done; err != nil {
 		putSendJob(job)
 		s.unregisterResult(msgID)
-		if s.onDisconnect != nil {
-			s.onDisconnect(err)
-		}
 		return nil, fmt.Errorf("session: send: %w", err)
 	}
 	putSendJob(job)
@@ -663,9 +660,6 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	if err := <-job.done; err != nil {
 		putSendJob(job)
 		s.unregisterRawResult(msgID)
-		if s.onDisconnect != nil {
-			s.onDisconnect(err)
-		}
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
 	putSendJob(job)
@@ -803,7 +797,7 @@ func (s *Session) StartContext(ctx context.Context) error {
 
 func (s *Session) start(loopCtx, pingCtx context.Context) error {
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 64)
+	s.sendCh = make(chan *sendJob, 256)
 	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.receiveErr = make(chan error, 1)
 	s.connected.Store(true)
@@ -956,8 +950,11 @@ func (s *Session) writer() {
 			} else {
 				putSendJob(job)
 			}
-			if err != nil && s.onDisconnect != nil {
-				s.onDisconnect(err)
+			if err != nil {
+				if s.onDisconnect != nil {
+					s.onDisconnect(err)
+				}
+				return
 			}
 		}
 	}
