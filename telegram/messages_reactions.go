@@ -193,3 +193,97 @@ func (c *Client) RetractVote(ctx context.Context, chatID int64, messageID int32)
 	}
 	return err
 }
+
+// GetMessagesViews retrieves and optionally increments the view counter for one or
+// more messages in a chat. When increment is true, each listed message's view count
+// is bumped by 1 on the server before returning the updated values.
+//
+// Parameters:
+//   - ctx: context for cancellation and deadlines
+//   - chatID: the target chat containing the messages
+//   - messageIDs: the IDs of the messages whose views to fetch
+//   - increment: whether to increment the view counter before returning
+//
+// Returns the view counts in the same order as messageIDs.
+//
+// Returns an error if:
+//   - the peer cannot be resolved
+//   - the RPC call fails
+func (c *Client) GetMessagesViews(ctx context.Context, chatID int64, messageIDs []int32, increment bool) ([]int32, error) {
+	c.Log.Debugf("GetMessagesViews chat_id=%d count=%d increment=%v", chatID, len(messageIDs), increment)
+	peer, err := resolvePeer(c, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+
+	rpc := c.Raw()
+	result, err := rpc.MessagesGetMessagesViews(ctx, &tg.MessagesGetMessagesViewsRequest{
+		Peer:      peer,
+		ID:        messageIDs,
+		Increment: increment,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	viewsResult, ok := result.(*tg.MessagesMessageViews)
+	if !ok {
+		return nil, fmt.Errorf("unexpected MessageViews type: %T", result)
+	}
+
+	views := make([]int32, len(viewsResult.Views))
+	for i, v := range viewsResult.Views {
+		if mv, ok := v.(*tg.MessageViews); ok {
+			views[i] = mv.Views
+		}
+	}
+	return views, nil
+}
+
+// GetMessageReactionsList retrieves the list of users who reacted to a message,
+// with optional filtering by reaction type and pagination.
+//
+// Parameters:
+//   - ctx: context for cancellation and deadlines
+//   - chatID: the target chat containing the message
+//   - messageID: the ID of the message
+//   - reaction: optional reaction filter (nil for all reactions)
+//   - offset: pagination offset (empty string for first page)
+//   - limit: maximum number of results to return (defaults to 100 if <= 0)
+//
+// Returns an error if:
+//   - the peer cannot be resolved
+//   - the RPC call fails
+func (c *Client) GetMessageReactionsList(ctx context.Context, chatID int64, messageID int32, reaction tg.ReactionClass, offset string, limit int32) (*tg.MessagesMessageReactionsList, error) {
+	c.Log.Debugf("GetMessageReactionsList chat_id=%d msg_id=%d limit=%d", chatID, messageID, limit)
+	peer, err := resolvePeer(c, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rpc := c.Raw()
+	return rpc.MessagesGetMessageReactionsList(ctx, &tg.MessagesGetMessageReactionsListRequest{
+		Peer:     peer,
+		ID:       messageID,
+		Reaction: reaction,
+		Offset:   offset,
+		Limit:    limit,
+	})
+}
+
+// GetAvailableReactions retrieves the list of reactions available in the current
+// account. Pass hash=0 to fetch the full list; subsequent calls can use the
+// returned hash for incremental updates.
+//
+// Returns an error if the RPC call fails.
+func (c *Client) GetAvailableReactions(ctx context.Context, hash int32) (tg.AvailableReactionsClass, error) {
+	c.Log.Debugf("GetAvailableReactions hash=%d", hash)
+	rpc := c.Raw()
+	return rpc.MessagesGetAvailableReactions(ctx, &tg.MessagesGetAvailableReactionsRequest{
+		Hash: hash,
+	})
+}
