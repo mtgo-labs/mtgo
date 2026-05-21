@@ -59,8 +59,14 @@ func obfuscated2Handshake(conn net.Conn, secret []byte, dcID int, codec byte) (*
 	decIV := make([]byte, 16)
 	copy(decIV, reversed[32:48])
 
-	enc := crypto.NewCTRCipher(encKey, encIV)
-	dec := crypto.NewCTRCipher(decKey, decIV)
+	enc, err := crypto.NewCTRCipher(encKey, encIV)
+	if err != nil {
+		return nil, fmt.Errorf("mtproxy: create enc cipher: %w", err)
+	}
+	dec, err := crypto.NewCTRCipher(decKey, decIV)
+	if err != nil {
+		return nil, fmt.Errorf("mtproxy: create dec cipher: %w", err)
+	}
 
 	header[56] = codec
 	header[57] = codec

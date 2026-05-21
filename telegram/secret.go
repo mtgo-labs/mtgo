@@ -596,7 +596,10 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 
 	keyFP := crypto.FileKeyFingerprint(fileKey, fileIV)
 
-	encryptedFileData := crypto.EncryptFile(fileData, fileKey, fileIV)
+	encryptedFileData, err := crypto.EncryptFile(fileData, fileKey, fileIV)
+		if err != nil {
+			return fmt.Errorf("telegram: encrypt file: %w", err)
+		}
 
 	uploadResult, err := c.UploadFile(ctx, bytes.NewReader(encryptedFileData), fileName, int64(len(encryptedFileData)), nil)
 	if err != nil {

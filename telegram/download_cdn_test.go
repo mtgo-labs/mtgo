@@ -20,7 +20,10 @@ func TestCDNDecryptChunk(t *testing.T) {
 	originalData := make([]byte, 1024)
 	_, _ = rand.Read(originalData)
 
-	encrypted := crypto.CTREncrypt(originalData, key, iv[:16])
+	encrypted, err := crypto.CTREncrypt(originalData, key, iv[:16])
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	decrypted := cdnDecryptChunk(encrypted, key, iv, 0)
 	if !bytes.Equal(decrypted, originalData) {
@@ -37,7 +40,10 @@ func TestCDNDecryptChunkWithOffset(t *testing.T) {
 	originalData := make([]byte, downloadChunkSize*2)
 	_, _ = rand.Read(originalData)
 
-	encrypted := crypto.CTREncrypt(originalData, key, iv[:16])
+	encrypted, err := crypto.CTREncrypt(originalData, key, iv[:16])
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	decrypted := cdnDecryptChunk(encrypted[downloadChunkSize:], key, iv, int64(downloadChunkSize))
 	if !bytes.Equal(decrypted, originalData[downloadChunkSize:]) {
