@@ -179,29 +179,42 @@ func (t *TCPObfuscated) Send(buf *bytes.Buffer) error {
 
 	switch inner := t.inner.(type) {
 	case *TCPIntermediate:
-		header := make([]byte, 4)
-		binary.LittleEndian.PutUint32(header, uint32(len(data)))
-		plain := append(header, data...)
-		encrypted := t.enc.Process(plain)
-		if _, err := t.conn.Write(encrypted); err != nil {
+		var header [4]byte
+		binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
+		encHeader := t.enc.Process(header[:])
+		encData := t.enc.Process(data)
+		if _, err := t.conn.Write(encHeader); err != nil {
+			return fmt.Errorf("tcp_obfuscated: send: %w", err)
+		}
+		if _, err := t.conn.Write(encData); err != nil {
 			return fmt.Errorf("tcp_obfuscated: send: %w", err)
 		}
 	case *TCPAbridged:
 		length := len(data) / 4
-		var header []byte
 		if length <= 126 {
-			header = []byte{byte(length)}
+			h := [1]byte{byte(length)}
+			encHeader := t.enc.Process(h[:])
+			encData := t.enc.Process(data)
+			if _, err := t.conn.Write(encHeader); err != nil {
+				return fmt.Errorf("tcp_obfuscated: send: %w", err)
+			}
+			if _, err := t.conn.Write(encData); err != nil {
+				return fmt.Errorf("tcp_obfuscated: send: %w", err)
+			}
 		} else {
-			header = make([]byte, 4)
+			var header [4]byte
 			header[0] = 0x7f
 			header[1] = byte(length)
 			header[2] = byte(length >> 8)
 			header[3] = byte(length >> 16)
-		}
-		plain := append(header, data...)
-		encrypted := t.enc.Process(plain)
-		if _, err := t.conn.Write(encrypted); err != nil {
-			return fmt.Errorf("tcp_obfuscated: send: %w", err)
+			encHeader := t.enc.Process(header[:])
+			encData := t.enc.Process(data)
+			if _, err := t.conn.Write(encHeader); err != nil {
+				return fmt.Errorf("tcp_obfuscated: send: %w", err)
+			}
+			if _, err := t.conn.Write(encData); err != nil {
+				return fmt.Errorf("tcp_obfuscated: send: %w", err)
+			}
 		}
 	default:
 		_ = inner

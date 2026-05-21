@@ -4,11 +4,14 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 )
@@ -110,7 +113,11 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 	addrHost := net.JoinHostPort(host, port)
 
 	if u.Scheme == "wss" {
-		conn, err := tls.DialWithDialer(&net.Dialer{}, "tcp", addrHost, &tls.Config{
+		dialer := &net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}
+		conn, err := tls.DialWithDialer(dialer, "tcp", addrHost, &tls.Config{
 			ServerName: host,
 		})
 		if err != nil {
@@ -145,8 +152,7 @@ func (c *obfsConn) Read(p []byte) (int, error) {
 	buf := c.readBuf[:len(p)]
 	n, err := c.Conn.Read(buf)
 	if n > 0 {
-		plain := c.dec.Process(buf[:n])
-		copy(p, plain)
+		c.dec.ProcessTo(buf[:n], p[:n])
 	}
 	return n, err
 }
@@ -211,8 +217,10 @@ func invalidObfuscated2Nonce(nonce []byte) bool {
 		return true
 	}
 
-	switch string(nonce[:4]) {
-	case "\x16\x03\x01\x02", "\xdd\xdd\xdd\xdd", "\xee\xee\xee\xee", "POST", "GET ", "HEAD", "OPTI":
+	prefix := binary.LittleEndian.Uint32(nonce[:4])
+	switch prefix {
+	case 0x02010316, 0xDDDDDDDD, 0xEEEEEEEE,
+		0x54534F50, 0x20544547, 0x44414548, 0x4954504F:
 		return true
 	}
 
@@ -221,7 +229,7 @@ func invalidObfuscated2Nonce(nonce []byte) bool {
 
 func acceptObfuscated2(conn net.Conn) (*obfsConn, error) {
 	nonce := make([]byte, 64)
-	if _, err := readFull(conn, nonce); err != nil {
+	if _, err := io.ReadFull(conn, nonce); err != nil {
 		return nil, fmt.Errorf("obfuscated2: read nonce: %w", err)
 	}
 
@@ -245,16 +253,4 @@ func acceptObfuscated2(conn net.Conn) (*obfsConn, error) {
 	dec.Process(make([]byte, 64))
 
 	return &obfsConn{Conn: conn, enc: enc, dec: dec}, nil
-}
-
-func readFull(conn net.Conn, buf []byte) (int, error) {
-	read := 0
-	for read < len(buf) {
-		n, err := conn.Read(buf[read:])
-		read += n
-		if err != nil {
-			return read, err
-		}
-	}
-	return read, nil
 }

@@ -1,22 +1,24 @@
 package transport
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"net"
 )
 
-// TCPIntermediateNoHeader implements the MTProto intermediate transport
-// framing (4-byte LE length prefix) without sending the 0xEE protocol
-// marker during Connect. This is used for WebSocket connections where
-// the protocol marker is embedded in the obfuscated2 nonce instead.
 type TCPIntermediateNoHeader struct {
-	conn net.Conn
-	buf  []byte
+	conn    net.Conn
+	br      *bufio.Reader
+	buf     []byte
+	readBuf []byte
 }
 
 func NewTCPIntermediateNoHeader(conn net.Conn) *TCPIntermediateNoHeader {
-	return &TCPIntermediateNoHeader{conn: conn}
+	return &TCPIntermediateNoHeader{
+		conn: conn,
+		br:   bufio.NewReaderSize(conn, 1<<20),
+	}
 }
 
 func (t *TCPIntermediateNoHeader) Connect() error {
@@ -26,11 +28,13 @@ func (t *TCPIntermediateNoHeader) Connect() error {
 func (t *TCPIntermediateNoHeader) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 
-	packet := make([]byte, 4+len(data))
-	binary.LittleEndian.PutUint32(packet[:4], uint32(len(data)))
-	copy(packet[4:], data)
+	var header [4]byte
+	binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
 
-	_, err := t.conn.Write(packet)
+	if _, err := t.conn.Write(header[:]); err != nil {
+		return err
+	}
+	_, err := t.conn.Write(data)
 	return err
 }
 
@@ -53,15 +57,24 @@ func (t *TCPIntermediateNoHeader) Recv() ([]byte, error) {
 		}
 	}
 
-	payload := make([]byte, length)
+	if cap(t.readBuf) < int(length) {
+		t.readBuf = make([]byte, length)
+	}
+	payload := t.readBuf[:length]
 	copy(payload, t.buf[4:needed])
-	t.buf = t.buf[needed:]
+
+	remaining := copy(t.buf, t.buf[needed:])
+	t.buf = t.buf[:remaining]
+
 	return payload, nil
 }
 
 func (t *TCPIntermediateNoHeader) fill() error {
-	tmp := make([]byte, 1<<20)
-	n, err := t.conn.Read(tmp)
+	if cap(t.readBuf) < 1<<20 {
+		t.readBuf = make([]byte, 1<<20)
+	}
+	tmp := t.readBuf[:1<<20]
+	n, err := t.br.Read(tmp)
 	if err != nil {
 		return err
 	}

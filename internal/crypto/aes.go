@@ -40,6 +40,11 @@ func xorInPlace(dst, a, b []byte) {
 	}
 }
 
+// TODO: newAESBlock creates a new cipher.Block on every call. Since the auth
+// key is the same for every message in a session and cipher.Block is immutable
+// and goroutine-safe, callers should cache the block at the session level
+// (e.g. in Session.SetAuthKey) and pass it through to IGEEncrypt/IGEDecrypt
+// instead of passing the raw key.
 func newAESBlock(key []byte) cipher.Block {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -63,8 +68,9 @@ func IGEEncrypt(data, key, iv []byte) []byte {
 		panic("crypto/aes: IGE data length must be multiple of 16")
 	}
 	block := newAESBlock(key)
-	iv1 := make([]byte, 16)
-	iv2 := make([]byte, 16)
+	var iv1Buf, iv2Buf [16]byte
+	iv1 := iv1Buf[:]
+	iv2 := iv2Buf[:]
 	copy(iv1, iv[:16])
 	copy(iv2, iv[16:])
 
@@ -96,8 +102,9 @@ func IGEDecrypt(data, key, iv []byte) []byte {
 		panic("crypto/aes: IGE data length must be multiple of 16")
 	}
 	block := newAESBlock(key)
-	iv1 := make([]byte, 16)
-	iv2 := make([]byte, 16)
+	var iv1Buf, iv2Buf [16]byte
+	iv1 := iv1Buf[:]
+	iv2 := iv2Buf[:]
 	copy(iv1, iv[:16])
 	copy(iv2, iv[16:])
 
@@ -144,8 +151,8 @@ func ctrCrypt(data, key, iv []byte) []byte {
 	ivCopy := make([]byte, 16)
 	copy(ivCopy, iv)
 
-	keystream := make([]byte, 16)
-	block.Encrypt(keystream, ivCopy)
+	var keystream [16]byte
+	block.Encrypt(keystream[:], ivCopy)
 
 	out := make([]byte, len(data))
 	pos := 0
@@ -155,7 +162,7 @@ func ctrCrypt(data, key, iv []byte) []byte {
 		if pos >= 16 {
 			pos = 0
 			incrementIV(ivCopy)
-			block.Encrypt(keystream, ivCopy)
+			block.Encrypt(keystream[:], ivCopy)
 		}
 	}
 	return out
@@ -194,6 +201,13 @@ func (c *CTRCipher) Process(data []byte) []byte {
 		return nil
 	}
 	out := make([]byte, len(data))
+	c.ProcessTo(data, out)
+	return out
+}
+
+// ProcessTo XORs data with the CTR keystream and writes the result into out.
+// out must have length >= len(data). The cipher state is preserved between calls.
+func (c *CTRCipher) ProcessTo(data []byte, out []byte) {
 	for i := 0; i < len(data); i++ {
 		out[i] = data[i] ^ c.keystream[c.pos]
 		c.pos++
@@ -203,5 +217,4 @@ func (c *CTRCipher) Process(data []byte) []byte {
 			c.block.Encrypt(c.keystream[:], c.iv)
 		}
 	}
-	return out
 }

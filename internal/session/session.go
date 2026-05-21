@@ -548,6 +548,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		s.unregisterResult(msgID)
 		return nil, ctx.Err()
 	case <-writeTimer.C:
+		writeTimer.Stop()
 		putSendJob(job)
 		s.unregisterResult(msgID)
 		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
@@ -575,12 +576,18 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		s.unregisterResult(msgID)
 		return nil, ErrSessionClosed
 	case <-respTimer.C:
+		respTimer.Stop()
 		s.unregisterResult(msgID)
 		return nil, ErrSendTimeout
 	}
 }
 
 func (s *Session) sendRPCDrop(reqMsgID int64) {
+	select {
+	case <-s.cancel:
+		return
+	default:
+	}
 	s.mu.RLock()
 	authKey := s.authKey
 	authKeyID := s.authKeyID
@@ -729,6 +736,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		s.unregisterRawResult(msgID)
 		return nil, ctx.Err()
 	case <-writeTimer.C:
+		writeTimer.Stop()
 		putSendJob(job)
 		s.unregisterRawResult(msgID)
 		return nil, fmt.Errorf("session: send raw: write queue full: %w", ErrSendTimeout)
@@ -756,6 +764,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		s.unregisterRawResult(msgID)
 		return nil, ErrSessionClosed
 	case <-respTimer.C:
+		respTimer.Stop()
 		s.unregisterRawResult(msgID)
 		return nil, ErrSendTimeout
 	}
@@ -1418,11 +1427,18 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 		readTimeout = 30 * time.Second
 	}
 
+	retryTimer := time.NewTimer(0)
+	if !retryTimer.Stop() {
+		<-retryTimer.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
+			retryTimer.Stop()
 			return ctx.Err()
 		case <-s.cancel:
+			retryTimer.Stop()
 			return nil
 		default:
 		}
@@ -1434,9 +1450,11 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 		data, err := tp.Recv()
 		if err != nil {
 			if !s.connected.Load() {
+				retryTimer.Stop()
 				return nil
 			}
 			if isTimeoutError(err) {
+				retryTimer.Stop()
 				return fmt.Errorf("session: read deadline exceeded: %w", err)
 			}
 			s.mu.RLock()
@@ -1446,22 +1464,18 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 				disconnFn(err)
 				lastDisconnect = time.Now()
 			}
-			timer := time.NewTimer(100 * time.Millisecond)
+			retryTimer.Reset(100 * time.Millisecond)
 			select {
 			case <-ctx.Done():
-				timer.Stop()
+				retryTimer.Stop()
 				return ctx.Err()
 			case <-s.cancel:
-				timer.Stop()
+				retryTimer.Stop()
 				return nil
-			case <-timer.C:
+			case <-retryTimer.C:
 			}
 			continue
 		}
-		s.mu.RLock()
-		tp = s.transport
-		s.mu.RUnlock()
-		tp.SetReadDeadline(time.Time{})
 		if len(data) == 4 {
 			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
 			if code < 0 {

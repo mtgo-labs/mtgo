@@ -14,12 +14,14 @@ const (
 type msgIDValidator struct {
 	mu       sync.Mutex
 	ids      []int64
+	idSet    map[int64]struct{}
 	serverTS func() int64
 }
 
 func newMsgIDValidator(serverTS func() int64) *msgIDValidator {
 	return &msgIDValidator{
 		ids:      make([]int64, 0, msgIDReplayCapacity),
+		idSet:    make(map[int64]struct{}, msgIDReplayCapacity),
 		serverTS: serverTS,
 	}
 }
@@ -41,23 +43,17 @@ func (v *msgIDValidator) Check(msgID int64) bool {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 
-	for _, id := range v.ids {
-		if id == msgID {
-			return false
-		}
-	}
-
-	for i := range v.ids {
-		if v.ids[i] < msgID {
-			continue
-		}
-		if v.ids[i] > msgID {
-			break
-		}
+	if _, exists := v.idSet[msgID]; exists {
+		return false
 	}
 
 	v.ids = append(v.ids, msgID)
+	v.idSet[msgID] = struct{}{}
 	if len(v.ids) > msgIDReplayCapacity {
+		evicted := v.ids[:len(v.ids)-msgIDReplayCapacity]
+		for _, id := range evicted {
+			delete(v.idSet, id)
+		}
 		v.ids = v.ids[len(v.ids)-msgIDReplayCapacity:]
 	}
 
@@ -68,4 +64,7 @@ func (v *msgIDValidator) Reset() {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	v.ids = v.ids[:0]
+	for k := range v.idSet {
+		delete(v.idSet, k)
+	}
 }

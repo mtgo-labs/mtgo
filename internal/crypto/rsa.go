@@ -66,13 +66,13 @@ func rsapad(data []byte, n *big.Int) ([]byte, error) {
 		aesEncrypted := IGEEncrypt(dataWithHash[:], tempKey[:], zeroIV)
 
 		aesHash := sha256.Sum256(aesEncrypted)
-		defer ReleaseAESBuf(aesEncrypted)
 		for i := 0; i < tempKeyLen; i++ {
 			tempKeyXor[i] = tempKey[i] ^ aesHash[i]
 		}
 
 		copy(result[:], tempKeyXor[:])
 		copy(result[tempKeyLen:], aesEncrypted)
+		ReleaseAESBuf(aesEncrypted)
 
 		resultInt := new(big.Int).SetBytes(result[:])
 		if resultInt.Cmp(n) < 0 {

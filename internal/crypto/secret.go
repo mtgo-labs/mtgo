@@ -6,10 +6,12 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
+	mathrand "math/rand"
 )
 
 var (
@@ -116,13 +118,9 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	buf.Write(lenBytes)
 	buf.Write(plaintext)
 
-	paddingLen := SecretChatMinPadding + (SecretChatMaxPadding - SecretChatMinPadding)
-	if buf.Len()+paddingLen < 16 || (buf.Len()+paddingLen)%16 != 0 {
-		needed := 16 - (buf.Len() % 16)
-		if needed < SecretChatMinPadding {
-			needed += 16
-		}
-		paddingLen = needed
+	paddingLen := SecretChatMinPadding + mathrand.Intn(SecretChatMaxPadding-SecretChatMinPadding)
+	if rem := paddingLen % 16; rem != 0 {
+		paddingLen += 16 - rem
 	}
 	padding := make([]byte, paddingLen)
 	rand.Read(padding)
@@ -135,14 +133,20 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 		x = 8
 	}
 
-	msgKeyLargeInput := make([]byte, 32+len(data))
+	var stackBuf [4096]byte
+	msgKeyLargeInput := stackBuf[:0]
+	if 32+len(data) > len(stackBuf) {
+		msgKeyLargeInput = make([]byte, 32+len(data))
+	} else {
+		msgKeyLargeInput = stackBuf[:32+len(data)]
+	}
 	copy(msgKeyLargeInput, key[x+88:x+120])
 	copy(msgKeyLargeInput[32:], data)
 	msgKeyLarge := sha256.Sum256(msgKeyLargeInput)
 	msgKey := msgKeyLarge[8:24]
 
 	aesKey, aesIV := secretKDF(key, msgKey, x)
-	encrypted := IGEEncrypt(data, aesKey, aesIV)
+	encrypted := IGEEncrypt(data, aesKey[:], aesIV[:])
 
 	var result bytes.Buffer
 	result.Write(msgKey)
@@ -165,13 +169,19 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	}
 
 	aesKey, aesIV := secretKDF(key, msgKey, x)
-	decrypted := IGEDecrypt(encrypted, aesKey, aesIV)
+	decrypted := IGEDecrypt(encrypted, aesKey[:], aesIV[:])
 
-	msgKeyLargeInput := make([]byte, 32+len(decrypted))
+	var stackBuf [4096]byte
+	msgKeyLargeInput := stackBuf[:0]
+	if 32+len(decrypted) > len(stackBuf) {
+		msgKeyLargeInput = make([]byte, 32+len(decrypted))
+	} else {
+		msgKeyLargeInput = stackBuf[:32+len(decrypted)]
+	}
 	copy(msgKeyLargeInput, key[x+88:x+120])
 	copy(msgKeyLargeInput[32:], decrypted)
 	msgKeyCheck := sha256.Sum256(msgKeyLargeInput)
-	if !bytes.Equal(msgKey, msgKeyCheck[8:24]) {
+	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
 		return nil, errMsgKeyMismatch
 	}
 
@@ -190,26 +200,24 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	return decrypted[4 : 4+msgLen], nil
 }
 
-func secretKDF(key, msgKey []byte, x int) (aesKey, aesIV []byte) {
-	tmpA := make([]byte, len(msgKey)+36)
-	copy(tmpA, msgKey)
+func secretKDF(key, msgKey []byte, x int) (aesKey, aesIV [32]byte) {
+	var tmpA [52]byte
+	copy(tmpA[:], msgKey)
 	copy(tmpA[len(msgKey):], key[x:x+36])
-	sha256A := sha256.Sum256(tmpA)
+	sha256A := sha256.Sum256(tmpA[:])
 
-	tmpB := make([]byte, 36+len(msgKey))
-	copy(tmpB, key[x+40:x+76])
+	var tmpB [52]byte
+	copy(tmpB[:], key[x+40:x+76])
 	copy(tmpB[36:], msgKey)
-	sha256B := sha256.Sum256(tmpB)
+	sha256B := sha256.Sum256(tmpB[:])
 
-	aesKey = make([]byte, 0, 32)
-	aesKey = append(aesKey, sha256A[:8]...)
-	aesKey = append(aesKey, sha256B[8:24]...)
-	aesKey = append(aesKey, sha256A[24:32]...)
+	copy(aesKey[0:8], sha256A[:8])
+	copy(aesKey[8:24], sha256B[8:24])
+	copy(aesKey[24:32], sha256A[24:32])
 
-	aesIV = make([]byte, 0, 32)
-	aesIV = append(aesIV, sha256B[:8]...)
-	aesIV = append(aesIV, sha256A[8:16]...)
-	aesIV = append(aesIV, sha256B[24:32]...)
+	copy(aesIV[0:8], sha256B[:8])
+	copy(aesIV[8:24], sha256A[8:24])
+	copy(aesIV[24:32], sha256B[24:32])
 
 	return aesKey, aesIV
 }

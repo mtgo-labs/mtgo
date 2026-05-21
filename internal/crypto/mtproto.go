@@ -78,9 +78,9 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	if paddingLen < 12 {
 		paddingLen += 16
 	}
-	padding := make([]byte, paddingLen)
-	rand.Read(padding)
-	dataBuf.Write(padding)
+	var padding [28]byte
+	rand.Read(padding[:paddingLen])
+	dataBuf.Write(padding[:paddingLen])
 
 	data := dataBuf.Bytes()
 
@@ -127,9 +127,9 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 	if paddingLen < 12 {
 		paddingLen += 16
 	}
-	padding := make([]byte, paddingLen)
-	rand.Read(padding)
-	dataBuf.Write(padding)
+	var padding [28]byte
+	rand.Read(padding[:paddingLen])
+	dataBuf.Write(padding[:paddingLen])
 
 	data := dataBuf.Bytes()
 

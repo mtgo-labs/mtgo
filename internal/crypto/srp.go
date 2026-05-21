@@ -41,6 +41,10 @@ func pad256(n *big.Int) []byte {
 // algorithm: SHA-256(salt2 + PBKDF2(SHA-256(salt2 + SHA-256(salt1 + password +
 // salt1) + salt2), salt1, 100000) + salt2). Returns a 32-byte hash.
 //
+// This function uses PBKDF2 with 100,000 iterations and is expensive. Callers
+// that may invoke it multiple times with the same password and salts (e.g.
+// retry scenarios) should cache the result rather than recomputing it.
+//
 // See https://core.telegram.org/api/srp#checking-the-password-with-srp.
 func ComputePasswordHash(password string, salt1, salt2 []byte) []byte {
 	pw := []byte(password)
@@ -73,7 +77,8 @@ func ComputeSRP(salt1, salt2 []byte, g *big.Int, p *big.Int, srpB []byte, srpID 
 	x := new(big.Int).SetBytes(xBytes)
 
 	gBytes := pad256(g)
-	k := new(big.Int).SetBytes(sha256sum(p.Bytes(), gBytes))
+	pBytes := p.Bytes()
+	k := new(big.Int).SetBytes(sha256sum(pBytes, gBytes))
 
 	gX := new(big.Int).Exp(g, x, p)
 	kgX := new(big.Int).Mul(k, gX)
@@ -116,7 +121,7 @@ func ComputeSRP(salt1, salt2 []byte, g *big.Int, p *big.Int, srpB []byte, srpID 
 	K := sha256sum(SBytes)
 
 	M1 := sha256sum(
-		xorBytes(sha256sum(p.Bytes()), sha256sum(gBytes)),
+		xorBytes(sha256sum(pBytes), sha256sum(gBytes)),
 		sha256sum(salt1),
 		sha256sum(salt2),
 		ABytes,

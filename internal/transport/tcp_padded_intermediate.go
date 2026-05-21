@@ -8,11 +8,9 @@ import (
 	"net"
 )
 
-// TCPPaddedIntermediate implements the MTProto padded intermediate transport.
-// It uses intermediate framing, but each packet carries 0-15 bytes of random
-// transport padding and is negotiated with the 0xDDDDDDDD marker.
 type TCPPaddedIntermediate struct {
-	conn net.Conn
+	conn    net.Conn
+	readBuf []byte
 }
 
 func NewTCPPaddedIntermediate(conn net.Conn) *TCPPaddedIntermediate {
@@ -31,38 +29,51 @@ func (t *TCPPaddedIntermediate) Send(buf *bytes.Buffer) error {
 	if _, err := rand.Read(n[:]); err != nil {
 		return err
 	}
-	padding := make([]byte, int(n[0])%16)
-	if len(padding) > 0 {
-		if _, err := rand.Read(padding); err != nil {
+	padLen := int(n[0]) % 16
+	var padding [15]byte
+	if padLen > 0 {
+		if _, err := rand.Read(padding[:padLen]); err != nil {
 			return err
 		}
 	}
 
-	packetLen := len(data) + len(padding)
-	packet := make([]byte, 4+packetLen)
-	binary.LittleEndian.PutUint32(packet[:4], uint32(packetLen))
-	copy(packet[4:], data)
-	copy(packet[4+len(data):], padding)
+	packetLen := len(data) + padLen
+	var lenBytes [4]byte
+	binary.LittleEndian.PutUint32(lenBytes[:], uint32(packetLen))
 
-	_, err := t.conn.Write(packet)
-	return err
+	if _, err := t.conn.Write(lenBytes[:]); err != nil {
+		return err
+	}
+	if _, err := t.conn.Write(data); err != nil {
+		return err
+	}
+	if padLen > 0 {
+		if _, err := t.conn.Write(padding[:padLen]); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *TCPPaddedIntermediate) Recv() ([]byte, error) {
-	lenBytes := make([]byte, 4)
-	if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
+	var lenBytes [4]byte
+	if _, err := io.ReadFull(t.conn, lenBytes[:]); err != nil {
 		return nil, err
 	}
 
-	length := binary.LittleEndian.Uint32(lenBytes)
+	length := binary.LittleEndian.Uint32(lenBytes[:])
 	if length > MaxPayloadLen+15 {
 		return nil, ErrPayloadTooLarge
 	}
 
-	data := make([]byte, length)
 	if length == 0 {
-		return data, nil
+		return nil, nil
 	}
+
+	if cap(t.readBuf) < int(length) {
+		t.readBuf = make([]byte, length)
+	}
+	data := t.readBuf[:length]
 	if _, err := io.ReadFull(t.conn, data); err != nil {
 		return nil, err
 	}

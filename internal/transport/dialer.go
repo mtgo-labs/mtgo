@@ -26,8 +26,9 @@ func (d *NetDialer) Dial(network, address string, timeout time.Duration) (net.Co
 		if err != nil {
 			return nil, err
 		}
-		dialer := net.Dialer{Timeout: timeout, LocalAddr: laddr}
+		dialer := net.Dialer{Timeout: timeout, KeepAlive: 30 * time.Second, LocalAddr: laddr}
 		return dialer.Dial(network, address)
 	}
-	return net.DialTimeout(network, address, timeout)
+	dialer := net.Dialer{Timeout: timeout, KeepAlive: 30 * time.Second}
+	return dialer.Dial(network, address)
 }

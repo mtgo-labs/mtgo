@@ -514,6 +514,7 @@ func (m *memoryAdapter) Close() error { return nil }
 
 // adapterWrapper wraps an [Adapter] to satisfy the [Storage] interface.
 type adapterWrapper struct {
+	mu   sync.Mutex
 	ext  Adapter
 	sess *Session
 }
@@ -525,6 +526,8 @@ func NewAdapter(a Adapter) *adapterWrapper {
 }
 
 func (a *adapterWrapper) load() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.sess != nil {
 		return nil
 	}
@@ -540,6 +543,8 @@ func (a *adapterWrapper) load() error {
 }
 
 func (a *adapterWrapper) save() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	return a.ext.SaveSession(a.sess)
 }
 
@@ -553,11 +558,15 @@ func (a *adapterWrapper) SetSessionID(v string) error {
 	if sa, ok := a.ext.(SessionIDAware); ok {
 		sa.SetSessionName(v)
 	}
+	a.mu.Lock()
 	a.sess = nil
+	a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return fmt.Errorf("load after SetSessionName: %w", err)
 	}
+	a.mu.Lock()
 	a.sess.SessionID = v
+	a.mu.Unlock()
 	if err := a.save(); err != nil {
 		return fmt.Errorf("save session: %w", err)
 	}

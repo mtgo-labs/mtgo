@@ -41,6 +41,7 @@ type wsConn struct {
 	mu     sync.Mutex // serializes writes
 
 	readBuf    []byte // buffered bytes from the current frame
+	frameBuf   []byte // reusable buffer for reading frame payloads
 	readEOF    bool   // set when a final frame has been drained
 	readErr    error  // sticky read error
 }
@@ -54,10 +55,14 @@ func (w *wsReadWriter) Read(p []byte) (int, error)  { return w.conn.Read(p) }
 func (w *wsReadWriter) Write(p []byte) (int, error) { return w.conn.Write(p) }
 
 // newWSConn creates a new wsConn atop an already-upgraded TCP connection.
-func newWSConn(conn net.Conn) *wsConn {
+// If br is nil, a fresh bufio.Reader is created.
+func newWSConn(conn net.Conn, br *bufio.Reader) *wsConn {
+	if br == nil {
+		br = bufio.NewReaderSize(conn, 4096)
+	}
 	return &wsConn{
 		conn: conn,
-		br:   bufio.NewReaderSize(conn, 4096),
+		br:   br,
 	}
 }
 
@@ -127,8 +132,8 @@ func (c *wsConn) SetWriteDeadline(t time.Time) error  { return c.conn.SetWriteDe
 // --- frame I/O ---
 
 func (c *wsConn) readFrame() (op byte, payload []byte, err error) {
-	header := make([]byte, 2)
-	if _, err = io.ReadFull(c.br, header); err != nil {
+	var header [2]byte
+	if _, err = io.ReadFull(c.br, header[:]); err != nil {
 		return 0, nil, err
 	}
 
@@ -162,7 +167,10 @@ func (c *wsConn) readFrame() (op byte, payload []byte, err error) {
 		}
 	}
 
-	payload = make([]byte, length)
+	if cap(c.frameBuf) < int(length) {
+		c.frameBuf = make([]byte, length)
+	}
+	payload = c.frameBuf[:length]
 	if _, err = io.ReadFull(c.br, payload); err != nil {
 		return 0, nil, err
 	}
@@ -216,9 +224,20 @@ func (c *wsConn) writeControl(opcode byte, payload []byte) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	buf := make([]byte, 0, 2+len(payload))
-	buf = append(buf, opcode|wsFin, byte(len(payload)))
+	var maskKey [4]byte
+	if _, err := rand.Read(maskKey[:]); err != nil {
+		return err
+	}
+
+	buf := make([]byte, 0, 2+4+len(payload))
+	buf = append(buf, opcode|wsFin, byte(len(payload))|wsMask)
+	buf = append(buf, maskKey[:]...)
+	start := len(buf)
 	buf = append(buf, payload...)
+	for i := range payload {
+		buf[start+i] ^= maskKey[i%4]
+	}
+
 	_, err := c.conn.Write(buf)
 	return err
 }
@@ -265,7 +284,8 @@ func wsDial(conn net.Conn, addr string) (*wsConn, error) {
 		return nil, fmt.Errorf("ws: write handshake: %w", err)
 	}
 
-	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	br := bufio.NewReader(conn)
+	resp, err := http.ReadResponse(br, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ws: read handshake response: %w", err)
 	}
@@ -280,7 +300,7 @@ func wsDial(conn net.Conn, addr string) (*wsConn, error) {
 		return nil, errors.New("ws: invalid Sec-WebSocket-Accept")
 	}
 
-	return newWSConn(conn), nil
+	return newWSConn(conn, br), nil
 }
 
 // wsAccept performs a server-side WebSocket upgrade handshake.
@@ -314,7 +334,7 @@ func wsAccept(w http.ResponseWriter, r *http.Request) (*wsConn, error) {
 		"Sec-WebSocket-Protocol: binary\r\n\r\n")
 	_ = bufrw.Flush()
 
-	return newWSConn(conn), nil
+	return newWSConn(conn, bufrw.Reader), nil
 }
 
 func computeAcceptKey(key string) string {
