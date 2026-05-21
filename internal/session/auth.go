@@ -3,6 +3,8 @@ package session
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/sha1"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 
@@ -270,12 +272,20 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 
 		authKey := computeAuthKey(gA, b, dhPrime)
 
-		clientDHInner := &tg.ClientDHInnerData{
-			Nonce:       nonce,
-			ServerNonce: resPQ.ServerNonce,
-			RetryID:     0,
-			GB:          string(gB.Bytes()),
+		authKeyAuxHash := func() int64 {
+			h := sha1.Sum(authKey)
+			return int64(binary.LittleEndian.Uint64(h[0:8]))
 		}
+
+		var retryID int64
+		const maxRetries = 5
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			clientDHInner := &tg.ClientDHInnerData{
+				Nonce:       nonce,
+				ServerNonce: resPQ.ServerNonce,
+				RetryID:     retryID,
+				GB:          string(gB.Bytes()),
+			}
 
 		clientDHBytes, err := a.serializeTL(clientDHInner)
 		if err != nil {
@@ -337,14 +347,25 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			}, nil
 
 		case *tg.DHGenRetry:
-			return nil, ErrDHGenRetry
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
+			retryID = authKeyAuxHash()
+			b = a.generateRandomBN(2048)
+			gB = new(big.Int).Exp(g, b, dhPrime)
+			authKey = computeAuthKey(gA, b, dhPrime)
 
 		case *tg.DHGenFail:
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
 			return nil, ErrDHGenFail
 
 		default:
 			return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
 		}
+		}
+		return nil, ErrDHGenRetry
 
 	default:
 		return nil, fmt.Errorf("step 8: unexpected ServerDHParams type %T", obj)

@@ -750,14 +750,32 @@ func typeName(v tg.TLObject) string {
 // connectivity. Returns an error if the initial ping fails, in which case the
 // session is stopped automatically.
 func (s *Session) Start(timeout time.Duration) error {
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	return s.StartContext(ctx)
+}
+
+// StartContext launches the receive and writer background workers, registers
+// the session with the global housekeeper, and performs an initial ping to
+// verify connectivity. It returns after the session is ready.
+func (s *Session) StartContext(ctx context.Context) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
 	s.connected.Store(true)
 
 	go s.writer()
-	go s.readLoop()
+	go func() {
+		if err := s.receiveLoop(ctx); err != nil && s.connected.Load() && s.onDisconnect != nil {
+			s.onDisconnect(err)
+		}
+	}()
 
-	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
+	timeout := timeoutFromContext(ctx)
+	_, err := s.Invoke(ctx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
 	if err != nil {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
@@ -767,6 +785,26 @@ func (s *Session) Start(timeout time.Duration) error {
 	s.nextSaltFetch = now.Add(initialSaltFetchWait)
 	defaultHousekeeper.register(s)
 	return nil
+}
+
+// Run starts the session and blocks until ctx is canceled.
+func (s *Session) Run(ctx context.Context) error {
+	if err := s.StartContext(ctx); err != nil {
+		return err
+	}
+	<-ctx.Done()
+	s.Stop()
+	return ctx.Err()
+}
+
+func timeoutFromContext(ctx context.Context) time.Duration {
+	if deadline, ok := ctx.Deadline(); ok {
+		timeout := time.Until(deadline)
+		if timeout > 0 {
+			return timeout
+		}
+	}
+	return 60 * time.Second
 }
 
 // Stop signals all background workers to exit, closes the cancel channel,
@@ -846,8 +884,16 @@ func (s *Session) flushAcks() {
 	default:
 	}
 	acks := s.drainAcks()
-	if len(acks) > 0 {
-		s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
+	const maxAckBatch = 8192
+	for len(acks) > 0 {
+		batch := acks
+		if len(batch) > maxAckBatch {
+			batch = batch[:maxAckBatch]
+			acks = acks[maxAckBatch:]
+		} else {
+			acks = nil
+		}
+		s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
 	}
 }
 
@@ -937,6 +983,19 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
+	case tg.MsgDetailedInfoTypeID:
+		if len(body) >= 20 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[12:20])))
+		}
+	case tg.MsgNewDetailedInfoTypeID:
+		if len(body) >= 12 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[4:12])))
+		}
+	case tg.MsgsStateReqTypeID:
+		s.handleRawMsgsStateReq(body[4:])
+	case tg.MsgResendReqTypeID:
+		s.handleRawMsgResendReq(body[4:])
+	case tg.MsgsAllInfoTypeID:
 	default:
 		return false
 	}
@@ -996,6 +1055,9 @@ func (s *Session) handleRawContainer(body []byte) bool {
 		return false
 	}
 	count := binary.LittleEndian.Uint32(body[:4])
+	if count > 1024 {
+		return false
+	}
 	off := 4
 	allHandled := true
 	for i := uint32(0); i < count; i++ {
@@ -1054,6 +1116,43 @@ func (s *Session) handleRawFutureSalts(body []byte) bool {
 	}
 	s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20])))
 	return true
+}
+
+func (s *Session) handleRawMsgsStateReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil || len(msgIDs) == 0 {
+		return
+	}
+	info := make([]byte, len(msgIDs))
+	for i := range msgIDs {
+		if _, ok := s.results.Load(msgIDs[i]); ok {
+			info[i] = 0x80 | 0x04
+		} else {
+			info[i] = 0x01
+		}
+	}
+	s.sendServiceMessage(&tg.MsgsStateInfo{
+		ReqMsgID: 0,
+		Info:     string(info),
+	})
+}
+
+func (s *Session) handleRawMsgResendReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil {
+		return
+	}
+	for _, id := range msgIDs {
+		s.addAck(id)
+	}
 }
 
 func (s *Session) readLoop() {
