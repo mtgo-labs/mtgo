@@ -856,15 +856,9 @@ func (c *Client) initialDCID(st storage.Storage) int {
 
 func (c *Client) connectTransport(timeout time.Duration) error {
 	c.mu.Lock()
-	locked := true
-	defer func() {
-		if locked {
-			c.mu.Unlock()
-		}
-	}()
-
 	dcID := c.initialDCID(c.testStorage)
 	if err := c.state.SetConnecting(dcID); err != nil {
+		c.mu.Unlock()
 		return err
 	}
 
@@ -877,14 +871,21 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		} else if c.cfg.SessionName != "" {
 			s, err := newDefaultStorage(c.cfg.SessionName)
 			if err != nil {
+				c.mu.Unlock()
 				return fmt.Errorf("telegram: auto-create storage: %w", err)
 			}
 			st = s
 		} else {
+			c.mu.Unlock()
 			return ErrNoStorage
 		}
 	}
 	c.storage = st
+	migratingDC := c.migratingDC
+	c.migratingDC = false
+	testSession := c.testSession
+	testDialer := c.testDialer
+	c.mu.Unlock()
 
 	if c.cfg.SessionName != "" {
 		if err := st.SetSessionID(c.cfg.SessionName); err != nil {
@@ -922,7 +923,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 
 	c.loadPeersFromStorage()
 
-	sess := c.testSession
+	sess := testSession
 	if sess == nil {
 		dcID := c.initialDCID(st)
 		dc := session.DataCenter{
@@ -943,7 +944,6 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}
 	configureSessionDispatch(sess, c.cfg)
-	c.session = sess
 
 	dc := sess.DC()
 
@@ -981,8 +981,8 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 
 		d := c.dialer
-		if c.testDialer != nil {
-			d = c.testDialer
+		if testDialer != nil {
+			d = testDialer
 		}
 		conn, err := d.Dial("tcp", addr, timeout)
 		if err != nil {
@@ -1002,23 +1002,18 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	}
 
 	authKey, _ := st.AuthKey()
-	needDH := len(authKey) == 0 || c.migratingDC
-	c.migratingDC = false
+	needDH := len(authKey) == 0 || migratingDC
 	if needDH {
 		c.Log.Debug("auth key missing; starting DH exchange with DC ", dc.ID)
 		auth := &session.Auth{
 			DC:       dc.ID,
 			TestMode: dc.TestMode,
 		}
-		c.mu.Unlock()
-		locked = false
 		result, err := auth.Create(sessionTp)
 		if err != nil {
 			sessionTp.Close()
 			return fmt.Errorf("DH key exchange: %w", err)
 		}
-		c.mu.Lock()
-		locked = true
 		sess.SetAuthKey(result.AuthKey)
 		sess.SetServerSalt(result.ServerSalt)
 		sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
@@ -1066,13 +1061,13 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	}
 	c.Log.Info("encrypted session started")
 
-	// Release c.mu before making RPC calls (bot auth, UpdatesGetState)
-	// to avoid deadlock with Invoke's c.mu.RLock. Mark connected first
-	// so requireConnected() passes for the RPC invocations.
+	// Publish session and mark connected under brief lock so that
+	// concurrent readers observe c.session and ConnStateConnected together.
+	c.mu.Lock()
+	c.session = sess
 	c.state.SetConnected()
 	c.state.SetDC(dcID)
 	c.mu.Unlock()
-	locked = false
 
 	if botToken := c.cfg.BotToken; botToken != "" {
 		alreadyAuthorized := false
@@ -1667,7 +1662,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		upd.UserStatus = &types.UserStatusUpdated{UserID: v.UserID}
 	case *tg.UpdateUserName:
 		if len(v.Usernames) > 0 {
-			c.cacheUsernameLocked(v.Usernames[0].Username, v.UserID)
+			c.cacheUsername(v.Usernames[0].Username, v.UserID)
 			if ps, ok := c.storage.(storage.PeerStore); ok {
 				_ = ps.SavePeer(&storage.Peer{
 					ID:        v.UserID,
@@ -2084,7 +2079,9 @@ func (c *Client) evictOldestPeerLocked() {
 	}
 }
 
-func (c *Client) cacheUsernameLocked(username string, userID int64) {
+func (c *Client) cacheUsername(username string, userID int64) {
+	c.peerCacheMu.Lock()
+	defer c.peerCacheMu.Unlock()
 	if _, exists := c.usernameCache[username]; !exists {
 		c.usernameCacheOrder = append(c.usernameCacheOrder, username)
 	}
@@ -2117,7 +2114,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 		c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
 		username := user.Username
 		if username != "" {
-			c.cacheUsernameLocked(username, user.ID)
+			c.cacheUsername(username, user.ID)
 		}
 		entries = append(entries, &storage.Peer{
 			ID:         user.ID,
@@ -2141,7 +2138,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: accessHash})
 			username := v.Username
 			if username != "" {
-				c.cacheUsernameLocked(username, v.ID)
+				c.cacheUsername(username, v.ID)
 			}
 			entries = append(entries, &storage.Peer{
 				ID:         v.ID,
@@ -2186,7 +2183,7 @@ func (c *Client) loadPeersFromStorage() {
 		}
 		c.CachePeer(p.ID, peer)
 		if p.Username != "" {
-			c.cacheUsernameLocked(p.Username, p.ID)
+			c.cacheUsername(p.Username, p.ID)
 		}
 	}
 }

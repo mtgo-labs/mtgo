@@ -133,12 +133,16 @@ type wsConnCloser struct {
 
 type obfsConn struct {
 	net.Conn
-	enc *crypto.CTRCipher
-	dec *crypto.CTRCipher
+	enc     *crypto.CTRCipher
+	dec     *crypto.CTRCipher
+	readBuf []byte
 }
 
 func (c *obfsConn) Read(p []byte) (int, error) {
-	buf := make([]byte, len(p))
+	if cap(c.readBuf) < len(p) {
+		c.readBuf = make([]byte, len(p))
+	}
+	buf := c.readBuf[:len(p)]
 	n, err := c.Conn.Read(buf)
 	if n > 0 {
 		plain := c.dec.Process(buf[:n])
