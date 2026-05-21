@@ -1083,6 +1083,9 @@ func (s *Session) readLoop() {
 		}
 		if len(data) == 4 {
 			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
+			if code < 0 {
+				continue
+			}
 			if s.onDisconnect != nil {
 				s.onDisconnect(fmt.Errorf("transport error: code %d", -code))
 			}
