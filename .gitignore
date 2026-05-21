@@ -22,6 +22,9 @@ go.work
 # Compiled conversation binaries
 conversations
 
+# Test DC binary
+testdc
+
 # OpenMP session dumps
 omp-session-*.html
 
