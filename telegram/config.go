@@ -3,9 +3,9 @@ package telegram
 import (
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 // Proxy holds connection details for routing Telegram traffic through an
@@ -85,6 +85,8 @@ const (
 	TransportModePaddedIntermediate = "PaddedIntermediate"
 	// TransportModeFull selects full TCP framing with sequence numbers and CRC32.
 	TransportModeFull = "Full"
+
+	defaultDispatchQueueSize = 256
 )
 
 // Config contains every tunable parameter for a Telegram MTProto client.
@@ -199,6 +201,16 @@ type Config struct {
 	// MaxConcurrentTrans limits how many file transfers may run in parallel.
 	// Keep low on bandwidth-constrained networks to avoid throttling.
 	MaxConcurrentTrans int
+	// DispatchWorkers sets the number of session workers used to TL-decode
+	// incoming messages before result/update dispatch. Values <= 0 use
+	// runtime.GOMAXPROCS(0). Increase for I/O-heavy update handling; keep near
+	// CPU count for CPU-heavy decoding.
+	DispatchWorkers int
+	// DispatchQueueSize sets the bounded queue capacity for incoming messages
+	// waiting for TL decode. Values <= 0 use the default 256. Larger values
+	// absorb bursts at the cost of memory; smaller values apply backpressure
+	// sooner under high traffic.
+	DispatchQueueSize int
 	// MaxMessageCacheSize caps the number of messages retained in the
 	// internal cache. Older entries are evicted when the limit is exceeded.
 	MaxMessageCacheSize int
@@ -277,7 +289,8 @@ type Config struct {
 	TZOffset int
 	// TransportMode selects the MTProto TCP framing mode for direct TCP
 	// connections. Valid values are Abridged, Intermediate,
-	// PaddedIntermediate, and Full.
+	// PaddedIntermediate, and Full. When empty, NewClient uses the default
+	// Abridged transport mode.
 	TransportMode string
 	// SavePeers persists encountered peer identifiers to the session file so
 	// that they survive restarts without re-fetching.
@@ -376,10 +389,11 @@ type Config struct {
 //	cfg.InMemory = true
 //	client, err := telegram.NewClient(apiID, apiHash, &cfg)
 var DefaultConfig = Config{
-	SleepThreshold:     10 * time.Second,
+	SleepThreshold:      10 * time.Second,
 	Timeout:             60 * time.Second,
 	ReqTimeout:          60 * time.Second,
 	MaxConcurrentTrans:  1,
+	DispatchQueueSize:   defaultDispatchQueueSize,
 	MaxMessageCacheSize: 1000,
 	MaxTopicCacheSize:   1000,
 	PeerCacheSize:       5000,

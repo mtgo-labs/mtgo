@@ -213,6 +213,12 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.MaxConcurrentTrans != 0 {
 			c.MaxConcurrentTrans = cfg.MaxConcurrentTrans
 		}
+		if cfg.DispatchWorkers != 0 {
+			c.DispatchWorkers = cfg.DispatchWorkers
+		}
+		if cfg.DispatchQueueSize != 0 {
+			c.DispatchQueueSize = cfg.DispatchQueueSize
+		}
 		if cfg.MaxMessageCacheSize != 0 {
 			c.MaxMessageCacheSize = cfg.MaxMessageCacheSize
 		}
@@ -678,6 +684,13 @@ func (c *Client) Config() Config {
 	return c.cfg
 }
 
+func configureSessionDispatch(sess *session.Session, cfg Config) {
+	if sess == nil {
+		return
+	}
+	sess.SetDispatchConfig(cfg.DispatchWorkers, cfg.DispatchQueueSize)
+}
+
 // SetDispatcher replaces the update dispatcher used to route incoming updates to handlers.
 func (c *Client) SetDispatcher(d Dispatcher) {
 	c.mu.Lock()
@@ -929,6 +942,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			return fmt.Errorf("save dc_id: %w", err)
 		}
 	}
+	configureSessionDispatch(sess, c.cfg)
 	c.session = sess
 
 	dc := sess.DC()
@@ -1887,6 +1901,10 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	if err != nil {
 		return nil, fmt.Errorf("create session for dc %d: %w", dcID, err)
 	}
+	c.mu.RLock()
+	cfg := c.cfg
+	c.mu.RUnlock()
+	configureSessionDispatch(sess, cfg)
 
 	c.sessionsMu.Lock()
 	if existing, ok := c.sessions[key]; ok {

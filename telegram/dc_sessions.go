@@ -18,8 +18,8 @@ type dcSessionEntry struct {
 }
 
 type dcSessions struct {
-	mu       sync.Mutex
-	entries  map[int]*dcSessionEntry
+	mu        sync.Mutex
+	entries   map[int]*dcSessionEntry
 	initLocks map[int]*sync.Mutex
 }
 
@@ -145,6 +145,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: create session DC %d: %w", dcID, err)
 	}
+	configureSessionDispatch(sess, cfg)
 
 	auth := &session.Auth{
 		DC:       dcID,

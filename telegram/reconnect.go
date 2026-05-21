@@ -120,6 +120,7 @@ func (c *Client) reconnectOnce() error {
 	if err != nil {
 		return fmt.Errorf("create session: %w", err)
 	}
+	configureSessionDispatch(sess, c.cfg)
 
 	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
 	d := c.dialer

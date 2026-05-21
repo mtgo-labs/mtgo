@@ -29,6 +29,12 @@ func TestNewClientDefaults(t *testing.T) {
 	if c.cfg.MaxConcurrentTrans != 1 {
 		t.Errorf("MaxConcurrentTrans = %d, want 1", c.cfg.MaxConcurrentTrans)
 	}
+	if c.cfg.DispatchWorkers != 0 {
+		t.Errorf("DispatchWorkers = %d, want 0", c.cfg.DispatchWorkers)
+	}
+	if c.cfg.DispatchQueueSize != defaultDispatchQueueSize {
+		t.Errorf("DispatchQueueSize = %d, want %d", c.cfg.DispatchQueueSize, defaultDispatchQueueSize)
+	}
 	if c.cfg.MaxMessageCacheSize != 1000 {
 		t.Errorf("MaxMessageCacheSize = %d, want 1000", c.cfg.MaxMessageCacheSize)
 	}
@@ -76,6 +82,8 @@ func TestNewClientWithOptions(t *testing.T) {
 		NoUpdates:           true,
 		SleepThreshold:      5 * time.Second,
 		MaxConcurrentTrans:  4,
+		DispatchWorkers:     8,
+		DispatchQueueSize:   512,
 		MaxMessageCacheSize: 500,
 		ParseMode:           HTML,
 		HidePassword:        true,
@@ -128,6 +136,12 @@ func TestNewClientWithOptions(t *testing.T) {
 	}
 	if cfg.MaxConcurrentTrans != 4 {
 		t.Errorf("MaxConcurrentTrans = %d", cfg.MaxConcurrentTrans)
+	}
+	if cfg.DispatchWorkers != 8 {
+		t.Errorf("DispatchWorkers = %d", cfg.DispatchWorkers)
+	}
+	if cfg.DispatchQueueSize != 512 {
+		t.Errorf("DispatchQueueSize = %d", cfg.DispatchQueueSize)
 	}
 	if cfg.MaxMessageCacheSize != 500 {
 		t.Errorf("MaxMessageCacheSize = %d", cfg.MaxMessageCacheSize)
