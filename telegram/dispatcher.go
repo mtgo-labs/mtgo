@@ -78,20 +78,6 @@ func (d *HandlerDispatcher) RemoveHandler(h Handler) {
 	}
 }
 
-func (d *HandlerDispatcher) sortedHandlers() []handlerEntry {
-	if !d.dirty {
-		return d.sorted
-	}
-	sorted := make([]handlerEntry, len(d.handlers))
-	copy(sorted, d.handlers)
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].group < sorted[j].group
-	})
-	d.sorted = sorted
-	d.dirty = false
-	return sorted
-}
-
 // Dispatch delivers update to every registered handler whose Check method
 // returns true, in ascending group order. It creates a fresh Context for each
 // handler via Client.NewContext and populates it with fields extracted from the
@@ -107,9 +93,27 @@ func (d *HandlerDispatcher) sortedHandlers() []handlerEntry {
 //	disp.AddHandler(&myHandler{}, 0)
 //	disp.Dispatch(client, update)
 func (d *HandlerDispatcher) Dispatch(client *Client, update *Update) {
-	d.mu.Lock()
-	handlers := d.sortedHandlers()
-	d.mu.Unlock()
+	var handlers []handlerEntry
+
+	d.mu.RLock()
+	if d.dirty {
+		d.mu.RUnlock()
+		d.mu.Lock()
+		if d.dirty {
+			sorted := make([]handlerEntry, len(d.handlers))
+			copy(sorted, d.handlers)
+			sort.Slice(sorted, func(i, j int) bool {
+				return sorted[i].group < sorted[j].group
+			})
+			d.sorted = sorted
+			d.dirty = false
+		}
+		handlers = d.sorted
+		d.mu.Unlock()
+	} else {
+		handlers = d.sorted
+		d.mu.RUnlock()
+	}
 
 	if client != nil && client.Log != nil {
 		client.Log.Tracef("dispatching update to %d handlers", len(handlers))

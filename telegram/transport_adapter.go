@@ -67,3 +67,10 @@ func (s *sessionTransport) SetWriteDeadline(t time.Time) error {
 	}
 	return nil
 }
+
+func (s *sessionTransport) SetReadDeadline(t time.Time) error {
+	if s.conn != nil {
+		return s.conn.SetReadDeadline(t)
+	}
+	return nil
+}

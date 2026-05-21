@@ -12,7 +12,8 @@ import (
 // It is simpler than full (no CRC) and more straightforward than abridged
 // (fixed-size length prefix).
 type TCPIntermediate struct {
-	conn net.Conn
+	conn    net.Conn
+	readBuf []byte
 }
 
 // NewTCPIntermediate returns a new TCPIntermediate transport wrapping conn.
@@ -44,20 +45,24 @@ func (t *TCPIntermediate) Send(buf *bytes.Buffer) error {
 // Recv reads the next intermediate-transport framed message from the
 // connection. It reads a 4-byte length prefix followed by the payload bytes.
 func (t *TCPIntermediate) Recv() ([]byte, error) {
-	lenBytes := make([]byte, 4)
-	if _, err := io.ReadFull(t.conn, lenBytes); err != nil {
+	var lenBytes [4]byte
+	if _, err := io.ReadFull(t.conn, lenBytes[:]); err != nil {
 		return nil, err
 	}
 
-	length := binary.LittleEndian.Uint32(lenBytes)
+	length := int(binary.LittleEndian.Uint32(lenBytes[:]))
 	if length > MaxPayloadLen {
 		return nil, ErrPayloadTooLarge
 	}
 
-	data := make([]byte, length)
 	if length == 0 {
-		return data, nil
+		return nil, nil
 	}
+
+	if cap(t.readBuf) < length {
+		t.readBuf = make([]byte, length)
+	}
+	data := t.readBuf[:length]
 	if _, err := io.ReadFull(t.conn, data); err != nil {
 		return nil, err
 	}
