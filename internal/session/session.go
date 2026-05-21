@@ -209,6 +209,13 @@ type Session struct {
 
 	// connected indicates whether the session is currently active.
 	connected atomic.Bool
+	// mu protects the mutable config fields below: authKey, authKeyID,
+	// transport, pingInterval, nextPing, nextSaltFetch, onUpdate,
+	// onDisconnect, onPanic. Always acquire mu before rawResultsMu if
+	// both are needed.
+	mu sync.RWMutex
+	// stopOnce ensures cancel is closed exactly once.
+	stopOnce sync.Once
 	// cancel is closed to signal background workers to stop.
 	cancel chan struct{}
 
@@ -243,12 +250,16 @@ type Session struct {
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
 func (s *Session) SetOnPanic(fn func(panicValue any)) {
+	s.mu.Lock()
 	s.onPanic = fn
+	s.mu.Unlock()
 }
 
 // SetOnDisconnect sets a callback invoked when the transport connection dies.
 func (s *Session) SetOnDisconnect(fn func(error)) {
+	s.mu.Lock()
 	s.onDisconnect = fn
+	s.mu.Unlock()
 }
 
 func computeAuthKeyID(authKey []byte) []byte {
@@ -419,12 +430,14 @@ func (s *Session) drainAcks() []int64 {
 // SetAuthKey replaces the current authorization key and recomputes its ID.
 // Passing an empty slice clears the key and its ID.
 func (s *Session) SetAuthKey(key []byte) {
+	s.mu.Lock()
 	s.authKey = key
 	if len(key) > 0 {
 		s.authKeyID = computeAuthKeyID(key)
 	} else {
 		s.authKeyID = nil
 	}
+	s.mu.Unlock()
 }
 
 // SetServerSalt updates the server salt used for encrypting outgoing messages.
@@ -451,11 +464,14 @@ func (s *Session) SessionID() int64 {
 // AuthKey returns a copy of the current 256-byte authorization key, or nil if
 // no key is set.
 func (s *Session) AuthKey() []byte {
-	if len(s.authKey) == 0 {
+	s.mu.RLock()
+	authKey := s.authKey
+	s.mu.RUnlock()
+	if len(authKey) == 0 {
 		return nil
 	}
-	cp := make([]byte, len(s.authKey))
-	copy(cp, s.authKey)
+	cp := make([]byte, len(authKey))
+	copy(cp, authKey)
 	return cp
 }
 
@@ -467,7 +483,9 @@ func (s *Session) IsConnected() bool {
 // SetTransport replaces the underlying transport used for sending and
 // receiving encrypted payloads.
 func (s *Session) SetTransport(t Transport) {
+	s.mu.Lock()
 	s.transport = t
+	s.mu.Unlock()
 }
 
 func (s *Session) sessionIDBytes() []byte {
@@ -480,10 +498,15 @@ func (s *Session) sessionIDBytes() []byte {
 // an RPCDropAnswerRequest is fired to inform the server the request is no longer
 // needed. Returns the raw response bytes or an error.
 func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) (tg.TLObject, error) {
-	if len(s.authKey) == 0 {
+	s.mu.RLock()
+	authKey := s.authKey
+	authKeyID := s.authKeyID
+	transport := s.transport
+	s.mu.RUnlock()
+	if len(authKey) == 0 {
 		return nil, ErrAuthKeyNotSet
 	}
-	if s.transport == nil {
+	if transport == nil {
 		return nil, ErrTransportNotSet
 	}
 
@@ -493,7 +516,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		Body:  body,
 	}
 
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
 
 	ch := s.registerResult(msgID)
 
@@ -545,6 +568,10 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 }
 
 func (s *Session) sendRPCDrop(reqMsgID int64) {
+	s.mu.RLock()
+	authKey := s.authKey
+	authKeyID := s.authKeyID
+	s.mu.RUnlock()
 	drop := &tg.RPCDropAnswerRequest{ReqMsgID: reqMsgID}
 	msgID := s.msgFactory.AllocateMsgID()
 	seqNo := s.msgFactory.AllocateSeqNo(false)
@@ -553,7 +580,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 		SeqNo: uint32(seqNo),
 		Body:  drop,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(5 * time.Second)
@@ -603,14 +630,22 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		}
 		s.deliverResult(v.ReqMsgID, result)
 	case tg.UpdatesClass:
-		if s.onUpdate != nil {
+		s.mu.RLock()
+		fn := s.onUpdate
+		s.mu.RUnlock()
+		if fn != nil {
 			s.dispatchUpdate(obj)
 		}
 	default:
 		if _, hasResult := s.results.Load(msgID); hasResult {
 			s.deliverResult(msgID, obj)
-		} else if s.onUpdate != nil {
-			s.dispatchUpdate(obj)
+		} else {
+			s.mu.RLock()
+			fn := s.onUpdate
+			s.mu.RUnlock()
+			if fn != nil {
+				s.dispatchUpdate(obj)
+			}
 		}
 	}
 }
@@ -619,6 +654,10 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 // bounded by the updateSem semaphore. If 64 dispatches are already in
 // flight, this blocks until one completes, providing backpressure.
 func (s *Session) dispatchUpdate(obj tg.TLObject) {
+	s.mu.RLock()
+	handlerFn := s.onUpdate
+	panicFn := s.onPanic
+	s.mu.RUnlock()
 	select {
 	case <-s.cancel:
 		return
@@ -627,14 +666,14 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 			defer func() { <-s.updateSem }()
 			defer func() {
 				if r := recover(); r != nil {
-					if s.onPanic != nil {
-						s.onPanic(r)
+					if panicFn != nil {
+						panicFn(r)
 					} else {
 						log.Printf("session: dispatchUpdate panic: %v", r)
 					}
 				}
 			}()
-			s.onUpdate(obj)
+			handlerFn(obj)
 		}()
 	}
 }
@@ -644,14 +683,19 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 // bytes. Unlike [Send], the response path does not gzip-unpack or TL-decode the
 // payload.
 func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBytes []byte, timeout time.Duration) ([]byte, error) {
-	if len(s.authKey) == 0 {
+	s.mu.RLock()
+	authKey := s.authKey
+	authKeyID := s.authKeyID
+	transport := s.transport
+	s.mu.RUnlock()
+	if len(authKey) == 0 {
 		return nil, ErrAuthKeyNotSet
 	}
-	if s.transport == nil {
+	if transport == nil {
 		return nil, ErrTransportNotSet
 	}
 
-	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
 
 	ch := s.registerRawResult(msgID)
 
@@ -866,9 +910,10 @@ func (s *Session) start(loopCtx, pingCtx context.Context) error {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
 	}
-	now := time.Now()
-	s.nextPing = now.Add(s.pingInterval)
-	s.nextSaltFetch = now.Add(initialSaltFetchWait)
+	s.mu.Lock()
+	s.nextPing = time.Now().Add(s.pingInterval)
+	s.nextSaltFetch = time.Now().Add(initialSaltFetchWait)
+	s.mu.Unlock()
 	defaultHousekeeper.register(s)
 	return nil
 }
@@ -903,15 +948,16 @@ func timeoutFromContext(ctx context.Context) time.Duration {
 func (s *Session) Stop() {
 	s.connected.Store(false)
 	defaultHousekeeper.unregister(s)
-	if s.cancel != nil {
-		select {
-		case <-s.cancel:
-		default:
+	s.stopOnce.Do(func() {
+		if s.cancel != nil {
 			close(s.cancel)
 		}
-	}
-	if s.transport != nil {
-		s.transport.Close()
+	})
+	s.mu.RLock()
+	tp := s.transport
+	s.mu.RUnlock()
+	if tp != nil {
+		tp.Close()
 	}
 }
 
@@ -928,6 +974,10 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		return
 	default:
 	}
+	s.mu.RLock()
+	authKey := s.authKey
+	authKeyID := s.authKeyID
+	s.mu.RUnlock()
 	msgID := s.msgFactory.AllocateMsgID()
 	seqNo := s.msgFactory.AllocateSeqNo(false)
 	message := &tg.MTProtoMessage{
@@ -935,7 +985,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		SeqNo: uint32(seqNo),
 		Body:  body,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(10 * time.Second)
@@ -954,18 +1004,24 @@ func (s *Session) runScheduledMaintenance(now time.Time) {
 		return
 	default:
 	}
+	s.mu.Lock()
 	if !s.nextSaltFetch.IsZero() && !now.Before(s.nextSaltFetch) {
-		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
 		s.nextSaltFetch = now.Add(saltFetchInterval)
+		s.mu.Unlock()
+		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
+		s.mu.Lock()
 	}
 	pingInterval := s.pingInterval
 	if pingInterval <= 0 {
 		pingInterval = 60 * time.Second
 	}
 	if !s.nextPing.IsZero() && !now.Before(s.nextPing) {
-		s.sendPing()
 		s.nextPing = now.Add(pingInterval)
+		s.mu.Unlock()
+		s.sendPing()
+		return
 	}
+	s.mu.Unlock()
 }
 
 func (s *Session) flushAcks() {
@@ -994,25 +1050,30 @@ func (s *Session) writer() {
 		case <-s.cancel:
 			return
 		case job := <-s.sendCh:
-			s.transport.SetWriteDeadline(job.deadline)
-			err := s.transport.Send(job.encrypted)
-			s.transport.SetWriteDeadline(time.Time{})
+			s.mu.RLock()
+			tp := s.transport
+			s.mu.RUnlock()
+			tp.SetWriteDeadline(job.deadline)
+			err := tp.Send(job.encrypted)
+			tp.SetWriteDeadline(time.Time{})
 			if job.done != nil {
 				job.done <- err
 			} else {
 				putSendJob(job)
 			}
 			if err != nil {
-				if s.onDisconnect != nil {
-					s.onDisconnect(err)
+				s.mu.RLock()
+				fn := s.onDisconnect
+				s.mu.RUnlock()
+				if fn != nil {
+					fn(err)
 				}
 			drain:
 				for {
 					select {
 					case job := <-s.sendCh:
-						select {
-						case job.done <- err:
-						default:
+						if job.done != nil {
+							job.done <- err
 						}
 						putSendJob(job)
 					default:
@@ -1048,10 +1109,13 @@ func (s *Session) dispatchWorker(ctx context.Context) {
 }
 
 func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
+	s.mu.RLock()
+	panicFn := s.onPanic
+	s.mu.RUnlock()
 	defer func() {
 		if r := recover(); r != nil {
-			if s.onPanic != nil {
-				s.onPanic(r)
+			if panicFn != nil {
+				panicFn(r)
 			} else {
 				log.Printf("session: dispatchRaw panic: %v", r)
 			}
@@ -1231,7 +1295,10 @@ func (s *Session) handleRawContainer(body []byte) bool {
 }
 
 func (s *Session) decodeRawPacketIfNeeded(msgID int64, seqNo uint32, body []byte) bool {
-	if !s.hasDecodedResults() && s.onUpdate == nil {
+	s.mu.RLock()
+	updateFn := s.onUpdate
+	s.mu.RUnlock()
+	if !s.hasDecodedResults() && updateFn == nil {
 		return false
 	}
 	r := tg.NewReader(body)
@@ -1306,7 +1373,10 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 func (s *Session) receiveLoop(ctx context.Context) error {
 	var lastDisconnect time.Time
 
-	readTimeout := s.pingInterval * 2
+	s.mu.RLock()
+	pingInterval := s.pingInterval
+	s.mu.RUnlock()
+	readTimeout := pingInterval * 2
 	if readTimeout < 30*time.Second {
 		readTimeout = 30 * time.Second
 	}
@@ -1320,8 +1390,11 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 		default:
 		}
 
-		s.transport.SetReadDeadline(time.Now().Add(readTimeout))
-		data, err := s.transport.Recv()
+		s.mu.RLock()
+		tp := s.transport
+		s.mu.RUnlock()
+		tp.SetReadDeadline(time.Now().Add(readTimeout))
+		data, err := tp.Recv()
 		if err != nil {
 			if !s.connected.Load() {
 				return nil
@@ -1329,8 +1402,11 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 			if isTimeoutError(err) {
 				return fmt.Errorf("session: read deadline exceeded: %w", err)
 			}
-			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
-				s.onDisconnect(err)
+			s.mu.RLock()
+			disconnFn := s.onDisconnect
+			s.mu.RUnlock()
+			if disconnFn != nil && time.Since(lastDisconnect) > time.Second {
+				disconnFn(err)
 				lastDisconnect = time.Now()
 			}
 			timer := time.NewTimer(100 * time.Millisecond)
@@ -1345,23 +1421,36 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 			}
 			continue
 		}
-		s.transport.SetReadDeadline(time.Time{})
+		s.mu.RLock()
+		tp = s.transport
+		s.mu.RUnlock()
+		tp.SetReadDeadline(time.Time{})
 		if len(data) == 4 {
 			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
 			if code < 0 {
 				continue
 			}
-			if s.onDisconnect != nil {
-				s.onDisconnect(fmt.Errorf("transport error: code %d", -code))
+			s.mu.RLock()
+			disconnFn := s.onDisconnect
+			s.mu.RUnlock()
+			if disconnFn != nil {
+				disconnFn(fmt.Errorf("transport error: code %d", -code))
 			}
 			return fmt.Errorf("transport error: code %d", -code)
 		}
 
-		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+		s.mu.RLock()
+		authKey := s.authKey
+		authKeyID := s.authKeyID
+		s.mu.RUnlock()
+		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), authKey, authKeyID)
 		if err != nil {
 			if _, ok := err.(*tgerr.SecurityCheckMismatch); ok {
-				if s.onDisconnect != nil {
-					s.onDisconnect(err)
+				s.mu.RLock()
+				disconnFn := s.onDisconnect
+				s.mu.RUnlock()
+				if disconnFn != nil {
+					disconnFn(err)
 				}
 				return err
 			}
@@ -1380,13 +1469,14 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 
 		crypto.ReleaseAESBuf(decrypted)
 
-		if rawHandled || (!needsDecodedResult && s.onUpdate == nil) {
+		s.mu.RLock()
+		updateFn := s.onUpdate
+		s.mu.RUnlock()
+		if rawHandled || (!needsDecodedResult && updateFn == nil) {
 			continue
 		}
 
-		// Only decode the TL body if decoded result listeners or update handlers
-		// need the object tree.
-		if needsDecodedResult || s.onUpdate != nil {
+		if needsDecodedResult || updateFn != nil {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -1406,7 +1496,9 @@ func (s *Session) sendPing() {
 }
 
 func (s *Session) setPingInterval(d time.Duration) {
+	s.mu.Lock()
 	s.pingInterval = d
+	s.mu.Unlock()
 }
 
 func isTimeoutError(err error) bool {
@@ -1420,7 +1512,9 @@ func isTimeoutError(err error) bool {
 // updates (e.g., new messages, status changes). Pass nil to remove the
 // handler.
 func (s *Session) SetUpdateHandler(fn func(tg.TLObject)) {
+	s.mu.Lock()
 	s.onUpdate = fn
+	s.mu.Unlock()
 }
 
 // Connect sets the transport and starts the session. It requires that an auth
@@ -1439,9 +1533,14 @@ func (s *Session) Connect(transport Transport, timeout time.Duration) error {
 // auth key has already been established. The context bounds the startup ping.
 func (s *Session) ConnectContext(ctx context.Context, transport Transport) error {
 	if transport != nil {
+		s.mu.Lock()
 		s.transport = transport
+		s.mu.Unlock()
 	}
-	if len(s.authKey) == 0 {
+	s.mu.RLock()
+	authKey := s.authKey
+	s.mu.RUnlock()
+	if len(authKey) == 0 {
 		return ErrConnectNoAuthKey
 	}
 	return s.StartContext(ctx)
@@ -1465,15 +1564,25 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 // and the startup ping.
 func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transport, authFunc AuthFunc) error {
 	if transport != nil {
+		s.mu.Lock()
 		s.transport = transport
+		s.mu.Unlock()
 	}
-	if len(s.authKey) == 0 && authFunc != nil {
-		result, err := authFunc(s.transport)
+	s.mu.RLock()
+	authKey := s.authKey
+	s.mu.RUnlock()
+	if len(authKey) == 0 && authFunc != nil {
+		s.mu.RLock()
+		tp := s.transport
+		s.mu.RUnlock()
+		result, err := authFunc(tp)
 		if err != nil {
 			return fmt.Errorf("session: connect with auth: %w", err)
 		}
+		s.mu.Lock()
 		s.authKey = result.AuthKey
 		s.authKeyID = computeAuthKeyID(result.AuthKey)
+		s.mu.Unlock()
 		s.serverSalt.Store(result.ServerSalt)
 		if s.storage != nil {
 			if err := s.storage.SetAuthKey(result.AuthKey); err != nil {
