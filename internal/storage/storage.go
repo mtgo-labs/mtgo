@@ -525,9 +525,8 @@ func NewAdapter(a Adapter) *adapterWrapper {
 	return &adapterWrapper{ext: a}
 }
 
+// load initializes a.sess from the external adapter. Caller must hold a.mu.
 func (a *adapterWrapper) load() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	if a.sess != nil {
 		return nil
 	}
@@ -542,13 +541,14 @@ func (a *adapterWrapper) load() error {
 	return nil
 }
 
+// save persists the current session to the external adapter. Caller must hold a.mu.
 func (a *adapterWrapper) save() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	return a.ext.SaveSession(a.sess)
 }
 
 func (a *adapterWrapper) SessionID() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
@@ -559,26 +559,28 @@ func (a *adapterWrapper) SetSessionID(v string) error {
 		sa.SetSessionName(v)
 	}
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.sess = nil
-	a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return fmt.Errorf("load after SetSessionName: %w", err)
 	}
-	a.mu.Lock()
 	a.sess.SessionID = v
-	a.mu.Unlock()
 	if err := a.save(); err != nil {
 		return fmt.Errorf("save session: %w", err)
 	}
 	return nil
 }
 func (a *adapterWrapper) DCID() (int, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return 0, err
 	}
 	return a.sess.DC, nil
 }
 func (a *adapterWrapper) SetDCID(v int) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -586,12 +588,16 @@ func (a *adapterWrapper) SetDCID(v int) error {
 	return a.save()
 }
 func (a *adapterWrapper) APIID() (int32, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return 0, err
 	}
 	return a.sess.APIID, nil
 }
 func (a *adapterWrapper) SetAPIID(v int32) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -599,12 +605,16 @@ func (a *adapterWrapper) SetAPIID(v int32) error {
 	return a.save()
 }
 func (a *adapterWrapper) APIHash() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
 	return a.sess.APIHash, nil
 }
 func (a *adapterWrapper) SetAPIHash(v string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -612,12 +622,16 @@ func (a *adapterWrapper) SetAPIHash(v string) error {
 	return a.save()
 }
 func (a *adapterWrapper) TestMode() (bool, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return false, err
 	}
 	return a.sess.TestMode, nil
 }
 func (a *adapterWrapper) SetTestMode(v bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -625,12 +639,16 @@ func (a *adapterWrapper) SetTestMode(v bool) error {
 	return a.save()
 }
 func (a *adapterWrapper) AuthKey() ([]byte, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return nil, err
 	}
 	return a.sess.AuthKey, nil
 }
 func (a *adapterWrapper) SetAuthKey(v []byte) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -638,12 +656,16 @@ func (a *adapterWrapper) SetAuthKey(v []byte) error {
 	return a.save()
 }
 func (a *adapterWrapper) UserID() (int64, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return 0, err
 	}
 	return a.sess.UserID, nil
 }
 func (a *adapterWrapper) SetUserID(v int64) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -651,12 +673,16 @@ func (a *adapterWrapper) SetUserID(v int64) error {
 	return a.save()
 }
 func (a *adapterWrapper) IsBot() (bool, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return false, err
 	}
 	return a.sess.IsBot, nil
 }
 func (a *adapterWrapper) SetIsBot(v bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -664,12 +690,16 @@ func (a *adapterWrapper) SetIsBot(v bool) error {
 	return a.save()
 }
 func (a *adapterWrapper) FirstName() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
 	return a.sess.FirstName, nil
 }
 func (a *adapterWrapper) SetFirstName(v string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -677,12 +707,16 @@ func (a *adapterWrapper) SetFirstName(v string) error {
 	return a.save()
 }
 func (a *adapterWrapper) LastName() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
 	return a.sess.LastName, nil
 }
 func (a *adapterWrapper) SetLastName(v string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -690,12 +724,16 @@ func (a *adapterWrapper) SetLastName(v string) error {
 	return a.save()
 }
 func (a *adapterWrapper) Username() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
 	return a.sess.Username, nil
 }
 func (a *adapterWrapper) SetUsername(v string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -703,12 +741,16 @@ func (a *adapterWrapper) SetUsername(v string) error {
 	return a.save()
 }
 func (a *adapterWrapper) Date() (int, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return 0, err
 	}
 	return a.sess.Date, nil
 }
 func (a *adapterWrapper) SetDate(v int) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -716,12 +758,16 @@ func (a *adapterWrapper) SetDate(v int) error {
 	return a.save()
 }
 func (a *adapterWrapper) ServerAddress() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
 	return a.sess.Addr, nil
 }
 func (a *adapterWrapper) SetServerAddress(v string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -729,12 +775,16 @@ func (a *adapterWrapper) SetServerAddress(v string) error {
 	return a.save()
 }
 func (a *adapterWrapper) Port() (int, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return 0, err
 	}
 	return a.sess.Port, nil
 }
 func (a *adapterWrapper) SetPort(v int) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -742,12 +792,16 @@ func (a *adapterWrapper) SetPort(v int) error {
 	return a.save()
 }
 func (a *adapterWrapper) State() ([]byte, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return nil, err
 	}
 	return a.sess.State, nil
 }
 func (a *adapterWrapper) SetState(v []byte) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return err
 	}
@@ -755,6 +809,8 @@ func (a *adapterWrapper) SetState(v []byte) error {
 	return a.save()
 }
 func (a *adapterWrapper) ExportSessionString() (string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if err := a.load(); err != nil {
 		return "", err
 	}
