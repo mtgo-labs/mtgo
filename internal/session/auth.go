@@ -3,6 +3,8 @@ package session
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/sha1"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 
@@ -185,7 +187,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		return nil, fmt.Errorf("step 6: PQInnerData too large (%d bytes)", len(pqInnerBytes))
 	}
 
-	encData, err := crypto.RSAEncryptLegacy(pqInnerBytes, fp)
+	encData, err := crypto.RSAEncrypt(pqInnerBytes, fp)
 	if err != nil {
 		return nil, fmt.Errorf("step 6: RSA encrypt: %w", err)
 	}
@@ -232,20 +234,58 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			return nil, ErrDHNonceMismatch
 		}
 
-		b := a.generateRandomBN(2048)
+		if dhInner.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
+
+		if v.ServerNonce != resPQ.ServerNonce {
+			return nil, ErrServerNonceMismatch
+		}
+
 		dhPrime := new(big.Int).SetBytes([]byte(dhInner.DHPrime))
+		if dhPrime.BitLen() != 2048 {
+			return nil, fmt.Errorf("%w: bit length %d", ErrDHPrimeInvalid, dhPrime.BitLen())
+		}
+		if !dhPrime.ProbablyPrime(20) {
+			return nil, ErrDHPrimeInvalid
+		}
+
 		g := big.NewInt(int64(dhInner.G))
-		gB := new(big.Int).Exp(g, b, dhPrime)
+		if g.Int64() < 2 || g.Int64() > 7 {
+			return nil, fmt.Errorf("session: invalid DH generator %d", g.Int64())
+		}
 
 		gA := new(big.Int).SetBytes([]byte(dhInner.GA))
+		one := big.NewInt(1)
+		if gA.Cmp(one) <= 0 || gA.Cmp(new(big.Int).Sub(dhPrime, one)) >= 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		lowerBound := new(big.Int).Lsh(big.NewInt(1), 2048-64)
+		upperBound := new(big.Int).Sub(dhPrime, new(big.Int).Lsh(big.NewInt(1), 2048-64))
+		if gA.Cmp(lowerBound) < 0 || gA.Cmp(upperBound) > 0 {
+			return nil, ErrGAOutOfRange
+		}
+
+		b := a.generateRandomBN(2048)
+		gB := new(big.Int).Exp(g, b, dhPrime)
+
 		authKey := computeAuthKey(gA, b, dhPrime)
 
-		clientDHInner := &tg.ClientDHInnerData{
-			Nonce:       nonce,
-			ServerNonce: resPQ.ServerNonce,
-			RetryID:     0,
-			GB:          string(gB.Bytes()),
+		authKeyAuxHash := func() int64 {
+			h := sha1.Sum(authKey)
+			return int64(binary.LittleEndian.Uint64(h[0:8]))
 		}
+
+		var retryID int64
+		const maxRetries = 5
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			clientDHInner := &tg.ClientDHInnerData{
+				Nonce:       nonce,
+				ServerNonce: resPQ.ServerNonce,
+				RetryID:     retryID,
+				GB:          string(gB.Bytes()),
+			}
 
 		clientDHBytes, err := a.serializeTL(clientDHInner)
 		if err != nil {
@@ -278,6 +318,13 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 
 		switch v := obj.(type) {
 		case *tg.DHGenOk:
+			if v.Nonce != nonce {
+				return nil, ErrNonceMismatch
+			}
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
+
 			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
 			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
 				return nil, ErrNewNonceHashMismatch
@@ -300,14 +347,25 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			}, nil
 
 		case *tg.DHGenRetry:
-			return nil, ErrDHGenRetry
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
+			retryID = authKeyAuxHash()
+			b = a.generateRandomBN(2048)
+			gB = new(big.Int).Exp(g, b, dhPrime)
+			authKey = computeAuthKey(gA, b, dhPrime)
 
 		case *tg.DHGenFail:
+			if v.ServerNonce != resPQ.ServerNonce {
+				return nil, ErrServerNonceMismatch
+			}
 			return nil, ErrDHGenFail
 
 		default:
 			return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
 		}
+		}
+		return nil, ErrDHGenRetry
 
 	default:
 		return nil, fmt.Errorf("step 8: unexpected ServerDHParams type %T", obj)

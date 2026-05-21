@@ -170,7 +170,7 @@ type Session struct {
 	// auth key in encrypted MTProto packets.
 	authKeyID []byte
 	// serverSalt is the current salt value used for message encryption.
-	serverSalt int64
+	serverSalt atomic.Int64
 	// sessionID is a random identifier for this session, unique per connection.
 	sessionID int64
 	// sidBytes is the little-endian encoding of sessionID, cached to avoid
@@ -179,6 +179,10 @@ type Session struct {
 
 	// msgFactory generates unique message IDs and sequence numbers.
 	msgFactory *MsgFactory
+
+	// msgIDValidator checks incoming server msg_ids for parity, replay,
+	// and temporal validity as required by the MTProto security guidelines.
+	msgIDValidator *msgIDValidator
 
 	// results maps message IDs to channels that receive RPC response objects.
 	results sync.Map
@@ -199,7 +203,7 @@ type Session struct {
 	acksMu sync.Mutex
 
 	// connected indicates whether the session is currently active.
-	connected bool
+	connected atomic.Bool
 	// cancel is closed to signal background workers to stop.
 	cancel chan struct{}
 
@@ -273,6 +277,9 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		sessionID:    sid,
 		sidBytes:     encodedSidBytes,
 		msgFactory:   NewMsgFactory(time.Now()),
+		msgIDValidator: newMsgIDValidator(func() int64 {
+			return time.Now().Unix()
+		}),
 		results:      sync.Map{},
 		rawResults:   make(map[int64]chan []byte),
 		cancel:       make(chan struct{}),
@@ -376,7 +383,7 @@ func (s *Session) SetAuthKey(key []byte) {
 
 // SetServerSalt updates the server salt used for encrypting outgoing messages.
 func (s *Session) SetServerSalt(salt int64) {
-	s.serverSalt = salt
+	s.serverSalt.Store(salt)
 }
 
 // SetServerTime updates the internal message ID generator with the server's
@@ -408,7 +415,7 @@ func (s *Session) AuthKey() []byte {
 
 // IsConnected reports whether the session is currently active and connected.
 func (s *Session) IsConnected() bool {
-	return s.connected
+	return s.connected.Load()
 }
 
 // SetTransport replaces the underlying transport used for sending and
@@ -440,7 +447,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		Body:  body,
 	}
 
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 
 	ch := s.registerResult(msgID)
 
@@ -503,7 +510,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 		SeqNo: uint32(seqNo),
 		Body:  drop,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(5 * time.Second)
@@ -534,11 +541,11 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		case *tg.BadMsgNotification:
 			s.deliverResult(bv.BadMsgID, bv)
 		case *tg.BadServerSalt:
-			s.serverSalt = bv.NewServerSalt
+			s.serverSalt.Store(bv.NewServerSalt)
 			s.deliverResult(bv.BadMsgID, bv)
 		}
 	case *tg.NewSessionCreated:
-		s.serverSalt = v.ServerSalt
+		s.serverSalt.Store(v.ServerSalt)
 	case *tg.FutureSalts:
 		s.storeFutureSalts(v)
 	case *tg.MsgsAck:
@@ -600,7 +607,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, ErrTransportNotSet
 	}
 
-	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 
 	ch := s.registerRawResult(msgID)
 
@@ -743,14 +750,32 @@ func typeName(v tg.TLObject) string {
 // connectivity. Returns an error if the initial ping fails, in which case the
 // session is stopped automatically.
 func (s *Session) Start(timeout time.Duration) error {
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	return s.StartContext(ctx)
+}
+
+// StartContext launches the receive and writer background workers, registers
+// the session with the global housekeeper, and performs an initial ping to
+// verify connectivity. It returns after the session is ready.
+func (s *Session) StartContext(ctx context.Context) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.connected = true
+	s.connected.Store(true)
 
 	go s.writer()
-	go s.readLoop()
+	go func() {
+		if err := s.receiveLoop(ctx); err != nil && s.connected.Load() && s.onDisconnect != nil {
+			s.onDisconnect(err)
+		}
+	}()
 
-	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
+	timeout := timeoutFromContext(ctx)
+	_, err := s.Invoke(ctx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
 	if err != nil {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
@@ -762,10 +787,30 @@ func (s *Session) Start(timeout time.Duration) error {
 	return nil
 }
 
+// Run starts the session and blocks until ctx is canceled.
+func (s *Session) Run(ctx context.Context) error {
+	if err := s.StartContext(ctx); err != nil {
+		return err
+	}
+	<-ctx.Done()
+	s.Stop()
+	return ctx.Err()
+}
+
+func timeoutFromContext(ctx context.Context) time.Duration {
+	if deadline, ok := ctx.Deadline(); ok {
+		timeout := time.Until(deadline)
+		if timeout > 0 {
+			return timeout
+		}
+	}
+	return 60 * time.Second
+}
+
 // Stop signals all background workers to exit, closes the cancel channel,
 // and closes the underlying transport.
 func (s *Session) Stop() {
-	s.connected = false
+	s.connected.Store(false)
 	defaultHousekeeper.unregister(s)
 	if s.cancel != nil {
 		select {
@@ -783,7 +828,7 @@ func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
 	if len(fs.Salts) == 0 {
 		return
 	}
-	s.serverSalt = fs.Salts[0].Salt
+	s.serverSalt.Store(fs.Salts[0].Salt)
 }
 
 func (s *Session) sendServiceMessage(body tg.TLObject) {
@@ -799,7 +844,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		SeqNo: uint32(seqNo),
 		Body:  body,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(10 * time.Second)
@@ -839,8 +884,16 @@ func (s *Session) flushAcks() {
 	default:
 	}
 	acks := s.drainAcks()
-	if len(acks) > 0 {
-		s.sendServiceMessage(&tg.MsgsAck{MsgIds: acks})
+	const maxAckBatch = 8192
+	for len(acks) > 0 {
+		batch := acks
+		if len(batch) > maxAckBatch {
+			batch = batch[:maxAckBatch]
+			acks = acks[maxAckBatch:]
+		} else {
+			acks = nil
+		}
+		s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
 	}
 }
 
@@ -915,7 +968,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		}
 		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
-		s.serverSalt = newSalt
+		s.serverSalt.Store(newSalt)
 		s.deliverResult(badMsgID, &tg.BadServerSalt{
 			BadMsgID:      badMsgID,
 			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
@@ -926,10 +979,23 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 28 {
 			return false
 		}
-		s.serverSalt = int64(binary.LittleEndian.Uint64(body[20:28]))
+		s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[20:28])))
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
+	case tg.MsgDetailedInfoTypeID:
+		if len(body) >= 20 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[12:20])))
+		}
+	case tg.MsgNewDetailedInfoTypeID:
+		if len(body) >= 12 {
+			s.addAck(int64(binary.LittleEndian.Uint64(body[4:12])))
+		}
+	case tg.MsgsStateReqTypeID:
+		s.handleRawMsgsStateReq(body[4:])
+	case tg.MsgResendReqTypeID:
+		s.handleRawMsgResendReq(body[4:])
+	case tg.MsgsAllInfoTypeID:
 	default:
 		return false
 	}
@@ -989,6 +1055,9 @@ func (s *Session) handleRawContainer(body []byte) bool {
 		return false
 	}
 	count := binary.LittleEndian.Uint32(body[:4])
+	if count > 1024 {
+		return false
+	}
 	off := 4
 	allHandled := true
 	for i := uint32(0); i < count; i++ {
@@ -1045,8 +1114,45 @@ func (s *Session) handleRawFutureSalts(body []byte) bool {
 	if binary.LittleEndian.Uint32(body[firstSaltOffset:firstSaltOffset+4]) != tg.FutureSaltTypeID {
 		return false
 	}
-	s.serverSalt = int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20]))
+	s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20])))
 	return true
+}
+
+func (s *Session) handleRawMsgsStateReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil || len(msgIDs) == 0 {
+		return
+	}
+	info := make([]byte, len(msgIDs))
+	for i := range msgIDs {
+		if _, ok := s.results.Load(msgIDs[i]); ok {
+			info[i] = 0x80 | 0x04
+		} else {
+			info[i] = 0x01
+		}
+	}
+	s.sendServiceMessage(&tg.MsgsStateInfo{
+		ReqMsgID: 0,
+		Info:     string(info),
+	})
+}
+
+func (s *Session) handleRawMsgResendReq(body []byte) {
+	if len(body) < 8 {
+		return
+	}
+	r := tg.NewReader(body)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil {
+		return
+	}
+	for _, id := range msgIDs {
+		s.addAck(id)
+	}
 }
 
 func (s *Session) readLoop() {
@@ -1060,7 +1166,7 @@ func (s *Session) readLoop() {
 
 		data, err := s.transport.Recv()
 		if err != nil {
-			if !s.connected {
+			if !s.connected.Load() {
 				return
 			}
 			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
@@ -1074,8 +1180,30 @@ func (s *Session) readLoop() {
 			}
 			continue
 		}
+		if len(data) == 4 {
+			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
+			if code < 0 {
+				continue
+			}
+			if s.onDisconnect != nil {
+				s.onDisconnect(fmt.Errorf("transport error: code %d", -code))
+			}
+			return
+		}
+
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 		if err != nil {
+			if _, ok := err.(*tgerr.SecurityCheckMismatch); ok {
+				if s.onDisconnect != nil {
+					s.onDisconnect(err)
+				}
+				return
+			}
+			continue
+		}
+
+		if !s.msgIDValidator.Check(raw.MsgID) {
+			crypto.ReleaseAESBuf(decrypted)
 			continue
 		}
 
@@ -1164,7 +1292,7 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 		}
 		s.authKey = result.AuthKey
 		s.authKeyID = computeAuthKeyID(result.AuthKey)
-		s.serverSalt = result.ServerSalt
+		s.serverSalt.Store(result.ServerSalt)
 		if s.storage != nil {
 			if err := s.storage.SetAuthKey(result.AuthKey); err != nil {
 				return fmt.Errorf("session: save auth key: %w", err)

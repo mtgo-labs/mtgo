@@ -688,7 +688,7 @@ func guessExtension(mimeType string) string {
 }
 
 func buildDownloadPath(dir string, info *downloadInput) (string, error) {
-	fileName := info.fileName
+	fileName := sanitizeFileName(info.fileName)
 
 	if fileName == "" {
 		ext := guessExtension(info.mimeType)
@@ -714,6 +714,18 @@ func buildDownloadPath(dir string, info *downloadInput) (string, error) {
 		}
 	}
 	return dir, nil
+}
+
+func sanitizeFileName(name string) string {
+	if name == "" {
+		return ""
+	}
+	name = filepath.Base(name)
+	cleaned := strings.ReplaceAll(name, "..", "")
+	if cleaned == "" || cleaned == "." || cleaned == "/" {
+		return ""
+	}
+	return cleaned
 }
 
 func (c *Client) downloadToPath(ctx context.Context, input interface{}, filePath string, progress params.ProgressFunc) (string, error) {

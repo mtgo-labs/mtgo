@@ -155,7 +155,9 @@ func (c *Client) reconnectOnce() error {
 		c.Log.Errorf("session dispatch panic: %v", r)
 	})
 
+	c.mu.Lock()
 	c.apiInit = false
+	c.mu.Unlock()
 	if err := sess.Connect(sessionTp, 30*time.Second); err != nil {
 		sessionTp.Close()
 		return fmt.Errorf("session start: %w", err)

@@ -151,7 +151,7 @@ func (c *wsConn) readFrame() (op byte, payload []byte, err error) {
 		length = int64(binary.BigEndian.Uint64(b[:]))
 	}
 
-	if length < 0 || length > 1<<30 {
+	if length < 0 || length > int64(MaxPayloadLen) {
 		return 0, nil, fmt.Errorf("ws: frame too large: %d", length)
 	}
 

@@ -42,7 +42,7 @@ func (t *TCPIntermediateNoHeader) Recv() ([]byte, error) {
 	}
 
 	length := binary.LittleEndian.Uint32(t.buf[:4])
-	if length > maxPayloadLen {
+	if length > MaxPayloadLen {
 		return nil, ErrPayloadTooLarge
 	}
 

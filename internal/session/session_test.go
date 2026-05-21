@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"testing"
 	"time"
 
@@ -218,17 +219,24 @@ func makeAuthKey() []byte {
 	return make([]byte, 256)
 }
 
+var serverMsgIDCounter int64
+
+func makeServerMsgID() int64 {
+	serverMsgIDCounter++
+	return (time.Now().Unix()<<32 | 1) + int64(serverMsgIDCounter<<2)
+}
+
 func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObject) []byte {
 	message := &tg.MTProtoMessage{
 		MsgID: msgID,
 		SeqNo: seqNo,
 		Body:  body,
 	}
-	return crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	return crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 }
 
 func makeEncryptedRawResponse(s *Session, msgID int64, seqNo uint32, body []byte) []byte {
-	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 }
 
 func encodeTLObject(t *testing.T, obj tg.TLObject) []byte {
@@ -263,7 +271,7 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 func startTestWorkers(s *Session) {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.connected = true
+	s.connected.Store(true)
 	go s.writer()
 	go s.readLoop()
 }
@@ -287,7 +295,7 @@ func TestSessionSendAndWait(t *testing.T) {
 
 	<-mt.sendCh
 
-	respMsgID := s.msgFactory.AllocateMsgID()
+	respMsgID := makeServerMsgID()
 	respSeqNo := s.msgFactory.AllocateSeqNo(false)
 	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
 	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
@@ -336,7 +344,7 @@ func TestSessionSendRawAndWait(t *testing.T) {
 
 	<-mt.sendCh
 
-	respMsgID := s.msgFactory.AllocateMsgID()
+	respMsgID := makeServerMsgID()
 	respSeqNo := s.msgFactory.AllocateSeqNo(false)
 	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
 	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), &tg.RPCResult{
@@ -406,7 +414,7 @@ func TestSessionSendRawReturnsGzipPackedPayloadWithoutDecode(t *testing.T) {
 	tg.WriteInt(&rpcResult, tg.RPCResultTypeID)
 	tg.WriteLong(&rpcResult, msgID)
 	rpcResult.Write(gzipPayload.Bytes())
-	mt.recvCh <- makeEncryptedRawResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
+	mt.recvCh <- makeEncryptedRawResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
 
 	select {
 	case result := <-sendDone:
@@ -455,7 +463,7 @@ func TestSessionSendRawReturnsUnknownPayloadWithoutTLDecode(t *testing.T) {
 	tg.WriteInt(&rpcResult, tg.RPCResultTypeID)
 	tg.WriteLong(&rpcResult, msgID)
 	rpcResult.Write(payload)
-	mt.recvCh <- makeEncryptedRawResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
+	mt.recvCh <- makeEncryptedRawResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
 
 	select {
 	case result := <-sendDone:
@@ -505,7 +513,7 @@ func TestSessionSendRawRoutesTopLevelGzipPackedRPCResult(t *testing.T) {
 	}}).Encode(&gzipBody); err != nil {
 		t.Fatalf("encode gzip body: %v", err)
 	}
-	mt.recvCh <- makeEncryptedRawResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), gzipBody.Bytes())
+	mt.recvCh <- makeEncryptedRawResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), gzipBody.Bytes())
 
 	select {
 	case result := <-sendDone:
@@ -562,10 +570,10 @@ func TestSessionSendRawContainerSkipsRawPayloadDecodeAndDispatchesUpdate(t *test
 	var container bytes.Buffer
 	tg.WriteInt(&container, tg.MsgContainerID)
 	tg.WriteInt(&container, 2)
-	writeRawMTProtoMessage(&container, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
-	writeRawMTProtoMessage(&container, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), update)
+	writeRawMTProtoMessage(&container, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), rpcResult.Bytes())
+	writeRawMTProtoMessage(&container, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), update)
 
-	mt.recvCh <- makeEncryptedRawResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), container.Bytes())
+	mt.recvCh <- makeEncryptedRawResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), container.Bytes())
 
 	select {
 	case result := <-sendDone:
@@ -614,7 +622,7 @@ func TestSessionSendDeliversRpcResultByRequestMsgID(t *testing.T) {
 
 	<-mt.sendCh
 
-	respMsgID := s.msgFactory.AllocateMsgID()
+	respMsgID := makeServerMsgID()
 	respSeqNo := s.msgFactory.AllocateSeqNo(false)
 	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
 	encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
@@ -658,7 +666,7 @@ func TestSessionSendDecodesRPCResultPayloadFastPath(t *testing.T) {
 	<-mt.sendCh
 
 	pong := &tg.Pong{MsgID: msgID, PingID: pingID}
-	mt.recvCh <- makeEncryptedResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.RPCResult{
+	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.RPCResult{
 		ReqMsgID: msgID,
 		Result:   pong,
 	})
@@ -709,7 +717,7 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 	}
 
 	newSalt := int64(0x0102030405060708)
-	mt.recvCh <- makeEncryptedResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.BadServerSalt{
+	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.BadServerSalt{
 		BadMsgID:      firstMsg.MsgID,
 		BadMsgSeqno:   int32(firstMsg.SeqNo),
 		ErrorCode:     48,
@@ -724,11 +732,11 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 	if secondMsg.MsgID == firstMsg.MsgID {
 		t.Fatal("retry reused msg_id")
 	}
-	if s.serverSalt != newSalt {
-		t.Fatalf("serverSalt = %x, want %x", s.serverSalt, newSalt)
+	if s.serverSalt.Load() != newSalt {
+		t.Fatalf("serverSalt = %x, want %x", s.serverSalt.Load(), newSalt)
 	}
 
-	mt.recvCh <- makeEncryptedResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.Pong{
+	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.Pong{
 		MsgID:  secondMsg.MsgID,
 		PingID: pingID,
 	})
@@ -767,7 +775,7 @@ func TestSessionInvokeZeroRetriesDoesNotSend(t *testing.T) {
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 1)
-	s.connected = true
+	s.connected.Store(true)
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {
@@ -787,7 +795,7 @@ func TestSessionInvokeRawZeroRetriesDoesNotSend(t *testing.T) {
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 1)
-	s.connected = true
+	s.connected.Store(true)
 
 	_, err := s.InvokeRaw(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {
@@ -820,7 +828,7 @@ func TestSessionStartStop(t *testing.T) {
 		if !ok {
 			return
 		}
-		respMsgID := s.msgFactory.AllocateMsgID()
+		respMsgID := makeServerMsgID()
 		respSeqNo := s.msgFactory.AllocateSeqNo(false)
 		pong := &tg.Pong{MsgID: msg.MsgID, PingID: ping.PingID}
 		encrypted := makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
@@ -897,7 +905,7 @@ func TestSessionStartIgnoresInvalidIncomingFrame(t *testing.T) {
 			return
 		}
 		mt.recvCh <- []byte{}
-		respMsgID := s.msgFactory.AllocateMsgID()
+		respMsgID := makeServerMsgID()
 		respSeqNo := s.msgFactory.AllocateSeqNo(false)
 		pong := &tg.Pong{MsgID: msg.MsgID, PingID: ping.PingID}
 		mt.recvCh <- makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
@@ -928,4 +936,82 @@ func TestSessionConnectNoAuthKey(t *testing.T) {
 func unpackIncoming(data []byte, s *Session) *tg.MTProtoMessage {
 	msg, _, _ := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 	return msg
+}
+
+func TestQuickAck(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	disconnectCh := make(chan error, 1)
+	s.onDisconnect = func(err error) {
+		disconnectCh <- err
+	}
+
+	startTestWorkers(s)
+
+	quickAck := make([]byte, 4)
+	binary.LittleEndian.PutUint32(quickAck, uint32(0x80000001))
+	mt.recvCh <- quickAck
+
+	msgID := s.msgFactory.AllocateMsgID()
+	respMsgID := makeServerMsgID()
+	respSeqNo := s.msgFactory.AllocateSeqNo(false)
+	pong := &tg.Pong{MsgID: msgID, PingID: 42}
+
+	sendDone := make(chan error, 1)
+	go func() {
+		_, err := s.Send(context.Background(), msgID, uint32(s.msgFactory.AllocateSeqNo(true)), &tg.PingRequest{PingID: 42}, 5*time.Second)
+		sendDone <- err
+	}()
+
+	<-mt.sendCh
+	time.Sleep(50 * time.Millisecond)
+
+	mt.recvCh <- makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
+
+	select {
+	case err := <-sendDone:
+		if err != nil {
+			t.Fatalf("Send() error: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Send() timed out")
+	}
+
+	select {
+	case <-disconnectCh:
+		t.Fatal("quick ack should not cause disconnect")
+	default:
+	}
+
+	close(s.cancel)
+}
+
+func TestTransportErrorCodeCausesDisconnect(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	disconnectCh := make(chan error, 1)
+	s.onDisconnect = func(err error) {
+		disconnectCh <- err
+	}
+
+	startTestWorkers(s)
+
+	errCode := make([]byte, 4)
+	binary.LittleEndian.PutUint32(errCode, uint32(404))
+	mt.recvCh <- errCode
+
+	select {
+	case err := <-disconnectCh:
+		if err == nil {
+			t.Fatal("expected non-nil disconnect error")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("expected disconnect from transport error code")
+	}
+
+	close(s.cancel)
 }
