@@ -59,6 +59,9 @@ type SendCodeResult struct {
 //	}
 //	fmt.Println("phone code hash:", result.PhoneCodeHash)
 func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("auth: SendCode")
 	rpc := c.Raw()
 	result, err := rpc.AuthSendCode(ctx, &tg.AuthSendCodeRequest{
@@ -109,6 +112,9 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 //	}
 //	fmt.Println("signed in as:", user.FirstName)
 func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("auth: SignIn")
 	rpc := c.Raw()
 	result, err := rpc.AuthSignIn(ctx, &tg.AuthSignInRequest{
@@ -156,6 +162,9 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 //	}
 //	fmt.Println("registered as:", user.FirstName, user.LastName)
 func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("auth: SignUp")
 	ln := ""
 	if len(lastName) > 0 {
@@ -201,6 +210,9 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 //	}
 //	fmt.Println("signed out:", ok)
 func (c *Client) SignOut(ctx context.Context) (bool, error) {
+	if err := c.ensureConnected(); err != nil {
+		return false, err
+	}
 	c.Log.Info("auth: SignOut")
 	rpc := c.Raw()
 	_, err := rpc.AuthLogOut(ctx)
@@ -219,6 +231,9 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 // Returns an empty string when no hint has been set by the user.
 // Returns an error if the server request fails or the session is not authorized.
 func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
+	if err := c.ensureConnected(); err != nil {
+		return "", err
+	}
 	rpc := c.Raw()
 	pwd, err := rpc.AccountGetPassword(ctx)
 	if err != nil {
@@ -246,6 +261,9 @@ func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
 //	}
 //	fmt.Println("authenticated as:", user.FirstName)
 func (c *Client) CheckPassword(ctx context.Context, password string) (*types.User, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("auth: CheckPassword")
 	srp, err := c.computeSRP(ctx, password)
 	if err != nil {
@@ -281,6 +299,9 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 // Returns an error if the recovery code is invalid or expired, or if the
 // server rejects the request.
 func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("auth: RecoverPassword")
 	rpc := c.Raw()
 	result, err := rpc.AuthRecoverPassword(ctx, &tg.AuthRecoverPasswordRequest{
@@ -389,6 +410,9 @@ type ActiveSessions struct {
 //	    fmt.Printf("%s (%s) - IP: %s\n", s.DeviceModel, s.Platform, s.IP)
 //	}
 func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
+	}
 	c.Log.Debug("GetActiveSessions")
 	rpc := c.Raw()
 	result, err := rpc.AccountGetAuthorizations(ctx)
@@ -436,6 +460,9 @@ func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error)
 //	    }
 //	}
 func (c *Client) ResetSession(ctx context.Context, hash int64) error {
+	if err := c.ensureConnected(); err != nil {
+		return err
+	}
 	c.Log.Debugf("ResetSession hash=%d", hash)
 	rpc := c.Raw()
 	_, err := rpc.AccountResetAuthorization(ctx, &tg.AccountResetAuthorizationRequest{
