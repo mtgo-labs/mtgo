@@ -203,6 +203,9 @@ func (t *TCPObfuscated) Recv() ([]byte, error) {
 		decLen := t.dec.Process(lenBytes[:])
 		length := binary.LittleEndian.Uint32(decLen)
 
+		if length > uint32(MaxPayloadLen) {
+			return nil, ErrPayloadTooLarge
+		}
 		if cap(t.readBuf) < int(length) {
 			t.readBuf = make([]byte, length)
 		}
@@ -232,6 +235,9 @@ func (t *TCPObfuscated) Recv() ([]byte, error) {
 		}
 
 		length *= 4
+		if length > MaxPayloadLen {
+			return nil, ErrPayloadTooLarge
+		}
 		if cap(t.readBuf) < length {
 			t.readBuf = make([]byte, length)
 		}
