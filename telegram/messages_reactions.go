@@ -44,8 +44,8 @@ func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID i
 		Count:    int32(amount),
 		RandomID: c.RandomID(),
 	}
-	if opt.Privacy != nil {
-		req.Private = opt.Privacy
+	if opt.Private {
+		req.Private = &tg.PaidReactionPrivacyAnonymous{}
 	}
 
 	rpc := c.Raw()
