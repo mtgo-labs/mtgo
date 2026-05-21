@@ -278,9 +278,14 @@ func startTestWorkers(s *Session) {
 	s.sendCh = make(chan *sendJob, 64)
 	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.connected.Store(true)
+	s.wg.Add(1)
 	go s.writer()
 	s.startDispatchWorkers(context.Background(), 1)
-	go func() { _ = s.receiveLoop(context.Background()) }()
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		_ = s.receiveLoop(context.Background())
+	}()
 }
 
 func TestSessionDispatchConfigDefaults(t *testing.T) {
