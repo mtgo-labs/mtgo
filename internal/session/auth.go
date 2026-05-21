@@ -270,6 +270,11 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		b := a.generateRandomBN(2048)
 		gB := new(big.Int).Exp(g, b, dhPrime)
 
+		two := big.NewInt(2)
+		if gB.Cmp(two) < 0 || gB.Cmp(new(big.Int).Sub(dhPrime, two)) > 0 {
+			return nil, ErrGBOutOfRange
+		}
+
 		authKey := computeAuthKey(gA, b, dhPrime)
 
 		authKeyAuxHash := func() int64 {

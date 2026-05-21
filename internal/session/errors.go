@@ -55,4 +55,7 @@ var (
 	// ErrGAOutOfRange is returned when the server's g_a falls outside the
 	// required range [2, dh_prime-2].
 	ErrGAOutOfRange = errors.New("session: g_a out of range")
+	// ErrGBOutOfRange is returned when the client's computed g_b falls
+	// outside the required range [2, dh_prime-2].
+	ErrGBOutOfRange = errors.New("session: g_b out of range")
 )
