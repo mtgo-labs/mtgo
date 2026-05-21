@@ -1241,3 +1241,18 @@ type GiftPurchaseOffer struct {
 	Duration             int32
 	PaidMessageStarCount *int64
 }
+
+type SendReactionOption struct {
+	Big         bool
+	AddToRecent bool
+}
+
+type SendPaidReactionOption struct {
+	Private tl.PaidReactionPrivacyClass
+}
+
+type GetStarsTransactionsOption struct {
+	Ascending      bool
+	SubscriptionID string
+	Ton            bool
+}

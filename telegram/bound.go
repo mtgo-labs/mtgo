@@ -202,7 +202,7 @@ func (c *Client) BoundReact(chatID int64, msgID int32, opts ...*params.React) er
 	ctx := context.Background()
 	o := params.GetOptDef(&params.React{}, opts...)
 	reactions := []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: o.Emoji}}
-	return c.SendReaction(ctx, chatID, msgID, reactions...)
+	return c.SendReaction(ctx, chatID, msgID, reactions)
 }
 
 // BoundPin pins a message in the specified chat. This is a bound-method

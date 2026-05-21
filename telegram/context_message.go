@@ -295,7 +295,7 @@ func (c *Context) React(reaction ...tg.ReactionClass) error {
 	if err != nil {
 		return err
 	}
-	return c.Client.SendReaction(c.Ctx, chatID, c.Message.ID, reaction...)
+	return c.Client.SendReaction(c.Ctx, chatID, c.Message.ID, reaction)
 }
 
 // Read marks the message that triggered the current context as read. If no specific message
