@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"testing"
 	"time"
 
@@ -935,4 +936,82 @@ func TestSessionConnectNoAuthKey(t *testing.T) {
 func unpackIncoming(data []byte, s *Session) *tg.MTProtoMessage {
 	msg, _, _ := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 	return msg
+}
+
+func TestQuickAck(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	disconnectCh := make(chan error, 1)
+	s.onDisconnect = func(err error) {
+		disconnectCh <- err
+	}
+
+	startTestWorkers(s)
+
+	quickAck := make([]byte, 4)
+	binary.LittleEndian.PutUint32(quickAck, uint32(0x80000001))
+	mt.recvCh <- quickAck
+
+	msgID := s.msgFactory.AllocateMsgID()
+	respMsgID := makeServerMsgID()
+	respSeqNo := s.msgFactory.AllocateSeqNo(false)
+	pong := &tg.Pong{MsgID: msgID, PingID: 42}
+
+	sendDone := make(chan error, 1)
+	go func() {
+		_, err := s.Send(context.Background(), msgID, uint32(s.msgFactory.AllocateSeqNo(true)), &tg.PingRequest{PingID: 42}, 5*time.Second)
+		sendDone <- err
+	}()
+
+	<-mt.sendCh
+	time.Sleep(50 * time.Millisecond)
+
+	mt.recvCh <- makeEncryptedResponse(s, respMsgID, uint32(respSeqNo), pong)
+
+	select {
+	case err := <-sendDone:
+		if err != nil {
+			t.Fatalf("Send() error: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Send() timed out")
+	}
+
+	select {
+	case <-disconnectCh:
+		t.Fatal("quick ack should not cause disconnect")
+	default:
+	}
+
+	close(s.cancel)
+}
+
+func TestTransportErrorCodeCausesDisconnect(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	disconnectCh := make(chan error, 1)
+	s.onDisconnect = func(err error) {
+		disconnectCh <- err
+	}
+
+	startTestWorkers(s)
+
+	errCode := make([]byte, 4)
+	binary.LittleEndian.PutUint32(errCode, uint32(404))
+	mt.recvCh <- errCode
+
+	select {
+	case err := <-disconnectCh:
+		if err == nil {
+			t.Fatal("expected non-nil disconnect error")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("expected disconnect from transport error code")
+	}
+
+	close(s.cancel)
 }
