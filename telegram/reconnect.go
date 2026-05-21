@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/transport"
+	"github.com/mtgo-labs/mtgo/mtproxy"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -122,26 +124,60 @@ func (c *Client) reconnectOnce() error {
 	}
 	configureSessionDispatch(sess, c.cfg)
 
-	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
-	d := c.dialer
-	if c.testDialer != nil {
-		d = c.testDialer
-	}
-	conn, err := d.Dial("tcp", addr, 15*time.Second)
-	if err != nil {
-		return fmt.Errorf("dial %s: %w", addr, err)
-	}
+	timeout := 15 * time.Second
+	var sessionTp *sessionTransport
 
-	tp, err := newTCPTransport(c.cfg.TransportMode, conn)
-	if err != nil {
-		conn.Close()
-		return err
+	if useWebSocket(c.cfg) {
+		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.cfg.WebSocketTLS)
+		wsCtx, wsCancel := dialerCtx(timeout)
+		defer wsCancel()
+		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
+		if err != nil {
+			return fmt.Errorf("ws dial %s: %w", wsAddr, err)
+		}
+		tp := transport.NewTCPIntermediateNoHeader(wsConn)
+		if err := tp.Connect(); err != nil {
+			wsConn.Close()
+			return fmt.Errorf("ws transport handshake: %w", err)
+		}
+		sessionTp = newSessionTransport(tp, wsConn)
+	} else if c.cfg.MTProxy != nil {
+		mpConn, err := mtproxy.Dial(c.cfg.MTProxy.Addr, c.cfg.MTProxy.Secret, dc.ID, timeout)
+		if err != nil {
+			return fmt.Errorf("mtproxy dial: %w", err)
+		}
+		tp := transport.NewTCPIntermediateNoHeader(mpConn)
+		if err := tp.Connect(); err != nil {
+			mpConn.Close()
+			return fmt.Errorf("mtproxy transport handshake: %w", err)
+		}
+		sessionTp = newSessionTransport(tp, mpConn)
+	} else {
+		addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
+		if c.cfg.ServerAddr != "" {
+			addr = c.cfg.ServerAddr
+		}
+
+		d := c.dialer
+		if c.testDialer != nil {
+			d = c.testDialer
+		}
+		conn, err := d.Dial("tcp", addr, timeout)
+		if err != nil {
+			return fmt.Errorf("dial %s: %w", addr, err)
+		}
+
+		tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+		if err != nil {
+			conn.Close()
+			return err
+		}
+		if err := tp.Connect(); err != nil {
+			conn.Close()
+			return fmt.Errorf("transport handshake: %w", err)
+		}
+		sessionTp = newSessionTransport(tp, conn)
 	}
-	if err := tp.Connect(); err != nil {
-		conn.Close()
-		return fmt.Errorf("transport handshake: %w", err)
-	}
-	sessionTp := newSessionTransport(tp, conn)
 
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
@@ -230,6 +266,7 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 		rm.mu.Unlock()
 
 		if rm.cfg.MaxAttempts > 0 && attempt > rm.cfg.MaxAttempts {
+			rm.client.Log.Errorf("reconnect exhausted %d attempts, giving up", attempt-1)
 			rm.client.state.SetDisconnected(&ReconnectError{
 				Attempts: attempt,
 				Err:      ErrReconnectFailed,
@@ -239,7 +276,7 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 		}
 
 		delay := rm.cfg.delay(attempt)
-		rm.client.Log.Debugf("reconnect attempt %d in %v", attempt, delay)
+		rm.client.Log.Infof("reconnect attempt %d in %v", attempt, delay)
 
 		select {
 		case <-ctx.Done():

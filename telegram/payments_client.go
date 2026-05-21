@@ -180,3 +180,69 @@ func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool
 	_, err := rpc.MessagesSetBotShippingResults(ctx, req)
 	return err
 }
+
+// GetStarsTransactions retrieves a paginated list of Telegram Stars transactions
+// for the specified peer (user, bot, or channel). Use the inbound/outbound flags
+// to filter direction and offset for pagination.
+//
+// Parameters:
+//   - ctx: context for cancellation and deadlines
+//   - chatID: the peer whose transactions to retrieve (0 for self)
+//   - inbound: include incoming transactions
+//   - outbound: include outgoing transactions
+//   - offset: pagination cursor (empty string for first page)
+//   - limit: maximum number of transactions to return (defaults to 100 if <= 0)
+//
+// Returns a *PaymentsStarsStatus containing the transaction list and balance on success.
+//
+// Returns an error if:
+//   - the peer cannot be resolved
+//   - the RPC call fails
+func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32) (*tg.PaymentsStarsStatus, error) {
+	c.Log.Debugf("GetStarsTransactions chat_id=%d inbound=%v outbound=%v limit=%d", chatID, inbound, outbound, limit)
+	peer, err := resolvePeer(c, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rpc := c.Raw()
+	return rpc.PaymentsGetStarsTransactions(ctx, &tg.PaymentsGetStarsTransactionsRequest{
+		Inbound:  inbound,
+		Outbound: outbound,
+		Peer:     peer,
+		Offset:   offset,
+		Limit:    limit,
+	})
+}
+
+// RefundStarsCharge refunds a Telegram Stars charge. Bots can use this to refund
+// a payment made by a user. The charge_id is obtained from the original payment
+// update or transaction list.
+//
+// Parameters:
+//   - ctx: context for cancellation and deadlines
+//   - userID: the user who made the original payment
+//   - chargeID: the unique charge identifier to refund
+//
+// Returns an error if:
+//   - the user cannot be resolved
+//   - the charge_id is invalid or already refunded
+//   - the RPC call fails
+func (c *Client) RefundStarsCharge(ctx context.Context, userID int64, chargeID string) error {
+	c.Log.Debugf("RefundStarsCharge user_id=%d charge_id=%s", userID, chargeID)
+	user, err := resolveUserID(c, userID)
+	if err != nil {
+		return fmt.Errorf("resolve user: %w", err)
+	}
+
+	rpc := c.Raw()
+	_, err = rpc.PaymentsRefundStarsCharge(ctx, &tg.PaymentsRefundStarsChargeRequest{
+		UserID:   user,
+		ChargeID: chargeID,
+	})
+	return err
+}
