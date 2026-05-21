@@ -447,7 +447,7 @@ func TestSendReaction(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	err := c.SendReaction(context.Background(), 10, 55, &tg.ReactionEmoji{Emoticon: "\U0001F525"})
+	err := c.SendReaction(context.Background(), 10, 55, []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F525"}})
 	if err != nil {
 		t.Fatalf("SendReaction() error: %v", err)
 	}
@@ -468,8 +468,10 @@ func TestSendReactionMultiple(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
 	err := c.SendReaction(context.Background(), 10, 55,
-		&tg.ReactionEmoji{Emoticon: "\U0001F525"},
-		&tg.ReactionCustomEmoji{DocumentID: 12345},
+		[]tg.ReactionClass{
+			&tg.ReactionEmoji{Emoticon: "\U0001F525"},
+			&tg.ReactionCustomEmoji{DocumentID: 12345},
+		},
 	)
 	if err != nil {
 		t.Fatalf("SendReaction() error: %v", err)
@@ -480,6 +482,29 @@ func TestSendReactionMultiple(t *testing.T) {
 	}
 	if len(req.Reaction) != 2 {
 		t.Errorf("expected 2 reactions, got %d", len(req.Reaction))
+	}
+}
+
+func TestSendReactionWithOptions(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	err := c.SendReaction(context.Background(), 10, 55,
+		[]tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F525"}},
+		&params.SendReactionOption{Big: true, AddToRecent: true},
+	)
+	if err != nil {
+		t.Fatalf("SendReaction() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendReactionRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendReactionRequest, got %T", inv.lastCall())
+	}
+	if !req.Big {
+		t.Error("Big = false, want true")
+	}
+	if !req.AddToRecent {
+		t.Error("AddToRecent = false, want true")
 	}
 }
 
@@ -505,7 +530,7 @@ func TestSendPaidReaction(t *testing.T) {
 
 func TestSendReactionPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
-	err := c.SendReaction(context.Background(), 999, 1, &tg.ReactionEmoji{Emoticon: "\U0001F44D"})
+	err := c.SendReaction(context.Background(), 999, 1, []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: "\U0001F44D"}})
 	if err == nil {
 		t.Fatal("expected error for unresolved peer")
 	}

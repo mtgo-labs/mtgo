@@ -198,7 +198,7 @@ func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32) (*tg.PaymentsStarsStatus, error) {
+func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*tg.PaymentsStarsStatus, error) {
 	c.Log.Debugf("GetStarsTransactions chat_id=%d inbound=%v outbound=%v limit=%d", chatID, inbound, outbound, limit)
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
@@ -209,13 +209,18 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 		limit = 100
 	}
 
+	opt := params.GetOptDef(&params.GetStarsTransactionsOption{}, opts...)
+
 	rpc := c.Raw()
 	return rpc.PaymentsGetStarsTransactions(ctx, &tg.PaymentsGetStarsTransactionsRequest{
-		Inbound:  inbound,
-		Outbound: outbound,
-		Peer:     peer,
-		Offset:   offset,
-		Limit:    limit,
+		Inbound:        inbound,
+		Outbound:       outbound,
+		Ascending:      opt.Ascending,
+		SubscriptionID: opt.SubscriptionID,
+		Ton:            opt.Ton,
+		Peer:           peer,
+		Offset:         offset,
+		Limit:          limit,
 	})
 }
 
