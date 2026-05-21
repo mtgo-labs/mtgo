@@ -224,11 +224,11 @@ func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObje
 		SeqNo: seqNo,
 		Body:  body,
 	}
-	return crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	return crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 }
 
 func makeEncryptedRawResponse(s *Session, msgID int64, seqNo uint32, body []byte) []byte {
-	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	return crypto.PackRaw(msgID, seqNo, body, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 }
 
 func encodeTLObject(t *testing.T, obj tg.TLObject) []byte {
@@ -263,7 +263,7 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 func startTestWorkers(s *Session) {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.connected = true
+	s.connected.Store(true)
 	go s.writer()
 	go s.readLoop()
 }
@@ -724,8 +724,8 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 	if secondMsg.MsgID == firstMsg.MsgID {
 		t.Fatal("retry reused msg_id")
 	}
-	if s.serverSalt != newSalt {
-		t.Fatalf("serverSalt = %x, want %x", s.serverSalt, newSalt)
+	if s.serverSalt.Load() != newSalt {
+		t.Fatalf("serverSalt = %x, want %x", s.serverSalt.Load(), newSalt)
 	}
 
 	mt.recvCh <- makeEncryptedResponse(s, s.msgFactory.AllocateMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.Pong{
@@ -767,7 +767,7 @@ func TestSessionInvokeZeroRetriesDoesNotSend(t *testing.T) {
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 1)
-	s.connected = true
+	s.connected.Store(true)
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {
@@ -787,7 +787,7 @@ func TestSessionInvokeRawZeroRetriesDoesNotSend(t *testing.T) {
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 1)
-	s.connected = true
+	s.connected.Store(true)
 
 	_, err := s.InvokeRaw(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {

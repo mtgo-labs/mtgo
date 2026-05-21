@@ -170,7 +170,7 @@ type Session struct {
 	// auth key in encrypted MTProto packets.
 	authKeyID []byte
 	// serverSalt is the current salt value used for message encryption.
-	serverSalt int64
+	serverSalt atomic.Int64
 	// sessionID is a random identifier for this session, unique per connection.
 	sessionID int64
 	// sidBytes is the little-endian encoding of sessionID, cached to avoid
@@ -199,7 +199,7 @@ type Session struct {
 	acksMu sync.Mutex
 
 	// connected indicates whether the session is currently active.
-	connected bool
+	connected atomic.Bool
 	// cancel is closed to signal background workers to stop.
 	cancel chan struct{}
 
@@ -376,7 +376,7 @@ func (s *Session) SetAuthKey(key []byte) {
 
 // SetServerSalt updates the server salt used for encrypting outgoing messages.
 func (s *Session) SetServerSalt(salt int64) {
-	s.serverSalt = salt
+	s.serverSalt.Store(salt)
 }
 
 // SetServerTime updates the internal message ID generator with the server's
@@ -408,7 +408,7 @@ func (s *Session) AuthKey() []byte {
 
 // IsConnected reports whether the session is currently active and connected.
 func (s *Session) IsConnected() bool {
-	return s.connected
+	return s.connected.Load()
 }
 
 // SetTransport replaces the underlying transport used for sending and
@@ -440,7 +440,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		Body:  body,
 	}
 
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 
 	ch := s.registerResult(msgID)
 
@@ -503,7 +503,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 		SeqNo: uint32(seqNo),
 		Body:  drop,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(5 * time.Second)
@@ -534,11 +534,11 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		case *tg.BadMsgNotification:
 			s.deliverResult(bv.BadMsgID, bv)
 		case *tg.BadServerSalt:
-			s.serverSalt = bv.NewServerSalt
+			s.serverSalt.Store(bv.NewServerSalt)
 			s.deliverResult(bv.BadMsgID, bv)
 		}
 	case *tg.NewSessionCreated:
-		s.serverSalt = v.ServerSalt
+		s.serverSalt.Store(v.ServerSalt)
 	case *tg.FutureSalts:
 		s.storeFutureSalts(v)
 	case *tg.MsgsAck:
@@ -600,7 +600,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, ErrTransportNotSet
 	}
 
-	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 
 	ch := s.registerRawResult(msgID)
 
@@ -745,7 +745,7 @@ func typeName(v tg.TLObject) string {
 func (s *Session) Start(timeout time.Duration) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
-	s.connected = true
+	s.connected.Store(true)
 
 	go s.writer()
 	go s.readLoop()
@@ -765,7 +765,7 @@ func (s *Session) Start(timeout time.Duration) error {
 // Stop signals all background workers to exit, closes the cancel channel,
 // and closes the underlying transport.
 func (s *Session) Stop() {
-	s.connected = false
+	s.connected.Store(false)
 	defaultHousekeeper.unregister(s)
 	if s.cancel != nil {
 		select {
@@ -783,7 +783,7 @@ func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
 	if len(fs.Salts) == 0 {
 		return
 	}
-	s.serverSalt = fs.Salts[0].Salt
+	s.serverSalt.Store(fs.Salts[0].Salt)
 }
 
 func (s *Session) sendServiceMessage(body tg.TLObject) {
@@ -799,7 +799,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		SeqNo: uint32(seqNo),
 		Body:  body,
 	}
-	encrypted := crypto.Pack(message, s.serverSalt, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	job := getSendJob()
 	job.encrypted = encrypted
 	job.deadline = time.Now().Add(10 * time.Second)
@@ -915,7 +915,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		}
 		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
-		s.serverSalt = newSalt
+		s.serverSalt.Store(newSalt)
 		s.deliverResult(badMsgID, &tg.BadServerSalt{
 			BadMsgID:      badMsgID,
 			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
@@ -926,7 +926,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 28 {
 			return false
 		}
-		s.serverSalt = int64(binary.LittleEndian.Uint64(body[20:28]))
+		s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[20:28])))
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
@@ -1045,7 +1045,7 @@ func (s *Session) handleRawFutureSalts(body []byte) bool {
 	if binary.LittleEndian.Uint32(body[firstSaltOffset:firstSaltOffset+4]) != tg.FutureSaltTypeID {
 		return false
 	}
-	s.serverSalt = int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20]))
+	s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20])))
 	return true
 }
 
@@ -1060,7 +1060,7 @@ func (s *Session) readLoop() {
 
 		data, err := s.transport.Recv()
 		if err != nil {
-			if !s.connected {
+			if !s.connected.Load() {
 				return
 			}
 			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
@@ -1164,7 +1164,7 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 		}
 		s.authKey = result.AuthKey
 		s.authKeyID = computeAuthKeyID(result.AuthKey)
-		s.serverSalt = result.ServerSalt
+		s.serverSalt.Store(result.ServerSalt)
 		if s.storage != nil {
 			if err := s.storage.SetAuthKey(result.AuthKey); err != nil {
 				return fmt.Errorf("session: save auth key: %w", err)
