@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -47,6 +48,7 @@ const (
 	saltFetchInterval    = time.Hour
 	ackFlushInterval     = 30 * time.Second
 	housekeeperTick      = time.Second
+	dispatchQueueSize    = 256
 )
 
 var sendJobPool = sync.Pool{
@@ -213,6 +215,10 @@ type Session struct {
 	// dedicated writer goroutine. Using a channel instead of a mutex ensures
 	// that a blocked write to a dead connection never blocks RPC senders.
 	sendCh chan *sendJob
+	// dispatchCh is a bounded queue for raw messages that need TL decoding.
+	dispatchCh chan *tg.MTProtoMessageRaw
+	// receiveErr receives the terminal receive loop error, if any.
+	receiveErr chan error
 	// pingInterval controls how often keep-alive pings are sent.
 	pingInterval time.Duration
 	// nextPing and nextSaltFetch are maintained by the global housekeeper.
@@ -224,8 +230,6 @@ type Session struct {
 	onDisconnect func(error)
 	// updateSem bounds the number of concurrent update dispatch goroutines.
 	updateSem chan struct{}
-	// dispatchSem bounds the number of concurrent message dispatch goroutines.
-	dispatchSem chan struct{}
 	// onPanic is called (if non-nil) when a dispatch goroutine panics.
 	onPanic func(panicValue any)
 }
@@ -267,16 +271,16 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 	binary.LittleEndian.PutUint64(encodedSidBytes[:], uint64(sid))
 
 	s := &Session{
-		dc:           dc,
-		storage:      st,
-		deviceModel:  deviceModel,
-		appVersion:   appVersion,
-		systemLang:   systemLang,
-		langCode:     langCode,
-		authKey:      authKey,
-		sessionID:    sid,
-		sidBytes:     encodedSidBytes,
-		msgFactory:   NewMsgFactory(time.Now()),
+		dc:          dc,
+		storage:     st,
+		deviceModel: deviceModel,
+		appVersion:  appVersion,
+		systemLang:  systemLang,
+		langCode:    langCode,
+		authKey:     authKey,
+		sessionID:   sid,
+		sidBytes:    encodedSidBytes,
+		msgFactory:  NewMsgFactory(time.Now()),
 		msgIDValidator: newMsgIDValidator(func() int64 {
 			return time.Now().Unix()
 		}),
@@ -285,7 +289,6 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
-		dispatchSem:  make(chan struct{}, 128),
 	}
 
 	if len(authKey) > 0 {
@@ -577,6 +580,8 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 // flight, this blocks until one completes, providing backpressure.
 func (s *Session) dispatchUpdate(obj tg.TLObject) {
 	select {
+	case <-s.cancel:
+		return
 	case s.updateSem <- struct{}{}:
 		go func() {
 			defer func() { <-s.updateSem }()
@@ -591,7 +596,6 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 			}()
 			s.onUpdate(obj)
 		}()
-	default:
 	}
 }
 
@@ -756,24 +760,31 @@ func (s *Session) Start(timeout time.Duration) error {
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
-	return s.StartContext(ctx)
+	return s.start(context.Background(), ctx)
 }
 
 // StartContext launches the receive and writer background workers, registers
 // the session with the global housekeeper, and performs an initial ping to
 // verify connectivity. It returns after the session is ready.
 func (s *Session) StartContext(ctx context.Context) error {
+	return s.start(context.Background(), ctx)
+}
+
+func (s *Session) start(loopCtx, pingCtx context.Context) error {
 	s.cancel = make(chan struct{})
 	s.sendCh = make(chan *sendJob, 64)
+	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, dispatchQueueSize)
+	s.receiveErr = make(chan error, 1)
 	s.connected.Store(true)
 
 	go s.writer()
+	s.startDispatchWorkers(loopCtx, runtime.GOMAXPROCS(0))
 	go func() {
-		s.readLoop()
+		s.receiveErr <- s.receiveLoop(loopCtx)
 	}()
 
-	timeout := timeoutFromContext(ctx)
-	_, err := s.Invoke(ctx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
+	timeout := timeoutFromContext(pingCtx)
+	_, err := s.Invoke(pingCtx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeout)
 	if err != nil {
 		s.Stop()
 		return fmt.Errorf("session: start: initial ping failed: %w", err)
@@ -787,12 +798,17 @@ func (s *Session) StartContext(ctx context.Context) error {
 
 // Run starts the session and blocks until ctx is canceled.
 func (s *Session) Run(ctx context.Context) error {
-	if err := s.StartContext(ctx); err != nil {
+	if err := s.start(ctx, ctx); err != nil {
 		return err
 	}
-	<-ctx.Done()
-	s.Stop()
-	return ctx.Err()
+	select {
+	case err := <-s.receiveErr:
+		s.Stop()
+		return err
+	case <-ctx.Done():
+		s.Stop()
+		return ctx.Err()
+	}
 }
 
 func timeoutFromContext(ctx context.Context) time.Duration {
@@ -914,6 +930,47 @@ func (s *Session) writer() {
 			}
 		}
 	}
+}
+
+func (s *Session) startDispatchWorkers(ctx context.Context, workers int) {
+	if workers < 1 {
+		workers = 1
+	}
+	for range workers {
+		go s.dispatchWorker(ctx)
+	}
+}
+
+func (s *Session) dispatchWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-s.cancel:
+			return
+		case raw := <-s.dispatchCh:
+			s.dispatchRaw(raw)
+		}
+	}
+}
+
+func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
+	defer func() {
+		if r := recover(); r != nil {
+			if s.onPanic != nil {
+				s.onPanic(r)
+			} else {
+				log.Printf("session: dispatchRaw panic: %v", r)
+			}
+		}
+	}()
+	bodyReader := tg.NewReader(raw.BodyRaw)
+	defer tg.ReleaseReader(bodyReader)
+	body, err := tg.ReadTLObject(bodyReader)
+	if err != nil {
+		return
+	}
+	s.processIncoming(&tg.MTProtoMessage{MsgID: raw.MsgID, SeqNo: raw.SeqNo, Body: body})
 }
 
 func (s *Session) processIncoming(msg *tg.MTProtoMessage) {
@@ -1153,28 +1210,35 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 	}
 }
 
-func (s *Session) readLoop() {
+func (s *Session) receiveLoop(ctx context.Context) error {
 	var lastDisconnect time.Time
 	for {
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-s.cancel:
-			return
+			return nil
 		default:
 		}
 
 		data, err := s.transport.Recv()
 		if err != nil {
 			if !s.connected.Load() {
-				return
+				return nil
 			}
 			if s.onDisconnect != nil && time.Since(lastDisconnect) > time.Second {
 				s.onDisconnect(err)
 				lastDisconnect = time.Now()
 			}
+			timer := time.NewTimer(100 * time.Millisecond)
 			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return ctx.Err()
 			case <-s.cancel:
-				return
-			case <-time.After(100 * time.Millisecond):
+				timer.Stop()
+				return nil
+			case <-timer.C:
 			}
 			continue
 		}
@@ -1186,7 +1250,7 @@ func (s *Session) readLoop() {
 			if s.onDisconnect != nil {
 				s.onDisconnect(fmt.Errorf("transport error: code %d", -code))
 			}
-			return
+			return fmt.Errorf("transport error: code %d", -code)
 		}
 
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
@@ -1195,7 +1259,7 @@ func (s *Session) readLoop() {
 				if s.onDisconnect != nil {
 					s.onDisconnect(err)
 				}
-				return
+				return err
 			}
 			continue
 		}
@@ -1220,27 +1284,11 @@ func (s *Session) readLoop() {
 		// need the object tree.
 		if needsDecodedResult || s.onUpdate != nil {
 			select {
-			case s.dispatchSem <- struct{}{}:
-				go func(rawMsg *tg.MTProtoMessageRaw) {
-					defer func() { <-s.dispatchSem }()
-					defer func() {
-						if r := recover(); r != nil {
-							if s.onPanic != nil {
-								s.onPanic(r)
-							} else {
-								log.Printf("session: readLoop dispatch panic: %v", r)
-							}
-						}
-					}()
-					bodyReader := tg.NewReader(rawMsg.BodyRaw)
-					defer tg.ReleaseReader(bodyReader)
-					body, err := tg.ReadTLObject(bodyReader)
-					if err != nil {
-						return
-					}
-					s.processIncoming(&tg.MTProtoMessage{MsgID: rawMsg.MsgID, SeqNo: rawMsg.SeqNo, Body: body})
-				}(raw)
-			default:
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-s.cancel:
+				return nil
+			case s.dispatchCh <- raw:
 			}
 		}
 	}
@@ -1267,19 +1315,44 @@ func (s *Session) SetUpdateHandler(fn func(tg.TLObject)) {
 // Connect sets the transport and starts the session. It requires that an auth
 // key has already been established. Returns an error if no auth key is set.
 func (s *Session) Connect(transport Transport, timeout time.Duration) error {
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	return s.ConnectContext(ctx, transport)
+}
+
+// ConnectContext sets the transport and starts the session. It requires that an
+// auth key has already been established. The context bounds the startup ping.
+func (s *Session) ConnectContext(ctx context.Context, transport Transport) error {
 	if transport != nil {
 		s.transport = transport
 	}
 	if len(s.authKey) == 0 {
 		return ErrConnectNoAuthKey
 	}
-	return s.Start(timeout)
+	return s.StartContext(ctx)
 }
 
 // ConnectWithAuth sets the transport and performs key generation via authFunc
 // if no auth key is currently set. The resulting auth key and server salt are
 // persisted to storage. After authentication, the session is started.
 func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeout time.Duration) error {
+	ctx := context.Background()
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	return s.ConnectWithAuthContext(ctx, transport, authFunc)
+}
+
+// ConnectWithAuthContext sets the transport and performs key generation via
+// authFunc if no auth key is currently set. The context bounds authentication
+// and the startup ping.
+func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transport, authFunc AuthFunc) error {
 	if transport != nil {
 		s.transport = transport
 	}
@@ -1298,7 +1371,7 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 		}
 		s.msgFactory.UpdateServerTime(time.Unix(int64(result.ServerTime), 0))
 	}
-	return s.Start(timeout)
+	return s.StartContext(ctx)
 }
 
 func unpackIncomingMessageEnvelope(data, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessageRaw, []byte, error) {
