@@ -97,10 +97,7 @@ func (s *testServer) handleConn(conn net.Conn) {
 			salt := int64(binary.LittleEndian.Uint64(decrypted[0:8]))
 			sessionID := decrypted[8:16]
 
-			respMsgID := time.Now().UnixNano() & 0x3FFFFFFFFFFFFFFF
-			if respMsgID%2 != 1 {
-				respMsgID++
-			}
+			respMsgID := (time.Now().Unix() << 32) | 1
 			respSeqNo := uint32(0)
 
 			origMsgID := int64(binary.LittleEndian.Uint64(decrypted[16:24]))

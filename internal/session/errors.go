@@ -46,19 +46,13 @@ var (
 	// responds with dh_gen_fail, indicating the DH key generation failed.
 	ErrDHGenFail = errors.New("step 10: dh_gen_fail")
 
-	// ErrServerNonceMismatch is returned during key exchange when the
-	// server_nonce in a server response does not match the one from resPQ.
+	// ErrServerNonceMismatch is returned during the DH key exchange when
+	// the server_nonce in a server response does not match the original.
 	ErrServerNonceMismatch = errors.New("session: server_nonce mismatch")
-	// ErrGAOutOfRange is returned during key exchange when the server's
-	// g_a value falls outside the required range [2, dh_prime - 2].
+	// ErrDHPrimeInvalid is returned when the server's dh_prime fails
+	// validation (wrong bit length or not prime).
+	ErrDHPrimeInvalid = errors.New("session: dh_prime validation failed")
+	// ErrGAOutOfRange is returned when the server's g_a falls outside the
+	// required range [2, dh_prime-2].
 	ErrGAOutOfRange = errors.New("session: g_a out of range")
-	// ErrGBOutOfRange is returned during key exchange when the client's
-	// g_b value falls outside the required range [2, dh_prime - 2].
-	ErrGBOutOfRange = errors.New("session: g_b out of range")
-	// ErrDHPrimeInvalid is returned during key exchange when the server's
-	// dh_prime is not a valid 2048-bit safe prime.
-	ErrDHPrimeInvalid = errors.New("session: dh_prime invalid")
-	// ErrGeneratorInvalid is returned during key exchange when the
-	// generator g is not in the allowed range [2, 7].
-	ErrGeneratorInvalid = errors.New("session: generator invalid")
 )

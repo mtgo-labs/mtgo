@@ -7,8 +7,6 @@ import (
 	"net"
 )
 
-const maxPayloadLen = 1 << 24 // 16 MiB
-
 // TCPIntermediate implements the MTProto "intermediate" transport which
 // prefixes each payload with a simple 4-byte little-endian length field.
 // It is simpler than full (no CRC) and more straightforward than abridged
@@ -52,7 +50,7 @@ func (t *TCPIntermediate) Recv() ([]byte, error) {
 	}
 
 	length := binary.LittleEndian.Uint32(lenBytes)
-	if length > maxPayloadLen {
+	if length > MaxPayloadLen {
 		return nil, ErrPayloadTooLarge
 	}
 
