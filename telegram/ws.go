@@ -35,7 +35,7 @@ func wsDCAddress(dcID int, testMode bool, tls bool) string {
 }
 
 func useWebSocket(cfg Config) bool {
-	return cfg.WebSocket || cfg.WebSocketTLS
+	return cfg.WebSocket
 }
 
 func dialerCtx(timeout time.Duration) (context.Context, context.CancelFunc) {
