@@ -201,7 +201,7 @@ func (c *Client) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.Delet
 func (c *Client) BoundReact(chatID int64, msgID int32, opts ...*params.React) error {
 	ctx := context.Background()
 	o := params.GetOptDef(&params.React{}, opts...)
-	reactions := []tg.ReactionClass{&tg.ReactionEmoji{Emoticon: o.Emoji}}
+	reactions := []types.Reaction{{Emoji: o.Emoji}}
 	return c.SendReaction(ctx, chatID, msgID, reactions)
 }
 

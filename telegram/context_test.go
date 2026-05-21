@@ -146,7 +146,7 @@ func TestContext_Send_NilClient(t *testing.T) {
 
 func TestContext_React_NilMessage(t *testing.T) {
 	c := &Context{Ctx: context.Background(), Client: &Client{}}
-	err := c.React(&tg.ReactionEmoji{Emoticon: "👍"})
+	err := c.React(types.Reaction{Emoji: "👍"})
 	if err == nil {
 		t.Fatal("expected error for nil message")
 	}

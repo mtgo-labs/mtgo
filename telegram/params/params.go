@@ -1248,7 +1248,7 @@ type SendReactionOption struct {
 }
 
 type SendPaidReactionOption struct {
-	Private tl.PaidReactionPrivacyClass
+	Private bool
 }
 
 type GetStarsTransactionsOption struct {
