@@ -28,10 +28,14 @@ func wsDCAddress(dcID int, testMode bool, tls bool) string {
 		m = testWSDomains
 	}
 	host := m[dcID]
-	if tls {
-		return "wss://" + host + "/apiws"
+	path := "/apiws"
+	if testMode {
+		path = "/apiws_test"
 	}
-	return "ws://" + host + "/apiws"
+	if tls {
+		return "wss://" + host + ":443" + path
+	}
+	return "ws://" + host + ":80" + path
 }
 
 func useWebSocket(cfg Config) bool {
