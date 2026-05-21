@@ -11,6 +11,33 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 )
 
+var forbiddenFirstInts = []uint32{
+	0xdddddddd,
+	0xeeeeeeee,
+	0x44414548,
+	0x54534f50,
+	0x20544547,
+	0x4954504f,
+	0x02010316,
+}
+
+func isForbiddenNonce(nonce []byte) bool {
+	if nonce[0] == 0xef {
+		return true
+	}
+	firstInt := binary.LittleEndian.Uint32(nonce[0:4])
+	for _, v := range forbiddenFirstInts {
+		if firstInt == v {
+			return true
+		}
+	}
+	secondInt := binary.LittleEndian.Uint32(nonce[4:8])
+	if secondInt == 0 {
+		return true
+	}
+	return false
+}
+
 // TCPObfuscated wraps an inner Transport with AES-CTR encryption to hide
 // the transport fingerprint from middleboxes. It negotiates encryption
 // keys via a random 64-byte nonce exchanged during Connect and then
@@ -66,16 +93,9 @@ func (t *TCPObfuscated) Connect() error {
 		nonce = make([]byte, 64)
 		for {
 			rand.Read(nonce)
-			if nonce[0] == 0xEF {
-				continue
+			if !isForbiddenNonce(nonce) {
+				break
 			}
-			if bytes.Equal(nonce[:4], []byte{0xee, 0xee, 0xee, 0xee}) {
-				continue
-			}
-			if bytes.Equal(nonce[4:8], []byte{0, 0, 0, 0}) {
-				continue
-			}
-			break
 		}
 	}
 
