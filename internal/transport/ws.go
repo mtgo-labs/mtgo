@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 
@@ -115,11 +116,21 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 }
 
 func fromWSScheme(addr string) string {
-	if len(addr) > 6 && addr[:6] == "wss://" {
-		return addr[6:]
-	}
-	if len(addr) > 5 && addr[:5] == "ws://" {
-		return addr[5:]
+	if strings.HasPrefix(addr, "wss://") || strings.HasPrefix(addr, "ws://") {
+		u, err := url.Parse(addr)
+		if err != nil {
+			return addr
+		}
+		host := u.Hostname()
+		port := u.Port()
+		if port == "" {
+			if u.Scheme == "wss" {
+				port = "443"
+			} else {
+				port = "80"
+			}
+		}
+		return net.JoinHostPort(host, port)
 	}
 	return addr
 }
