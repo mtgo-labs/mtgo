@@ -1182,7 +1182,7 @@ func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
 	defer tg.ReleaseReader(bodyReader)
 	body, err := tg.ReadTLObject(bodyReader)
 	if err != nil {
-		log.Printf("session: TL decode failed: %v", err)
+		log.Printf("session: TL decode failed: msg_id=%d buf_len=%d err=%v", raw.MsgID, len(raw.BodyRaw), err)
 		return
 	}
 	s.processIncoming(&tg.MTProtoMessage{MsgID: raw.MsgID, SeqNo: raw.SeqNo, Body: body})
