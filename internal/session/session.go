@@ -7,7 +7,6 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -18,6 +17,12 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
+
+type sessionLogger interface {
+	Debugf(format string, v ...any)
+	Warnf(format string, v ...any)
+	Errorf(format string, v ...any)
+}
 
 // Transport abstracts the underlying network transport used by a Session to
 // send and receive raw byte payloads. Implementations must be safe for
@@ -259,12 +264,20 @@ type Session struct {
 	updateSem chan struct{}
 	// onPanic is called (if non-nil) when a dispatch goroutine panics.
 	onPanic func(panicValue any)
+	// log receives structured log output. When nil, logging is suppressed.
+	log sessionLogger
 }
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
 func (s *Session) SetOnPanic(fn func(panicValue any)) {
 	s.mu.Lock()
 	s.onPanic = fn
+	s.mu.Unlock()
+}
+
+func (s *Session) SetLogger(l sessionLogger) {
+	s.mu.Lock()
+	s.log = l
 	s.mu.Unlock()
 }
 
@@ -377,7 +390,9 @@ func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
 			select {
 			case ch <- obj:
 			case <-time.After(5 * time.Second):
-				log.Printf("session: deliverResult: dropping result for msg_id=%d: channel full", msgID)
+				if s.log != nil {
+					s.log.Warnf("deliverResult: dropping result for msg_id=%d: channel full", msgID)
+				}
 			}
 		}
 	}
@@ -410,7 +425,9 @@ func (s *Session) deliverRawResult(msgID int64, data []byte) {
 			select {
 			case ch <- data:
 			case <-time.After(5 * time.Second):
-				log.Printf("session: deliverRawResult: dropping result for msg_id=%d: channel full", msgID)
+				if s.log != nil {
+					s.log.Warnf("deliverRawResult: dropping result for msg_id=%d: channel full", msgID)
+				}
 			}
 		}
 	}
@@ -624,7 +641,9 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 	if gz, ok := body.(*tg.GzipPacked); ok {
 		decoded, err := gz.Decode()
 		if err != nil {
-			log.Printf("session: gzip decode failed: %v", err)
+			if s.log != nil {
+				s.log.Warnf("gzip decode failed: %v", err)
+			}
 			return
 		}
 		obj = decoded
@@ -651,7 +670,9 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		if gz, ok := result.(*tg.GzipPacked); ok {
 			decoded, err := gz.Decode()
 			if err != nil {
-				log.Printf("session: gzip decode rpc result failed: %v", err)
+				if s.log != nil {
+				s.log.Warnf("gzip decode rpc result failed: %v", err)
+			}
 				return
 			}
 			result = decoded
@@ -697,7 +718,9 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 					if panicFn != nil {
 						panicFn(r)
 					} else {
-						log.Printf("session: dispatchUpdate panic: %v", r)
+						if s.log != nil {
+						s.log.Errorf("dispatchUpdate panic: %v", r)
+					}
 					}
 				}
 			}()
@@ -1008,7 +1031,9 @@ func (s *Session) Stop() {
 	select {
 	case <-done:
 	case <-time.After(10 * time.Second):
-		log.Printf("session: Stop: timed out waiting for goroutines to exit")
+		if s.log != nil {
+		s.log.Warnf("Stop: timed out waiting for goroutines to exit")
+	}
 	}
 }
 
@@ -1174,7 +1199,9 @@ func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
 			if panicFn != nil {
 				panicFn(r)
 			} else {
-				log.Printf("session: dispatchRaw panic: %v", r)
+				if s.log != nil {
+					s.log.Errorf("dispatchRaw panic: %v", r)
+				}
 			}
 		}
 	}()
@@ -1182,7 +1209,15 @@ func (s *Session) dispatchRaw(raw *tg.MTProtoMessageRaw) {
 	defer tg.ReleaseReader(bodyReader)
 	body, err := tg.ReadTLObject(bodyReader)
 	if err != nil {
-		log.Printf("session: TL decode failed: msg_id=%d buf_len=%d err=%v", raw.MsgID, len(raw.BodyRaw), err)
+		if _, ok := err.(*tg.UnknownConstructorError); ok {
+			if s.log != nil {
+				s.log.Debugf("skipping unknown constructor in msg_id=%d buf_len=%d", raw.MsgID, len(raw.BodyRaw))
+			}
+			return
+		}
+		if s.log != nil {
+			s.log.Warnf("TL decode failed: msg_id=%d buf_len=%d err=%v", raw.MsgID, len(raw.BodyRaw), err)
+		}
 		return
 	}
 	s.processIncoming(&tg.MTProtoMessage{MsgID: raw.MsgID, SeqNo: raw.SeqNo, Body: body})
