@@ -6,2083 +6,6 @@ import (
 	"bytes"
 )
 
-// ResPQTypeID is the constructor ID for TL type resPQ.
-const ResPQTypeID = 0x05162463
-
-// ResPQ represents the TL constructor resPQ (0x05162463).
-//
-// See https://core.telegram.org/constructor/resPQ for reference.
-type ResPQ struct {
-	Nonce                       [16]byte `json:"nonce,omitempty"`
-	ServerNonce                 [16]byte `json:"server_nonce,omitempty"`
-	PQ                          string   `json:"pq,omitempty"`
-	ServerPublicKeyFingerprints []int64  `json:"server_public_key_fingerprints,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x05162463.
-func (v *ResPQ) ConstructorID() uint32 {
-	return ResPQTypeID
-}
-
-// Encode serializes ResPQ to a bytes.Buffer using the TL binary protocol.
-func (v *ResPQ) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ResPQTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.PQ)
-	WriteVectorLong(b, v.ServerPublicKeyFingerprints)
-	return nil
-}
-
-// DecodeResPQ deserializes a ResPQ from a reader using the TL binary protocol.
-func DecodeResPQ(r *Reader) (*ResPQ, error) {
-	v := &ResPQ{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rPQ, _ePQ := r.ReadString()
-	if _ePQ != nil {
-		return nil, _ePQ
-	}
-	v.PQ = _rPQ
-	_vvServerPublicKeyFingerprints, _veServerPublicKeyFingerprints := r.ReadVectorLong()
-	if _veServerPublicKeyFingerprints != nil {
-		return nil, _veServerPublicKeyFingerprints
-	}
-	v.ServerPublicKeyFingerprints = _vvServerPublicKeyFingerprints
-	return v, nil
-}
-
-func init() {
-	Registry[ResPQTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeResPQ(r)
-	}
-}
-
-// PQInnerDataClass is the interface for TL type PQInnerData.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the PQInnerData TL type.
-type PQInnerDataClass interface {
-	TLObject
-	isPQInnerData()
-}
-
-// PQInnerDataTypeID is the constructor ID for TL type p_q_inner_data.
-const PQInnerDataTypeID = 0x83c95aec
-
-// PQInnerDataDCTypeID is the constructor ID for TL type p_q_inner_data_dc.
-const PQInnerDataDCTypeID = 0xa9f55f95
-
-// PQInnerDataTempTypeID is the constructor ID for TL type p_q_inner_data_temp.
-const PQInnerDataTempTypeID = 0x3c6a84d4
-
-// PQInnerDataTempDCTypeID is the constructor ID for TL type p_q_inner_data_temp_dc.
-const PQInnerDataTempDCTypeID = 0x56fddf88
-
-// isPQInnerData marks PQInnerData as implementing the PQInnerDataClass interface.
-func (*PQInnerData) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataDC as implementing the PQInnerDataClass interface.
-func (*PQInnerDataDC) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataTemp as implementing the PQInnerDataClass interface.
-func (*PQInnerDataTemp) isPQInnerData() {}
-
-// isPQInnerData marks PQInnerDataTempDC as implementing the PQInnerDataClass interface.
-func (*PQInnerDataTempDC) isPQInnerData() {}
-
-// PQInnerData represents the TL constructor p_q_inner_data (0x83c95aec).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data for reference.
-type PQInnerData struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x83c95aec.
-func (v *PQInnerData) ConstructorID() uint32 {
-	return PQInnerDataTypeID
-}
-
-// Encode serializes PQInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	return nil
-}
-
-// DecodePQInnerData deserializes a PQInnerData from a reader using the TL binary protocol.
-func DecodePQInnerData(r *Reader) (*PQInnerData, error) {
-	v := &PQInnerData{}
-	_rPQ, _ePQ := r.ReadString()
-	if _ePQ != nil {
-		return nil, _ePQ
-	}
-	v.PQ = _rPQ
-	_rP, _eP := r.ReadString()
-	if _eP != nil {
-		return nil, _eP
-	}
-	v.P = _rP
-	_rQ, _eQ := r.ReadString()
-	if _eQ != nil {
-		return nil, _eQ
-	}
-	v.Q = _rQ
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonce, _eNewNonce := r.ReadInt256()
-	if _eNewNonce != nil {
-		return nil, _eNewNonce
-	}
-	v.NewNonce = _rNewNonce
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodePQInnerData(r)
-	}
-}
-
-// PQInnerDataDC represents the TL constructor p_q_inner_data_dc (0xa9f55f95).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_dc for reference.
-type PQInnerDataDC struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	DC          int32    `json:"dc,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa9f55f95.
-func (v *PQInnerDataDC) ConstructorID() uint32 {
-	return PQInnerDataDCTypeID
-}
-
-// Encode serializes PQInnerDataDC to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataDC) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataDCTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.DC))
-	return nil
-}
-
-// DecodePQInnerDataDC deserializes a PQInnerDataDC from a reader using the TL binary protocol.
-func DecodePQInnerDataDC(r *Reader) (*PQInnerDataDC, error) {
-	v := &PQInnerDataDC{}
-	_rPQ, _ePQ := r.ReadString()
-	if _ePQ != nil {
-		return nil, _ePQ
-	}
-	v.PQ = _rPQ
-	_rP, _eP := r.ReadString()
-	if _eP != nil {
-		return nil, _eP
-	}
-	v.P = _rP
-	_rQ, _eQ := r.ReadString()
-	if _eQ != nil {
-		return nil, _eQ
-	}
-	v.Q = _rQ
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonce, _eNewNonce := r.ReadInt256()
-	if _eNewNonce != nil {
-		return nil, _eNewNonce
-	}
-	v.NewNonce = _rNewNonce
-	_rDC, _eDC := r.ReadInt32()
-	if _eDC != nil {
-		return nil, _eDC
-	}
-	v.DC = _rDC
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataDCTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodePQInnerDataDC(r)
-	}
-}
-
-// PQInnerDataTemp represents the TL constructor p_q_inner_data_temp (0x3c6a84d4).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_temp for reference.
-type PQInnerDataTemp struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	ExpiresIn   int32    `json:"expires_in,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x3c6a84d4.
-func (v *PQInnerDataTemp) ConstructorID() uint32 {
-	return PQInnerDataTempTypeID
-}
-
-// Encode serializes PQInnerDataTemp to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataTemp) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTempTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.ExpiresIn))
-	return nil
-}
-
-// DecodePQInnerDataTemp deserializes a PQInnerDataTemp from a reader using the TL binary protocol.
-func DecodePQInnerDataTemp(r *Reader) (*PQInnerDataTemp, error) {
-	v := &PQInnerDataTemp{}
-	_rPQ, _ePQ := r.ReadString()
-	if _ePQ != nil {
-		return nil, _ePQ
-	}
-	v.PQ = _rPQ
-	_rP, _eP := r.ReadString()
-	if _eP != nil {
-		return nil, _eP
-	}
-	v.P = _rP
-	_rQ, _eQ := r.ReadString()
-	if _eQ != nil {
-		return nil, _eQ
-	}
-	v.Q = _rQ
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonce, _eNewNonce := r.ReadInt256()
-	if _eNewNonce != nil {
-		return nil, _eNewNonce
-	}
-	v.NewNonce = _rNewNonce
-	_rExpiresIn, _eExpiresIn := r.ReadInt32()
-	if _eExpiresIn != nil {
-		return nil, _eExpiresIn
-	}
-	v.ExpiresIn = _rExpiresIn
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTempTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodePQInnerDataTemp(r)
-	}
-}
-
-// PQInnerDataTempDC represents the TL constructor p_q_inner_data_temp_dc (0x56fddf88).
-//
-// See https://core.telegram.org/constructor/p_q_inner_data_temp_dc for reference.
-type PQInnerDataTempDC struct {
-	PQ          string   `json:"pq,omitempty"`
-	P           string   `json:"p,omitempty"`
-	Q           string   `json:"q,omitempty"`
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	NewNonce    [32]byte `json:"new_nonce,omitempty"`
-	DC          int32    `json:"dc,omitempty"`
-	ExpiresIn   int32    `json:"expires_in,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x56fddf88.
-func (v *PQInnerDataTempDC) ConstructorID() uint32 {
-	return PQInnerDataTempDCTypeID
-}
-
-// Encode serializes PQInnerDataTempDC to a bytes.Buffer using the TL binary protocol.
-func (v *PQInnerDataTempDC) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PQInnerDataTempDCTypeID)
-	WriteString(b, v.PQ)
-	WriteString(b, v.P)
-	WriteString(b, v.Q)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt256(b, v.NewNonce)
-	WriteInt(b, uint32(v.DC))
-	WriteInt(b, uint32(v.ExpiresIn))
-	return nil
-}
-
-// DecodePQInnerDataTempDC deserializes a PQInnerDataTempDC from a reader using the TL binary protocol.
-func DecodePQInnerDataTempDC(r *Reader) (*PQInnerDataTempDC, error) {
-	v := &PQInnerDataTempDC{}
-	_rPQ, _ePQ := r.ReadString()
-	if _ePQ != nil {
-		return nil, _ePQ
-	}
-	v.PQ = _rPQ
-	_rP, _eP := r.ReadString()
-	if _eP != nil {
-		return nil, _eP
-	}
-	v.P = _rP
-	_rQ, _eQ := r.ReadString()
-	if _eQ != nil {
-		return nil, _eQ
-	}
-	v.Q = _rQ
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonce, _eNewNonce := r.ReadInt256()
-	if _eNewNonce != nil {
-		return nil, _eNewNonce
-	}
-	v.NewNonce = _rNewNonce
-	_rDC, _eDC := r.ReadInt32()
-	if _eDC != nil {
-		return nil, _eDC
-	}
-	v.DC = _rDC
-	_rExpiresIn, _eExpiresIn := r.ReadInt32()
-	if _eExpiresIn != nil {
-		return nil, _eExpiresIn
-	}
-	v.ExpiresIn = _rExpiresIn
-	return v, nil
-}
-
-func init() {
-	Registry[PQInnerDataTempDCTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodePQInnerDataTempDC(r)
-	}
-}
-
-// ServerDHParamsClass is the interface for TL type ServerDHParams.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the ServerDHParams TL type.
-type ServerDHParamsClass interface {
-	TLObject
-	isServerDHParams()
-}
-
-// ServerDHParamsFailTypeID is the constructor ID for TL type server_DH_params_fail.
-const ServerDHParamsFailTypeID = 0x79cb045d
-
-// ServerDHParamsOkTypeID is the constructor ID for TL type server_DH_params_ok.
-const ServerDHParamsOkTypeID = 0xd0e8075c
-
-// isServerDHParams marks ServerDHParamsFail as implementing the ServerDHParamsClass interface.
-func (*ServerDHParamsFail) isServerDHParams() {}
-
-// isServerDHParams marks ServerDHParamsOk as implementing the ServerDHParamsClass interface.
-func (*ServerDHParamsOk) isServerDHParams() {}
-
-// ServerDHParamsFail represents the TL constructor server_DH_params_fail (0x79cb045d).
-//
-// See https://core.telegram.org/constructor/server_DH_params_fail for reference.
-type ServerDHParamsFail struct {
-	Nonce        [16]byte `json:"nonce,omitempty"`
-	ServerNonce  [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash [16]byte `json:"new_nonce_hash,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x79cb045d.
-func (v *ServerDHParamsFail) ConstructorID() uint32 {
-	return ServerDHParamsFailTypeID
-}
-
-// Encode serializes ServerDHParamsFail to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHParamsFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHParamsFailTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash)
-	return nil
-}
-
-// DecodeServerDHParamsFail deserializes a ServerDHParamsFail from a reader using the TL binary protocol.
-func DecodeServerDHParamsFail(r *Reader) (*ServerDHParamsFail, error) {
-	v := &ServerDHParamsFail{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonceHash, _eNewNonceHash := r.ReadInt128()
-	if _eNewNonceHash != nil {
-		return nil, _eNewNonceHash
-	}
-	v.NewNonceHash = _rNewNonceHash
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHParamsFailTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeServerDHParamsFail(r)
-	}
-}
-
-// ServerDHParamsOk represents the TL constructor server_DH_params_ok (0xd0e8075c).
-//
-// See https://core.telegram.org/constructor/server_DH_params_ok for reference.
-type ServerDHParamsOk struct {
-	Nonce           [16]byte `json:"nonce,omitempty"`
-	ServerNonce     [16]byte `json:"server_nonce,omitempty"`
-	EncryptedAnswer string   `json:"encrypted_answer,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xd0e8075c.
-func (v *ServerDHParamsOk) ConstructorID() uint32 {
-	return ServerDHParamsOkTypeID
-}
-
-// Encode serializes ServerDHParamsOk to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHParamsOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHParamsOkTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteString(b, v.EncryptedAnswer)
-	return nil
-}
-
-// DecodeServerDHParamsOk deserializes a ServerDHParamsOk from a reader using the TL binary protocol.
-func DecodeServerDHParamsOk(r *Reader) (*ServerDHParamsOk, error) {
-	v := &ServerDHParamsOk{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rEncryptedAnswer, _eEncryptedAnswer := r.ReadString()
-	if _eEncryptedAnswer != nil {
-		return nil, _eEncryptedAnswer
-	}
-	v.EncryptedAnswer = _rEncryptedAnswer
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHParamsOkTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeServerDHParamsOk(r)
-	}
-}
-
-// ServerDHInnerDataTypeID is the constructor ID for TL type server_DH_inner_data.
-const ServerDHInnerDataTypeID = 0xb5890dba
-
-// ServerDHInnerData represents the TL constructor server_DH_inner_data (0xb5890dba).
-//
-// See https://core.telegram.org/constructor/server_DH_inner_data for reference.
-type ServerDHInnerData struct {
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	G           int32    `json:"g,omitempty"`
-	DHPrime     string   `json:"dh_prime,omitempty"`
-	GA          string   `json:"ga,omitempty"`
-	ServerTime  int32    `json:"server_time,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xb5890dba.
-func (v *ServerDHInnerData) ConstructorID() uint32 {
-	return ServerDHInnerDataTypeID
-}
-
-// Encode serializes ServerDHInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *ServerDHInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ServerDHInnerDataTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt(b, uint32(v.G))
-	WriteString(b, v.DHPrime)
-	WriteString(b, v.GA)
-	WriteInt(b, uint32(v.ServerTime))
-	return nil
-}
-
-// DecodeServerDHInnerData deserializes a ServerDHInnerData from a reader using the TL binary protocol.
-func DecodeServerDHInnerData(r *Reader) (*ServerDHInnerData, error) {
-	v := &ServerDHInnerData{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rG, _eG := r.ReadInt32()
-	if _eG != nil {
-		return nil, _eG
-	}
-	v.G = _rG
-	_rDHPrime, _eDHPrime := r.ReadString()
-	if _eDHPrime != nil {
-		return nil, _eDHPrime
-	}
-	v.DHPrime = _rDHPrime
-	_rGA, _eGA := r.ReadString()
-	if _eGA != nil {
-		return nil, _eGA
-	}
-	v.GA = _rGA
-	_rServerTime, _eServerTime := r.ReadInt32()
-	if _eServerTime != nil {
-		return nil, _eServerTime
-	}
-	v.ServerTime = _rServerTime
-	return v, nil
-}
-
-func init() {
-	Registry[ServerDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeServerDHInnerData(r)
-	}
-}
-
-// ClientDHInnerDataTypeID is the constructor ID for TL type client_DH_inner_data.
-const ClientDHInnerDataTypeID = 0x6643b654
-
-// ClientDHInnerData represents the TL constructor client_DH_inner_data (0x6643b654).
-//
-// See https://core.telegram.org/constructor/client_DH_inner_data for reference.
-type ClientDHInnerData struct {
-	Nonce       [16]byte `json:"nonce,omitempty"`
-	ServerNonce [16]byte `json:"server_nonce,omitempty"`
-	RetryID     int64    `json:"retry_id,omitempty"`
-	GB          string   `json:"gb,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x6643b654.
-func (v *ClientDHInnerData) ConstructorID() uint32 {
-	return ClientDHInnerDataTypeID
-}
-
-// Encode serializes ClientDHInnerData to a bytes.Buffer using the TL binary protocol.
-func (v *ClientDHInnerData) Encode(b *bytes.Buffer) error {
-	WriteInt(b, ClientDHInnerDataTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteLong(b, v.RetryID)
-	WriteString(b, v.GB)
-	return nil
-}
-
-// DecodeClientDHInnerData deserializes a ClientDHInnerData from a reader using the TL binary protocol.
-func DecodeClientDHInnerData(r *Reader) (*ClientDHInnerData, error) {
-	v := &ClientDHInnerData{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rRetryID, _eRetryID := r.ReadInt64()
-	if _eRetryID != nil {
-		return nil, _eRetryID
-	}
-	v.RetryID = _rRetryID
-	_rGB, _eGB := r.ReadString()
-	if _eGB != nil {
-		return nil, _eGB
-	}
-	v.GB = _rGB
-	return v, nil
-}
-
-func init() {
-	Registry[ClientDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeClientDHInnerData(r)
-	}
-}
-
-// SetClientDHParamsAnswerClass is the interface for TL type SetClientDHParamsAnswer.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the SetClientDHParamsAnswer TL type.
-type SetClientDHParamsAnswerClass interface {
-	TLObject
-	isSetClientDHParamsAnswer()
-}
-
-// DHGenOkTypeID is the constructor ID for TL type dh_gen_ok.
-const DHGenOkTypeID = 0x3bcbf734
-
-// DHGenRetryTypeID is the constructor ID for TL type dh_gen_retry.
-const DHGenRetryTypeID = 0x46dc1fb9
-
-// DHGenFailTypeID is the constructor ID for TL type dh_gen_fail.
-const DHGenFailTypeID = 0xa69dae02
-
-// isSetClientDHParamsAnswer marks DHGenOk as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenOk) isSetClientDHParamsAnswer() {}
-
-// isSetClientDHParamsAnswer marks DHGenRetry as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenRetry) isSetClientDHParamsAnswer() {}
-
-// isSetClientDHParamsAnswer marks DHGenFail as implementing the SetClientDHParamsAnswerClass interface.
-func (*DHGenFail) isSetClientDHParamsAnswer() {}
-
-// DHGenOk represents the TL constructor dh_gen_ok (0x3bcbf734).
-//
-// See https://core.telegram.org/constructor/dh_gen_ok for reference.
-type DHGenOk struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash1 [16]byte `json:"new_nonce_hash1,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x3bcbf734.
-func (v *DHGenOk) ConstructorID() uint32 {
-	return DHGenOkTypeID
-}
-
-// Encode serializes DHGenOk to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenOkTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash1)
-	return nil
-}
-
-// DecodeDHGenOk deserializes a DHGenOk from a reader using the TL binary protocol.
-func DecodeDHGenOk(r *Reader) (*DHGenOk, error) {
-	v := &DHGenOk{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonceHash1, _eNewNonceHash1 := r.ReadInt128()
-	if _eNewNonceHash1 != nil {
-		return nil, _eNewNonceHash1
-	}
-	v.NewNonceHash1 = _rNewNonceHash1
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenOkTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDHGenOk(r)
-	}
-}
-
-// DHGenRetry represents the TL constructor dh_gen_retry (0x46dc1fb9).
-//
-// See https://core.telegram.org/constructor/dh_gen_retry for reference.
-type DHGenRetry struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash2 [16]byte `json:"new_nonce_hash2,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x46dc1fb9.
-func (v *DHGenRetry) ConstructorID() uint32 {
-	return DHGenRetryTypeID
-}
-
-// Encode serializes DHGenRetry to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenRetry) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenRetryTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash2)
-	return nil
-}
-
-// DecodeDHGenRetry deserializes a DHGenRetry from a reader using the TL binary protocol.
-func DecodeDHGenRetry(r *Reader) (*DHGenRetry, error) {
-	v := &DHGenRetry{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonceHash2, _eNewNonceHash2 := r.ReadInt128()
-	if _eNewNonceHash2 != nil {
-		return nil, _eNewNonceHash2
-	}
-	v.NewNonceHash2 = _rNewNonceHash2
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenRetryTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDHGenRetry(r)
-	}
-}
-
-// DHGenFail represents the TL constructor dh_gen_fail (0xa69dae02).
-//
-// See https://core.telegram.org/constructor/dh_gen_fail for reference.
-type DHGenFail struct {
-	Nonce         [16]byte `json:"nonce,omitempty"`
-	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
-	NewNonceHash3 [16]byte `json:"new_nonce_hash3,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa69dae02.
-func (v *DHGenFail) ConstructorID() uint32 {
-	return DHGenFailTypeID
-}
-
-// Encode serializes DHGenFail to a bytes.Buffer using the TL binary protocol.
-func (v *DHGenFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DHGenFailTypeID)
-	WriteInt128(b, v.Nonce)
-	WriteInt128(b, v.ServerNonce)
-	WriteInt128(b, v.NewNonceHash3)
-	return nil
-}
-
-// DecodeDHGenFail deserializes a DHGenFail from a reader using the TL binary protocol.
-func DecodeDHGenFail(r *Reader) (*DHGenFail, error) {
-	v := &DHGenFail{}
-	_rNonce, _eNonce := r.ReadInt128()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rServerNonce, _eServerNonce := r.ReadInt128()
-	if _eServerNonce != nil {
-		return nil, _eServerNonce
-	}
-	v.ServerNonce = _rServerNonce
-	_rNewNonceHash3, _eNewNonceHash3 := r.ReadInt128()
-	if _eNewNonceHash3 != nil {
-		return nil, _eNewNonceHash3
-	}
-	v.NewNonceHash3 = _rNewNonceHash3
-	return v, nil
-}
-
-func init() {
-	Registry[DHGenFailTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDHGenFail(r)
-	}
-}
-
-// MsgsAckTypeID is the constructor ID for TL type msgs_ack.
-const MsgsAckTypeID = 0x62d6b459
-
-// MsgsAck represents the TL constructor msgs_ack (0x62d6b459).
-//
-// See https://core.telegram.org/constructor/msgs_ack for reference.
-type MsgsAck struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x62d6b459.
-func (v *MsgsAck) ConstructorID() uint32 {
-	return MsgsAckTypeID
-}
-
-// Encode serializes MsgsAck to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsAck) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsAckTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgsAck deserializes a MsgsAck from a reader using the TL binary protocol.
-func DecodeMsgsAck(r *Reader) (*MsgsAck, error) {
-	v := &MsgsAck{}
-	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
-	if _veMsgIds != nil {
-		return nil, _veMsgIds
-	}
-	v.MsgIds = _vvMsgIds
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsAckTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgsAck(r)
-	}
-}
-
-// BadMsgNotificationClass is the interface for TL type BadMsgNotification.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the BadMsgNotification TL type.
-type BadMsgNotificationClass interface {
-	TLObject
-	isBadMsgNotification()
-}
-
-// BadMsgNotificationTypeID is the constructor ID for TL type bad_msg_notification.
-const BadMsgNotificationTypeID = 0xa7eff811
-
-// BadServerSaltTypeID is the constructor ID for TL type bad_server_salt.
-const BadServerSaltTypeID = 0xedab447b
-
-// isBadMsgNotification marks BadMsgNotification as implementing the BadMsgNotificationClass interface.
-func (*BadMsgNotification) isBadMsgNotification() {}
-
-// isBadMsgNotification marks BadServerSalt as implementing the BadMsgNotificationClass interface.
-func (*BadServerSalt) isBadMsgNotification() {}
-
-// BadMsgNotification represents the TL constructor bad_msg_notification (0xa7eff811).
-//
-// See https://core.telegram.org/constructor/bad_msg_notification for reference.
-type BadMsgNotification struct {
-	BadMsgID    int64 `json:"bad_msg_id,omitempty"`
-	BadMsgSeqno int32 `json:"bad_msg_seqno,omitempty"`
-	ErrorCode   int32 `json:"error_code,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa7eff811.
-func (v *BadMsgNotification) ConstructorID() uint32 {
-	return BadMsgNotificationTypeID
-}
-
-// Encode serializes BadMsgNotification to a bytes.Buffer using the TL binary protocol.
-func (v *BadMsgNotification) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BadMsgNotificationTypeID)
-	WriteLong(b, v.BadMsgID)
-	WriteInt(b, uint32(v.BadMsgSeqno))
-	WriteInt(b, uint32(v.ErrorCode))
-	return nil
-}
-
-// DecodeBadMsgNotification deserializes a BadMsgNotification from a reader using the TL binary protocol.
-func DecodeBadMsgNotification(r *Reader) (*BadMsgNotification, error) {
-	v := &BadMsgNotification{}
-	_rBadMsgID, _eBadMsgID := r.ReadInt64()
-	if _eBadMsgID != nil {
-		return nil, _eBadMsgID
-	}
-	v.BadMsgID = _rBadMsgID
-	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
-	if _eBadMsgSeqno != nil {
-		return nil, _eBadMsgSeqno
-	}
-	v.BadMsgSeqno = _rBadMsgSeqno
-	_rErrorCode, _eErrorCode := r.ReadInt32()
-	if _eErrorCode != nil {
-		return nil, _eErrorCode
-	}
-	v.ErrorCode = _rErrorCode
-	return v, nil
-}
-
-func init() {
-	Registry[BadMsgNotificationTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeBadMsgNotification(r)
-	}
-}
-
-// BadServerSalt represents the TL constructor bad_server_salt (0xedab447b).
-//
-// See https://core.telegram.org/constructor/bad_server_salt for reference.
-type BadServerSalt struct {
-	BadMsgID      int64 `json:"bad_msg_id,omitempty"`
-	BadMsgSeqno   int32 `json:"bad_msg_seqno,omitempty"`
-	ErrorCode     int32 `json:"error_code,omitempty"`
-	NewServerSalt int64 `json:"new_server_salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xedab447b.
-func (v *BadServerSalt) ConstructorID() uint32 {
-	return BadServerSaltTypeID
-}
-
-// Encode serializes BadServerSalt to a bytes.Buffer using the TL binary protocol.
-func (v *BadServerSalt) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BadServerSaltTypeID)
-	WriteLong(b, v.BadMsgID)
-	WriteInt(b, uint32(v.BadMsgSeqno))
-	WriteInt(b, uint32(v.ErrorCode))
-	WriteLong(b, v.NewServerSalt)
-	return nil
-}
-
-// DecodeBadServerSalt deserializes a BadServerSalt from a reader using the TL binary protocol.
-func DecodeBadServerSalt(r *Reader) (*BadServerSalt, error) {
-	v := &BadServerSalt{}
-	_rBadMsgID, _eBadMsgID := r.ReadInt64()
-	if _eBadMsgID != nil {
-		return nil, _eBadMsgID
-	}
-	v.BadMsgID = _rBadMsgID
-	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
-	if _eBadMsgSeqno != nil {
-		return nil, _eBadMsgSeqno
-	}
-	v.BadMsgSeqno = _rBadMsgSeqno
-	_rErrorCode, _eErrorCode := r.ReadInt32()
-	if _eErrorCode != nil {
-		return nil, _eErrorCode
-	}
-	v.ErrorCode = _rErrorCode
-	_rNewServerSalt, _eNewServerSalt := r.ReadInt64()
-	if _eNewServerSalt != nil {
-		return nil, _eNewServerSalt
-	}
-	v.NewServerSalt = _rNewServerSalt
-	return v, nil
-}
-
-func init() {
-	Registry[BadServerSaltTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeBadServerSalt(r)
-	}
-}
-
-// MsgsStateReqTypeID is the constructor ID for TL type msgs_state_req.
-const MsgsStateReqTypeID = 0xda69fb52
-
-// MsgsStateReq represents the TL constructor msgs_state_req (0xda69fb52).
-//
-// See https://core.telegram.org/constructor/msgs_state_req for reference.
-type MsgsStateReq struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xda69fb52.
-func (v *MsgsStateReq) ConstructorID() uint32 {
-	return MsgsStateReqTypeID
-}
-
-// Encode serializes MsgsStateReq to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsStateReq) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsStateReqTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgsStateReq deserializes a MsgsStateReq from a reader using the TL binary protocol.
-func DecodeMsgsStateReq(r *Reader) (*MsgsStateReq, error) {
-	v := &MsgsStateReq{}
-	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
-	if _veMsgIds != nil {
-		return nil, _veMsgIds
-	}
-	v.MsgIds = _vvMsgIds
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsStateReqTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgsStateReq(r)
-	}
-}
-
-// MsgsStateInfoTypeID is the constructor ID for TL type msgs_state_info.
-const MsgsStateInfoTypeID = 0x04deb57d
-
-// MsgsStateInfo represents the TL constructor msgs_state_info (0x04deb57d).
-//
-// See https://core.telegram.org/constructor/msgs_state_info for reference.
-type MsgsStateInfo struct {
-	ReqMsgID int64  `json:"req_msg_id,omitempty"`
-	Info     string `json:"info,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x04deb57d.
-func (v *MsgsStateInfo) ConstructorID() uint32 {
-	return MsgsStateInfoTypeID
-}
-
-// Encode serializes MsgsStateInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsStateInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsStateInfoTypeID)
-	WriteLong(b, v.ReqMsgID)
-	WriteString(b, v.Info)
-	return nil
-}
-
-// DecodeMsgsStateInfo deserializes a MsgsStateInfo from a reader using the TL binary protocol.
-func DecodeMsgsStateInfo(r *Reader) (*MsgsStateInfo, error) {
-	v := &MsgsStateInfo{}
-	_rReqMsgID, _eReqMsgID := r.ReadInt64()
-	if _eReqMsgID != nil {
-		return nil, _eReqMsgID
-	}
-	v.ReqMsgID = _rReqMsgID
-	_rInfo, _eInfo := r.ReadString()
-	if _eInfo != nil {
-		return nil, _eInfo
-	}
-	v.Info = _rInfo
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsStateInfoTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgsStateInfo(r)
-	}
-}
-
-// MsgsAllInfoTypeID is the constructor ID for TL type msgs_all_info.
-const MsgsAllInfoTypeID = 0x8cc0d131
-
-// MsgsAllInfo represents the TL constructor msgs_all_info (0x8cc0d131).
-//
-// See https://core.telegram.org/constructor/msgs_all_info for reference.
-type MsgsAllInfo struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-	Info   string  `json:"info,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x8cc0d131.
-func (v *MsgsAllInfo) ConstructorID() uint32 {
-	return MsgsAllInfoTypeID
-}
-
-// Encode serializes MsgsAllInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgsAllInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgsAllInfoTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	WriteString(b, v.Info)
-	return nil
-}
-
-// DecodeMsgsAllInfo deserializes a MsgsAllInfo from a reader using the TL binary protocol.
-func DecodeMsgsAllInfo(r *Reader) (*MsgsAllInfo, error) {
-	v := &MsgsAllInfo{}
-	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
-	if _veMsgIds != nil {
-		return nil, _veMsgIds
-	}
-	v.MsgIds = _vvMsgIds
-	_rInfo, _eInfo := r.ReadString()
-	if _eInfo != nil {
-		return nil, _eInfo
-	}
-	v.Info = _rInfo
-	return v, nil
-}
-
-func init() {
-	Registry[MsgsAllInfoTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgsAllInfo(r)
-	}
-}
-
-// MsgDetailedInfoClass is the interface for TL type MsgDetailedInfo.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the MsgDetailedInfo TL type.
-type MsgDetailedInfoClass interface {
-	TLObject
-	isMsgDetailedInfo()
-}
-
-// MsgDetailedInfoTypeID is the constructor ID for TL type msg_detailed_info.
-const MsgDetailedInfoTypeID = 0x276d3ec6
-
-// MsgNewDetailedInfoTypeID is the constructor ID for TL type msg_new_detailed_info.
-const MsgNewDetailedInfoTypeID = 0x809db6df
-
-// isMsgDetailedInfo marks MsgDetailedInfo as implementing the MsgDetailedInfoClass interface.
-func (*MsgDetailedInfo) isMsgDetailedInfo() {}
-
-// isMsgDetailedInfo marks MsgNewDetailedInfo as implementing the MsgDetailedInfoClass interface.
-func (*MsgNewDetailedInfo) isMsgDetailedInfo() {}
-
-// MsgDetailedInfo represents the TL constructor msg_detailed_info (0x276d3ec6).
-//
-// See https://core.telegram.org/constructor/msg_detailed_info for reference.
-type MsgDetailedInfo struct {
-	MsgID       int64 `json:"msg_id,omitempty"`
-	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
-	Bytes       int32 `json:"bytes,omitempty"`
-	Status      int32 `json:"status,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x276d3ec6.
-func (v *MsgDetailedInfo) ConstructorID() uint32 {
-	return MsgDetailedInfoTypeID
-}
-
-// Encode serializes MsgDetailedInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgDetailedInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgDetailedInfoTypeID)
-	WriteLong(b, v.MsgID)
-	WriteLong(b, v.AnswerMsgID)
-	WriteInt(b, uint32(v.Bytes))
-	WriteInt(b, uint32(v.Status))
-	return nil
-}
-
-// DecodeMsgDetailedInfo deserializes a MsgDetailedInfo from a reader using the TL binary protocol.
-func DecodeMsgDetailedInfo(r *Reader) (*MsgDetailedInfo, error) {
-	v := &MsgDetailedInfo{}
-	_rMsgID, _eMsgID := r.ReadInt64()
-	if _eMsgID != nil {
-		return nil, _eMsgID
-	}
-	v.MsgID = _rMsgID
-	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
-	if _eAnswerMsgID != nil {
-		return nil, _eAnswerMsgID
-	}
-	v.AnswerMsgID = _rAnswerMsgID
-	_rBytes, _eBytes := r.ReadInt32()
-	if _eBytes != nil {
-		return nil, _eBytes
-	}
-	v.Bytes = _rBytes
-	_rStatus, _eStatus := r.ReadInt32()
-	if _eStatus != nil {
-		return nil, _eStatus
-	}
-	v.Status = _rStatus
-	return v, nil
-}
-
-func init() {
-	Registry[MsgDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgDetailedInfo(r)
-	}
-}
-
-// MsgNewDetailedInfo represents the TL constructor msg_new_detailed_info (0x809db6df).
-//
-// See https://core.telegram.org/constructor/msg_new_detailed_info for reference.
-type MsgNewDetailedInfo struct {
-	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
-	Bytes       int32 `json:"bytes,omitempty"`
-	Status      int32 `json:"status,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x809db6df.
-func (v *MsgNewDetailedInfo) ConstructorID() uint32 {
-	return MsgNewDetailedInfoTypeID
-}
-
-// Encode serializes MsgNewDetailedInfo to a bytes.Buffer using the TL binary protocol.
-func (v *MsgNewDetailedInfo) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgNewDetailedInfoTypeID)
-	WriteLong(b, v.AnswerMsgID)
-	WriteInt(b, uint32(v.Bytes))
-	WriteInt(b, uint32(v.Status))
-	return nil
-}
-
-// DecodeMsgNewDetailedInfo deserializes a MsgNewDetailedInfo from a reader using the TL binary protocol.
-func DecodeMsgNewDetailedInfo(r *Reader) (*MsgNewDetailedInfo, error) {
-	v := &MsgNewDetailedInfo{}
-	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
-	if _eAnswerMsgID != nil {
-		return nil, _eAnswerMsgID
-	}
-	v.AnswerMsgID = _rAnswerMsgID
-	_rBytes, _eBytes := r.ReadInt32()
-	if _eBytes != nil {
-		return nil, _eBytes
-	}
-	v.Bytes = _rBytes
-	_rStatus, _eStatus := r.ReadInt32()
-	if _eStatus != nil {
-		return nil, _eStatus
-	}
-	v.Status = _rStatus
-	return v, nil
-}
-
-func init() {
-	Registry[MsgNewDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgNewDetailedInfo(r)
-	}
-}
-
-// MsgResendReqTypeID is the constructor ID for TL type msg_resend_req.
-const MsgResendReqTypeID = 0x7d861a08
-
-// MsgResendReq represents the TL constructor msg_resend_req (0x7d861a08).
-//
-// See https://core.telegram.org/constructor/msg_resend_req for reference.
-type MsgResendReq struct {
-	MsgIds []int64 `json:"msg_ids,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x7d861a08.
-func (v *MsgResendReq) ConstructorID() uint32 {
-	return MsgResendReqTypeID
-}
-
-// Encode serializes MsgResendReq to a bytes.Buffer using the TL binary protocol.
-func (v *MsgResendReq) Encode(b *bytes.Buffer) error {
-	WriteInt(b, MsgResendReqTypeID)
-	WriteVectorLong(b, v.MsgIds)
-	return nil
-}
-
-// DecodeMsgResendReq deserializes a MsgResendReq from a reader using the TL binary protocol.
-func DecodeMsgResendReq(r *Reader) (*MsgResendReq, error) {
-	v := &MsgResendReq{}
-	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
-	if _veMsgIds != nil {
-		return nil, _veMsgIds
-	}
-	v.MsgIds = _vvMsgIds
-	return v, nil
-}
-
-func init() {
-	Registry[MsgResendReqTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeMsgResendReq(r)
-	}
-}
-
-// RPCResultTypeID is the constructor ID for TL type rpc_result.
-const RPCResultTypeID = 0xf35c6d01
-
-// RPCResult represents the TL constructor rpc_result (0xf35c6d01).
-//
-// See https://core.telegram.org/constructor/rpc_result for reference.
-type RPCResult struct {
-	ReqMsgID int64    `json:"req_msg_id,omitempty"`
-	Result   TLObject `json:"result,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xf35c6d01.
-func (v *RPCResult) ConstructorID() uint32 {
-	return RPCResultTypeID
-}
-
-// Encode serializes RPCResult to a bytes.Buffer using the TL binary protocol.
-func (v *RPCResult) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCResultTypeID)
-	WriteLong(b, v.ReqMsgID)
-	EncodeTLObject(b, v.Result)
-	return nil
-}
-
-// DecodeRPCResult deserializes a RPCResult from a reader using the TL binary protocol.
-func DecodeRPCResult(r *Reader) (*RPCResult, error) {
-	v := &RPCResult{}
-	_rReqMsgID, _eReqMsgID := r.ReadInt64()
-	if _eReqMsgID != nil {
-		return nil, _eReqMsgID
-	}
-	v.ReqMsgID = _rReqMsgID
-	_objResult, _errResult := ReadTLObject(r)
-	if _errResult != nil {
-		return nil, _errResult
-	}
-	v.Result = _objResult.(TLObject)
-	return v, nil
-}
-
-func init() {
-	Registry[RPCResultTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRPCResult(r)
-	}
-}
-
-// RPCErrorTypeID is the constructor ID for TL type rpc_error.
-const RPCErrorTypeID = 0x2144ca19
-
-// RPCError represents the TL constructor rpc_error (0x2144ca19).
-//
-// See https://core.telegram.org/constructor/rpc_error for reference.
-type RPCError struct {
-	ErrorCode    int32  `json:"error_code,omitempty"`
-	ErrorMessage string `json:"error_message,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x2144ca19.
-func (v *RPCError) ConstructorID() uint32 {
-	return RPCErrorTypeID
-}
-
-// Encode serializes RPCError to a bytes.Buffer using the TL binary protocol.
-func (v *RPCError) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCErrorTypeID)
-	WriteInt(b, uint32(v.ErrorCode))
-	WriteString(b, v.ErrorMessage)
-	return nil
-}
-
-// DecodeRPCError deserializes a RPCError from a reader using the TL binary protocol.
-func DecodeRPCError(r *Reader) (*RPCError, error) {
-	v := &RPCError{}
-	_rErrorCode, _eErrorCode := r.ReadInt32()
-	if _eErrorCode != nil {
-		return nil, _eErrorCode
-	}
-	v.ErrorCode = _rErrorCode
-	_rErrorMessage, _eErrorMessage := r.ReadString()
-	if _eErrorMessage != nil {
-		return nil, _eErrorMessage
-	}
-	v.ErrorMessage = _rErrorMessage
-	return v, nil
-}
-
-func init() {
-	Registry[RPCErrorTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRPCError(r)
-	}
-}
-
-// RPCDropAnswerClass is the interface for TL type RPCDropAnswer.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the RPCDropAnswer TL type.
-type RPCDropAnswerClass interface {
-	TLObject
-	isRPCDropAnswer()
-}
-
-// RPCAnswerUnknownTypeID is the constructor ID for TL type rpc_answer_unknown.
-const RPCAnswerUnknownTypeID = 0x5e2ad36e
-
-// RPCAnswerDroppedRunningTypeID is the constructor ID for TL type rpc_answer_dropped_running.
-const RPCAnswerDroppedRunningTypeID = 0xcd78e586
-
-// RPCAnswerDroppedTypeID is the constructor ID for TL type rpc_answer_dropped.
-const RPCAnswerDroppedTypeID = 0xa43ad8b7
-
-// isRPCDropAnswer marks RPCAnswerUnknown as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerUnknown) isRPCDropAnswer() {}
-
-// isRPCDropAnswer marks RPCAnswerDroppedRunning as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerDroppedRunning) isRPCDropAnswer() {}
-
-// isRPCDropAnswer marks RPCAnswerDropped as implementing the RPCDropAnswerClass interface.
-func (*RPCAnswerDropped) isRPCDropAnswer() {}
-
-// RPCAnswerUnknown represents the TL constructor rpc_answer_unknown (0x5e2ad36e).
-//
-// See https://core.telegram.org/constructor/rpc_answer_unknown for reference.
-type RPCAnswerUnknown struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0x5e2ad36e.
-func (v *RPCAnswerUnknown) ConstructorID() uint32 {
-	return RPCAnswerUnknownTypeID
-}
-
-// Encode serializes RPCAnswerUnknown to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerUnknown) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerUnknownTypeID)
-	return nil
-}
-
-// DecodeRPCAnswerUnknown deserializes a RPCAnswerUnknown from a reader using the TL binary protocol.
-func DecodeRPCAnswerUnknown(r *Reader) (*RPCAnswerUnknown, error) {
-	v := &RPCAnswerUnknown{}
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerUnknownTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRPCAnswerUnknown(r)
-	}
-}
-
-// RPCAnswerDroppedRunning represents the TL constructor rpc_answer_dropped_running (0xcd78e586).
-//
-// See https://core.telegram.org/constructor/rpc_answer_dropped_running for reference.
-type RPCAnswerDroppedRunning struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xcd78e586.
-func (v *RPCAnswerDroppedRunning) ConstructorID() uint32 {
-	return RPCAnswerDroppedRunningTypeID
-}
-
-// Encode serializes RPCAnswerDroppedRunning to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerDroppedRunning) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerDroppedRunningTypeID)
-	return nil
-}
-
-// DecodeRPCAnswerDroppedRunning deserializes a RPCAnswerDroppedRunning from a reader using the TL binary protocol.
-func DecodeRPCAnswerDroppedRunning(r *Reader) (*RPCAnswerDroppedRunning, error) {
-	v := &RPCAnswerDroppedRunning{}
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerDroppedRunningTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRPCAnswerDroppedRunning(r)
-	}
-}
-
-// RPCAnswerDropped represents the TL constructor rpc_answer_dropped (0xa43ad8b7).
-//
-// See https://core.telegram.org/constructor/rpc_answer_dropped for reference.
-type RPCAnswerDropped struct {
-	MsgID int64 `json:"msg_id,omitempty"`
-	SeqNo int32 `json:"seq_no,omitempty"`
-	Bytes int32 `json:"bytes,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xa43ad8b7.
-func (v *RPCAnswerDropped) ConstructorID() uint32 {
-	return RPCAnswerDroppedTypeID
-}
-
-// Encode serializes RPCAnswerDropped to a bytes.Buffer using the TL binary protocol.
-func (v *RPCAnswerDropped) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RPCAnswerDroppedTypeID)
-	WriteLong(b, v.MsgID)
-	WriteInt(b, uint32(v.SeqNo))
-	WriteInt(b, uint32(v.Bytes))
-	return nil
-}
-
-// DecodeRPCAnswerDropped deserializes a RPCAnswerDropped from a reader using the TL binary protocol.
-func DecodeRPCAnswerDropped(r *Reader) (*RPCAnswerDropped, error) {
-	v := &RPCAnswerDropped{}
-	_rMsgID, _eMsgID := r.ReadInt64()
-	if _eMsgID != nil {
-		return nil, _eMsgID
-	}
-	v.MsgID = _rMsgID
-	_rSeqNo, _eSeqNo := r.ReadInt32()
-	if _eSeqNo != nil {
-		return nil, _eSeqNo
-	}
-	v.SeqNo = _rSeqNo
-	_rBytes, _eBytes := r.ReadInt32()
-	if _eBytes != nil {
-		return nil, _eBytes
-	}
-	v.Bytes = _rBytes
-	return v, nil
-}
-
-func init() {
-	Registry[RPCAnswerDroppedTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRPCAnswerDropped(r)
-	}
-}
-
-// FutureSaltTypeID is the constructor ID for TL type future_salt.
-const FutureSaltTypeID = 0x0949d9dc
-
-// FutureSalt represents the TL constructor future_salt (0x0949d9dc).
-//
-// See https://core.telegram.org/constructor/future_salt for reference.
-type FutureSalt struct {
-	ValidSince int32 `json:"valid_since,omitempty"`
-	ValidUntil int32 `json:"valid_until,omitempty"`
-	Salt       int64 `json:"salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x0949d9dc.
-func (v *FutureSalt) ConstructorID() uint32 {
-	return FutureSaltTypeID
-}
-
-// Encode serializes FutureSalt to a bytes.Buffer using the TL binary protocol.
-func (v *FutureSalt) Encode(b *bytes.Buffer) error {
-	WriteInt(b, FutureSaltTypeID)
-	WriteInt(b, uint32(v.ValidSince))
-	WriteInt(b, uint32(v.ValidUntil))
-	WriteLong(b, v.Salt)
-	return nil
-}
-
-// DecodeFutureSalt deserializes a FutureSalt from a reader using the TL binary protocol.
-func DecodeFutureSalt(r *Reader) (*FutureSalt, error) {
-	v := &FutureSalt{}
-	_rValidSince, _eValidSince := r.ReadInt32()
-	if _eValidSince != nil {
-		return nil, _eValidSince
-	}
-	v.ValidSince = _rValidSince
-	_rValidUntil, _eValidUntil := r.ReadInt32()
-	if _eValidUntil != nil {
-		return nil, _eValidUntil
-	}
-	v.ValidUntil = _rValidUntil
-	_rSalt, _eSalt := r.ReadInt64()
-	if _eSalt != nil {
-		return nil, _eSalt
-	}
-	v.Salt = _rSalt
-	return v, nil
-}
-
-func init() {
-	Registry[FutureSaltTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeFutureSalt(r)
-	}
-}
-
-// FutureSaltsTypeID is the constructor ID for TL type future_salts.
-const FutureSaltsTypeID = 0xae500895
-
-// FutureSalts represents the TL constructor future_salts (0xae500895).
-//
-// See https://core.telegram.org/constructor/future_salts for reference.
-type FutureSalts struct {
-	ReqMsgID int64         `json:"req_msg_id,omitempty"`
-	Now      int32         `json:"now,omitempty"`
-	Salts    []*FutureSalt `json:"salts,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xae500895.
-func (v *FutureSalts) ConstructorID() uint32 {
-	return FutureSaltsTypeID
-}
-
-// Encode serializes FutureSalts to a bytes.Buffer using the TL binary protocol.
-func (v *FutureSalts) Encode(b *bytes.Buffer) error {
-	WriteInt(b, FutureSaltsTypeID)
-	WriteLong(b, v.ReqMsgID)
-	WriteInt(b, uint32(v.Now))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Salts)))
-	for _, _item := range v.Salts {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeFutureSalts deserializes a FutureSalts from a reader using the TL binary protocol.
-func DecodeFutureSalts(r *Reader) (*FutureSalts, error) {
-	v := &FutureSalts{}
-	_rReqMsgID, _eReqMsgID := r.ReadInt64()
-	if _eReqMsgID != nil {
-		return nil, _eReqMsgID
-	}
-	v.ReqMsgID = _rReqMsgID
-	_rNow, _eNow := r.ReadInt32()
-	if _eNow != nil {
-		return nil, _eNow
-	}
-	v.Now = _rNow
-	_vhdrSalts, _ehdrSalts := r.ReadUint32()
-	if _ehdrSalts != nil {
-		return nil, _ehdrSalts
-	}
-	_cntSalts, _ecntSalts := r.ReadUint32()
-	if _ecntSalts != nil {
-		return nil, _ecntSalts
-	}
-	if _errSalts := checkVectorCount(_cntSalts); _errSalts != nil {
-		return nil, _errSalts
-	}
-	v.Salts = make([]*FutureSalt, _cntSalts)
-	for _iSalts := range v.Salts {
-		_objSalts, _errSalts := ReadTLObject(r)
-		if _errSalts != nil {
-			return nil, _errSalts
-		}
-		v.Salts[_iSalts] = _objSalts.(*FutureSalt)
-	}
-	_ = _vhdrSalts
-	return v, nil
-}
-
-func init() {
-	Registry[FutureSaltsTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeFutureSalts(r)
-	}
-}
-
-// PongTypeID is the constructor ID for TL type pong.
-const PongTypeID = 0x347773c5
-
-// Pong represents the TL constructor pong (0x347773c5).
-//
-// See https://core.telegram.org/constructor/pong for reference.
-type Pong struct {
-	MsgID  int64 `json:"msg_id,omitempty"`
-	PingID int64 `json:"ping_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x347773c5.
-func (v *Pong) ConstructorID() uint32 {
-	return PongTypeID
-}
-
-// Encode serializes Pong to a bytes.Buffer using the TL binary protocol.
-func (v *Pong) Encode(b *bytes.Buffer) error {
-	WriteInt(b, PongTypeID)
-	WriteLong(b, v.MsgID)
-	WriteLong(b, v.PingID)
-	return nil
-}
-
-// DecodePong deserializes a Pong from a reader using the TL binary protocol.
-func DecodePong(r *Reader) (*Pong, error) {
-	v := &Pong{}
-	_rMsgID, _eMsgID := r.ReadInt64()
-	if _eMsgID != nil {
-		return nil, _eMsgID
-	}
-	v.MsgID = _rMsgID
-	_rPingID, _ePingID := r.ReadInt64()
-	if _ePingID != nil {
-		return nil, _ePingID
-	}
-	v.PingID = _rPingID
-	return v, nil
-}
-
-func init() {
-	Registry[PongTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodePong(r)
-	}
-}
-
-// DestroySessionResClass is the interface for TL type DestroySessionRes.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the DestroySessionRes TL type.
-type DestroySessionResClass interface {
-	TLObject
-	isDestroySessionRes()
-}
-
-// DestroySessionOkTypeID is the constructor ID for TL type destroy_session_ok.
-const DestroySessionOkTypeID = 0xe22045fc
-
-// DestroySessionNoneTypeID is the constructor ID for TL type destroy_session_none.
-const DestroySessionNoneTypeID = 0x62d350c9
-
-// isDestroySessionRes marks DestroySessionOk as implementing the DestroySessionResClass interface.
-func (*DestroySessionOk) isDestroySessionRes() {}
-
-// isDestroySessionRes marks DestroySessionNone as implementing the DestroySessionResClass interface.
-func (*DestroySessionNone) isDestroySessionRes() {}
-
-// DestroySessionOk represents the TL constructor destroy_session_ok (0xe22045fc).
-//
-// See https://core.telegram.org/constructor/destroy_session_ok for reference.
-type DestroySessionOk struct {
-	SessionID int64 `json:"session_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xe22045fc.
-func (v *DestroySessionOk) ConstructorID() uint32 {
-	return DestroySessionOkTypeID
-}
-
-// Encode serializes DestroySessionOk to a bytes.Buffer using the TL binary protocol.
-func (v *DestroySessionOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroySessionOkTypeID)
-	WriteLong(b, v.SessionID)
-	return nil
-}
-
-// DecodeDestroySessionOk deserializes a DestroySessionOk from a reader using the TL binary protocol.
-func DecodeDestroySessionOk(r *Reader) (*DestroySessionOk, error) {
-	v := &DestroySessionOk{}
-	_rSessionID, _eSessionID := r.ReadInt64()
-	if _eSessionID != nil {
-		return nil, _eSessionID
-	}
-	v.SessionID = _rSessionID
-	return v, nil
-}
-
-func init() {
-	Registry[DestroySessionOkTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDestroySessionOk(r)
-	}
-}
-
-// DestroySessionNone represents the TL constructor destroy_session_none (0x62d350c9).
-//
-// See https://core.telegram.org/constructor/destroy_session_none for reference.
-type DestroySessionNone struct {
-	SessionID int64 `json:"session_id,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x62d350c9.
-func (v *DestroySessionNone) ConstructorID() uint32 {
-	return DestroySessionNoneTypeID
-}
-
-// Encode serializes DestroySessionNone to a bytes.Buffer using the TL binary protocol.
-func (v *DestroySessionNone) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroySessionNoneTypeID)
-	WriteLong(b, v.SessionID)
-	return nil
-}
-
-// DecodeDestroySessionNone deserializes a DestroySessionNone from a reader using the TL binary protocol.
-func DecodeDestroySessionNone(r *Reader) (*DestroySessionNone, error) {
-	v := &DestroySessionNone{}
-	_rSessionID, _eSessionID := r.ReadInt64()
-	if _eSessionID != nil {
-		return nil, _eSessionID
-	}
-	v.SessionID = _rSessionID
-	return v, nil
-}
-
-func init() {
-	Registry[DestroySessionNoneTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDestroySessionNone(r)
-	}
-}
-
-// NewSessionCreatedTypeID is the constructor ID for TL type new_session_created.
-const NewSessionCreatedTypeID = 0x9ec20908
-
-// NewSessionCreated represents the TL constructor new_session_created (0x9ec20908).
-//
-// See https://core.telegram.org/constructor/new_session_created for reference.
-type NewSessionCreated struct {
-	FirstMsgID int64 `json:"first_msg_id,omitempty"`
-	UniqueID   int64 `json:"unique_id,omitempty"`
-	ServerSalt int64 `json:"server_salt,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x9ec20908.
-func (v *NewSessionCreated) ConstructorID() uint32 {
-	return NewSessionCreatedTypeID
-}
-
-// Encode serializes NewSessionCreated to a bytes.Buffer using the TL binary protocol.
-func (v *NewSessionCreated) Encode(b *bytes.Buffer) error {
-	WriteInt(b, NewSessionCreatedTypeID)
-	WriteLong(b, v.FirstMsgID)
-	WriteLong(b, v.UniqueID)
-	WriteLong(b, v.ServerSalt)
-	return nil
-}
-
-// DecodeNewSessionCreated deserializes a NewSessionCreated from a reader using the TL binary protocol.
-func DecodeNewSessionCreated(r *Reader) (*NewSessionCreated, error) {
-	v := &NewSessionCreated{}
-	_rFirstMsgID, _eFirstMsgID := r.ReadInt64()
-	if _eFirstMsgID != nil {
-		return nil, _eFirstMsgID
-	}
-	v.FirstMsgID = _rFirstMsgID
-	_rUniqueID, _eUniqueID := r.ReadInt64()
-	if _eUniqueID != nil {
-		return nil, _eUniqueID
-	}
-	v.UniqueID = _rUniqueID
-	_rServerSalt, _eServerSalt := r.ReadInt64()
-	if _eServerSalt != nil {
-		return nil, _eServerSalt
-	}
-	v.ServerSalt = _rServerSalt
-	return v, nil
-}
-
-func init() {
-	Registry[NewSessionCreatedTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeNewSessionCreated(r)
-	}
-}
-
-// HTTPWaitTypeID is the constructor ID for TL type http_wait.
-const HTTPWaitTypeID = 0x9299359f
-
-// HTTPWait represents the TL constructor http_wait (0x9299359f).
-//
-// See https://core.telegram.org/constructor/http_wait for reference.
-type HTTPWait struct {
-	MaxDelay  int32 `json:"max_delay,omitempty"`
-	WaitAfter int32 `json:"wait_after,omitempty"`
-	MaxWait   int32 `json:"max_wait,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x9299359f.
-func (v *HTTPWait) ConstructorID() uint32 {
-	return HTTPWaitTypeID
-}
-
-// Encode serializes HTTPWait to a bytes.Buffer using the TL binary protocol.
-func (v *HTTPWait) Encode(b *bytes.Buffer) error {
-	WriteInt(b, HTTPWaitTypeID)
-	WriteInt(b, uint32(v.MaxDelay))
-	WriteInt(b, uint32(v.WaitAfter))
-	WriteInt(b, uint32(v.MaxWait))
-	return nil
-}
-
-// DecodeHTTPWait deserializes a HTTPWait from a reader using the TL binary protocol.
-func DecodeHTTPWait(r *Reader) (*HTTPWait, error) {
-	v := &HTTPWait{}
-	_rMaxDelay, _eMaxDelay := r.ReadInt32()
-	if _eMaxDelay != nil {
-		return nil, _eMaxDelay
-	}
-	v.MaxDelay = _rMaxDelay
-	_rWaitAfter, _eWaitAfter := r.ReadInt32()
-	if _eWaitAfter != nil {
-		return nil, _eWaitAfter
-	}
-	v.WaitAfter = _rWaitAfter
-	_rMaxWait, _eMaxWait := r.ReadInt32()
-	if _eMaxWait != nil {
-		return nil, _eMaxWait
-	}
-	v.MaxWait = _rMaxWait
-	return v, nil
-}
-
-func init() {
-	Registry[HTTPWaitTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeHTTPWait(r)
-	}
-}
-
-// IpPortClass is the interface for TL type IpPort.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the IpPort TL type.
-type IpPortClass interface {
-	TLObject
-	isIpPort()
-}
-
-// IpPortTypeID is the constructor ID for TL type ipPort.
-const IpPortTypeID = 0xd433ad73
-
-// IpPortSecretTypeID is the constructor ID for TL type ipPortSecret.
-const IpPortSecretTypeID = 0x37982646
-
-// isIpPort marks IpPort as implementing the IpPortClass interface.
-func (*IpPort) isIpPort() {}
-
-// isIpPort marks IpPortSecret as implementing the IpPortClass interface.
-func (*IpPortSecret) isIpPort() {}
-
-// IpPort represents the TL constructor ipPort (0xd433ad73).
-//
-// See https://core.telegram.org/constructor/ipPort for reference.
-type IpPort struct {
-	IPv4 int32 `json:"i_pv4,omitempty"`
-	Port int32 `json:"port,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0xd433ad73.
-func (v *IpPort) ConstructorID() uint32 {
-	return IpPortTypeID
-}
-
-// Encode serializes IpPort to a bytes.Buffer using the TL binary protocol.
-func (v *IpPort) Encode(b *bytes.Buffer) error {
-	WriteInt(b, IpPortTypeID)
-	WriteInt(b, uint32(v.IPv4))
-	WriteInt(b, uint32(v.Port))
-	return nil
-}
-
-// DecodeIpPort deserializes a IpPort from a reader using the TL binary protocol.
-func DecodeIpPort(r *Reader) (*IpPort, error) {
-	v := &IpPort{}
-	_rIPv4, _eIPv4 := r.ReadInt32()
-	if _eIPv4 != nil {
-		return nil, _eIPv4
-	}
-	v.IPv4 = _rIPv4
-	_rPort, _ePort := r.ReadInt32()
-	if _ePort != nil {
-		return nil, _ePort
-	}
-	v.Port = _rPort
-	return v, nil
-}
-
-func init() {
-	Registry[IpPortTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeIpPort(r)
-	}
-}
-
-// IpPortSecret represents the TL constructor ipPortSecret (0x37982646).
-//
-// See https://core.telegram.org/constructor/ipPortSecret for reference.
-type IpPortSecret struct {
-	IPv4   int32  `json:"i_pv4,omitempty"`
-	Port   int32  `json:"port,omitempty"`
-	Secret []byte `json:"secret,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x37982646.
-func (v *IpPortSecret) ConstructorID() uint32 {
-	return IpPortSecretTypeID
-}
-
-// Encode serializes IpPortSecret to a bytes.Buffer using the TL binary protocol.
-func (v *IpPortSecret) Encode(b *bytes.Buffer) error {
-	WriteInt(b, IpPortSecretTypeID)
-	WriteInt(b, uint32(v.IPv4))
-	WriteInt(b, uint32(v.Port))
-	WriteBytes(b, v.Secret)
-	return nil
-}
-
-// DecodeIpPortSecret deserializes a IpPortSecret from a reader using the TL binary protocol.
-func DecodeIpPortSecret(r *Reader) (*IpPortSecret, error) {
-	v := &IpPortSecret{}
-	_rIPv4, _eIPv4 := r.ReadInt32()
-	if _eIPv4 != nil {
-		return nil, _eIPv4
-	}
-	v.IPv4 = _rIPv4
-	_rPort, _ePort := r.ReadInt32()
-	if _ePort != nil {
-		return nil, _ePort
-	}
-	v.Port = _rPort
-	_rSecret, _eSecret := r.ReadBytes()
-	if _eSecret != nil {
-		return nil, _eSecret
-	}
-	v.Secret = _rSecret
-	return v, nil
-}
-
-func init() {
-	Registry[IpPortSecretTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeIpPortSecret(r)
-	}
-}
-
-// AccessPointRuleTypeID is the constructor ID for TL type accessPointRule.
-const AccessPointRuleTypeID = 0x4679b65f
-
-// AccessPointRule represents the TL constructor accessPointRule (0x4679b65f).
-//
-// See https://core.telegram.org/constructor/accessPointRule for reference.
-type AccessPointRule struct {
-	PhonePrefixRules string        `json:"phone_prefix_rules,omitempty"`
-	DCID             int32         `json:"dcid,omitempty"`
-	Ips              []IpPortClass `json:"ips,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x4679b65f.
-func (v *AccessPointRule) ConstructorID() uint32 {
-	return AccessPointRuleTypeID
-}
-
-// Encode serializes AccessPointRule to a bytes.Buffer using the TL binary protocol.
-func (v *AccessPointRule) Encode(b *bytes.Buffer) error {
-	WriteInt(b, AccessPointRuleTypeID)
-	WriteString(b, v.PhonePrefixRules)
-	WriteInt(b, uint32(v.DCID))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Ips)))
-	for _, _item := range v.Ips {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeAccessPointRule deserializes a AccessPointRule from a reader using the TL binary protocol.
-func DecodeAccessPointRule(r *Reader) (*AccessPointRule, error) {
-	v := &AccessPointRule{}
-	_rPhonePrefixRules, _ePhonePrefixRules := r.ReadString()
-	if _ePhonePrefixRules != nil {
-		return nil, _ePhonePrefixRules
-	}
-	v.PhonePrefixRules = _rPhonePrefixRules
-	_rDCID, _eDCID := r.ReadInt32()
-	if _eDCID != nil {
-		return nil, _eDCID
-	}
-	v.DCID = _rDCID
-	_vhdrIps, _ehdrIps := r.ReadUint32()
-	if _ehdrIps != nil {
-		return nil, _ehdrIps
-	}
-	_cntIps, _ecntIps := r.ReadUint32()
-	if _ecntIps != nil {
-		return nil, _ecntIps
-	}
-	if _errIps := checkVectorCount(_cntIps); _errIps != nil {
-		return nil, _errIps
-	}
-	v.Ips = make([]IpPortClass, _cntIps)
-	for _iIps := range v.Ips {
-		_objIps, _errIps := ReadTLObject(r)
-		if _errIps != nil {
-			return nil, _errIps
-		}
-		v.Ips[_iIps] = _objIps.(IpPortClass)
-	}
-	_ = _vhdrIps
-	return v, nil
-}
-
-func init() {
-	Registry[AccessPointRuleTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeAccessPointRule(r)
-	}
-}
-
 // BoolClass is the interface for TL type Bool.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the Bool TL type.
@@ -13136,5 +11059,2082 @@ func DecodeAuctionBidLevel(r *Reader) (*AuctionBidLevel, error) {
 func init() {
 	Registry[AuctionBidLevelTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuctionBidLevel(r)
+	}
+}
+
+// ResPQTypeID is the constructor ID for TL type resPQ.
+const ResPQTypeID = 0x05162463
+
+// ResPQ represents the TL constructor resPQ (0x05162463).
+//
+// See https://core.telegram.org/constructor/resPQ for reference.
+type ResPQ struct {
+	Nonce                       [16]byte `json:"nonce,omitempty"`
+	ServerNonce                 [16]byte `json:"server_nonce,omitempty"`
+	PQ                          string   `json:"pq,omitempty"`
+	ServerPublicKeyFingerprints []int64  `json:"server_public_key_fingerprints,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x05162463.
+func (v *ResPQ) ConstructorID() uint32 {
+	return ResPQTypeID
+}
+
+// Encode serializes ResPQ to a bytes.Buffer using the TL binary protocol.
+func (v *ResPQ) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ResPQTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.PQ)
+	WriteVectorLong(b, v.ServerPublicKeyFingerprints)
+	return nil
+}
+
+// DecodeResPQ deserializes a ResPQ from a reader using the TL binary protocol.
+func DecodeResPQ(r *Reader) (*ResPQ, error) {
+	v := &ResPQ{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_vvServerPublicKeyFingerprints, _veServerPublicKeyFingerprints := r.ReadVectorLong()
+	if _veServerPublicKeyFingerprints != nil {
+		return nil, _veServerPublicKeyFingerprints
+	}
+	v.ServerPublicKeyFingerprints = _vvServerPublicKeyFingerprints
+	return v, nil
+}
+
+func init() {
+	Registry[ResPQTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeResPQ(r)
+	}
+}
+
+// PQInnerDataClass is the interface for TL type PQInnerData.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the PQInnerData TL type.
+type PQInnerDataClass interface {
+	TLObject
+	isPQInnerData()
+}
+
+// PQInnerDataTypeID is the constructor ID for TL type p_q_inner_data.
+const PQInnerDataTypeID = 0x83c95aec
+
+// PQInnerDataDCTypeID is the constructor ID for TL type p_q_inner_data_dc.
+const PQInnerDataDCTypeID = 0xa9f55f95
+
+// PQInnerDataTempTypeID is the constructor ID for TL type p_q_inner_data_temp.
+const PQInnerDataTempTypeID = 0x3c6a84d4
+
+// PQInnerDataTempDCTypeID is the constructor ID for TL type p_q_inner_data_temp_dc.
+const PQInnerDataTempDCTypeID = 0x56fddf88
+
+// isPQInnerData marks PQInnerData as implementing the PQInnerDataClass interface.
+func (*PQInnerData) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataDC as implementing the PQInnerDataClass interface.
+func (*PQInnerDataDC) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataTemp as implementing the PQInnerDataClass interface.
+func (*PQInnerDataTemp) isPQInnerData() {}
+
+// isPQInnerData marks PQInnerDataTempDC as implementing the PQInnerDataClass interface.
+func (*PQInnerDataTempDC) isPQInnerData() {}
+
+// PQInnerData represents the TL constructor p_q_inner_data (0x83c95aec).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data for reference.
+type PQInnerData struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x83c95aec.
+func (v *PQInnerData) ConstructorID() uint32 {
+	return PQInnerDataTypeID
+}
+
+// Encode serializes PQInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	return nil
+}
+
+// DecodePQInnerData deserializes a PQInnerData from a reader using the TL binary protocol.
+func DecodePQInnerData(r *Reader) (*PQInnerData, error) {
+	v := &PQInnerData{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerData(r)
+	}
+}
+
+// PQInnerDataDC represents the TL constructor p_q_inner_data_dc (0xa9f55f95).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_dc for reference.
+type PQInnerDataDC struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	DC          int32    `json:"dc,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa9f55f95.
+func (v *PQInnerDataDC) ConstructorID() uint32 {
+	return PQInnerDataDCTypeID
+}
+
+// Encode serializes PQInnerDataDC to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataDC) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataDCTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.DC))
+	return nil
+}
+
+// DecodePQInnerDataDC deserializes a PQInnerDataDC from a reader using the TL binary protocol.
+func DecodePQInnerDataDC(r *Reader) (*PQInnerDataDC, error) {
+	v := &PQInnerDataDC{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rDC, _eDC := r.ReadInt32()
+	if _eDC != nil {
+		return nil, _eDC
+	}
+	v.DC = _rDC
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataDCTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataDC(r)
+	}
+}
+
+// PQInnerDataTemp represents the TL constructor p_q_inner_data_temp (0x3c6a84d4).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_temp for reference.
+type PQInnerDataTemp struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	ExpiresIn   int32    `json:"expires_in,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3c6a84d4.
+func (v *PQInnerDataTemp) ConstructorID() uint32 {
+	return PQInnerDataTempTypeID
+}
+
+// Encode serializes PQInnerDataTemp to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataTemp) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTempTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.ExpiresIn))
+	return nil
+}
+
+// DecodePQInnerDataTemp deserializes a PQInnerDataTemp from a reader using the TL binary protocol.
+func DecodePQInnerDataTemp(r *Reader) (*PQInnerDataTemp, error) {
+	v := &PQInnerDataTemp{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rExpiresIn, _eExpiresIn := r.ReadInt32()
+	if _eExpiresIn != nil {
+		return nil, _eExpiresIn
+	}
+	v.ExpiresIn = _rExpiresIn
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTempTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataTemp(r)
+	}
+}
+
+// PQInnerDataTempDC represents the TL constructor p_q_inner_data_temp_dc (0x56fddf88).
+//
+// See https://core.telegram.org/constructor/p_q_inner_data_temp_dc for reference.
+type PQInnerDataTempDC struct {
+	PQ          string   `json:"pq,omitempty"`
+	P           string   `json:"p,omitempty"`
+	Q           string   `json:"q,omitempty"`
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	NewNonce    [32]byte `json:"new_nonce,omitempty"`
+	DC          int32    `json:"dc,omitempty"`
+	ExpiresIn   int32    `json:"expires_in,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x56fddf88.
+func (v *PQInnerDataTempDC) ConstructorID() uint32 {
+	return PQInnerDataTempDCTypeID
+}
+
+// Encode serializes PQInnerDataTempDC to a bytes.Buffer using the TL binary protocol.
+func (v *PQInnerDataTempDC) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PQInnerDataTempDCTypeID)
+	WriteString(b, v.PQ)
+	WriteString(b, v.P)
+	WriteString(b, v.Q)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt256(b, v.NewNonce)
+	WriteInt(b, uint32(v.DC))
+	WriteInt(b, uint32(v.ExpiresIn))
+	return nil
+}
+
+// DecodePQInnerDataTempDC deserializes a PQInnerDataTempDC from a reader using the TL binary protocol.
+func DecodePQInnerDataTempDC(r *Reader) (*PQInnerDataTempDC, error) {
+	v := &PQInnerDataTempDC{}
+	_rPQ, _ePQ := r.ReadString()
+	if _ePQ != nil {
+		return nil, _ePQ
+	}
+	v.PQ = _rPQ
+	_rP, _eP := r.ReadString()
+	if _eP != nil {
+		return nil, _eP
+	}
+	v.P = _rP
+	_rQ, _eQ := r.ReadString()
+	if _eQ != nil {
+		return nil, _eQ
+	}
+	v.Q = _rQ
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonce, _eNewNonce := r.ReadInt256()
+	if _eNewNonce != nil {
+		return nil, _eNewNonce
+	}
+	v.NewNonce = _rNewNonce
+	_rDC, _eDC := r.ReadInt32()
+	if _eDC != nil {
+		return nil, _eDC
+	}
+	v.DC = _rDC
+	_rExpiresIn, _eExpiresIn := r.ReadInt32()
+	if _eExpiresIn != nil {
+		return nil, _eExpiresIn
+	}
+	v.ExpiresIn = _rExpiresIn
+	return v, nil
+}
+
+func init() {
+	Registry[PQInnerDataTempDCTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePQInnerDataTempDC(r)
+	}
+}
+
+// ServerDHParamsClass is the interface for TL type ServerDHParams.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the ServerDHParams TL type.
+type ServerDHParamsClass interface {
+	TLObject
+	isServerDHParams()
+}
+
+// ServerDHParamsFailTypeID is the constructor ID for TL type server_DH_params_fail.
+const ServerDHParamsFailTypeID = 0x79cb045d
+
+// ServerDHParamsOkTypeID is the constructor ID for TL type server_DH_params_ok.
+const ServerDHParamsOkTypeID = 0xd0e8075c
+
+// isServerDHParams marks ServerDHParamsFail as implementing the ServerDHParamsClass interface.
+func (*ServerDHParamsFail) isServerDHParams() {}
+
+// isServerDHParams marks ServerDHParamsOk as implementing the ServerDHParamsClass interface.
+func (*ServerDHParamsOk) isServerDHParams() {}
+
+// ServerDHParamsFail represents the TL constructor server_DH_params_fail (0x79cb045d).
+//
+// See https://core.telegram.org/constructor/server_DH_params_fail for reference.
+type ServerDHParamsFail struct {
+	Nonce        [16]byte `json:"nonce,omitempty"`
+	ServerNonce  [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash [16]byte `json:"new_nonce_hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x79cb045d.
+func (v *ServerDHParamsFail) ConstructorID() uint32 {
+	return ServerDHParamsFailTypeID
+}
+
+// Encode serializes ServerDHParamsFail to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHParamsFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHParamsFailTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash)
+	return nil
+}
+
+// DecodeServerDHParamsFail deserializes a ServerDHParamsFail from a reader using the TL binary protocol.
+func DecodeServerDHParamsFail(r *Reader) (*ServerDHParamsFail, error) {
+	v := &ServerDHParamsFail{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash, _eNewNonceHash := r.ReadInt128()
+	if _eNewNonceHash != nil {
+		return nil, _eNewNonceHash
+	}
+	v.NewNonceHash = _rNewNonceHash
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHParamsFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHParamsFail(r)
+	}
+}
+
+// ServerDHParamsOk represents the TL constructor server_DH_params_ok (0xd0e8075c).
+//
+// See https://core.telegram.org/constructor/server_DH_params_ok for reference.
+type ServerDHParamsOk struct {
+	Nonce           [16]byte `json:"nonce,omitempty"`
+	ServerNonce     [16]byte `json:"server_nonce,omitempty"`
+	EncryptedAnswer string   `json:"encrypted_answer,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd0e8075c.
+func (v *ServerDHParamsOk) ConstructorID() uint32 {
+	return ServerDHParamsOkTypeID
+}
+
+// Encode serializes ServerDHParamsOk to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHParamsOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHParamsOkTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteString(b, v.EncryptedAnswer)
+	return nil
+}
+
+// DecodeServerDHParamsOk deserializes a ServerDHParamsOk from a reader using the TL binary protocol.
+func DecodeServerDHParamsOk(r *Reader) (*ServerDHParamsOk, error) {
+	v := &ServerDHParamsOk{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rEncryptedAnswer, _eEncryptedAnswer := r.ReadString()
+	if _eEncryptedAnswer != nil {
+		return nil, _eEncryptedAnswer
+	}
+	v.EncryptedAnswer = _rEncryptedAnswer
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHParamsOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHParamsOk(r)
+	}
+}
+
+// ServerDHInnerDataTypeID is the constructor ID for TL type server_DH_inner_data.
+const ServerDHInnerDataTypeID = 0xb5890dba
+
+// ServerDHInnerData represents the TL constructor server_DH_inner_data (0xb5890dba).
+//
+// See https://core.telegram.org/constructor/server_DH_inner_data for reference.
+type ServerDHInnerData struct {
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	G           int32    `json:"g,omitempty"`
+	DHPrime     string   `json:"dh_prime,omitempty"`
+	GA          string   `json:"ga,omitempty"`
+	ServerTime  int32    `json:"server_time,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb5890dba.
+func (v *ServerDHInnerData) ConstructorID() uint32 {
+	return ServerDHInnerDataTypeID
+}
+
+// Encode serializes ServerDHInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *ServerDHInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ServerDHInnerDataTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt(b, uint32(v.G))
+	WriteString(b, v.DHPrime)
+	WriteString(b, v.GA)
+	WriteInt(b, uint32(v.ServerTime))
+	return nil
+}
+
+// DecodeServerDHInnerData deserializes a ServerDHInnerData from a reader using the TL binary protocol.
+func DecodeServerDHInnerData(r *Reader) (*ServerDHInnerData, error) {
+	v := &ServerDHInnerData{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rG, _eG := r.ReadInt32()
+	if _eG != nil {
+		return nil, _eG
+	}
+	v.G = _rG
+	_rDHPrime, _eDHPrime := r.ReadString()
+	if _eDHPrime != nil {
+		return nil, _eDHPrime
+	}
+	v.DHPrime = _rDHPrime
+	_rGA, _eGA := r.ReadString()
+	if _eGA != nil {
+		return nil, _eGA
+	}
+	v.GA = _rGA
+	_rServerTime, _eServerTime := r.ReadInt32()
+	if _eServerTime != nil {
+		return nil, _eServerTime
+	}
+	v.ServerTime = _rServerTime
+	return v, nil
+}
+
+func init() {
+	Registry[ServerDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeServerDHInnerData(r)
+	}
+}
+
+// ClientDHInnerDataTypeID is the constructor ID for TL type client_DH_inner_data.
+const ClientDHInnerDataTypeID = 0x6643b654
+
+// ClientDHInnerData represents the TL constructor client_DH_inner_data (0x6643b654).
+//
+// See https://core.telegram.org/constructor/client_DH_inner_data for reference.
+type ClientDHInnerData struct {
+	Nonce       [16]byte `json:"nonce,omitempty"`
+	ServerNonce [16]byte `json:"server_nonce,omitempty"`
+	RetryID     int64    `json:"retry_id,omitempty"`
+	GB          string   `json:"gb,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x6643b654.
+func (v *ClientDHInnerData) ConstructorID() uint32 {
+	return ClientDHInnerDataTypeID
+}
+
+// Encode serializes ClientDHInnerData to a bytes.Buffer using the TL binary protocol.
+func (v *ClientDHInnerData) Encode(b *bytes.Buffer) error {
+	WriteInt(b, ClientDHInnerDataTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteLong(b, v.RetryID)
+	WriteString(b, v.GB)
+	return nil
+}
+
+// DecodeClientDHInnerData deserializes a ClientDHInnerData from a reader using the TL binary protocol.
+func DecodeClientDHInnerData(r *Reader) (*ClientDHInnerData, error) {
+	v := &ClientDHInnerData{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rRetryID, _eRetryID := r.ReadInt64()
+	if _eRetryID != nil {
+		return nil, _eRetryID
+	}
+	v.RetryID = _rRetryID
+	_rGB, _eGB := r.ReadString()
+	if _eGB != nil {
+		return nil, _eGB
+	}
+	v.GB = _rGB
+	return v, nil
+}
+
+func init() {
+	Registry[ClientDHInnerDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeClientDHInnerData(r)
+	}
+}
+
+// SetClientDHParamsAnswerClass is the interface for TL type SetClientDHParamsAnswer.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the SetClientDHParamsAnswer TL type.
+type SetClientDHParamsAnswerClass interface {
+	TLObject
+	isSetClientDHParamsAnswer()
+}
+
+// DHGenOkTypeID is the constructor ID for TL type dh_gen_ok.
+const DHGenOkTypeID = 0x3bcbf734
+
+// DHGenRetryTypeID is the constructor ID for TL type dh_gen_retry.
+const DHGenRetryTypeID = 0x46dc1fb9
+
+// DHGenFailTypeID is the constructor ID for TL type dh_gen_fail.
+const DHGenFailTypeID = 0xa69dae02
+
+// isSetClientDHParamsAnswer marks DHGenOk as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenOk) isSetClientDHParamsAnswer() {}
+
+// isSetClientDHParamsAnswer marks DHGenRetry as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenRetry) isSetClientDHParamsAnswer() {}
+
+// isSetClientDHParamsAnswer marks DHGenFail as implementing the SetClientDHParamsAnswerClass interface.
+func (*DHGenFail) isSetClientDHParamsAnswer() {}
+
+// DHGenOk represents the TL constructor dh_gen_ok (0x3bcbf734).
+//
+// See https://core.telegram.org/constructor/dh_gen_ok for reference.
+type DHGenOk struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash1 [16]byte `json:"new_nonce_hash1,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3bcbf734.
+func (v *DHGenOk) ConstructorID() uint32 {
+	return DHGenOkTypeID
+}
+
+// Encode serializes DHGenOk to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenOkTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash1)
+	return nil
+}
+
+// DecodeDHGenOk deserializes a DHGenOk from a reader using the TL binary protocol.
+func DecodeDHGenOk(r *Reader) (*DHGenOk, error) {
+	v := &DHGenOk{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash1, _eNewNonceHash1 := r.ReadInt128()
+	if _eNewNonceHash1 != nil {
+		return nil, _eNewNonceHash1
+	}
+	v.NewNonceHash1 = _rNewNonceHash1
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenOk(r)
+	}
+}
+
+// DHGenRetry represents the TL constructor dh_gen_retry (0x46dc1fb9).
+//
+// See https://core.telegram.org/constructor/dh_gen_retry for reference.
+type DHGenRetry struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash2 [16]byte `json:"new_nonce_hash2,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x46dc1fb9.
+func (v *DHGenRetry) ConstructorID() uint32 {
+	return DHGenRetryTypeID
+}
+
+// Encode serializes DHGenRetry to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenRetry) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenRetryTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash2)
+	return nil
+}
+
+// DecodeDHGenRetry deserializes a DHGenRetry from a reader using the TL binary protocol.
+func DecodeDHGenRetry(r *Reader) (*DHGenRetry, error) {
+	v := &DHGenRetry{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash2, _eNewNonceHash2 := r.ReadInt128()
+	if _eNewNonceHash2 != nil {
+		return nil, _eNewNonceHash2
+	}
+	v.NewNonceHash2 = _rNewNonceHash2
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenRetryTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenRetry(r)
+	}
+}
+
+// DHGenFail represents the TL constructor dh_gen_fail (0xa69dae02).
+//
+// See https://core.telegram.org/constructor/dh_gen_fail for reference.
+type DHGenFail struct {
+	Nonce         [16]byte `json:"nonce,omitempty"`
+	ServerNonce   [16]byte `json:"server_nonce,omitempty"`
+	NewNonceHash3 [16]byte `json:"new_nonce_hash3,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa69dae02.
+func (v *DHGenFail) ConstructorID() uint32 {
+	return DHGenFailTypeID
+}
+
+// Encode serializes DHGenFail to a bytes.Buffer using the TL binary protocol.
+func (v *DHGenFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DHGenFailTypeID)
+	WriteInt128(b, v.Nonce)
+	WriteInt128(b, v.ServerNonce)
+	WriteInt128(b, v.NewNonceHash3)
+	return nil
+}
+
+// DecodeDHGenFail deserializes a DHGenFail from a reader using the TL binary protocol.
+func DecodeDHGenFail(r *Reader) (*DHGenFail, error) {
+	v := &DHGenFail{}
+	_rNonce, _eNonce := r.ReadInt128()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rServerNonce, _eServerNonce := r.ReadInt128()
+	if _eServerNonce != nil {
+		return nil, _eServerNonce
+	}
+	v.ServerNonce = _rServerNonce
+	_rNewNonceHash3, _eNewNonceHash3 := r.ReadInt128()
+	if _eNewNonceHash3 != nil {
+		return nil, _eNewNonceHash3
+	}
+	v.NewNonceHash3 = _rNewNonceHash3
+	return v, nil
+}
+
+func init() {
+	Registry[DHGenFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDHGenFail(r)
+	}
+}
+
+// MsgsAckTypeID is the constructor ID for TL type msgs_ack.
+const MsgsAckTypeID = 0x62d6b459
+
+// MsgsAck represents the TL constructor msgs_ack (0x62d6b459).
+//
+// See https://core.telegram.org/constructor/msgs_ack for reference.
+type MsgsAck struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x62d6b459.
+func (v *MsgsAck) ConstructorID() uint32 {
+	return MsgsAckTypeID
+}
+
+// Encode serializes MsgsAck to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsAck) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsAckTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgsAck deserializes a MsgsAck from a reader using the TL binary protocol.
+func DecodeMsgsAck(r *Reader) (*MsgsAck, error) {
+	v := &MsgsAck{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsAckTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsAck(r)
+	}
+}
+
+// BadMsgNotificationClass is the interface for TL type BadMsgNotification.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the BadMsgNotification TL type.
+type BadMsgNotificationClass interface {
+	TLObject
+	isBadMsgNotification()
+}
+
+// BadMsgNotificationTypeID is the constructor ID for TL type bad_msg_notification.
+const BadMsgNotificationTypeID = 0xa7eff811
+
+// BadServerSaltTypeID is the constructor ID for TL type bad_server_salt.
+const BadServerSaltTypeID = 0xedab447b
+
+// isBadMsgNotification marks BadMsgNotification as implementing the BadMsgNotificationClass interface.
+func (*BadMsgNotification) isBadMsgNotification() {}
+
+// isBadMsgNotification marks BadServerSalt as implementing the BadMsgNotificationClass interface.
+func (*BadServerSalt) isBadMsgNotification() {}
+
+// BadMsgNotification represents the TL constructor bad_msg_notification (0xa7eff811).
+//
+// See https://core.telegram.org/constructor/bad_msg_notification for reference.
+type BadMsgNotification struct {
+	BadMsgID    int64 `json:"bad_msg_id,omitempty"`
+	BadMsgSeqno int32 `json:"bad_msg_seqno,omitempty"`
+	ErrorCode   int32 `json:"error_code,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa7eff811.
+func (v *BadMsgNotification) ConstructorID() uint32 {
+	return BadMsgNotificationTypeID
+}
+
+// Encode serializes BadMsgNotification to a bytes.Buffer using the TL binary protocol.
+func (v *BadMsgNotification) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BadMsgNotificationTypeID)
+	WriteLong(b, v.BadMsgID)
+	WriteInt(b, uint32(v.BadMsgSeqno))
+	WriteInt(b, uint32(v.ErrorCode))
+	return nil
+}
+
+// DecodeBadMsgNotification deserializes a BadMsgNotification from a reader using the TL binary protocol.
+func DecodeBadMsgNotification(r *Reader) (*BadMsgNotification, error) {
+	v := &BadMsgNotification{}
+	_rBadMsgID, _eBadMsgID := r.ReadInt64()
+	if _eBadMsgID != nil {
+		return nil, _eBadMsgID
+	}
+	v.BadMsgID = _rBadMsgID
+	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
+	if _eBadMsgSeqno != nil {
+		return nil, _eBadMsgSeqno
+	}
+	v.BadMsgSeqno = _rBadMsgSeqno
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	return v, nil
+}
+
+func init() {
+	Registry[BadMsgNotificationTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBadMsgNotification(r)
+	}
+}
+
+// BadServerSalt represents the TL constructor bad_server_salt (0xedab447b).
+//
+// See https://core.telegram.org/constructor/bad_server_salt for reference.
+type BadServerSalt struct {
+	BadMsgID      int64 `json:"bad_msg_id,omitempty"`
+	BadMsgSeqno   int32 `json:"bad_msg_seqno,omitempty"`
+	ErrorCode     int32 `json:"error_code,omitempty"`
+	NewServerSalt int64 `json:"new_server_salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xedab447b.
+func (v *BadServerSalt) ConstructorID() uint32 {
+	return BadServerSaltTypeID
+}
+
+// Encode serializes BadServerSalt to a bytes.Buffer using the TL binary protocol.
+func (v *BadServerSalt) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BadServerSaltTypeID)
+	WriteLong(b, v.BadMsgID)
+	WriteInt(b, uint32(v.BadMsgSeqno))
+	WriteInt(b, uint32(v.ErrorCode))
+	WriteLong(b, v.NewServerSalt)
+	return nil
+}
+
+// DecodeBadServerSalt deserializes a BadServerSalt from a reader using the TL binary protocol.
+func DecodeBadServerSalt(r *Reader) (*BadServerSalt, error) {
+	v := &BadServerSalt{}
+	_rBadMsgID, _eBadMsgID := r.ReadInt64()
+	if _eBadMsgID != nil {
+		return nil, _eBadMsgID
+	}
+	v.BadMsgID = _rBadMsgID
+	_rBadMsgSeqno, _eBadMsgSeqno := r.ReadInt32()
+	if _eBadMsgSeqno != nil {
+		return nil, _eBadMsgSeqno
+	}
+	v.BadMsgSeqno = _rBadMsgSeqno
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	_rNewServerSalt, _eNewServerSalt := r.ReadInt64()
+	if _eNewServerSalt != nil {
+		return nil, _eNewServerSalt
+	}
+	v.NewServerSalt = _rNewServerSalt
+	return v, nil
+}
+
+func init() {
+	Registry[BadServerSaltTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBadServerSalt(r)
+	}
+}
+
+// MsgsStateReqTypeID is the constructor ID for TL type msgs_state_req.
+const MsgsStateReqTypeID = 0xda69fb52
+
+// MsgsStateReq represents the TL constructor msgs_state_req (0xda69fb52).
+//
+// See https://core.telegram.org/constructor/msgs_state_req for reference.
+type MsgsStateReq struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xda69fb52.
+func (v *MsgsStateReq) ConstructorID() uint32 {
+	return MsgsStateReqTypeID
+}
+
+// Encode serializes MsgsStateReq to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsStateReq) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsStateReqTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgsStateReq deserializes a MsgsStateReq from a reader using the TL binary protocol.
+func DecodeMsgsStateReq(r *Reader) (*MsgsStateReq, error) {
+	v := &MsgsStateReq{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsStateReqTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsStateReq(r)
+	}
+}
+
+// MsgsStateInfoTypeID is the constructor ID for TL type msgs_state_info.
+const MsgsStateInfoTypeID = 0x04deb57d
+
+// MsgsStateInfo represents the TL constructor msgs_state_info (0x04deb57d).
+//
+// See https://core.telegram.org/constructor/msgs_state_info for reference.
+type MsgsStateInfo struct {
+	ReqMsgID int64  `json:"req_msg_id,omitempty"`
+	Info     string `json:"info,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x04deb57d.
+func (v *MsgsStateInfo) ConstructorID() uint32 {
+	return MsgsStateInfoTypeID
+}
+
+// Encode serializes MsgsStateInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsStateInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsStateInfoTypeID)
+	WriteLong(b, v.ReqMsgID)
+	WriteString(b, v.Info)
+	return nil
+}
+
+// DecodeMsgsStateInfo deserializes a MsgsStateInfo from a reader using the TL binary protocol.
+func DecodeMsgsStateInfo(r *Reader) (*MsgsStateInfo, error) {
+	v := &MsgsStateInfo{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_rInfo, _eInfo := r.ReadString()
+	if _eInfo != nil {
+		return nil, _eInfo
+	}
+	v.Info = _rInfo
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsStateInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsStateInfo(r)
+	}
+}
+
+// MsgsAllInfoTypeID is the constructor ID for TL type msgs_all_info.
+const MsgsAllInfoTypeID = 0x8cc0d131
+
+// MsgsAllInfo represents the TL constructor msgs_all_info (0x8cc0d131).
+//
+// See https://core.telegram.org/constructor/msgs_all_info for reference.
+type MsgsAllInfo struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+	Info   string  `json:"info,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x8cc0d131.
+func (v *MsgsAllInfo) ConstructorID() uint32 {
+	return MsgsAllInfoTypeID
+}
+
+// Encode serializes MsgsAllInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgsAllInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgsAllInfoTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	WriteString(b, v.Info)
+	return nil
+}
+
+// DecodeMsgsAllInfo deserializes a MsgsAllInfo from a reader using the TL binary protocol.
+func DecodeMsgsAllInfo(r *Reader) (*MsgsAllInfo, error) {
+	v := &MsgsAllInfo{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	_rInfo, _eInfo := r.ReadString()
+	if _eInfo != nil {
+		return nil, _eInfo
+	}
+	v.Info = _rInfo
+	return v, nil
+}
+
+func init() {
+	Registry[MsgsAllInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgsAllInfo(r)
+	}
+}
+
+// MsgDetailedInfoClass is the interface for TL type MsgDetailedInfo.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the MsgDetailedInfo TL type.
+type MsgDetailedInfoClass interface {
+	TLObject
+	isMsgDetailedInfo()
+}
+
+// MsgDetailedInfoTypeID is the constructor ID for TL type msg_detailed_info.
+const MsgDetailedInfoTypeID = 0x276d3ec6
+
+// MsgNewDetailedInfoTypeID is the constructor ID for TL type msg_new_detailed_info.
+const MsgNewDetailedInfoTypeID = 0x809db6df
+
+// isMsgDetailedInfo marks MsgDetailedInfo as implementing the MsgDetailedInfoClass interface.
+func (*MsgDetailedInfo) isMsgDetailedInfo() {}
+
+// isMsgDetailedInfo marks MsgNewDetailedInfo as implementing the MsgDetailedInfoClass interface.
+func (*MsgNewDetailedInfo) isMsgDetailedInfo() {}
+
+// MsgDetailedInfo represents the TL constructor msg_detailed_info (0x276d3ec6).
+//
+// See https://core.telegram.org/constructor/msg_detailed_info for reference.
+type MsgDetailedInfo struct {
+	MsgID       int64 `json:"msg_id,omitempty"`
+	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
+	Bytes       int32 `json:"bytes,omitempty"`
+	Status      int32 `json:"status,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x276d3ec6.
+func (v *MsgDetailedInfo) ConstructorID() uint32 {
+	return MsgDetailedInfoTypeID
+}
+
+// Encode serializes MsgDetailedInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgDetailedInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgDetailedInfoTypeID)
+	WriteLong(b, v.MsgID)
+	WriteLong(b, v.AnswerMsgID)
+	WriteInt(b, uint32(v.Bytes))
+	WriteInt(b, uint32(v.Status))
+	return nil
+}
+
+// DecodeMsgDetailedInfo deserializes a MsgDetailedInfo from a reader using the TL binary protocol.
+func DecodeMsgDetailedInfo(r *Reader) (*MsgDetailedInfo, error) {
+	v := &MsgDetailedInfo{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
+	if _eAnswerMsgID != nil {
+		return nil, _eAnswerMsgID
+	}
+	v.AnswerMsgID = _rAnswerMsgID
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	_rStatus, _eStatus := r.ReadInt32()
+	if _eStatus != nil {
+		return nil, _eStatus
+	}
+	v.Status = _rStatus
+	return v, nil
+}
+
+func init() {
+	Registry[MsgDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgDetailedInfo(r)
+	}
+}
+
+// MsgNewDetailedInfo represents the TL constructor msg_new_detailed_info (0x809db6df).
+//
+// See https://core.telegram.org/constructor/msg_new_detailed_info for reference.
+type MsgNewDetailedInfo struct {
+	AnswerMsgID int64 `json:"answer_msg_id,omitempty"`
+	Bytes       int32 `json:"bytes,omitempty"`
+	Status      int32 `json:"status,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x809db6df.
+func (v *MsgNewDetailedInfo) ConstructorID() uint32 {
+	return MsgNewDetailedInfoTypeID
+}
+
+// Encode serializes MsgNewDetailedInfo to a bytes.Buffer using the TL binary protocol.
+func (v *MsgNewDetailedInfo) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgNewDetailedInfoTypeID)
+	WriteLong(b, v.AnswerMsgID)
+	WriteInt(b, uint32(v.Bytes))
+	WriteInt(b, uint32(v.Status))
+	return nil
+}
+
+// DecodeMsgNewDetailedInfo deserializes a MsgNewDetailedInfo from a reader using the TL binary protocol.
+func DecodeMsgNewDetailedInfo(r *Reader) (*MsgNewDetailedInfo, error) {
+	v := &MsgNewDetailedInfo{}
+	_rAnswerMsgID, _eAnswerMsgID := r.ReadInt64()
+	if _eAnswerMsgID != nil {
+		return nil, _eAnswerMsgID
+	}
+	v.AnswerMsgID = _rAnswerMsgID
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	_rStatus, _eStatus := r.ReadInt32()
+	if _eStatus != nil {
+		return nil, _eStatus
+	}
+	v.Status = _rStatus
+	return v, nil
+}
+
+func init() {
+	Registry[MsgNewDetailedInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgNewDetailedInfo(r)
+	}
+}
+
+// MsgResendReqTypeID is the constructor ID for TL type msg_resend_req.
+const MsgResendReqTypeID = 0x7d861a08
+
+// MsgResendReq represents the TL constructor msg_resend_req (0x7d861a08).
+//
+// See https://core.telegram.org/constructor/msg_resend_req for reference.
+type MsgResendReq struct {
+	MsgIds []int64 `json:"msg_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7d861a08.
+func (v *MsgResendReq) ConstructorID() uint32 {
+	return MsgResendReqTypeID
+}
+
+// Encode serializes MsgResendReq to a bytes.Buffer using the TL binary protocol.
+func (v *MsgResendReq) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MsgResendReqTypeID)
+	WriteVectorLong(b, v.MsgIds)
+	return nil
+}
+
+// DecodeMsgResendReq deserializes a MsgResendReq from a reader using the TL binary protocol.
+func DecodeMsgResendReq(r *Reader) (*MsgResendReq, error) {
+	v := &MsgResendReq{}
+	_vvMsgIds, _veMsgIds := r.ReadVectorLong()
+	if _veMsgIds != nil {
+		return nil, _veMsgIds
+	}
+	v.MsgIds = _vvMsgIds
+	return v, nil
+}
+
+func init() {
+	Registry[MsgResendReqTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMsgResendReq(r)
+	}
+}
+
+// RPCResultTypeID is the constructor ID for TL type rpc_result.
+const RPCResultTypeID = 0xf35c6d01
+
+// RPCResult represents the TL constructor rpc_result (0xf35c6d01).
+//
+// See https://core.telegram.org/constructor/rpc_result for reference.
+type RPCResult struct {
+	ReqMsgID int64    `json:"req_msg_id,omitempty"`
+	Result   TLObject `json:"result,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf35c6d01.
+func (v *RPCResult) ConstructorID() uint32 {
+	return RPCResultTypeID
+}
+
+// Encode serializes RPCResult to a bytes.Buffer using the TL binary protocol.
+func (v *RPCResult) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCResultTypeID)
+	WriteLong(b, v.ReqMsgID)
+	EncodeTLObject(b, v.Result)
+	return nil
+}
+
+// DecodeRPCResult deserializes a RPCResult from a reader using the TL binary protocol.
+func DecodeRPCResult(r *Reader) (*RPCResult, error) {
+	v := &RPCResult{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_objResult, _errResult := ReadTLObject(r)
+	if _errResult != nil {
+		return nil, _errResult
+	}
+	v.Result = _objResult.(TLObject)
+	return v, nil
+}
+
+func init() {
+	Registry[RPCResultTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCResult(r)
+	}
+}
+
+// RPCErrorTypeID is the constructor ID for TL type rpc_error.
+const RPCErrorTypeID = 0x2144ca19
+
+// RPCError represents the TL constructor rpc_error (0x2144ca19).
+//
+// See https://core.telegram.org/constructor/rpc_error for reference.
+type RPCError struct {
+	ErrorCode    int32  `json:"error_code,omitempty"`
+	ErrorMessage string `json:"error_message,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x2144ca19.
+func (v *RPCError) ConstructorID() uint32 {
+	return RPCErrorTypeID
+}
+
+// Encode serializes RPCError to a bytes.Buffer using the TL binary protocol.
+func (v *RPCError) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCErrorTypeID)
+	WriteInt(b, uint32(v.ErrorCode))
+	WriteString(b, v.ErrorMessage)
+	return nil
+}
+
+// DecodeRPCError deserializes a RPCError from a reader using the TL binary protocol.
+func DecodeRPCError(r *Reader) (*RPCError, error) {
+	v := &RPCError{}
+	_rErrorCode, _eErrorCode := r.ReadInt32()
+	if _eErrorCode != nil {
+		return nil, _eErrorCode
+	}
+	v.ErrorCode = _rErrorCode
+	_rErrorMessage, _eErrorMessage := r.ReadString()
+	if _eErrorMessage != nil {
+		return nil, _eErrorMessage
+	}
+	v.ErrorMessage = _rErrorMessage
+	return v, nil
+}
+
+func init() {
+	Registry[RPCErrorTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCError(r)
+	}
+}
+
+// RPCDropAnswerClass is the interface for TL type RPCDropAnswer.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the RPCDropAnswer TL type.
+type RPCDropAnswerClass interface {
+	TLObject
+	isRPCDropAnswer()
+}
+
+// RPCAnswerUnknownTypeID is the constructor ID for TL type rpc_answer_unknown.
+const RPCAnswerUnknownTypeID = 0x5e2ad36e
+
+// RPCAnswerDroppedRunningTypeID is the constructor ID for TL type rpc_answer_dropped_running.
+const RPCAnswerDroppedRunningTypeID = 0xcd78e586
+
+// RPCAnswerDroppedTypeID is the constructor ID for TL type rpc_answer_dropped.
+const RPCAnswerDroppedTypeID = 0xa43ad8b7
+
+// isRPCDropAnswer marks RPCAnswerUnknown as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerUnknown) isRPCDropAnswer() {}
+
+// isRPCDropAnswer marks RPCAnswerDroppedRunning as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerDroppedRunning) isRPCDropAnswer() {}
+
+// isRPCDropAnswer marks RPCAnswerDropped as implementing the RPCDropAnswerClass interface.
+func (*RPCAnswerDropped) isRPCDropAnswer() {}
+
+// RPCAnswerUnknown represents the TL constructor rpc_answer_unknown (0x5e2ad36e).
+//
+// See https://core.telegram.org/constructor/rpc_answer_unknown for reference.
+type RPCAnswerUnknown struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x5e2ad36e.
+func (v *RPCAnswerUnknown) ConstructorID() uint32 {
+	return RPCAnswerUnknownTypeID
+}
+
+// Encode serializes RPCAnswerUnknown to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerUnknown) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerUnknownTypeID)
+	return nil
+}
+
+// DecodeRPCAnswerUnknown deserializes a RPCAnswerUnknown from a reader using the TL binary protocol.
+func DecodeRPCAnswerUnknown(r *Reader) (*RPCAnswerUnknown, error) {
+	v := &RPCAnswerUnknown{}
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerUnknownTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerUnknown(r)
+	}
+}
+
+// RPCAnswerDroppedRunning represents the TL constructor rpc_answer_dropped_running (0xcd78e586).
+//
+// See https://core.telegram.org/constructor/rpc_answer_dropped_running for reference.
+type RPCAnswerDroppedRunning struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xcd78e586.
+func (v *RPCAnswerDroppedRunning) ConstructorID() uint32 {
+	return RPCAnswerDroppedRunningTypeID
+}
+
+// Encode serializes RPCAnswerDroppedRunning to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerDroppedRunning) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerDroppedRunningTypeID)
+	return nil
+}
+
+// DecodeRPCAnswerDroppedRunning deserializes a RPCAnswerDroppedRunning from a reader using the TL binary protocol.
+func DecodeRPCAnswerDroppedRunning(r *Reader) (*RPCAnswerDroppedRunning, error) {
+	v := &RPCAnswerDroppedRunning{}
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerDroppedRunningTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerDroppedRunning(r)
+	}
+}
+
+// RPCAnswerDropped represents the TL constructor rpc_answer_dropped (0xa43ad8b7).
+//
+// See https://core.telegram.org/constructor/rpc_answer_dropped for reference.
+type RPCAnswerDropped struct {
+	MsgID int64 `json:"msg_id,omitempty"`
+	SeqNo int32 `json:"seq_no,omitempty"`
+	Bytes int32 `json:"bytes,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa43ad8b7.
+func (v *RPCAnswerDropped) ConstructorID() uint32 {
+	return RPCAnswerDroppedTypeID
+}
+
+// Encode serializes RPCAnswerDropped to a bytes.Buffer using the TL binary protocol.
+func (v *RPCAnswerDropped) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RPCAnswerDroppedTypeID)
+	WriteLong(b, v.MsgID)
+	WriteInt(b, uint32(v.SeqNo))
+	WriteInt(b, uint32(v.Bytes))
+	return nil
+}
+
+// DecodeRPCAnswerDropped deserializes a RPCAnswerDropped from a reader using the TL binary protocol.
+func DecodeRPCAnswerDropped(r *Reader) (*RPCAnswerDropped, error) {
+	v := &RPCAnswerDropped{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rSeqNo, _eSeqNo := r.ReadInt32()
+	if _eSeqNo != nil {
+		return nil, _eSeqNo
+	}
+	v.SeqNo = _rSeqNo
+	_rBytes, _eBytes := r.ReadInt32()
+	if _eBytes != nil {
+		return nil, _eBytes
+	}
+	v.Bytes = _rBytes
+	return v, nil
+}
+
+func init() {
+	Registry[RPCAnswerDroppedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRPCAnswerDropped(r)
+	}
+}
+
+// FutureSaltTypeID is the constructor ID for TL type future_salt.
+const FutureSaltTypeID = 0x0949d9dc
+
+// FutureSalt represents the TL constructor future_salt (0x0949d9dc).
+//
+// See https://core.telegram.org/constructor/future_salt for reference.
+type FutureSalt struct {
+	ValidSince int32 `json:"valid_since,omitempty"`
+	ValidUntil int32 `json:"valid_until,omitempty"`
+	Salt       int64 `json:"salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x0949d9dc.
+func (v *FutureSalt) ConstructorID() uint32 {
+	return FutureSaltTypeID
+}
+
+// Encode serializes FutureSalt to a bytes.Buffer using the TL binary protocol.
+func (v *FutureSalt) Encode(b *bytes.Buffer) error {
+	WriteInt(b, FutureSaltTypeID)
+	WriteInt(b, uint32(v.ValidSince))
+	WriteInt(b, uint32(v.ValidUntil))
+	WriteLong(b, v.Salt)
+	return nil
+}
+
+// DecodeFutureSalt deserializes a FutureSalt from a reader using the TL binary protocol.
+func DecodeFutureSalt(r *Reader) (*FutureSalt, error) {
+	v := &FutureSalt{}
+	_rValidSince, _eValidSince := r.ReadInt32()
+	if _eValidSince != nil {
+		return nil, _eValidSince
+	}
+	v.ValidSince = _rValidSince
+	_rValidUntil, _eValidUntil := r.ReadInt32()
+	if _eValidUntil != nil {
+		return nil, _eValidUntil
+	}
+	v.ValidUntil = _rValidUntil
+	_rSalt, _eSalt := r.ReadInt64()
+	if _eSalt != nil {
+		return nil, _eSalt
+	}
+	v.Salt = _rSalt
+	return v, nil
+}
+
+func init() {
+	Registry[FutureSaltTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeFutureSalt(r)
+	}
+}
+
+// FutureSaltsTypeID is the constructor ID for TL type future_salts.
+const FutureSaltsTypeID = 0xae500895
+
+// FutureSalts represents the TL constructor future_salts (0xae500895).
+//
+// See https://core.telegram.org/constructor/future_salts for reference.
+type FutureSalts struct {
+	ReqMsgID int64         `json:"req_msg_id,omitempty"`
+	Now      int32         `json:"now,omitempty"`
+	Salts    []*FutureSalt `json:"salts,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xae500895.
+func (v *FutureSalts) ConstructorID() uint32 {
+	return FutureSaltsTypeID
+}
+
+// Encode serializes FutureSalts to a bytes.Buffer using the TL binary protocol.
+func (v *FutureSalts) Encode(b *bytes.Buffer) error {
+	WriteInt(b, FutureSaltsTypeID)
+	WriteLong(b, v.ReqMsgID)
+	WriteInt(b, uint32(v.Now))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Salts)))
+	for _, _item := range v.Salts {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeFutureSalts deserializes a FutureSalts from a reader using the TL binary protocol.
+func DecodeFutureSalts(r *Reader) (*FutureSalts, error) {
+	v := &FutureSalts{}
+	_rReqMsgID, _eReqMsgID := r.ReadInt64()
+	if _eReqMsgID != nil {
+		return nil, _eReqMsgID
+	}
+	v.ReqMsgID = _rReqMsgID
+	_rNow, _eNow := r.ReadInt32()
+	if _eNow != nil {
+		return nil, _eNow
+	}
+	v.Now = _rNow
+	_vhdrSalts, _ehdrSalts := r.ReadUint32()
+	if _ehdrSalts != nil {
+		return nil, _ehdrSalts
+	}
+	_cntSalts, _ecntSalts := r.ReadUint32()
+	if _ecntSalts != nil {
+		return nil, _ecntSalts
+	}
+	if _errSalts := checkVectorCount(_cntSalts); _errSalts != nil {
+		return nil, _errSalts
+	}
+	v.Salts = make([]*FutureSalt, _cntSalts)
+	for _iSalts := range v.Salts {
+		_objSalts, _errSalts := ReadTLObject(r)
+		if _errSalts != nil {
+			return nil, _errSalts
+		}
+		v.Salts[_iSalts] = _objSalts.(*FutureSalt)
+	}
+	_ = _vhdrSalts
+	return v, nil
+}
+
+func init() {
+	Registry[FutureSaltsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeFutureSalts(r)
+	}
+}
+
+// PongTypeID is the constructor ID for TL type pong.
+const PongTypeID = 0x347773c5
+
+// Pong represents the TL constructor pong (0x347773c5).
+//
+// See https://core.telegram.org/constructor/pong for reference.
+type Pong struct {
+	MsgID  int64 `json:"msg_id,omitempty"`
+	PingID int64 `json:"ping_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x347773c5.
+func (v *Pong) ConstructorID() uint32 {
+	return PongTypeID
+}
+
+// Encode serializes Pong to a bytes.Buffer using the TL binary protocol.
+func (v *Pong) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PongTypeID)
+	WriteLong(b, v.MsgID)
+	WriteLong(b, v.PingID)
+	return nil
+}
+
+// DecodePong deserializes a Pong from a reader using the TL binary protocol.
+func DecodePong(r *Reader) (*Pong, error) {
+	v := &Pong{}
+	_rMsgID, _eMsgID := r.ReadInt64()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rPingID, _ePingID := r.ReadInt64()
+	if _ePingID != nil {
+		return nil, _ePingID
+	}
+	v.PingID = _rPingID
+	return v, nil
+}
+
+func init() {
+	Registry[PongTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePong(r)
+	}
+}
+
+// DestroySessionResClass is the interface for TL type DestroySessionRes.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the DestroySessionRes TL type.
+type DestroySessionResClass interface {
+	TLObject
+	isDestroySessionRes()
+}
+
+// DestroySessionOkTypeID is the constructor ID for TL type destroy_session_ok.
+const DestroySessionOkTypeID = 0xe22045fc
+
+// DestroySessionNoneTypeID is the constructor ID for TL type destroy_session_none.
+const DestroySessionNoneTypeID = 0x62d350c9
+
+// isDestroySessionRes marks DestroySessionOk as implementing the DestroySessionResClass interface.
+func (*DestroySessionOk) isDestroySessionRes() {}
+
+// isDestroySessionRes marks DestroySessionNone as implementing the DestroySessionResClass interface.
+func (*DestroySessionNone) isDestroySessionRes() {}
+
+// DestroySessionOk represents the TL constructor destroy_session_ok (0xe22045fc).
+//
+// See https://core.telegram.org/constructor/destroy_session_ok for reference.
+type DestroySessionOk struct {
+	SessionID int64 `json:"session_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xe22045fc.
+func (v *DestroySessionOk) ConstructorID() uint32 {
+	return DestroySessionOkTypeID
+}
+
+// Encode serializes DestroySessionOk to a bytes.Buffer using the TL binary protocol.
+func (v *DestroySessionOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroySessionOkTypeID)
+	WriteLong(b, v.SessionID)
+	return nil
+}
+
+// DecodeDestroySessionOk deserializes a DestroySessionOk from a reader using the TL binary protocol.
+func DecodeDestroySessionOk(r *Reader) (*DestroySessionOk, error) {
+	v := &DestroySessionOk{}
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	return v, nil
+}
+
+func init() {
+	Registry[DestroySessionOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroySessionOk(r)
+	}
+}
+
+// DestroySessionNone represents the TL constructor destroy_session_none (0x62d350c9).
+//
+// See https://core.telegram.org/constructor/destroy_session_none for reference.
+type DestroySessionNone struct {
+	SessionID int64 `json:"session_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x62d350c9.
+func (v *DestroySessionNone) ConstructorID() uint32 {
+	return DestroySessionNoneTypeID
+}
+
+// Encode serializes DestroySessionNone to a bytes.Buffer using the TL binary protocol.
+func (v *DestroySessionNone) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroySessionNoneTypeID)
+	WriteLong(b, v.SessionID)
+	return nil
+}
+
+// DecodeDestroySessionNone deserializes a DestroySessionNone from a reader using the TL binary protocol.
+func DecodeDestroySessionNone(r *Reader) (*DestroySessionNone, error) {
+	v := &DestroySessionNone{}
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	return v, nil
+}
+
+func init() {
+	Registry[DestroySessionNoneTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroySessionNone(r)
+	}
+}
+
+// NewSessionCreatedTypeID is the constructor ID for TL type new_session_created.
+const NewSessionCreatedTypeID = 0x9ec20908
+
+// NewSessionCreated represents the TL constructor new_session_created (0x9ec20908).
+//
+// See https://core.telegram.org/constructor/new_session_created for reference.
+type NewSessionCreated struct {
+	FirstMsgID int64 `json:"first_msg_id,omitempty"`
+	UniqueID   int64 `json:"unique_id,omitempty"`
+	ServerSalt int64 `json:"server_salt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9ec20908.
+func (v *NewSessionCreated) ConstructorID() uint32 {
+	return NewSessionCreatedTypeID
+}
+
+// Encode serializes NewSessionCreated to a bytes.Buffer using the TL binary protocol.
+func (v *NewSessionCreated) Encode(b *bytes.Buffer) error {
+	WriteInt(b, NewSessionCreatedTypeID)
+	WriteLong(b, v.FirstMsgID)
+	WriteLong(b, v.UniqueID)
+	WriteLong(b, v.ServerSalt)
+	return nil
+}
+
+// DecodeNewSessionCreated deserializes a NewSessionCreated from a reader using the TL binary protocol.
+func DecodeNewSessionCreated(r *Reader) (*NewSessionCreated, error) {
+	v := &NewSessionCreated{}
+	_rFirstMsgID, _eFirstMsgID := r.ReadInt64()
+	if _eFirstMsgID != nil {
+		return nil, _eFirstMsgID
+	}
+	v.FirstMsgID = _rFirstMsgID
+	_rUniqueID, _eUniqueID := r.ReadInt64()
+	if _eUniqueID != nil {
+		return nil, _eUniqueID
+	}
+	v.UniqueID = _rUniqueID
+	_rServerSalt, _eServerSalt := r.ReadInt64()
+	if _eServerSalt != nil {
+		return nil, _eServerSalt
+	}
+	v.ServerSalt = _rServerSalt
+	return v, nil
+}
+
+func init() {
+	Registry[NewSessionCreatedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeNewSessionCreated(r)
+	}
+}
+
+// HTTPWaitTypeID is the constructor ID for TL type http_wait.
+const HTTPWaitTypeID = 0x9299359f
+
+// HTTPWait represents the TL constructor http_wait (0x9299359f).
+//
+// See https://core.telegram.org/constructor/http_wait for reference.
+type HTTPWait struct {
+	MaxDelay  int32 `json:"max_delay,omitempty"`
+	WaitAfter int32 `json:"wait_after,omitempty"`
+	MaxWait   int32 `json:"max_wait,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9299359f.
+func (v *HTTPWait) ConstructorID() uint32 {
+	return HTTPWaitTypeID
+}
+
+// Encode serializes HTTPWait to a bytes.Buffer using the TL binary protocol.
+func (v *HTTPWait) Encode(b *bytes.Buffer) error {
+	WriteInt(b, HTTPWaitTypeID)
+	WriteInt(b, uint32(v.MaxDelay))
+	WriteInt(b, uint32(v.WaitAfter))
+	WriteInt(b, uint32(v.MaxWait))
+	return nil
+}
+
+// DecodeHTTPWait deserializes a HTTPWait from a reader using the TL binary protocol.
+func DecodeHTTPWait(r *Reader) (*HTTPWait, error) {
+	v := &HTTPWait{}
+	_rMaxDelay, _eMaxDelay := r.ReadInt32()
+	if _eMaxDelay != nil {
+		return nil, _eMaxDelay
+	}
+	v.MaxDelay = _rMaxDelay
+	_rWaitAfter, _eWaitAfter := r.ReadInt32()
+	if _eWaitAfter != nil {
+		return nil, _eWaitAfter
+	}
+	v.WaitAfter = _rWaitAfter
+	_rMaxWait, _eMaxWait := r.ReadInt32()
+	if _eMaxWait != nil {
+		return nil, _eMaxWait
+	}
+	v.MaxWait = _rMaxWait
+	return v, nil
+}
+
+func init() {
+	Registry[HTTPWaitTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeHTTPWait(r)
+	}
+}
+
+// IpPortClass is the interface for TL type IpPort.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the IpPort TL type.
+type IpPortClass interface {
+	TLObject
+	isIpPort()
+}
+
+// IpPortTypeID is the constructor ID for TL type ipPort.
+const IpPortTypeID = 0xd433ad73
+
+// IpPortSecretTypeID is the constructor ID for TL type ipPortSecret.
+const IpPortSecretTypeID = 0x37982646
+
+// isIpPort marks IpPort as implementing the IpPortClass interface.
+func (*IpPort) isIpPort() {}
+
+// isIpPort marks IpPortSecret as implementing the IpPortClass interface.
+func (*IpPortSecret) isIpPort() {}
+
+// IpPort represents the TL constructor ipPort (0xd433ad73).
+//
+// See https://core.telegram.org/constructor/ipPort for reference.
+type IpPort struct {
+	IPv4 int32 `json:"i_pv4,omitempty"`
+	Port int32 `json:"port,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd433ad73.
+func (v *IpPort) ConstructorID() uint32 {
+	return IpPortTypeID
+}
+
+// Encode serializes IpPort to a bytes.Buffer using the TL binary protocol.
+func (v *IpPort) Encode(b *bytes.Buffer) error {
+	WriteInt(b, IpPortTypeID)
+	WriteInt(b, uint32(v.IPv4))
+	WriteInt(b, uint32(v.Port))
+	return nil
+}
+
+// DecodeIpPort deserializes a IpPort from a reader using the TL binary protocol.
+func DecodeIpPort(r *Reader) (*IpPort, error) {
+	v := &IpPort{}
+	_rIPv4, _eIPv4 := r.ReadInt32()
+	if _eIPv4 != nil {
+		return nil, _eIPv4
+	}
+	v.IPv4 = _rIPv4
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	return v, nil
+}
+
+func init() {
+	Registry[IpPortTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeIpPort(r)
+	}
+}
+
+// IpPortSecret represents the TL constructor ipPortSecret (0x37982646).
+//
+// See https://core.telegram.org/constructor/ipPortSecret for reference.
+type IpPortSecret struct {
+	IPv4   int32  `json:"i_pv4,omitempty"`
+	Port   int32  `json:"port,omitempty"`
+	Secret []byte `json:"secret,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x37982646.
+func (v *IpPortSecret) ConstructorID() uint32 {
+	return IpPortSecretTypeID
+}
+
+// Encode serializes IpPortSecret to a bytes.Buffer using the TL binary protocol.
+func (v *IpPortSecret) Encode(b *bytes.Buffer) error {
+	WriteInt(b, IpPortSecretTypeID)
+	WriteInt(b, uint32(v.IPv4))
+	WriteInt(b, uint32(v.Port))
+	WriteBytes(b, v.Secret)
+	return nil
+}
+
+// DecodeIpPortSecret deserializes a IpPortSecret from a reader using the TL binary protocol.
+func DecodeIpPortSecret(r *Reader) (*IpPortSecret, error) {
+	v := &IpPortSecret{}
+	_rIPv4, _eIPv4 := r.ReadInt32()
+	if _eIPv4 != nil {
+		return nil, _eIPv4
+	}
+	v.IPv4 = _rIPv4
+	_rPort, _ePort := r.ReadInt32()
+	if _ePort != nil {
+		return nil, _ePort
+	}
+	v.Port = _rPort
+	_rSecret, _eSecret := r.ReadBytes()
+	if _eSecret != nil {
+		return nil, _eSecret
+	}
+	v.Secret = _rSecret
+	return v, nil
+}
+
+func init() {
+	Registry[IpPortSecretTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeIpPortSecret(r)
+	}
+}
+
+// AccessPointRuleTypeID is the constructor ID for TL type accessPointRule.
+const AccessPointRuleTypeID = 0x4679b65f
+
+// AccessPointRule represents the TL constructor accessPointRule (0x4679b65f).
+//
+// See https://core.telegram.org/constructor/accessPointRule for reference.
+type AccessPointRule struct {
+	PhonePrefixRules string        `json:"phone_prefix_rules,omitempty"`
+	DCID             int32         `json:"dcid,omitempty"`
+	Ips              []IpPortClass `json:"ips,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x4679b65f.
+func (v *AccessPointRule) ConstructorID() uint32 {
+	return AccessPointRuleTypeID
+}
+
+// Encode serializes AccessPointRule to a bytes.Buffer using the TL binary protocol.
+func (v *AccessPointRule) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccessPointRuleTypeID)
+	WriteString(b, v.PhonePrefixRules)
+	WriteInt(b, uint32(v.DCID))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Ips)))
+	for _, _item := range v.Ips {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeAccessPointRule deserializes a AccessPointRule from a reader using the TL binary protocol.
+func DecodeAccessPointRule(r *Reader) (*AccessPointRule, error) {
+	v := &AccessPointRule{}
+	_rPhonePrefixRules, _ePhonePrefixRules := r.ReadString()
+	if _ePhonePrefixRules != nil {
+		return nil, _ePhonePrefixRules
+	}
+	v.PhonePrefixRules = _rPhonePrefixRules
+	_rDCID, _eDCID := r.ReadInt32()
+	if _eDCID != nil {
+		return nil, _eDCID
+	}
+	v.DCID = _rDCID
+	_vhdrIps, _ehdrIps := r.ReadUint32()
+	if _ehdrIps != nil {
+		return nil, _ehdrIps
+	}
+	_cntIps, _ecntIps := r.ReadUint32()
+	if _ecntIps != nil {
+		return nil, _ecntIps
+	}
+	if _errIps := checkVectorCount(_cntIps); _errIps != nil {
+		return nil, _errIps
+	}
+	v.Ips = make([]IpPortClass, _cntIps)
+	for _iIps := range v.Ips {
+		_objIps, _errIps := ReadTLObject(r)
+		if _errIps != nil {
+			return nil, _errIps
+		}
+		v.Ips[_iIps] = _objIps.(IpPortClass)
+	}
+	_ = _vhdrIps
+	return v, nil
+}
+
+func init() {
+	Registry[AccessPointRuleTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeAccessPointRule(r)
 	}
 }

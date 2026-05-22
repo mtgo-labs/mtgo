@@ -6,78 +6,6 @@ import (
 	"bytes"
 )
 
-// HelpConfigSimpleTypeID is the constructor ID for TL type help.configSimple.
-const HelpConfigSimpleTypeID = 0x5a592a6c
-
-// HelpConfigSimple represents the TL constructor help.configSimple (0x5a592a6c).
-//
-// See https://core.telegram.org/constructor/help.configSimple for reference.
-type HelpConfigSimple struct {
-	Date    int32              `json:"date,omitempty"`
-	Expires int32              `json:"expires,omitempty"`
-	Rules   []*AccessPointRule `json:"rules,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x5a592a6c.
-func (v *HelpConfigSimple) ConstructorID() uint32 {
-	return HelpConfigSimpleTypeID
-}
-
-// Encode serializes HelpConfigSimple to a bytes.Buffer using the TL binary protocol.
-func (v *HelpConfigSimple) Encode(b *bytes.Buffer) error {
-	WriteInt(b, HelpConfigSimpleTypeID)
-	WriteInt(b, uint32(v.Date))
-	WriteInt(b, uint32(v.Expires))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Rules)))
-	for _, _item := range v.Rules {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeHelpConfigSimple deserializes a HelpConfigSimple from a reader using the TL binary protocol.
-func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
-	v := &HelpConfigSimple{}
-	_rDate, _eDate := r.ReadInt32()
-	if _eDate != nil {
-		return nil, _eDate
-	}
-	v.Date = _rDate
-	_rExpires, _eExpires := r.ReadInt32()
-	if _eExpires != nil {
-		return nil, _eExpires
-	}
-	v.Expires = _rExpires
-	_vhdrRules, _ehdrRules := r.ReadUint32()
-	if _ehdrRules != nil {
-		return nil, _ehdrRules
-	}
-	_cntRules, _ecntRules := r.ReadUint32()
-	if _ecntRules != nil {
-		return nil, _ecntRules
-	}
-	if _errRules := checkVectorCount(_cntRules); _errRules != nil {
-		return nil, _errRules
-	}
-	v.Rules = make([]*AccessPointRule, _cntRules)
-	for _iRules := range v.Rules {
-		_objRules, _errRules := ReadTLObject(r)
-		if _errRules != nil {
-			return nil, _errRules
-		}
-		v.Rules[_iRules] = _objRules.(*AccessPointRule)
-	}
-	_ = _vhdrRules
-	return v, nil
-}
-
-func init() {
-	Registry[HelpConfigSimpleTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeHelpConfigSimple(r)
-	}
-}
-
 // AppUpdateClass is the interface for TL type AppUpdate.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the AppUpdate TL type.
@@ -2253,5 +2181,77 @@ func DecodeHelpTimezonesList(r *Reader) (*HelpTimezonesList, error) {
 func init() {
 	Registry[HelpTimezonesListTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeHelpTimezonesList(r)
+	}
+}
+
+// HelpConfigSimpleTypeID is the constructor ID for TL type help.configSimple.
+const HelpConfigSimpleTypeID = 0x5a592a6c
+
+// HelpConfigSimple represents the TL constructor help.configSimple (0x5a592a6c).
+//
+// See https://core.telegram.org/constructor/help.configSimple for reference.
+type HelpConfigSimple struct {
+	Date    int32              `json:"date,omitempty"`
+	Expires int32              `json:"expires,omitempty"`
+	Rules   []*AccessPointRule `json:"rules,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x5a592a6c.
+func (v *HelpConfigSimple) ConstructorID() uint32 {
+	return HelpConfigSimpleTypeID
+}
+
+// Encode serializes HelpConfigSimple to a bytes.Buffer using the TL binary protocol.
+func (v *HelpConfigSimple) Encode(b *bytes.Buffer) error {
+	WriteInt(b, HelpConfigSimpleTypeID)
+	WriteInt(b, uint32(v.Date))
+	WriteInt(b, uint32(v.Expires))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Rules)))
+	for _, _item := range v.Rules {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeHelpConfigSimple deserializes a HelpConfigSimple from a reader using the TL binary protocol.
+func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
+	v := &HelpConfigSimple{}
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	_vhdrRules, _ehdrRules := r.ReadUint32()
+	if _ehdrRules != nil {
+		return nil, _ehdrRules
+	}
+	_cntRules, _ecntRules := r.ReadUint32()
+	if _ecntRules != nil {
+		return nil, _ecntRules
+	}
+	if _errRules := checkVectorCount(_cntRules); _errRules != nil {
+		return nil, _errRules
+	}
+	v.Rules = make([]*AccessPointRule, _cntRules)
+	for _iRules := range v.Rules {
+		_objRules, _errRules := ReadTLObject(r)
+		if _errRules != nil {
+			return nil, _errRules
+		}
+		v.Rules[_iRules] = _objRules.(*AccessPointRule)
+	}
+	_ = _vhdrRules
+	return v, nil
+}
+
+func init() {
+	Registry[HelpConfigSimpleTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeHelpConfigSimple(r)
 	}
 }
