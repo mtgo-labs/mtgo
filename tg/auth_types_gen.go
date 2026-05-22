@@ -6,186 +6,6 @@ import (
 	"bytes"
 )
 
-// BindAuthKeyInnerTypeID is the constructor ID for TL type bind_auth_key_inner.
-const BindAuthKeyInnerTypeID = 0x75a3f765
-
-// BindAuthKeyInner represents the TL constructor bind_auth_key_inner (0x75a3f765).
-//
-// See https://core.telegram.org/constructor/bind_auth_key_inner for reference.
-type BindAuthKeyInner struct {
-	Nonce         int64 `json:"nonce,omitempty"`
-	TempAuthKeyID int64 `json:"temp_auth_key_id,omitempty"`
-	PermAuthKeyID int64 `json:"perm_auth_key_id,omitempty"`
-	TempSessionID int64 `json:"temp_session_id,omitempty"`
-	ExpiresAt     int32 `json:"expires_at,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x75a3f765.
-func (v *BindAuthKeyInner) ConstructorID() uint32 {
-	return BindAuthKeyInnerTypeID
-}
-
-// Encode serializes BindAuthKeyInner to a bytes.Buffer using the TL binary protocol.
-func (v *BindAuthKeyInner) Encode(b *bytes.Buffer) error {
-	WriteInt(b, BindAuthKeyInnerTypeID)
-	WriteLong(b, v.Nonce)
-	WriteLong(b, v.TempAuthKeyID)
-	WriteLong(b, v.PermAuthKeyID)
-	WriteLong(b, v.TempSessionID)
-	WriteInt(b, uint32(v.ExpiresAt))
-	return nil
-}
-
-// DecodeBindAuthKeyInner deserializes a BindAuthKeyInner from a reader using the TL binary protocol.
-func DecodeBindAuthKeyInner(r *Reader) (*BindAuthKeyInner, error) {
-	v := &BindAuthKeyInner{}
-	_rNonce, _eNonce := r.ReadInt64()
-	if _eNonce != nil {
-		return nil, _eNonce
-	}
-	v.Nonce = _rNonce
-	_rTempAuthKeyID, _eTempAuthKeyID := r.ReadInt64()
-	if _eTempAuthKeyID != nil {
-		return nil, _eTempAuthKeyID
-	}
-	v.TempAuthKeyID = _rTempAuthKeyID
-	_rPermAuthKeyID, _ePermAuthKeyID := r.ReadInt64()
-	if _ePermAuthKeyID != nil {
-		return nil, _ePermAuthKeyID
-	}
-	v.PermAuthKeyID = _rPermAuthKeyID
-	_rTempSessionID, _eTempSessionID := r.ReadInt64()
-	if _eTempSessionID != nil {
-		return nil, _eTempSessionID
-	}
-	v.TempSessionID = _rTempSessionID
-	_rExpiresAt, _eExpiresAt := r.ReadInt32()
-	if _eExpiresAt != nil {
-		return nil, _eExpiresAt
-	}
-	v.ExpiresAt = _rExpiresAt
-	return v, nil
-}
-
-func init() {
-	Registry[BindAuthKeyInnerTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeBindAuthKeyInner(r)
-	}
-}
-
-// DestroyAuthKeyResClass is the interface for TL type DestroyAuthKeyRes.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the DestroyAuthKeyRes TL type.
-type DestroyAuthKeyResClass interface {
-	TLObject
-	isDestroyAuthKeyRes()
-}
-
-// DestroyAuthKeyOkTypeID is the constructor ID for TL type destroy_auth_key_ok.
-const DestroyAuthKeyOkTypeID = 0xf660e1d4
-
-// DestroyAuthKeyNoneTypeID is the constructor ID for TL type destroy_auth_key_none.
-const DestroyAuthKeyNoneTypeID = 0x0a9f2259
-
-// DestroyAuthKeyFailTypeID is the constructor ID for TL type destroy_auth_key_fail.
-const DestroyAuthKeyFailTypeID = 0xea109b13
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyOk as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyOk) isDestroyAuthKeyRes() {}
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyNone as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyNone) isDestroyAuthKeyRes() {}
-
-// isDestroyAuthKeyRes marks DestroyAuthKeyFail as implementing the DestroyAuthKeyResClass interface.
-func (*DestroyAuthKeyFail) isDestroyAuthKeyRes() {}
-
-// DestroyAuthKeyOk represents the TL constructor destroy_auth_key_ok (0xf660e1d4).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_ok for reference.
-type DestroyAuthKeyOk struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xf660e1d4.
-func (v *DestroyAuthKeyOk) ConstructorID() uint32 {
-	return DestroyAuthKeyOkTypeID
-}
-
-// Encode serializes DestroyAuthKeyOk to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyOk) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyOkTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyOk deserializes a DestroyAuthKeyOk from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyOk(r *Reader) (*DestroyAuthKeyOk, error) {
-	v := &DestroyAuthKeyOk{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyOkTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyOk(r)
-	}
-}
-
-// DestroyAuthKeyNone represents the TL constructor destroy_auth_key_none (0x0a9f2259).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_none for reference.
-type DestroyAuthKeyNone struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0x0a9f2259.
-func (v *DestroyAuthKeyNone) ConstructorID() uint32 {
-	return DestroyAuthKeyNoneTypeID
-}
-
-// Encode serializes DestroyAuthKeyNone to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyNone) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyNoneTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyNone deserializes a DestroyAuthKeyNone from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyNone(r *Reader) (*DestroyAuthKeyNone, error) {
-	v := &DestroyAuthKeyNone{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyNoneTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyNone(r)
-	}
-}
-
-// DestroyAuthKeyFail represents the TL constructor destroy_auth_key_fail (0xea109b13).
-//
-// See https://core.telegram.org/constructor/destroy_auth_key_fail for reference.
-type DestroyAuthKeyFail struct {
-}
-
-// ConstructorID returns the TL constructor identifier 0xea109b13.
-func (v *DestroyAuthKeyFail) ConstructorID() uint32 {
-	return DestroyAuthKeyFailTypeID
-}
-
-// Encode serializes DestroyAuthKeyFail to a bytes.Buffer using the TL binary protocol.
-func (v *DestroyAuthKeyFail) Encode(b *bytes.Buffer) error {
-	WriteInt(b, DestroyAuthKeyFailTypeID)
-	return nil
-}
-
-// DecodeDestroyAuthKeyFail deserializes a DestroyAuthKeyFail from a reader using the TL binary protocol.
-func DecodeDestroyAuthKeyFail(r *Reader) (*DestroyAuthKeyFail, error) {
-	v := &DestroyAuthKeyFail{}
-	return v, nil
-}
-
-func init() {
-	Registry[DestroyAuthKeyFailTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeDestroyAuthKeyFail(r)
-	}
-}
-
 // SentCodeClass is the interface for TL type SentCode.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the SentCode TL type.
@@ -2955,5 +2775,185 @@ func DecodeInputPasskeyCredentialFirebasePnv(r *Reader) (*InputPasskeyCredential
 func init() {
 	Registry[InputPasskeyCredentialFirebasePnvTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyCredentialFirebasePnv(r)
+	}
+}
+
+// BindAuthKeyInnerTypeID is the constructor ID for TL type bind_auth_key_inner.
+const BindAuthKeyInnerTypeID = 0x75a3f765
+
+// BindAuthKeyInner represents the TL constructor bind_auth_key_inner (0x75a3f765).
+//
+// See https://core.telegram.org/constructor/bind_auth_key_inner for reference.
+type BindAuthKeyInner struct {
+	Nonce         int64 `json:"nonce,omitempty"`
+	TempAuthKeyID int64 `json:"temp_auth_key_id,omitempty"`
+	PermAuthKeyID int64 `json:"perm_auth_key_id,omitempty"`
+	TempSessionID int64 `json:"temp_session_id,omitempty"`
+	ExpiresAt     int32 `json:"expires_at,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x75a3f765.
+func (v *BindAuthKeyInner) ConstructorID() uint32 {
+	return BindAuthKeyInnerTypeID
+}
+
+// Encode serializes BindAuthKeyInner to a bytes.Buffer using the TL binary protocol.
+func (v *BindAuthKeyInner) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BindAuthKeyInnerTypeID)
+	WriteLong(b, v.Nonce)
+	WriteLong(b, v.TempAuthKeyID)
+	WriteLong(b, v.PermAuthKeyID)
+	WriteLong(b, v.TempSessionID)
+	WriteInt(b, uint32(v.ExpiresAt))
+	return nil
+}
+
+// DecodeBindAuthKeyInner deserializes a BindAuthKeyInner from a reader using the TL binary protocol.
+func DecodeBindAuthKeyInner(r *Reader) (*BindAuthKeyInner, error) {
+	v := &BindAuthKeyInner{}
+	_rNonce, _eNonce := r.ReadInt64()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	_rTempAuthKeyID, _eTempAuthKeyID := r.ReadInt64()
+	if _eTempAuthKeyID != nil {
+		return nil, _eTempAuthKeyID
+	}
+	v.TempAuthKeyID = _rTempAuthKeyID
+	_rPermAuthKeyID, _ePermAuthKeyID := r.ReadInt64()
+	if _ePermAuthKeyID != nil {
+		return nil, _ePermAuthKeyID
+	}
+	v.PermAuthKeyID = _rPermAuthKeyID
+	_rTempSessionID, _eTempSessionID := r.ReadInt64()
+	if _eTempSessionID != nil {
+		return nil, _eTempSessionID
+	}
+	v.TempSessionID = _rTempSessionID
+	_rExpiresAt, _eExpiresAt := r.ReadInt32()
+	if _eExpiresAt != nil {
+		return nil, _eExpiresAt
+	}
+	v.ExpiresAt = _rExpiresAt
+	return v, nil
+}
+
+func init() {
+	Registry[BindAuthKeyInnerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBindAuthKeyInner(r)
+	}
+}
+
+// DestroyAuthKeyResClass is the interface for TL type DestroyAuthKeyRes.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the DestroyAuthKeyRes TL type.
+type DestroyAuthKeyResClass interface {
+	TLObject
+	isDestroyAuthKeyRes()
+}
+
+// DestroyAuthKeyOkTypeID is the constructor ID for TL type destroy_auth_key_ok.
+const DestroyAuthKeyOkTypeID = 0xf660e1d4
+
+// DestroyAuthKeyNoneTypeID is the constructor ID for TL type destroy_auth_key_none.
+const DestroyAuthKeyNoneTypeID = 0x0a9f2259
+
+// DestroyAuthKeyFailTypeID is the constructor ID for TL type destroy_auth_key_fail.
+const DestroyAuthKeyFailTypeID = 0xea109b13
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyOk as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyOk) isDestroyAuthKeyRes() {}
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyNone as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyNone) isDestroyAuthKeyRes() {}
+
+// isDestroyAuthKeyRes marks DestroyAuthKeyFail as implementing the DestroyAuthKeyResClass interface.
+func (*DestroyAuthKeyFail) isDestroyAuthKeyRes() {}
+
+// DestroyAuthKeyOk represents the TL constructor destroy_auth_key_ok (0xf660e1d4).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_ok for reference.
+type DestroyAuthKeyOk struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xf660e1d4.
+func (v *DestroyAuthKeyOk) ConstructorID() uint32 {
+	return DestroyAuthKeyOkTypeID
+}
+
+// Encode serializes DestroyAuthKeyOk to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyOkTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyOk deserializes a DestroyAuthKeyOk from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyOk(r *Reader) (*DestroyAuthKeyOk, error) {
+	v := &DestroyAuthKeyOk{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyOk(r)
+	}
+}
+
+// DestroyAuthKeyNone represents the TL constructor destroy_auth_key_none (0x0a9f2259).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_none for reference.
+type DestroyAuthKeyNone struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x0a9f2259.
+func (v *DestroyAuthKeyNone) ConstructorID() uint32 {
+	return DestroyAuthKeyNoneTypeID
+}
+
+// Encode serializes DestroyAuthKeyNone to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyNone) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyNoneTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyNone deserializes a DestroyAuthKeyNone from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyNone(r *Reader) (*DestroyAuthKeyNone, error) {
+	v := &DestroyAuthKeyNone{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyNoneTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyNone(r)
+	}
+}
+
+// DestroyAuthKeyFail represents the TL constructor destroy_auth_key_fail (0xea109b13).
+//
+// See https://core.telegram.org/constructor/destroy_auth_key_fail for reference.
+type DestroyAuthKeyFail struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xea109b13.
+func (v *DestroyAuthKeyFail) ConstructorID() uint32 {
+	return DestroyAuthKeyFailTypeID
+}
+
+// Encode serializes DestroyAuthKeyFail to a bytes.Buffer using the TL binary protocol.
+func (v *DestroyAuthKeyFail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, DestroyAuthKeyFailTypeID)
+	return nil
+}
+
+// DecodeDestroyAuthKeyFail deserializes a DestroyAuthKeyFail from a reader using the TL binary protocol.
+func DecodeDestroyAuthKeyFail(r *Reader) (*DestroyAuthKeyFail, error) {
+	v := &DestroyAuthKeyFail{}
+	return v, nil
+}
+
+func init() {
+	Registry[DestroyAuthKeyFailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeDestroyAuthKeyFail(r)
 	}
 }

@@ -689,11 +689,14 @@ func (c *Client) Config() Config {
 	return c.cfg
 }
 
-func configureSessionDispatch(sess *session.Session, cfg Config) {
+func configureSessionDispatch(sess *session.Session, cfg Config, log *Logger) {
 	if sess == nil {
 		return
 	}
 	sess.SetDispatchConfig(cfg.DispatchWorkers, cfg.DispatchQueueSize)
+	if log != nil {
+		sess.SetLogger(log)
+	}
 }
 
 // SetDispatcher replaces the update dispatcher used to route incoming updates to handlers.
@@ -956,7 +959,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			return fmt.Errorf("save dc_id: %w", err)
 		}
 	}
-	configureSessionDispatch(sess, c.cfg)
+	configureSessionDispatch(sess, c.cfg, c.Log)
 
 	dc := sess.DC()
 
@@ -1941,8 +1944,9 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	}
 	c.mu.RLock()
 	cfg := c.cfg
+	log := c.Log
 	c.mu.RUnlock()
-	configureSessionDispatch(sess, cfg)
+	configureSessionDispatch(sess, cfg, log)
 
 	c.sessionsMu.Lock()
 	if existing, ok := c.sessions[key]; ok {

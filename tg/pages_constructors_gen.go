@@ -4,7 +4,6 @@ package tg
 
 // ConstructorMapPages maps constructor IDs to factory functions.
 var ConstructorMapPages = map[uint32]func() TLObject{
-	0x6f747657: func() TLObject { return &PageCaption{} },
 	0x13567e8a: func() TLObject { return &PageBlockUnsupported{} },
 	0x70abc3fd: func() TLObject { return &PageBlockTitle{} },
 	0x8ffa9a1f: func() TLObject { return &PageBlockSubtitle{} },
@@ -34,11 +33,6 @@ var ConstructorMapPages = map[uint32]func() TLObject{
 	0x76768bed: func() TLObject { return &PageBlockDetails{} },
 	0x16115a96: func() TLObject { return &PageBlockRelatedArticles{} },
 	0xa44f3ef6: func() TLObject { return &PageBlockMap{} },
-	0x34566b6a: func() TLObject { return &PageTableCell{} },
-	0xb92fb6cd: func() TLObject { return &PageListItemText{} },
-	0x25e073fc: func() TLObject { return &PageListItemBlocks{} },
-	0xb390dc08: func() TLObject { return &PageRelatedArticle{} },
-	0x98657f0d: func() TLObject { return &Page{} },
 	0xdc3d824f: func() TLObject { return &TextEmpty{} },
 	0x744694e0: func() TLObject { return &TextPlain{} },
 	0x6724abc4: func() TLObject { return &TextBold{} },
@@ -55,5 +49,11 @@ var ConstructorMapPages = map[uint32]func() TLObject{
 	0x1ccb966a: func() TLObject { return &TextPhone{} },
 	0x081ccf4f: func() TLObject { return &TextImage{} },
 	0x35553762: func() TLObject { return &TextAnchor{} },
+	0x98657f0d: func() TLObject { return &Page{} },
 	0xe0c0c5e5: func() TLObject { return &PageTableRow{} },
+	0xb92fb6cd: func() TLObject { return &PageListItemText{} },
+	0x25e073fc: func() TLObject { return &PageListItemBlocks{} },
+	0xb390dc08: func() TLObject { return &PageRelatedArticle{} },
+	0x6f747657: func() TLObject { return &PageCaption{} },
+	0x34566b6a: func() TLObject { return &PageTableCell{} },
 }

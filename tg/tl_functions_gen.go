@@ -4,16 +4,6 @@ package tg
 
 // FunctionsMap maps function constructor IDs to factory functions that return zero-value request objects.
 var FunctionsMap = map[uint32]func() TLObject{
-	0x60469778: func() TLObject { return &ReqPQRequest{} },
-	0xbe7e8ef1: func() TLObject { return &ReqPQMultiRequest{} },
-	0xd712e4be: func() TLObject { return &ReqDHParamsRequest{} },
-	0xf5045f1f: func() TLObject { return &SetClientDHParamsRequest{} },
-	0xd1435160: func() TLObject { return &DestroyAuthKeyRequest{} },
-	0x58e4a740: func() TLObject { return &RPCDropAnswerRequest{} },
-	0xb921bd04: func() TLObject { return &GetFutureSaltsRequest{} },
-	0x7abe77ec: func() TLObject { return &PingRequest{} },
-	0xf3427b8c: func() TLObject { return &PingDelayDisconnectRequest{} },
-	0xe7512126: func() TLObject { return &DestroySessionRequest{} },
 	0xcb9f372d: func() TLObject { return &InvokeAfterMsgRequest{} },
 	0x3dc4b4f0: func() TLObject { return &InvokeAfterMsgsRequest{} },
 	0xc1cd5ea9: func() TLObject { return &InitConnectionRequest{} },
@@ -797,4 +787,14 @@ var FunctionsMap = map[uint32]func() TLObject{
 	0xb2e8ba03: func() TLObject { return &AicomposeGetToneRequest{} },
 	0xabd59201: func() TLObject { return &AicomposeGetTonesRequest{} },
 	0xd1b4ab14: func() TLObject { return &AicomposeGetToneExampleRequest{} },
+	0x60469778: func() TLObject { return &ReqPQRequest{} },
+	0xbe7e8ef1: func() TLObject { return &ReqPQMultiRequest{} },
+	0xd712e4be: func() TLObject { return &ReqDHParamsRequest{} },
+	0xf5045f1f: func() TLObject { return &SetClientDHParamsRequest{} },
+	0xd1435160: func() TLObject { return &DestroyAuthKeyRequest{} },
+	0x58e4a740: func() TLObject { return &RPCDropAnswerRequest{} },
+	0xb921bd04: func() TLObject { return &GetFutureSaltsRequest{} },
+	0x7abe77ec: func() TLObject { return &PingRequest{} },
+	0xf3427b8c: func() TLObject { return &PingDelayDisconnectRequest{} },
+	0xe7512126: func() TLObject { return &DestroySessionRequest{} },
 }

@@ -79,7 +79,7 @@ func WriteDouble(b *bytes.Buffer, v float64) {
 
 const (
 	// BoolTrueID is the TL constructor ID for boolTrue.
-	BoolTrueID uint32 = 0x997277B5
+	BoolTrueID uint32 = 0x997275B5
 	// BoolFalseID is the TL constructor ID for boolFalse.
 	BoolFalseID uint32 = 0xBC799737
 )

@@ -122,7 +122,7 @@ func (c *Client) reconnectOnce() error {
 	if err != nil {
 		return fmt.Errorf("create session: %w", err)
 	}
-	configureSessionDispatch(sess, c.cfg)
+	configureSessionDispatch(sess, c.cfg, c.Log)
 
 	timeout := 15 * time.Second
 	var sessionTp *sessionTransport
