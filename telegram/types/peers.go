@@ -105,7 +105,7 @@ func GetPeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return -p.ChatID
 	case *tg.PeerChannel:
-		return -p.ChannelID
+		return channelChatID(p.ChannelID)
 	}
 	return 0
 }

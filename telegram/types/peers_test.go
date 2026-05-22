@@ -29,8 +29,8 @@ func TestGetPeerID_Chat(t *testing.T) {
 
 func TestGetPeerID_Channel(t *testing.T) {
 	got := GetPeerID(&tl.PeerChannel{ChannelID: 500})
-	if got != -500 {
-		t.Errorf("GetPeerID(PeerChannel{500}) = %d, want -500", got)
+	if got != -1000000000500 {
+		t.Errorf("GetPeerID(PeerChannel{500}) = %d, want -1000000000500", got)
 	}
 }
 

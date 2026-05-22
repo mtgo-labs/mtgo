@@ -244,11 +244,11 @@ func TestParseMessageForwardOriginChannel(t *testing.T) {
 	if !origin.Date.Equal(time.Unix(1690000000, 0)) {
 		t.Fatalf("Date = %v, want %v", origin.Date, time.Unix(1690000000, 0))
 	}
-	if origin.Chat == nil || origin.Chat.ID != -20 || origin.Chat.Title != "Channel" {
-		t.Fatalf("Chat = %+v, want channel -20", origin.Chat)
+	if origin.Chat == nil || origin.Chat.ID != -1000000000020 || origin.Chat.Title != "Channel" {
+		t.Fatalf("Chat = %+v, want channel -1000000000020", origin.Chat)
 	}
-	if origin.ChatID != 20 {
-		t.Fatalf("ChatID = %d, want 20", origin.ChatID)
+	if origin.ChatID != -1000000000020 {
+		t.Fatalf("ChatID = %d, want -1000000000020", origin.ChatID)
 	}
 	if origin.MessageID != 123 {
 		t.Fatalf("MessageID = %d, want 123", origin.MessageID)

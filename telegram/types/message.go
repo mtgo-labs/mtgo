@@ -1152,7 +1152,7 @@ func parseMessageOrigin(raw *tg.MessageFwdHeader, pm *PeerMap) *MessageOrigin {
 		}
 	case *tg.PeerChannel:
 		origin.Type = MessageOriginTypeChannel
-		origin.ChatID = peer.ChannelID
+		origin.ChatID = channelChatID(peer.ChannelID)
 		origin.MessageID = raw.ChannelPost
 		origin.AuthorSignature = raw.PostAuthor
 		if pm != nil {
@@ -1172,7 +1172,7 @@ func getPeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return -p.ChatID
 	case *tg.PeerChannel:
-		return -p.ChannelID
+		return channelChatID(p.ChannelID)
 	}
 	return 0
 }
@@ -1187,7 +1187,7 @@ func getBarePeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return -p.ChatID
 	case *tg.PeerChannel:
-		return -p.ChannelID
+		return channelChatID(p.ChannelID)
 	}
 	return 0
 }

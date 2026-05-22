@@ -186,7 +186,7 @@ func ExtractChatID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return int64(-v.ChatID)
 	case *tg.PeerChannel:
-		return int64(-100 - v.ChannelID)
+		return channelChatID(v.ChannelID)
 	}
 	return 0
 }

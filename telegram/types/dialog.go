@@ -379,7 +379,7 @@ func chatFromInputPeer(peer tg.InputPeerClass) *Chat {
 	case *tg.InputPeerChat:
 		return &Chat{ID: -p.ChatID, Type: ChatTypeGroup}
 	case *tg.InputPeerChannel:
-		return &Chat{ID: -p.ChannelID, Type: ChatTypeChannel, AccessHash: p.AccessHash}
+		return &Chat{ID: channelChatID(p.ChannelID), Type: ChatTypeChannel, AccessHash: p.AccessHash}
 	}
 	return nil
 }

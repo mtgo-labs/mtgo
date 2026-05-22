@@ -384,9 +384,9 @@ func ParsePaidMessageReactor(raw *tg.MessageReactor) *PaidMessageReactor {
 		case *tg.PeerUser:
 			r.PeerID = p.UserID
 		case *tg.PeerChat:
-			r.PeerID = p.ChatID
+			r.PeerID = -p.ChatID
 		case *tg.PeerChannel:
-			r.PeerID = p.ChannelID
+			r.PeerID = channelChatID(p.ChannelID)
 		}
 	}
 	return r

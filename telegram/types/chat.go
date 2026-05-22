@@ -565,7 +565,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 		return c
 	case *tg.ChatForbidden:
 		return &Chat{
-			ID:       -r.ID,
+			ID:       channelChatID(r.ID),
 			Type:     ChatTypeGroup,
 			Title:    r.Title,
 			IsBanned: true,
@@ -580,7 +580,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 			chatType = ChatTypeForum
 		}
 		c := &Chat{
-			ID:                     -r.ID,
+			ID:                     channelChatID(r.ID),
 			Type:                   chatType,
 			Title:                  r.Title,
 			IsVerified:             r.Verified,
@@ -641,7 +641,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 			chatType = ChatTypeSupergroup
 		}
 		return &Chat{
-			ID:       -r.ID,
+			ID:       channelChatID(r.ID),
 			Type:     chatType,
 			Title:    r.Title,
 			IsBanned: true,
@@ -672,7 +672,7 @@ func ParseChatFromPeer(peer tg.PeerClass, pm *PeerMap) *Chat {
 		if ch, ok := pm.Channels[p.ChannelID]; ok {
 			return ParseChatFromChat(ch)
 		}
-		return &Chat{ID: -p.ChannelID, Type: ChatTypeChannel}
+		return &Chat{ID: channelChatID(p.ChannelID), Type: ChatTypeChannel}
 	}
 	return nil
 }
