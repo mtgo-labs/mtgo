@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
@@ -40,8 +41,6 @@ type MemoryStorage struct {
 	userID        int64
 	isBot         bool
 	date          int
-	serverAddress string
-	port          int
 	state         []byte
 	firstName     string
 	lastName      string
@@ -103,10 +102,6 @@ func (m *MemoryStorage) APIHash() (string, error)        { return m.apiHash, nil
 func (m *MemoryStorage) SetAPIHash(v string) error       { m.apiHash = v; return nil }
 func (m *MemoryStorage) Date() (int, error)              { return m.date, nil }
 func (m *MemoryStorage) SetDate(v int) error             { m.date = v; return nil }
-func (m *MemoryStorage) ServerAddress() (string, error)  { return m.serverAddress, nil }
-func (m *MemoryStorage) SetServerAddress(v string) error { m.serverAddress = v; return nil }
-func (m *MemoryStorage) Port() (int, error)              { return m.port, nil }
-func (m *MemoryStorage) SetPort(v int) error             { m.port = v; return nil }
 func (m *MemoryStorage) State() ([]byte, error)          { return append([]byte(nil), m.state...), nil }
 func (m *MemoryStorage) SetState(v []byte) error         { m.state = v; return nil }
 
@@ -115,13 +110,12 @@ func (m *MemoryStorage) ExportSessionString() (string, error) {
 		return "", nil
 	}
 
+	dc := session.DataCenter{ID: m.dcID}
 	var ip net.IP
-	if m.serverAddress != "" {
-		ip = net.ParseIP(m.serverAddress)
-		if ip == nil {
-			ip = net.ParseIP("0.0.0.0")
-		}
-	} else {
+	if addr := dc.Address(); addr != "" {
+		ip = net.ParseIP(addr)
+	}
+	if ip == nil {
 		ip = net.ParseIP("0.0.0.0")
 	}
 	if ip4 := ip.To4(); ip4 != nil {
@@ -131,7 +125,7 @@ func (m *MemoryStorage) ExportSessionString() (string, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(uint8(m.dcID))
 	buf.Write(ip)
-	_ = binary.Write(buf, binary.BigEndian, uint16(m.port))
+	_ = binary.Write(buf, binary.BigEndian, uint16(443))
 	buf.Write(m.authKey)
 
 	return "1" + base64.URLEncoding.EncodeToString(buf.Bytes()), nil
