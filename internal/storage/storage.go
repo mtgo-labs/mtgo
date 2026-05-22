@@ -206,10 +206,6 @@ type Storage interface {
 	SetUsername(string) error
 	Date() (int, error)
 	SetDate(int) error
-	ServerAddress() (string, error)
-	SetServerAddress(string) error
-	Port() (int, error)
-	SetPort(int) error
 	State() ([]byte, error)
 	SetState([]byte) error
 	ExportSessionString() (string, error)
@@ -587,7 +583,7 @@ func (a *adapterWrapper) SetDCID(v int) error {
 		}
 	}
 	a.sess.DC = v
-	return nil
+	return a.save()
 }
 func (a *adapterWrapper) APIID() (int32, error) {
 	a.mu.Lock()
@@ -759,40 +755,6 @@ func (a *adapterWrapper) SetDate(v int) error {
 	a.sess.Date = v
 	return a.save()
 }
-func (a *adapterWrapper) ServerAddress() (string, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if err := a.load(); err != nil {
-		return "", err
-	}
-	return a.sess.Addr, nil
-}
-func (a *adapterWrapper) SetServerAddress(v string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if err := a.load(); err != nil {
-		return err
-	}
-	a.sess.Addr = v
-	return a.save()
-}
-func (a *adapterWrapper) Port() (int, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if err := a.load(); err != nil {
-		return 0, err
-	}
-	return a.sess.Port, nil
-}
-func (a *adapterWrapper) SetPort(v int) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if err := a.load(); err != nil {
-		return err
-	}
-	a.sess.Port = v
-	return a.save()
-}
 func (a *adapterWrapper) State() ([]byte, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -820,12 +782,10 @@ func (a *adapterWrapper) ExportSessionString() (string, error) {
 		return "", nil
 	}
 	var ip net.IP
-	if a.sess.Addr != "" {
-		ip = net.ParseIP(a.sess.Addr)
-		if ip == nil {
-			ip = net.ParseIP("0.0.0.0")
-		}
-	} else {
+	if addr := dcIPv4Address(a.sess.DC); addr != "" {
+		ip = net.ParseIP(addr)
+	}
+	if ip == nil {
 		ip = net.ParseIP("0.0.0.0")
 	}
 	if ip4 := ip.To4(); ip4 != nil {
@@ -834,9 +794,21 @@ func (a *adapterWrapper) ExportSessionString() (string, error) {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(uint8(a.sess.DC))
 	buf.Write(ip)
-	_ = binary.Write(buf, binary.BigEndian, uint16(a.sess.Port))
+	_ = binary.Write(buf, binary.BigEndian, uint16(443))
 	buf.Write(a.sess.AuthKey)
 	return "1" + base64.URLEncoding.EncodeToString(buf.Bytes()), nil
+}
+
+var prodDCAddresses = map[int]string{
+	1: "149.154.175.53",
+	2: "149.154.167.51",
+	3: "149.154.175.100",
+	4: "149.154.167.91",
+	5: "149.154.171.5",
+}
+
+func dcIPv4Address(id int) string {
+	return prodDCAddresses[id]
 }
 func (a *adapterWrapper) Close() error           { return a.ext.Close() }
 func (a *adapterWrapper) SavePeer(p Peer) error  { return a.ext.SavePeer(&p) }

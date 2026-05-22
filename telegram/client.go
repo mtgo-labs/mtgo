@@ -920,16 +920,6 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 				return fmt.Errorf("telegram: import session dc_id: %w", err)
 			}
 		}
-		if addr, _ := src.ServerAddress(); addr != "" {
-			if err := st.SetServerAddress(addr); err != nil {
-				return fmt.Errorf("telegram: import session address: %w", err)
-			}
-		}
-		if p, _ := src.Port(); p > 0 {
-			if err := st.SetPort(p); err != nil {
-				return fmt.Errorf("telegram: import session port: %w", err)
-			}
-		}
 		if key, _ := src.AuthKey(); len(key) > 0 {
 			if err := st.SetAuthKey(key); err != nil {
 				return fmt.Errorf("telegram: import session auth key: %w", err)
@@ -1041,12 +1031,6 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 		if err := st.SetAPIHash(c.cfg.APIHash); err != nil {
 			c.Log.Warnf("save api_hash: %v", err)
-		}
-		if err := st.SetServerAddress(dc.Address()); err != nil {
-			c.Log.Warnf("save server address: %v", err)
-		}
-		if err := st.SetPort(dc.Port()); err != nil {
-			c.Log.Warnf("save port: %v", err)
 		}
 		if err := st.SetTestMode(dc.TestMode); err != nil {
 			c.Log.Warnf("save test mode: %v", err)
