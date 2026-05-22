@@ -38,16 +38,18 @@ func main() {
 	authLog.Debug("phone code requested")
 
 	fmt.Println("\n=== File output + rotation ===")
-	tmp, _ := os.CreateTemp("", "mtgo-log-*.log")
-	tmp.Close()
-	if err := log.SetFile(tmp.Name(), 1024); err != nil {
+	logPath := "demo.log"
+	if err := log.SetFile(logPath, 1024); err != nil {
 		fmt.Printf("set file: %v\n", err)
 		return
 	}
 	log.Info("this line goes to both stderr and the log file")
-	fmt.Printf("log file: %s\n", tmp.Name())
+	log.ErrorWithCause(fmt.Errorf("write failed: %w", fmt.Errorf("disk full")), "cannot save session")
 	log.Close()
-	os.Remove(tmp.Name())
+
+	data, _ := os.ReadFile(logPath)
+	fmt.Printf("\n--- contents of %s ---\n%s\n", logPath, string(data))
+	os.Remove(logPath)
 
 	fmt.Println("\n=== Level filtering ===")
 	log2 := telegram.NewLogger("filtered")
