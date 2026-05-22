@@ -2,6 +2,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // TLObject is the interface implemented by all TL serializable types.
@@ -65,10 +66,11 @@ func itox(v uint32) string {
 
 type vectorTooLargeError struct {
 	count uint32
+	max   uint32
 }
 
 func (e *vectorTooLargeError) Error() string {
-	return "tg: vector too large"
+	return fmt.Sprintf("tg: vector too large: count=%d, max=%d", e.count, e.max)
 }
 
 const maxVectorElements uint32 = 100000
@@ -76,7 +78,7 @@ const maxVectorElements uint32 = 100000
 // CheckVectorCount rejects implausibly large TL vector lengths before allocating.
 func CheckVectorCount(count uint32) error {
 	if count > maxVectorElements {
-		return &vectorTooLargeError{count: count}
+		return &vectorTooLargeError{count: count, max: maxVectorElements}
 	}
 	return nil
 }

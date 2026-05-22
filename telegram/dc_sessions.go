@@ -136,6 +136,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 
 	c.mu.RLock()
 	cfg := c.cfg
+	log := c.Log
 	c.mu.RUnlock()
 
 	dcStorage := NewMemoryStorage()
@@ -145,7 +146,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: create session DC %d: %w", dcID, err)
 	}
-	configureSessionDispatch(sess, cfg)
+	configureSessionDispatch(sess, cfg, log)
 
 	auth := &session.Auth{
 		DC:       dcID,

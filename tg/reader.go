@@ -183,6 +183,9 @@ func (r *Reader) ReadVectorInt() ([]int32, error) {
 	if err := checkVectorCount(count); err != nil {
 		return nil, err
 	}
+	if int(count)*4 > r.Len() {
+		return nil, io.ErrUnexpectedEOF
+	}
 	result := make([]int32, count)
 	for i := range result {
 		v, err := r.ReadInt32()
@@ -206,6 +209,9 @@ func (r *Reader) ReadVectorLong() ([]int64, error) {
 	}
 	if err := checkVectorCount(count); err != nil {
 		return nil, err
+	}
+	if int(count)*8 > r.Len() {
+		return nil, io.ErrUnexpectedEOF
 	}
 	result := make([]int64, count)
 	for i := range result {
