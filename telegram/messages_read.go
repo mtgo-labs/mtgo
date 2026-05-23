@@ -87,3 +87,31 @@ func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 	}
 	return err
 }
+
+// ReadChannelHistory marks channel/supergroup history as read up to and
+// including maxID. This is the channels.readHistory method, which is the
+// correct way to mark channel messages as read (unlike messages.readHistory
+// which only works for basic chats).
+//
+// Parameters:
+//   - ctx: context for cancellation and deadlines
+//   - chatID: the channel whose history to mark as read
+//   - maxID: the maximum message ID up to which history is marked read
+//
+// Returns an error if:
+//   - the peer cannot be resolved as a channel
+//   - the RPC call fails
+func (c *Client) ReadChannelHistory(ctx context.Context, chatID int64, maxID int32) error {
+	c.Log.Debugf("ReadChannelHistory chat_id=%d max_id=%d", chatID, maxID)
+	channel, err := resolveChannelID(c, chatID)
+	if err != nil {
+		return fmt.Errorf("resolve channel: %w", err)
+	}
+
+	rpc := c.Raw()
+	_, err = rpc.ChannelsReadHistory(ctx, &tg.ChannelsReadHistoryRequest{
+		Channel: channel,
+		MaxID:   maxID,
+	})
+	return err
+}
