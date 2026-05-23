@@ -252,7 +252,7 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			return nil, fmt.Errorf("%w: bit length %d", ErrDHPrimeInvalid, dhPrime.BitLen())
 		}
 		if dhPrime.Cmp(crypto.CurrentDHPrime) != 0 {
-			if !dhPrime.ProbablyPrime(20) {
+			if !dhPrime.ProbablyPrime(64) {
 				return nil, ErrDHPrimeInvalid
 			}
 		}

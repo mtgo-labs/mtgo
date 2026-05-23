@@ -33,6 +33,8 @@ type Transport interface {
 	// Recv blocks until a raw encrypted payload is received.
 	Recv() ([]byte, error)
 	// Close terminates the transport connection and releases resources.
+	// Implementations must guarantee that Close unblocks any in-flight
+	// Send or Recv calls, causing them to return an error.
 	Close() error
 	// IsConnected reports whether the transport is currently connected.
 	IsConnected() bool
@@ -1341,7 +1343,12 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 
 		s.mu.RLock()
 		tp := s.transport
+		disconnFn := s.onDisconnect
+		authKey := s.authKey
+		authKeyID := s.authKeyID
+		updateFn := s.onUpdate
 		s.mu.RUnlock()
+
 		tp.SetReadDeadline(time.Now().Add(readTimeout))
 		data, err := tp.Recv()
 		if err != nil {
@@ -1353,9 +1360,6 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 				retryTimer.Stop()
 				return fmt.Errorf("session: read deadline exceeded: %w", err)
 			}
-			s.mu.RLock()
-			disconnFn := s.onDisconnect
-			s.mu.RUnlock()
 			if disconnFn != nil && time.Since(lastDisconnect) > time.Second {
 				disconnFn(err)
 				lastDisconnect = time.Now()
@@ -1377,25 +1381,15 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 			if code < 0 {
 				continue
 			}
-			s.mu.RLock()
-			disconnFn := s.onDisconnect
-			s.mu.RUnlock()
 			if disconnFn != nil {
 				disconnFn(fmt.Errorf("transport error: code %d", -code))
 			}
 			return fmt.Errorf("transport error: code %d", -code)
 		}
 
-		s.mu.RLock()
-		authKey := s.authKey
-		authKeyID := s.authKeyID
-		s.mu.RUnlock()
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), authKey, authKeyID)
 		if err != nil {
 			if _, ok := err.(*tgerr.SecurityCheckMismatch); ok {
-				s.mu.RLock()
-				disconnFn := s.onDisconnect
-				s.mu.RUnlock()
 				if disconnFn != nil {
 					disconnFn(err)
 				}
@@ -1416,20 +1410,15 @@ func (s *Session) receiveLoop(ctx context.Context) error {
 
 		crypto.ReleaseAESBuf(decrypted)
 
-		s.mu.RLock()
-		updateFn := s.onUpdate
-		s.mu.RUnlock()
 		if rawHandled || (!needsDecodedResult && updateFn == nil) {
 			continue
 		}
 
 		if needsDecodedResult || updateFn != nil {
 			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-s.cancel:
-				return nil
 			case s.dispatchCh <- raw:
+			default:
+				s.dispatchRaw(raw)
 			}
 		}
 	}

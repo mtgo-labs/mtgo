@@ -55,7 +55,7 @@ func TestCurrentDHPrime(t *testing.T) {
 }
 
 func TestCurrentDHPrimeIsPrime(t *testing.T) {
-	if !CurrentDHPrime.ProbablyPrime(20) {
+	if !CurrentDHPrime.ProbablyPrime(64) {
 		t.Fatal("CurrentDHPrime is not prime")
 	}
 }
