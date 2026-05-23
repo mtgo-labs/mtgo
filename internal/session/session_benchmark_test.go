@@ -50,35 +50,36 @@ func BenchmarkSessionRPCResultRouting(b *testing.B) {
 
 	b.Run("constructor_fast_path_raw_result", func(b *testing.B) {
 		s := benchmarkSession(b)
-		ch := s.registerRawResult(reqMsgID)
-		defer s.unregisterRawResult(reqMsgID)
 		b.ReportAllocs()
 
 		for b.Loop() {
+			handle := s.pending.Register(reqMsgID, true)
 			s.handleRawPacket(respMsgID, body)
-			benchmarkRawResult = <-ch
+			<-handle.Done()
+			_, benchmarkRawResult, _ = handle.Result()
+			s.pending.Cancel(reqMsgID)
 		}
 	})
 
 	b.Run("constructor_fast_path_decoded_result", func(b *testing.B) {
 		s := benchmarkSession(b)
-		ch := s.registerResult(reqMsgID)
-		defer s.unregisterResult(reqMsgID)
 		b.ReportAllocs()
 
 		for b.Loop() {
+			handle := s.pending.Register(reqMsgID, false)
 			s.handleRawPacket(respMsgID, body)
-			benchmarkTLResult = <-ch
+			<-handle.Done()
+			benchmarkTLResult, _, _ = handle.Result()
+			s.pending.Cancel(reqMsgID)
 		}
 	})
 
 	b.Run("full_TL_decode_rpc_result_wrapper", func(b *testing.B) {
 		s := benchmarkSession(b)
-		ch := s.registerResult(reqMsgID)
-		defer s.unregisterResult(reqMsgID)
 		b.ReportAllocs()
 
 		for b.Loop() {
+			handle := s.pending.Register(reqMsgID, false)
 			r := tg.NewReader(body)
 			obj, err := tg.ReadTLObject(r)
 			tg.ReleaseReader(r)
@@ -86,7 +87,9 @@ func BenchmarkSessionRPCResultRouting(b *testing.B) {
 				b.Fatalf("ReadTLObject() error: %v", err)
 			}
 			s.processIncoming(&tg.MTProtoMessage{MsgID: respMsgID, Body: obj})
-			benchmarkTLResult = <-ch
+			<-handle.Done()
+			benchmarkTLResult, _, _ = handle.Result()
+			s.pending.Cancel(reqMsgID)
 		}
 	})
 }

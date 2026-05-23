@@ -155,11 +155,11 @@ func putSendJob(job *sendJob) {
 // RPC result. Raw result waiters are tracked separately so they do not force
 // TL decoding or gzip unpacking.
 func (s *Session) hasDecodedResults() bool {
-	return s.pendingResults.Load() > 0
+	return s.pending.HasAny()
 }
 
 func (s *Session) hasRawResults() bool {
-	return s.rawPendingResults.Load() > 0
+	return s.pending.HasAnyRaw()
 }
 
 // AuthFunc is a function that performs key generation/authentication against
@@ -205,18 +205,8 @@ type Session struct {
 	// and temporal validity as required by the MTProto security guidelines.
 	msgIDValidator *msgIDValidator
 
-	// results maps message IDs to channels that receive RPC response objects.
-	results sync.Map
-
-	// rawResults maps request message IDs to channels that receive raw
-	// rpc_result payload bytes (the result:Object bytes only).
-	rawResults   map[int64]chan []byte
-	rawResultsMu sync.Mutex
-
-	// pendingResults counts active decoded TL RPC result listeners.
-	pendingResults atomic.Int64
-	// rawPendingResults counts active raw rpc_result payload listeners.
-	rawPendingResults atomic.Int64
+	// pending manages all outstanding RPC call lifecycles.
+	pending *PendingManager
 
 	// acks accumulates message IDs that need to be acknowledged.
 	acks []int64
@@ -227,8 +217,7 @@ type Session struct {
 	connected atomic.Bool
 	// mu protects the mutable config fields below: authKey, authKeyID,
 	// transport, pingInterval, nextPing, nextSaltFetch, onUpdate,
-	// onDisconnect, onPanic. Always acquire mu before rawResultsMu if
-	// both are needed.
+	// onDisconnect, onPanic.
 	mu sync.RWMutex
 	// stopOnce ensures cancel is closed exactly once.
 	stopOnce sync.Once
@@ -328,8 +317,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		msgIDValidator: newMsgIDValidator(func() int64 {
 			return time.Now().Unix()
 		}),
-		results:      sync.Map{},
-		rawResults:   make(map[int64]chan []byte),
+		pending:      NewPendingManager(),
 		cancel:       make(chan struct{}),
 		pingInterval: 60 * time.Second,
 		updateSem:    make(chan struct{}, 64),
@@ -366,78 +354,6 @@ func resolveDispatchQueueSize(queueSize int) int {
 		return queueSize
 	}
 	return defaultDispatchQueueSize
-}
-
-func (s *Session) registerResult(msgID int64) chan tg.TLObject {
-	ch := make(chan tg.TLObject, 1)
-	s.results.Store(msgID, ch)
-	s.pendingResults.Add(1)
-	return ch
-}
-
-func (s *Session) unregisterResult(msgID int64) {
-	s.results.Delete(msgID)
-	s.pendingResults.Add(-1)
-}
-
-func (s *Session) deliverResult(msgID int64, obj tg.TLObject) {
-	val, ok := s.results.Load(msgID)
-	if ok {
-		ch := val.(chan tg.TLObject)
-		select {
-		case ch <- obj:
-		default:
-			select {
-			case ch <- obj:
-			case <-time.After(5 * time.Second):
-				if s.log != nil {
-					s.log.Warnf("deliverResult: dropping result for msg_id=%d: channel full", msgID)
-				}
-			}
-		}
-	}
-}
-
-func (s *Session) registerRawResult(msgID int64) chan []byte {
-	ch := make(chan []byte, 1)
-	s.rawResultsMu.Lock()
-	s.rawResults[msgID] = ch
-	s.rawResultsMu.Unlock()
-	s.rawPendingResults.Add(1)
-	return ch
-}
-
-func (s *Session) unregisterRawResult(msgID int64) {
-	s.rawResultsMu.Lock()
-	delete(s.rawResults, msgID)
-	s.rawResultsMu.Unlock()
-	s.rawPendingResults.Add(-1)
-}
-
-func (s *Session) deliverRawResult(msgID int64, data []byte) {
-	s.rawResultsMu.Lock()
-	ch, ok := s.rawResults[msgID]
-	s.rawResultsMu.Unlock()
-	if ok {
-		select {
-		case ch <- data:
-		default:
-			select {
-			case ch <- data:
-			case <-time.After(5 * time.Second):
-				if s.log != nil {
-					s.log.Warnf("deliverRawResult: dropping result for msg_id=%d: channel full", msgID)
-				}
-			}
-		}
-	}
-}
-
-func (s *Session) hasRawResultWaiter(msgID int64) bool {
-	s.rawResultsMu.Lock()
-	_, ok := s.rawResults[msgID]
-	s.rawResultsMu.Unlock()
-	return ok
 }
 
 func (s *Session) addAck(msgID int64) {
@@ -551,7 +467,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		return nil, fmt.Errorf("session: pack message: %w", err)
 	}
 
-	ch := s.registerResult(msgID)
+	handle := s.pending.Register(msgID, false)
 
 	job := getSendJob()
 	job.encrypted = encrypted
@@ -565,39 +481,38 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 	case <-ctx.Done():
 		writeTimer.Stop()
 		putSendJob(job)
-		s.unregisterResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, ctx.Err()
 	case <-writeTimer.C:
 		writeTimer.Stop()
 		putSendJob(job)
-		s.unregisterResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
 	}
 	if err := <-job.done; err != nil {
 		putSendJob(job)
-		s.unregisterResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send: %w", err)
 	}
 	putSendJob(job)
 
 	respTimer := time.NewTimer(timeout)
+	defer respTimer.Stop()
 	select {
-	case obj := <-ch:
-		respTimer.Stop()
-		s.unregisterResult(msgID)
-		return obj, nil
+	case <-handle.Done():
+		obj, _, err := handle.Result()
+		return obj, err
 	case <-ctx.Done():
-		respTimer.Stop()
-		s.unregisterResult(msgID)
+		s.pending.Cancel(msgID)
 		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.cancel:
-		respTimer.Stop()
-		s.unregisterResult(msgID)
-		return nil, ErrSessionClosed
+		s.pending.Reject(msgID, ErrSessionClosed)
+		<-handle.Done()
+		obj, _, err := handle.Result()
+		return obj, err
 	case <-respTimer.C:
-		respTimer.Stop()
-		s.unregisterResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, ErrSendTimeout
 	}
 }
@@ -651,14 +566,14 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 
 	switch v := obj.(type) {
 	case *tg.Pong:
-		s.deliverResult(v.MsgID, v)
+		s.pending.Resolve(v.MsgID, v)
 	case tg.BadMsgNotificationClass:
 		switch bv := v.(type) {
 		case *tg.BadMsgNotification:
-			s.deliverResult(bv.BadMsgID, bv)
+			s.pending.Resolve(bv.BadMsgID, bv)
 		case *tg.BadServerSalt:
 			s.serverSalt.Store(bv.NewServerSalt)
-			s.deliverResult(bv.BadMsgID, bv)
+			s.pending.Resolve(bv.BadMsgID, bv)
 		}
 	case *tg.NewSessionCreated:
 		s.serverSalt.Store(v.ServerSalt)
@@ -671,13 +586,13 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 			decoded, err := gz.Decode()
 			if err != nil {
 				if s.log != nil {
-				s.log.Warnf("gzip decode rpc result failed: %v", err)
-			}
+					s.log.Warnf("gzip decode rpc result failed: %v", err)
+				}
 				return
 			}
 			result = decoded
 		}
-		s.deliverResult(v.ReqMsgID, result)
+		s.pending.Resolve(v.ReqMsgID, result)
 	case tg.UpdatesClass:
 		s.mu.RLock()
 		fn := s.onUpdate
@@ -686,8 +601,8 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 			s.dispatchUpdate(obj)
 		}
 	default:
-		if _, hasResult := s.results.Load(msgID); hasResult {
-			s.deliverResult(msgID, obj)
+		if s.pending.Has(msgID) {
+			s.pending.Resolve(msgID, obj)
 		} else {
 			s.mu.RLock()
 			fn := s.onUpdate
@@ -719,8 +634,8 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 						panicFn(r)
 					} else {
 						if s.log != nil {
-						s.log.Errorf("dispatchUpdate panic: %v", r)
-					}
+							s.log.Errorf("dispatchUpdate panic: %v", r)
+						}
 					}
 				}
 			}()
@@ -751,7 +666,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
 
-	ch := s.registerRawResult(msgID)
+	handle := s.pending.Register(msgID, true)
 
 	job := getSendJob()
 	job.encrypted = encrypted
@@ -765,39 +680,38 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	case <-ctx.Done():
 		writeTimer.Stop()
 		putSendJob(job)
-		s.unregisterRawResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, ctx.Err()
 	case <-writeTimer.C:
 		writeTimer.Stop()
 		putSendJob(job)
-		s.unregisterRawResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send raw: write queue full: %w", ErrSendTimeout)
 	}
 	if err := <-job.done; err != nil {
 		putSendJob(job)
-		s.unregisterRawResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
 	putSendJob(job)
 
 	respTimer := time.NewTimer(timeout)
+	defer respTimer.Stop()
 	select {
-	case data := <-ch:
-		respTimer.Stop()
-		s.unregisterRawResult(msgID)
-		return data, nil
+	case <-handle.Done():
+		_, raw, err := handle.Result()
+		return raw, err
 	case <-ctx.Done():
-		respTimer.Stop()
-		s.unregisterRawResult(msgID)
+		s.pending.Cancel(msgID)
 		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.cancel:
-		respTimer.Stop()
-		s.unregisterRawResult(msgID)
-		return nil, ErrSessionClosed
+		s.pending.Reject(msgID, ErrSessionClosed)
+		<-handle.Done()
+		_, raw, err := handle.Result()
+		return raw, err
 	case <-respTimer.C:
-		respTimer.Stop()
-		s.unregisterRawResult(msgID)
+		s.pending.Cancel(msgID)
 		return nil, ErrSendTimeout
 	}
 }
@@ -1012,6 +926,7 @@ func timeoutFromContext(ctx context.Context) time.Duration {
 func (s *Session) Stop() {
 	s.connected.Store(false)
 	defaultHousekeeper.unregister(s)
+	s.pending.RejectAll(ErrSessionClosed)
 	s.stopOnce.Do(func() {
 		if s.cancel != nil {
 			close(s.cancel)
@@ -1032,8 +947,8 @@ func (s *Session) Stop() {
 	case <-done:
 	case <-time.After(10 * time.Second):
 		if s.log != nil {
-		s.log.Warnf("Stop: timed out waiting for goroutines to exit")
-	}
+			s.log.Warnf("Stop: timed out waiting for goroutines to exit")
+		}
 	}
 }
 
@@ -1254,7 +1169,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 20 {
 			return false
 		}
-		s.deliverResult(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.Pong{
+		s.pending.Resolve(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.Pong{
 			MsgID:  int64(binary.LittleEndian.Uint64(body[4:12])),
 			PingID: int64(binary.LittleEndian.Uint64(body[12:20])),
 		})
@@ -1262,7 +1177,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 20 {
 			return false
 		}
-		s.deliverResult(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.BadMsgNotification{
+		s.pending.Resolve(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.BadMsgNotification{
 			BadMsgID:    int64(binary.LittleEndian.Uint64(body[4:12])),
 			BadMsgSeqno: int32(binary.LittleEndian.Uint32(body[12:16])),
 			ErrorCode:   int32(binary.LittleEndian.Uint32(body[16:20])),
@@ -1274,7 +1189,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
 		s.serverSalt.Store(newSalt)
-		s.deliverResult(badMsgID, &tg.BadServerSalt{
+		s.pending.Resolve(badMsgID, &tg.BadServerSalt{
 			BadMsgID:      badMsgID,
 			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
 			ErrorCode:     int32(binary.LittleEndian.Uint32(body[16:20])),
@@ -1313,19 +1228,19 @@ func (s *Session) handleRawRPCResult(body []byte) {
 	}
 	reqMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 	payload := body[12:]
-	if s.hasRawResultWaiter(reqMsgID) {
+	if s.pending.HasRaw(reqMsgID) {
 		result := make([]byte, len(payload))
 		copy(result, payload)
-		s.deliverRawResult(reqMsgID, result)
+		s.pending.ResolveRaw(reqMsgID, result)
 	}
-	if _, ok := s.results.Load(reqMsgID); !ok {
+	if !s.pending.Has(reqMsgID) {
 		return
 	}
 	result, err := decodeRawRPCResultPayload(payload)
 	if err != nil {
 		return
 	}
-	s.deliverResult(reqMsgID, result)
+	s.pending.Resolve(reqMsgID, result)
 }
 
 func decodeRawRPCResultPayload(payload []byte) (tg.TLObject, error) {
@@ -1437,7 +1352,7 @@ func (s *Session) handleRawMsgsStateReq(body []byte) {
 	}
 	info := make([]byte, len(msgIDs))
 	for i := range msgIDs {
-		if _, ok := s.results.Load(msgIDs[i]); ok {
+		if s.pending.Has(msgIDs[i]) {
 			info[i] = 0x80 | 0x04
 		} else {
 			info[i] = 0x01

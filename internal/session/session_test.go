@@ -131,24 +131,22 @@ func TestSessionResultChannel(t *testing.T) {
 	}
 
 	msgID := int64(100)
-	ch := s.registerResult(msgID)
+	handle := s.pending.Register(msgID, false)
 
-	s.deliverResult(msgID, tg.TLBool(true))
+	s.pending.Resolve(msgID, tg.TLBool(true))
 
-	select {
-	case obj := <-ch:
-		b, ok := obj.(tg.TLBool)
-		if !ok || !bool(b) {
-			t.Errorf("received data = %T %[1]v, want tg.TLBool(true)", obj)
-		}
-	default:
-		t.Error("expected data on channel but got none")
+	<-handle.Done()
+	obj, _, err := handle.Result()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	b, ok := obj.(tg.TLBool)
+	if !ok || !bool(b) {
+		t.Errorf("received data = %T %[1]v, want tg.TLBool(true)", obj)
 	}
 
-	s.unregisterResult(msgID)
-
-	if _, exists := s.results.Load(msgID); exists {
-		t.Error("result still exists after unregister")
+	if s.pending.Has(msgID) {
+		t.Error("result still exists after resolve")
 	}
 }
 
