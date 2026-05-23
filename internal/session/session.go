@@ -967,7 +967,6 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 
 	s.mu.RLock()
 	tp := s.transport
-	fn := s.onDisconnect
 	s.mu.RUnlock()
 	if tp == nil {
 		return ErrTransportNotSet
@@ -985,9 +984,6 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 	tp.SetWriteDeadline(deadline)
 	err := tp.Send(encrypted)
 	tp.SetWriteDeadline(time.Time{})
-	if err != nil && fn != nil {
-		fn(err)
-	}
 	return err
 }
 
@@ -998,7 +994,6 @@ func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) 
 
 	s.mu.RLock()
 	tp := s.transport
-	fn := s.onDisconnect
 	s.mu.RUnlock()
 	if tp == nil {
 		return ErrTransportNotSet
@@ -1016,9 +1011,6 @@ func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) 
 	tp.SetWriteDeadline(deadline)
 	err := tp.Send(encrypted)
 	tp.SetWriteDeadline(time.Time{})
-	if err != nil && fn != nil {
-		fn(err)
-	}
 	return err
 }
 
