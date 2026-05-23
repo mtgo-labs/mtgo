@@ -1167,12 +1167,7 @@ func (s *Session) handleRawRPCResult(body []byte) {
 	}
 	reqMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 	payload := body[12:]
-	if s.pending.HasRaw(reqMsgID) {
-		result := make([]byte, len(payload))
-		copy(result, payload)
-		s.pending.ResolveRaw(reqMsgID, result)
-	}
-	if !s.pending.Has(reqMsgID) {
+	if !s.pending.ResolveRPCResult(reqMsgID, payload) {
 		return
 	}
 	result, err := decodeRawRPCResultPayload(payload)

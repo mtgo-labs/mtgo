@@ -1,7 +1,7 @@
 package session
 
 import (
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -9,27 +9,31 @@ import (
 // based on the server's Unix time. Message IDs are structured as
 // (server_time << 32) | (counter << 2) to comply with the MTProto specification.
 type MsgIDGenerator struct {
-	serverTimeUnix int64
-	counter        int64
-	mu             sync.Mutex
+	serverTimeUnix atomic.Int64
+	counter        atomic.Int64
 }
 
 // NewMsgIDGenerator returns a generator seeded with the given server time.
 func NewMsgIDGenerator(serverTime time.Time) *MsgIDGenerator {
-	return &MsgIDGenerator{
-		serverTimeUnix: serverTime.Unix(),
-	}
+	g := &MsgIDGenerator{}
+	g.serverTimeUnix.Store(serverTime.Unix())
+	return g
 }
 
 // UpdateServerTime advances the internal clock to the given time if it is
 // newer than the current reference, resetting the counter. Older times are
 // ignored.
 func (g *MsgIDGenerator) UpdateServerTime(t time.Time) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	if t.Unix() > g.serverTimeUnix {
-		g.serverTimeUnix = t.Unix()
-		g.counter = 0
+	newUnix := t.Unix()
+	for {
+		cur := g.serverTimeUnix.Load()
+		if newUnix <= cur {
+			return
+		}
+		if g.serverTimeUnix.CompareAndSwap(cur, newUnix) {
+			g.counter.Store(0)
+			return
+		}
 	}
 }
 
@@ -37,14 +41,17 @@ func (g *MsgIDGenerator) UpdateServerTime(t time.Time) {
 // increasing. The lower bits encode a counter to ensure uniqueness within the
 // same second.
 func (g *MsgIDGenerator) Next() int64 {
-	g.mu.Lock()
-	defer g.mu.Unlock()
 	now := time.Now().Unix()
-	if now > g.serverTimeUnix {
-		g.serverTimeUnix = now
-		g.counter = 0
+	for {
+		cur := g.serverTimeUnix.Load()
+		if now > cur {
+			if g.serverTimeUnix.CompareAndSwap(cur, now) {
+				g.counter.Store(0)
+			}
+			continue
+		}
+		c := g.counter.Add(1) - 1
+		base := cur << 32
+		return base | (c << 2)
 	}
-	base := g.serverTimeUnix << 32
-	g.counter++
-	return base | (g.counter << 2)
 }
