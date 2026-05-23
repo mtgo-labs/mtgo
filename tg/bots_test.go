@@ -26,8 +26,8 @@ func TestInputKeyboardButtonRequestPeerSchema(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read constructor: %v", err)
 	}
-	if id != 0x02b78156 {
-		t.Fatalf("constructor id = %#08x, want 0x02b78156", id)
+	if id != InputKeyboardButtonRequestPeerTypeID {
+		t.Fatalf("constructor id = %#08x, want %#08x", id, InputKeyboardButtonRequestPeerTypeID)
 	}
 
 	flags, err := r.ReadUint32()
