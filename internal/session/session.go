@@ -558,15 +558,13 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 
 // dispatchUpdate spawns a goroutine to deliver an update to the handler,
 // bounded by the updateSem semaphore. If 64 dispatches are already in
-// flight, this blocks until one completes, providing backpressure.
+// flight, the update is dropped.
 func (s *Session) dispatchUpdate(obj tg.TLObject) {
 	s.mu.RLock()
 	handlerFn := s.onUpdate
 	panicFn := s.onPanic
 	s.mu.RUnlock()
 	select {
-	case <-s.cancel:
-		return
 	case s.updateSem <- struct{}{}:
 		go func() {
 			defer func() { <-s.updateSem }()
@@ -583,6 +581,7 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 			}()
 			handlerFn(obj)
 		}()
+	default:
 	}
 }
 
