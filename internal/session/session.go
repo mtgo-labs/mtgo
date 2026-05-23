@@ -42,13 +42,6 @@ type Transport interface {
 	SetReadDeadline(t time.Time) error
 }
 
-// sendJob is a unit of work for the writer goroutine.
-type sendJob struct {
-	encrypted []byte
-	deadline  time.Time
-	done      chan error
-}
-
 const (
 	numFutureSalts       = 4
 	initialSaltFetchWait = 15 * time.Second
@@ -59,26 +52,17 @@ const (
 	defaultDispatchQueueSize = 256
 )
 
-var sendJobPool = sync.Pool{
-	New: func() any {
-		return &sendJob{}
-	},
-}
-
 var defaultHousekeeper = newGlobalHousekeeper()
 
 type globalHousekeeper struct {
 	mu       sync.Mutex
 	sessions map[*Session]struct{}
 	once     sync.Once
-	stopCh   chan struct{}
-	stopped  bool
 }
 
 func newGlobalHousekeeper() *globalHousekeeper {
 	return &globalHousekeeper{
 		sessions: make(map[*Session]struct{}),
-		stopCh:   make(chan struct{}),
 	}
 }
 
@@ -94,10 +78,6 @@ func (h *globalHousekeeper) register(s *Session) {
 func (h *globalHousekeeper) unregister(s *Session) {
 	h.mu.Lock()
 	delete(h.sessions, s)
-	if len(h.sessions) == 0 && !h.stopped {
-		h.stopped = true
-		close(h.stopCh)
-	}
 	h.mu.Unlock()
 }
 
@@ -127,8 +107,6 @@ func (h *globalHousekeeper) run() {
 
 	for {
 		select {
-		case <-h.stopCh:
-			return
 		case <-ticker.C:
 			now := time.Now()
 			for _, s := range h.snapshot() {
@@ -140,15 +118,6 @@ func (h *globalHousekeeper) run() {
 			}
 		}
 	}
-}
-
-func getSendJob() *sendJob {
-	return sendJobPool.Get().(*sendJob)
-}
-
-func putSendJob(job *sendJob) {
-	job.encrypted = nil
-	sendJobPool.Put(job)
 }
 
 // hasDecodedResults returns true if any goroutine is waiting for a decoded TL
@@ -228,10 +197,10 @@ type Session struct {
 
 	// transport is the underlying network transport for sending/receiving data.
 	transport Transport
-	// sendCh is the queue for outgoing encrypted payloads, consumed by the
-	// dedicated writer goroutine. Using a channel instead of a mutex ensures
-	// that a blocked write to a dead connection never blocks RPC senders.
-	sendCh chan *sendJob
+	// writeMux serializes writes to the transport. Every outbound message
+	// (RPC, service, ack, ping) acquires this mutex, writes directly, and
+	// releases it. No goroutine hop, no channel, no silent drops.
+	writeMux sync.Mutex
 	// dispatchCh is a bounded queue for raw messages that need TL decoding.
 	dispatchCh chan *tg.MTProtoMessageRaw
 	// dispatchWorkers is the number of workers that decode dispatchCh items.
@@ -469,32 +438,10 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 
 	handle := s.pending.Register(msgID, false)
 
-	job := getSendJob()
-	job.encrypted = encrypted
-	job.deadline = time.Now().Add(timeout)
-	job.done = make(chan error, 1)
-
-	writeTimer := time.NewTimer(timeout)
-	select {
-	case s.sendCh <- job:
-		writeTimer.Stop()
-	case <-ctx.Done():
-		writeTimer.Stop()
-		putSendJob(job)
-		s.pending.Cancel(msgID)
-		return nil, ctx.Err()
-	case <-writeTimer.C:
-		writeTimer.Stop()
-		putSendJob(job)
-		s.pending.Cancel(msgID)
-		return nil, fmt.Errorf("session: send: write queue full: %w", ErrSendTimeout)
-	}
-	if err := <-job.done; err != nil {
-		putSendJob(job)
+	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send: %w", err)
 	}
-	putSendJob(job)
 
 	respTimer := time.NewTimer(timeout)
 	defer respTimer.Stop()
@@ -539,14 +486,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 	if err != nil {
 		return
 	}
-	job := getSendJob()
-	job.encrypted = encrypted
-	job.deadline = time.Now().Add(5 * time.Second)
-	select {
-	case s.sendCh <- job:
-	default:
-		putSendJob(job)
-	}
+	_ = s.writeEncryptedDirect(encrypted, 5*time.Second)
 }
 
 func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
@@ -668,32 +608,10 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 
 	handle := s.pending.Register(msgID, true)
 
-	job := getSendJob()
-	job.encrypted = encrypted
-	job.deadline = time.Now().Add(timeout)
-	job.done = make(chan error, 1)
-
-	writeTimer := time.NewTimer(timeout)
-	select {
-	case s.sendCh <- job:
-		writeTimer.Stop()
-	case <-ctx.Done():
-		writeTimer.Stop()
-		putSendJob(job)
-		s.pending.Cancel(msgID)
-		return nil, ctx.Err()
-	case <-writeTimer.C:
-		writeTimer.Stop()
-		putSendJob(job)
-		s.pending.Cancel(msgID)
-		return nil, fmt.Errorf("session: send raw: write queue full: %w", ErrSendTimeout)
-	}
-	if err := <-job.done; err != nil {
-		putSendJob(job)
+	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
-	putSendJob(job)
 
 	respTimer := time.NewTimer(timeout)
 	defer respTimer.Stop()
@@ -868,18 +786,24 @@ func (s *Session) StartContext(ctx context.Context) error {
 
 func (s *Session) start(loopCtx, pingCtx context.Context) error {
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 256)
 	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.receiveErr = make(chan error, 1)
 	s.connected.Store(true)
 
-	s.wg.Add(1)
-	go s.writer()
 	s.startDispatchWorkers(loopCtx, s.dispatchWorkers)
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		s.receiveErr <- s.receiveLoop(loopCtx)
+		var err error
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					err = fmt.Errorf("session: receive loop panic: %v", r)
+				}
+			}()
+			err = s.receiveLoop(loopCtx)
+		}()
+		s.receiveErr <- err
 	}()
 
 	timeout := timeoutFromContext(pingCtx)
@@ -980,16 +904,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 	if err != nil {
 		return
 	}
-	job := getSendJob()
-	job.encrypted = encrypted
-	job.deadline = time.Now().Add(10 * time.Second)
-	select {
-	case s.sendCh <- job:
-	case <-s.cancel:
-		putSendJob(job)
-	default:
-		putSendJob(job)
-	}
+	_ = s.writeEncryptedDirect(encrypted, 10*time.Second)
 }
 
 func (s *Session) runScheduledMaintenance(now time.Time) {
@@ -1038,47 +953,71 @@ func (s *Session) flushAcks() {
 	}
 }
 
-func (s *Session) writer() {
-	defer s.wg.Done()
-	for {
-		select {
-		case <-s.cancel:
-			return
-		case job := <-s.sendCh:
-			s.mu.RLock()
-			tp := s.transport
-			s.mu.RUnlock()
-			tp.SetWriteDeadline(job.deadline)
-			err := tp.Send(job.encrypted)
-			tp.SetWriteDeadline(time.Time{})
-			if job.done != nil {
-				job.done <- err
-			} else {
-				putSendJob(job)
-			}
-			if err != nil {
-				s.mu.RLock()
-				fn := s.onDisconnect
-				s.mu.RUnlock()
-				if fn != nil {
-					fn(err)
-				}
-			drain:
-				for {
-					select {
-					case job := <-s.sendCh:
-						if job.done != nil {
-							job.done <- err
-						}
-						putSendJob(job)
-					default:
-						break drain
-					}
-				}
-				return
-			}
-		}
+// writeEncrypted snapshots transport state, acquires writeMux, sets the write
+// deadline from ctx or timeout (whichever is sooner), writes the encrypted
+// payload, and releases the mutex. Returns the transport error, if any.
+// Lock ordering: mu is always acquired BEFORE writeMux, never inside it.
+func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	if dl, ok := ctx.Deadline(); ok && dl.Before(deadline) {
+		deadline = dl
 	}
+
+	s.mu.RLock()
+	tp := s.transport
+	fn := s.onDisconnect
+	s.mu.RUnlock()
+	if tp == nil {
+		return ErrTransportNotSet
+	}
+
+	s.writeMux.Lock()
+	defer s.writeMux.Unlock()
+
+	select {
+	case <-s.cancel:
+		return ErrSessionClosed
+	default:
+	}
+
+	tp.SetWriteDeadline(deadline)
+	err := tp.Send(encrypted)
+	tp.SetWriteDeadline(time.Time{})
+	if err != nil && fn != nil {
+		fn(err)
+	}
+	return err
+}
+
+// writeEncryptedDirect is the context-less variant used by service messages
+// and RPCDropAnswer where there is no caller context to respect.
+func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	s.mu.RLock()
+	tp := s.transport
+	fn := s.onDisconnect
+	s.mu.RUnlock()
+	if tp == nil {
+		return ErrTransportNotSet
+	}
+
+	s.writeMux.Lock()
+	defer s.writeMux.Unlock()
+
+	select {
+	case <-s.cancel:
+		return ErrSessionClosed
+	default:
+	}
+
+	tp.SetWriteDeadline(deadline)
+	err := tp.Send(encrypted)
+	tp.SetWriteDeadline(time.Time{})
+	if err != nil && fn != nil {
+		fn(err)
+	}
+	return err
 }
 
 func (s *Session) startDispatchWorkers(ctx context.Context, workers int) {
