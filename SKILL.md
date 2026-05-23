@@ -504,6 +504,8 @@ raw, err := client.InvokeRaw(ctx, &tg.MessagesGetHistoryRequest{
 
 `client.InvokeWithRawResult(ctx, query)` sends a TL object and returns the raw MTProto `rpc_result.result:Object` payload bytes. The return value is not a decoded Go struct, and it is not necessarily gzip-unpacked; if Telegram returns `gzip_packed`, the returned bytes start with the `gzip_packed` constructor.
 
+**Error handling:** RPC errors (e.g. `rpc_error` from Telegram) are detected and returned as `*tgerr.Error` — they are **not** included in the raw bytes. DC migration errors (code 303) are handled automatically, same as the typed `Invoke` path. Context deadlines are respected: the shorter of `ctx.Deadline()` and `Config.ReqTimeout` is used.
+
 ```go
 // Fast ping: get the raw rpc_result payload bytes without TL decoding.
 rawBytes, err := client.InvokeWithRawResult(ctx, &tg.PingRequest{PingID: rand.Int63()})
@@ -514,6 +516,13 @@ for _, peer := range peers {
         Peer:  peer.InputPeer(),
         Limit: 1,
     })
+    if err != nil {
+        var rpcErr *tgerr.Error
+        if errors.As(err, &rpcErr) {
+            log.Printf("RPC error: %d %s", rpcErr.Code, rpcErr.Type)
+        }
+        continue
+    }
     // rawBytes is the undecoded rpc_result payload; parse only what you need.
 }
 ```
