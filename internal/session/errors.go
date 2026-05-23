@@ -22,6 +22,12 @@ var (
 	// ErrConnectNoAuthKey is returned when Connect is called before an
 	// authorization key has been generated via key generation.
 	ErrConnectNoAuthKey = errors.New("session: connect: no auth key")
+	// ErrDraining is returned when a write is attempted while the session
+	// is draining pending work before shutdown.
+	ErrDraining = errors.New("session: draining")
+	// ErrNotConnected is returned when a write or connect is attempted
+	// while the session is not in an active state.
+	ErrNotConnected = errors.New("session: not connected")
 
 	// ErrSHA1Mismatch is returned during the DH key exchange when the SHA1
 	// hash of the received data does not match the expected value.
