@@ -508,6 +508,8 @@ func (m *memoryAdapter) Close() error { return nil }
 
 // --- Adapter wrapper ---
 
+var _ PeerStore = (*adapterWrapper)(nil)
+
 // adapterWrapper wraps an [Adapter] to satisfy the [Storage] interface.
 type adapterWrapper struct {
 	mu   sync.Mutex
@@ -810,28 +812,22 @@ var prodDCAddresses = map[int]string{
 func dcIPv4Address(id int) string {
 	return prodDCAddresses[id]
 }
-func (a *adapterWrapper) Close() error           { return a.ext.Close() }
-func (a *adapterWrapper) SavePeer(p Peer) error  { return a.ext.SavePeer(&p) }
-func (a *adapterWrapper) SavePeers(peers []Peer) error {
+func (a *adapterWrapper) Close() error             { return a.ext.Close() }
+func (a *adapterWrapper) SavePeer(p *Peer) error   { return a.ext.SavePeer(p) }
+func (a *adapterWrapper) SavePeers(peers []*Peer) error {
 	for _, p := range peers {
-		if err := a.ext.SavePeer(&p); err != nil {
+		if err := a.ext.SavePeer(p); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (a *adapterWrapper) LoadPeers() ([]Peer, error) {
-	ep, err := a.ext.LoadPeers()
-	if err != nil {
-		return nil, err
-	}
-	out := make([]Peer, len(ep))
-	for i := range ep {
-		out[i] = *ep[i]
-	}
-	return out, nil
+func (a *adapterWrapper) LoadPeers() ([]*Peer, error) {
+	return a.ext.LoadPeers()
 }
-func (a *adapterWrapper) DeletePeer(id int64) error { return a.ext.DeletePeer(id) }
+func (a *adapterWrapper) GetPeer(id int64) (*Peer, error)                 { return a.ext.GetPeer(id) }
+func (a *adapterWrapper) GetPeerByUsername(username string) (*Peer, error) { return a.ext.GetPeerByUsername(username) }
+func (a *adapterWrapper) DeletePeer(id int64) error                       { return a.ext.DeletePeer(id) }
 
 func (a *adapterWrapper) cs() ConversationStore {
 	if s, ok := a.ext.(ConversationStore); ok {
