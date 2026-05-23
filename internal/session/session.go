@@ -89,8 +89,9 @@ type Session struct {
 	// authKeyID is the lower 64 bits of SHA1(authKey), used to identify the
 	// auth key in encrypted MTProto packets.
 	authKeyID []byte
-	// serverSalt is the current salt value used for message encryption.
-	serverSalt atomic.Int64
+	// saltMgr manages the current and future server salts, tracking
+	// validity windows and scheduling proactive refresh.
+	saltMgr *saltManager
 	// sessionID is a random identifier for this session, unique per connection.
 	sessionID int64
 	// sidBytes is the little-endian encoding of sessionID, cached to avoid
@@ -185,6 +186,14 @@ func (s *Session) SetPongTimeout(d time.Duration) {
 	s.mu.Unlock()
 }
 
+func (s *Session) SetSaltRefreshRatio(r float64) {
+	s.saltMgr.SetRefreshRatio(r)
+}
+
+func (s *Session) SetSaltRefreshMin(d time.Duration) {
+	s.saltMgr.SetRefreshMin(d)
+}
+
 func (s *Session) SetLogger(l sessionLogger) {
 	s.mu.Lock()
 	s.log = l
@@ -218,16 +227,16 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 	binary.LittleEndian.PutUint64(encodedSidBytes[:], uint64(sid))
 
 	s := &Session{
-		dc:           dc,
-		storage:      st,
-		deviceModel:  deviceModel,
-		appVersion:   appVersion,
-		systemLang:   systemLang,
-		langCode:     langCode,
-		authKey:      authKey,
-		sessionID:    sid,
-		sidBytes:     encodedSidBytes,
-		msgFactory:   NewMsgFactory(time.Now()),
+		dc:          dc,
+		storage:     st,
+		deviceModel: deviceModel,
+		appVersion:  appVersion,
+		systemLang:  systemLang,
+		langCode:    langCode,
+		authKey:     authKey,
+		sessionID:   sid,
+		sidBytes:    encodedSidBytes,
+		msgFactory:  NewMsgFactory(time.Now()),
 		msgIDValidator: newMsgIDValidator(func() int64 {
 			return time.Now().Unix()
 		}),
@@ -235,6 +244,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		pingInterval: 60 * time.Second,
 		pongTimeout:  30 * time.Second,
 		updateSem:    make(chan struct{}, 128),
+		saltMgr:      newSaltManager(time.Now),
 	}
 
 	if len(authKey) > 0 {
@@ -274,7 +284,7 @@ func (s *Session) SetAuthKey(key []byte) {
 
 // SetServerSalt updates the server salt used for encrypting outgoing messages.
 func (s *Session) SetServerSalt(salt int64) {
-	s.serverSalt.Store(salt)
+	s.saltMgr.StoreSimple(salt)
 }
 
 // SetServerTime updates the internal message ID generator with the server's
@@ -342,13 +352,18 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		return nil, ErrTransportNotSet
 	}
 
+	salt := s.ensureFreshSalt(ctx)
+	if salt == 0 {
+		salt = s.saltMgr.Load()
+	}
+
 	message := &tg.MTProtoMessage{
 		MsgID: msgID,
 		SeqNo: seqNo,
 		Body:  body,
 	}
 
-	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, salt, s.sessionIDBytes(), authKey, authKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("session: pack message: %w", err)
 	}
@@ -399,7 +414,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 		SeqNo: uint32(seqNo),
 		Body:  drop,
 	}
-	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
 	if err != nil {
 		return
 	}
@@ -430,11 +445,11 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		case *tg.BadMsgNotification:
 			s.pending.Resolve(bv.BadMsgID, bv)
 		case *tg.BadServerSalt:
-			s.serverSalt.Store(bv.NewServerSalt)
+			s.saltMgr.StoreSimple(bv.NewServerSalt)
 			s.pending.Resolve(bv.BadMsgID, bv)
 		}
 	case *tg.NewSessionCreated:
-		s.serverSalt.Store(v.ServerSalt)
+		s.saltMgr.StoreSimple(v.ServerSalt)
 	case *tg.FutureSalts:
 		s.storeFutureSalts(v)
 	case *tg.MsgsAck:
@@ -518,7 +533,12 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, ErrTransportNotSet
 	}
 
-	encrypted, err := crypto.PackRaw(msgID, seqNo, bodyBytes, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	salt := s.ensureFreshSalt(ctx)
+	if salt == 0 {
+		salt = s.saltMgr.Load()
+	}
+
+	encrypted, err := crypto.PackRaw(msgID, seqNo, bodyBytes, salt, s.sessionIDBytes(), authKey, authKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
@@ -828,11 +848,36 @@ func timeoutFromContext(ctx context.Context) time.Duration {
 	return 60 * time.Second
 }
 
+func (s *Session) ensureFreshSalt(ctx context.Context) int64 {
+	if !s.saltMgr.IsExpired() {
+		return s.saltMgr.Load()
+	}
+	if s.log != nil {
+		s.log.Warnf("salt pre-fetch: salt expired before send, triggering immediate refresh")
+	}
+	s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
+
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return 0
+		case <-s.done:
+			return 0
+		case <-time.After(100 * time.Millisecond):
+		}
+		if !s.saltMgr.IsExpired() {
+			return s.saltMgr.Load()
+		}
+	}
+	return s.saltMgr.Load()
+}
+
 func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
 	if len(fs.Salts) == 0 {
 		return
 	}
-	s.serverSalt.Store(fs.Salts[0].Salt)
+	s.saltMgr.StoreFromFutureSalts(saltEntriesFromFuture(fs.Salts))
 }
 
 func (s *Session) sendServiceMessage(body tg.TLObject) {
@@ -852,7 +897,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		SeqNo: uint32(seqNo),
 		Body:  body,
 	}
-	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
 	if err != nil {
 		return
 	}
@@ -1095,18 +1140,57 @@ func (s *Session) saltLoop(ctx context.Context) error {
 	case <-time.After(initialSaltFetchWait):
 	}
 
-	s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
-
-	ticker := time.NewTicker(saltFetchInterval)
-	defer ticker.Stop()
+	s.fetchSaltsWithRetry(ctx)
 
 	for {
+		wait := s.saltMgr.NextRefreshIn()
+		if wait <= 0 {
+			wait = defaultSaltRefreshMin
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-ticker.C:
-			s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
+		case <-time.After(wait):
+			s.fetchSaltsWithRetry(ctx)
 		}
+	}
+}
+
+func (s *Session) fetchSaltsWithRetry(ctx context.Context) {
+	for attempt := 0; attempt < saltPrefetchMaxRetries; attempt++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if !s.connected.Load() {
+			return
+		}
+
+		s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(saltPrefetchRetryBase * time.Duration(1<<attempt)):
+		}
+
+		if !s.saltMgr.IsExpired() {
+			return
+		}
+
+		backoff := saltPrefetchRetryBase * time.Duration(1<<attempt)
+		if backoff > saltPrefetchRetryMax {
+			backoff = saltPrefetchRetryMax
+		}
+		if s.log != nil {
+			s.log.Warnf("salt pre-fetch: salt still expired after attempt %d, retrying in %v", attempt+1, backoff)
+		}
+	}
+	if s.log != nil {
+		s.log.Warnf("salt pre-fetch: failed to refresh salt after %d attempts", saltPrefetchMaxRetries)
 	}
 }
 
@@ -1212,7 +1296,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		}
 		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
-		s.serverSalt.Store(newSalt)
+		s.saltMgr.StoreSimple(newSalt)
 		s.pending.Resolve(badMsgID, &tg.BadServerSalt{
 			BadMsgID:      badMsgID,
 			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
@@ -1223,7 +1307,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 28 {
 			return false
 		}
-		s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[20:28])))
+		s.saltMgr.StoreSimple(int64(binary.LittleEndian.Uint64(body[20:28])))
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
@@ -1339,24 +1423,45 @@ func (s *Session) decodeRawPacketIfNeeded(msgID int64, seqNo uint32, body []byte
 }
 
 func (s *Session) handleRawFutureSalts(body []byte) bool {
-	const firstSaltOffset = 24
-	if len(body) < firstSaltOffset {
+	const headerSize = 24
+	if len(body) < headerSize {
 		return false
 	}
 	if binary.LittleEndian.Uint32(body[16:20]) != tg.VectorTypeID {
 		return false
 	}
-	count := binary.LittleEndian.Uint32(body[20:24])
+	count := int(binary.LittleEndian.Uint32(body[20:24]))
 	if count == 0 {
 		return true
 	}
-	if len(body) < firstSaltOffset+20 {
-		return false
+	saltSize := 4 + 4 + 4 + 8
+	expected := headerSize + count*saltSize
+	if len(body) < expected {
+		count = (len(body) - headerSize) / saltSize
+		if count <= 0 {
+			return false
+		}
 	}
-	if binary.LittleEndian.Uint32(body[firstSaltOffset:firstSaltOffset+4]) != tg.FutureSaltTypeID {
-		return false
+	var entries []saltEntry
+	offset := headerSize
+	for i := 0; i < count; i++ {
+		if binary.LittleEndian.Uint32(body[offset:offset+4]) != tg.FutureSaltTypeID {
+			offset += saltSize
+			continue
+		}
+		validSince := int64(binary.LittleEndian.Uint32(body[offset+4 : offset+8]))
+		validUntil := int64(binary.LittleEndian.Uint32(body[offset+8 : offset+12]))
+		salt := int64(binary.LittleEndian.Uint64(body[offset+12 : offset+20]))
+		entries = append(entries, saltEntry{
+			validSince: validSince,
+			validUntil: validUntil,
+			salt:       salt,
+		})
+		offset += saltSize
 	}
-	s.serverSalt.Store(int64(binary.LittleEndian.Uint64(body[firstSaltOffset+12 : firstSaltOffset+20])))
+	if len(entries) > 0 {
+		s.saltMgr.StoreFromFutureSalts(entries)
+	}
 	return true
 }
 
@@ -1479,7 +1584,7 @@ func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transpor
 		s.authKey = result.AuthKey
 		s.authKeyID = computeAuthKeyID(result.AuthKey)
 		s.mu.Unlock()
-		s.serverSalt.Store(result.ServerSalt)
+		s.saltMgr.StoreSimple(result.ServerSalt)
 		if s.storage != nil {
 			if err := s.storage.SetAuthKey(result.AuthKey); err != nil {
 				return fmt.Errorf("session: save auth key: %w", err)

@@ -253,7 +253,7 @@ func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObje
 		SeqNo: seqNo,
 		Body:  body,
 	}
-	encrypted, err := crypto.Pack(message, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	if err != nil {
 		panic("makeEncryptedResponse: " + err.Error())
 	}
@@ -261,7 +261,7 @@ func makeEncryptedResponse(s *Session, msgID int64, seqNo uint32, body tg.TLObje
 }
 
 func makeEncryptedRawResponse(s *Session, msgID int64, seqNo uint32, body []byte) []byte {
-	encrypted, err := crypto.PackRaw(msgID, seqNo, body, s.serverSalt.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
+	encrypted, err := crypto.PackRaw(msgID, seqNo, body, s.saltMgr.Load(), s.sessionIDBytes(), s.authKey, s.authKeyID)
 	if err != nil {
 		panic("makeEncryptedRawResponse: " + err.Error())
 	}
@@ -772,8 +772,8 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 	if secondMsg.MsgID == firstMsg.MsgID {
 		t.Fatal("retry reused msg_id")
 	}
-	if s.serverSalt.Load() != newSalt {
-		t.Fatalf("serverSalt = %x, want %x", s.serverSalt.Load(), newSalt)
+	if s.saltMgr.Load() != newSalt {
+		t.Fatalf("serverSalt = %x, want %x", s.saltMgr.Load(), newSalt)
 	}
 
 	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.Pong{
