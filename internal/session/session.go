@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -61,6 +60,19 @@ func (s *Session) hasRawResults() bool {
 	return s.pending.HasAnyRaw()
 }
 
+func (s *Session) checkWrite() error {
+	switch s.sm.State() {
+	case StateActive, StateConnecting:
+		return nil
+	case StateClosed:
+		return ErrSessionClosed
+	case StateDraining:
+		return ErrDraining
+	default:
+		return ErrNotConnected
+	}
+}
+
 // AuthFunc is a function that performs key generation/authentication against
 // the server using the provided transport. It returns an AuthResult containing
 // the established auth key, server salt, and server time.
@@ -108,8 +120,8 @@ type Session struct {
 	// pending manages all outstanding RPC call lifecycles.
 	pending *PendingManager
 
-	// connected indicates whether the session is currently active.
-	connected atomic.Bool
+	// sm is the session connection state machine.
+	sm *stateMachine
 	// mu protects the mutable config fields below: authKey, authKeyID,
 	// transport, pingInterval, onUpdate, onPanic.
 	mu sync.RWMutex
@@ -245,6 +257,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		pongTimeout:  30 * time.Second,
 		updateSem:    make(chan struct{}, 128),
 		saltMgr:      newSaltManager(time.Now),
+		sm:           newStateMachine(),
 	}
 
 	if len(authKey) > 0 {
@@ -319,7 +332,7 @@ func (s *Session) AuthKey() []byte {
 
 // IsConnected reports whether the session is currently active and connected.
 func (s *Session) IsConnected() bool {
-	return s.connected.Load()
+	return s.sm.isActive()
 }
 
 // SetTransport replaces the underlying transport used for sending and
@@ -340,6 +353,9 @@ func (s *Session) sessionIDBytes() []byte {
 // an RPCDropAnswerRequest is fired to inform the server the request is no
 // longer needed. Returns the raw response bytes or an error.
 func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) (tg.TLObject, error) {
+	if err := s.checkWrite(); err != nil {
+		return nil, err
+	}
 	s.mu.RLock()
 	authKey := s.authKey
 	authKeyID := s.authKeyID
@@ -521,6 +537,9 @@ func (s *Session) dispatchUpdate(obj tg.TLObject) {
 // bytes. Unlike [Send], the response path does not gzip-unpack or TL-decode the
 // payload.
 func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBytes []byte, timeout time.Duration) ([]byte, error) {
+	if err := s.checkWrite(); err != nil {
+		return nil, err
+	}
 	s.mu.RLock()
 	authKey := s.authKey
 	authKeyID := s.authKeyID
@@ -748,7 +767,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
-	s.connected.Store(true)
+	s.sm.transition(StateIdle, StateConnecting)
 
 	// Start the errgroup so readLoop is running during the initial ping.
 	g := newErrGroup(groupCtx)
@@ -762,10 +781,12 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	initPingCancel()
 	if err != nil {
 		g.Cancel()
-		s.connected.Store(false)
+		s.sm.transition(StateConnecting, StateClosed)
 		close(s.done)
 		return fmt.Errorf("session: initial ping: %w", err)
 	}
+
+	s.sm.transition(StateConnecting, StateActive)
 
 	return nil
 }
@@ -779,7 +800,7 @@ func (s *Session) runLoop(ctx context.Context) error {
 	g.Go(s.handleClose)
 
 	err := g.Wait()
-	s.connected.Store(false)
+	s.sm.transitionTo(StateClosed)
 	return err
 }
 
@@ -788,6 +809,13 @@ func (s *Session) runLoop(ctx context.Context) error {
 // (pingLoop, saltLoop, handleClose) and blocks until the context is cancelled
 // or a fatal error occurs.
 func (s *Session) Run(ctx context.Context) error {
+	if !s.sm.canConnect() {
+		state := s.sm.State()
+		if state == StateClosed {
+			return ErrSessionClosed
+		}
+		return fmt.Errorf("session: run: already connected (state=%s)", state)
+	}
 	if err := s.runInit(ctx); err != nil {
 		return err
 	}
@@ -811,6 +839,13 @@ func (s *Session) Start(timeout time.Duration) error {
 // after the initial ping succeeds. The ctx bounds the startup ping. Use Stop
 // to terminate the background session.
 func (s *Session) StartContext(ctx context.Context) error {
+	if !s.sm.canConnect() {
+		state := s.sm.State()
+		if state == StateClosed {
+			return ErrSessionClosed
+		}
+		return fmt.Errorf("session: start: already connected (state=%s)", state)
+	}
 	runCtx, runCancel := context.WithCancel(context.Background())
 	s.runCancel = runCancel
 	s.runDone = make(chan struct{})
@@ -996,7 +1031,7 @@ func (s *Session) readLoop(ctx context.Context) error {
 				return ctx.Err()
 			default:
 			}
-			if !s.connected.Load() {
+			if !s.sm.isActive() {
 				return nil
 			}
 			if isTimeoutError(err) {
@@ -1165,7 +1200,7 @@ func (s *Session) fetchSaltsWithRetry(ctx context.Context) {
 		default:
 		}
 
-		if !s.connected.Load() {
+		if !s.sm.isActive() {
 			return
 		}
 
@@ -1199,7 +1234,7 @@ func (s *Session) fetchSaltsWithRetry(ctx context.Context) {
 // done channel, and closes the transport.
 func (s *Session) handleClose(ctx context.Context) error {
 	<-ctx.Done()
-	s.connected.Store(false)
+	s.sm.transitionTo(StateDraining)
 	s.pending.RejectAll(ErrSessionClosed)
 	close(s.done)
 	s.mu.RLock()
@@ -1533,6 +1568,13 @@ func (s *Session) Connect(transport Transport, timeout time.Duration) error {
 // ConnectContext sets the transport and starts the session. It requires that an
 // auth key has already been established. The context bounds the startup ping.
 func (s *Session) ConnectContext(ctx context.Context, transport Transport) error {
+	if !s.sm.canConnect() {
+		state := s.sm.State()
+		if state == StateClosed {
+			return ErrSessionClosed
+		}
+		return fmt.Errorf("session: connect: already connected (state=%s)", state)
+	}
 	if transport != nil {
 		s.mu.Lock()
 		s.transport = transport
@@ -1564,6 +1606,13 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 // authFunc if no auth key is currently set. The context bounds authentication
 // and the startup ping.
 func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transport, authFunc AuthFunc) error {
+	if !s.sm.canConnect() {
+		state := s.sm.State()
+		if state == StateClosed {
+			return ErrSessionClosed
+		}
+		return fmt.Errorf("session: connect: already connected (state=%s)", state)
+	}
 	if transport != nil {
 		s.mu.Lock()
 		s.transport = transport

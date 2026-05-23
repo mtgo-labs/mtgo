@@ -331,7 +331,7 @@ func TestSessionSaltLoopTriggersPreFetch(t *testing.T) {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
-	s.connected.Store(true)
+	s.sm.forceSetState(StateActive)
 
 	go func() { _ = s.saltLoop(ctx) }()
 

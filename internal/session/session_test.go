@@ -305,7 +305,7 @@ func startTestWorkers(s *Session, mt *mockTransport) func() {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
-	s.connected.Store(true)
+	s.sm.forceSetState(StateActive)
 	go func() { _ = s.readLoop(ctx) }()
 	go func() { _ = s.ackLoop(ctx) }()
 	return func() {
@@ -813,7 +813,7 @@ func TestSessionInvokeZeroRetriesDoesNotSend(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 	s.done = make(chan struct{})
-	s.connected.Store(true)
+	s.sm.forceSetState(StateActive)
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {
@@ -832,7 +832,7 @@ func TestSessionInvokeRawZeroRetriesDoesNotSend(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 	s.done = make(chan struct{})
-	s.connected.Store(true)
+	s.sm.forceSetState(StateActive)
 
 	_, err := s.InvokeRaw(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
 	if err == nil {
