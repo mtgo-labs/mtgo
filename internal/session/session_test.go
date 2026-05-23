@@ -281,11 +281,8 @@ func newSessionWithAuthKey(t *testing.T) *Session {
 
 func startTestWorkers(s *Session) {
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 64)
 	s.dispatchCh = make(chan *tg.MTProtoMessageRaw, s.dispatchQueueSize)
 	s.connected.Store(true)
-	s.wg.Add(1)
-	go s.writer()
 	s.startDispatchWorkers(context.Background(), 1)
 	s.wg.Add(1)
 	go func() {
@@ -824,7 +821,6 @@ func TestSessionInvokeZeroRetriesDoesNotSend(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 1)
 	s.connected.Store(true)
 
 	_, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
@@ -844,7 +840,6 @@ func TestSessionInvokeRawZeroRetriesDoesNotSend(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 1)
 	s.connected.Store(true)
 
 	_, err := s.InvokeRaw(context.Background(), &tg.PingRequest{PingID: 123}, 0, 50*time.Millisecond)
@@ -910,15 +905,14 @@ func TestSessionFlushAcksUsesServiceMessage(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 	s.cancel = make(chan struct{})
-	s.sendCh = make(chan *sendJob, 1)
 
 	s.addAck(1)
 	s.addAck(2)
 	s.flushAcks()
 
 	select {
-	case job := <-s.sendCh:
-		msg := unpackIncoming(job.encrypted, s)
+	case data := <-mt.sendCh:
+		msg := unpackIncoming(data, s)
 		if msg == nil {
 			t.Fatal("service message did not decode")
 		}
