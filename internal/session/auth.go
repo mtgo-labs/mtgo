@@ -216,12 +216,12 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 	case *tg.ServerDHParamsOk:
 		key, iv := computeKeyAndIV(newNonce[:], resPQ.ServerNonce[:])
 		decrypted, err := crypto.IGEDecrypt([]byte(v.EncryptedAnswer), key, iv)
-			if err != nil {
-				return nil, fmt.Errorf("step 8: decrypt DH params: %w", err)
-			}
-			defer crypto.ReleaseAESBuf(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("step 8: decrypt DH params: %w", err)
+		}
+		defer crypto.ReleaseAESBuf(decrypted)
 
-			serverDHData, err := unwrapDataWithHash(decrypted)
+		serverDHData, err := unwrapDataWithHash(decrypted)
 		if err != nil {
 			return nil, fmt.Errorf("step 8: unwrap decrypted DH params: %w", err)
 		}
@@ -309,90 +309,90 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 				GB:          string(gB.Bytes()),
 			}
 
-		clientDHBytes, err := a.serializeTL(clientDHInner)
-		if err != nil {
-			return nil, fmt.Errorf("step 9: serialize ClientDHInnerData: %w", err)
-		}
+			clientDHBytes, err := a.serializeTL(clientDHInner)
+			if err != nil {
+				return nil, fmt.Errorf("step 9: serialize ClientDHInnerData: %w", err)
+			}
 
-		clientDHWithHash := sha1Hash(clientDHBytes)
-		clientDHWithHash = append(clientDHWithHash, clientDHBytes...)
-		padLen := 16 - (len(clientDHWithHash) % 16)
-		if padLen < 16 {
-			pad := make([]byte, padLen)
-			clientDHWithHash = append(clientDHWithHash, pad...)
-		}
+			clientDHWithHash := sha1Hash(clientDHBytes)
+			clientDHWithHash = append(clientDHWithHash, clientDHBytes...)
+			padLen := 16 - (len(clientDHWithHash) % 16)
+			if padLen < 16 {
+				pad := make([]byte, padLen)
+				clientDHWithHash = append(clientDHWithHash, pad...)
+			}
 
-		encClientDH, err := crypto.IGEEncrypt(clientDHWithHash, key, iv)
+			encClientDH, err := crypto.IGEEncrypt(clientDHWithHash, key, iv)
 			if err != nil {
 				return nil, fmt.Errorf("step 9: encrypt client DH: %w", err)
 			}
 			defer crypto.ReleaseAESBuf(encClientDH)
 
-		if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
-			Nonce:         nonce,
-			ServerNonce:   resPQ.ServerNonce,
-			EncryptedData: string(encClientDH),
-		}); err != nil {
-			return nil, fmt.Errorf("step 9: send SetClientDHParams: %w", err)
-		}
-
-		obj, err = a.recvUnencrypted(conn)
-		if err != nil {
-			return nil, fmt.Errorf("step 10: recv DH answer: %w", err)
-		}
-
-		switch v := obj.(type) {
-		case *tg.DHGenOk:
-			if v.Nonce != nonce {
-				return nil, ErrNonceMismatch
-			}
-			if v.ServerNonce != resPQ.ServerNonce {
-				return nil, ErrServerNonceMismatch
+			if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
+				Nonce:         nonce,
+				ServerNonce:   resPQ.ServerNonce,
+				EncryptedData: string(encClientDH),
+			}); err != nil {
+				return nil, fmt.Errorf("step 9: send SetClientDHParams: %w", err)
 			}
 
-			expectedHash := computeNewNonceHash1(newNonce[:], authKey)
-			if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
-				return nil, ErrNewNonceHashMismatch
+			obj, err = a.recvUnencrypted(conn)
+			if err != nil {
+				return nil, fmt.Errorf("step 10: recv DH answer: %w", err)
 			}
 
-			if len(authKey) < 256 {
-				padded := make([]byte, 256)
-				copy(padded[256-len(authKey):], authKey)
-				authKey = padded
-			} else {
-				authKey = authKey[:256]
+			switch v := obj.(type) {
+			case *tg.DHGenOk:
+				if v.Nonce != nonce {
+					return nil, ErrNonceMismatch
+				}
+				if v.ServerNonce != resPQ.ServerNonce {
+					return nil, ErrServerNonceMismatch
+				}
+
+				expectedHash := computeNewNonceHash1(newNonce[:], authKey)
+				if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
+					return nil, ErrNewNonceHashMismatch
+				}
+
+				if len(authKey) < 256 {
+					padded := make([]byte, 256)
+					copy(padded[256-len(authKey):], authKey)
+					authKey = padded
+				} else {
+					authKey = authKey[:256]
+				}
+
+				salt := computeServerSalt(newNonce[:], resPQ.ServerNonce[:])
+
+				return &AuthResult{
+					AuthKey:    authKey,
+					ServerSalt: salt,
+					ServerTime: dhInner.ServerTime,
+				}, nil
+
+			case *tg.DHGenRetry:
+				if v.ServerNonce != resPQ.ServerNonce {
+					return nil, ErrServerNonceMismatch
+				}
+				retryID = authKeyAuxHash()
+				var retryErr error
+				b, retryErr = a.generateRandomBN(2048)
+				if retryErr != nil {
+					return nil, fmt.Errorf("step 10: retry DH secret: %w", retryErr)
+				}
+				gB = new(big.Int).Exp(g, b, dhPrime)
+				authKey = computeAuthKey(gA, b, dhPrime)
+
+			case *tg.DHGenFail:
+				if v.ServerNonce != resPQ.ServerNonce {
+					return nil, ErrServerNonceMismatch
+				}
+				return nil, ErrDHGenFail
+
+			default:
+				return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
 			}
-
-			salt := computeServerSalt(newNonce[:], resPQ.ServerNonce[:])
-
-			return &AuthResult{
-				AuthKey:    authKey,
-				ServerSalt: salt,
-				ServerTime: dhInner.ServerTime,
-			}, nil
-
-		case *tg.DHGenRetry:
-			if v.ServerNonce != resPQ.ServerNonce {
-				return nil, ErrServerNonceMismatch
-			}
-			retryID = authKeyAuxHash()
-			var retryErr error
-			b, retryErr = a.generateRandomBN(2048)
-			if retryErr != nil {
-				return nil, fmt.Errorf("step 10: retry DH secret: %w", retryErr)
-			}
-			gB = new(big.Int).Exp(g, b, dhPrime)
-			authKey = computeAuthKey(gA, b, dhPrime)
-
-		case *tg.DHGenFail:
-			if v.ServerNonce != resPQ.ServerNonce {
-				return nil, ErrServerNonceMismatch
-			}
-			return nil, ErrDHGenFail
-
-		default:
-			return nil, fmt.Errorf("step 10: unexpected DH answer type %T", obj)
-		}
 		}
 		return nil, ErrDHGenRetry
 

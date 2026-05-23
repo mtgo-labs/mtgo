@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -167,6 +168,10 @@ type Session struct {
 	onPanic func(panicValue any)
 	// log receives structured log output. When nil, logging is suppressed.
 	log sessionLogger
+
+	consecWriteFailures   int
+	writeBreakerThreshold int
+	writeBreakerOpen      atomic.Bool
 }
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
@@ -210,6 +215,27 @@ func (s *Session) SetLogger(l sessionLogger) {
 	s.mu.Lock()
 	s.log = l
 	s.mu.Unlock()
+}
+
+func (s *Session) SetWriteBreakerThreshold(n int) {
+	s.writeBreakerThreshold = n
+}
+
+func (s *Session) trackWriteResult(err error) {
+	if s.writeBreakerThreshold <= 0 {
+		return
+	}
+	if err != nil {
+		s.consecWriteFailures++
+		if s.consecWriteFailures >= s.writeBreakerThreshold && !s.writeBreakerOpen.Load() {
+			s.writeBreakerOpen.Store(true)
+			if s.group != nil {
+				s.group.Cancel()
+			}
+		}
+	} else {
+		s.consecWriteFailures = 0
+	}
 }
 
 func computeAuthKeyID(authKey []byte) []byte {
@@ -258,6 +284,8 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		updateSem:    make(chan struct{}, 128),
 		saltMgr:      newSaltManager(time.Now),
 		sm:           newStateMachine(),
+
+		writeBreakerThreshold: 3,
 	}
 
 	if len(authKey) > 0 {
@@ -384,7 +412,10 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		return nil, fmt.Errorf("session: pack message: %w", err)
 	}
 
-	handle := s.pending.Register(msgID, false)
+	handle, regErr := s.pending.Register(msgID, false)
+	if regErr != nil {
+		return nil, fmt.Errorf("session: send: %w", regErr)
+	}
 
 	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
@@ -562,7 +593,10 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return nil, fmt.Errorf("session: send raw: %w", err)
 	}
 
-	handle := s.pending.Register(msgID, true)
+	handle, regErr := s.pending.Register(msgID, true)
+	if regErr != nil {
+		return nil, fmt.Errorf("session: send raw: %w", regErr)
+	}
 
 	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
@@ -944,6 +978,10 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 // payload, and releases the mutex. Returns the transport error, if any.
 // Lock ordering: mu is always acquired BEFORE writeMux, never inside it.
 func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout time.Duration) error {
+	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
 	deadline := time.Now().Add(timeout)
 	if dl, ok := ctx.Deadline(); ok && dl.Before(deadline) {
 		deadline = dl
@@ -959,6 +997,10 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 	s.writeMux.Lock()
 	defer s.writeMux.Unlock()
 
+	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
 	select {
 	case <-s.done:
 		return ErrSessionClosed
@@ -968,12 +1010,17 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 	tp.SetWriteDeadline(deadline)
 	err := tp.Send(encrypted)
 	tp.SetWriteDeadline(time.Time{})
+	s.trackWriteResult(err)
 	return err
 }
 
 // writeEncryptedDirect is the context-less variant used by service messages
 // and RPCDropAnswer where there is no caller context to respect.
 func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) error {
+	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
 	deadline := time.Now().Add(timeout)
 
 	s.mu.RLock()
@@ -986,6 +1033,10 @@ func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) 
 	s.writeMux.Lock()
 	defer s.writeMux.Unlock()
 
+	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
 	select {
 	case <-s.done:
 		return ErrSessionClosed
@@ -995,12 +1046,23 @@ func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) 
 	tp.SetWriteDeadline(deadline)
 	err := tp.Send(encrypted)
 	tp.SetWriteDeadline(time.Time{})
+	s.trackWriteResult(err)
 	return err
 }
 
 // readLoop is an errgroup goroutine that reads from the transport and handles
 // or dispatches incoming messages.
-func (s *Session) readLoop(ctx context.Context) error {
+func (s *Session) readLoop(ctx context.Context) (retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if s.log != nil {
+				s.log.Errorf("readLoop panic: %v", r)
+			}
+			s.pending.RejectAll(ErrSessionClosed)
+			retErr = fmt.Errorf("session: readLoop panic: %v", r)
+		}
+	}()
+
 	readTimeout := s.pingInterval * 2
 	if readTimeout < 30*time.Second {
 		readTimeout = 30 * time.Second
