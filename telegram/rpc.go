@@ -87,6 +87,13 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 
 	data, err := ci.client.InvokeWithRawResult(ctx, query)
 	if err != nil {
+		if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 303 {
+			if shouldReturnMigrationToCaller(input, rpcErr) {
+				return nil, rpcErr
+			}
+			_, migErr := ci.client.handleMigrationError(rpcErr, input)
+			return nil, migErr
+		}
 		return nil, err
 	}
 	if !apiInit && needsInitConnection(input) {
