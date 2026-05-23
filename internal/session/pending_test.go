@@ -13,7 +13,10 @@ import (
 
 func TestRegisterAndResolve(t *testing.T) {
 	pm := NewPendingManager()
-	h := pm.Register(1, false)
+	h, err := pm.Register(1, false)
+	if err != nil {
+		t.Fatalf("Register() error: %v", err)
+	}
 
 	if !pm.Has(1) {
 		t.Fatal("expected Has(1) to be true")
@@ -49,7 +52,10 @@ func TestRegisterAndResolve(t *testing.T) {
 
 func TestRegisterAndResolveRaw(t *testing.T) {
 	pm := NewPendingManager()
-	h := pm.Register(2, true)
+	h, err := pm.Register(2, true)
+	if err != nil {
+		t.Fatalf("Register() error: %v", err)
+	}
 
 	if !pm.HasRaw(2) {
 		t.Fatal("expected HasRaw(2) to be true")
@@ -75,7 +81,10 @@ func TestRegisterAndResolveRaw(t *testing.T) {
 
 func TestReject(t *testing.T) {
 	pm := NewPendingManager()
-	h := pm.Register(3, false)
+	h, err := pm.Register(3, false)
+	if err != nil {
+		t.Fatalf("Register() error: %v", err)
+	}
 
 	rejectErr := errors.New("test error")
 	if !pm.Reject(3, rejectErr) {
@@ -83,15 +92,18 @@ func TestReject(t *testing.T) {
 	}
 
 	<-h.Done()
-	_, _, err := h.Result()
-	if err != rejectErr {
-		t.Fatalf("expected rejectErr, got %v", err)
+	_, _, e := h.Result()
+	if e != rejectErr {
+		t.Fatalf("expected rejectErr, got %v", e)
 	}
 }
 
 func TestCancel(t *testing.T) {
 	pm := NewPendingManager()
-	h := pm.Register(4, false)
+	h, err := pm.Register(4, false)
+	if err != nil {
+		t.Fatalf("Register() error: %v", err)
+	}
 
 	if !pm.Cancel(4) {
 		t.Fatal("expected Cancel to return true")
@@ -125,9 +137,9 @@ func TestLateResolveIgnored(t *testing.T) {
 
 func TestRejectAll(t *testing.T) {
 	pm := NewPendingManager()
-	h1 := pm.Register(10, false)
-	h2 := pm.Register(11, true)
-	h3 := pm.Register(12, false)
+	h1, _ := pm.Register(10, false)
+	h2, _ := pm.Register(11, true)
+	h3, _ := pm.Register(12, false)
 
 	rejectErr := errors.New("shutdown")
 	pm.RejectAll(rejectErr)
@@ -278,7 +290,11 @@ func TestHighConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(id int64) {
 			defer wg.Done()
-			h := pm.Register(id, id%2 == 0)
+			h, regErr := pm.Register(id, id%2 == 0)
+			if regErr != nil {
+				errs <- regErr
+				return
+			}
 
 			// Simulate receive loop resolving quickly
 			go func() {
@@ -311,5 +327,126 @@ func TestHighConcurrency(t *testing.T) {
 
 	if pm.Count() != 0 {
 		t.Fatalf("expected 0 pending, got %d", pm.Count())
+	}
+}
+
+func TestMaxPendingRPC(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(5)
+
+	for i := int64(0); i < 5; i++ {
+		_, err := pm.Register(i, false)
+		if err != nil {
+			t.Fatalf("Register(%d) unexpected error: %v", i, err)
+		}
+	}
+
+	_, err := pm.Register(99, false)
+	if !errors.Is(err, ErrBusy) {
+		t.Fatalf("Register over limit: err=%v, want ErrBusy", err)
+	}
+
+	if pm.Count() != 5 {
+		t.Fatalf("Count()=%d, want 5", pm.Count())
+	}
+}
+
+func TestMaxPendingRPCFreedOnResolve(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(3)
+
+	for i := int64(0); i < 3; i++ {
+		_, err := pm.Register(i, false)
+		if err != nil {
+			t.Fatalf("Register(%d) unexpected error: %v", i, err)
+		}
+	}
+
+	_, err := pm.Register(99, false)
+	if !errors.Is(err, ErrBusy) {
+		t.Fatalf("expected ErrBusy, got %v", err)
+	}
+
+	pm.Resolve(0, &tg.Pong{})
+
+	_, err = pm.Register(100, false)
+	if err != nil {
+		t.Fatalf("Register after resolve: unexpected error: %v", err)
+	}
+}
+
+func TestMaxPendingRPCFreedOnCancel(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(2)
+
+	_, _ = pm.Register(1, false)
+	_, _ = pm.Register(2, false)
+
+	_, err := pm.Register(3, false)
+	if !errors.Is(err, ErrBusy) {
+		t.Fatalf("expected ErrBusy, got %v", err)
+	}
+
+	pm.Cancel(1)
+
+	_, err = pm.Register(3, false)
+	if err != nil {
+		t.Fatalf("Register after cancel: unexpected error: %v", err)
+	}
+}
+
+func TestMaxPendingRPCFreedOnReject(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(2)
+
+	_, _ = pm.Register(1, false)
+	_, _ = pm.Register(2, false)
+
+	pm.Reject(1, errors.New("test"))
+
+	_, err := pm.Register(3, false)
+	if err != nil {
+		t.Fatalf("Register after reject: unexpected error: %v", err)
+	}
+}
+
+func TestMaxPendingRPCRejectAllFreesCapacity(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(3)
+
+	_, _ = pm.Register(1, false)
+	_, _ = pm.Register(2, false)
+	_, _ = pm.Register(3, false)
+
+	pm.RejectAll(errors.New("shutdown"))
+
+	if pm.Count() != 0 {
+		t.Fatalf("Count()=%d, want 0 after RejectAll", pm.Count())
+	}
+
+	for i := int64(10); i < 13; i++ {
+		_, err := pm.Register(i, false)
+		if err != nil {
+			t.Fatalf("Register(%d) after RejectAll: unexpected error: %v", i, err)
+		}
+	}
+}
+
+func TestMaxPendingRPCDefaultIs1024(t *testing.T) {
+	pm := NewPendingManager()
+	if pm.MaxPending() != 1024 {
+		t.Fatalf("MaxPending()=%d, want 1024", pm.MaxPending())
+	}
+}
+
+func TestMaxPendingRPCZeroDisablesLimit(t *testing.T) {
+	pm := NewPendingManager()
+	pm.SetMaxPending(0)
+
+	for i := int64(0); i < 2000; i++ {
+		_, err := pm.Register(i, false)
+		if err != nil {
+			t.Fatalf("Register(%d) with no limit: unexpected error: %v", i, err)
+		}
 	}
 }

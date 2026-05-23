@@ -53,7 +53,7 @@ func BenchmarkSessionRPCResultRouting(b *testing.B) {
 		b.ReportAllocs()
 
 		for b.Loop() {
-			handle := s.pending.Register(reqMsgID, true)
+			handle, _ := s.pending.Register(reqMsgID, true)
 			s.handleRawPacket(respMsgID, body)
 			<-handle.Done()
 			_, benchmarkRawResult, _ = handle.Result()
@@ -66,7 +66,7 @@ func BenchmarkSessionRPCResultRouting(b *testing.B) {
 		b.ReportAllocs()
 
 		for b.Loop() {
-			handle := s.pending.Register(reqMsgID, false)
+			handle, _ := s.pending.Register(reqMsgID, false)
 			s.handleRawPacket(respMsgID, body)
 			<-handle.Done()
 			benchmarkTLResult, _, _ = handle.Result()
@@ -79,7 +79,7 @@ func BenchmarkSessionRPCResultRouting(b *testing.B) {
 		b.ReportAllocs()
 
 		for b.Loop() {
-			handle := s.pending.Register(reqMsgID, false)
+			handle, _ := s.pending.Register(reqMsgID, false)
 			r := tg.NewReader(body)
 			obj, err := tg.ReadTLObject(r)
 			tg.ReleaseReader(r)
