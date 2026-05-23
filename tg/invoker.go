@@ -2,6 +2,7 @@ package tg
 
 import (
 	"context"
+	"fmt"
 )
 
 type Invoker interface {
@@ -16,7 +17,7 @@ func (f InvokerFunc) RPCInvoke(ctx context.Context, input TLObject, decode func(
 }
 
 func (f InvokerFunc) RPCInvokeRaw(ctx context.Context, input TLObject) ([]byte, error) {
-	return nil, nil
+	return nil, fmt.Errorf("tg: InvokerFunc does not implement RPCInvokeRaw")
 }
 
 // Client wraps an Invoker and provides a high-level RPC interface.

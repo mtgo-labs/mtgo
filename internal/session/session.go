@@ -583,12 +583,35 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 			}
 			continue
 		}
+
+		if err := checkRawRPCError(data); err != nil {
+			return nil, err
+		}
+
 		return data, nil
 	}
 	if lastErr == nil {
 		return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d)", retries)
 	}
 	return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d): %w", retries, lastErr)
+}
+
+func checkRawRPCError(data []byte) error {
+	if len(data) < 4 {
+		return nil
+	}
+	constructorID := binary.LittleEndian.Uint32(data[:4])
+	if constructorID != tg.RPCErrorTypeID {
+		return nil
+	}
+	r := tg.NewReader(data[4:])
+	defer tg.ReleaseReader(r)
+	rpcErr, err := tg.DecodeRPCError(r)
+	if err != nil {
+		return nil
+	}
+	parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+	return fmt.Errorf("invoke raw: %w", parsed)
 }
 
 // Invoke sends an RPC query and decodes the response into a TLObject.

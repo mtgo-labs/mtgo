@@ -1477,8 +1477,16 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	}
 
 	timeout := c.cfg.ReqTimeout
+	if deadline, ok := ctx.Deadline(); ok {
+		if d := time.Until(deadline); d < timeout {
+			timeout = d
+		}
+	}
 	if timeout <= 0 {
 		timeout = 60 * time.Second
+	}
+	if timeout < time.Second {
+		timeout = time.Second
 	}
 	retries := c.cfg.Retries
 	if retries < 1 {
