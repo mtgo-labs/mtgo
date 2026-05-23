@@ -51,34 +51,50 @@ func (h *CallHandle) complete(fn func()) bool {
 // PendingManager owns the lifecycle of all pending RPC calls for a session.
 // Resolve/Reject/Cancel never block on caller behavior.
 type PendingManager struct {
-	mu      sync.Mutex
-	pending map[int64]*CallHandle
-
+	mu           sync.Mutex
+	pending      map[int64]*CallHandle
+	maxPending   int64
 	totalPending atomic.Int64
 	rawPending   atomic.Int64
 }
 
-// NewPendingManager creates a PendingManager ready to use.
 func NewPendingManager() *PendingManager {
 	return &PendingManager{
-		pending: make(map[int64]*CallHandle),
+		pending:    make(map[int64]*CallHandle),
+		maxPending: 1024,
 	}
 }
 
-// Register creates a new CallHandle for the given msgID.
-func (pm *PendingManager) Register(msgID int64, isRaw bool) *CallHandle {
+func (pm *PendingManager) SetMaxPending(n int64) {
+	pm.mu.Lock()
+	pm.maxPending = n
+	pm.mu.Unlock()
+}
+
+func (pm *PendingManager) MaxPending() int64 {
+	pm.mu.Lock()
+	n := pm.maxPending
+	pm.mu.Unlock()
+	return n
+}
+
+func (pm *PendingManager) Register(msgID int64, isRaw bool) (*CallHandle, error) {
+	pm.mu.Lock()
+	if pm.maxPending > 0 && int64(len(pm.pending)) >= pm.maxPending {
+		pm.mu.Unlock()
+		return nil, ErrBusy
+	}
 	h := &CallHandle{
 		done:  make(chan struct{}),
 		isRaw: isRaw,
 	}
-	pm.mu.Lock()
 	pm.pending[msgID] = h
 	pm.mu.Unlock()
 	pm.totalPending.Add(1)
 	if isRaw {
 		pm.rawPending.Add(1)
 	}
-	return h
+	return h, nil
 }
 
 // Resolve stores a decoded TL result and completes the handle.
