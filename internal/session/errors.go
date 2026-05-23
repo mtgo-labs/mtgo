@@ -1,6 +1,9 @@
 package session
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
 // Session connection and authentication errors.
 //
@@ -64,4 +67,60 @@ var (
 	// ErrGBOutOfRange is returned when the client's computed g_b falls
 	// outside the required range [2, dh_prime-2].
 	ErrGBOutOfRange = errors.New("session: g_b out of range")
+
+	// ErrBusy is returned when the pending RPC count reaches MaxPendingRPC.
+	// No bytes are written to the transport when this error is returned.
+	ErrBusy = errors.New("session: too many pending RPCs")
+
+	// ErrWriteCircuitOpen is returned when the write circuit breaker has
+	// tripped due to consecutive write failures.
+	ErrWriteCircuitOpen = errors.New("session: write circuit breaker open")
 )
+
+// ErrorClass classifies a transport or session error for reconnect decisions.
+type ErrorClass int
+
+const (
+	ClassTransient ErrorClass = iota
+	ClassPermanent
+	ClassClosed
+	ClassRateLimited
+	ClassMigrate
+	ClassUnknown
+)
+
+func (c ErrorClass) String() string {
+	switch c {
+	case ClassTransient:
+		return "transient"
+	case ClassPermanent:
+		return "permanent"
+	case ClassClosed:
+		return "closed"
+	case ClassRateLimited:
+		return "rate_limited"
+	case ClassMigrate:
+		return "migrate"
+	default:
+		return "unknown"
+	}
+}
+
+func ClassifyError(err error) ErrorClass {
+	if err == nil {
+		return ClassUnknown
+	}
+	if errors.Is(err, ErrSessionClosed) || errors.Is(err, ErrDraining) {
+		return ClassClosed
+	}
+	if errors.Is(err, ErrWriteCircuitOpen) {
+		return ClassPermanent
+	}
+	if errors.Is(err, io.EOF) {
+		return ClassClosed
+	}
+	if netErr, ok := err.(interface{ Timeout() bool }); ok && netErr.Timeout() {
+		return ClassTransient
+	}
+	return ClassUnknown
+}
