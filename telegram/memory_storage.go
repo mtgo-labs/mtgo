@@ -1,16 +1,13 @@
 package telegram
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"net"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
@@ -109,26 +106,33 @@ func (m *MemoryStorage) ExportSessionString() (string, error) {
 	if len(m.authKey) == 0 {
 		return "", nil
 	}
-
-	dc := session.DataCenter{ID: m.dcID}
-	var ip net.IP
-	if addr := dc.Address(); addr != "" {
-		ip = net.ParseIP(addr)
-	}
-	if ip == nil {
-		ip = net.ParseIP("0.0.0.0")
-	}
-	if ip4 := ip.To4(); ip4 != nil {
-		ip = ip4
+	if m.apiID == 0 {
+		return "", fmt.Errorf("telegram: cannot export session: api_id not stored")
 	}
 
-	buf := new(bytes.Buffer)
-	buf.WriteByte(uint8(m.dcID))
-	buf.Write(ip)
-	_ = binary.Write(buf, binary.BigEndian, uint16(443))
-	buf.Write(m.authKey)
+	buf := make([]byte, 0, 271)
+	buf = append(buf, byte(m.dcID))
+	apiID := make([]byte, 4)
+	binary.BigEndian.PutUint32(apiID, uint32(m.apiID))
+	buf = append(buf, apiID...)
+	testMode := byte(0)
+	if m.testMode {
+		testMode = 1
+	}
+	buf = append(buf, testMode)
+	buf = append(buf, m.authKey...)
+	userID := make([]byte, 8)
+	binary.BigEndian.PutUint64(userID, uint64(m.userID))
+	buf = append(buf, userID...)
+	isBot := byte(0)
+	if m.isBot {
+		isBot = 1
+	}
+	buf = append(buf, isBot)
 
-	return "1" + base64.URLEncoding.EncodeToString(buf.Bytes()), nil
+	encoded := base64.URLEncoding.EncodeToString(buf)
+	encoded = strings.TrimRight(encoded, "=")
+	return encoded, nil
 }
 
 func (m *MemoryStorage) Close() error { return nil }

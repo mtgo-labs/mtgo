@@ -1,11 +1,9 @@
 package session
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"net"
 )
 
 // Format identifies a string session encoding format.
@@ -205,27 +203,14 @@ func (s *Session) Close() error                    { return nil }
 
 // ExportSessionString returns the Telethon-format session string.
 func (s *Session) ExportSessionString() (string, error) {
-	if len(s.authKey) == 0 {
-		return "", nil
-	}
-	var ip net.IP
-	if s.serverAddress != "" {
-		ip = net.ParseIP(s.serverAddress)
-	}
-	if ip == nil {
-		ip = net.IPv4(0, 0, 0, 0)
-	}
-	if ip4 := ip.To4(); ip4 != nil {
-		ip = ip4
-	}
-
-	buf := new(bytes.Buffer)
-	buf.WriteByte(uint8(s.dcID))
-	buf.Write(ip)
-	_ = binary.Write(buf, binary.BigEndian, uint16(s.port))
-	buf.Write(s.authKey)
-
-	return "1" + base64.URLEncoding.EncodeToString(buf.Bytes()), nil
+	return EncodePyrogram(&SessionData{
+		DCID:     s.dcID,
+		AppID:    s.apiID,
+		TestMode: s.testMode,
+		AuthKey:  s.authKey,
+		UserID:   s.userID,
+		IsBot:    s.isBot,
+	})
 }
 
 // ---------- ImportSessionString — used by connectTransport ----------
@@ -279,6 +264,16 @@ func DetectFormat(s string) Format {
 				if len(payload) == expected {
 					return FormatGramJS
 				}
+			}
+		}
+	}
+
+	if s[0] == '2' && len(s) > 1 {
+		rest := s[1:]
+		if payload, err := base64.URLEncoding.DecodeString(padBase64(rest)); err == nil {
+			switch len(payload) {
+			case 267, 279: // v2: IPv4 or IPv6 with api_id
+				return FormatTelethon
 			}
 		}
 	}

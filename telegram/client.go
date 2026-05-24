@@ -148,10 +148,11 @@ type Client struct {
 //	}
 //	defer client.Disconnect()
 func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
-	if apiID == 0 {
+	hasSessionString := cfg != nil && cfg.SessionString != ""
+	if apiID == 0 && !hasSessionString {
 		return nil, ErrAPIIDRequired
 	}
-	if apiHash == "" {
+	if apiHash == "" && !hasSessionString {
 		return nil, ErrAPIHashRequired
 	}
 
@@ -915,6 +916,15 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 				return fmt.Errorf("telegram: import session auth key: %w", err)
 			}
 		}
+		if c.cfg.APIID == 0 {
+			if appID, _ := src.APIID(); appID > 0 {
+				c.cfg.APIID = appID
+			}
+		}
+	}
+
+	if c.cfg.APIID == 0 {
+		return fmt.Errorf("telegram: apiID is required (not found in session string)")
 	}
 
 	c.loadPeersFromStorage()

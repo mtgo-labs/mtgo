@@ -8,11 +8,10 @@
 package storage
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -690,22 +689,33 @@ func (a *adapterWrapper) ExportSessionString() (string, error) {
 	if len(a.sess.AuthKey) == 0 {
 		return "", nil
 	}
-	var ip net.IP
-	if addr := dcIPv4Address(a.sess.DC); addr != "" {
-		ip = net.ParseIP(addr)
+	if a.sess.APIID == 0 {
+		return "", fmt.Errorf("telegram: cannot export session: api_id not stored")
 	}
-	if ip == nil {
-		ip = net.ParseIP("0.0.0.0")
+
+	buf := make([]byte, 0, 271)
+	buf = append(buf, byte(a.sess.DC))
+	apiID := make([]byte, 4)
+	binary.BigEndian.PutUint32(apiID, uint32(a.sess.APIID))
+	buf = append(buf, apiID...)
+	testMode := byte(0)
+	if a.sess.TestMode {
+		testMode = 1
 	}
-	if ip4 := ip.To4(); ip4 != nil {
-		ip = ip4
+	buf = append(buf, testMode)
+	buf = append(buf, a.sess.AuthKey...)
+	userID := make([]byte, 8)
+	binary.BigEndian.PutUint64(userID, uint64(a.sess.UserID))
+	buf = append(buf, userID...)
+	isBot := byte(0)
+	if a.sess.IsBot {
+		isBot = 1
 	}
-	buf := new(bytes.Buffer)
-	buf.WriteByte(uint8(a.sess.DC))
-	buf.Write(ip)
-	_ = binary.Write(buf, binary.BigEndian, uint16(443))
-	buf.Write(a.sess.AuthKey)
-	return "1" + base64.URLEncoding.EncodeToString(buf.Bytes()), nil
+	buf = append(buf, isBot)
+
+	encoded := base64.URLEncoding.EncodeToString(buf)
+	encoded = strings.TrimRight(encoded, "=")
+	return encoded, nil
 }
 
 var prodDCAddresses = map[int]string{
