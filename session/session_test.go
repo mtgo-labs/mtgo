@@ -36,8 +36,8 @@ func TestTelethonRoundTrip(t *testing.T) {
 	if encoded == "" {
 		t.Fatal("empty encoded string")
 	}
-	if encoded[0] != '1' {
-		t.Fatalf("expected '1' prefix, got %q", encoded[0])
+	if encoded[0] != '2' {
+		t.Fatalf("expected '2' prefix (has api_id), got %q", encoded[0])
 	}
 
 	decoded, err := DecodeTelethon(encoded)
@@ -45,6 +45,9 @@ func TestTelethonRoundTrip(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 	assertEqualSession(t, orig, decoded)
+	if decoded.AppID != orig.AppID {
+		t.Fatalf("AppID: %d vs %d", decoded.AppID, orig.AppID)
+	}
 }
 
 func TestTelethonIPv6RoundTrip(t *testing.T) {
@@ -72,6 +75,40 @@ func TestTelethonIPv6RoundTrip(t *testing.T) {
 		t.Fatalf("DC/port mismatch")
 	}
 	assertAuthKeyEqual(t, orig.AuthKey, decoded.AuthKey)
+}
+
+func TestTelethonRoundTripNoAPIID(t *testing.T) {
+	orig := &SessionData{
+		DCID:          2,
+		ServerAddress: "149.154.167.50",
+		Port:          443,
+		AuthKey:       makeTestAuthKey(),
+		AppID:         0,
+	}
+	encoded, err := EncodeTelethon(orig)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	if encoded[0] != '1' {
+		t.Fatalf("expected '1' prefix (no api_id), got %q", encoded[0])
+	}
+	decoded, err := DecodeTelethon(encoded)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	assertEqualSession(t, orig, decoded)
+}
+
+func TestTelethonV2Detect(t *testing.T) {
+	orig := makeTestData()
+	encoded, err := EncodeTelethon(orig)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	f := DetectFormat(encoded)
+	if f != FormatTelethon {
+		t.Fatalf("expected FormatTelethon, got %s", f)
+	}
 }
 
 // --- Pyrogram ---

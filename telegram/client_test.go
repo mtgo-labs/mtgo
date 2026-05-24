@@ -185,6 +185,40 @@ func TestNewClientRejectsInvalidTransportMode(t *testing.T) {
 	}
 }
 
+func TestNewClientAllowsZeroAPIIDWithSessionString(t *testing.T) {
+	_, err := NewClient(0, "hash", &Config{
+		SessionString: "some-session-string",
+		InMemory:      true,
+	})
+	if err != nil {
+		t.Fatalf("NewClient with SessionString and apiID=0: %v", err)
+	}
+}
+
+func TestNewClientAllowsEmptyAPIHashWithSessionString(t *testing.T) {
+	_, err := NewClient(12345, "", &Config{
+		SessionString: "some-session-string",
+		InMemory:      true,
+	})
+	if err != nil {
+		t.Fatalf("NewClient with SessionString and apiHash='': %v", err)
+	}
+}
+
+func TestNewClientRejectsZeroAPIIDWithoutSessionString(t *testing.T) {
+	_, err := NewClient(0, "hash", nil)
+	if !errors.Is(err, ErrAPIIDRequired) {
+		t.Fatalf("expected ErrAPIIDRequired, got %v", err)
+	}
+}
+
+func TestNewClientRejectsEmptyAPIHashWithoutSessionString(t *testing.T) {
+	_, err := NewClient(12345, "", nil)
+	if !errors.Is(err, ErrAPIHashRequired) {
+		t.Fatalf("expected ErrAPIHashRequired, got %v", err)
+	}
+}
+
 func TestWithProxy(t *testing.T) {
 	c, _ := NewClient(1, "h", &Config{Proxy: &Proxy{Addr: "1.2.3.4:1080", Username: "user", Password: "pass"}})
 	cfg := c.Config()
@@ -584,6 +618,7 @@ func TestExportSessionStringWithStorage(t *testing.T) {
 	st := NewMemoryStorage()
 	_ = st.SetAuthKey(make([]byte, 256))
 	_ = st.SetDCID(2)
+	_ = st.SetAPIID(42)
 	c.setTestStorage(st)
 
 	sess, err := session.NewSession(session.DataCenter{ID: 2}, st, "Test", "0.1", "en", "en")
@@ -896,6 +931,7 @@ func TestFullLifecycle(t *testing.T) {
 	st := NewMemoryStorage()
 	_ = st.SetAuthKey(make([]byte, 256))
 	_ = st.SetDCID(2)
+	_ = st.SetAPIID(42)
 	c.setTestStorage(st)
 
 	sess, err := session.NewSession(session.DataCenter{ID: 2}, st, "Test", "0.1", "en", "en")
