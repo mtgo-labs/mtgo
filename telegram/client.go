@@ -516,40 +516,40 @@ func (c *Client) SaveSession(s *storage.Session) error {
 
 // SavePeer persists a peer to the storage backend.
 func (c *Client) SavePeer(p *storage.Peer) error {
-	if a := c.Adapter(); a != nil {
-		return a.SavePeer(p)
+	if ps := c.peerStore(); ps != nil {
+		return ps.SavePeer(p)
 	}
 	return nil
 }
 
 // GetPeer retrieves a cached peer by ID from the storage backend.
 func (c *Client) GetPeer(id int64) (*storage.Peer, error) {
-	if a := c.Adapter(); a != nil {
-		return a.GetPeer(id)
+	if ps := c.peerStore(); ps != nil {
+		return ps.GetPeer(id)
 	}
 	return nil, nil
 }
 
 // GetPeerByUsername retrieves a cached peer by username from the storage backend.
 func (c *Client) GetPeerByUsername(username string) (*storage.Peer, error) {
-	if a := c.Adapter(); a != nil {
-		return a.GetPeerByUsername(username)
+	if ps := c.peerStore(); ps != nil {
+		return ps.GetPeerByUsername(username)
 	}
 	return nil, nil
 }
 
 // LoadPeers returns all cached peers from the storage backend.
 func (c *Client) LoadPeers() ([]*storage.Peer, error) {
-	if a := c.Adapter(); a != nil {
-		return a.LoadPeers()
+	if ps := c.peerStore(); ps != nil {
+		return ps.LoadPeers()
 	}
 	return nil, nil
 }
 
 // DeletePeer removes a cached peer from the storage backend.
 func (c *Client) DeletePeer(id int64) error {
-	if a := c.Adapter(); a != nil {
-		return a.DeletePeer(id)
+	if ps := c.peerStore(); ps != nil {
+		return ps.DeletePeer(id)
 	}
 	return nil
 }
@@ -1688,7 +1688,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 	case *tg.UpdateUserName:
 		if len(v.Usernames) > 0 {
 			c.cacheUsername(v.Usernames[0].Username, v.UserID)
-			if ps, ok := c.storage.(storage.PeerStore); ok {
+			if ps := c.peerStore(); ps != nil {
 				_ = ps.SavePeer(&storage.Peer{
 					ID:        v.UserID,
 					Type:      storage.PeerTypeUser,
@@ -2072,25 +2072,101 @@ func (c *Client) SetBotToken(token string) { c.cfg.BotToken = token }
 // Returns the cached peer or ErrPeerNotFound if not present.
 func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
 	c.peerCacheMu.RLock()
-	defer c.peerCacheMu.RUnlock()
-	if p, ok := c.peerCache[id]; ok {
-		return p, nil
+	for _, lookupID := range peerLookupIDs(id) {
+		if p, ok := c.peerCache[lookupID]; ok {
+			c.peerCacheMu.RUnlock()
+			return p, nil
+		}
+	}
+	c.peerCacheMu.RUnlock()
+
+	if c.cfg.SavePeers {
+		if ps := c.peerStore(); ps != nil {
+			for _, lookupID := range peerLookupIDs(id) {
+				p, err := ps.GetPeer(lookupID)
+				if err != nil || p == nil {
+					continue
+				}
+				var peer tg.InputPeerClass
+				switch p.Type {
+				case storage.PeerTypeUser:
+					peer = &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}
+				case storage.PeerTypeChat:
+					peer = &tg.InputPeerChat{ChatID: p.ID}
+				case storage.PeerTypeChannel:
+					channelID := p.ID
+					if raw, ok := rawChannelID(channelID); ok {
+						channelID = raw
+					}
+					peer = &tg.InputPeerChannel{ChannelID: channelID, AccessHash: p.AccessHash}
+				default:
+					return nil, ErrPeerNotFound
+				}
+				c.CachePeer(lookupID, peer)
+				if p.Username != "" {
+					c.cacheUsername(p.Username, p.ID)
+				}
+				return peer, nil
+			}
+		}
 	}
 	return nil, ErrPeerNotFound
 }
 
-// CachePeer stores an InputPeer in the client's peer cache keyed by numeric ID.
-// Cached peers are used by ResolvePeerCache to avoid redundant RPC calls.
-// When PeerCacheSize is set and the cache exceeds the limit, the oldest entry
-// is evicted (FIFO) to prevent unbounded growth.
 func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
+	id = canonicalPeerID(id, peer)
 	c.peerCacheMu.Lock()
+	defer c.peerCacheMu.Unlock()
 	if _, exists := c.peerCache[id]; !exists {
 		c.peerCacheOrder = append(c.peerCacheOrder, id)
 	}
 	c.peerCache[id] = peer
 	c.evictOldestPeerLocked()
-	c.peerCacheMu.Unlock()
+
+	if c.cfg.SavePeers {
+		if ps := c.peerStore(); ps != nil {
+			entry := &storage.Peer{ID: id}
+			switch p := peer.(type) {
+			case *tg.InputPeerUser:
+				entry.Type = storage.PeerTypeUser
+				entry.AccessHash = p.AccessHash
+			case *tg.InputPeerChat:
+				entry.Type = storage.PeerTypeChat
+			case *tg.InputPeerChannel:
+				entry.Type = storage.PeerTypeChannel
+				entry.ID = p.ChannelID
+				entry.AccessHash = p.AccessHash
+			default:
+				return
+			}
+			_ = ps.SavePeer(entry)
+		}
+	}
+}
+
+func peerLookupIDs(id int64) []int64 {
+	if raw, ok := rawChannelID(id); ok {
+		return []int64{raw, id}
+	}
+	return []int64{id}
+}
+
+func canonicalPeerID(id int64, peer tg.InputPeerClass) int64 {
+	if p, ok := peer.(*tg.InputPeerChannel); ok && p.ChannelID != 0 {
+		return p.ChannelID
+	}
+	if raw, ok := rawChannelID(id); ok {
+		return raw
+	}
+	return id
+}
+
+func rawChannelID(id int64) (int64, bool) {
+	const channelChatIDPrefix int64 = -1000000000000
+	if id <= channelChatIDPrefix {
+		return channelChatIDPrefix - id, true
+	}
+	return 0, false
 }
 
 func (c *Client) evictOldestPeerLocked() {
@@ -2101,10 +2177,22 @@ func (c *Client) evictOldestPeerLocked() {
 	for len(c.peerCache) > limit && len(c.peerCacheOrder) > 0 {
 		oldest := c.peerCacheOrder[0]
 		delete(c.peerCache, oldest)
+		if cachedID, ok := c.reverseUsernameCache(oldest); ok {
+			delete(c.usernameCache, cachedID)
+		}
 		copy(c.peerCacheOrder, c.peerCacheOrder[1:])
 		c.peerCacheOrder[len(c.peerCacheOrder)-1] = 0
 		c.peerCacheOrder = c.peerCacheOrder[:len(c.peerCacheOrder)-1]
 	}
+}
+
+func (c *Client) reverseUsernameCache(peerID int64) (string, bool) {
+	for username, id := range c.usernameCache {
+		if id == peerID {
+			return username, true
+		}
+	}
+	return "", false
 }
 
 func (c *Client) cacheUsername(username string, userID int64) {
@@ -2147,12 +2235,15 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			c.cacheUsername(username, user.ID)
 		}
 		entries = append(entries, &storage.Peer{
-			ID:         user.ID,
-			Type:       storage.PeerTypeUser,
-			AccessHash: user.AccessHash,
-			Username:   username,
-			FirstName:  user.FirstName,
-			LastName:   user.LastName,
+			ID:          user.ID,
+			Type:        storage.PeerTypeUser,
+			AccessHash:  user.AccessHash,
+			Username:    username,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			PhoneNumber: user.Phone,
+			IsBot:       user.Bot,
+			Language:    user.LangCode,
 		})
 	}
 	for _, ch := range chats {
@@ -2179,7 +2270,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 		}
 	}
 	if c.cfg.SavePeers && len(entries) > 0 {
-		if ps, ok := c.storage.(storage.PeerStore); ok {
+		if ps := c.peerStore(); ps != nil {
 			for _, entry := range entries {
 				_ = ps.SavePeer(entry)
 			}
@@ -2191,8 +2282,8 @@ func (c *Client) loadPeersFromStorage() {
 	if !c.cfg.SavePeers {
 		return
 	}
-	ps, ok := c.storage.(storage.PeerStore)
-	if !ok {
+	ps := c.peerStore()
+	if ps == nil {
 		return
 	}
 	peers, err := ps.LoadPeers()

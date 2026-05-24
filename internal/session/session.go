@@ -657,6 +657,19 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 			continue
 		}
 
+		if len(data) < 4 {
+			lastErr = fmt.Errorf("invoke raw: rpc result too short: %d", len(data))
+			if backoff == 0 {
+				backoff = 100 * time.Millisecond
+			} else {
+				backoff = backoff * 2
+				if backoff > 2*time.Second {
+					backoff = 2 * time.Second
+				}
+			}
+			continue
+		}
+
 		if err := checkRawRPCError(data); err != nil {
 			return nil, err
 		}

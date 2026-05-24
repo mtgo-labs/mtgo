@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -151,6 +152,7 @@ func (r *resolveCoalescer) Do(key string, fn func() (tg.InputPeerClass, error)) 
 }
 
 func (c *Client) resolveAndCache(result *tg.ContactsResolvedPeer) {
+	var entries []*storage.Peer
 	for _, u := range result.Users {
 		user, ok := u.(*tg.User)
 		if !ok {
@@ -161,17 +163,46 @@ func (c *Client) resolveAndCache(result *tg.ContactsResolvedPeer) {
 			if user.Username != "" {
 				c.cacheUsername(user.Username, user.ID)
 			}
+			entries = append(entries, &storage.Peer{
+				ID:          user.ID,
+				Type:        storage.PeerTypeUser,
+				AccessHash:  user.AccessHash,
+				Username:    user.Username,
+				FirstName:   user.FirstName,
+				LastName:    user.LastName,
+				PhoneNumber: user.Phone,
+				IsBot:       user.Bot,
+				Language:    user.LangCode,
+			})
 		}
 	}
 	for _, ch := range result.Chats {
-		channel, ok := ch.(*tg.Channel)
-		if !ok {
-			continue
+		switch v := ch.(type) {
+		case *tg.Chat:
+			c.CachePeer(v.ID, &tg.InputPeerChat{ChatID: v.ID})
+			entries = append(entries, &storage.Peer{
+				ID:   v.ID,
+				Type: storage.PeerTypeChat,
+			})
+		case *tg.Channel:
+			if v.AccessHash != 0 {
+				c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: v.AccessHash})
+				if v.Username != "" {
+					c.cacheUsername(v.Username, v.ID)
+				}
+				entries = append(entries, &storage.Peer{
+					ID:         v.ID,
+					Type:       storage.PeerTypeChannel,
+					AccessHash: v.AccessHash,
+					Username:   v.Username,
+				})
+			}
 		}
-		if channel.AccessHash != 0 {
-			c.CachePeer(channel.ID, &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash})
-			if channel.Username != "" {
-				c.cacheUsername(channel.Username, channel.ID)
+	}
+	if c.cfg.SavePeers && len(entries) > 0 {
+		if ps := c.peerStore(); ps != nil {
+			for _, entry := range entries {
+				_ = ps.SavePeer(entry)
 			}
 		}
 	}

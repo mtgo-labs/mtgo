@@ -71,10 +71,28 @@ func (c *Client) SearchContacts(ctx context.Context, query string, limit int) (*
 	}
 
 	for _, u := range found.Users {
+		user, ok := u.(*tg.User)
+		if ok && user.AccessHash != 0 {
+			c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
+			if user.Username != "" {
+				c.cacheUsername(user.Username, user.ID)
+			}
+		}
 		result.Users = append(result.Users, types.ParseUser(u))
 	}
 
 	for _, ch := range found.Chats {
+		switch v := ch.(type) {
+		case *tg.Chat:
+			c.CachePeer(v.ID, &tg.InputPeerChat{ChatID: v.ID})
+		case *tg.Channel:
+			if v.AccessHash != 0 {
+				c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: v.AccessHash})
+				if v.Username != "" {
+					c.cacheUsername(v.Username, v.ID)
+				}
+			}
+		}
 		if chat := types.ParseChatFromChat(ch); chat != nil {
 			result.Chats = append(result.Chats, chat)
 		}

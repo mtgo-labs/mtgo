@@ -851,6 +851,65 @@ func TestSessionInvokeRawZeroRetriesDoesNotSend(t *testing.T) {
 	close(s.done)
 }
 
+func TestSessionInvokeRawRetriesShortRPCResult(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	resultCh := make(chan struct {
+		data []byte
+		err  error
+	}, 1)
+	go func() {
+		data, err := s.InvokeRaw(context.Background(), &tg.PingRequest{PingID: 123}, 2, 5*time.Second)
+		resultCh <- struct {
+			data []byte
+			err  error
+		}{data, err}
+	}()
+
+	first := <-mt.sendCh
+	firstMsg, err := unpackTestOutgoing(s, first)
+	if err != nil {
+		t.Fatalf("unpack first request: %v", err)
+	}
+	var emptyRPCResult bytes.Buffer
+	if err := binary.Write(&emptyRPCResult, binary.LittleEndian, uint32(tg.RPCResultTypeID)); err != nil {
+		t.Fatalf("write rpc_result constructor: %v", err)
+	}
+	if err := binary.Write(&emptyRPCResult, binary.LittleEndian, uint64(firstMsg.MsgID)); err != nil {
+		t.Fatalf("write req_msg_id: %v", err)
+	}
+	mt.recvCh <- makeEncryptedRawResponse(s, makeServerMsgID(), 0, emptyRPCResult.Bytes())
+
+	second := <-mt.sendCh
+	secondMsg, err := unpackTestOutgoing(s, second)
+	if err != nil {
+		t.Fatalf("unpack second request: %v", err)
+	}
+	pong := &tg.Pong{MsgID: secondMsg.MsgID, PingID: 123}
+	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), 0, &tg.RPCResult{
+		ReqMsgID: secondMsg.MsgID,
+		Result:   pong,
+	})
+
+	select {
+	case result := <-resultCh:
+		if result.err != nil {
+			t.Fatalf("InvokeRaw() error: %v", result.err)
+		}
+		want := encodeTLObject(t, pong)
+		if !bytes.Equal(result.data, want) {
+			t.Fatalf("InvokeRaw() = %x, want %x", result.data, want)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("InvokeRaw() timed out")
+	}
+}
+
 func TestSessionStartStop(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
@@ -985,6 +1044,14 @@ func TestSessionConnectNoAuthKey(t *testing.T) {
 func unpackIncoming(data []byte, s *Session) *tg.MTProtoMessage {
 	msg, _, _ := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
 	return msg
+}
+
+func unpackTestOutgoing(s *Session, data []byte) (*tg.MTProtoMessage, error) {
+	msg, decrypted, err := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+	if decrypted != nil {
+		crypto.ReleaseAESBuf(decrypted)
+	}
+	return msg, err
 }
 
 func TestQuickAck(t *testing.T) {

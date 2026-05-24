@@ -15,84 +15,26 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	extstorage "github.com/mtgo-labs/storage"
 )
 
-// PeerType represents the type of a Telegram peer.
-type PeerType int
+type PeerType = extstorage.PeerType
+type Peer = extstorage.Peer
+type Session = extstorage.Session
+type Conversation = extstorage.Conversation
+type PeerStore = extstorage.PeerStore
+type SessionStore = extstorage.SessionStore
+type ConversationStore = extstorage.ConversationStore
+type Adapter = extstorage.Adapter
+type DCAuthEntry = extstorage.DCAuthEntry
+type DCAuthStore = extstorage.DCAuthStore
 
 const (
-	PeerTypeUser    PeerType = 0
-	PeerTypeChat    PeerType = 1
-	PeerTypeChannel PeerType = 2
+	PeerTypeUser    PeerType = extstorage.PeerTypeUser
+	PeerTypeChat    PeerType = extstorage.PeerTypeChat
+	PeerTypeChannel PeerType = extstorage.PeerTypeChannel
 )
-
-func (p PeerType) String() string {
-	switch p {
-	case PeerTypeUser:
-		return "user"
-	case PeerTypeChat:
-		return "chat"
-	case PeerTypeChannel:
-		return "channel"
-	default:
-		return "unknown"
-	}
-}
-
-// Session holds MTProto session data.
-type Session struct {
-	SessionID string `json:"session_id"`
-	DC        int    `json:"dc"`
-	APIID     int32  `json:"api_id"`
-	APIHash   string `json:"api_hash"`
-	TestMode  bool   `json:"test_mode"`
-	AuthKey   []byte `json:"auth_key"`
-	State     []byte `json:"state"`
-	UserID    int64  `json:"user_id"`
-	IsBot     bool   `json:"is_bot"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Username  string `json:"username"`
-	Date      int    `json:"date"`
-	Addr      string `json:"addr"`
-	Port      int    `json:"port"`
-}
-
-// Peer holds cached peer information.
-type Peer struct {
-	ID          int64    `json:"id"`
-	Type        PeerType `json:"type"`
-	AccessHash  int64    `json:"access_hash"`
-	Username    string   `json:"username"`
-	Usernames   string   `json:"usernames,omitempty"`
-	FirstName   string   `json:"first_name"`
-	LastName    string   `json:"last_name"`
-	PhoneNumber string   `json:"phone_number,omitempty"`
-	IsBot       bool     `json:"is_bot,omitempty"`
-	PhotoID     int64    `json:"photo_id,omitempty"`
-	Language    string   `json:"language,omitempty"`
-	LastUpdated int64    `json:"last_updated"`
-}
-
-// DCAuthEntry holds authentication data for a data center.
-type DCAuthEntry struct {
-	DCID       int    `json:"dc_id"`
-	AuthKey    []byte `json:"auth_key"`
-	ServerSalt int64  `json:"server_salt"`
-	Port       int    `json:"port"`
-	ServerAddr string `json:"server_addr"`
-}
-
-// Conversation holds plugin conversation state.
-type Conversation struct {
-	ChatID    int64  `json:"chat_id"`
-	UserID    int64  `json:"user_id"`
-	Name      string `json:"name"`
-	Step      int    `json:"step"`
-	Data      []byte `json:"data,omitempty"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-}
 
 // UpdateState holds the client's update sequence numbers.
 type UpdateState struct {
@@ -120,41 +62,6 @@ type DurableUpdate struct {
 	LastError string `json:"last_error"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"updated_at"`
-}
-
-// DCAuthStore persists data center authentication entries.
-type DCAuthStore interface {
-	SaveDCAuth(entry DCAuthEntry) error
-	LoadDCAuth(dcID int) (DCAuthEntry, error)
-}
-
-// SessionStore persists MTProto session data.
-type SessionStore interface {
-	LoadSession() (*Session, error)
-	SaveSession(s *Session) error
-}
-
-// PeerStore persists peer cache entries.
-type PeerStore interface {
-	SavePeer(p *Peer) error
-	GetPeer(id int64) (*Peer, error)
-	GetPeerByUsername(username string) (*Peer, error)
-	LoadPeers() ([]*Peer, error)
-	DeletePeer(id int64) error
-}
-
-// ConversationStore persists plugin conversation state.
-type ConversationStore interface {
-	SaveConversation(c *Conversation) error
-	LoadConversation(chatID, userID int64) (*Conversation, error)
-	DeleteConversation(chatID, userID int64) error
-}
-
-// Adapter combines session and peer storage. ConversationStore is optional.
-type Adapter interface {
-	SessionStore
-	PeerStore
-	Close() error
 }
 
 // UpdateStateStore is the interface used by the update manager to
