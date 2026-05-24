@@ -28,6 +28,9 @@ testdc
 # OpenMP session dumps
 omp-session-*.html
 
+# CodeGraph index
+.codegraph/
+
 # Worktrees
 .worktrees/
 chatid_bot/
