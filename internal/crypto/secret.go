@@ -116,7 +116,8 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	buf.Write(plaintext)
 
 	paddingLen := SecretChatMinPadding + mathrand.Intn(SecretChatMaxPadding-SecretChatMinPadding)
-	if rem := paddingLen % 16; rem != 0 {
+	totalLen := 4 + len(plaintext) + paddingLen
+	if rem := totalLen % 16; rem != 0 {
 		paddingLen += 16 - rem
 	}
 	padding := make([]byte, paddingLen)
