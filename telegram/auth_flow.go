@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/sys/unix"
+	"golang.org/x/term"
 
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -56,18 +56,15 @@ func TerminalPasswordFunc() PasswordFunc {
 
 func readPassword() ([]byte, error) {
 	fd := int(os.Stdin.Fd())
-	oldState, err := unix.IoctlGetTermios(fd, unix.TCGETS)
+	if !term.IsTerminal(fd) {
+		return bufio.NewReader(os.Stdin).ReadBytes('\n')
+	}
+
+	pw, err := term.ReadPassword(fd)
 	if err != nil {
 		return bufio.NewReader(os.Stdin).ReadBytes('\n')
 	}
-	newState := *oldState
-	newState.Lflag &^= unix.ECHO
-	_ = unix.IoctlSetTermios(fd, unix.TCSETS, &newState)
-	defer unix.IoctlSetTermios(fd, unix.TCSETS, oldState)
-
-	reader := bufio.NewReader(os.Stdin)
-	line, err := reader.ReadBytes('\n')
-	return line, err
+	return pw, nil
 }
 
 // loginUser runs the interactive phone login flow:
