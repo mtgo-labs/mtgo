@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"math/big"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -38,8 +39,8 @@ func pad256(n *big.Int) []byte {
 }
 
 // ComputePasswordHash derives the 2FA password hash using the MTProto SRP
-// algorithm: SHA-256(salt2 + PBKDF2(SHA-256(salt2 + SHA-256(salt1 + password +
-// salt1) + salt2), salt1, 100000) + salt2). Returns a 32-byte hash.
+// algorithm: SHA-256(salt2 + PBKDF2-HMAC-SHA512(SHA-256(salt2 + SHA-256(salt1 +
+// password + salt1) + salt2), salt1, 100000) + salt2). Returns a 32-byte hash.
 //
 // This function uses PBKDF2 with 100,000 iterations and is expensive. Callers
 // that may invoke it multiple times with the same password and salts (e.g.
@@ -50,7 +51,7 @@ func ComputePasswordHash(password string, salt1, salt2 []byte) []byte {
 	pw := []byte(password)
 	hash1 := sha256sum(salt1, pw, salt1)
 	hash2 := sha256sum(salt2, hash1, salt2)
-	hash3 := pbkdf2.Key(hash2, salt1, 100000, 64, sha256.New)[:32]
+	hash3 := pbkdf2.Key(hash2, salt1, 100000, 64, sha512.New)
 	return sha256sum(salt2, hash3, salt2)
 }
 
