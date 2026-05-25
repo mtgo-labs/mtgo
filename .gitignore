@@ -38,3 +38,5 @@ chatid_bot
 conversations
 examples/conversations/**/conversations
 .serena/
+# GoScope MCP local data
+.goscope/

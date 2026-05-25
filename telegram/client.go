@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -877,7 +878,9 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 
 	st := c.testStorage
 	if st == nil {
-		if c.cfg.Storage != nil {
+		if c.storage != nil {
+			st = c.storage
+		} else if c.cfg.Storage != nil {
 			st = c.cfg.Storage
 		} else if c.cfg.InMemory {
 			st = NewMemoryStorage()
@@ -1192,7 +1195,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}
 
-	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == ""
+	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == "" && !migratingDC
 	if needLogin {
 		c.Log.Info("session not authorized; starting phone login flow")
 		if err := c.loginUser(context.Background()); err != nil {
@@ -1385,6 +1388,7 @@ var idempotentConstructors = map[uint32]bool{
 	tg.InitConnectionTypeID:          true,
 	tg.AuthExportAuthorizationTypeID: true,
 	tg.AuthImportAuthorizationTypeID: true,
+	tg.AuthSendCodeTypeID:            true,
 }
 
 func isIdempotent(query tg.TLObject) bool {
@@ -1398,6 +1402,8 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 	if !isIdempotent(query) {
 		return nil, &UnsafeMigrationError{TargetDC: targetDC, Method: fmt.Sprintf("%T", query)}
 	}
+
+	fmt.Fprintf(os.Stderr, "migrating to DC %d...\n", targetDC)
 
 	c.cleanupSessions(false)
 
@@ -1413,11 +1419,24 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
 
+	retryQuery := query
+	if needsInitConnection(query) {
+		retryQuery = wrapInitConnection(c.cfg, query)
+	}
+
 	retries := c.cfg.Retries
 	if retries < 1 {
 		retries = 1
 	}
-	return c.Invoke(context.Background(), query, retries, 30*time.Second)
+	result, err := c.Invoke(context.Background(), retryQuery, retries, 30*time.Second)
+	if err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: err}
+	}
+	if rpcErr, ok := result.(*tg.RPCError); ok {
+		parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+		return nil, &MigrationError{TargetDC: targetDC, Err: parsed}
+	}
+	return result, nil
 }
 
 func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {

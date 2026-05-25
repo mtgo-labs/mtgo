@@ -350,17 +350,17 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 					return nil, ErrServerNonceMismatch
 				}
 
-				expectedHash := computeNewNonceHash1(newNonce[:], authKey)
-				if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
-					return nil, ErrNewNonceHashMismatch
-				}
-
 				if len(authKey) < 256 {
 					padded := make([]byte, 256)
 					copy(padded[256-len(authKey):], authKey)
 					authKey = padded
 				} else {
 					authKey = authKey[:256]
+				}
+
+				expectedHash := computeNewNonceHash1(newNonce[:], authKey)
+				if !bytes.Equal(v.NewNonceHash1[:], expectedHash) {
+					return nil, ErrNewNonceHashMismatch
 				}
 
 				salt := computeServerSalt(newNonce[:], resPQ.ServerNonce[:])
