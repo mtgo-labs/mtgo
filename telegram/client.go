@@ -176,6 +176,12 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.Password != "" {
 			c.Password = cfg.Password
 		}
+		if cfg.CodeFunc != nil {
+			c.CodeFunc = cfg.CodeFunc
+		}
+		if cfg.PasswordFunc != nil {
+			c.PasswordFunc = cfg.PasswordFunc
+		}
 		if cfg.WorkDir != "" {
 			c.WorkDir = cfg.WorkDir
 		}
@@ -1183,6 +1189,15 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			c.me = me
 			c.mu.Unlock()
 			c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
+		}
+	}
+
+	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == ""
+	if needLogin {
+		c.Log.Info("session not authorized; starting phone login flow")
+		if err := c.loginUser(context.Background()); err != nil {
+			c.cleanupSessions()
+			return fmt.Errorf("phone login: %w", err)
 		}
 	}
 

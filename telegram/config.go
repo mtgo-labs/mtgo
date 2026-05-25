@@ -139,6 +139,20 @@ type Config struct {
 	// Password is the two-factor authentication password required when the
 	// account has 2FA enabled.
 	Password string
+	// CodeFunc returns the verification code for phone login. When PhoneNumber
+	// is set and the session is not yet authorized, Connect calls this function
+	// to obtain the OTP. If nil, TerminalCodeFunc (stdin prompt) is used.
+	//
+	// Example — custom provider:
+	//
+	//	cfg.CodeFunc = func(ctx context.Context, phone string) (string, error) {
+	//	    return readCodeFromWebhook(ctx)
+	//	}
+	CodeFunc CodeFunc
+	// PasswordFunc returns the 2FA password during phone login. Called when
+	// the account has two-factor authentication enabled. If nil,
+	// TerminalPasswordFunc (stdin prompt) is used.
+	PasswordFunc PasswordFunc
 	// WorkDir is the filesystem directory where session files are stored.
 	// Defaults to the current working directory when empty.
 	WorkDir string
