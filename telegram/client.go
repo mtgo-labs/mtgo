@@ -219,6 +219,9 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		if cfg.ReqTimeout != 0 {
 			c.ReqTimeout = cfg.ReqTimeout
 		}
+		if cfg.Retries != 0 {
+			c.Retries = cfg.Retries
+		}
 		if cfg.MaxConcurrentTrans != 0 {
 			c.MaxConcurrentTrans = cfg.MaxConcurrentTrans
 		}

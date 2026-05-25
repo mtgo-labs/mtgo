@@ -429,6 +429,16 @@ func TestInvokeNotConnected(t *testing.T) {
 	}
 }
 
+func TestNewClientAppliesRetriesConfig(t *testing.T) {
+	c, err := NewClient(12345, "hash", &Config{Retries: 3})
+	if err != nil {
+		t.Fatalf("NewClient() error: %v", err)
+	}
+	if c.cfg.Retries != 3 {
+		t.Fatalf("Retries = %d, want 3", c.cfg.Retries)
+	}
+}
+
 func TestInvokeRawNotConnected(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 

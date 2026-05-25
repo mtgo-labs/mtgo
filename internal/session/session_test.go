@@ -748,7 +748,7 @@ func TestSessionInvokeRetriesBadServerSalt(t *testing.T) {
 		err error
 	}, 1)
 	go func() {
-		obj, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: pingID}, 2, 5*time.Second)
+		obj, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: pingID}, 1, 5*time.Second)
 		invokeDone <- struct {
 			obj tg.TLObject
 			err error

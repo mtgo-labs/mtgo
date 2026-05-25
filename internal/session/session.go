@@ -708,7 +708,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 
 	var lastErr error
 	var backoff time.Duration
-	for i := 0; i < retries; i++ {
+	maxAttempts := retries
+	badSaltRetries := 0
+	for i := 0; i < maxAttempts; i++ {
 		if i > 0 {
 			time.Sleep(backoff)
 		}
@@ -735,6 +737,10 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				lastErr = fmt.Errorf("invoke %s: bad message (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
 			case *tg.BadServerSalt:
 				lastErr = fmt.Errorf("invoke %s: bad server salt (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
+				if badSaltRetries == 0 && i+1 >= maxAttempts {
+					badSaltRetries++
+					maxAttempts++
+				}
 			default:
 				lastErr = fmt.Errorf("invoke %s: bad message notification: %T", methodName, bad)
 			}
