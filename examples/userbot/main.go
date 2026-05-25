@@ -1,47 +1,41 @@
 package main
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
-// userbot demonstrates a full userbot login flow using phone number + code.
+// userbot demonstrates a userbot with automatic phone login.
 //
-// It supports three scenarios:
-//   1. Phone + code login
-//   2. Phone + code + 2FA password
-//   3. Reusing a saved session string (no re-login needed)
+// On first run (no saved session), Connect() detects the session is not
+// authorized and automatically prompts for:
 //
-// Required environment variables:
-//   - API_ID:   your Telegram API ID
-//   - API_HASH: your Telegram API hash
+//   1. Verification code (sent via SMS/Telegram)
+//   2. 2FA password (if enabled)
 //
-// Optional environment variables:
-//   - SESSION:  existing session string (skips login if set)
+// The session is saved to disk, so subsequent runs reuse it without prompts.
 //
 // Usage:
 //
 //	# First run (interactive login):
-//	API_ID=12345 API_HASH=abc go run .
+//	API_ID=12345 API_HASH=abc PHONE="+1234567890" go run .
 //
-//	# Subsequent runs with saved session:
-//	API_ID=12345 API_HASH=abc SESSION="saved_session_string" go run .
+//	# Subsequent runs reuse the saved session automatically:
+//	API_ID=12345 API_HASH=abc PHONE="+1234567890" go run .
 func main() {
 	apiID := mustEnv("API_ID")
 	apiHash := mustEnv("API_HASH")
-	sessionStr := os.Getenv("SESSION")
+	phone := mustEnv("PHONE")
 
 	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
+		PhoneNumber:       phone,
 		SessionName:       "userbot",
-		SessionString:     sessionStr,
-		InMemory:          sessionStr != "",
 		SavePeers:         true,
 		DispatchQueueSize: 512,
 	})
@@ -55,14 +49,14 @@ func main() {
 		}
 
 		switch {
-		case strings.HasPrefix(msg.Text, "/ping"):
+		case msg.Text == "/ping":
 			msg.Reply("pong")
-		case strings.HasPrefix(msg.Text, "/me"):
+		case msg.Text == "/me":
 			me := client.Me()
 			if me != nil {
 				msg.Reply(fmt.Sprintf("ID: %d\nName: %s\nUsername: @%s", me.ID, me.FirstName, me.Username))
 			}
-		case strings.HasPrefix(msg.Text, "/session"):
+		case msg.Text == "/session":
 			s, err := client.ExportSessionString()
 			if err != nil {
 				msg.Reply(fmt.Sprintf("error: %v", err))
@@ -73,84 +67,33 @@ func main() {
 		}
 	}, telegram.Private)
 
+	// Connect triggers the interactive login flow automatically when the
+	// session is not yet authorized and PhoneNumber is set.
 	if err := client.Connect(0); err != nil {
 		log.Fatalf("connect: %v", err)
 	}
 	defer client.Stop()
 
 	me, err := client.GetMe(context.Background())
-	if err == nil && me != nil {
-		fmt.Println("=== Already Authorized ===")
-		printUser(me)
-		fmt.Println("userbot is running. Press Ctrl+C to stop.")
-		client.Idle()
-		return
-	}
-
-	fmt.Println("=== Userbot Login ===")
-	me, err = loginUser(client)
 	if err != nil {
-		log.Fatalf("login: %v", err)
+		log.Fatalf("get me: %v", err)
 	}
 
+	fmt.Println("=== Userbot ===")
 	printUser(me)
 
 	sessionString, err := client.ExportSessionString()
 	if err != nil {
-		log.Printf("warning: could not export session string: %v", err)
+		if !errors.Is(err, telegram.ErrAPIIDRequired) {
+			log.Printf("warning: could not export session: %v", err)
+		}
 	} else {
-		fmt.Println("\nSave this session string for future runs:")
+		fmt.Println("\nSave this for future runs without re-login:")
 		fmt.Printf("  SESSION=%q\n", sessionString)
 	}
 
 	fmt.Println("\nuserbot is running. Press Ctrl+C to stop.")
 	client.Idle()
-}
-
-func loginUser(client *telegram.Client) (*types.User, error) {
-	ctx := context.Background()
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Print("Phone number (e.g. +1234567890): ")
-	phone, _ := reader.ReadString('\n')
-	phone = strings.TrimSpace(phone)
-
-	codeResult, err := client.SendCode(ctx, phone)
-	if err != nil {
-		return nil, fmt.Errorf("send code: %w", err)
-	}
-	fmt.Println("Verification code sent. Check your Telegram app.")
-
-	fmt.Print("Enter code: ")
-	code, _ := reader.ReadString('\n')
-	code = strings.TrimSpace(code)
-
-	user, err := client.SignIn(ctx, phone, codeResult.PhoneCodeHash, code)
-	if err == nil {
-		return user, nil
-	}
-
-	if err.Error() == telegram.Err2FARequired.Error() {
-		fmt.Print("2FA password: ")
-		password, _ := reader.ReadString('\n')
-		password = strings.TrimSpace(password)
-
-		return client.CheckPassword(ctx, password)
-	}
-
-	if err.Error() == telegram.ErrSignUpRequired.Error() {
-		fmt.Print("First name: ")
-		firstName, _ := reader.ReadString('\n')
-		firstName = strings.TrimSpace(firstName)
-
-		fmt.Print("Last name (optional): ")
-		lastName, _ := reader.ReadString('\n')
-		lastName = strings.TrimSpace(lastName)
-
-		return client.SignUp(ctx, phone, codeResult.PhoneCodeHash, firstName, lastName)
-	}
-
-	return nil, err
 }
 
 func printUser(u *types.User) {
