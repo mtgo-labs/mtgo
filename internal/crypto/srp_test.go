@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
 	"testing"
 )
@@ -19,6 +20,14 @@ func TestComputePasswordHash(t *testing.T) {
 	hash2 := ComputePasswordHash(password, salt1, salt2)
 	if !bytes.Equal(hash, hash2) {
 		t.Fatal("hash should be deterministic")
+	}
+
+	expected, err := hex.DecodeString("92d7a0f414b43eae3d70a41b838c737ab665cc63c325a9faed3b3fe77f45aa25")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(hash, expected) {
+		t.Fatalf("hash mismatch: got %x, want %x", hash, expected)
 	}
 }
 

@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"math/big"
 
@@ -335,6 +334,10 @@ func (c *Client) computeSRP(ctx context.Context, password string) (tg.InputCheck
 		return nil, fmt.Errorf("get password: %w", err)
 	}
 
+	return computeCheckPasswordSRP(pwd, password)
+}
+
+func computeCheckPasswordSRP(pwd *tg.AccountPassword, password string) (tg.InputCheckPasswordSRPClass, error) {
 	algo, ok := pwd.CurrentAlgo.(*tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow)
 	if !ok {
 		return nil, fmt.Errorf("unsupported password KDF algorithm: %T", pwd.CurrentAlgo)
@@ -345,12 +348,6 @@ func (c *Client) computeSRP(ctx context.Context, password string) (tg.InputCheck
 
 	salt1 := algo.Salt1
 	salt2 := algo.Salt2
-
-	randomBytes := make([]byte, 32)
-	if _, err := rand.Read(randomBytes); err != nil {
-		return nil, fmt.Errorf("generate random salt: %w", err)
-	}
-	salt1 = append(salt1, randomBytes...)
 
 	result, err := crypto.ComputeSRP(salt1, salt2, g, p, pwd.SRPB, pwd.SRPID, password)
 	if err != nil {

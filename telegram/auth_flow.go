@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
@@ -35,7 +37,7 @@ func TerminalCodeFunc() CodeFunc {
 	}
 }
 
-// TerminalPasswordFunc reads a 2FA password from stdin.
+// TerminalPasswordFunc reads a 2FA password from stdin (hidden input).
 func TerminalPasswordFunc() PasswordFunc {
 	return func(_ context.Context, hint string) (string, error) {
 		if hint != "" {
@@ -43,12 +45,29 @@ func TerminalPasswordFunc() PasswordFunc {
 		} else {
 			fmt.Print("Enter 2FA password: ")
 		}
-		pw, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		pw, err := readPassword()
+		fmt.Println()
 		if err != nil {
 			return "", fmt.Errorf("read password: %w", err)
 		}
-		return strings.TrimSpace(pw), nil
+		return strings.TrimSpace(string(pw)), nil
 	}
+}
+
+func readPassword() ([]byte, error) {
+	fd := int(os.Stdin.Fd())
+	oldState, err := unix.IoctlGetTermios(fd, unix.TCGETS)
+	if err != nil {
+		return bufio.NewReader(os.Stdin).ReadBytes('\n')
+	}
+	newState := *oldState
+	newState.Lflag &^= unix.ECHO
+	_ = unix.IoctlSetTermios(fd, unix.TCSETS, &newState)
+	defer unix.IoctlSetTermios(fd, unix.TCSETS, oldState)
+
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadBytes('\n')
+	return line, err
 }
 
 // loginUser runs the interactive phone login flow:
@@ -74,7 +93,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 		pwFn = TerminalPasswordFunc()
 	}
 
-	c.Log.Infof("login: sending code to %s", phone)
+	fmt.Fprintf(os.Stderr, "login: sending code to %s...\n", phone)
 	sentCode, err := c.SendCode(ctx, phone)
 	if err != nil {
 		if errors.Is(err, ErrAlreadyAuthed) {
@@ -93,7 +112,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 
 		_, err = c.SignIn(ctx, phone, hash, code)
 		if err == nil {
-			c.Log.Info("login: authenticated")
+			fmt.Fprintln(os.Stderr, "login: authenticated")
 			return nil
 		}
 
@@ -104,7 +123,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 			return c.loginSignUp(ctx, phone, hash, codeFn)
 		}
 		if tgerr.Is(err, "PHONE_CODE_INVALID") || tgerr.Is(err, "PHONE_CODE_EMPTY") {
-			c.Log.Warnf("login: invalid code (%d/%d)", attempt+1, maxAuthRetries)
+			fmt.Fprintf(os.Stderr, "login: invalid code (%d/%d)\n", attempt+1, maxAuthRetries)
 			continue
 		}
 		return fmt.Errorf("sign in: %w", err)
@@ -113,6 +132,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 }
 
 func (c *Client) loginPassword(ctx context.Context, pwFn PasswordFunc) error {
+	fmt.Fprintln(os.Stderr, "login: 2FA required")
 	hint, _ := c.GetPasswordHint(ctx)
 
 	for attempt := 0; attempt < maxAuthRetries; attempt++ {
@@ -123,7 +143,7 @@ func (c *Client) loginPassword(ctx context.Context, pwFn PasswordFunc) error {
 
 		_, err = c.CheckPassword(ctx, pw)
 		if err == nil {
-			c.Log.Info("login: 2FA authenticated")
+			fmt.Fprintln(os.Stderr, "login: 2FA authenticated")
 			return nil
 		}
 		if tgerr.Is(err, "PASSWORD_HASH_INVALID") {

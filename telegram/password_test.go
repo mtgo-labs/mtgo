@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	mtcrypto "github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func TestEnableCloudPassword_NotConnected(t *testing.T) {
@@ -27,5 +30,34 @@ func TestRemoveCloudPassword_NotConnected(t *testing.T) {
 	err := c.RemoveCloudPassword(context.Background(), "pw")
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("expected ErrNotConnected, got %v", err)
+	}
+}
+
+func TestComputeCheckPasswordSRPDoesNotExtendSalt1(t *testing.T) {
+	backing := make([]byte, 64)
+	for i := range backing {
+		backing[i] = byte(i + 1)
+	}
+	salt1 := backing[:16]
+	tail := append([]byte(nil), backing[16:]...)
+
+	_, err := computeCheckPasswordSRP(&tg.AccountPassword{
+		CurrentAlgo: &tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow{
+			Salt1: salt1,
+			Salt2: []byte("server-salt-2"),
+			G:     3,
+			P:     mtcrypto.CurrentDHPrime.Bytes(),
+		},
+		SRPB:  make([]byte, 256),
+		SRPID: 1,
+	}, "password")
+	if err != nil {
+		t.Fatalf("computeCheckPasswordSRP failed: %v", err)
+	}
+
+	for i, want := range tail {
+		if got := backing[16+i]; got != want {
+			t.Fatalf("salt1 backing data mutated at offset %d: got %d, want %d", 16+i, got, want)
+		}
 	}
 }
