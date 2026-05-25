@@ -12,8 +12,8 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
-	"github.com/mtgo-labs/mtgo/internal/storage"
-	"github.com/mtgo-labs/mtgo/internal/storage/sqlite"
+	extstorage "github.com/mtgo-labs/storage"
+	"github.com/mtgo-labs/storage/sqlite"
 )
 
 func main() {
@@ -33,11 +33,11 @@ func main() {
 
 	client.OnMessage(func(ctx *telegram.Context, msg *types.Message) {
 		ctx.Reply(
-			"<b>Storage Bot</b>\n\n" +
-				"Commands:\n" +
-				"• /note &lt;text&gt; — save a note\n" +
-				"• /notes — list your notes\n" +
-				"• /peers — show cached peers\n" +
+			"<b>Storage Bot</b>\n\n"+
+				"Commands:\n"+
+				"• /note &lt;text&gt; — save a note\n"+
+				"• /notes — list your notes\n"+
+				"• /peers — show cached peers\n"+
 				"• /clear — delete your notes",
 		)
 	}, telegram.Command("start"))
@@ -49,7 +49,7 @@ func main() {
 			return
 		}
 		body := text[6:]
-		conv := &storage.Conversation{
+		conv := &extstorage.Conversation{
 			ChatID:    msg.ChatID,
 			UserID:    msg.FromID,
 			Name:      "note:" + body,
@@ -114,9 +114,9 @@ func main() {
 		if msg.FromID == 0 {
 			return
 		}
-		peer := &storage.Peer{
+		peer := &extstorage.Peer{
 			ID:          msg.FromID,
-			Type:        storage.PeerTypeUser,
+			Type:        extstorage.PeerTypeUser,
 			LastUpdated: time.Now().Unix(),
 		}
 		client.SavePeer(peer)
