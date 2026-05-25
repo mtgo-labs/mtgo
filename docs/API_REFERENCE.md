@@ -26,6 +26,7 @@
     - [Pin](#pin-messages)
     - [Read](#read-messages)
     - [Search](#search-messages)
+    - [Get](#get-messages)
     - [Reactions & Polls](#reactions--polls)
   - [Chats](#chats)
   - [Chat Actions](#chat-actions)
@@ -48,6 +49,7 @@
   - [Menu Button](#menu-button)
   - [Games](#games)
   - [Account & Privacy](#account--privacy)
+  - [Secret Chats](#secret-chats)
   - [RPC Layer](#rpc-layer)
 - [Update Handling](#update-handling)
   - [Update Struct](#update-struct)
@@ -67,6 +69,7 @@
     - [Premium Methods](#premium-methods)
 - [Peer Resolution](#peer-resolution)
 - [Utilities](#utilities)
+- [Logger](#logger)
 - [tg — Generated TL Types](#tg--generated-tl-types)
   - [Core Interfaces](#core-interfaces)
   - [TL Primitives](#tl-primitives)
@@ -74,7 +77,9 @@
   - [Gzip](#gzip)
   - [Generated Maps](#generated-maps)
 - [tgerr — Error Handling](#tgerr--error-handling)
-- [telegram/types — Domain Types](#telegrams--domain-types)
+- [session — Session String Import/Export](#session--session-string-importexport)
+- [mtproxy — MTProxy Transport](#mtproxy--mtproxy-transport)
+- [telegram/types — Domain Types](#telegramtypes--domain-types)
 - [telegram/params — API Parameters](#telegramparams--api-parameters)
 - [telegram/parser — Text Parsing](#telegramparser--text-parsing)
 - [telegram/fileid — File ID](#telegramfileid--file-id)
@@ -94,8 +99,10 @@
 | `telegram` | `github.com/mtgo-labs/mtgo/telegram` | High-level Telegram client |
 | `tg` | `github.com/mtgo-labs/mtgo/tg` | Generated TL types and MTProto primitives |
 | `tgerr` | `github.com/mtgo-labs/mtgo/tgerr` | RPC error types and handling |
+| `session` | `github.com/mtgo-labs/mtgo/session` | Session string import/export (Telethon, Pyrogram, GramJS, mtcute) |
+| `mtproxy` | `github.com/mtgo-labs/mtgo/mtproxy` | MTProxy obfuscated2/fake-TLS transport |
 | `telegram/types` | `github.com/mtgo-labs/mtgo/telegram/types` | Parsed domain types |
-| `telegram/params` | `github.com/mtgo-labs/mtgo/telegram/params` | Option structs for API calls |
+| `telegram/params` | `github.com/mtgo-labs/mtgo/telegram/params` | Param structs for API calls |
 | `telegram/parser` | `github.com/mtgo-labs/mtgo/telegram/parser` | HTML/Markdown text parsing |
 | `telegram/fileid` | `github.com/mtgo-labs/mtgo/telegram/fileid` | File ID encode/decode |
 | `compiler/tlgen` | `github.com/mtgo-labs/mtgo/compiler/tlgen` | TL schema code generator |
@@ -103,6 +110,134 @@
 | `internal/session` | `github.com/mtgo-labs/mtgo/internal/session` | MTProto session management |
 | `internal/storage` | `github.com/mtgo-labs/mtgo/internal/storage` | Session storage backends |
 | `internal/transport` | `github.com/mtgo-labs/mtgo/internal/transport` | TCP transport implementations |
+
+---
+
+## Plugins
+
+Plugins provide a lifecycle hook system for extending client behaviour at startup and shutdown. A plugin is any type that implements the `Plugin` interface.
+
+### Plugin Interface
+
+```go
+type Plugin interface {
+    Name() string
+    Start(ctx context.Context, client *Client) error
+    Stop(ctx context.Context) error
+}
+```
+
+| Method | Description |
+|--------|-------------|
+| `Name` | Unique identifier for the plugin. If two plugins share a name, the last one registered wins |
+| `Start` | Called when the client connects. Return an error to abort connection |
+| `Stop` | Called when the client disconnects. Should be idempotent |
+
+### Registration
+
+```go
+func (c *Client) Use(plugin Plugin)
+```
+
+Plugins are started in registration order when `Connect()` is called, and stopped in reverse order when `Disconnect()` or `Stop()` is called.
+
+**Example:**
+```go
+type LoggingPlugin struct{}
+
+func (p *LoggingPlugin) Name() string { return "logging" }
+func (p *LoggingPlugin) Start(ctx context.Context, client *telegram.Client) error {
+    log.Println("plugin: logging started")
+    return nil
+}
+func (p *LoggingPlugin) Stop(ctx context.Context) error {
+    log.Println("plugin: logging stopped")
+    return nil
+}
+
+client.Use(&LoggingPlugin{})
+```
+
+---
+
+## Middlewares
+
+Middlewares wrap handler dispatch and RPC invocations, allowing cross-cutting concerns like logging, rate limiting, authentication, and error recovery.
+
+### Handler Middleware
+
+Handler middleware wraps the update dispatch pipeline. Each middleware receives the next `Handler` and returns a new `Handler`, forming a chain. Lower priority values run first (outermost).
+
+```go
+type Middleware func(Handler) Handler
+```
+
+#### Registration
+
+```go
+func (c *Client) UseMiddleware(mw Middleware, priority ...int)
+```
+
+The optional `priority` parameter controls execution order. Lower values wrap the handler first and therefore see the request first on the way in, and last on the way out. Default priority is 0.
+
+#### Chaining
+
+```go
+func Chain(mws ...Middleware) Middleware
+```
+
+Composes multiple middleware into a single `Middleware`. The resulting middleware applies `mws` in order: `mws[0]` wraps `mws[1]` which wraps `mws[2]`, etc.
+
+**Example:**
+```go
+client.UseMiddleware(func(next telegram.Handler) telegram.Handler {
+    return &telegram.FuncHandler{Fn: func(ctx *telegram.Context) {
+        start := time.Now()
+        next.Handle(ctx)
+        log.Printf("handler took %v", time.Since(start))
+    }}
+}, -10)
+```
+
+### Invoker Middleware
+
+Invoker middleware wraps RPC calls at the `tg.Invoker` level, allowing interception, modification, or retry of any outgoing Telegram API call.
+
+```go
+type InvokerMiddleware func(next tg.Invoker) tg.Invoker
+```
+
+#### Registration
+
+```go
+func (c *Client) UseInvokerMiddleware(mw InvokerMiddleware)
+```
+
+Middleware is applied in registration order: the first registered wraps all subsequent ones. Adding new middleware invalidates the cached RPC client.
+
+**Example — rate limiting + flood-wait retry:**
+```go
+limiter := ratelimit.New(20, 5)
+client.UseInvokerMiddleware(limiter.Middleware())
+
+waiter := floodwait.New()
+waiter.WithMaxWait(60 * time.Second)
+client.UseInvokerMiddleware(waiter.Middleware())
+```
+
+**Example — logging RPC calls:**
+```go
+client.UseInvokerMiddleware(func(next tg.Invoker) tg.Invoker {
+    return tg.InvokerFunc(func(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+        log.Printf("RPC: %T", input)
+        result, err := next.RPCInvoke(ctx, input, decode)
+        if err != nil {
+            log.Printf("RPC error: %v", err)
+        }
+        return result, err
+    })
+})
+```
 
 ---
 
@@ -119,6 +254,11 @@ var ErrAlreadyConnected error
 var ErrNotConnected      error
 var ErrStillInitialized  error
 var ErrPeerNotFound      error
+var ErrClientClosed      error
+var ErrGetChatNotChat    error
+var ErrJoinNoInfo        error
+var ErrGroupNoInfo       error
+var ErrNoMessage         error
 ```
 
 #### Constructor
@@ -130,8 +270,8 @@ func NewClient(apiID int, apiHash string, cfg *Config) (*Client, error)
 Creates a new Client with a `*Config`. If `cfg` is `nil`, the default configuration is used. Only non-zero fields in `cfg` override the defaults.
 
 **Parameters:**
-- `apiID` — Telegram API application ID (from my.telegram.org)
-- `apiHash` — Telegram API application hash
+- `apiID` — Telegram API application ID (from my.telegram.org). Pass 0 when using `SessionString`
+- `apiHash` — Telegram API application hash. Pass empty string when using `SessionString`
 - `cfg` — Optional `*Config` (pass `nil` for defaults)
 
 **Example:**
@@ -160,7 +300,7 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass)
 
 | Method | Description |
 |--------|-------------|
-| `Connect` | Creates storage, loads or generates auth key, starts encrypted session. If `timeout <= 0`, defaults to 30s |
+| `Connect` | Creates storage, loads or generates auth key, starts encrypted session. If `timeout <= 0`, defaults to 60s |
 | `Start` | Connects then blocks until `Stop()` is called. For bots: connect + idle in one call |
 | `Stop` | Closes the stop channel and disconnects |
 | `Idle` | Blocks until `Stop()` is called. Call after `Connect()` for long-running bots |
@@ -194,7 +334,11 @@ func (c *Client) ParseMode() int
 func (c *Client) SleepThreshold() time.Duration
 func (c *Client) MaxConcurrentTransmissions() int
 func (c *Client) MaxMessageCacheSize() int
+func (c *Client) AutoConnect() bool
+func (c *Client) RandomID() int64
 ```
+
+`RandomID()` returns a per-client random int64, useful for `random_id` fields in RPC requests. It avoids contention on the global `math/rand` mutex.
 
 #### Session Management
 
@@ -208,13 +352,102 @@ func (c *Client) ExportSessionString() (string, error)
 | `GetSession` | Get or create a session for a specific data center |
 | `ExportSessionString` | Export the current session as a portable string for reuse |
 
-#### Peer Cache
+#### Peer Resolution
+
+Peer resolution converts a user, chat, or channel identifier into a `tg.InputPeerClass` that can be used in API calls. The client maintains an in-memory peer cache that is populated automatically from incoming updates and explicit resolution calls.
+
+##### PeerResolver Interface
+
+The `PeerResolver` interface abstracts peer resolution so helper functions can resolve peers without depending directly on the `Client` type:
+
+```go
+type PeerResolver interface {
+    ResolvePeerCache(id int64) (tg.InputPeerClass, error)
+    ResolveUsername(ctx context.Context, username string) (tg.InputPeerClass, error)
+    ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error)
+}
+```
+
+`Client` implements `PeerResolver`.
+
+##### Client Methods
 
 ```go
 func (c *Client) ResolvePeer(ctx context.Context, peerID interface{}) (tg.InputPeerClass, error)
 func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error)
+func (c *Client) ResolveUsername(ctx context.Context, username string) (tg.InputPeerClass, error)
+func (c *Client) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error)
 func (c *Client) CachePeer(id int64, peer tg.InputPeerClass)
 ```
+
+| Method | Description |
+|--------|-------------|
+| `ResolvePeer` | Resolve any peer identifier to `InputPeerClass`. Accepts `int64`, `int`, `string` (username/phone/t.me URL), `ChatRef`, or `InputPeerClass` directly. Returns `ErrPeerNotFound` on failure. |
+| `ResolvePeerCache` | Look up a previously cached `InputPeer` by numeric ID. Returns `ErrPeerNotFound` if not present. Also checks persistent peer storage when `Config.SavePeers` is enabled. |
+| `ResolveUsername` | Resolve a `@username` to an `InputPeerClass` via the Telegram `contacts.resolveUsername` RPC. Results are cached (including username→ID mapping). Uses request coalescing to deduplicate concurrent lookups. |
+| `ResolvePhone` | Resolve a phone number to an `InputPeerClass` via the Telegram `contacts.resolvePhone` RPC. Uses request coalescing to deduplicate concurrent lookups. |
+| `CachePeer` | Manually insert a peer into the in-memory cache by numeric ID. |
+
+##### ChatRef — Opaque Chat Reference
+
+`ChatRef` is an opaque reference to a chat that can be resolved to an `InputPeerClass`. Use constructor functions to create instances:
+
+```go
+type ChatRef struct { /* opaque */ }
+
+func ChatID(id int64) ChatRef
+func Username(username string) ChatRef
+func ChatPhone(phone string) ChatRef
+func ChatPeer(peer tg.InputPeerClass) ChatRef
+func ChatRefFrom(peer string) ChatRef
+```
+
+| Constructor | Description |
+|-------------|-------------|
+| `ChatID` | Resolve by numeric identifier |
+| `Username` | Resolve by public username (`@` prefix optional) |
+| `ChatPhone` | Resolve by phone number lookup |
+| `ChatPeer` | Wrap a pre-resolved `InputPeerClass`, bypassing lookup |
+| `ChatRefFrom` | Auto-detect from string: phone (`+`/`00`), numeric ID, t.me URL, or plain username |
+
+Example:
+
+```go
+peer, err := client.ResolvePeer(ctx, telegram.ChatID(12345678))
+peer, err := client.ResolvePeer(ctx, telegram.Username("@durov"))
+peer, err := client.ResolvePeer(ctx, telegram.ChatRefFrom("+15551234567"))
+peer, err := client.ResolvePeer(ctx, telegram.ChatRefFrom("https://t.me/telegram"))
+```
+
+##### UserRef — Opaque User Reference
+
+`UserRef` is the user-specific counterpart, resolving to `tg.InputUserClass`:
+
+```go
+type UserRef struct { /* opaque */ }
+
+func UserID(id int64) UserRef
+func UserUsername(username string) UserRef
+func UserPhone(phone string) UserRef
+func UserInput(user tg.InputUserClass) UserRef
+```
+
+##### Utility Functions
+
+```go
+func PeerToInputPeer(peer tg.PeerClass, users []tg.UserClass, chats []tg.ChatClass) (tg.InputPeerClass, error)
+```
+
+`PeerToInputPeer` converts a raw `tg.PeerClass` from an RPC response into an `InputPeerClass`, using the accompanying user and chat lists to populate access hashes. Handles `PeerUser`, `PeerChat`, `PeerChannel`, and self (empty user).
+
+```go
+func GetPeerID(peer tg.PeerClass) int64
+```
+
+`GetPeerID` returns a signed chat ID from a `tg.PeerClass`:
+- `PeerUser` → positive user ID
+- `PeerChat` → negative chat ID (`-chatID`)
+- `PeerChannel` → negative channel ID (`-100` prefix format)
 
 #### Handler Management
 
@@ -227,74 +460,210 @@ func (c *Client) RemoveHandler(handler Handler)
 
 ### Configuration
 
+The `Config` struct controls every tunable parameter. Fields left at zero fall back to `DefaultConfig`.
+
+#### Proxy
+
 ```go
 type Proxy struct {
     Addr     string
     Username string
     Password string
-}
-
-type Config struct {
-    APIID               int
-    APIHash             string
-    DC                  int
-    SessionName         string
-    BotToken            string
-    SessionString       string
-    PhoneNumber         string
-    PhoneCode           string
-    Password            string
-    WorkDir             string
-    InMemory            bool
-    Proxy               *Proxy
-    TestMode            bool
-    IPv6                bool
-    NoUpdates           bool
-    SkipUpdates         bool
-    Workers             int
-    SleepThreshold      time.Duration
-    HandlerTimeout      time.Duration
-    MaxConcurrentTrans  int
-    MaxMessageCacheSize int
-    ParseMode           int
-    HidePassword        bool
-    FetchReplies        bool
-    FetchTopics         bool
-    FetchStories        bool
-    FetchStickers       bool
-    ClientPlatform      types.ClientPlatform
-    AppVersion          string
-    DeviceModel         string
-    SystemVersion       string
-    LangCode            string
-    LangPack            string
-    SystemLangCode      string
-    TZOffset            int
-    NetPoll             bool
-    SavePeers           bool
-}
-
-var DefaultConfig = Config{
-    Workers:             0,
-    SleepThreshold:      10 * time.Second,
-    MaxConcurrentTrans:  1,
-    MaxMessageCacheSize: 1000,
-    DeviceModel:         "MTGo",
-    SystemVersion:       "1.0.0",
-    AppVersion:          "1.0.0",
-    LangPack:            "tdesktop",
-    LangCode:            "en",
-    SystemLangCode:      "en",
-    SkipUpdates:         true,
-    FetchReplies:        true,
-    FetchTopics:         true,
-    FetchStories:        true,
-    FetchStickers:       true,
-    ClientPlatform:      types.ClientPlatformAndroid,
+    Protocol string
 }
 ```
 
-When `Workers` is 0 (default), it is automatically set to `min(runtime.NumCPU()+4, 32)`.
+`Protocol` is one of `"socks5"`, `"socks4"`, `"http"`, `"https"`. Defaults to `"socks5"`.
+
+#### MTProxyConfig
+
+```go
+type MTProxyConfig struct {
+    Addr   string
+    Secret string
+}
+```
+
+Routes MTProto through an MTProxy server. The `Secret` is hex-encoded:
+- `dd`-prefixed (17 bytes): obfuscated2 with PaddedIntermediate
+- `ee`-prefixed (18+ bytes): fake TLS + obfuscated2
+- Simple (16 bytes): obfuscated2 with Intermediate
+
+#### LogConfig
+
+```go
+type LogConfig struct {
+    Level  LogLevel
+    File   string
+    MaxSize int64
+    Logger *Logger
+}
+```
+
+#### DeviceConfig
+
+```go
+type DeviceConfig struct {
+    DeviceModel    string
+    SystemVersion  string
+    AppVersion     string
+    LangCode       string
+    SystemLangCode string
+    LangPack       string
+    TZOffset       int
+    ClientPlatform types.ClientPlatform
+}
+```
+
+#### Transport Mode Constants
+
+```go
+const TransportModeAbridged         = "Abridged"
+const TransportModeIntermediate     = "Intermediate"
+const TransportModePaddedIntermediate = "PaddedIntermediate"
+const TransportModeFull             = "Full"
+```
+
+#### Config
+
+```go
+type Config struct {
+    APIID                int32
+    APIHash              string
+    DC                   int
+    SessionName          string
+    BotToken             string
+    SessionString        string
+    PhoneNumber          string
+    PhoneCode            string
+    Password             string
+    CodeFunc             CodeFunc
+    PasswordFunc         PasswordFunc
+    WorkDir              string
+    InMemory             bool
+    Proxy                *Proxy
+    MTProxy              *MTProxyConfig
+    TestMode             bool
+    IPv6                 bool
+    NoUpdates            bool
+    AutoConnect          bool
+    SkipUpdates          bool
+    SleepThreshold       time.Duration
+    HandlerTimeout       time.Duration
+    Timeout              time.Duration
+    ReqTimeout           time.Duration
+    Retries              int
+    MaxConcurrentTrans   int
+    DispatchWorkers      int
+    DispatchQueueSize    int
+    MaxMessageCacheSize  int
+    MaxTopicCacheSize    int
+    PeerCacheSize        int
+    ParseMode            params.ParseMode
+    HidePassword         bool
+    LinkPreviewOptions   *types.LinkPreviewOptions
+    Takeout              bool
+    FetchReplies         bool
+    FetchTopics          bool
+    FetchStories         bool
+    FetchStickers        bool
+    ClientPlatform       types.ClientPlatform
+    Device               DeviceConfig
+    AppVersion           string
+    DeviceModel          string
+    SystemVersion        string
+    LangCode             string
+    LangPack             string
+    SystemLangCode       string
+    TZOffset             int
+    TransportMode        string
+    SavePeers            bool
+    Storage              storage.Storage
+    WebSocket            bool
+    WebSocketTLS         bool
+    ServerAddr           string
+    LocalAddr            string
+    Log                  LogConfig
+
+    ReconnectEnabled      bool
+    ReconnectBaseDelay    time.Duration
+    ReconnectMaxDelay     time.Duration
+    ReconnectMaxAttempts  int
+    HealthEnabled         bool
+    HealthPingInterval    time.Duration
+    HealthPongTimeout     time.Duration
+
+    UpdateQueueSize        int
+    DurableUpdateQueue     bool
+    MaxUpdateHandlerRetry  int
+    UpdateRecoveryEnabled bool
+}
+```
+
+#### DefaultConfig
+
+```go
+var DefaultConfig = Config{
+    SleepThreshold:      10 * time.Second,
+    Timeout:             60 * time.Second,
+    ReqTimeout:          60 * time.Second,
+    MaxConcurrentTrans:  1,
+    DispatchQueueSize:   256,
+    MaxMessageCacheSize: 1000,
+    MaxTopicCacheSize:   1000,
+    PeerCacheSize:       5000,
+    Device: DeviceConfig{
+        DeviceModel:    "MTGo",
+        SystemVersion:  "1.0.0",
+        AppVersion:     "1.0.0",
+        LangPack:       "tdesktop",
+        LangCode:       "en",
+        SystemLangCode: "en",
+        ClientPlatform: types.ClientPlatformAndroid,
+    },
+    SkipUpdates:           true,
+    TransportMode:         TransportModeAbridged,
+    SavePeers:             true,
+    WebSocketTLS:          true,
+    FetchReplies:          true,
+    FetchTopics:           true,
+    FetchStories:          true,
+    FetchStickers:         true,
+    ReconnectEnabled:      true,
+    ReconnectBaseDelay:    1 * time.Second,
+    ReconnectMaxDelay:     60 * time.Second,
+    HealthEnabled:         true,
+    HealthPingInterval:    60 * time.Second,
+    HealthPongTimeout:     30 * time.Second,
+    UpdateQueueSize:       1024,
+    DurableUpdateQueue:    true,
+    MaxUpdateHandlerRetry: 3,
+    UpdateRecoveryEnabled: true,
+}
+```
+
+#### Key Config Fields Explained
+
+| Field | Description |
+|-------|-------------|
+| `AutoConnect` | Enables lazy connection on first RPC call or handler registration. Defaults to `false` |
+| `TransportMode` | TCP framing: `"Abridged"`, `"Intermediate"`, `"PaddedIntermediate"`, `"Full"` |
+| `WebSocket` | Routes MTProto over WebSocket instead of TCP |
+| `WebSocketTLS` | Enables TLS on WebSocket transport. Defaults to `true` |
+| `MTProxy` | MTProxy configuration for obfuscated2/fake-TLS connections |
+| `Storage` | Custom storage backend. Takes precedence over `InMemory` and file storage |
+| `ServerAddr` | Override DC address (format: `"host:port"`) |
+| `LocalAddr` | Local bind address for multi-homed hosts |
+| `ReconnectEnabled` | Auto-reconnect with exponential backoff. Defaults to `true` |
+| `ReconnectBaseDelay` | Initial reconnect delay. Defaults to 1s |
+| `ReconnectMaxDelay` | Maximum backoff delay. Defaults to 60s |
+| `ReconnectMaxAttempts` | Max reconnect tries; 0 = unlimited |
+| `HealthEnabled` | Periodic health-check pings. Defaults to `true` |
+| `HealthPingInterval` | Time between pings. Defaults to 60s |
+| `HealthPongTimeout` | Time to wait for pong before treating as dead. Defaults to 30s |
+| `UpdateRecoveryEnabled` | Restores missed updates after reconnect. Defaults to `true` |
+| `DurableUpdateQueue` | Persists undelivered updates across reconnects. Defaults to `true` |
+| `Takeout` | Enables takeout session for data export. Implies `NoUpdates=true` |
 
 ---
 
@@ -326,6 +695,8 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 | `GetPasswordHint` | Get 2FA password hint |
 | `CheckPassword` | Verify 2FA cloud password |
 | `RecoverPassword` | Recover account via email verification code |
+
+For interactive phone login, set `Config.PhoneNumber` and optionally `Config.CodeFunc` / `Config.PasswordFunc`. If `CodeFunc` is nil, the client prompts via stdin.
 
 **Example — User auth flow:**
 ```go
@@ -371,7 +742,7 @@ func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*type
 
 #### Send Messages
 
-Options are passed as variadic pointers to structs from the `params` package:
+Params are passed as variadic pointers to structs from the `params` package:
 
 ```go
 type SendMessage struct {
@@ -531,6 +902,22 @@ func (c *Client) SearchMessagesCount(ctx context.Context, chatID int64, query st
 func (c *Client) SearchGlobalCount(ctx context.Context, query string) (int32, error)
 ```
 
+#### Get Messages
+
+```go
+func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int32) ([]*types.Message, error)
+func (c *Client) GetChatHistory(ctx context.Context, chatID int64, limit int, offsetID int32) ([]*types.Message, error)
+func (c *Client) GetChatHistoryCount(ctx context.Context, chatID int64) (int, error)
+func (c *Client) GetMediaGroup(ctx context.Context, chatID int64, messageID int32) ([]*types.Message, error)
+```
+
+| Method | Description |
+|--------|-------------|
+| `GetMessages` | Retrieve specific messages by ID from a chat |
+| `GetChatHistory` | Retrieve paginated message history. `offsetID=0` starts from the most recent |
+| `GetChatHistoryCount` | Returns the total number of messages in a chat |
+| `GetMediaGroup` | Retrieves all messages in the same album/media group |
+
 #### Reactions & Polls
 
 ```go
@@ -607,13 +994,12 @@ func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, about s
 ```go
 type InputFile struct { /* unexported fields */ }
 
-// Constructors — use one based on the source of the file:
-func FileID(s string) *InputFile                          // Telegram file_id string
-func FromIDs(ID, accessHash int64, fileRef []byte) *InputFile // Raw Telegram file IDs
-func URL(u string) *InputFile                              // Download from URL
-func Path(p string) *InputFile                             // Local filesystem path
-func Reader(r io.ReadSeeker, fileName string, size int64) *InputFile  // In-memory reader
-func FromBytes(data []byte, fileName string) *InputFile    // Raw byte slice
+func FileID(s string) *InputFile
+func FromIDs(ID, accessHash int64, fileRef []byte) *InputFile
+func URL(u string) *InputFile
+func Path(p string) *InputFile
+func Reader(r io.ReadSeeker, fileName string, size int64) *InputFile
+func FromBytes(data []byte, fileName string) *InputFile
 ```
 
 Each `InputFile` is resolved automatically by the client: file IDs and raw IDs are sent as `InputMediaPhoto`/`InputMediaDocument`; URLs are passed as `InputMediaDocument` with `url`; paths and readers are uploaded first, then sent.
@@ -735,7 +1121,7 @@ type ProgressInfo struct {
 
 type ProgressFunc func(info ProgressInfo)
 
-func (p ProgressInfo) Progress() float64 // Returns 0.0–100.0
+func (p ProgressInfo) Progress() float64 // Returns 0.0-100.0
 ```
 
 ---
@@ -955,6 +1341,94 @@ func (c *Client) GetAccountTTL(ctx context.Context) (int32, error)
 
 ---
 
+### Secret Chats
+
+End-to-end encrypted secret chats using the DH key exchange protocol. Secret chat messages are encrypted locally and decrypted on receipt.
+
+#### Types
+
+```go
+type SecretChatState int
+
+const (
+    SecretChatStateWaiting   SecretChatState = iota
+    SecretChatStateReady
+    SecretChatChatDiscarded
+)
+```
+
+```go
+type SecretChat struct {
+    ID         int32
+    AccessHash int64
+    AdminID    int64
+    PartID     int64
+    State      SecretChatState
+    Outgoing   bool
+    Layer      int32
+    AuthKey    []byte
+    // ... cryptographic fields
+}
+
+type SecretChatManager struct { /* ... */ }
+```
+
+#### SecretChat Methods
+
+```go
+func (sc *SecretChat) SetState(s SecretChatState)
+func (sc *SecretChat) GetState() SecretChatState
+func (sc *SecretChat) NextOutSeqNo() int32
+func (sc *SecretChat) NextInSeqNo() int32
+func (sc *SecretChat) InputPeer() *tg.InputEncryptedChat
+func (sc *SecretChat) Visualization() []string
+```
+
+#### SecretChatManager Methods
+
+```go
+func NewSecretChatManager() *SecretChatManager
+func (m *SecretChatManager) Put(chat *SecretChat)
+func (m *SecretChatManager) Get(id int32) (*SecretChat, bool)
+func (m *SecretChatManager) Remove(id int32)
+func (m *SecretChatManager) Each(fn func(*SecretChat))
+```
+
+#### Client Secret Chat Methods
+
+```go
+func (c *Client) OnSecretMessage(handler SecretMessageHandler)
+func (c *Client) OnSecretChatRequest(handler SecretChatRequestHandler)
+```
+
+```go
+type SecretMessageHandler func(chat *SecretChat, layer *e2e.DecryptedMessageLayer)
+type SecretChatRequestHandler func(chat *SecretChat) bool
+```
+
+```go
+func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text string, opts ...*SecretMessageOptions) error
+func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Reader, fileName string, fileSize int64, opts *SecretFileOptions) error
+func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretChat, error)
+func (c *Client) DiscardSecretChat(ctx context.Context, chatID int32) error
+func (c *Client) GetSecretChat(chatID int32) (*SecretChat, bool)
+func (c *Client) DecryptSecretFile(ctx context.Context, file *tg.EncryptedFile, fileKey, fileIV []byte) ([]byte, error)
+```
+
+**Example:**
+```go
+client.OnSecretChatRequest(func(chat *telegram.SecretChat) bool {
+    _, err := client.AcceptSecretChat(ctx, chat.ID)
+    return err == nil
+})
+
+client.OnSecretMessage(func(chat *telegram.SecretChat, layer *e2e.DecryptedMessageLayer) {
+    fmt.Printf("secret message from chat %d: %v\n", chat.ID, layer.Message)
+})
+```
+
+---
+
 ### RPC Layer
 
 ```go
@@ -1057,6 +1531,24 @@ type RemoveFunc func()
 ```
 
 All handler constructors take `callback interface{}` which accepts multiple callback signatures (e.g. `func(*Context)`, `func(*Client, *types.Message)`, `func(*Context, *types.Message)` for message handlers). Lifecycle and error handlers take `func(*Context)`.
+
+#### FuncHandler
+
+`FuncHandler` is a simple adapter that wraps a function as a `Handler`. `Check` always returns `true`.
+
+```go
+type FuncHandler struct {
+    Fn func(*Context)
+}
+```
+
+Useful for quick handler construction and middleware testing:
+
+```go
+client.AddHandler(&telegram.FuncHandler{Fn: func(ctx *telegram.Context) {
+    ctx.Reply("pong")
+}})
+```
 
 #### Handler Types (26 total)
 
@@ -1329,6 +1821,11 @@ func (c *Context) StopPropagation()
 func (c *Context) ResolvePeer(id int64) interface{}
 ```
 
+| Method | Description |
+|--------|-------------|
+| `StopPropagation` | Stop the event from propagating to lower-priority handler groups |
+| `ResolvePeer` | Look up a user or chat from the current update's peer maps by numeric ID. Returns a raw `tg.UserClass`, `tg.ChatClass`, or `nil` |
+
 ### Context Methods
 
 #### Message Methods
@@ -1510,6 +2007,78 @@ func (c *Client) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([
 
 ---
 
+## Logger
+
+The `Logger` provides structured, leveled logging for the MTProto client. It supports console output with colors, file output with rotation, and cloning for subsystem-specific prefixes.
+
+### Types
+
+```go
+type LogLevel int32
+
+const (
+    NoLevel    LogLevel = iota
+    LogLevelDebug
+    LogLevelInfo
+    LogLevelWarn
+    LogLevelError
+    LogLevelNone
+)
+```
+
+### Constructor
+
+```go
+func NewLogger(prefix string) *Logger
+```
+
+### Methods
+
+```go
+func (l *Logger) NoColor(v ...bool) *Logger
+func (l *Logger) SetLevel(level LogLevel) *Logger
+func (l *Logger) SetPrefix(prefix string) *Logger
+func (l *Logger) SetFile(path string, maxSize int64) error
+func (l *Logger) Clone(prefix string) *Logger
+func (l *Logger) Close() error
+
+func (l *Logger) Debugf(format string, v ...any)
+func (l *Logger) Infof(format string, v ...any)
+func (l *Logger) Warnf(format string, v ...any)
+func (l *Logger) Errorf(format string, v ...any)
+func (l *Logger) Fatalf(format string, v ...any)
+func (l *Logger) Fatal(v ...any)
+```
+
+| Method | Description |
+|--------|-------------|
+| `NoColor` | Disable/enable color output |
+| `SetLevel` | Set minimum log level |
+| `SetPrefix` | Set log message prefix |
+| `SetFile` | Enable file logging with rotation at `maxSize` bytes |
+| `Clone` | Create a child logger with an extended prefix, sharing the same file output |
+| `Close` | Close the log file if open |
+
+**Example:**
+```go
+logger := telegram.NewLogger("mtgo")
+logger.SetLevel(telegram.LogLevelDebug)
+logger.SetFile("/var/log/mtgo.log", 10*1024*1024) // 10MB rotation
+defer logger.Close()
+```
+
+When set via `Config.Log`:
+```go
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
+    Log: telegram.LogConfig{
+        Level: telegram.LogLevelDebug,
+        File:  "/var/log/mtgo.log",
+    },
+})
+```
+
+---
+
 ## tg — Generated TL Types
 
 ### Core Interfaces
@@ -1530,15 +2099,19 @@ var Registry map[uint32]func(io.Reader) (TLObject, error)
 
 ```go
 type Invoker interface {
-    RPCInvoke(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error)
+    RPCInvoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
+    RPCInvokeRaw(ctx context.Context, input TLObject) ([]byte, error)
 }
+
+type InvokerFunc func(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
 
 type Client struct { rpc Invoker }
 type RPCClient struct { rpc Invoker }
 
 func NewClient(invoker Invoker) *Client
 func (c *RPCClient) RPC() Invoker
-func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(io.Reader) (TLObject, error)) (TLObject, error)
+func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error)
+func (c *RPCClient) InvokeWithRawResult(ctx context.Context, input TLObject) ([]byte, error)
 func (c *RPCClient) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error)
 ```
 
@@ -1622,9 +2195,9 @@ func DecodeGzipPacked(r io.Reader) (*GzipPacked, error)
 ### Generated Maps
 
 ```go
-var NamesMap        map[string]uint32                    // qualified name → constructor ID
-var FunctionsMap    map[uint32]func() TLObject           // function ID → factory
-var ConstructorMap  map[uint32]func() TLObject           // constructor ID → factory
+var NamesMap        map[string]uint32                    // qualified name -> constructor ID
+var FunctionsMap    map[uint32]func() TLObject           // function ID -> factory
+var ConstructorMap  map[uint32]func() TLObject           // constructor ID -> factory
 ```
 
 ### Generated Types
@@ -1702,9 +2275,204 @@ const ErrPeerFlood            = "PEER_FLOOD"
 const ErrUserDeactivated      = "USER_DEACTIVATED"
 const ErrApiIdInvalid         = "API_ID_INVALID"
 const ErrAuthKeyInvalid       = "AUTH_KEY_INVALID"
+const ErrAuthKeyUnregistered  = "AUTH_KEY_UNREGISTERED"
+const ErrAuthKeyDuplicated    = "AUTH_KEY_DUPLICATED"
+const ErrSessionRevoked       = "SESSION_REVOKED"
 ```
 
 Each constant has a matching `Is<Name>(err error) bool` function, e.g. `IsFloodWait(err)`, `IsPhoneNumberInvalid(err)`.
+
+---
+
+## session — Session String Import/Export
+
+The `session` package provides cross-format session string import, export, and auto-detection. It supports Telethon, Pyrogram, GramJS, mtcute, and GoTelegram (gotg) formats.
+
+### Format Constants
+
+```go
+type Format string
+
+const (
+    FormatTelethon    Format = "telethon"
+    FormatPyrogram    Format = "pyrogram"
+    FormatGramJS      Format = "gramjs"
+    FormatMtcute      Format = "mtcute"
+    FormatGotg        Format = "gotg"
+    FormatGotgExtended Format = "gotg_extended"
+    FormatUnknown     Format = ""
+)
+```
+
+### Session Struct
+
+```go
+type Session struct {
+    Format Format
+    // implements storage.Storage interface
+}
+
+func (s *Session) String() string
+func (s *Session) ExportSessionString() (string, error)
+```
+
+`Session` implements the `storage.Storage` interface via structural typing, so it can be passed directly to `Config.Storage`.
+
+### Session Constructors
+
+```go
+func NewTelethonSession(s string) (*Session, error)
+func NewPyrogramSession(s string) (*Session, error)
+func NewGramjsSession(s string) (*Session, error)
+func NewMtcuteSession(s string) (*Session, error)
+func NewSession(s string) (*Session, error)
+```
+
+`NewSession` auto-detects the format and decodes the session string.
+
+### Format Conversion Helpers
+
+```go
+func Telethon(s string) (string, error)
+func Pyrogram(s string) (string, error)
+func Gramjs(s string) (string, error)
+func Mtcute(s string) (string, error)
+func String(s string) (string, error)
+```
+
+Each validates/decodes the input format and returns a normalized session string.
+
+### SessionData
+
+```go
+type SessionData struct {
+    DCID          int
+    ServerAddress string
+    Port          int
+    AuthKey       []byte // 256 bytes
+    AppID         int32
+    TestMode      bool
+    UserID        int64
+    IsBot         bool
+}
+```
+
+### Encode/Decode
+
+```go
+func Decode(s string) (*SessionData, Format, error)
+func Encode(data *SessionData, format Format) (string, error)
+func DetectFormat(s string) Format
+```
+
+`Decode` auto-detects the format and decodes. `Encode` encodes `SessionData` into the specified format.
+
+### Storage Interface
+
+`Session` implements the full `storage.Storage` interface:
+
+```go
+func (s *Session) DCID() (int, error)
+func (s *Session) SetDCID(v int) error
+func (s *Session) APIID() (int32, error)
+func (s *Session) SetAPIID(v int32) error
+func (s *Session) APIHash() (string, error)
+func (s *Session) SetAPIHash(v string) error
+func (s *Session) TestMode() (bool, error)
+func (s *Session) SetTestMode(v bool) error
+func (s *Session) AuthKey() ([]byte, error)
+func (s *Session) SetAuthKey(v []byte) error
+func (s *Session) UserID() (int64, error)
+func (s *Session) SetUserID(v int64) error
+func (s *Session) IsBot() (bool, error)
+func (s *Session) SetIsBot(v bool) error
+func (s *Session) FirstName() (string, error)
+func (s *Session) LastName() (string, error)
+func (s *Session) Username() (string, error)
+func (s *Session) Date() (int, error)
+func (s *Session) ServerAddress() (string, error)
+func (s *Session) Port() (int, error)
+func (s *Session) State() ([]byte, error)
+func (s *Session) Close() error
+```
+
+**Example:**
+```go
+// Auto-detect and use session string
+sess, err := session.NewSession("1BVtsOJABu...")
+client, err := telegram.NewClient(0, "", &telegram.Config{
+    Storage: sess,
+})
+
+// Convert Pyrogram session to Telethon format
+telethonStr, err := session.Pyrogram("BAAOM...")
+```
+
+---
+
+## mtproxy — MTProxy Transport
+
+The `mtproxy` package implements MTProxy obfuscated2 and fake-TLS transports for routing MTProto traffic through MTProxy servers.
+
+### Secret Parsing
+
+```go
+type Secret struct {
+    Secret []byte
+    Domain string
+    Codec  byte
+}
+
+func ParseSecret(hexSecret string) (Secret, error)
+func (s Secret) NeedsFakeTLS() bool
+```
+
+| Secret Type | Hex Format | Transport |
+|-------------|-----------|-----------|
+| Simple | 16 bytes | obfuscated2 with Abridged |
+| `dd`-prefixed | `dd` + 16 bytes (33 hex chars) | obfuscated2 with PaddedIntermediate |
+| `ee`-prefixed | `ee` + 16 bytes + domain hex | fake TLS + obfuscated2 |
+
+### Connection
+
+```go
+func Dial(addr string, secretHex string, dcID int, timeout time.Duration) (net.Conn, error)
+func DialSecret(addr string, secret Secret, dcID int, timeout time.Duration) (net.Conn, error)
+func Handshake(conn net.Conn, secret Secret, dcID int) (net.Conn, error)
+```
+
+| Function | Description |
+|----------|-------------|
+| `Dial` | Parse hex secret, dial TCP, perform handshake |
+| `DialSecret` | Dial TCP with pre-parsed `Secret`, perform handshake |
+| `Handshake` | Perform handshake on an existing TCP connection |
+
+`Handshake` automatically applies fake TLS if the secret requires it (`ee` prefix), then performs the obfuscated2 handshake.
+
+The returned `net.Conn` is an AES-CTR encrypted/decrypted connection ready for MTProto traffic.
+
+**Example:**
+```go
+conn, err := mtproxy.Dial(
+    "proxy.example.com:443",
+    "dd05fb7acb549be047a7c585116581418",
+    2,  // DC ID
+    10*time.Second,
+)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+Used with `Config.MTProxy`:
+```go
+client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
+    MTProxy: &telegram.MTProxyConfig{
+        Addr:   "proxy.example.com:443",
+        Secret: "dd05fb7acb549be047a7c585116581418",
+    },
+})
+```
 
 ---
 
@@ -1758,6 +2526,18 @@ type PreCheckoutQuery struct { /* ID, UserID, Currency, TotalAmount, Payload */ 
 type ShippingQuery struct { /* ID, UserID, Payload, ShippingAddress */ }
 type PurchasedPaidMedia struct { /* UserID, Payload */ }
 type ManagedBotUpdated struct { /* UserID, BotID */ }
+```
+
+### Bound Methods on User
+
+When a `User` is created by a Client, it carries a `Binder` enabling bound convenience methods:
+
+```go
+func (u *User) Archive(ctx context.Context) error
+func (u *User) Unarchive(ctx context.Context) error
+func (u *User) Block(ctx context.Context) error
+func (u *User) Unblock(ctx context.Context) error
+func (u *User) GetCommonChats(ctx context.Context, limit int) ([]*types.Chat, error)
 ```
 
 ### InputFile
@@ -1838,7 +2618,7 @@ func GetPeerID(peer tl.PeerClass) int64
 
 ## telegram/params — API Parameters
 
-Option and parameter structs used to configure Telegram API calls. Each struct corresponds to a specific API method group.
+Parameter structs used to configure Telegram API calls. Each struct corresponds to a specific API method group.
 
 ### ParseMode
 
@@ -1854,59 +2634,539 @@ const (
 )
 ```
 
-### Message Option Structs
+### Message Param Structs
+
+#### SendMessage
+
+Configures the `SendMessage` / `SendMedia` API call.
 
 ```go
-type SendMessage struct { /* DisableNotification, Silent, Background, ClearDraft, NoForwards,
-    InvertMedia, ReplyToMessageID, ReplyTo, ReplyMarkup, Entities, ParseMode,
-    ScheduleDate, EffectID, SendAs */ }
-
-type EditMessage struct { /* DisableWebPagePreview, InvertMedia, ReplyMarkup, ParseMode,
-    Entities, ScheduleDate */ }
-
-type ForwardMessages struct { /* DisableNotification, NoForwards, DropAuthor, DropMediaCaptions,
-    ScheduleDate */ }
-
-type CopyMessage struct { /* Caption, DisableNotification, ReplyToMessageID, ReplyMarkup,
-    ScheduleDate, DropAuthor */ }
-
-type DeleteMessages struct { /* Revoke */ }
-type PinMessage struct { /* Silent, Unpin */ }
-
-type SendMediaGroup struct { /* DisableNotification, Silent, Background, ClearDraft, NoForwards,
-    ReplyToMessageID, ReplyTo, ScheduleDate, EffectID, SendAs */ }
-
-type SearchMessages struct { /* Limit, OffsetID, MinDate, MaxDate, FromID, Filter, TopMsgID */ }
-type SearchGlobal struct { /* Limit, OffsetRate, OffsetID, OffsetPeer, MinDate, MaxDate,
-    BroadcastsOnly, GroupsOnly, FolderID, Filter */ }
+type SendMessage struct {
+    DisableWebPagePreview bool
+    DisableNotification   bool
+    Silent                bool
+    Background            bool
+    ClearDraft            bool
+    NoForwards            bool
+    InvertMedia           bool
+    ReplyToMessageID      int32
+    ReplyTo               tg.InputReplyToClass
+    ReplyMarkup           tg.ReplyMarkupClass
+    Entities              []tg.MessageEntityClass
+    ParseMode             ParseMode
+    ScheduleDate          *int32
+    EffectID              *int64
+    SendAs                tg.InputPeerClass
+    RepeatPeriod          *int32
+    BusinessConnectionID  string
+    AllowPaidBroadcast    bool
+    PaidMessageStarCount  *int64
+    ShowCaptionAboveMedia bool
+    MessageThreadID       int32
+    DirectMessagesTopicID int64
+    ProtectContent        bool
+}
 ```
 
-### Media Option Structs
+#### EditMessage
 
-Each media type has its own struct with common fields plus media-specific options:
+Configures the `EditMessage` API call.
 
 ```go
-type SendPhoto struct { /* common... + FileName */ }
-type SendDocument struct { /* common... + FileName, Thumb, MimeType */ }
-type SendVideo struct { /* common... + Duration float64, Width, Height, SupportsStreaming, FileName, Thumb */ }
-type SendAudio struct { /* common... + Duration int32, Performer, Title, FileName, Thumb */ }
-type SendAnimation struct { /* common... + FileName, Thumb */ }
-type SendVoice struct { /* common... + Duration int32, FileName */ }
-type SendVideoNote struct { /* common... + Duration float64, FileName, Thumb */ }
-type SendSticker struct { /* common... + FileName */ }
+type EditMessage struct {
+    DisableWebPagePreview bool
+    InvertMedia           bool
+    ReplyMarkup           tg.ReplyMarkupClass
+    ParseMode             ParseMode
+    Entities              []tg.MessageEntityClass
+    ScheduleDate          *int32
+    ShowCaptionAboveMedia bool
+    BusinessConnectionID  string
+}
 ```
 
-### Special Option Structs
+#### ForwardMessages
+
+Configures the `ForwardMessages` API call.
 
 ```go
-type SendContact struct { /* common... */ }
-type SendLocation struct { /* common... */ }
-type SendVenue struct { /* common... */ }
-type SendPoll struct { /* common... */ }
-type SendDice struct { /* Emoticon */ }
-type SendGame struct { /* common... */ }
-type SendChecklist struct { /* common... */ }
-type SendInlineBotResult struct { /* common... + QueryID, ResultID, HideVia */ }
+type ForwardMessages struct {
+    DisableNotification  bool
+    NoForwards           bool
+    DropAuthor           bool
+    DropMediaCaptions    bool
+    ScheduleDate         *int32
+    RepeatPeriod         *int32
+    HideSenderName       bool
+    HideCaptions         bool
+    AllowPaidBroadcast   bool
+    PaidMessageStarCount *int64
+    MessageThreadID      int32
+    ProtectContent       bool
+}
+```
+
+#### CopyMessage
+
+Configures the `CopyMessage` API call.
+
+```go
+type CopyMessage struct {
+    Caption               string
+    ParseMode             ParseMode
+    CaptionEntities       []tg.MessageEntityClass
+    DisableNotification   bool
+    ReplyToMessageID      int32
+    ReplyMarkup           tg.ReplyMarkupClass
+    ScheduleDate          *int32
+    DropAuthor            bool
+    HasSpoiler            bool
+    ShowCaptionAboveMedia bool
+    BusinessConnectionID  string
+    AllowPaidBroadcast    bool
+    PaidMessageStarCount  *int64
+    MessageThreadID       int32
+    ProtectContent        bool
+    NoForwards            bool
+}
+```
+
+#### DeleteMessages / PinMessage
+
+```go
+type DeleteMessages struct {
+    Revoke bool  // Delete for all participants
+}
+
+type PinMessage struct {
+    Silent bool  // Pin without notification
+    Unpin  bool  // Unpin instead of pinning
+}
+```
+
+#### SendMediaGroup
+
+Configures the `SendMediaGroup` API call (album send).
+
+```go
+type SendMediaGroup struct {
+    DisableNotification   bool
+    Silent                bool
+    Background            bool
+    ClearDraft            bool
+    NoForwards            bool
+    ProtectContent        bool
+    ReplyToMessageID      int32
+    ReplyTo               tg.InputReplyToClass
+    ScheduleDate          *int32
+    EffectID              *int64
+    SendAs                tg.InputPeerClass
+    ShowCaptionAboveMedia bool
+    BusinessConnectionID  string
+    AllowPaidBroadcast    bool
+    PaidMessageStarCount  *int64
+    MessageThreadID       int32
+}
+```
+
+#### SearchMessages / SearchGlobal
+
+```go
+type SearchMessages struct {
+    Limit    int32
+    OffsetID int32
+    MinDate  int32
+    MaxDate  int32
+    FromID   int64
+    Filter   tg.MessagesFilterClass
+    TopMsgID int32
+}
+
+type SearchGlobal struct {
+    Limit          int32
+    OffsetRate     int32
+    OffsetID       int32
+    OffsetPeer     int64
+    MinDate        int32
+    MaxDate        int32
+    BroadcastsOnly bool
+    GroupsOnly     bool
+    FolderID       int32
+    Filter         tg.MessagesFilterClass
+}
+```
+
+### Media Param Structs
+
+Each media type shares common fields (`DisableNotification`, `Silent`, `Background`, `ClearDraft`, `NoForwards`, `ProtectContent`, `ReplyToMessageID`, `ReplyTo`, `ReplyMarkup`, `ScheduleDate`, `EffectID`, `SendAs`, `ParseMode`, `CaptionEntities`, `ShowCaptionAboveMedia`, `BusinessConnectionID`, `AllowPaidBroadcast`, `PaidMessageStarCount`, `MessageThreadID`, `RepeatPeriod`) plus media-specific fields listed below:
+
+#### SendPhoto
+
+```go
+type SendPhoto struct {
+    // common fields...
+    FileName   string
+    HasSpoiler bool
+    TTLSeconds *int32
+    ViewOnce   bool
+}
+```
+
+#### SendDocument
+
+```go
+type SendDocument struct {
+    // common fields...
+    FileName      string
+    Thumb         string
+    MimeType      string
+    ForceDocument bool
+}
+```
+
+#### SendVideo
+
+```go
+type SendVideo struct {
+    // common fields...
+    Duration            float64
+    Width               int32
+    Height              int32
+    SupportsStreaming   bool
+    FileName            string
+    Thumb               string
+    HasSpoiler          bool
+    TTLSeconds          *int32
+    ViewOnce            bool
+    NoSound             bool
+    VideoStartTimestamp *int32
+    VideoCover          tg.InputDocumentClass
+}
+```
+
+#### SendAudio
+
+```go
+type SendAudio struct {
+    // common fields...
+    Duration  int32
+    Performer string
+    Title     string
+    FileName  string
+    Thumb     string
+}
+```
+
+#### SendAnimation
+
+```go
+type SendAnimation struct {
+    // common fields...
+    FileName string
+    Thumb    string
+    Duration float64
+    Width    int32
+    Height   int32
+    Unsave   bool
+}
+```
+
+#### SendVoice
+
+```go
+type SendVoice struct {
+    // common fields...
+    Duration int32
+    FileName string
+    ViewOnce bool
+}
+```
+
+#### SendVideoNote
+
+```go
+type SendVideoNote struct {
+    // common fields...
+    Duration float64
+    FileName string
+    Thumb    string
+    Length   int32
+    ViewOnce bool
+}
+```
+
+#### SendSticker
+
+```go
+type SendSticker struct {
+    // common fields...
+    FileName string
+    Emoji    string
+}
+```
+
+### Special Param Structs
+
+#### SendContact
+
+```go
+type SendContact struct {
+    // common fields...
+    Vcard string
+}
+```
+
+#### SendLocation
+
+```go
+type SendLocation struct {
+    // common fields...
+    AccuracyRadius       *int32
+    Heading              *int32
+    ProximityAlertRadius *int32
+    LivePeriod           *int32
+}
+```
+
+#### SendVenue
+
+```go
+type SendVenue struct {
+    // common fields...
+    Provider       string
+    VenueID        string
+    VenueType      string
+    FoursquareID   string
+    FoursquareType string
+}
+```
+
+#### SendPoll
+
+```go
+type SendPoll struct {
+    // common fields...
+    PublicVoters          bool
+    MultipleChoice        bool
+    Quiz                  bool
+    Closed                bool
+    ShuffleAnswers        bool
+    RevotingDisabled      bool
+    HideResultsUntilClose bool
+    SubscribersOnly       bool
+    OpenAnswers           bool
+    AllowAddingOptions    bool
+    ClosePeriod           *int32
+    CloseDate             *int32
+    CorrectAnswers        [][]byte
+    Solution              *string
+    SolutionEntities      []tg.MessageEntityClass
+    Description           string
+    DescriptionMedia      tg.InputMediaClass
+}
+```
+
+#### SendDice / SendGame / SendChecklist
+
+```go
+type SendDice struct {
+    // common fields...
+    Emoticon string
+}
+
+type SendGame struct {
+    // common fields...
+    // (no extra fields beyond common)
+}
+
+type SendChecklist struct {
+    // common fields...
+    OthersCanAppend   bool
+    OthersCanComplete bool
+    PaidMessageStars  *int64
+}
+```
+
+#### SendInlineBotResult
+
+```go
+type SendInlineBotResult struct {
+    // common fields...
+    HideVia        bool
+    AllowPaidStars *int64
+}
+```
+
+### Callback & Payment Param Structs
+
+```go
+type AnswerCallback struct {
+    Text      string
+    ShowAlert bool
+    URL       string
+    CacheTime int32
+}
+
+type AnswerShipping struct {
+    Ok              bool
+    ShippingOptions interface{}
+    ErrorMsg        string
+}
+
+type AnswerPreCheckout struct {
+    Ok       bool
+    ErrorMsg string
+}
+```
+
+### EditCaption
+
+```go
+type EditCaption struct {
+    Caption               string
+    ParseMode             ParseMode
+    CaptionEntities       []tg.MessageEntityClass
+    ReplyMarkup           tg.ReplyMarkupClass
+    ShowCaptionAboveMedia bool
+    BusinessConnectionID  string
+    ScheduleDate          *int32
+}
+```
+
+### Download Param Struct
+
+```go
+type Download struct {
+    FileName  string
+    ChunkSize int32
+    Progress  ProgressFunc
+    DCID      int32
+}
+```
+
+### Progress Reporting
+
+```go
+type ProgressInfo struct {
+    FileName       string
+    TotalBytes     int64
+    UploadedBytes  int64
+    DownloadedBytes int64
+    IsUpload       bool
+}
+
+func (p ProgressInfo) Progress() float64
+
+type ProgressFunc func(info ProgressInfo)
+```
+
+### Story Param Structs
+
+```go
+type StoryForward struct {
+    DisableNotification  bool
+    MessageThreadID      int32
+    ScheduleDate         *int32
+    RepeatPeriod         *int32
+    PaidMessageStarCount *int64
+    ProtectContent       bool
+    AllowPaidBroadcast   bool
+    ReplyParameters      interface{}
+    ReplyMarkup          tg.ReplyMarkupClass
+    MessageEffectID      *int64
+}
+
+type StoryCopy struct {
+    Caption         string
+    ParseMode       ParseMode
+    CaptionEntities []tg.MessageEntityClass
+    Period          *int32
+    MediaAreas      interface{}
+    Privacy         string
+    AllowedUsers    []int64
+    DisallowedUsers []int64
+    ProtectContent  bool
+}
+```
+
+### Gift Param Structs
+
+```go
+type GiftSend struct {
+    Text          string
+    ParseMode     ParseMode
+    Entities      []tg.MessageEntityClass
+    IsPrivate     bool
+    PayForUpgrade bool
+}
+
+type BuyGift struct {
+    Ton bool
+}
+
+type GiftPurchaseOffer struct {
+    Price                int64
+    Duration             int32
+    PaidMessageStarCount *int64
+}
+```
+
+### Reaction Param Structs
+
+```go
+type React struct {
+    Emoji string
+    Big   bool
+}
+
+type SendReactionOption struct {
+    Big         bool
+    AddToRecent bool
+}
+
+type SendPaidReactionOption struct {
+    Private bool
+}
+```
+
+### Misc Param Structs
+
+```go
+type InlineQuery struct {
+    CacheTime     int
+    Gallery       bool
+    Private       bool
+    NextOffset    string
+    SwitchPM      string
+    SwitchPMText  string
+}
+
+type GetGifts struct {
+    ExcludeUnsaved      bool
+    ExcludeSaved        bool
+    ExcludeUnlimited    bool
+    ExcludeUnique       bool
+    SortByValue         bool
+    ExcludeUpgradable   bool
+    ExcludeUnupgradable bool
+    PeerColorAvailable  bool
+    ExcludeHosted       bool
+    CollectionID        int32
+    Offset              string
+    Limit               int32
+}
+
+type EditPrivacy struct {
+    Privacy         string
+    AllowedUsers    []int64
+    DisallowedUsers []int64
+}
+
+type GetStarsTransactionsOption struct {
+    Ascending      bool
+    SubscriptionID string
+    Ton            bool
+}
 ```
 
 ### Utility
@@ -1915,7 +3175,7 @@ type SendInlineBotResult struct { /* common... + QueryID, ResultID, HideVia */ }
 func GetOptDef[T comparable](def T, opts ...T) T
 ```
 
-Returns the first valid option from `opts`, or `def` when empty. Panics if more than one option is passed.
+Returns the first valid param from `opts`, or `def` when empty. Panics if more than one param is passed.
 
 ---
 
@@ -2161,6 +3421,14 @@ type SRPResult struct {
 }
 
 func ComputeSRP(salt1, salt2 []byte, g, p *big.Int, srpB []byte, srpID int64, password string) (*SRPResult, error)
+
+func SecretEncrypt(data, authKey []byte, outgoing bool) ([]byte, error)
+func SecretDecrypt(data, authKey []byte) ([]byte, error)
+func KeyVisualization(authKey []byte) []string
+func GenerateFileKeyIV() (key, iv []byte, err error)
+func FileKeyFingerprint(key, iv []byte) int64
+func EncryptFile(data, key, iv []byte) ([]byte, error)
+func DecryptFile(data, key, iv []byte) ([]byte, error)
 ```
 
 ### internal/session
@@ -2194,13 +3462,45 @@ func (s *Session) SetServerSalt(salt int64)
 func (s *Session) SetServerTime(t time.Time)
 func (s *Session) SetTransport(t Transport)
 func (s *Session) SetUpdateHandler(fn func(tg.TLObject))
+func (s *Session) SetOnPanic(fn func(panicValue any))
+func (s *Session) SessionDone() <-chan struct{}
+func (s *Session) SetPingInterval(d time.Duration)
+func (s *Session) SetPongTimeout(d time.Duration)
+func (s *Session) SetSaltRefreshRatio(r float64)
+func (s *Session) SetSaltRefreshMin(d time.Duration)
+func (s *Session) SetLogger(l sessionLogger)
+func (s *Session) SetWriteBreakerThreshold(n int)
 func (s *Session) Send(msgID int64, seqNo uint32, body tg.TLObject, timeout time.Duration) ([]byte, error)
 func (s *Session) Invoke(query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error)
 func (s *Session) Start(timeout time.Duration) error
 func (s *Session) Stop()
 func (s *Session) Connect(transport Transport, timeout time.Duration) error
 func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeout time.Duration) error
+```
 
+#### State Machine
+
+```go
+type SessionState uint8
+
+const (
+    StateIdle       SessionState = iota
+    StateConnecting
+    StateActive
+    StateDraining
+    StateClosed
+)
+```
+
+Allowed transitions:
+- `Idle` -> `Connecting`
+- `Connecting` -> `Active`, `Draining`, `Closed`
+- `Active` -> `Draining`, `Closed`
+- `Draining` -> `Connecting`, `Closed`
+
+#### DataCenter
+
+```go
 type DataCenter struct {
     ID       int
     TestMode bool
@@ -2216,26 +3516,26 @@ func (dc *DataCenter) String() string
 
 ```go
 type Storage interface {
-    DCID() int
-    SetDCID(id int)
-    APIID() int
-    SetAPIID(id int)
-    TestMode() bool
-    SetTestMode(v bool)
-    AuthKey() []byte
-    SetAuthKey(key []byte)
-    UserID() int64
-    SetUserID(id int64)
-    IsBot() bool
-    SetIsBot(v bool)
-    Date() int32
-    SetDate(d int32)
-    ServerAddress() string
-    SetServerAddress(addr string)
-    Port() int
-    SetPort(port int)
-    State() int
-    SetState(state int)
+    DCID() (int, error)
+    SetDCID(id int) error
+    APIID() (int, error)
+    SetAPIID(id int) error
+    TestMode() (bool, error)
+    SetTestMode(v bool) error
+    AuthKey() ([]byte, error)
+    SetAuthKey(key []byte) error
+    UserID() (int64, error)
+    SetUserID(id int64) error
+    IsBot() (bool, error)
+    SetIsBot(v bool) error
+    Date() (int32, error)
+    SetDate(d int32) error
+    ServerAddress() (string, error)
+    SetServerAddress(addr string) error
+    Port() (int, error)
+    SetPort(port int) error
+    State() ([]byte, error)
+    SetState(state []byte) error
     ExportSessionString() (string, error)
     Close() error
 }
@@ -2261,11 +3561,20 @@ type Transport interface {
 | `TCPFull` | `NewTCPFull(conn net.Conn)` | Full transport with length prefix, seq_no, CRC32 |
 | `TCPAbridged` | `NewTCPAbridged(conn net.Conn)` | Abridged transport (0xEF marker, compact length) |
 | `TCPIntermediate` | `NewTCPIntermediate(conn net.Conn)` | Intermediate transport (0xEEEEEEEE marker, 4-byte length) |
+| `TCPIntermediateNoHeader` | `NewTCPIntermediateNoHeader(conn net.Conn)` | Intermediate without marker byte (for WS/proxy) |
+| `TCPPaddedIntermediate` | `NewTCPPaddedIntermediate(conn net.Conn)` | Padded intermediate (0xDDDDDDDD marker, 0-15 bytes padding) |
 | `TCPObfuscated` | `NewTCPObfuscated(inner Transport, marker byte)` | AES-CTR obfuscated wrapper |
 | `TCPAbridgedO` | `NewTCPAbridgedO(conn net.Conn)` | Obfuscated + Abridged |
 | `TCPIntermediateO` | `NewTCPIntermediateO(conn net.Conn)` | Obfuscated + Intermediate |
 
 All transport types implement `Connect() error`, `Send(buf *bytes.Buffer) error`, and `Recv() ([]byte, error)`.
+
+WebSocket support:
+
+```go
+func DialWebsocket(ctx context.Context, addr string) (net.Conn, error)
+func ListenWebsocket(addr string) (net.Listener, error)
+```
 
 ---
 
@@ -2279,6 +3588,7 @@ import (
     "log"
 
     "github.com/mtgo-labs/mtgo/telegram"
+    "github.com/mtgo-labs/mtgo/telegram/params"
     "github.com/mtgo-labs/mtgo/telegram/types"
 )
 
@@ -2296,7 +3606,6 @@ func main() {
     }
     defer client.Disconnect()
 
-    // Register message handler
     client.OnMessage(func(ctx *telegram.Context) {
         if ctx.Message == nil {
             return
@@ -2304,13 +3613,12 @@ func main() {
         ctx.Reply("Echo: " + ctx.Message.Text)
     }, telegram.Command("echo"))
 
-    // Send a message
-    msg, err := client.SendMessage(context.Background(), telegram.ChatID(-100123456), "Hello!")
+    msg, err := client.SendMessage(context.Background(), -100123456, "Hello!")
     if err != nil {
         log.Fatal(err)
     }
     _ = msg
 
-    client.Idle() // block until Stop()
+    client.Idle()
 }
 ```
