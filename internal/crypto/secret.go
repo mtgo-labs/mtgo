@@ -3,7 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/md5"
-	"crypto/rand"
+	cryptorand "crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	mathrand "math/rand"
 )
 
 var (
@@ -33,7 +32,7 @@ var one = big.NewInt(1)
 func GenerateDHSecret(dhPrime *big.Int, bits int) (*big.Int, error) {
 	byteLen := bits / 8
 	b := make([]byte, byteLen)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := cryptorand.Read(b); err != nil {
 		return nil, fmt.Errorf("crypto/secret: generate random: %w", err)
 	}
 	n := new(big.Int).SetBytes(b)
@@ -115,13 +114,13 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	buf.Write(lenBytes)
 	buf.Write(plaintext)
 
-	paddingLen := SecretChatMinPadding + mathrand.Intn(SecretChatMaxPadding-SecretChatMinPadding)
+	paddingLen := SecretChatMinPadding + cryptoRandIntn(SecretChatMaxPadding-SecretChatMinPadding)
 	totalLen := 4 + len(plaintext) + paddingLen
 	if rem := totalLen % 16; rem != 0 {
 		paddingLen += 16 - rem
 	}
 	padding := make([]byte, paddingLen)
-	if _, err := rand.Read(padding); err != nil {
+	if _, err := cryptorand.Read(padding); err != nil {
 		return nil, fmt.Errorf("crypto/secret: generate padding: %w", err)
 	}
 	buf.Write(padding)
@@ -249,13 +248,20 @@ func FileKeyFingerprint(key, iv []byte) int32 {
 func GenerateFileKeyIV() (key, iv []byte, err error) {
 	key = make([]byte, 32)
 	iv = make([]byte, 32)
-	if _, err = rand.Read(key); err != nil {
+	if _, err = cryptorand.Read(key); err != nil {
 		return nil, nil, err
 	}
-	if _, err = rand.Read(iv); err != nil {
+	if _, err = cryptorand.Read(iv); err != nil {
 		return nil, nil, err
 	}
 	return key, iv, nil
+}
+
+// cryptoRandIntn returns a cryptographically secure random integer in [0, n).
+func cryptoRandIntn(n int) int {
+	var b [4]byte
+	_, _ = cryptorand.Read(b[:])
+	return int(binary.LittleEndian.Uint32(b[:])) % n
 }
 
 func padFile(data []byte) []byte {
