@@ -26,6 +26,9 @@ func (t *TCPAbridged) Connect() error {
 	return err
 }
 
+// Conn returns the underlying net.Conn.
+func (t *TCPAbridged) Conn() net.Conn { return t.conn }
+
 // Send writes buf to the connection with an abridged-style length prefix.
 // The length is encoded in 4-byte units; payloads up to 504 bytes use a
 // single-byte prefix while larger payloads use a 4-byte prefix starting

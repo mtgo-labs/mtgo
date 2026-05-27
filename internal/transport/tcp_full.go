@@ -28,6 +28,9 @@ func (t *TCPFull) Connect() error {
 	return nil
 }
 
+// Conn returns the underlying net.Conn.
+func (t *TCPFull) Conn() net.Conn { return t.conn }
+
 // Send writes buf to the connection with a full transport header consisting of
 // a 4-byte length, 4-byte sequence number, the payload, and a 4-byte CRC32
 // checksum. It increments the sequence number after each successful write.

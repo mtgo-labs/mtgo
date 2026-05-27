@@ -28,6 +28,9 @@ func (t *TCPIntermediate) Connect() error {
 	return err
 }
 
+// Conn returns the underlying net.Conn.
+func (t *TCPIntermediate) Conn() net.Conn { return t.conn }
+
 // Send writes buf to the connection with a 4-byte little-endian length prefix.
 func (t *TCPIntermediate) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()

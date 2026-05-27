@@ -25,6 +25,9 @@ func (t *TCPIntermediateNoHeader) Connect() error {
 	return nil
 }
 
+// Conn returns the underlying net.Conn.
+func (t *TCPIntermediateNoHeader) Conn() net.Conn { return t.conn }
+
 func (t *TCPIntermediateNoHeader) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 

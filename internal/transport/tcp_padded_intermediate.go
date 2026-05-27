@@ -22,6 +22,9 @@ func (t *TCPPaddedIntermediate) Connect() error {
 	return err
 }
 
+// Conn returns the underlying net.Conn.
+func (t *TCPPaddedIntermediate) Conn() net.Conn { return t.conn }
+
 func (t *TCPPaddedIntermediate) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 

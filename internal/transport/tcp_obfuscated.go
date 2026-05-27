@@ -134,6 +134,9 @@ func (t *TCPObfuscated) Connect() error {
 	t.nonce = nonce
 
 	t.conn = t.getInnerConn()
+	if t.conn == nil {
+		return fmt.Errorf("tcp_obfuscated: inner transport %T does not expose a connection", t.inner)
+	}
 
 	if _, err := t.conn.Write(nonce); err != nil {
 		return fmt.Errorf("tcp_obfuscated: write nonce: %w", err)
@@ -170,17 +173,22 @@ func (t *TCPObfuscated) connectReverse() error {
 	t.dec.Process(make([]byte, 64))
 
 	t.conn = t.getInnerConn()
+	if t.conn == nil {
+		return fmt.Errorf("tcp_obfuscated: inner transport %T does not expose a connection", t.inner)
+	}
 	return nil
 }
 
+// connProvider is implemented by transport types that expose their underlying
+// net.Conn. Used by TCPObfuscated to access the raw connection for writing
+// the obfuscated nonce.
+type connProvider interface {
+	Conn() net.Conn
+}
+
 func (t *TCPObfuscated) getInnerConn() net.Conn {
-	switch inner := t.inner.(type) {
-	case *TCPIntermediate:
-		return inner.conn
-	case *TCPAbridged:
-		return inner.conn
-	case *TCPFull:
-		return inner.conn
+	if cp, ok := t.inner.(connProvider); ok {
+		return cp.Conn()
 	}
 	return nil
 }
