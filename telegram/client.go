@@ -872,11 +872,51 @@ func (c *Client) initialDCID(st storage.Storage) int {
 }
 
 func (c *Client) connectTransport(timeout time.Duration) error {
+	st, migratingDC, err := c.initStorage()
+	if err != nil {
+		return err
+	}
+	testSession := c.testSession
+	testDialer := c.testDialer
+
+	if err := c.importSessionString(st); err != nil {
+		return err
+	}
+	c.loadPeersFromStorage()
+
+	sess, err := c.initSession(st, testSession)
+	if err != nil {
+		return err
+	}
+
+	dc := sess.DC()
+	sessionTp, err := c.dialTransport(dc, timeout, testDialer)
+	if err != nil {
+		return err
+	}
+
+	if err := c.performDHExchange(sess, st, dc, sessionTp, migratingDC); err != nil {
+		return err
+	}
+
+	c.startSession(sess, sessionTp, timeout)
+
+	if err := c.authenticateUser(st, timeout); err != nil {
+		return err
+	}
+
+	c.postConnect()
+	return nil
+}
+
+// initStorage resolves the storage backend, sets the connecting state, and
+// returns the storage, whether a DC migration is in progress, and any error.
+func (c *Client) initStorage() (storage.Storage, bool, error) {
 	c.mu.Lock()
 	dcID := c.initialDCID(c.testStorage)
 	if err := c.state.SetConnecting(dcID); err != nil {
 		c.mu.Unlock()
-		return err
+		return nil, false, err
 	}
 
 	st := c.testStorage
@@ -891,167 +931,185 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			s, err := newDefaultStorage(c.cfg.SessionName)
 			if err != nil {
 				c.mu.Unlock()
-				return fmt.Errorf("telegram: auto-create storage: %w", err)
+				return nil, false, fmt.Errorf("telegram: auto-create storage: %w", err)
 			}
 			st = s
 		} else {
 			c.mu.Unlock()
-			return ErrNoStorage
+			return nil, false, ErrNoStorage
 		}
 	}
 	c.storage = st
 	migratingDC := c.migratingDC
 	c.migratingDC = false
-	testSession := c.testSession
-	testDialer := c.testDialer
 	c.mu.Unlock()
 
 	if c.cfg.SessionName != "" {
 		if err := st.SetSessionID(c.cfg.SessionName); err != nil {
-			return fmt.Errorf("set session id %q: %w", c.cfg.SessionName, err)
+			return nil, false, fmt.Errorf("set session id %q: %w", c.cfg.SessionName, err)
 		}
 	}
+	return st, migratingDC, nil
+}
 
-	// If SessionString is set, decode and copy session fields into storage.
-	if c.cfg.SessionString != "" {
-		src, err := sessions.StringSession(c.cfg.SessionString)
-		if err != nil {
-			return fmt.Errorf("telegram: decode session string: %w", err)
-		}
-		if dc, _ := src.DCID(); dc > 0 {
-			if err := st.SetDCID(dc); err != nil {
-				return fmt.Errorf("telegram: import session dc_id: %w", err)
-			}
-		}
-		if key, _ := src.AuthKey(); len(key) > 0 {
-			if err := st.SetAuthKey(key); err != nil {
-				return fmt.Errorf("telegram: import session auth key: %w", err)
-			}
-		}
+// importSessionString decodes the SessionString config field and copies its
+// session fields (DC, auth key, API ID) into the storage backend.
+func (c *Client) importSessionString(st storage.Storage) error {
+	if c.cfg.SessionString == "" {
 		if c.cfg.APIID == 0 {
-			if appID, _ := src.APIID(); appID > 0 {
-				c.cfg.APIID = appID
-			}
+			return fmt.Errorf("telegram: apiID is required (not found in session string)")
+		}
+		return nil
+	}
+	src, err := sessions.StringSession(c.cfg.SessionString)
+	if err != nil {
+		return fmt.Errorf("telegram: decode session string: %w", err)
+	}
+	if dc, _ := src.DCID(); dc > 0 {
+		if err := st.SetDCID(dc); err != nil {
+			return fmt.Errorf("telegram: import session dc_id: %w", err)
 		}
 	}
-
+	if key, _ := src.AuthKey(); len(key) > 0 {
+		if err := st.SetAuthKey(key); err != nil {
+			return fmt.Errorf("telegram: import session auth key: %w", err)
+		}
+	}
+	if c.cfg.APIID == 0 {
+		if appID, _ := src.APIID(); appID > 0 {
+			c.cfg.APIID = appID
+		}
+	}
 	if c.cfg.APIID == 0 {
 		return fmt.Errorf("telegram: apiID is required (not found in session string)")
 	}
+	return nil
+}
 
-	c.loadPeersFromStorage()
-
-	sess := testSession
-	if sess == nil {
-		dcID := c.initialDCID(st)
-		dc := session.DataCenter{
-			ID:       dcID,
-			TestMode: c.cfg.TestMode,
-			IPv6:     c.cfg.IPv6,
-		}
-		if dc.Address() == "" {
-			return fmt.Errorf("unknown dc_id: %d", dc.ID)
-		}
-		s, err := session.NewSession(dc, st, c.cfg.Device.DeviceModel, c.cfg.Device.AppVersion, c.cfg.Device.SystemLangCode, c.cfg.Device.LangCode)
-		if err != nil {
-			return fmt.Errorf("create session: %w", err)
-		}
-		sess = s
-		if err := st.SetDCID(dcID); err != nil {
-			return fmt.Errorf("save dc_id: %w", err)
-		}
+// initSession creates or restores the MTProto session for the given storage
+// backend. If a test session is provided it is used directly.
+func (c *Client) initSession(st storage.Storage, testSession *session.Session) (*session.Session, error) {
+	if testSession != nil {
+		configureSessionDispatch(testSession, c.cfg, c.Log)
+		return testSession, nil
+	}
+	dcID := c.initialDCID(st)
+	dc := session.DataCenter{
+		ID:       dcID,
+		TestMode: c.cfg.TestMode,
+		IPv6:     c.cfg.IPv6,
+	}
+	if dc.Address() == "" {
+		return nil, fmt.Errorf("unknown dc_id: %d", dc.ID)
+	}
+	sess, err := session.NewSession(dc, st, c.cfg.Device.DeviceModel, c.cfg.Device.AppVersion, c.cfg.Device.SystemLangCode, c.cfg.Device.LangCode)
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+	if err := st.SetDCID(dcID); err != nil {
+		return nil, fmt.Errorf("save dc_id: %w", err)
 	}
 	configureSessionDispatch(sess, c.cfg, c.Log)
+	return sess, nil
+}
 
-	dc := sess.DC()
-
-	var sessionTp *sessionTransport
-
+// dialTransport establishes the underlying transport connection (TCP,
+// WebSocket, or MTProxy) to the given data center.
+func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, testDialer transport.Dialer) (*sessionTransport, error) {
 	if useWebSocket(c.cfg) {
 		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.cfg.WebSocketTLS)
 		wsCtx, wsCancel := dialerCtx(timeout)
 		defer wsCancel()
 		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
 		if err != nil {
-			return fmt.Errorf("ws dial %s: %w", wsAddr, err)
+			return nil, fmt.Errorf("ws dial %s: %w", wsAddr, err)
 		}
 		tp := transport.NewTCPIntermediateNoHeader(wsConn)
 		if err := tp.Connect(); err != nil {
 			wsConn.Close()
-			return fmt.Errorf("ws transport handshake: %w", err)
+			return nil, fmt.Errorf("ws transport handshake: %w", err)
 		}
-		sessionTp = newSessionTransport(tp, wsConn)
-	} else if c.cfg.MTProxy != nil {
+		return newSessionTransport(tp, wsConn), nil
+	}
+	if c.cfg.MTProxy != nil {
 		mpConn, err := mtproxy.Dial(c.cfg.MTProxy.Addr, c.cfg.MTProxy.Secret, dc.ID, timeout)
 		if err != nil {
-			return fmt.Errorf("mtproxy dial: %w", err)
+			return nil, fmt.Errorf("mtproxy dial: %w", err)
 		}
 		tp := transport.NewTCPIntermediateNoHeader(mpConn)
 		if err := tp.Connect(); err != nil {
 			mpConn.Close()
-			return fmt.Errorf("mtproxy transport handshake: %w", err)
+			return nil, fmt.Errorf("mtproxy transport handshake: %w", err)
 		}
-		sessionTp = newSessionTransport(tp, mpConn)
-	} else {
-		addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
-		if c.cfg.ServerAddr != "" {
-			addr = c.cfg.ServerAddr
-		}
-
-		d := c.dialer
-		if testDialer != nil {
-			d = testDialer
-		}
-		conn, err := d.Dial("tcp", addr, timeout)
-		if err != nil {
-			return fmt.Errorf("dial %s: %w", addr, err)
-		}
-
-		tp, err := newTCPTransport(c.cfg.TransportMode, conn)
-		if err != nil {
-			conn.Close()
-			return err
-		}
-		if err := tp.Connect(); err != nil {
-			conn.Close()
-			return fmt.Errorf("transport handshake: %w", err)
-		}
-		sessionTp = newSessionTransport(tp, conn)
+		return newSessionTransport(tp, mpConn), nil
 	}
 
+	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
+	if c.cfg.ServerAddr != "" {
+		addr = c.cfg.ServerAddr
+	}
+	d := c.dialer
+	if testDialer != nil {
+		d = testDialer
+	}
+	conn, err := d.Dial("tcp", addr, timeout)
+	if err != nil {
+		return nil, fmt.Errorf("dial %s: %w", addr, err)
+	}
+	tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	if err := tp.Connect(); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("transport handshake: %w", err)
+	}
+	return newSessionTransport(tp, conn), nil
+}
+
+// performDHExchange runs the MTProto DH key exchange if no auth key exists or
+// a DC migration is in progress. On success the auth key and salt are saved to
+// storage.
+func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc session.DataCenter, sessionTp *sessionTransport, migratingDC bool) error {
 	authKey, _ := st.AuthKey()
-	needDH := len(authKey) == 0 || migratingDC
-	if needDH {
-		c.Log.Debug("auth key missing; starting DH exchange with DC ", dc.ID)
-		auth := &session.Auth{
-			DC:       dc.ID,
-			TestMode: dc.TestMode,
-		}
-		result, err := auth.Create(sessionTp)
-		if err != nil {
-			sessionTp.Close()
-			return fmt.Errorf("DH key exchange: %w", err)
-		}
-		sess.SetAuthKey(result.AuthKey)
-		sess.SetServerSalt(result.ServerSalt)
-		sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
-		if err := st.SetAuthKey(result.AuthKey); err != nil {
-			return fmt.Errorf("save auth key: %w", err)
-		}
-		if err := st.SetAPIID(c.cfg.APIID); err != nil {
-			c.Log.Warnf("save api_id: %v", err)
-		}
-		if err := st.SetAPIHash(c.cfg.APIHash); err != nil {
-			c.Log.Warnf("save api_hash: %v", err)
-		}
-		if err := st.SetTestMode(dc.TestMode); err != nil {
-			c.Log.Warnf("save test mode: %v", err)
-		}
-		c.Log.Debug("DH exchange complete; auth_key=", len(result.AuthKey), " bytes")
-	} else {
+	if len(authKey) != 0 && !migratingDC {
 		c.Log.Debug("loaded auth key from session; auth_key=", len(authKey), " bytes")
+		return nil
 	}
 
+	c.Log.Debug("auth key missing; starting DH exchange with DC ", dc.ID)
+	auth := &session.Auth{
+		DC:       dc.ID,
+		TestMode: dc.TestMode,
+	}
+	result, err := auth.Create(sessionTp)
+	if err != nil {
+		sessionTp.Close()
+		return fmt.Errorf("DH key exchange: %w", err)
+	}
+	sess.SetAuthKey(result.AuthKey)
+	sess.SetServerSalt(result.ServerSalt)
+	sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
+	if err := st.SetAuthKey(result.AuthKey); err != nil {
+		return fmt.Errorf("save auth key: %w", err)
+	}
+	if err := st.SetAPIID(c.cfg.APIID); err != nil {
+		c.Log.Warnf("save api_id: %v", err)
+	}
+	if err := st.SetAPIHash(c.cfg.APIHash); err != nil {
+		c.Log.Warnf("save api_hash: %v", err)
+	}
+	if err := st.SetTestMode(dc.TestMode); err != nil {
+		c.Log.Warnf("save test mode: %v", err)
+	}
+	c.Log.Debug("DH exchange complete; auth_key=", len(result.AuthKey), " bytes")
+	return nil
+}
+
+// startSession registers the update handler, starts the encrypted session, and
+// marks the client as connected.
+func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) {
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
 	})
@@ -1063,7 +1121,6 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	c.apiInit = false
 	c.mu.Unlock()
 
-	// Configure session ping intervals from client config before starting.
 	if c.cfg.HealthPingInterval > 0 {
 		sess.SetPingInterval(c.cfg.HealthPingInterval)
 	}
@@ -1074,11 +1131,11 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	c.Log.Debug("starting encrypted session")
 	if err := sess.Connect(sessionTp, timeout); err != nil {
 		sessionTp.Close()
-		return fmt.Errorf("session start: %w", err)
+		c.Log.Errorf("session start: %v", err)
+		return
 	}
 	c.Log.Info("encrypted session started")
 
-	// Watch for session exit and trigger reconnect when it dies.
 	go func() {
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
@@ -1086,14 +1143,17 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}()
 
-	// Publish session and mark connected under brief lock so that
-	// concurrent readers observe c.session and ConnStateConnected together.
 	c.mu.Lock()
 	c.session = sess
 	c.state.SetConnected()
-	c.state.SetDC(dcID)
+	c.state.SetDC(c.initialDCID(c.storage))
 	c.mu.Unlock()
+}
 
+// authenticateUser handles bot authorization import, user restore from storage,
+// and phone login flow. Returns an error only for fatal failures that should
+// abort the connection.
+func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) error {
 	if botToken := c.cfg.BotToken; botToken != "" {
 		alreadyAuthorized := false
 		isUserAccount := false
@@ -1198,7 +1258,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		}
 	}
 
-	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == "" && !migratingDC
+	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == "" && !c.migratingDC
 	if needLogin {
 		c.Log.Info("session not authorized; starting phone login flow")
 		if err := c.loginUser(context.Background()); err != nil {
@@ -1206,7 +1266,12 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			return fmt.Errorf("phone login: %w", err)
 		}
 	}
+	return nil
+}
 
+// postConnect runs post-connection setup: fetching update state, starting
+// plugins, and enabling update recovery.
+func (c *Client) postConnect() {
 	if !c.cfg.NoUpdates {
 		c.Log.Debug("fetching updates state")
 		rpc := c.Raw()
@@ -1216,7 +1281,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 				c.Log.Debug("updates state fetch skipped: not authorized (", rpcErr.Type, ")")
 			} else {
 				c.cleanupSessions()
-				return fmt.Errorf("get state: %w", err)
+				c.Log.Errorf("get state: %v", err)
 			}
 		} else {
 			c.Log.Info("updates state fetched")
@@ -1243,8 +1308,6 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 			c.Log.Info("update recovery enabled")
 		}
 	}
-
-	return nil
 }
 
 func (c *Client) processRawUpdate(obj tg.TLObject) {
