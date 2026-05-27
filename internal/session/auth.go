@@ -326,15 +326,16 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 			if err != nil {
 				return nil, fmt.Errorf("step 9: encrypt client DH: %w", err)
 			}
-			defer crypto.ReleaseAESBuf(encClientDH)
 
 			if err := a.sendUnencrypted(conn, &tg.SetClientDHParamsRequest{
 				Nonce:         nonce,
 				ServerNonce:   resPQ.ServerNonce,
 				EncryptedData: string(encClientDH),
 			}); err != nil {
+				crypto.ReleaseAESBuf(encClientDH)
 				return nil, fmt.Errorf("step 9: send SetClientDHParams: %w", err)
 			}
+			crypto.ReleaseAESBuf(encClientDH)
 
 			obj, err = a.recvUnencrypted(conn)
 			if err != nil {
