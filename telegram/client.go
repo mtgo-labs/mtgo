@@ -161,216 +161,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	c.APIID = apiID
 	c.APIHash = apiHash
 	if cfg != nil {
-		if cfg.SessionName != "" {
-			c.SessionName = cfg.SessionName
-		}
-		if cfg.BotToken != "" {
-			c.BotToken = cfg.BotToken
-		}
-
-		if cfg.PhoneNumber != "" {
-			c.PhoneNumber = cfg.PhoneNumber
-		}
-		if cfg.PhoneCode != "" {
-			c.PhoneCode = cfg.PhoneCode
-		}
-		if cfg.Password != "" {
-			c.Password = cfg.Password
-		}
-		if cfg.CodeFunc != nil {
-			c.CodeFunc = cfg.CodeFunc
-		}
-		if cfg.PasswordFunc != nil {
-			c.PasswordFunc = cfg.PasswordFunc
-		}
-		if cfg.WorkDir != "" {
-			c.WorkDir = cfg.WorkDir
-		}
-		if cfg.InMemory {
-			c.InMemory = true
-		}
-		if cfg.Proxy != nil {
-			c.Proxy = cfg.Proxy
-		}
-		if cfg.TestMode {
-			c.TestMode = true
-		}
-		if cfg.IPv6 {
-			c.IPv6 = true
-		}
-		if cfg.NoUpdates {
-			c.NoUpdates = true
-		}
-		if cfg.AutoConnect {
-			c.AutoConnect = true
-		}
-		if cfg.SkipUpdates {
-			c.SkipUpdates = true
-		}
-		if cfg.SleepThreshold != 0 {
-			c.SleepThreshold = cfg.SleepThreshold
-		}
-		if cfg.HandlerTimeout != 0 {
-			c.HandlerTimeout = cfg.HandlerTimeout
-		}
-		if cfg.Timeout != 0 {
-			c.Timeout = cfg.Timeout
-		}
-		if cfg.ReqTimeout != 0 {
-			c.ReqTimeout = cfg.ReqTimeout
-		}
-		if cfg.Retries != 0 {
-			c.Retries = cfg.Retries
-		}
-		if cfg.MaxConcurrentTrans != 0 {
-			c.MaxConcurrentTrans = cfg.MaxConcurrentTrans
-		}
-		if cfg.DispatchWorkers != 0 {
-			c.DispatchWorkers = cfg.DispatchWorkers
-		}
-		if cfg.DispatchQueueSize != 0 {
-			c.DispatchQueueSize = cfg.DispatchQueueSize
-		}
-		if cfg.MaxMessageCacheSize != 0 {
-			c.MaxMessageCacheSize = cfg.MaxMessageCacheSize
-		}
-		if cfg.MaxTopicCacheSize != 0 {
-			c.MaxTopicCacheSize = cfg.MaxTopicCacheSize
-		}
-		if cfg.ParseMode != "" {
-			c.ParseMode = cfg.ParseMode
-		}
-
-		if cfg.HidePassword {
-			c.HidePassword = true
-		}
-		if cfg.Takeout {
-			c.Takeout = true
-		}
-		if cfg.LinkPreviewOptions != nil {
-			c.LinkPreviewOptions = cfg.LinkPreviewOptions
-		}
-		if cfg.FetchReplies {
-			c.FetchReplies = true
-		}
-		if cfg.FetchTopics {
-			c.FetchTopics = true
-		}
-		if cfg.FetchStories {
-			c.FetchStories = true
-		}
-		if cfg.FetchStickers {
-			c.FetchStickers = true
-		}
-		if cfg.Device.DeviceModel != "" || cfg.Device.AppVersion != "" {
-			if cfg.Device.DeviceModel != "" {
-				c.Device.DeviceModel = cfg.Device.DeviceModel
-			}
-			if cfg.Device.SystemVersion != "" {
-				c.Device.SystemVersion = cfg.Device.SystemVersion
-			}
-			if cfg.Device.AppVersion != "" {
-				c.Device.AppVersion = cfg.Device.AppVersion
-			}
-			if cfg.Device.LangCode != "" {
-				c.Device.LangCode = cfg.Device.LangCode
-			}
-			if cfg.Device.LangPack != "" {
-				c.Device.LangPack = cfg.Device.LangPack
-			}
-			if cfg.Device.SystemLangCode != "" {
-				c.Device.SystemLangCode = cfg.Device.SystemLangCode
-			}
-			if cfg.Device.TZOffset != 0 {
-				c.Device.TZOffset = cfg.Device.TZOffset
-			}
-			if cfg.Device.ClientPlatform != "" {
-				c.Device.ClientPlatform = cfg.Device.ClientPlatform
-			}
-		}
-		// Deprecated top-level fields override Device for backwards compat.
-		if cfg.AppVersion != "" {
-			c.Device.AppVersion = cfg.AppVersion
-		}
-		if cfg.DeviceModel != "" {
-			c.Device.DeviceModel = cfg.DeviceModel
-		}
-		if cfg.SystemVersion != "" {
-			c.Device.SystemVersion = cfg.SystemVersion
-		}
-		if cfg.LangCode != "" {
-			c.Device.LangCode = cfg.LangCode
-		}
-		if cfg.LangPack != "" {
-			c.Device.LangPack = cfg.LangPack
-		}
-		if cfg.SystemLangCode != "" {
-			c.Device.SystemLangCode = cfg.SystemLangCode
-		}
-		if cfg.TZOffset != 0 {
-			c.Device.TZOffset = cfg.TZOffset
-		}
-		if cfg.ClientPlatform != "" {
-			c.Device.ClientPlatform = cfg.ClientPlatform
-		}
-		if cfg.TransportMode != "" {
-			c.TransportMode = cfg.TransportMode
-		}
-		if cfg.Storage != nil {
-			c.Storage = cfg.Storage
-		}
-		if cfg.SessionString != "" {
-			c.SessionString = cfg.SessionString
-		}
-		if cfg.MTProxy != nil {
-			c.MTProxy = cfg.MTProxy
-		}
-		if cfg.SavePeers {
-			c.SavePeers = true
-		}
-		if cfg.WebSocket {
-			c.WebSocket = true
-		}
-		if cfg.WebSocketTLS {
-			c.WebSocketTLS = true
-		}
-		if cfg.DC != 0 {
-			c.DC = cfg.DC
-		}
-		if cfg.ServerAddr != "" {
-			c.ServerAddr = cfg.ServerAddr
-		}
-		if cfg.LocalAddr != "" {
-			c.LocalAddr = cfg.LocalAddr
-		}
-		c.ReconnectEnabled = cfg.ReconnectEnabled
-		if cfg.ReconnectBaseDelay != 0 {
-			c.ReconnectBaseDelay = cfg.ReconnectBaseDelay
-		}
-		if cfg.ReconnectMaxDelay != 0 {
-			c.ReconnectMaxDelay = cfg.ReconnectMaxDelay
-		}
-		if cfg.ReconnectMaxAttempts != 0 {
-			c.ReconnectMaxAttempts = cfg.ReconnectMaxAttempts
-		}
-		c.HealthEnabled = cfg.HealthEnabled
-		if cfg.HealthPingInterval != 0 {
-			c.HealthPingInterval = cfg.HealthPingInterval
-		}
-		if cfg.HealthPongTimeout != 0 {
-			c.HealthPongTimeout = cfg.HealthPongTimeout
-		}
-		if cfg.UpdateQueueSize != 0 {
-			c.UpdateQueueSize = cfg.UpdateQueueSize
-		}
-		if cfg.DurableUpdateQueue {
-			c.DurableUpdateQueue = true
-		}
-		if cfg.MaxUpdateHandlerRetry != 0 {
-			c.MaxUpdateHandlerRetry = cfg.MaxUpdateHandlerRetry
-		}
-		c.UpdateRecoveryEnabled = cfg.UpdateRecoveryEnabled
-		c.Log = cfg.Log
+		c.mergeConfig(cfg)
 	}
 	if _, err := newTCPTransport(c.TransportMode, nil); err != nil {
 		return nil, err
@@ -429,6 +220,219 @@ func (c *Client) backoffConfig() backoffConfig {
 		cfg.MaxAttempts = c.cfg.ReconnectMaxAttempts
 	}
 	return cfg
+}
+
+// mergeConfig copies non-zero fields from src into c. Deprecated top-level
+// device fields override Device.* for backwards compatibility.
+func (c *Config) mergeConfig(src *Config) {
+	if src.SessionName != "" {
+		c.SessionName = src.SessionName
+	}
+	if src.BotToken != "" {
+		c.BotToken = src.BotToken
+	}
+	if src.PhoneNumber != "" {
+		c.PhoneNumber = src.PhoneNumber
+	}
+	if src.PhoneCode != "" {
+		c.PhoneCode = src.PhoneCode
+	}
+	if src.Password != "" {
+		c.Password = src.Password
+	}
+	if src.CodeFunc != nil {
+		c.CodeFunc = src.CodeFunc
+	}
+	if src.PasswordFunc != nil {
+		c.PasswordFunc = src.PasswordFunc
+	}
+	if src.WorkDir != "" {
+		c.WorkDir = src.WorkDir
+	}
+	if src.InMemory {
+		c.InMemory = true
+	}
+	if src.Proxy != nil {
+		c.Proxy = src.Proxy
+	}
+	if src.TestMode {
+		c.TestMode = true
+	}
+	if src.IPv6 {
+		c.IPv6 = true
+	}
+	if src.NoUpdates {
+		c.NoUpdates = true
+	}
+	if src.AutoConnect {
+		c.AutoConnect = true
+	}
+	if src.SkipUpdates {
+		c.SkipUpdates = true
+	}
+	if src.SleepThreshold != 0 {
+		c.SleepThreshold = src.SleepThreshold
+	}
+	if src.HandlerTimeout != 0 {
+		c.HandlerTimeout = src.HandlerTimeout
+	}
+	if src.Timeout != 0 {
+		c.Timeout = src.Timeout
+	}
+	if src.ReqTimeout != 0 {
+		c.ReqTimeout = src.ReqTimeout
+	}
+	if src.Retries != 0 {
+		c.Retries = src.Retries
+	}
+	if src.MaxConcurrentTrans != 0 {
+		c.MaxConcurrentTrans = src.MaxConcurrentTrans
+	}
+	if src.DispatchWorkers != 0 {
+		c.DispatchWorkers = src.DispatchWorkers
+	}
+	if src.DispatchQueueSize != 0 {
+		c.DispatchQueueSize = src.DispatchQueueSize
+	}
+	if src.MaxMessageCacheSize != 0 {
+		c.MaxMessageCacheSize = src.MaxMessageCacheSize
+	}
+	if src.MaxTopicCacheSize != 0 {
+		c.MaxTopicCacheSize = src.MaxTopicCacheSize
+	}
+	if src.ParseMode != "" {
+		c.ParseMode = src.ParseMode
+	}
+	if src.HidePassword {
+		c.HidePassword = true
+	}
+	if src.Takeout {
+		c.Takeout = true
+	}
+	if src.LinkPreviewOptions != nil {
+		c.LinkPreviewOptions = src.LinkPreviewOptions
+	}
+	if src.FetchReplies {
+		c.FetchReplies = true
+	}
+	if src.FetchTopics {
+		c.FetchTopics = true
+	}
+	if src.FetchStories {
+		c.FetchStories = true
+	}
+	if src.FetchStickers {
+		c.FetchStickers = true
+	}
+	if src.Device.DeviceModel != "" || src.Device.AppVersion != "" {
+		if src.Device.DeviceModel != "" {
+			c.Device.DeviceModel = src.Device.DeviceModel
+		}
+		if src.Device.SystemVersion != "" {
+			c.Device.SystemVersion = src.Device.SystemVersion
+		}
+		if src.Device.AppVersion != "" {
+			c.Device.AppVersion = src.Device.AppVersion
+		}
+		if src.Device.LangCode != "" {
+			c.Device.LangCode = src.Device.LangCode
+		}
+		if src.Device.LangPack != "" {
+			c.Device.LangPack = src.Device.LangPack
+		}
+		if src.Device.SystemLangCode != "" {
+			c.Device.SystemLangCode = src.Device.SystemLangCode
+		}
+		if src.Device.TZOffset != 0 {
+			c.Device.TZOffset = src.Device.TZOffset
+		}
+		if src.Device.ClientPlatform != "" {
+			c.Device.ClientPlatform = src.Device.ClientPlatform
+		}
+	}
+	// Deprecated top-level fields override Device for backwards compat.
+	if src.AppVersion != "" {
+		c.Device.AppVersion = src.AppVersion
+	}
+	if src.DeviceModel != "" {
+		c.Device.DeviceModel = src.DeviceModel
+	}
+	if src.SystemVersion != "" {
+		c.Device.SystemVersion = src.SystemVersion
+	}
+	if src.LangCode != "" {
+		c.Device.LangCode = src.LangCode
+	}
+	if src.LangPack != "" {
+		c.Device.LangPack = src.LangPack
+	}
+	if src.SystemLangCode != "" {
+		c.Device.SystemLangCode = src.SystemLangCode
+	}
+	if src.TZOffset != 0 {
+		c.Device.TZOffset = src.TZOffset
+	}
+	if src.ClientPlatform != "" {
+		c.Device.ClientPlatform = src.ClientPlatform
+	}
+	if src.TransportMode != "" {
+		c.TransportMode = src.TransportMode
+	}
+	if src.Storage != nil {
+		c.Storage = src.Storage
+	}
+	if src.SessionString != "" {
+		c.SessionString = src.SessionString
+	}
+	if src.MTProxy != nil {
+		c.MTProxy = src.MTProxy
+	}
+	if src.SavePeers {
+		c.SavePeers = true
+	}
+	if src.WebSocket {
+		c.WebSocket = true
+	}
+	if src.WebSocketTLS {
+		c.WebSocketTLS = true
+	}
+	if src.DC != 0 {
+		c.DC = src.DC
+	}
+	if src.ServerAddr != "" {
+		c.ServerAddr = src.ServerAddr
+	}
+	if src.LocalAddr != "" {
+		c.LocalAddr = src.LocalAddr
+	}
+	c.ReconnectEnabled = src.ReconnectEnabled
+	if src.ReconnectBaseDelay != 0 {
+		c.ReconnectBaseDelay = src.ReconnectBaseDelay
+	}
+	if src.ReconnectMaxDelay != 0 {
+		c.ReconnectMaxDelay = src.ReconnectMaxDelay
+	}
+	if src.ReconnectMaxAttempts != 0 {
+		c.ReconnectMaxAttempts = src.ReconnectMaxAttempts
+	}
+	c.HealthEnabled = src.HealthEnabled
+	if src.HealthPingInterval != 0 {
+		c.HealthPingInterval = src.HealthPingInterval
+	}
+	if src.HealthPongTimeout != 0 {
+		c.HealthPongTimeout = src.HealthPongTimeout
+	}
+	if src.UpdateQueueSize != 0 {
+		c.UpdateQueueSize = src.UpdateQueueSize
+	}
+	if src.DurableUpdateQueue {
+		c.DurableUpdateQueue = true
+	}
+	if src.MaxUpdateHandlerRetry != 0 {
+		c.MaxUpdateHandlerRetry = src.MaxUpdateHandlerRetry
+	}
+	c.UpdateRecoveryEnabled = src.UpdateRecoveryEnabled
+	c.Log = src.Log
 }
 
 // IsConnected reports whether the client has an active connection to Telegram.
