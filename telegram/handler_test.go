@@ -402,8 +402,18 @@ func TestGroupFilter(t *testing.T) {
 
 func TestChannelFilter(t *testing.T) {
 	f := Channel
-	if !f(&Context{Message: &types.Message{ChatID: -100}}) {
-		t.Error("expected true for negative chat ID")
+	chatID := int64(-100)
+	if !f(&Context{
+		Message: &types.Message{ChatID: chatID},
+		Update:  &Update{Chats: map[int64]*types.Chat{chatID: {ID: chatID, Type: types.ChatTypeChannel}}},
+	}) {
+		t.Error("expected true for channel chat")
+	}
+	if f(&Context{
+		Message: &types.Message{ChatID: chatID},
+		Update:  &Update{Chats: map[int64]*types.Chat{chatID: {ID: chatID, Type: types.ChatTypeSupergroup}}},
+	}) {
+		t.Error("expected false for supergroup chat")
 	}
 	if f(&Context{Message: &types.Message{ChatID: 42}}) {
 		t.Error("expected false for positive chat ID")

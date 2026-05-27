@@ -129,14 +129,7 @@ func (d *HandlerDispatcher) Dispatch(client *Client, update *Update) {
 		ctx = context.Background()
 	}
 
-	var currentGroup int
-	first := true
-
 	for _, he := range handlers {
-		if first || he.group != currentGroup {
-			currentGroup = he.group
-			first = false
-		}
 		if he.handler.Check(update) {
 			c := client.NewContext(ctx)
 			c.Update = update

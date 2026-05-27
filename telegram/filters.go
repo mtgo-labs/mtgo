@@ -511,9 +511,9 @@ var Group Filter = func(ctx *Context) bool {
 	return ctx.Message != nil && ctx.Message.ChatID < 0
 }
 
-// Channel matches messages from channels. Channel messages have a negative
-// ChatID, similar to groups — use this filter together with chat type
-// lookups when you need to distinguish channels from supergroups.
+// Channel matches messages from broadcast channels (not supergroups).
+// Supergroups and forums also have negative ChatIDs — this filter
+// distinguishes channels by checking the chat type in the update's peer map.
 //
 // Example:
 //
@@ -521,7 +521,11 @@ var Group Filter = func(ctx *Context) bool {
 //	    log.Printf("channel post in %d", ctx.Message.ChatID)
 //	}, telegram.Channel)
 var Channel Filter = func(ctx *Context) bool {
-	return ctx.Message != nil && ctx.Message.ChatID < 0
+	if ctx.Message == nil || ctx.Update == nil || ctx.Update.Chats == nil {
+		return false
+	}
+	ch, ok := ctx.Update.Chats[ctx.Message.ChatID]
+	return ok && ch.Type == types.ChatTypeChannel
 }
 
 // Forum matches messages from forum-enabled supergroups. Forums organize
@@ -813,8 +817,7 @@ var GameHighScore Filter = func(ctx *Context) bool {
 //	    log.Print("video chat started")
 //	}, telegram.VideoChatStarted)
 var VideoChatStarted Filter = func(ctx *Context) bool {
-	return ctx.Message != nil && ctx.Message.Service != nil &&
-		ctx.Message.Service.Type == types.ServiceActionGroupCall
+	return ctx.Message != nil && ctx.Message.VideoChatStarted != nil
 }
 
 // VideoChatEnded matches service messages for video chat (group call) end.
@@ -825,8 +828,7 @@ var VideoChatStarted Filter = func(ctx *Context) bool {
 //	    log.Print("video chat ended")
 //	}, telegram.VideoChatEnded)
 var VideoChatEnded Filter = func(ctx *Context) bool {
-	return ctx.Message != nil && ctx.Message.Service != nil &&
-		ctx.Message.Service.Type == types.ServiceActionGroupCall
+	return ctx.Message != nil && ctx.Message.VideoChatEnded != nil
 }
 
 // VideoChatMembersInvited matches service messages for video chat invitations.
@@ -838,8 +840,7 @@ var VideoChatEnded Filter = func(ctx *Context) bool {
 //	    log.Print("members invited to video chat")
 //	}, telegram.VideoChatMembersInvited)
 var VideoChatMembersInvited Filter = func(ctx *Context) bool {
-	return ctx.Message != nil && ctx.Message.Service != nil &&
-		ctx.Message.Service.Type == types.ServiceActionGroupCall
+	return ctx.Message != nil && ctx.Message.VideoChatMembersInvited != nil
 }
 
 // SuccessfulPayment matches messages confirming a completed payment.
