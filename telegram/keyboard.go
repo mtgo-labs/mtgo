@@ -227,32 +227,74 @@ func (b *KeyboardBuilder) applyStyle(fn func(*tg.KeyboardButtonStyle)) *Keyboard
 func styleOf(btn tg.KeyboardButtonClass) *tg.KeyboardButtonStyle {
 	switch b := btn.(type) {
 	case *tg.KeyboardButton:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonURL:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonCallback:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonRequestPhone:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonRequestGeoLocation:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonSwitchInline:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonGame:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonBuy:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonURLAuth:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonRequestPoll:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonUserProfile:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonWebView:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonSimpleWebView:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	case *tg.KeyboardButtonCopy:
+		if b.Style == nil {
+			b.Style = &tg.KeyboardButtonStyle{}
+		}
 		return b.Style
 	}
 	return nil
