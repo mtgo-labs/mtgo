@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 )
 
 type SessionState uint8
@@ -42,24 +43,23 @@ var allowedTransitions = map[SessionState][]SessionState{
 
 type stateMachine struct {
 	mu    sync.Mutex
-	state SessionState
+	state atomic.Uint32
 }
 
 func newStateMachine() *stateMachine {
-	return &stateMachine{state: StateIdle}
+	sm := &stateMachine{}
+	sm.state.Store(uint32(StateIdle))
+	return sm
 }
 
 func (sm *stateMachine) State() SessionState {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s
+	return SessionState(sm.state.Load())
 }
 
 func (sm *stateMachine) transition(from, to SessionState) bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	if sm.state != from {
+	if SessionState(sm.state.Load()) != from {
 		return false
 	}
 	return sm.doTransition(to)
@@ -72,13 +72,14 @@ func (sm *stateMachine) transitionTo(to SessionState) bool {
 }
 
 func (sm *stateMachine) doTransition(to SessionState) bool {
-	allowed, ok := allowedTransitions[sm.state]
+	cur := SessionState(sm.state.Load())
+	allowed, ok := allowedTransitions[cur]
 	if !ok {
 		return false
 	}
 	for _, s := range allowed {
 		if s == to {
-			sm.state = to
+			sm.state.Store(uint32(to))
 			return true
 		}
 	}
@@ -86,49 +87,32 @@ func (sm *stateMachine) doTransition(to SessionState) bool {
 }
 
 func (sm *stateMachine) canWrite() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
+	s := SessionState(sm.state.Load())
 	return s == StateActive || s == StateConnecting
 }
 
 func (sm *stateMachine) canConnect() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s == StateIdle
+	return SessionState(sm.state.Load()) == StateIdle
 }
 
 func (sm *stateMachine) canReconnect() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s == StateDraining
+	return SessionState(sm.state.Load()) == StateDraining
 }
 
 func (sm *stateMachine) canClose() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s != StateClosed
+	return SessionState(sm.state.Load()) != StateClosed
 }
 
 func (sm *stateMachine) isActive() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s == StateActive
+	return SessionState(sm.state.Load()) == StateActive
 }
 
 func (sm *stateMachine) isClosed() bool {
-	sm.mu.Lock()
-	s := sm.state
-	sm.mu.Unlock()
-	return s == StateClosed
+	return SessionState(sm.state.Load()) == StateClosed
 }
 
 func (sm *stateMachine) forceSetState(state SessionState) {
 	sm.mu.Lock()
-	sm.state = state
+	sm.state.Store(uint32(state))
 	sm.mu.Unlock()
 }
