@@ -288,6 +288,22 @@ func TestKeyboardRequestPeerEncodesInputButtonAndBoolFilter(t *testing.T) {
 	}
 }
 
+func TestKeyboardStyleOnNilStyle(t *testing.T) {
+	markup := Keyboard().
+		Callback("Yes", "yes").
+		Success().
+		Build()
+
+	inner := markup.(*tg.ReplyInlineMarkup)
+	btn := inner.Rows[0].Buttons[0].(*tg.KeyboardButtonCallback)
+	if btn.Style == nil {
+		t.Fatal("Style should be initialized after Success()")
+	}
+	if !btn.Style.BgSuccess {
+		t.Error("BgSuccess should be true")
+	}
+}
+
 func TestKeyboardRequestUser(t *testing.T) {
 	markup := Keyboard().
 		RequestUser("Pick User", 1, 5).
