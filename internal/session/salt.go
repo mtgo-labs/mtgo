@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -48,17 +49,21 @@ type saltManager struct {
 
 	refreshRatio float64
 	refreshMin   time.Duration
+
+	notify *sync.Cond
 }
 
 func newSaltManager(now nowFunc) *saltManager {
 	if now == nil {
 		now = time.Now
 	}
-	return &saltManager{
+	sm := &saltManager{
 		now:          now,
 		refreshRatio: defaultSaltRefreshRatio,
 		refreshMin:   defaultSaltRefreshMin,
 	}
+	sm.notify = sync.NewCond(&sm.mu)
+	return sm
 }
 
 func (m *saltManager) SetRefreshRatio(r float64) {
@@ -83,6 +88,7 @@ func (m *saltManager) StoreSimple(salt int64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.storeSimpleLocked(salt)
+	m.notify.Broadcast()
 }
 
 func (m *saltManager) storeSimpleLocked(salt int64) {
@@ -130,6 +136,7 @@ func (m *saltManager) StoreFromFutureSalts(salts []saltEntry) {
 		future = future[:8]
 	}
 	m.pending = future
+	m.notify.Broadcast()
 }
 
 func (m *saltManager) Load() int64 {
@@ -153,6 +160,43 @@ func (m *saltManager) IsExpired() bool {
 		return false
 	}
 	return m.now().Unix() >= m.validUntil
+}
+
+// WaitForValid blocks until the salt manager has a non-expired salt or ctx is
+// done. Returns true if a valid salt is available, false if the context was
+// cancelled.
+func (m *saltManager) WaitForValid(ctx context.Context) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for {
+		if m.validUntil == 0 || m.now().Unix() < m.validUntil {
+			return true
+		}
+		m.promoteIfNeededLocked()
+		if m.validUntil == 0 || m.now().Unix() < m.validUntil {
+			return true
+		}
+		if ctx.Err() != nil {
+			return false
+		}
+		// Wait in a goroutine so we can check ctx concurrently.
+		waitDone := make(chan struct{})
+		go func() {
+			m.mu.Lock()
+			m.notify.Wait()
+			m.mu.Unlock()
+			close(waitDone)
+		}()
+		m.mu.Unlock()
+		select {
+		case <-waitDone:
+		case <-ctx.Done():
+			m.notify.Broadcast() // wake the waiter goroutine
+			<-waitDone
+			return false
+		}
+		m.mu.Lock()
+	}
 }
 
 func (m *saltManager) HasValidSalt() bool {

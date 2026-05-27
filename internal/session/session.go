@@ -945,18 +945,10 @@ func (s *Session) ensureFreshSalt(ctx context.Context) int64 {
 	}
 	s.sendServiceMessage(&tg.GetFutureSaltsRequest{Num: numFutureSalts})
 
-	deadline := time.Now().Add(5 * time.Second)
-	for time.Now().Before(deadline) {
-		select {
-		case <-ctx.Done():
-			return 0
-		case <-s.done:
-			return 0
-		case <-time.After(100 * time.Millisecond):
-		}
-		if !s.saltMgr.IsExpired() {
-			return s.saltMgr.Load()
-		}
+	waitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if s.saltMgr.WaitForValid(waitCtx) {
+		return s.saltMgr.Load()
 	}
 	return s.saltMgr.Load()
 }
