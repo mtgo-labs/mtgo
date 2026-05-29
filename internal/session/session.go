@@ -635,11 +635,7 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 	bodyBytes := buf.Bytes()
 
 	var lastErr error
-	var backoff time.Duration
 	for i := 0; i < retries; i++ {
-		if i > 0 {
-			time.Sleep(backoff)
-		}
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
@@ -649,27 +645,11 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 				return nil, ctx.Err()
 			}
 			lastErr = fmt.Errorf("invoke raw: send: %w", err)
-			if backoff == 0 {
-				backoff = 100 * time.Millisecond
-			} else {
-				backoff = backoff * 2
-				if backoff > 2*time.Second {
-					backoff = 2 * time.Second
-				}
-			}
 			continue
 		}
 
 		if len(data) < 4 {
 			lastErr = fmt.Errorf("invoke raw: rpc result too short: %d", len(data))
-			if backoff == 0 {
-				backoff = 100 * time.Millisecond
-			} else {
-				backoff = backoff * 2
-				if backoff > 2*time.Second {
-					backoff = 2 * time.Second
-				}
-			}
 			continue
 		}
 
