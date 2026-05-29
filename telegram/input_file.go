@@ -97,7 +97,7 @@ const (
 	mediaKindSticker   = types.MediaKindSticker
 )
 
-func resolveFile(f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, error) {
+func resolveFile(ctx context.Context, f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, error) {
 	if f.GetFileID() != "" {
 		return resolveFromFileID(f, kind)
 	}
@@ -113,7 +113,7 @@ func resolveFile(f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, e
 		}
 	}
 	if f.GetReader() != nil {
-		return resolveUpload(f, c, kind)
+		return resolveUpload(ctx, f, c, kind)
 	}
 	return nil, ErrInputFileEmpty
 }
@@ -177,12 +177,12 @@ func openFile(f *InputFile) error {
 	return nil
 }
 
-func resolveUpload(f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, error) {
+func resolveUpload(ctx context.Context, f *InputFile, c *Client, kind mediaKind) (tg.InputMediaClass, error) {
 	if kind == mediaKindAuto {
 		kind = guessKind(f.GetFileName())
 	}
 
-	result, err := c.UploadFile(context.Background(), f.GetReader(), f.GetFileName(), f.GetFileSize(), nil)
+	result, err := c.UploadFile(ctx, f.GetReader(), f.GetFileName(), f.GetFileSize(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("input_file: upload: %w", err)
 	}

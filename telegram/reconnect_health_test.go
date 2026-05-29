@@ -256,13 +256,13 @@ func TestMigrationErrorParsing(t *testing.T) {
 	client.storage = NewMemoryStorage()
 
 	rpcErr := &tgerr.Error{Code: 303, Type: "PHONE_MIGRATE", Argument: 4}
-	_, err := client.handleMigrationError(rpcErr, nil)
+	_, err := client.handleMigrationError(context.Background(), rpcErr, nil)
 	if err == nil {
 		t.Fatal("should return error for nil query with non-idempotent migration path")
 	}
 
 	rpcErrBad := &tgerr.Error{Code: 303, Type: "PHONE_MIGRATE", Argument: 0}
-	_, err = client.handleMigrationError(rpcErrBad, nil)
+	_, err = client.handleMigrationError(context.Background(), rpcErrBad, nil)
 	if err == nil {
 		t.Fatal("should return error for DC 0")
 	}
@@ -282,7 +282,7 @@ func TestMigrationErrorNon303(t *testing.T) {
 	client.storage = NewMemoryStorage()
 
 	rpcErr := &tgerr.Error{Code: 400, Type: "BAD_REQUEST", Argument: 5}
-	_, err := client.handleMigrationError(rpcErr, nil)
+	_, err := client.handleMigrationError(context.Background(), rpcErr, nil)
 	if err != rpcErr {
 		t.Fatalf("non-303 with valid argument: got %v, want original error", err)
 	}
@@ -295,7 +295,7 @@ func TestMigrationUnknownType(t *testing.T) {
 	client.storage = NewMemoryStorage()
 
 	rpcErr := &tgerr.Error{Code: 303, Type: "GARBAGE_MIGRATE", Argument: 5}
-	_, err := client.handleMigrationError(rpcErr, nil)
+	_, err := client.handleMigrationError(context.Background(), rpcErr, nil)
 	var migErr *MigrationError
 	if !errors.As(err, &migErr) {
 		t.Fatalf("got %T, want *MigrationError", err)
@@ -313,7 +313,7 @@ func TestMigrationUnsafeNonIdempotent(t *testing.T) {
 
 	query := &tg.MessagesSendMessageRequest{}
 	rpcErr := &tgerr.Error{Code: 303, Type: "PHONE_MIGRATE", Argument: 4}
-	_, err := client.handleMigrationError(rpcErr, query)
+	_, err := client.handleMigrationError(context.Background(), rpcErr, query)
 	var unsafeErr *UnsafeMigrationError
 	if !errors.As(err, &unsafeErr) {
 		t.Fatalf("got %T, want *UnsafeMigrationError", err)
@@ -531,13 +531,13 @@ func TestInvokeMigrationOn303Error(t *testing.T) {
 	client.storage = NewMemoryStorage()
 
 	migrating := &tgerr.Error{Code: 303, Type: "PHONE_MIGRATE", Argument: 4}
-	_, err := client.handleMigrationError(migrating, &tg.MessagesSendMessageRequest{})
+	_, err := client.handleMigrationError(context.Background(), migrating, &tg.MessagesSendMessageRequest{})
 	var unsafeErr *UnsafeMigrationError
 	if !errors.As(err, &unsafeErr) {
 		t.Fatalf("got %T, want *UnsafeMigrationError", err)
 	}
 
-	result, err := client.handleMigrationError(migrating, &tg.AuthExportAuthorizationRequest{})
+	result, err := client.handleMigrationError(context.Background(), migrating, &tg.AuthExportAuthorizationRequest{})
 	_ = result
 	_ = err
 }
