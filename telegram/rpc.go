@@ -58,7 +58,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 			if shouldReturnMigrationToCaller(input, parsed) {
 				return nil, parsed
 			}
-			return ci.client.handleMigrationError(parsed, input)
+			return ci.client.handleMigrationError(ctx, parsed, input)
 		}
 		return nil, parsed
 	}
@@ -91,7 +91,7 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 			if shouldReturnMigrationToCaller(input, rpcErr) {
 				return nil, rpcErr
 			}
-			_, migErr := ci.client.handleMigrationError(rpcErr, input)
+			_, migErr := ci.client.handleMigrationError(ctx, rpcErr, input)
 			return nil, migErr
 		}
 		return nil, err
