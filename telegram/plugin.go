@@ -202,7 +202,7 @@ func (c *Client) dispatchUpdate(d *HandlerDispatcher, update *Update) {
 	inner := &dispatchAllHandler{d: d, c: c, update: update}
 	wrapped := c.applyMiddleware(Handler(inner))
 
-	cctx := c.NewContext(context.TODO())
+	cctx := c.NewContext(context.Background())
 	cctx.Update = update
 	populateContext(cctx, update)
 	wrapped.Handle(cctx)

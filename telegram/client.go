@@ -1427,7 +1427,7 @@ func (c *Client) Health() HealthStatus {
 	return c.state.Health()
 }
 
-func (c *Client) handleMigrationError(rpcErr *tgerr.Error, query tg.TLObject) (tg.TLObject, error) {
+func (c *Client) handleMigrationError(ctx context.Context, rpcErr *tgerr.Error, query tg.TLObject) (tg.TLObject, error) {
 	targetDC := rpcErr.Argument
 	if targetDC <= 0 {
 		return nil, &MigrationError{TargetDC: targetDC, Err: ErrMigrationUnknown}
@@ -1448,9 +1448,9 @@ func (c *Client) handleMigrationError(rpcErr *tgerr.Error, query tg.TLObject) (t
 
 	switch rpcErr.Type {
 	case "PHONE_MIGRATE", "NETWORK_MIGRATE", "USER_MIGRATE":
-		return c.migrateAndRetry(targetDC, query, st)
+		return c.migrateAndRetry(ctx, targetDC, query, st)
 	case "FILE_MIGRATE", "STATS_MIGRATE":
-		return c.migrateExportImport(targetDC, query, st)
+		return c.migrateExportImport(ctx, targetDC, query, st)
 	default:
 		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("unsupported migration type: %s", rpcErr.Type)}
 	}
@@ -1471,7 +1471,7 @@ func isIdempotent(query tg.TLObject) bool {
 	return idempotentConstructors[query.ConstructorID()]
 }
 
-func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Storage) (tg.TLObject, error) {
+func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLObject, st storage.Storage) (tg.TLObject, error) {
 	if !isIdempotent(query) {
 		return nil, &UnsafeMigrationError{TargetDC: targetDC, Method: fmt.Sprintf("%T", query)}
 	}
@@ -1501,7 +1501,7 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 	if retries < 1 {
 		retries = 1
 	}
-	result, err := c.Invoke(context.Background(), retryQuery, retries, 30*time.Second)
+	result, err := c.Invoke(ctx, retryQuery, retries, 30*time.Second)
 	if err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
@@ -1512,9 +1512,7 @@ func (c *Client) migrateAndRetry(targetDC int, query tg.TLObject, st storage.Sto
 	return result, nil
 }
 
-func (c *Client) migrateExportImport(targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {
-	ctx := context.Background()
-
+func (c *Client) migrateExportImport(ctx context.Context, targetDC int, query tg.TLObject, _ storage.Storage) (tg.TLObject, error) {
 	rpc, err := c.dcRPC(ctx, targetDC)
 	if err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
@@ -1548,7 +1546,7 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
-			return c.handleMigrationError(rpcErr, query)
+			return c.handleMigrationError(ctx, rpcErr, query)
 		}
 		return nil, fmt.Errorf("client: invoke: %w", err)
 	}

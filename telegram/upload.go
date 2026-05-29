@@ -531,7 +531,7 @@ func (c *Client) SendPhoto(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindPhoto)
+	media, err := resolveFile(ctx, file, c, mediaKindPhoto)
 	if err != nil {
 		return nil, fmt.Errorf("send_photo: %w", err)
 	}
@@ -546,7 +546,7 @@ func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindDocument)
+	media, err := resolveFile(ctx, file, c, mediaKindDocument)
 	if err != nil {
 		return nil, fmt.Errorf("send_document: %w", err)
 	}
@@ -569,7 +569,7 @@ func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindVideo)
+	media, err := resolveFile(ctx, file, c, mediaKindVideo)
 	if err != nil {
 		return nil, fmt.Errorf("send_video: %w", err)
 	}
@@ -589,7 +589,7 @@ func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindAudio)
+	media, err := resolveFile(ctx, file, c, mediaKindAudio)
 	if err != nil {
 		return nil, fmt.Errorf("send_audio: %w", err)
 	}
@@ -608,7 +608,7 @@ func (c *Client) SendAnimation(ctx context.Context, chatID int64, file *InputFil
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindAnimation)
+	media, err := resolveFile(ctx, file, c, mediaKindAnimation)
 	if err != nil {
 		return nil, fmt.Errorf("send_animation: %w", err)
 	}
@@ -623,7 +623,7 @@ func (c *Client) SendVoice(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindVoice)
+	media, err := resolveFile(ctx, file, c, mediaKindVoice)
 	if err != nil {
 		return nil, fmt.Errorf("send_voice: %w", err)
 	}
@@ -638,7 +638,7 @@ func (c *Client) SendVideoNote(ctx context.Context, chatID int64, file *InputFil
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindVideoNote)
+	media, err := resolveFile(ctx, file, c, mediaKindVideoNote)
 	if err != nil {
 		return nil, fmt.Errorf("send_video_note: %w", err)
 	}
@@ -653,7 +653,7 @@ func (c *Client) SendSticker(ctx context.Context, chatID int64, file *InputFile,
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(file, c, mediaKindSticker)
+	media, err := resolveFile(ctx, file, c, mediaKindSticker)
 	if err != nil {
 		return nil, fmt.Errorf("send_sticker: %w", err)
 	}
