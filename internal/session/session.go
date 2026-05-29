@@ -645,6 +645,9 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 
 		data, err := s.SendRaw(ctx, msgID, uint32(seqNo), bodyBytes, timeout)
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
 			lastErr = fmt.Errorf("invoke raw: send: %w", err)
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
@@ -719,6 +722,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 
 		obj, err := s.Send(ctx, msgID, uint32(seqNo), query, timeout)
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
 			lastErr = fmt.Errorf("invoke %s: send: %w", methodName, err)
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
