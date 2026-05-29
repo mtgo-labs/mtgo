@@ -987,6 +987,9 @@ func (c *Client) importSessionString(st storage.Storage) error {
 	if c.cfg.APIID == 0 {
 		return fmt.Errorf("telegram: apiID is required (not found in session string)")
 	}
+	if err := st.SetAPIID(c.cfg.APIID); err != nil {
+		return fmt.Errorf("telegram: import session api_id: %w", err)
+	}
 	return nil
 }
 
