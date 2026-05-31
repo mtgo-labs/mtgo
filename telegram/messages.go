@@ -619,6 +619,18 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 					m.SetBinder(binder)
 				}
 				return m, nil
+			case *tg.UpdateEditMessage:
+				m := types.ParseMessage(upd.Message, pm)
+				if m != nil {
+					m.SetBinder(binder)
+				}
+				return m, nil
+			case *tg.UpdateEditChannelMessage:
+				m := types.ParseMessage(upd.Message, pm)
+				if m != nil {
+					m.SetBinder(binder)
+				}
+				return m, nil
 			}
 		}
 		return nil, ErrNoMessageUpdates
@@ -629,6 +641,13 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 			Channels: make(map[int64]*tg.Channel),
 		}
 		if upd, ok := v.Update.(*tg.UpdateNewMessage); ok {
+			m := types.ParseMessage(upd.Message, pm)
+			if m != nil {
+				m.SetBinder(binder)
+			}
+			return m, nil
+		}
+		if upd, ok := v.Update.(*tg.UpdateEditMessage); ok {
 			m := types.ParseMessage(upd.Message, pm)
 			if m != nil {
 				m.SetBinder(binder)
