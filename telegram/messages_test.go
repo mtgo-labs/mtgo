@@ -133,6 +133,58 @@ func TestEditMessageCaption(t *testing.T) {
 	}
 }
 
+func TestEditMessageTextParsesEditMessageUpdate(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerUser{UserID: 10, AccessHash: 20})
+	inv.setResult(tg.MessagesEditMessageTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{
+			&tg.UpdateEditMessage{
+				Message: &tg.Message{
+					ID:      55,
+					PeerID:  &tg.PeerUser{UserID: 10},
+					Message: "edited text",
+				},
+			},
+		},
+		Users: []tg.UserClass{},
+		Chats: []tg.ChatClass{},
+	})
+
+	msg, err := c.EditMessageText(context.Background(), 10, 55, "edited text")
+	if err != nil {
+		t.Fatalf("EditMessageText() error: %v", err)
+	}
+	if msg == nil || msg.ID != 55 || msg.Text != "edited text" {
+		t.Fatalf("EditMessageText() = %#v, want edited message 55", msg)
+	}
+}
+
+func TestEditMessageCaptionParsesEditChannelMessageUpdate(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+	inv.setResult(tg.MessagesEditMessageTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{
+			&tg.UpdateEditChannelMessage{
+				Message: &tg.Message{
+					ID:      55,
+					PeerID:  &tg.PeerChannel{ChannelID: 10},
+					Message: "edited caption",
+				},
+			},
+		},
+		Users: []tg.UserClass{},
+		Chats: []tg.ChatClass{},
+	})
+
+	msg, err := c.EditMessageCaption(context.Background(), 10, 55, "edited caption")
+	if err != nil {
+		t.Fatalf("EditMessageCaption() error: %v", err)
+	}
+	if msg == nil || msg.ID != 55 || msg.Text != "edited caption" {
+		t.Fatalf("EditMessageCaption() = %#v, want edited channel message 55", msg)
+	}
+}
+
 func TestGetMessagesUsesChannelsGetMessagesForChannels(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
