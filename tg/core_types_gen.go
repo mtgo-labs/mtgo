@@ -12660,10 +12660,11 @@ func (v *FutureSalts) Encode(b *bytes.Buffer) error {
 	WriteInt(b, FutureSaltsTypeID)
 	WriteLong(b, v.ReqMsgID)
 	WriteInt(b, uint32(v.Now))
-	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Salts)))
 	for _, _item := range v.Salts {
-		EncodeTLObject(b, _item)
+		WriteInt(b, uint32(_item.ValidSince))
+		WriteInt(b, uint32(_item.ValidUntil))
+		WriteLong(b, _item.Salt)
 	}
 	return nil
 }
@@ -12681,10 +12682,6 @@ func DecodeFutureSalts(r *Reader) (*FutureSalts, error) {
 		return nil, _eNow
 	}
 	v.Now = _rNow
-	_vhdrSalts, _ehdrSalts := r.ReadUint32()
-	if _ehdrSalts != nil {
-		return nil, _ehdrSalts
-	}
 	_cntSalts, _ecntSalts := r.ReadUint32()
 	if _ecntSalts != nil {
 		return nil, _ecntSalts
@@ -12694,13 +12691,12 @@ func DecodeFutureSalts(r *Reader) (*FutureSalts, error) {
 	}
 	v.Salts = make([]*FutureSalt, _cntSalts)
 	for _iSalts := range v.Salts {
-		_objSalts, _errSalts := ReadTLObject(r)
+		_itemSalts, _errSalts := DecodeFutureSalt(r)
 		if _errSalts != nil {
 			return nil, _errSalts
 		}
-		v.Salts[_iSalts] = _objSalts.(*FutureSalt)
+		v.Salts[_iSalts] = _itemSalts
 	}
-	_ = _vhdrSalts
 	return v, nil
 }
 
@@ -13089,7 +13085,6 @@ func (v *AccessPointRule) Encode(b *bytes.Buffer) error {
 	WriteInt(b, AccessPointRuleTypeID)
 	WriteString(b, v.PhonePrefixRules)
 	WriteInt(b, uint32(v.DCID))
-	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Ips)))
 	for _, _item := range v.Ips {
 		EncodeTLObject(b, _item)
@@ -13110,10 +13105,6 @@ func DecodeAccessPointRule(r *Reader) (*AccessPointRule, error) {
 		return nil, _eDCID
 	}
 	v.DCID = _rDCID
-	_vhdrIps, _ehdrIps := r.ReadUint32()
-	if _ehdrIps != nil {
-		return nil, _ehdrIps
-	}
 	_cntIps, _ecntIps := r.ReadUint32()
 	if _ecntIps != nil {
 		return nil, _ecntIps
@@ -13127,9 +13118,9 @@ func DecodeAccessPointRule(r *Reader) (*AccessPointRule, error) {
 		if _errIps != nil {
 			return nil, _errIps
 		}
-		v.Ips[_iIps] = _objIps.(IpPortClass)
+		_itemIps := _objIps.(IpPortClass)
+		v.Ips[_iIps] = _itemIps
 	}
-	_ = _vhdrIps
 	return v, nil
 }
 

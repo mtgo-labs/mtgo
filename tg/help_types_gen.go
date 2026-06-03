@@ -2206,7 +2206,6 @@ func (v *HelpConfigSimple) Encode(b *bytes.Buffer) error {
 	WriteInt(b, HelpConfigSimpleTypeID)
 	WriteInt(b, uint32(v.Date))
 	WriteInt(b, uint32(v.Expires))
-	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rules)))
 	for _, _item := range v.Rules {
 		EncodeTLObject(b, _item)
@@ -2227,10 +2226,6 @@ func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
 		return nil, _eExpires
 	}
 	v.Expires = _rExpires
-	_vhdrRules, _ehdrRules := r.ReadUint32()
-	if _ehdrRules != nil {
-		return nil, _ehdrRules
-	}
 	_cntRules, _ecntRules := r.ReadUint32()
 	if _ecntRules != nil {
 		return nil, _ecntRules
@@ -2244,9 +2239,9 @@ func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
 		if _errRules != nil {
 			return nil, _errRules
 		}
-		v.Rules[_iRules] = _objRules.(*AccessPointRule)
+		_itemRules := _objRules.(*AccessPointRule)
+		v.Rules[_iRules] = _itemRules
 	}
-	_ = _vhdrRules
 	return v, nil
 }
 
