@@ -112,6 +112,8 @@ type Client struct {
 
 	autoConnectMu sync.Mutex
 
+	sessionWg sync.WaitGroup
+
 	secretChats           *SecretChatManager
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
@@ -924,7 +926,9 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		return err
 	}
 
-	c.startSession(sess, sessionTp, timeout)
+	if err := c.startSession(sess, sessionTp, timeout); err != nil {
+		return err
+	}
 
 	if err := c.authenticateUser(st, timeout); err != nil {
 		return err
@@ -1137,7 +1141,7 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 
 // startSession registers the update handler, starts the encrypted session, and
 // marks the client as connected.
-func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) {
+func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) error {
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
 	})
@@ -1159,12 +1163,13 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.Log.Debug("starting encrypted session")
 	if err := sess.Connect(sessionTp, timeout); err != nil {
 		sessionTp.Close()
-		c.Log.Errorf("session start: %v", err)
-		return
+		return fmt.Errorf("session start: %w", err)
 	}
 	c.Log.Info("encrypted session started")
 
+	c.sessionWg.Add(1)
 	go func() {
+		defer c.sessionWg.Done()
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
 			c.triggerReconnect(fmt.Errorf("session exited"))
@@ -1176,6 +1181,7 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.state.SetConnected()
 	c.state.SetDC(c.initialDCID(c.storage))
 	c.mu.Unlock()
+	return nil
 }
 
 // authenticateUser handles bot authorization import, user restore from storage,
@@ -1401,6 +1407,7 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if sess != nil {
 		sess.Stop()
 	}
+	c.sessionWg.Wait()
 
 	if shouldCloseStorage && c.storage != nil {
 		c.storage.Close()

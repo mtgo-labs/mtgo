@@ -211,6 +211,8 @@ func (c *Client) reconnectOnce() error {
 	c.state.SetDC(dcID)
 	c.state.ResetReconnectCount()
 
+	c.sessionWg.Add(1)
+
 	c.mu.RLock()
 	um := c.updateManager
 	c.mu.RUnlock()
@@ -222,6 +224,7 @@ func (c *Client) reconnectOnce() error {
 
 	// Watch for session exit and trigger reconnect when it dies.
 	go func() {
+		defer c.sessionWg.Done()
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
 			c.triggerReconnect(fmt.Errorf("session exited"))
