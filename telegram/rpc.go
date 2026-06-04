@@ -161,21 +161,18 @@ func (c *Client) Raw() *tg.RPCClient {
 		return tg.NewRPCClient(inv)
 	}
 
-	c.mu.RLock()
+	c.mu.Lock()
 	if c.invokerCache != nil {
-		c.mu.RUnlock()
+		c.mu.Unlock()
 		return c.invokerCache
 	}
 	mws := c.invokerMiddlewares
-	c.mu.RUnlock()
 
 	base := tg.Invoker(&clientInvoker{client: c})
 	for i := len(mws) - 1; i >= 0; i-- {
 		base = mws[i](base)
 	}
 	rpcClient := tg.NewRPCClient(base)
-
-	c.mu.Lock()
 	c.invokerCache = rpcClient
 	c.mu.Unlock()
 

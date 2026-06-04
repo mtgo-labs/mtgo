@@ -187,22 +187,29 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	copy(msgKeyLargeInput[32:], decrypted)
 	msgKeyCheck := sha256.Sum256(msgKeyLargeInput)
 	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
+		ReleaseAESBuf(decrypted)
 		return nil, errDecryptionFailed
 	}
 
 	if len(decrypted) < 4 {
+		ReleaseAESBuf(decrypted)
 		return nil, errDecryptionFailed
 	}
 	msgLen := int(binary.LittleEndian.Uint32(decrypted[:4]))
 	if msgLen < 0 || msgLen+4 > len(decrypted) {
+		ReleaseAESBuf(decrypted)
 		return nil, errDecryptionFailed
 	}
 	paddingLen := len(decrypted) - 4 - msgLen
 	if paddingLen < SecretChatMinPadding || paddingLen > SecretChatMaxPadding {
+		ReleaseAESBuf(decrypted)
 		return nil, errDecryptionFailed
 	}
 
-	return decrypted[4 : 4+msgLen], nil
+	result := make([]byte, msgLen)
+	copy(result, decrypted[4:4+msgLen])
+	ReleaseAESBuf(decrypted)
+	return result, nil
 }
 
 func secretKDF(key, msgKey []byte, x int) (aesKey, aesIV [32]byte) {
@@ -239,7 +246,10 @@ func DecryptFile(data, fileKey, fileIV []byte) ([]byte, error) {
 }
 
 func FileKeyFingerprint(key, iv []byte) int32 {
-	h := md5.Sum(append(key, iv...))
+	combined := make([]byte, len(key)+len(iv))
+	copy(combined, key)
+	copy(combined[len(key):], iv)
+	h := md5.Sum(combined)
 	fp := uint32(h[0])<<24 | uint32(h[1])<<16 | uint32(h[2])<<8 | uint32(h[3])
 	fp ^= uint32(h[4])<<24 | uint32(h[5])<<16 | uint32(h[6])<<8 | uint32(h[7])
 	return int32(fp)
