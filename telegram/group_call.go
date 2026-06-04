@@ -212,10 +212,55 @@ func (r *CallReader) NextChunk(ctx context.Context) ([]byte, error) {
 		r.currentTS += 1000 >> r.scale
 		return f.Bytes, nil
 	case *tg.UploadFileCDNRedirect:
-		return nil, ErrCallCDNNotSupported
+		chunk, err := r.readCDNChunk(ctx, f, input)
+		if err != nil {
+			return nil, fmt.Errorf("call reader: cdn chunk: %w", err)
+		}
+		r.currentTS += 1000 >> r.scale
+		return chunk, nil
 	default:
 		return nil, fmt.Errorf("call reader: unexpected result type %T", result)
 	}
+}
+
+// readCDNChunk downloads a stream chunk via CDN, decrypts it, and returns
+// the plaintext bytes. Handles UploadCDNFileReuploadNeeded by re-uploading
+// the file token before retrying.
+func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCDNRedirect, location tg.InputFileLocationClass) ([]byte, error) {
+	cdnRPC, err := r.client.dcRPC(ctx, int(redirect.DCID))
+	if err != nil {
+		return nil, fmt.Errorf("connect to cdn dc %d: %w", redirect.DCID, err)
+	}
+
+	var chunk []byte
+	for attempt := 0; attempt < 3; attempt++ {
+		result, err := cdnRPC.UploadGetCDNFile(ctx, &tg.UploadGetCDNFileRequest{
+			FileToken: redirect.FileToken,
+			Offset:    0,
+			Limit:     512 * 1024,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("cdn get file: %w", err)
+		}
+
+		switch f := result.(type) {
+		case *tg.UploadCDNFile:
+			chunk = cdnDecryptChunk(f.Bytes, redirect.EncryptionKey, redirect.EncryptionIv, 0)
+			return chunk, nil
+		case *tg.UploadCDNFileReuploadNeeded:
+			_, reuploadErr := cdnRPC.UploadReuploadCDNFile(ctx, &tg.UploadReuploadCDNFileRequest{
+				FileToken:    redirect.FileToken,
+				RequestToken: f.RequestToken,
+			})
+			if reuploadErr != nil {
+				return nil, fmt.Errorf("cdn reupload: %w", reuploadErr)
+			}
+			continue
+		default:
+			return nil, fmt.Errorf("cdn: unexpected result type %T", result)
+		}
+	}
+	return nil, fmt.Errorf("cdn: too many reupload retries")
 }
 
 // NewCallReader creates a CallReader for the active group call in the specified chat,
