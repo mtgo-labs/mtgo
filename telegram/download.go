@@ -325,7 +325,7 @@ func (m *memoryBuffer) Bytes() []byte {
 	return m.data
 }
 
-func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
+func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, *tg.UploadFileCDNRedirect, error) {
 	chunkSize := int32(downloadChunkSize)
 	if opts != nil && opts.ChunkSize > 0 {
 		chunkSize = opts.ChunkSize
@@ -337,7 +337,7 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 	for {
 		select {
 		case <-ctx.Done():
-			return totalWritten, ctx.Err()
+			return totalWritten, nil, ctx.Err()
 		default:
 		}
 
@@ -349,25 +349,24 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 
 		result, err := rpc.UploadGetFile(ctx, req)
 		if err != nil {
-			return totalWritten, fmt.Errorf("download: get file at offset %d: %w", offset, err)
+			return totalWritten, nil, fmt.Errorf("download: get file at offset %d: %w", offset, err)
 		}
 
 		switch file := result.(type) {
 		case *tg.UploadFile:
 			if len(file.Bytes) == 0 {
-				return totalWritten, nil
+				return totalWritten, nil, nil
 			}
 
 			n, err := writer.Write(file.Bytes)
 			if err != nil {
-				return totalWritten, fmt.Errorf("download: write: %w", err)
+				return totalWritten, nil, fmt.Errorf("download: write: %w", err)
 			}
 			totalWritten += int64(n)
 			offset += int64(n)
 
-			// Stop if we got less than requested (end of file).
 			if n < int(chunkSize) {
-				return totalWritten, nil
+				return totalWritten, nil, nil
 			}
 
 			if opts != nil && opts.Progress != nil {
@@ -379,29 +378,39 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 			}
 
 			if fileSize > 0 && totalWritten >= fileSize {
-				return totalWritten, nil
+				return totalWritten, nil, nil
 			}
 
 		case *tg.UploadFileCDNRedirect:
-			return totalWritten, fmt.Errorf("download: CDN redirect not supported in basic mode (dc=%d)", file.DCID)
+			return totalWritten, file, nil
 
 		default:
-			return totalWritten, fmt.Errorf("download: unexpected result type %T", result)
+			return totalWritten, nil, fmt.Errorf("download: unexpected result type %T", result)
 		}
 	}
 }
 
 func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
-	written, err := downloadToFileRPC(ctx, rpc, location, fileSize, writer, opts)
-	migratedRPC, ok, migrateErr := c.fileMigrationRPC(ctx, dcID, written, err)
-	if migrateErr != nil {
-		return written, migrateErr
+	written, cdnRedirect, err := downloadToFileRPC(ctx, rpc, location, fileSize, writer, opts)
+	if cdnRedirect != nil {
+		cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, fileSize, writer, opts)
+		if cdnErr != nil {
+			return written + cdnWritten, cdnErr
+		}
+		return written + cdnWritten, nil
 	}
-	if !ok {
-		return written, err
+	if err != nil {
+		migratedRPC, ok, migrateErr := c.fileMigrationRPC(ctx, dcID, written, err)
+		if migrateErr != nil {
+			return written, migrateErr
+		}
+		if !ok {
+			return written, err
+		}
+		w, _, e := downloadToFileRPC(ctx, migratedRPC, location, fileSize, writer, opts)
+		return w, e
 	}
-
-	return downloadToFileRPC(ctx, migratedRPC, location, fileSize, writer, opts)
+	return written, nil
 }
 
 func (c *Client) fileMigrationRPC(ctx context.Context, dcID int, written int64, err error) (*tg.RPCClient, bool, error) {
@@ -529,6 +538,91 @@ func getMediaFileSize(media types.Media) int64 {
 		return m.FileSize
 	default:
 		return 0
+	}
+}
+
+func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFileCDNRedirect, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
+	cdnRPC, err := c.dcRPC(ctx, int(redirect.DCID))
+	if err != nil {
+		return 0, fmt.Errorf("cdn: connect to dc %d: %w", redirect.DCID, err)
+	}
+
+	chunkSize := int32(downloadChunkSize)
+	if opts != nil && opts.ChunkSize > 0 {
+		chunkSize = opts.ChunkSize
+	}
+
+	key := redirect.EncryptionKey
+	iv := make([]byte, len(redirect.EncryptionIv))
+	copy(iv, redirect.EncryptionIv)
+
+	hashIndex := 0
+	var totalWritten int64
+	offset := int64(0)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return totalWritten, ctx.Err()
+		default:
+		}
+
+		req := &tg.UploadGetCDNFileRequest{
+			FileToken: redirect.FileToken,
+			Offset:    offset,
+			Limit:     chunkSize,
+		}
+
+		result, err := cdnRPC.UploadGetCDNFile(ctx, req)
+		if err != nil {
+			return totalWritten, fmt.Errorf("cdn: get file at offset %d: %w", offset, err)
+		}
+
+		cdnFile, ok := result.(*tg.UploadCDNFile)
+		if !ok {
+			if reupload, ok := result.(*tg.UploadCDNFileReuploadNeeded); ok {
+				_, reuploadErr := cdnRPC.UploadReuploadCDNFile(ctx, &tg.UploadReuploadCDNFileRequest{
+					FileToken:    redirect.FileToken,
+					RequestToken: reupload.RequestToken,
+				})
+				if reuploadErr != nil {
+					return totalWritten, fmt.Errorf("cdn: reupload needed but failed: %w", reuploadErr)
+				}
+				continue
+			}
+			return totalWritten, fmt.Errorf("cdn: unexpected result type %T", result)
+		}
+
+		decrypted := cdnDecryptChunk(cdnFile.Bytes, key, iv, offset)
+
+		if hashIndex < len(redirect.FileHashes) {
+			if cdnVerifyHash(decrypted, redirect.FileHashes[hashIndex], 0) {
+				hashIndex++
+			}
+		}
+
+		n, err := writer.Write(decrypted)
+		if err != nil {
+			return totalWritten, fmt.Errorf("cdn: write: %w", err)
+		}
+		totalWritten += int64(n)
+		offset += int64(len(decrypted))
+
+		if len(cdnFile.Bytes) < int(chunkSize) {
+			return totalWritten, nil
+		}
+
+		if opts != nil && opts.Progress != nil {
+			opts.Progress(params.ProgressInfo{
+				TotalBytes:      fileSize,
+				DownloadedBytes: totalWritten,
+				IsUpload:        false,
+			})
+		}
+
+		if fileSize > 0 && totalWritten >= fileSize {
+			return totalWritten, nil
+		}
 	}
 }
 

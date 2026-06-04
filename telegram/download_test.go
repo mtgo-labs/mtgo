@@ -91,7 +91,7 @@ func TestDownloadFile_ToBuffer(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	written, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	written, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID:         100,
 		AccessHash: 200,
 	}, int64(len(data)), &buf, nil)
@@ -115,7 +115,7 @@ func TestDownloadFile_SmallFile(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	written, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	written, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID:         100,
 		AccessHash: 200,
 	}, int64(len(data)), &buf, nil)
@@ -136,7 +136,7 @@ func TestDownloadFile_EmptyFile(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	written, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	written, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,
 	}, 0, &buf, nil)
 	if err != nil {
@@ -167,7 +167,7 @@ func TestDownloadFile_ProgressCallback(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	_, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	_, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,
 	}, int64(len(data)), &buf, &params.Download{Progress: progress})
 	if err != nil {
@@ -189,7 +189,7 @@ func TestDownloadFile_ContextCancelled(t *testing.T) {
 	cancel()
 
 	var buf bytes.Buffer
-	_, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	_, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,
 	}, int64(len(data)), &buf, nil)
 	if err == nil {
@@ -203,7 +203,7 @@ func TestDownloadFile_RPCError(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	_, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	_, _, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,
 	}, 1024, &buf, nil)
 	if err == nil {
@@ -252,11 +252,14 @@ func TestDownloadFile_CDNRedirect(t *testing.T) {
 
 	var buf bytes.Buffer
 	ctx := context.Background()
-	_, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+	_, cdnRedirect, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,
 	}, 1024, &buf, nil)
-	if err == nil {
-		t.Fatal("expected error for CDN redirect without CDN handler")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cdnRedirect == nil {
+		t.Fatal("expected CDN redirect")
 	}
 }
 
@@ -447,5 +450,42 @@ func TestSanitizeFileName(t *testing.T) {
 				t.Errorf("sanitizeFileName(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCDNRedirect_ReturnedCorrectly(t *testing.T) {
+	data := make([]byte, downloadChunkSize+500)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	mock.cdnRedirect = true
+	rpc := tg.NewRPCClient(mock)
+
+	var buf bytes.Buffer
+	ctx := context.Background()
+	written, cdnRedirect, err := downloadToFileRPC(ctx, rpc, &tg.InputDocumentFileLocation{
+		ID: 100, AccessHash: 200,
+	}, int64(len(data)), &buf, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if written != 0 {
+		t.Errorf("expected 0 bytes written before CDN, got %d", written)
+	}
+	if cdnRedirect == nil {
+		t.Fatal("expected CDN redirect")
+	}
+	if cdnRedirect.DCID != 1 {
+		t.Errorf("CDN DCID = %d, want 1", cdnRedirect.DCID)
+	}
+	if !bytes.Equal(cdnRedirect.FileToken, []byte("token")) {
+		t.Errorf("CDN file token mismatch")
+	}
+}
+
+func TestDownloadCDNReuploadNeeded(t *testing.T) {
+	reupload := &tg.UploadCDNFileReuploadNeeded{RequestToken: []byte("test-token")}
+	if reupload.RequestToken == nil {
+		t.Error("request token should not be nil")
 	}
 }

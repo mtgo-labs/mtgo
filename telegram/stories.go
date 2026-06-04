@@ -168,9 +168,35 @@ func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32
 	return extractStoryFromUpdates(result)
 }
 
-// DeleteStories is not yet available in the current TL schema and always returns an error.
-func (c *Client) DeleteStories(_ context.Context, _ int64, _ []int32) error {
-	return ErrStorySchema
+// DeleteStories removes one or more stories from the specified chat.
+// The peer must support stories (typically channels or the user's own chat).
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - chatID: the chat ID that owns the stories
+//   - storyIDs: slice of story IDs to delete
+//
+// Returns an error if the context has no client, no story IDs are provided,
+// the peer cannot be resolved, or the Telegram API returns an error.
+func (c *Client) DeleteStories(ctx context.Context, chatID int64, storyIDs []int32) error {
+	c.Log.Debugf("DeleteStories chat_id=%d story_ids=%v", chatID, storyIDs)
+	if len(storyIDs) == 0 {
+		return ErrStoryIDsRequired
+	}
+
+	peer, err := resolvePeer(c.clientPeerResolver(), chatID)
+	if err != nil {
+		return fmt.Errorf("resolve peer: %w", err)
+	}
+
+	req := &tg.StoriesDeleteStoriesRequest{
+		Peer: peer,
+		ID:   storyIDs,
+	}
+
+	rpc := c.Raw()
+	_, err = rpc.StoriesDeleteStories(ctx, req)
+	return err
 }
 
 // GetStories retrieves one or more stories by ID from the specified user.

@@ -2,7 +2,6 @@ package mtproxy
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -39,25 +38,14 @@ func obfuscated2Handshake(conn net.Conn, secret []byte, dcID int, codec byte) (*
 		break
 	}
 
-	encKeyInput := make([]byte, 32+16)
-	copy(encKeyInput, header[8:40])
-	copy(encKeyInput[32:], secret)
-	encKeyHash := sha256.Sum256(encKeyInput)
-	encKey := encKeyHash[:]
+	keys := deriveObfuscatedKeys(header, secret)
+	encKey := keys.encKey
 	encIV := make([]byte, 16)
-	copy(encIV, header[40:56])
+	copy(encIV, keys.encIV)
 
-	reversed := make([]byte, 48)
-	for i := 0; i < 48; i++ {
-		reversed[i] = header[55-i]
-	}
-	decKeyInput := make([]byte, 32+16)
-	copy(decKeyInput, reversed[:32])
-	copy(decKeyInput[32:], secret)
-	decKeyHash := sha256.Sum256(decKeyInput)
-	decKey := decKeyHash[:]
+	decKey := keys.decKey
 	decIV := make([]byte, 16)
-	copy(decIV, reversed[32:48])
+	copy(decIV, keys.decIV)
 
 	enc, err := crypto.NewCTRCipher(encKey, encIV)
 	if err != nil {
