@@ -24,11 +24,12 @@ func TestGoType(t *testing.T) {
 		{"Vector<int>", "[]int32"},
 		{"Vector<long>", "[]int64"},
 		{"Vector<string>", "[]string"},
+		{"vector<future_salt>", "[]*FutureSalt"},
 		{"Type", "TLObject"},
 	}
 
 	for _, tt := range tests {
-		got := goType(tt.tlType, "types", nil, nil)
+		got := goType(tt.tlType, "types", nil, map[string][]Combinator{"FutureSalt": {{QualName: "future_salt"}}})
 		if got != tt.want {
 			t.Errorf("goType(%q) = %q, want %q", tt.tlType, got, tt.want)
 		}
@@ -134,6 +135,74 @@ func TestWriteExpr(t *testing.T) {
 		got := writeExpr(tt.arg, tt.goType, "v")
 		if got != tt.want {
 			t.Errorf("writeExpr(%+v, %q) = %q, want %q", tt.arg, tt.goType, got, tt.want)
+		}
+	}
+}
+
+func TestWriteExprBareVectorConstructor(t *testing.T) {
+	arg := Arg{Name: "salts", Type: "vector<future_salt>"}
+	typeToConstructor := map[string][]Combinator{
+		"FutureSalt": {{
+			QualName: "future_salt",
+			Type:     "FutureSalt",
+			Args: []Arg{
+				{Name: "valid_since", Type: "int", FlagBit: -1},
+				{Name: "valid_until", Type: "int", FlagBit: -1},
+				{Name: "salt", Type: "long", FlagBit: -1},
+			},
+		}},
+	}
+
+	got := writeExpr(arg, "[]*FutureSalt", "v", typeToConstructor)
+	if strings.Contains(got, "0x1cb5c415") {
+		t.Fatalf("bare vector write should not include vector constructor: %s", got)
+	}
+	if strings.Contains(got, "EncodeTLObject") {
+		t.Fatalf("bare vector element write should not use boxed object encoding: %s", got)
+	}
+	for _, want := range []string{"WriteInt(b, uint32(len(v.Salts)))", "_item.ValidSince", "_item.ValidUntil", "_item.Salt"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("writeExpr missing %q in %s", want, got)
+		}
+	}
+}
+
+func TestBareVectorBoxedElements(t *testing.T) {
+	arg := Arg{Name: "ips", Type: "vector<IpPort>"}
+
+	write := writeExpr(arg, "[]IpPortClass", "v", nil)
+	if strings.Contains(write, "0x1cb5c415") {
+		t.Fatalf("bare vector write should not include vector constructor: %s", write)
+	}
+	if !strings.Contains(write, "EncodeTLObject") {
+		t.Fatalf("boxed vector elements should use TL object encoding: %s", write)
+	}
+
+	read := buildReadExpr(arg, "[]IpPortClass", nil, nil)
+	if strings.Contains(read, "_vhdr") {
+		t.Fatalf("bare vector read should not include vector header: %s", read)
+	}
+	if !strings.Contains(read, "ReadTLObject(r)") || !strings.Contains(read, ".(IpPortClass)") {
+		t.Fatalf("boxed vector elements should use TL object decoding: %s", read)
+	}
+	if strings.Index(read, "if _errIps != nil") > strings.Index(read, "_objIps.(IpPortClass)") {
+		t.Fatalf("read error should be checked before type assertion: %s", read)
+	}
+}
+
+func TestBuildReadExprBareVectorConstructor(t *testing.T) {
+	arg := Arg{Name: "salts", Type: "vector<future_salt>"}
+	typeToConstructor := map[string][]Combinator{
+		"FutureSalt": {{QualName: "future_salt", Type: "FutureSalt"}},
+	}
+
+	got := buildReadExpr(arg, "[]*FutureSalt", nil, typeToConstructor)
+	if strings.Contains(got, "_vhdr") || strings.Contains(got, "ReadTLObject") {
+		t.Fatalf("bare vector read should not use boxed vector/object decoding: %s", got)
+	}
+	for _, want := range []string{"_cntSalts", "checkVectorCount", "DecodeFutureSalt(r)"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("buildReadExpr missing %q in %s", want, got)
 		}
 	}
 }

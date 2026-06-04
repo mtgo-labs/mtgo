@@ -478,7 +478,7 @@ func buildTypeData(c Combinator, section string, baseTypes map[string]bool, type
 
 		fields = append(fields, fd)
 
-		wl := buildWriteLine(arg, fd, section, baseTypes)
+		wl := buildWriteLine(arg, fd, section, baseTypes, typeToConstructor)
 		writeLines = append(writeLines, wl)
 
 		rl := buildReadLine(arg, fd, section, baseTypes, typeToConstructor)
@@ -527,7 +527,96 @@ func isDirectOptionalScalar(goType string) bool {
 	return false
 }
 
-func buildWriteLine(arg Arg, fd fieldData, section string, baseTypes map[string]bool) writeLine {
+func bareVectorInner(tlType string) (string, bool) {
+	if strings.HasPrefix(tlType, "vector<") && strings.HasSuffix(tlType, ">") {
+		return strings.TrimSuffix(strings.TrimPrefix(tlType, "vector<"), ">"), true
+	}
+	return "", false
+}
+
+func constructorByQualName(name string, typeToConstructor map[string][]Combinator) (Combinator, bool) {
+	if typeToConstructor == nil {
+		return Combinator{}, false
+	}
+	stripped := stripNamespace(name)
+	for _, constructors := range typeToConstructor {
+		for _, c := range constructors {
+			if c.QualName == name || c.QualName == stripped || stripNamespace(c.QualName) == stripped {
+				return c, true
+			}
+		}
+	}
+	return Combinator{}, false
+}
+
+func writeBareVectorExpr(inner, access string, typeToConstructor map[string][]Combinator) string {
+	switch stripNamespace(inner) {
+	case "int":
+		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { WriteInt(b, uint32(_item)) }", access, access)
+	case "long":
+		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { WriteLong(b, _item) }", access, access)
+	case "string":
+		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { WriteString(b, _item) }", access, access)
+	case "bytes":
+		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { WriteBytes(b, _item) }", access, access)
+	}
+
+	if c, ok := constructorByQualName(inner, typeToConstructor); ok {
+		var body strings.Builder
+		for _, a := range c.Args {
+			if a.Type == "#" && a.Name == "flags" {
+				body.WriteString("WriteInt(b, uint32(_item.Flags))\n")
+				continue
+			}
+			gt := resolveGoTypeForField(a, "types", nil, typeToConstructor)
+			body.WriteString(writeExpr(a, gt, "_item", typeToConstructor))
+			body.WriteByte('\n')
+		}
+		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s {\n%s}", access, access, indentCode(strings.TrimRight(body.String(), "\n"), "\t"))
+	}
+
+	return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { EncodeTLObject(b, _item) }", access, access)
+}
+
+func readBareVectorExpr(inner, assign, fname, goType string, typeToConstructor map[string][]Combinator) string {
+	idx := fname
+	elemType := strings.TrimPrefix(goType, "[]")
+	var buf strings.Builder
+	fmt.Fprintf(&buf, "_cnt%s, _ecnt%s := r.ReadUint32()\n", idx, idx)
+	fmt.Fprintf(&buf, "if _ecnt%s != nil { return nil, _ecnt%s }\n", idx, idx)
+	fmt.Fprintf(&buf, "if _err%s := checkVectorCount(_cnt%s); _err%s != nil {\n\treturn nil, _err%s\n}\n", idx, idx, idx, idx)
+	fmt.Fprintf(&buf, "%s = make(%s, _cnt%s)\n", assign, goType, idx)
+	fmt.Fprintf(&buf, "for _i%s := range %s {\n", idx, assign)
+
+	switch stripNamespace(inner) {
+	case "int":
+		fmt.Fprintf(&buf, "\t_item%s, _err%s := r.ReadInt32()\n", idx, idx)
+	case "long":
+		fmt.Fprintf(&buf, "\t_item%s, _err%s := r.ReadInt64()\n", idx, idx)
+	case "string":
+		fmt.Fprintf(&buf, "\t_item%s, _err%s := r.ReadString()\n", idx, idx)
+	case "bytes":
+		fmt.Fprintf(&buf, "\t_item%s, _err%s := r.ReadBytes()\n", idx, idx)
+	default:
+		if c, ok := constructorByQualName(inner, typeToConstructor); ok {
+			fmt.Fprintf(&buf, "\t_item%s, _err%s := Decode%s(r)\n", idx, idx, SnakeToPascal(c.QualName))
+		} else {
+			fmt.Fprintf(&buf, "\t_obj%s, _err%s := ReadTLObject(r)\n", idx, idx)
+			fmt.Fprintf(&buf, "\tif _err%s != nil {\n\t\treturn nil, _err%s\n\t}\n", idx, idx)
+			fmt.Fprintf(&buf, "\t_item%s := %s\n", idx, typeAssertExpr("_obj"+idx, elemType))
+			fmt.Fprintf(&buf, "\t%s[_i%s] = _item%s\n", assign, idx, idx)
+			buf.WriteString("}")
+			return buf.String()
+		}
+	}
+
+	fmt.Fprintf(&buf, "\tif _err%s != nil {\n\t\treturn nil, _err%s\n\t}\n", idx, idx)
+	fmt.Fprintf(&buf, "\t%s[_i%s] = _item%s\n", assign, idx, idx)
+	buf.WriteString("}")
+	return buf.String()
+}
+
+func buildWriteLine(arg Arg, fd fieldData, section string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator) writeLine {
 	wl := writeLine{
 		FlagName: fd.FlagName,
 		FlagBit:  arg.FlagBit,
@@ -537,12 +626,12 @@ func buildWriteLine(arg Arg, fd fieldData, section string, baseTypes map[string]
 		wl.IsGuarded = true
 	}
 
-	wl.Code = writeExpr(arg, fd.GoType, "v")
+	wl.Code = writeExpr(arg, fd.GoType, "v", typeToConstructor)
 
 	return wl
 }
 
-func writeExpr(arg Arg, goType string, receiver string) string {
+func writeExpr(arg Arg, goType string, receiver string, typeMaps ...map[string][]Combinator) string {
 	fieldName := fieldNameFromTL(arg.Name)
 	access := fmt.Sprintf("%s.%s", receiver, fieldName)
 
@@ -550,6 +639,14 @@ func writeExpr(arg Arg, goType string, receiver string) string {
 	deref := access
 	if isPtr {
 		deref = "*" + access
+	}
+
+	var typeToConstructor map[string][]Combinator
+	if len(typeMaps) > 0 {
+		typeToConstructor = typeMaps[0]
+	}
+	if inner, ok := bareVectorInner(arg.Type); ok {
+		return writeBareVectorExpr(inner, access, typeToConstructor)
 	}
 
 	argType := normalizeVectorType(arg.Type)
@@ -619,6 +716,10 @@ func buildReadLine(arg Arg, fd fieldData, section string, baseTypes map[string]b
 func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator) string {
 	assign := fmt.Sprintf("v.%s", fieldNameFromTL(arg.Name))
 	fname := fieldNameFromTL(arg.Name)
+	if inner, ok := bareVectorInner(arg.Type); ok {
+		return readBareVectorExpr(inner, assign, fname, goType, typeToConstructor)
+	}
+
 	argType := normalizeVectorType(arg.Type)
 	argType = stripNamespace(argType)
 

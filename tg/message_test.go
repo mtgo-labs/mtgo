@@ -35,11 +35,33 @@ func TestMessage_ConstructorID(t *testing.T) {
 	}
 }
 
+func TestDecodeFutureSaltsBareVector(t *testing.T) {
+	var buf bytes.Buffer
+	WriteLong(&buf, 1)
+	WriteInt(&buf, 2)
+	WriteInt(&buf, 1)
+	WriteInt(&buf, 1780476673)
+	WriteInt(&buf, 1780480273)
+	WriteLong(&buf, 0x1122334455667788)
+
+	r := NewReader(buf.Bytes())
+	defer ReleaseReader(r)
+	got, err := DecodeFutureSalts(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Salts) != 1 {
+		t.Fatalf("len(got.Salts) = %d, want 1", len(got.Salts))
+	}
+	if got.Salts[0].ValidSince != 1780476673 || got.Salts[0].ValidUntil != 1780480273 || got.Salts[0].Salt != 0x1122334455667788 {
+		t.Fatalf("unexpected salt: %+v", got.Salts[0])
+	}
+}
+
 func TestDecodeFutureSaltsRejectsHugeVector(t *testing.T) {
 	var buf bytes.Buffer
 	WriteLong(&buf, 1)
 	WriteInt(&buf, 2)
-	WriteInt(&buf, vectorBareID)
 	WriteInt(&buf, maxVectorElements+1)
 
 	r := NewReader(buf.Bytes())
