@@ -110,6 +110,31 @@ func TestCopyMessages(t *testing.T) {
 	}
 }
 
+func TestSendMessageProtectionAndInvertMediaFlags(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	_, err := c.SendMessage(context.Background(), 10, "hello",
+		&params.SendMessage{NoForwards: true, InvertMedia: true},
+	)
+	if err != nil {
+		t.Fatalf("SendMessage() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMessageRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMessageRequest, got %T", inv.lastCall())
+	}
+	if !req.Noforwards || !req.Flags.Has(14) {
+		t.Fatalf("expected noforwards flag 14, flags=%032b", req.Flags)
+	}
+	if !req.InvertMedia || !req.Flags.Has(16) {
+		t.Fatalf("expected invert_media flag 16, flags=%032b", req.Flags)
+	}
+	if req.Flags.Has(27) {
+		t.Fatalf("unexpected stale invert_media flag 27, flags=%032b", req.Flags)
+	}
+}
+
 func TestEditMessageCaption(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
@@ -846,6 +871,164 @@ func TestSendCachedMedia(t *testing.T) {
 	_, ok = req.Media.(*tg.InputMediaDocument)
 	if !ok {
 		t.Fatalf("expected InputMediaDocument, got %T", req.Media)
+	}
+}
+
+func TestSendCachedMediaProtectionAndInvertMediaFlags(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+	cachedFileID, err := fileid.Encode(fileid.FileID{
+		Type:          fileid.FileTypeDocument,
+		DCID:          4,
+		ID:            100,
+		AccessHash:    200,
+		FileReference: []byte{1, 2, 3},
+	})
+	if err != nil {
+		t.Fatalf("encode file_id: %v", err)
+	}
+
+	_, err = c.SendCachedMedia(context.Background(), 10, cachedFileID,
+		&params.SendMessage{NoForwards: true, InvertMedia: true},
+	)
+	if err != nil {
+		t.Fatalf("SendCachedMedia() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	if !req.Noforwards || !req.Flags.Has(14) {
+		t.Fatalf("expected noforwards flag 14, flags=%032b", req.Flags)
+	}
+	if !req.InvertMedia || !req.Flags.Has(16) {
+		t.Fatalf("expected invert_media flag 16, flags=%032b", req.Flags)
+	}
+	if req.Flags.Has(27) {
+		t.Fatalf("unexpected stale invert_media flag 27, flags=%032b", req.Flags)
+	}
+}
+
+func TestSendMediaGroupProtectionAndInvertMediaFlags(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	items := []*tg.InputSingleMedia{
+		{
+			Media: &tg.InputMediaPhoto{
+				ID: &tg.InputPhoto{ID: 1, AccessHash: 2, FileReference: []byte{}},
+			},
+			RandomID: 1,
+			Message:  "caption",
+		},
+	}
+	_, err := c.SendMediaGroup(context.Background(), 10, items,
+		&params.SendMessage{NoForwards: true, InvertMedia: true},
+	)
+	if err != nil {
+		t.Fatalf("SendMediaGroup() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMultiMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMultiMediaRequest, got %T", inv.lastCall())
+	}
+	if !req.Noforwards || !req.Flags.Has(14) {
+		t.Fatalf("expected noforwards flag 14, flags=%032b", req.Flags)
+	}
+	if !req.InvertMedia || !req.Flags.Has(16) {
+		t.Fatalf("expected invert_media flag 16, flags=%032b", req.Flags)
+	}
+	if req.Flags.Has(27) {
+		t.Fatalf("unexpected stale invert_media flag 27, flags=%032b", req.Flags)
+	}
+}
+
+func TestEditMessageInvertMediaFlag(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	_, err := c.EditMessageText(context.Background(), 10, 55, "edited",
+		&params.EditMessage{InvertMedia: true},
+	)
+	if err != nil {
+		t.Fatalf("EditMessageText() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesEditMessageRequest)
+	if !ok {
+		t.Fatalf("expected MessagesEditMessageRequest, got %T", inv.lastCall())
+	}
+	if !req.InvertMedia || !req.Flags.Has(16) {
+		t.Fatalf("expected invert_media flag 16, flags=%032b", req.Flags)
+	}
+	if req.Flags.Has(26) {
+		t.Fatalf("unexpected stale invert_media flag 26, flags=%032b", req.Flags)
+	}
+}
+
+func TestEditMessageMediaFlag(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	media := &tg.InputMediaPhoto{
+		ID: &tg.InputPhoto{ID: 1, AccessHash: 2, FileReference: []byte{}},
+	}
+	_, err := c.EditMessageMedia(context.Background(), 10, 55, media)
+	if err != nil {
+		t.Fatalf("EditMessageMedia() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesEditMessageRequest)
+	if !ok {
+		t.Fatalf("expected MessagesEditMessageRequest, got %T", inv.lastCall())
+	}
+	if req.Media == nil || !req.Flags.Has(14) {
+		t.Fatalf("expected media flag 14, flags=%032b", req.Flags)
+	}
+	if req.Flags.Has(13) {
+		t.Fatalf("unexpected stale media flag 13, flags=%032b", req.Flags)
+	}
+}
+
+func TestEditInlineFlags(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.MessagesEditInlineBotMessageTypeID, &tg.BoolTrue{})
+	inlineID := &tg.InputBotInlineMessageID{DCID: 1, ID: 2, AccessHash: 3}
+
+	_, err := c.EditInlineText(context.Background(), inlineID, "edited",
+		&EditInlineOpts{NoWebpage: true, InvertMedia: true},
+	)
+	if err != nil {
+		t.Fatalf("EditInlineText() error: %v", err)
+	}
+	textReq, ok := inv.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
+	if !ok {
+		t.Fatalf("expected MessagesEditInlineBotMessageRequest, got %T", inv.lastCall())
+	}
+	if !textReq.Flags.Has(1) {
+		t.Fatalf("expected no_webpage flag 1, flags=%032b", textReq.Flags)
+	}
+	if !textReq.Flags.Has(16) {
+		t.Fatalf("expected invert_media flag 16, flags=%032b", textReq.Flags)
+	}
+	if textReq.Flags.Has(0) || textReq.Flags.Has(26) {
+		t.Fatalf("unexpected stale inline text flags, flags=%032b", textReq.Flags)
+	}
+
+	media := &tg.InputMediaPhoto{
+		ID: &tg.InputPhoto{ID: 1, AccessHash: 2, FileReference: []byte{}},
+	}
+	_, err = c.EditInlineMedia(context.Background(), inlineID, media)
+	if err != nil {
+		t.Fatalf("EditInlineMedia() error: %v", err)
+	}
+	mediaReq, ok := inv.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
+	if !ok {
+		t.Fatalf("expected MessagesEditInlineBotMessageRequest, got %T", inv.lastCall())
+	}
+	if mediaReq.Media == nil || !mediaReq.Flags.Has(14) {
+		t.Fatalf("expected media flag 14, flags=%032b", mediaReq.Flags)
+	}
+	if mediaReq.Flags.Has(13) {
+		t.Fatalf("unexpected stale inline media flag 13, flags=%032b", mediaReq.Flags)
 	}
 }
 

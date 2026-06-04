@@ -47,7 +47,7 @@ func (c *Client) EditMessageCaption(ctx context.Context, chatID int64, messageID
 	var flags tg.Fields
 	flags.Set(11)
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 
 	req := &tg.MessagesEditMessageRequest{
@@ -108,9 +108,9 @@ func (c *Client) EditMessageMedia(ctx context.Context, chatID int64, messageID i
 	opt := params.GetOptDef(&params.EditMessage{}, opts...)
 
 	var flags tg.Fields
-	flags.Set(13)
+	flags.Set(14)
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 
 	req := &tg.MessagesEditMessageRequest{
