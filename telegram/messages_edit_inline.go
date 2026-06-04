@@ -19,13 +19,13 @@ func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBot
 
 	var flags tg.Fields
 	if opt.NoWebpage {
-		flags.Set(0)
+		flags.Set(1)
 	}
 	if text != "" {
 		flags.Set(11)
 	}
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 	if opt.ReplyMarkup != nil {
 		flags.Set(2)
@@ -64,7 +64,7 @@ func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.Input
 	var flags tg.Fields
 	flags.Set(11)
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 	if opt.ReplyMarkup != nil {
 		flags.Set(2)
@@ -97,9 +97,9 @@ func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBo
 	opt := getEditInlineOpts(opts...)
 
 	var flags tg.Fields
-	flags.Set(13)
+	flags.Set(14)
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 	if opt.ReplyMarkup != nil {
 		flags.Set(2)

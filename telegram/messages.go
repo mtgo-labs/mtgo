@@ -115,7 +115,7 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 		flags.Set(14)
 	}
 	if opt.InvertMedia {
-		flags.Set(27)
+		flags.Set(16)
 	}
 
 	var replyTo tg.InputReplyToClass
@@ -365,7 +365,7 @@ func (c *Client) EditMessageText(ctx context.Context, chatID int64, messageID in
 		flags.Set(11)
 	}
 	if opt.InvertMedia {
-		flags.Set(26)
+		flags.Set(16)
 	}
 
 	req := &tg.MessagesEditMessageRequest{
@@ -549,7 +549,7 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 		flags.Set(14)
 	}
 	if opt.InvertMedia {
-		flags.Set(27)
+		flags.Set(16)
 	}
 
 	var replyTo tg.InputReplyToClass
@@ -848,24 +848,49 @@ func (c *Client) SendMediaGroup(ctx context.Context, chatID int64, items []*tg.I
 	if opt.Background {
 		flags.Set(6)
 	}
+	if opt.ClearDraft {
+		flags.Set(7)
+	}
+	if opt.NoForwards {
+		flags.Set(14)
+	}
+	if opt.InvertMedia {
+		flags.Set(16)
+	}
 
 	var replyTo tg.InputReplyToClass
-	if opt.ReplyToMessageID != 0 {
+	if opt.ReplyTo != nil {
+		flags.Set(0)
+		replyTo = opt.ReplyTo
+	} else if opt.ReplyToMessageID != 0 {
 		flags.Set(0)
 		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
+	}
+	if opt.SendAs != nil {
+		flags.Set(13)
+	}
+	if opt.EffectID != nil {
+		flags.Set(18)
 	}
 
 	rpc := c.Raw()
 	req := &tg.MessagesSendMultiMediaRequest{
-		Flags:      flags,
-		Silent:     opt.Silent || opt.DisableNotification,
-		Background: opt.Background,
-		Peer:       peer,
-		ReplyTo:    replyTo,
-		MultiMedia: items,
+		Flags:       flags,
+		Silent:      opt.Silent || opt.DisableNotification,
+		Background:  opt.Background,
+		ClearDraft:  opt.ClearDraft,
+		Noforwards:  opt.NoForwards,
+		InvertMedia: opt.InvertMedia,
+		Peer:        peer,
+		ReplyTo:     replyTo,
+		MultiMedia:  items,
+		SendAs:      opt.SendAs,
 	}
 	if opt.ScheduleDate != nil {
 		req.ScheduleDate = *opt.ScheduleDate
+	}
+	if opt.EffectID != nil {
+		req.Effect = *opt.EffectID
 	}
 	result, err := rpc.MessagesSendMultiMedia(ctx, req)
 	if err != nil {
