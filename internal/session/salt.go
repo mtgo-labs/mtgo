@@ -179,23 +179,16 @@ func (m *saltManager) WaitForValid(ctx context.Context) bool {
 		if ctx.Err() != nil {
 			return false
 		}
-		// Wait in a goroutine so we can check ctx concurrently.
-		waitDone := make(chan struct{})
+		cancelDone := make(chan struct{})
 		go func() {
-			m.mu.Lock()
-			m.notify.Wait()
-			m.mu.Unlock()
-			close(waitDone)
+			select {
+			case <-ctx.Done():
+				m.notify.Broadcast()
+			case <-cancelDone:
+			}
 		}()
-		m.mu.Unlock()
-		select {
-		case <-waitDone:
-		case <-ctx.Done():
-			m.notify.Broadcast() // wake the waiter goroutine
-			<-waitDone
-			return false
-		}
-		m.mu.Lock()
+		m.notify.Wait()
+		close(cancelDone)
 	}
 }
 
