@@ -172,9 +172,6 @@ var (
 	// ErrStoryNotInShort is returned when the expected story object is not
 	// found in the UpdateShort container returned by the API.
 	ErrStoryNotInShort = errors.New("no story found in UpdateShort")
-	// ErrStorySchema is returned when a story feature is not supported by the
-	// current TL schema version.
-	ErrStorySchema = errors.New("not available in current tl schema")
 )
 
 // Upload, download, and input validation errors.
@@ -200,12 +197,6 @@ var (
 	ErrProxyParamsRequired = errors.New("telegram: tg://proxy requires server, port, and secret")
 	// ErrSocks4Domain is returned when a SOCKS4 proxy receives a domain name
 	// instead of an IP address, which SOCKS4 does not support.
-	ErrSocks4Domain = errors.New("socks4: domain not supported, need ip")
-	// ErrSocks4IPv6 is returned when a SOCKS4 proxy receives an IPv6 address,
-	// which SOCKS4 does not support. Use SOCKS5 for IPv6.
-	ErrSocks4IPv6 = errors.New("socks4: ipv6 not supported")
-	// ErrProxyResponseTooLarge is returned when the proxy handshake response
-	// exceeds the expected maximum size.
 	ErrProxyResponseTooLarge = errors.New("response too large")
 )
 
@@ -229,9 +220,6 @@ var (
 	// ErrCallChannelNil is returned when the group call reader receives a nil
 	// channel reference.
 	ErrCallChannelNil = errors.New("call reader: channel is nil")
-	// ErrCallCDNNotSupported is returned when the group call stream redirects
-	// to a CDN endpoint, which is not yet supported.
-	ErrCallCDNNotSupported = errors.New("call reader: cdn redirect not supported")
 	// ErrCallNoStreams is returned when a group call has no available stream
 	// channels to read from.
 	ErrCallNoStreams = errors.New("call reader: no stream channels available")
