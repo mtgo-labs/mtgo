@@ -1786,3 +1786,90 @@ func TestWriteBreakerTriggersGroupCancel(t *testing.T) {
 
 	close(s.done)
 }
+
+func TestQuickAckSentOnUpdatesClass(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	updateCh := make(chan tg.TLObject, 1)
+	s.SetUpdateHandler(func(obj tg.TLObject) {
+		updateCh <- obj
+	})
+
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	update := &tg.Updates{Updates: []tg.UpdateClass{}, Users: []tg.UserClass{}, Chats: []tg.ChatClass{}, Date: 12345, Seq: 1}
+	serverMsgID := makeServerMsgID()
+	encrypted := makeEncryptedResponse(s, serverMsgID, uint32(s.msgFactory.AllocateSeqNo(false)), update)
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		mt.recvCh <- encrypted
+	}()
+
+	select {
+	case data := <-mt.sendCh:
+		msg, _, err := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+		if err != nil {
+			t.Fatalf("unpack: %v", err)
+		}
+		if msg == nil || msg.Body == nil {
+			t.Fatal("no message body")
+		}
+		ack, ok := msg.Body.(*tg.MsgsAck)
+		if !ok {
+			t.Fatalf("expected MsgsAck, got %T", msg.Body)
+		}
+		if len(ack.MsgIds) != 1 {
+			t.Fatalf("expected 1 ack msg ID, got %d", len(ack.MsgIds))
+		}
+		if ack.MsgIds[0] != serverMsgID {
+			t.Errorf("ack msg ID = %d, want %d", ack.MsgIds[0], serverMsgID)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for quick ACK")
+	}
+}
+
+func TestBatchAckSentOnNonUpdates(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	ping := &tg.Pong{MsgID: 1, PingID: 42}
+	serverMsgID := makeServerMsgID()
+	encrypted := makeEncryptedResponse(s, serverMsgID, uint32(s.msgFactory.AllocateSeqNo(false)), ping)
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		mt.recvCh <- encrypted
+	}()
+
+	for i := 0; i < 10; i++ {
+		select {
+		case data := <-mt.sendCh:
+			msg, _, err := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
+			if err != nil {
+				continue
+			}
+			if msg == nil || msg.Body == nil {
+				continue
+			}
+			ack, ok := msg.Body.(*tg.MsgsAck)
+			if !ok {
+				continue
+				}
+			for _, id := range ack.MsgIds {
+				if id == serverMsgID {
+					t.Fatalf("Pong should NOT trigger quick ACK (expected batched ack via ackLoop), but got immediate ack for msgID %d", id)
+				}
+			}
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}

@@ -1,6 +1,7 @@
 package mtproxy
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 )
@@ -35,6 +36,9 @@ func ParseSecretBytes(raw []byte) (Secret, error) {
 
 	case len(raw) == 17:
 		tag := raw[0]
+		if tag != 0xdd && tag != 0xee {
+			return Secret{}, fmt.Errorf("mtproxy: unsupported secured secret tag 0x%02x (expected 0xdd or 0xee)", tag)
+		}
 		secret := make([]byte, 16)
 		copy(secret, raw[1:17])
 		return Secret{Type: SecretSecured, Secret: secret, Tag: tag}, nil
@@ -69,4 +73,34 @@ func (s Secret) Codec() byte {
 
 func (s Secret) NeedsFakeTLS() bool {
 	return s.Type == SecretTLS
+}
+
+type obfuscatedKeys struct {
+	encKey []byte
+	encIV  []byte
+	decKey []byte
+	decIV  []byte
+}
+
+func deriveObfuscatedKeys(header, secret []byte) *obfuscatedKeys {
+	encKeyInput := make([]byte, 32+16)
+	copy(encKeyInput, header[8:40])
+	copy(encKeyInput[32:], secret)
+	encKeyHash := sha256.Sum256(encKeyInput)
+
+	reversed := make([]byte, 48)
+	for i := 0; i < 48; i++ {
+		reversed[i] = header[55-i]
+	}
+	decKeyInput := make([]byte, 32+16)
+	copy(decKeyInput, reversed[:32])
+	copy(decKeyInput[32:], secret)
+	decKeyHash := sha256.Sum256(decKeyInput)
+
+	return &obfuscatedKeys{
+		encKey: encKeyHash[:],
+		encIV:  header[40:56],
+		decKey: decKeyHash[:],
+		decIV:  reversed[32:48],
+	}
 }

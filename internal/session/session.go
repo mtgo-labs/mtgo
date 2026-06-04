@@ -306,6 +306,10 @@ func (s *Session) addAck(msgID int64) {
 	}
 }
 
+func (s *Session) sendQuickAck(msgID int64) {
+	s.sendServiceMessage(&tg.MsgsAck{MsgIds: []int64{msgID}})
+}
+
 // SetOnDisconnect is kept for API compatibility but is a no-op. The session
 // now uses errgroup sibling goroutines; Run() returns on failure.
 func (s *Session) SetOnDisconnect(func(error)) {}
@@ -514,6 +518,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		}
 		s.pending.Resolve(v.ReqMsgID, result)
 	case tg.UpdatesClass:
+		s.sendQuickAck(msgID)
 		s.mu.RLock()
 		fn := s.onUpdate
 		s.mu.RUnlock()
