@@ -806,6 +806,8 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
+	s.consecWriteFailures = 0
+	s.writeBreakerOpen.Store(false)
 	s.sm.transition(StateIdle, StateConnecting)
 
 	// Start the errgroup so readLoop is running during the initial ping.
@@ -1435,6 +1437,7 @@ func (s *Session) handleRawRPCResult(body []byte) {
 	}
 	result, err := decodeRawRPCResultPayload(payload)
 	if err != nil {
+		s.pending.Reject(reqMsgID, err)
 		return
 	}
 	s.pending.Resolve(reqMsgID, result)

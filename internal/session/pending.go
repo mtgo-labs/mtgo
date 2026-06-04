@@ -180,16 +180,21 @@ func (pm *PendingManager) Cancel(msgID int64) bool {
 func (pm *PendingManager) RejectAll(err error) {
 	pm.mu.Lock()
 	handles := make([]*CallHandle, 0, len(pm.pending))
+	var total, raw int64
 	for msgID, h := range pm.pending {
 		handles = append(handles, h)
 		delete(pm.pending, msgID)
+		total++
+		if h.isRaw {
+			raw++
+		}
 	}
 	pm.mu.Unlock()
 	for _, h := range handles {
 		h.complete(func() { h.err = err })
 	}
-	pm.totalPending.Store(0)
-	pm.rawPending.Store(0)
+	pm.totalPending.Add(-total)
+	pm.rawPending.Add(-raw)
 }
 
 // Has reports whether a specific msgID has a pending handle.
