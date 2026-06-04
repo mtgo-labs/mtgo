@@ -19,6 +19,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
@@ -77,6 +78,7 @@ type Dispatcher interface {
 // and the RPC methods (Invoke, Raw) to make arbitrary API calls.
 type Client struct {
 	cfg     Config
+	cfgMu   sync.RWMutex
 	mu      sync.RWMutex
 	state   *connStateManager
 	storage storage.Storage
@@ -110,6 +112,8 @@ type Client struct {
 
 	autoConnectMu sync.Mutex
 
+	sessionWg sync.WaitGroup
+
 	secretChats           *SecretChatManager
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
@@ -131,7 +135,26 @@ type Client struct {
 	// Booleans grouped at end to minimize padding on 64-bit.
 	apiInit     bool
 	mwSorted    bool
-	migratingDC bool
+	migratingDC atomic.Bool
+}
+
+func (c *Client) config() Config {
+	c.cfgMu.RLock()
+	cfg := c.cfg
+	c.cfgMu.RUnlock()
+	return cfg
+}
+
+func (c *Client) setConfig(cfg Config) {
+	c.cfgMu.Lock()
+	c.cfg = cfg
+	c.cfgMu.Unlock()
+}
+
+func (c *Client) updateConfig(fn func(cfg *Config)) {
+	c.cfgMu.Lock()
+	fn(&c.cfg)
+	c.cfgMu.Unlock()
 }
 
 // NewClient creates a new Telegram client with the given API credentials and optional configuration.
@@ -210,14 +233,14 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 
 func (c *Client) backoffConfig() backoffConfig {
 	cfg := defaultBackoffConfig
-	if c.cfg.ReconnectBaseDelay != 0 {
-		cfg.BaseDelay = c.cfg.ReconnectBaseDelay
+	if c.config().ReconnectBaseDelay != 0 {
+		cfg.BaseDelay = c.config().ReconnectBaseDelay
 	}
-	if c.cfg.ReconnectMaxDelay != 0 {
-		cfg.MaxDelay = c.cfg.ReconnectMaxDelay
+	if c.config().ReconnectMaxDelay != 0 {
+		cfg.MaxDelay = c.config().ReconnectMaxDelay
 	}
-	if c.cfg.ReconnectMaxAttempts != 0 {
-		cfg.MaxAttempts = c.cfg.ReconnectMaxAttempts
+	if c.config().ReconnectMaxAttempts != 0 {
+		cfg.MaxAttempts = c.config().ReconnectMaxAttempts
 	}
 	return cfg
 }
@@ -745,7 +768,7 @@ func (c *Client) ensureConnected() error {
 	if err := c.state.requireConnected(); err == nil {
 		return nil
 	}
-	if !c.cfg.AutoConnect {
+	if !c.config().AutoConnect {
 		return ErrNotConnected
 	}
 	if c.state.IsClosed() {
@@ -762,7 +785,7 @@ func (c *Client) ensureConnected() error {
 		return ErrClientClosed
 	}
 
-	timeout := c.cfg.Timeout
+	timeout := c.config().Timeout
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
@@ -791,7 +814,7 @@ func (c *Client) ensureConnected() error {
 //	defer client.Disconnect()
 func (c *Client) Connect(timeout time.Duration) error {
 	if timeout <= 0 {
-		timeout = c.cfg.Timeout
+		timeout = c.config().Timeout
 	}
 	if timeout <= 0 {
 		timeout = 60 * time.Second
@@ -815,7 +838,7 @@ func (c *Client) Connect(timeout time.Duration) error {
 //		    log.Fatal(err)
 //	}
 func (c *Client) Start() error {
-	timeout := c.cfg.Timeout
+	timeout := c.config().Timeout
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
@@ -858,14 +881,14 @@ func (c *Client) Idle() {
 }
 
 func (c *Client) connectToDC(dcID int, timeout time.Duration) error {
-	c.cfg.DC = dcID
-	c.migratingDC = true
+	c.updateConfig(func(cfg *Config) { cfg.DC = dcID })
+	c.migratingDC.Store(true)
 	return c.connectTransport(timeout)
 }
 
 func (c *Client) initialDCID(st storage.Storage) int {
-	if c.cfg.DC != 0 {
-		return c.cfg.DC
+	if c.config().DC != 0 {
+		return c.config().DC
 	}
 	if st != nil {
 		if dcID, err := st.DCID(); err == nil && dcID != 0 {
@@ -903,7 +926,9 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 		return err
 	}
 
-	c.startSession(sess, sessionTp, timeout)
+	if err := c.startSession(sess, sessionTp, timeout); err != nil {
+		return err
+	}
 
 	if err := c.authenticateUser(st, timeout); err != nil {
 		return err
@@ -927,12 +952,12 @@ func (c *Client) initStorage() (storage.Storage, bool, error) {
 	if st == nil {
 		if c.storage != nil {
 			st = c.storage
-		} else if c.cfg.Storage != nil {
-			st = c.cfg.Storage
-		} else if c.cfg.InMemory {
+		} else if c.config().Storage != nil {
+			st = c.config().Storage
+		} else if c.config().InMemory {
 			st = NewMemoryStorage()
-		} else if c.cfg.SessionName != "" {
-			s, err := newDefaultStorage(c.cfg.SessionName)
+		} else if c.config().SessionName != "" {
+			s, err := newDefaultStorage(c.config().SessionName)
 			if err != nil {
 				c.mu.Unlock()
 				return nil, false, fmt.Errorf("telegram: auto-create storage: %w", err)
@@ -944,13 +969,13 @@ func (c *Client) initStorage() (storage.Storage, bool, error) {
 		}
 	}
 	c.storage = st
-	migratingDC := c.migratingDC
-	c.migratingDC = false
+	migratingDC := c.migratingDC.Load()
+	c.migratingDC.Store(false)
 	c.mu.Unlock()
 
-	if c.cfg.SessionName != "" {
-		if err := st.SetSessionID(c.cfg.SessionName); err != nil {
-			return nil, false, fmt.Errorf("set session id %q: %w", c.cfg.SessionName, err)
+	if c.config().SessionName != "" {
+		if err := st.SetSessionID(c.config().SessionName); err != nil {
+			return nil, false, fmt.Errorf("set session id %q: %w", c.config().SessionName, err)
 		}
 	}
 	return st, migratingDC, nil
@@ -959,13 +984,13 @@ func (c *Client) initStorage() (storage.Storage, bool, error) {
 // importSessionString decodes the SessionString config field and copies its
 // session fields (DC, auth key, API ID) into the storage backend.
 func (c *Client) importSessionString(st storage.Storage) error {
-	if c.cfg.SessionString == "" {
-		if c.cfg.APIID == 0 {
+	if c.config().SessionString == "" {
+		if c.config().APIID == 0 {
 			return fmt.Errorf("telegram: apiID is required (not found in session string)")
 		}
 		return nil
 	}
-	src, err := sessions.StringSession(c.cfg.SessionString)
+	src, err := sessions.StringSession(c.config().SessionString)
 	if err != nil {
 		return fmt.Errorf("telegram: decode session string: %w", err)
 	}
@@ -979,15 +1004,15 @@ func (c *Client) importSessionString(st storage.Storage) error {
 			return fmt.Errorf("telegram: import session auth key: %w", err)
 		}
 	}
-	if c.cfg.APIID == 0 {
+	if c.config().APIID == 0 {
 		if appID, _ := src.APIID(); appID > 0 {
-			c.cfg.APIID = appID
+			c.updateConfig(func(cfg *Config) { cfg.APIID = appID })
 		}
 	}
-	if c.cfg.APIID == 0 {
+	if c.config().APIID == 0 {
 		return fmt.Errorf("telegram: apiID is required (not found in session string)")
 	}
-	if err := st.SetAPIID(c.cfg.APIID); err != nil {
+	if err := st.SetAPIID(c.config().APIID); err != nil {
 		return fmt.Errorf("telegram: import session api_id: %w", err)
 	}
 	return nil
@@ -1003,13 +1028,13 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 	dcID := c.initialDCID(st)
 	dc := session.DataCenter{
 		ID:       dcID,
-		TestMode: c.cfg.TestMode,
-		IPv6:     c.cfg.IPv6,
+		TestMode: c.config().TestMode,
+		IPv6:     c.config().IPv6,
 	}
 	if dc.Address() == "" {
 		return nil, fmt.Errorf("unknown dc_id: %d", dc.ID)
 	}
-	sess, err := session.NewSession(dc, st, c.cfg.Device.DeviceModel, c.cfg.Device.AppVersion, c.cfg.Device.SystemLangCode, c.cfg.Device.LangCode)
+	sess, err := session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)
 	if err != nil {
 		return nil, fmt.Errorf("create session: %w", err)
 	}
@@ -1024,7 +1049,7 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 // WebSocket, or MTProxy) to the given data center.
 func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, testDialer transport.Dialer) (*sessionTransport, error) {
 	if useWebSocket(c.cfg) {
-		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.cfg.WebSocketTLS)
+		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.config().WebSocketTLS)
 		wsCtx, wsCancel := dialerCtx(timeout)
 		defer wsCancel()
 		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
@@ -1038,8 +1063,8 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 		}
 		return newSessionTransport(tp, wsConn), nil
 	}
-	if c.cfg.MTProxy != nil {
-		mpConn, err := mtproxy.Dial(c.cfg.MTProxy.Addr, c.cfg.MTProxy.Secret, dc.ID, timeout)
+	if c.config().MTProxy != nil {
+		mpConn, err := mtproxy.Dial(c.config().MTProxy.Addr, c.config().MTProxy.Secret, dc.ID, timeout)
 		if err != nil {
 			return nil, fmt.Errorf("mtproxy dial: %w", err)
 		}
@@ -1052,8 +1077,8 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 	}
 
 	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
-	if c.cfg.ServerAddr != "" {
-		addr = c.cfg.ServerAddr
+	if c.config().ServerAddr != "" {
+		addr = c.config().ServerAddr
 	}
 	d := c.dialer
 	if testDialer != nil {
@@ -1063,7 +1088,7 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 	if err != nil {
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
 	}
-	tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+	tp, err := newTCPTransport(c.config().TransportMode, conn)
 	if err != nil {
 		conn.Close()
 		return nil, err
@@ -1101,10 +1126,10 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 	if err := st.SetAuthKey(result.AuthKey); err != nil {
 		return fmt.Errorf("save auth key: %w", err)
 	}
-	if err := st.SetAPIID(c.cfg.APIID); err != nil {
+	if err := st.SetAPIID(c.config().APIID); err != nil {
 		c.Log.Warnf("save api_id: %v", err)
 	}
-	if err := st.SetAPIHash(c.cfg.APIHash); err != nil {
+	if err := st.SetAPIHash(c.config().APIHash); err != nil {
 		c.Log.Warnf("save api_hash: %v", err)
 	}
 	if err := st.SetTestMode(dc.TestMode); err != nil {
@@ -1116,7 +1141,7 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 
 // startSession registers the update handler, starts the encrypted session, and
 // marks the client as connected.
-func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) {
+func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) error {
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
 	})
@@ -1128,22 +1153,23 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.apiInit = false
 	c.mu.Unlock()
 
-	if c.cfg.HealthPingInterval > 0 {
-		sess.SetPingInterval(c.cfg.HealthPingInterval)
+	if c.config().HealthPingInterval > 0 {
+		sess.SetPingInterval(c.config().HealthPingInterval)
 	}
-	if c.cfg.HealthPongTimeout > 0 {
-		sess.SetPongTimeout(c.cfg.HealthPongTimeout)
+	if c.config().HealthPongTimeout > 0 {
+		sess.SetPongTimeout(c.config().HealthPongTimeout)
 	}
 
 	c.Log.Debug("starting encrypted session")
 	if err := sess.Connect(sessionTp, timeout); err != nil {
 		sessionTp.Close()
-		c.Log.Errorf("session start: %v", err)
-		return
+		return fmt.Errorf("session start: %w", err)
 	}
 	c.Log.Info("encrypted session started")
 
+	c.sessionWg.Add(1)
 	go func() {
+		defer c.sessionWg.Done()
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
 			c.triggerReconnect(fmt.Errorf("session exited"))
@@ -1155,13 +1181,14 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.state.SetConnected()
 	c.state.SetDC(c.initialDCID(c.storage))
 	c.mu.Unlock()
+	return nil
 }
 
 // authenticateUser handles bot authorization import, user restore from storage,
 // and phone login flow. Returns an error only for fatal failures that should
 // abort the connection.
 func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) error {
-	if botToken := c.cfg.BotToken; botToken != "" {
+	if botToken := c.config().BotToken; botToken != "" {
 		alreadyAuthorized := false
 		isUserAccount := false
 		if st != nil {
@@ -1195,8 +1222,8 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 			rpc := c.Raw()
 			authResult, err := rpc.AuthImportBotAuthorization(context.Background(), &tg.AuthImportBotAuthorizationRequest{
 				Flags:        0,
-				APIID:        c.cfg.APIID,
-				APIHash:      c.cfg.APIHash,
+				APIID:        c.config().APIID,
+				APIHash:      c.config().APIHash,
 				BotAuthToken: botToken,
 			})
 			if err != nil {
@@ -1265,7 +1292,7 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 		}
 	}
 
-	needLogin := !c.isAuthorized() && c.cfg.PhoneNumber != "" && c.cfg.BotToken == "" && c.cfg.SessionString == "" && !c.migratingDC
+	needLogin := !c.isAuthorized() && c.config().PhoneNumber != "" && c.config().BotToken == "" && c.config().SessionString == "" && !c.migratingDC.Load()
 	if needLogin {
 		c.Log.Info("session not authorized; starting phone login flow")
 		if err := c.loginUser(context.Background()); err != nil {
@@ -1279,7 +1306,7 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 // postConnect runs post-connection setup: fetching update state, starting
 // plugins, and enabling update recovery.
 func (c *Client) postConnect() {
-	if !c.cfg.NoUpdates {
+	if !c.config().NoUpdates {
 		c.Log.Debug("fetching updates state")
 		rpc := c.Raw()
 		_, err := rpc.UpdatesGetState(context.Background())
@@ -1299,11 +1326,11 @@ func (c *Client) postConnect() {
 		c.Log.Errorf("plugin start: %v", err)
 	}
 
-	if c.cfg.UpdateRecoveryEnabled && !c.cfg.NoUpdates {
+	if c.config().UpdateRecoveryEnabled && !c.config().NoUpdates {
 		mgr := newUpdateManager(c, c.storage, updateManagerConfig{
-			QueueSize:       c.cfg.UpdateQueueSize,
-			DurableQueue:    c.cfg.DurableUpdateQueue,
-			MaxHandlerRetry: c.cfg.MaxUpdateHandlerRetry,
+			QueueSize:       c.config().UpdateQueueSize,
+			DurableQueue:    c.config().DurableUpdateQueue,
+			MaxHandlerRetry: c.config().MaxUpdateHandlerRetry,
 		})
 		if err := mgr.Start(context.Background()); err != nil {
 			c.Log.Warnf("update recovery start: %v", err)
@@ -1380,6 +1407,7 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if sess != nil {
 		sess.Stop()
 	}
+	c.sessionWg.Wait()
 
 	if shouldCloseStorage && c.storage != nil {
 		c.storage.Close()
@@ -1480,9 +1508,7 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 
 	c.cleanupSessions(false)
 
-	c.mu.Lock()
-	c.migratingDC = true
-	c.mu.Unlock()
+	c.migratingDC.Store(true)
 
 	if err := st.SetDCID(targetDC); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("save dc_id: %w", err)}
@@ -1497,7 +1523,7 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 		retryQuery = wrapInitConnection(c.cfg, query)
 	}
 
-	retries := c.cfg.Retries
+	retries := c.config().Retries
 	if retries < 1 {
 		retries = 1
 	}
@@ -1591,7 +1617,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 		return nil, ErrNotConnected
 	}
 
-	timeout := c.cfg.ReqTimeout
+	timeout := c.config().ReqTimeout
 	if deadline, ok := ctx.Deadline(); ok {
 		if d := time.Until(deadline); d < timeout {
 			timeout = d
@@ -1603,7 +1629,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	if timeout < time.Second {
 		timeout = time.Second
 	}
-	retries := c.cfg.Retries
+	retries := c.config().Retries
 	if retries < 1 {
 		retries = 1
 	}
@@ -1625,7 +1651,7 @@ func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]by
 //	// updates is a tg.UpdatesClass received from the server,
 //	// e.g. *tg.UpdatesTL containing a batch of UpdateClass items.
 func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
-	if c.cfg.NoUpdates || !c.IsConnected() {
+	if c.config().NoUpdates || !c.IsConnected() {
 		return
 	}
 
@@ -2008,11 +2034,11 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	}
 	c.sessionsMu.Unlock()
 
-	addr := ResolveDCAddress(dcID, c.cfg.TestMode)
+	addr := ResolveDCAddress(dcID, c.config().TestMode)
 	if addr == "" {
 		return nil, fmt.Errorf("unknown dc_id: %d", dcID)
 	}
-	port := DefaultDCPort(c.cfg.TestMode)
+	port := DefaultDCPort(c.config().TestMode)
 
 	var sess *session.Session
 	var err error
@@ -2022,8 +2048,8 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	} else {
 		dc := session.DataCenter{
 			ID:       dcID,
-			TestMode: c.cfg.TestMode,
-			IPv6:     c.cfg.IPv6,
+			TestMode: c.config().TestMode,
+			IPv6:     c.config().IPv6,
 		}
 		c.mu.RLock()
 		st := c.storage
@@ -2031,7 +2057,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 		if st == nil {
 			st = NewMemoryStorage()
 		}
-		sess, err = session.NewSession(dc, st, c.cfg.DeviceModel, c.cfg.AppVersion, c.cfg.SystemLangCode, c.cfg.LangCode)
+		sess, err = session.NewSession(dc, st, c.config().DeviceModel, c.config().AppVersion, c.config().SystemLangCode, c.config().LangCode)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("create session for dc %d: %w", dcID, err)
@@ -2106,82 +2132,84 @@ func (c *Client) saveMeToStorage(user *types.User) {
 
 // ServerTime returns the current estimated server time adjusted by the configured timezone offset.
 func (c *Client) ServerTime() int32 {
-	return ServerTime(c.cfg.Device.TZOffset)
+	return ServerTime(c.config().Device.TZOffset)
 }
 
 // APIID returns the Telegram API ID configured for this client.
-func (c *Client) APIID() int32 { return c.cfg.APIID }
+func (c *Client) APIID() int32 { return c.config().APIID }
 
 // APIHash returns the Telegram API hash configured for this client.
-func (c *Client) APIHash() string { return c.cfg.APIHash }
+func (c *Client) APIHash() string { return c.config().APIHash }
 
 // DC returns the configured preferred data center ID, or zero when automatic.
-func (c *Client) DC() int { return c.cfg.DC }
+func (c *Client) DC() int { return c.config().DC }
 
 // ServerAddr returns the manually configured server address, or empty for auto-resolution.
-func (c *Client) ServerAddr() string { return c.cfg.ServerAddr }
+func (c *Client) ServerAddr() string { return c.config().ServerAddr }
 
 // LocalAddr returns the local address binding for outbound connections, or empty for default.
-func (c *Client) LocalAddr() string { return c.cfg.LocalAddr }
+func (c *Client) LocalAddr() string { return c.config().LocalAddr }
 
 // SessionName returns the session name used for storage file naming.
-func (c *Client) SessionName() string { return c.cfg.SessionName }
+func (c *Client) SessionName() string { return c.config().SessionName }
 
 // BotToken returns the bot token if one was configured, or an empty string for user accounts.
-func (c *Client) BotToken() string { return c.cfg.BotToken }
+func (c *Client) BotToken() string { return c.config().BotToken }
 
 // TestMode reports whether the client is configured to connect to Telegram's test DC.
-func (c *Client) TestMode() bool { return c.cfg.TestMode }
+func (c *Client) TestMode() bool { return c.config().TestMode }
 
 // AutoConnect reports whether the client will automatically connect before the first
 // operation that requires an active connection.
-func (c *Client) AutoConnect() bool { return c.cfg.AutoConnect }
+func (c *Client) AutoConnect() bool { return c.config().AutoConnect }
 
 // IPv6 reports whether IPv6 connections are preferred.
-func (c *Client) IPv6() bool { return c.cfg.IPv6 }
+func (c *Client) IPv6() bool { return c.config().IPv6 }
 
 // NoUpdates reports whether update processing is disabled.
-func (c *Client) NoUpdates() bool { return c.cfg.NoUpdates }
+func (c *Client) NoUpdates() bool { return c.config().NoUpdates }
 
 // ParseMode returns the default message parsing mode.
-func (c *Client) ParseMode() ParseMode { return c.cfg.ParseMode }
+func (c *Client) ParseMode() ParseMode { return c.config().ParseMode }
 
 // SleepThreshold returns the flood-wait threshold; requests with shorter waits are automatically retried.
-func (c *Client) SleepThreshold() time.Duration { return c.cfg.SleepThreshold }
+func (c *Client) SleepThreshold() time.Duration { return c.config().SleepThreshold }
 
 // Timeout returns the TCP connection timeout used when dialing Telegram servers.
-func (c *Client) Timeout() time.Duration { return c.cfg.Timeout }
+func (c *Client) Timeout() time.Duration { return c.config().Timeout }
 
 // ReqTimeout returns the default RPC request timeout applied when no context deadline is set.
-func (c *Client) ReqTimeout() time.Duration { return c.cfg.ReqTimeout }
+func (c *Client) ReqTimeout() time.Duration { return c.config().ReqTimeout }
 
 // MaxConcurrentTransmissions returns the maximum number of concurrent RPC transmissions allowed.
-func (c *Client) MaxConcurrentTransmissions() int { return c.cfg.MaxConcurrentTrans }
+func (c *Client) MaxConcurrentTransmissions() int { return c.config().MaxConcurrentTrans }
 
 // MaxMessageCacheSize returns the maximum number of messages retained in the message cache.
-func (c *Client) MaxMessageCacheSize() int { return c.cfg.MaxMessageCacheSize }
+func (c *Client) MaxMessageCacheSize() int { return c.config().MaxMessageCacheSize }
 
 // MaxTopicCacheSize returns the maximum number of forum topics retained in the topic cache.
-func (c *Client) MaxTopicCacheSize() int { return c.cfg.MaxTopicCacheSize }
+func (c *Client) MaxTopicCacheSize() int { return c.config().MaxTopicCacheSize }
 
 // LinkPreviewOptions returns the global link preview defaults, or nil if none are set.
-func (c *Client) LinkPreviewOptions() *types.LinkPreviewOptions { return c.cfg.LinkPreviewOptions }
+func (c *Client) LinkPreviewOptions() *types.LinkPreviewOptions { return c.config().LinkPreviewOptions }
 
 // Takeout reports whether the client is configured to use a takeout session for data export.
-func (c *Client) Takeout() bool { return c.cfg.Takeout }
+func (c *Client) Takeout() bool { return c.config().Takeout }
 
 // IsBot reports whether the client is authenticated as a bot. It checks the stored
 // session state first, falling back to whether a BotToken was configured.
 func (c *Client) IsBot() bool {
 	if c.storage == nil {
-		return c.cfg.BotToken != ""
+		return c.config().BotToken != ""
 	}
 	isBot, _ := c.storage.IsBot()
 	return isBot
 }
 
 // SetBotToken updates the bot token in the client configuration.
-func (c *Client) SetBotToken(token string) { c.cfg.BotToken = token }
+func (c *Client) SetBotToken(token string) {
+	c.updateConfig(func(cfg *Config) { cfg.BotToken = token })
+}
 
 // ResolvePeerCache looks up a previously cached InputPeer by its numeric ID.
 // Returns the cached peer or ErrPeerNotFound if not present.
@@ -2195,7 +2223,7 @@ func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
 	}
 	c.peerCacheMu.RUnlock()
 
-	if c.cfg.SavePeers {
+	if c.config().SavePeers {
 		if ps := c.peerStore(); ps != nil {
 			for _, lookupID := range peerLookupIDs(id) {
 				p, err := ps.GetPeer(lookupID)
@@ -2238,7 +2266,7 @@ func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
 	c.peerCache[id] = peer
 	c.evictOldestPeerLocked()
 
-	if c.cfg.SavePeers {
+	if c.config().SavePeers {
 		if ps := c.peerStore(); ps != nil {
 			entry := &storage.Peer{ID: id}
 			switch p := peer.(type) {
@@ -2285,7 +2313,7 @@ func rawChannelID(id int64) (int64, bool) {
 }
 
 func (c *Client) evictOldestPeerLocked() {
-	limit := c.cfg.PeerCacheSize
+	limit := c.config().PeerCacheSize
 	if limit <= 0 || len(c.peerCache) <= limit {
 		return
 	}
@@ -2317,7 +2345,7 @@ func (c *Client) cacheUsername(username string, userID int64) {
 		c.usernameCacheOrder = append(c.usernameCacheOrder, username)
 	}
 	c.usernameCache[username] = userID
-	limit := c.cfg.PeerCacheSize
+	limit := c.config().PeerCacheSize
 	if limit <= 0 || len(c.usernameCache) <= limit {
 		return
 	}
@@ -2384,7 +2412,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			})
 		}
 	}
-	if c.cfg.SavePeers && len(entries) > 0 {
+	if c.config().SavePeers && len(entries) > 0 {
 		if ps := c.peerStore(); ps != nil {
 			for _, entry := range entries {
 				_ = ps.SavePeer(entry)
@@ -2394,7 +2422,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 }
 
 func (c *Client) loadPeersFromStorage() {
-	if !c.cfg.SavePeers {
+	if !c.config().SavePeers {
 		return
 	}
 	ps := c.peerStore()

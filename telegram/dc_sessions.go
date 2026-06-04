@@ -103,8 +103,8 @@ func (c *Client) dcRPC(ctx context.Context, dcID int) (*tg.RPCClient, error) {
 func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry, error) {
 	dc := session.DataCenter{
 		ID:       dcID,
-		TestMode: c.cfg.TestMode,
-		IPv6:     c.cfg.IPv6,
+		TestMode: c.config().TestMode,
+		IPv6:     c.config().IPv6,
 	}
 	addr := dc.Address()
 	if addr == "" {
@@ -122,7 +122,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 		return nil, fmt.Errorf("download: dial DC %d (%s:%d): %w", dcID, addr, port, err)
 	}
 
-	tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+	tp, err := newTCPTransport(c.config().TransportMode, conn)
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("download: transport DC %d: %w", dcID, err)

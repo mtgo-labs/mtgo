@@ -75,7 +75,7 @@ func (c *Client) triggerReconnect(err error) {
 	if c.state.IsClosed() {
 		return
 	}
-	if !c.cfg.ReconnectEnabled {
+	if !c.config().ReconnectEnabled {
 		c.state.SetDisconnected(err)
 		return
 	}
@@ -111,14 +111,14 @@ func (c *Client) reconnectOnce() error {
 
 	dc := session.DataCenter{
 		ID:       dcID,
-		TestMode: c.cfg.TestMode,
-		IPv6:     c.cfg.IPv6,
+		TestMode: c.config().TestMode,
+		IPv6:     c.config().IPv6,
 	}
 	if dc.Address() == "" {
 		return fmt.Errorf("unknown dc_id: %d", dcID)
 	}
 
-	sess, err := session.NewSession(dc, st, c.cfg.Device.DeviceModel, c.cfg.Device.AppVersion, c.cfg.Device.SystemLangCode, c.cfg.Device.LangCode)
+	sess, err := session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)
 	if err != nil {
 		return fmt.Errorf("create session: %w", err)
 	}
@@ -128,7 +128,7 @@ func (c *Client) reconnectOnce() error {
 	var sessionTp *sessionTransport
 
 	if useWebSocket(c.cfg) {
-		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.cfg.WebSocketTLS)
+		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.config().WebSocketTLS)
 		wsCtx, wsCancel := dialerCtx(timeout)
 		defer wsCancel()
 		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
@@ -141,8 +141,8 @@ func (c *Client) reconnectOnce() error {
 			return fmt.Errorf("ws transport handshake: %w", err)
 		}
 		sessionTp = newSessionTransport(tp, wsConn)
-	} else if c.cfg.MTProxy != nil {
-		mpConn, err := mtproxy.Dial(c.cfg.MTProxy.Addr, c.cfg.MTProxy.Secret, dc.ID, timeout)
+	} else if c.config().MTProxy != nil {
+		mpConn, err := mtproxy.Dial(c.config().MTProxy.Addr, c.config().MTProxy.Secret, dc.ID, timeout)
 		if err != nil {
 			return fmt.Errorf("mtproxy dial: %w", err)
 		}
@@ -154,8 +154,8 @@ func (c *Client) reconnectOnce() error {
 		sessionTp = newSessionTransport(tp, mpConn)
 	} else {
 		addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
-		if c.cfg.ServerAddr != "" {
-			addr = c.cfg.ServerAddr
+		if c.config().ServerAddr != "" {
+			addr = c.config().ServerAddr
 		}
 
 		d := c.dialer
@@ -167,7 +167,7 @@ func (c *Client) reconnectOnce() error {
 			return fmt.Errorf("dial %s: %w", addr, err)
 		}
 
-		tp, err := newTCPTransport(c.cfg.TransportMode, conn)
+		tp, err := newTCPTransport(c.config().TransportMode, conn)
 		if err != nil {
 			conn.Close()
 			return err
@@ -191,11 +191,11 @@ func (c *Client) reconnectOnce() error {
 	c.mu.Unlock()
 
 	// Configure session ping intervals from client config before starting.
-	if c.cfg.HealthPingInterval > 0 {
-		sess.SetPingInterval(c.cfg.HealthPingInterval)
+	if c.config().HealthPingInterval > 0 {
+		sess.SetPingInterval(c.config().HealthPingInterval)
 	}
-	if c.cfg.HealthPongTimeout > 0 {
-		sess.SetPongTimeout(c.cfg.HealthPongTimeout)
+	if c.config().HealthPongTimeout > 0 {
+		sess.SetPongTimeout(c.config().HealthPongTimeout)
 	}
 
 	if err := sess.Connect(sessionTp, 30*time.Second); err != nil {
@@ -211,6 +211,8 @@ func (c *Client) reconnectOnce() error {
 	c.state.SetDC(dcID)
 	c.state.ResetReconnectCount()
 
+	c.sessionWg.Add(1)
+
 	c.mu.RLock()
 	um := c.updateManager
 	c.mu.RUnlock()
@@ -222,6 +224,7 @@ func (c *Client) reconnectOnce() error {
 
 	// Watch for session exit and trigger reconnect when it dies.
 	go func() {
+		defer c.sessionWg.Done()
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
 			c.triggerReconnect(fmt.Errorf("session exited"))

@@ -195,6 +195,7 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 	}
 
 	if len(decrypted) < 16 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}
 	}
 
@@ -204,24 +205,29 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 	var msgKeyCheck [32]byte
 	hc.Sum(msgKeyCheck[:0])
 	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key == sha256(auth_key[96:128] + data)[8:24]"}
 	}
 
 	if subtle.ConstantTimeCompare(decrypted[8:16], sessionID) != 1 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data.read(8) == session_id"}
 	}
 
 	// Validate padding BEFORE decode to prevent OOM from corrupted body length.
 	if len(decrypted) < 32 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short for header"}
 	}
 	bodyLen := int32(decrypted[28]) | int32(decrypted[29])<<8 |
 		int32(decrypted[30])<<16 | int32(decrypted[31])<<24
 	paddingLen := len(decrypted) - 32 - int(bodyLen)
 	if paddingLen < 12 || paddingLen > 1024 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "12 <= len(padding) <= 1024"}
 	}
 	if (len(decrypted)-32)%4 != 0 {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "len(payload) % 4 == 0"}
 	}
 
@@ -231,6 +237,7 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return tg.DecodeMTProtoMessage(r)
 	}()
 	if err != nil {
+		ReleaseAESBuf(decrypted)
 		return nil, nil, fmt.Errorf("crypto/mtproto: decode message: %w", err)
 	}
 
