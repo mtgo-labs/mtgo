@@ -7,11 +7,41 @@ import (
 	"sync"
 )
 
-var igeBufPool = sync.Pool{
-	New: func() any {
-		buf := make([]byte, 0, 4096)
-		return &buf
-	},
+var (
+	igeBufPool = sync.Pool{
+		New: func() any {
+			buf := make([]byte, 0, 4096)
+			return &buf
+		},
+	}
+
+	aesBlockCache sync.Map
+)
+
+type aesBlockKey [32]byte
+
+// GetAESBlock returns a cached cipher.Block for the given key. Since
+// cipher.Block is immutable and goroutine-safe, the same block can be
+// shared across concurrent callers using the same key.
+func GetAESBlock(key []byte) (cipher.Block, error) {
+	if len(key) != 16 && len(key) != 24 && len(key) != 32 {
+		return nil, fmt.Errorf("crypto/aes: invalid key size %d", len(key))
+	}
+
+	var kk aesBlockKey
+	copy(kk[:], key)
+
+	if v, ok := aesBlockCache.Load(kk); ok {
+		return v.(cipher.Block), nil
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	actual, _ := aesBlockCache.LoadOrStore(kk, block)
+	return actual.(cipher.Block), nil
 }
 
 func getAESBuf(size int) []byte {
@@ -44,19 +74,6 @@ func xorInPlace(dst, a, b []byte) {
 	}
 }
 
-// TODO: newAESBlock creates a new cipher.Block on every call. Since the auth
-// key is the same for every message in a session and cipher.Block is immutable
-// and goroutine-safe, callers should cache the block at the session level
-// (e.g. in Session.SetAuthKey) and pass it through to IGEEncrypt/IGEDecrypt
-// instead of passing the raw key.
-func newAESBlock(key []byte) (cipher.Block, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	return block, nil
-}
-
 // IGEEncrypt encrypts data using AES-256 in Infinite Garble Extension (IGE)
 // mode. The data length must be a multiple of 16. The key must be 32 bytes and
 // iv must be 32 bytes (split into two 16-byte halves for IGE chaining).
@@ -71,7 +88,7 @@ func IGEEncrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data)%16 != 0 {
 		return nil, fmt.Errorf("crypto/aes: IGE data length %d is not a multiple of 16", len(data))
 	}
-	block, err := newAESBlock(key)
+	block, err := GetAESBlock(key)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +125,7 @@ func IGEDecrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data)%16 != 0 {
 		return nil, fmt.Errorf("crypto/aes: IGE data length %d is not a multiple of 16", len(data))
 	}
-	block, err := newAESBlock(key)
+	block, err := GetAESBlock(key)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +173,7 @@ func ctrCrypt(data, key, iv []byte) ([]byte, error) {
 	if len(data) == 0 {
 		return nil, nil
 	}
-	block, err := newAESBlock(key)
+	block, err := GetAESBlock(key)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +211,7 @@ type CTRCipher struct {
 // NewCTRCipher creates a new CTRCipher initialized with the given 32-byte key
 // and 16-byte IV. The cipher is ready to process data immediately.
 func NewCTRCipher(key, iv []byte) (*CTRCipher, error) {
-	block, err := newAESBlock(key)
+	block, err := GetAESBlock(key)
 	if err != nil {
 		return nil, err
 	}

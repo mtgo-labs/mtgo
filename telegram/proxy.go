@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"net/url"
@@ -267,22 +268,55 @@ func (d *socksDialer) socks4Handshake(conn net.Conn, address string) (net.Conn, 
 		return nil, err
 	}
 	ip := net.ParseIP(host)
+
 	if ip == nil {
-		conn.Close()
-		return nil, ErrSocks4Domain
-	}
-	ip4 := ip.To4()
-	if ip4 == nil {
-		conn.Close()
-		return nil, ErrSocks4IPv6
-	}
-	req := []byte{0x04, 0x01, byte(port >> 8), byte(port)}
-	req = append(req, ip4...)
-	req = append(req, []byte(d.username)...)
-	req = append(req, 0x00)
-	if _, err := conn.Write(req); err != nil {
-		conn.Close()
-		return nil, err
+		// SOCKS4a: domain name support — use 0.0.0.1 as placeholder IP
+		// and append the domain as a null-terminated string after the user ID.
+		req := []byte{0x04, 0x01, byte(port >> 8), byte(port), 0x00, 0x00, 0x00, 0x01}
+		req = append(req, []byte(d.username)...)
+		req = append(req, 0x00)
+		req = append(req, []byte(host)...)
+		req = append(req, 0x00)
+		if _, err := conn.Write(req); err != nil {
+			conn.Close()
+			return nil, err
+		}
+	} else if ip4 := ip.To4(); ip4 == nil {
+		// IPv6: SOCKS4 doesn't support IPv6 addresses. Resolve to IPv4
+		// via DNS first and use the resolved address.
+		ips, err := net.DefaultResolver.LookupIPAddr(context.Background(), host)
+		if err != nil {
+			conn.Close()
+			return nil, fmt.Errorf("socks4: resolve ipv6 host %s: %w", host, err)
+		}
+		var ip4Addr net.IP
+		for _, addr := range ips {
+			if v4 := addr.IP.To4(); v4 != nil {
+				ip4Addr = v4
+				break
+			}
+		}
+		if ip4Addr == nil {
+			conn.Close()
+			return nil, fmt.Errorf("socks4: no ipv4 address found for host %s", host)
+		}
+		req := []byte{0x04, 0x01, byte(port >> 8), byte(port)}
+		req = append(req, ip4Addr...)
+		req = append(req, []byte(d.username)...)
+		req = append(req, 0x00)
+		if _, err := conn.Write(req); err != nil {
+			conn.Close()
+			return nil, err
+		}
+	} else {
+		req := []byte{0x04, 0x01, byte(port >> 8), byte(port)}
+		req = append(req, ip4...)
+		req = append(req, []byte(d.username)...)
+		req = append(req, 0x00)
+		if _, err := conn.Write(req); err != nil {
+			conn.Close()
+			return nil, err
+		}
 	}
 	resp := make([]byte, 8)
 	if _, err := readFull(conn, resp); err != nil {
