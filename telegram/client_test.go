@@ -1126,6 +1126,58 @@ func TestClientUpdateHealthNoManager(t *testing.T) {
 	}
 }
 
+func TestClientToUpdateParsesChannelParticipantUpdate(t *testing.T) {
+	const (
+		channelID = int64(12345)
+		actorID   = int64(1001)
+		botID     = int64(2002)
+	)
+
+	c, _ := NewClient(1, "hash", nil)
+	rawUsers := []tg.UserClass{
+		&tg.User{ID: actorID, FirstName: "Actor"},
+		&tg.User{ID: botID, FirstName: "Bot", Bot: true},
+	}
+	rawChats := []tg.ChatClass{
+		&tg.Channel{ID: channelID, Title: "Sync"},
+	}
+	raw := &tg.UpdateChannelParticipant{
+		ChannelID: channelID,
+		ActorID:   actorID,
+		UserID:    botID,
+		NewParticipant: &tg.ChannelParticipantAdmin{
+			UserID: botID,
+			AdminRights: &tg.ChatAdminRights{
+				PostMessages: true,
+			},
+		},
+	}
+
+	upd := c.toUpdate(raw, buildUserMap(rawUsers), buildChatMap(rawChats), types.NewPeerMapFromClasses(rawUsers, rawChats))
+
+	if upd.ChatMember == nil {
+		t.Fatal("ChatMember is nil")
+	}
+	if upd.ChatMember.Chat == nil || upd.ChatMember.Chat.ID != types.GetPeerID(&tg.PeerChannel{ChannelID: channelID}) {
+		t.Fatalf("Chat = %+v", upd.ChatMember.Chat)
+	}
+	if upd.ChatMember.FromUser == nil || upd.ChatMember.FromUser.ID != actorID {
+		t.Fatalf("FromUser = %+v", upd.ChatMember.FromUser)
+	}
+	if upd.ChatMember.NewChatMember == nil {
+		t.Fatal("NewChatMember is nil")
+	}
+	if upd.ChatMember.NewChatMember.Status != types.ChatMemberStatusAdministrator {
+		t.Fatalf("Status = %q", upd.ChatMember.NewChatMember.Status)
+	}
+	if upd.ChatMember.NewChatMember.User == nil || upd.ChatMember.NewChatMember.User.ID != botID {
+		t.Fatalf("NewChatMember.User = %+v", upd.ChatMember.NewChatMember.User)
+	}
+	if upd.ChatMember.NewChatMember.Privileges == nil || !upd.ChatMember.NewChatMember.Privileges.CanPostMessages {
+		t.Fatalf("Privileges = %+v", upd.ChatMember.NewChatMember.Privileges)
+	}
+}
+
 type closeTrackingStorage struct {
 	*MemoryStorage
 	closed bool

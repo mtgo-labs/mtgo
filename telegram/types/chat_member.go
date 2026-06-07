@@ -87,6 +87,9 @@ func ParseChannelParticipant(raw tg.ChannelParticipantClass, users map[int64]tg.
 	if raw == nil {
 		return nil
 	}
+	if p, ok := raw.(*tg.ChannelsChannelParticipant); ok {
+		return ParseChannelParticipant(p.Participant, mergeUserClasses(users, p.Users))
+	}
 	m := &ChatMember{}
 	switch p := raw.(type) {
 	case *tg.ChannelParticipantCreator:
@@ -159,6 +162,22 @@ func getUser(users map[int64]tg.UserClass, id int64) *User {
 		return ParseUser(u)
 	}
 	return nil
+}
+
+func mergeUserClasses(base map[int64]tg.UserClass, users []tg.UserClass) map[int64]tg.UserClass {
+	if len(users) == 0 {
+		return base
+	}
+	merged := make(map[int64]tg.UserClass, len(base)+len(users))
+	for id, user := range base {
+		merged[id] = user
+	}
+	for _, user := range users {
+		if parsed := ParseUser(user); parsed != nil {
+			merged[parsed.ID] = user
+		}
+	}
+	return merged
 }
 
 func getPeerUserID(peer tg.PeerClass) int64 {
