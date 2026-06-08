@@ -1840,9 +1840,9 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 			}
 		}
 	case *tg.UpdateChatParticipant:
-		upd.ChatMember = &types.ChatMemberUpdated{}
+		upd.ChatMember = types.ParseChatMemberUpdated(v, userClassesFromPeerMap(pm), pm)
 	case *tg.UpdateChannelParticipant:
-		upd.ChatMember = &types.ChatMemberUpdated{}
+		upd.ChatMember = types.ParseChatMemberUpdated(v, userClassesFromPeerMap(pm), pm)
 	case *tg.UpdateMessageReactions:
 		upd.MessageReaction = &types.MessageReactions{}
 	case *tg.UpdateMessagePoll:
@@ -1961,6 +1961,17 @@ func buildChatMap(chats []tg.ChatClass) map[int64]*types.Chat {
 		}
 	}
 	return m
+}
+
+func userClassesFromPeerMap(pm *types.PeerMap) map[int64]tg.UserClass {
+	if pm == nil || len(pm.Users) == 0 {
+		return nil
+	}
+	users := make(map[int64]tg.UserClass, len(pm.Users))
+	for id, user := range pm.Users {
+		users[id] = user
+	}
+	return users
 }
 
 // ResolvePeer resolves a ChatRef (ID, username, or InputPeer) into an InputPeerClass
