@@ -13,7 +13,7 @@ require (
 	github.com/cloudwego/gopkg v0.1.4 // indirect
 	github.com/cloudwego/netpoll v0.7.2 // indirect
 	github.com/coder/websocket v1.8.14 // indirect
-	github.com/mtgo-labs/storage v0.1.1 // indirect
+	github.com/mtgo-labs/storage v0.4.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

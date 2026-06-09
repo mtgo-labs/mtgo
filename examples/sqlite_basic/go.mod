@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	github.com/mtgo-labs/mtgo v0.1.0
-	github.com/mtgo-labs/storage v0.1.1
+	github.com/mtgo-labs/storage v0.4.0
 	github.com/mtgo-labs/storage/sqlite v0.1.0
 )
 

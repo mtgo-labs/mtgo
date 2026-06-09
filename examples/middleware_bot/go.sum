@@ -19,8 +19,8 @@ github.com/mtgo-labs/middlewares/ratelimit v0.1.0 h1:i1EtDGqlO/IU51lTPHiarjFfXWx
 github.com/mtgo-labs/middlewares/ratelimit v0.1.0/go.mod h1:pUTxIDQZYd25hfAm1p3lXowachWX6mqeM2EYfkhEw58=
 github.com/mtgo-labs/mtgo v0.1.0 h1:PQIUTAy7brJDyezjzEy9cBA+YcHFA5tQhD5SckZisaM=
 github.com/mtgo-labs/mtgo v0.1.0/go.mod h1:6yhhHVjBH6M6lKvHAoAIK1fSKBf0wZjsspv0jePpOnY=
-github.com/mtgo-labs/storage v0.1.0 h1:fEyau3oDmdoJGqNoGiHkWMg0m57hL0VsNE6Mk6MEHSo=
-github.com/mtgo-labs/storage v0.1.0/go.mod h1:sBMyZUmM0laJr1Zx4bAyYeQ6jpMCZJ64WPHcL8kNj70=
+github.com/mtgo-labs/storage v0.4.0 h1:vfZGeLSrPux45y6S3PTtpQ302fEZxlItuzC2HRfTKl8=
+github.com/mtgo-labs/storage v0.4.0/go.mod h1:sBMyZUmM0laJr1Zx4bAyYeQ6jpMCZJ64WPHcL8kNj70=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
