@@ -14,6 +14,7 @@ type clientInvoker struct {
 }
 
 func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+	cfg := ci.client.config()
 	deadline, ok := ctx.Deadline()
 	timeout := time.Duration(0)
 	if ok {
@@ -22,7 +23,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 			timeout = 0
 		}
 	} else {
-		timeout = ci.client.cfg.ReqTimeout
+		timeout = cfg.ReqTimeout
 		if timeout <= 0 {
 			timeout = 60 * time.Second
 		}
@@ -31,13 +32,12 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		timeout = time.Second
 	}
 
-	retries := ci.client.cfg.Retries
+	retries := cfg.Retries
 	if retries < 1 {
 		retries = 1
 	}
 	ci.client.mu.RLock()
 	apiInit := ci.client.apiInit
-	cfg := ci.client.cfg
 	ci.client.mu.RUnlock()
 
 	query := input

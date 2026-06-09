@@ -27,6 +27,9 @@ func DecodeMsgContainer(r *Reader) (*MsgContainer, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckVectorCount(count); err != nil {
+		return nil, err
+	}
 	c := &MsgContainer{Messages: make([]*MTProtoMessage, count)}
 	for i := uint32(0); i < count; i++ {
 		msg, err := DecodeMTProtoMessage(r)

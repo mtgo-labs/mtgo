@@ -29,11 +29,13 @@ func (m *updateManager) RecoverAccount(ctx context.Context, rpc differenceRPC) e
 	}()
 
 	for {
+		m.mu.Lock()
 		req := &tg.UpdatesGetDifferenceRequest{
 			PTS:  m.state.Pts,
 			Date: m.state.Date,
 			Qts:  m.state.Qts,
 		}
+		m.mu.Unlock()
 		diff, err := rpc.UpdatesGetDifference(ctx, req)
 		if err != nil {
 			return fmt.Errorf("%w: %v", ErrDifferenceRecovery, err)

@@ -422,13 +422,9 @@ func (c *Client) ReadChatStories(ctx context.Context, chatID int64, storyIDs []i
 func extractStoryFromUpdates(result tg.UpdatesClass) (*types.Story, error) {
 	switch v := result.(type) {
 	case *tg.Updates:
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		for _, u := range v.Updates {
-			if upd, ok := u.(*tg.UpdateStory); ok {
-				return types.ParseStory(upd.Story, pm), nil
-			}
-		}
-		return nil, ErrStoryNotInUpdates
+		return findStoryInUpdates(v.Updates, v.Users, v.Chats)
+	case *tg.UpdatesCombined:
+		return findStoryInUpdates(v.Updates, v.Users, v.Chats)
 	case *tg.UpdateShort:
 		if upd, ok := v.Update.(*tg.UpdateStory); ok {
 			return types.ParseStory(upd.Story, nil), nil
@@ -437,4 +433,14 @@ func extractStoryFromUpdates(result tg.UpdatesClass) (*types.Story, error) {
 	default:
 		return nil, fmt.Errorf("unexpected updates type %T", result)
 	}
+}
+
+func findStoryInUpdates(updates []tg.UpdateClass, users []tg.UserClass, chats []tg.ChatClass) (*types.Story, error) {
+	pm := types.NewPeerMapFromClasses(users, chats)
+	for _, u := range updates {
+		if upd, ok := u.(*tg.UpdateStory); ok {
+			return types.ParseStory(upd.Story, pm), nil
+		}
+	}
+	return nil, ErrStoryNotInUpdates
 }
