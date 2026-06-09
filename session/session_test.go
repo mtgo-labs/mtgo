@@ -2,6 +2,7 @@ package session
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"net"
 	"testing"
 )
@@ -338,6 +339,34 @@ func TestDecodeInvalidBase64(t *testing.T) {
 func TestDetectFormatEmpty(t *testing.T) {
 	if f := DetectFormat(""); f != FormatUnknown {
 		t.Fatalf("expected unknown, got %s", f)
+	}
+}
+
+// TestDecodeGotgExtendedMalformedNoPanic ensures a malformed gotg_extended
+// payload whose null-padding run advances the cursor so that fewer than 256
+// auth-key bytes remain returns an error instead of panicking on an
+// out-of-range slice. Regression for the unbounded auth-key copy.
+func TestDecodeGotgExtendedMalformedNoPanic(t *testing.T) {
+	// 283-byte payload: dc low byte <=5, version, ip_len=0, then all-zero
+	// padding so the null-skip loop walks the cursor to near the end, leaving
+	// < 256 bytes for the auth key.
+	payload := make([]byte, 283)
+	payload[0] = 1 // dc id low byte (<=5 so DetectFormat picks gotg_extended)
+	payload[281] = 0x01
+	payload[282] = 0x02 // non-zero bytes stop the null loop and serve as the port
+
+	s := base64.URLEncoding.EncodeToString(payload)
+
+	if f := DetectFormat(s); f != FormatGotgExtended {
+		t.Fatalf("expected gotg_extended, got %s", f)
+	}
+
+	// Must not panic; must return an error.
+	if _, _, err := Decode(s); err == nil {
+		t.Fatal("expected error for truncated gotg_extended auth key, got nil")
+	}
+	if _, err := DecodeGotgExtended(s); err == nil {
+		t.Fatal("expected error from DecodeGotgExtended, got nil")
 	}
 }
 
