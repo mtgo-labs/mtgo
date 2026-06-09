@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/internal/storage"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 type fakeDifferenceRPC struct {

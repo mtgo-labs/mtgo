@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"math/big"
@@ -18,10 +19,25 @@ var ErrPasswordAlreadyEnabled = errors.New("cloud password already enabled")
 // but no cloud password is currently set on the account.
 var ErrPasswordNotEnabled = errors.New("cloud password not enabled")
 
-func computeNewPasswordHash(algo *tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow, password string) ([]byte, error) {
-	x := new(big.Int).SetBytes(crypto.ComputePasswordHash(password, algo.Salt1, algo.Salt2))
-	p := new(big.Int).SetBytes(algo.P)
-	g := big.NewInt(int64(algo.G))
+// computeNewPasswordHash derives the verifier for a NEW 2FA password. Per the
+// MTProto SRP spec (https://core.telegram.org/api/srp), the client must append
+// 32 sufficiently-random bytes to the server-provided salt1 before computing
+// v = g^x mod p. It returns the verifier together with a copy of the algo whose
+// Salt1 carries the appended bytes, which the caller MUST send as NewAlgo so the
+// server can recompute the same hash.
+func computeNewPasswordHash(algo *tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow, password string) ([]byte, *tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow, error) {
+	extendedSalt1 := make([]byte, len(algo.Salt1)+32)
+	copy(extendedSalt1, algo.Salt1)
+	if _, err := rand.Read(extendedSalt1[len(algo.Salt1):]); err != nil {
+		return nil, nil, fmt.Errorf("generate salt: %w", err)
+	}
+
+	newAlgo := *algo
+	newAlgo.Salt1 = extendedSalt1
+
+	x := new(big.Int).SetBytes(crypto.ComputePasswordHash(password, newAlgo.Salt1, newAlgo.Salt2))
+	p := new(big.Int).SetBytes(newAlgo.P)
+	g := big.NewInt(int64(newAlgo.G))
 	hash := new(big.Int).Exp(g, x, p).Bytes()
 	if len(hash) < 256 {
 		padded := make([]byte, 256)
@@ -31,7 +47,7 @@ func computeNewPasswordHash(algo *tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512
 	if len(hash) > 256 {
 		hash = hash[len(hash)-256:]
 	}
-	return hash, nil
+	return hash, &newAlgo, nil
 }
 
 // EnableCloudPassword enables two-factor authentication by setting a cloud password
@@ -68,7 +84,7 @@ func (c *Client) EnableCloudPassword(ctx context.Context, password, hint string)
 		return fmt.Errorf("unsupported password KDF algorithm: %T", pwd.NewAlgo)
 	}
 
-	newHash, err := computeNewPasswordHash(algo, password)
+	newHash, newAlgo, err := computeNewPasswordHash(algo, password)
 	if err != nil {
 		return fmt.Errorf("compute new password hash: %w", err)
 	}
@@ -76,7 +92,7 @@ func (c *Client) EnableCloudPassword(ctx context.Context, password, hint string)
 	_, err = rpc.AccountUpdatePasswordSettings(ctx, &tg.AccountUpdatePasswordSettingsRequest{
 		Password: &tg.InputCheckPasswordEmpty{},
 		NewSettings: &tg.AccountPasswordInputSettings{
-			NewAlgo:         algo,
+			NewAlgo:         newAlgo,
 			NewPasswordHash: newHash,
 			Hint:            hint,
 		},
@@ -126,7 +142,7 @@ func (c *Client) ChangeCloudPassword(ctx context.Context, currentPassword, newPa
 		return fmt.Errorf("unsupported password KDF algorithm: %T", pwd.NewAlgo)
 	}
 
-	newHash, err := computeNewPasswordHash(algo, newPassword)
+	newHash, newAlgo, err := computeNewPasswordHash(algo, newPassword)
 	if err != nil {
 		return fmt.Errorf("compute new password hash: %w", err)
 	}
@@ -134,7 +150,7 @@ func (c *Client) ChangeCloudPassword(ctx context.Context, currentPassword, newPa
 	_, err = rpc.AccountUpdatePasswordSettings(ctx, &tg.AccountUpdatePasswordSettingsRequest{
 		Password: srpInput,
 		NewSettings: &tg.AccountPasswordInputSettings{
-			NewAlgo:         algo,
+			NewAlgo:         newAlgo,
 			NewPasswordHash: newHash,
 			Hint:            newHint,
 		},

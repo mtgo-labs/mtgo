@@ -10,12 +10,12 @@ import (
 type Format string
 
 const (
-	FormatTelethon    Format = "telethon"
-	FormatPyrogram    Format = "pyrogram"
-	FormatGramJS      Format = "gramjs"
-	FormatMtcute      Format = "mtcute"
+	FormatTelethon     Format = "telethon"
+	FormatPyrogram     Format = "pyrogram"
+	FormatGramJS       Format = "gramjs"
+	FormatMtcute       Format = "mtcute"
 	FormatGotgExtended Format = "gotg_extended"
-	FormatUnknown     Format = ""
+	FormatUnknown      Format = ""
 )
 
 // -------------------------------------------------------------------
@@ -226,7 +226,8 @@ func ImportSessionString(st interface {
 	SetPort(int) error
 	AuthKey() ([]byte, error)
 	SetAuthKey([]byte) error
-}, s string) error {
+}, s string,
+) error {
 	data, err := DecodeTelethon(s)
 	if err != nil {
 		return fmt.Errorf("session: invalid session string: %w", err)
@@ -412,6 +413,9 @@ func DecodeGotgExtended(s string) (*SessionData, error) {
 	port := int(binary.BigEndian.Uint16(payload[pos : pos+2]))
 	pos += 2
 
+	if pos+256 > len(payload) {
+		return nil, fmt.Errorf("gotg_extended: payload too short for auth_key")
+	}
 	authKey := make([]byte, 256)
 	copy(authKey, payload[pos:pos+256])
 

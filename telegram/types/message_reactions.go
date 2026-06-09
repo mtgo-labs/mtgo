@@ -89,13 +89,13 @@ type StarsStatus struct {
 }
 
 type StarsSubscription struct {
-	ID          string
-	Title       string
-	ChatInvite  string
-	UntilDate   int32
-	IsCanceled  bool
-	IsMissing   bool
-	ChatID      int64
+	ID         string
+	Title      string
+	ChatInvite string
+	UntilDate  int32
+	IsCanceled bool
+	IsMissing  bool
+	ChatID     int64
 }
 
 func ParseStarsStatus(raw *tg.PaymentsStarsStatus) *StarsStatus {

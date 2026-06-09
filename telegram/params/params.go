@@ -614,7 +614,8 @@ type SendInlineBotResult struct {
 
 func flatToSendMsg(s interface {
 	getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass)
-}) *SendMessage {
+},
+) *SendMessage {
 	disableNotification, silent, background, clearDraft, noForwards,
 		replyToMessageID, replyTo, replyMarkup, scheduleDate, effectID, sendAs := s.getFlatSendFields()
 	return &SendMessage{

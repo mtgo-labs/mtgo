@@ -105,9 +105,9 @@ func (s *testServer) handleConn(conn net.Conn) {
 			respMsg := &tg.MTProtoMessage{MsgID: respMsgID, SeqNo: respSeqNo, Body: pong}
 
 			encrypted, err := crypto.Pack(respMsg, salt, sessionID, s.authKey, authKeyID)
-				if err != nil {
-					continue
-				}
+			if err != nil {
+				continue
+			}
 
 			var resp bytes.Buffer
 			binary.Write(&resp, binary.LittleEndian, uint32(len(encrypted)))
@@ -135,9 +135,9 @@ func unpackSafeNoSessionCheck(data, authKey, authKeyID []byte) (constructorID ui
 	encrypted := data[24:]
 	keyArr, ivArr := crypto.KDF(authKey, msgKey, false)
 	decrypted, err = crypto.IGEDecrypt(encrypted, keyArr[:], ivArr[:])
-		if err != nil {
-			return 0, 0, nil, err
-		}
+	if err != nil {
+		return 0, 0, nil, err
+	}
 	tmpChk := make([]byte, 32+len(decrypted))
 	copy(tmpChk, authKey[96:128])
 	copy(tmpChk[32:], decrypted)

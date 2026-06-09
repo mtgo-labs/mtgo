@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"errors"
+	"math/big"
 	"testing"
 
 	mtcrypto "github.com/mtgo-labs/mtgo/internal/crypto"
@@ -41,6 +42,12 @@ func TestComputeCheckPasswordSRPDoesNotExtendSalt1(t *testing.T) {
 	salt1 := backing[:16]
 	tail := append([]byte(nil), backing[16:]...)
 
+	// A valid in-range server B = g^k mod p.
+	validB := new(big.Int).Exp(big.NewInt(3), big.NewInt(12345), mtcrypto.CurrentDHPrime)
+	srpB := make([]byte, 256)
+	bBytes := validB.Bytes()
+	copy(srpB[256-len(bBytes):], bBytes)
+
 	_, err := computeCheckPasswordSRP(&tg.AccountPassword{
 		CurrentAlgo: &tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow{
 			Salt1: salt1,
@@ -48,7 +55,7 @@ func TestComputeCheckPasswordSRPDoesNotExtendSalt1(t *testing.T) {
 			G:     3,
 			P:     mtcrypto.CurrentDHPrime.Bytes(),
 		},
-		SRPB:  make([]byte, 256),
+		SRPB:  srpB,
 		SRPID: 1,
 	}, "password")
 	if err != nil {

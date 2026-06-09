@@ -1142,11 +1142,11 @@ func TestClientToUpdateParsesChatParticipantUpdate(t *testing.T) {
 		&tg.Chat{ID: chatID, Title: "Group"},
 	}
 	raw := &tg.UpdateChatParticipant{
-		ChatID: chatID,
+		ChatID:  chatID,
 		ActorID: actorID,
 		UserID:  userID,
 		NewParticipant: &tg.ChatParticipantAdmin{
-			UserID:   userID,
+			UserID:    userID,
 			InviterID: actorID,
 		},
 	}

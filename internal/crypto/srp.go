@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
+	"fmt"
 	"math/big"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -86,6 +87,17 @@ func ComputeSRP(salt1, salt2 []byte, g *big.Int, p *big.Int, srpB []byte, srpID 
 	kgX.Mod(kgX, p)
 
 	B := new(big.Int).SetBytes(srpB)
+
+	// Reject a server B outside (1, p-1): such values (0, 1, p, p-1, multiples of
+	// p) force the shared secret to a value the server controls or predicts,
+	// breaking the SRP zero-knowledge property. See https://core.telegram.org/api/srp.
+	if B.Sign() <= 0 || B.Cmp(p) >= 0 {
+		return nil, fmt.Errorf("srp: server B out of range")
+	}
+	pMinus1 := new(big.Int).Sub(p, big.NewInt(1))
+	if B.Cmp(big.NewInt(1)) <= 0 || B.Cmp(pMinus1) >= 0 {
+		return nil, fmt.Errorf("srp: server B out of range")
+	}
 
 	var a *big.Int
 	var A *big.Int

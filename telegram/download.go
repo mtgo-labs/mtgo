@@ -593,12 +593,29 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 			return totalWritten, fmt.Errorf("cdn: unexpected result type %T", result)
 		}
 
-		decrypted := cdnDecryptChunk(cdnFile.Bytes, key, iv, offset)
+		decrypted, err := cdnDecryptChunk(cdnFile.Bytes, key, iv, offset)
+		if err != nil {
+			return totalWritten, err
+		}
 
-		if hashIndex < len(redirect.FileHashes) {
-			if cdnVerifyHash(decrypted, redirect.FileHashes[hashIndex], 0) {
+		// Verify every CDN hash whose range is fully contained in this chunk.
+		// hash.Offset is absolute into the file, so translate by the chunk base
+		// (offset). A mismatch means the CDN served corrupted/tampered data and
+		// must abort the download rather than write bad bytes.
+		for hashIndex < len(redirect.FileHashes) {
+			h := redirect.FileHashes[hashIndex]
+			if h == nil {
 				hashIndex++
+				continue
 			}
+			if h.Offset+int64(h.Limit) > offset+int64(len(decrypted)) {
+				// Hash extends past this chunk; verify it on a later chunk.
+				break
+			}
+			if !cdnVerifyHash(decrypted, h, offset) {
+				return totalWritten, fmt.Errorf("cdn: hash verification failed at offset %d", h.Offset)
+			}
+			hashIndex++
 		}
 
 		n, err := writer.Write(decrypted)
@@ -626,14 +643,17 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 	}
 }
 
-func cdnDecryptChunk(data, key, iv []byte, offset int64) []byte {
+func cdnDecryptChunk(data, key, iv []byte, offset int64) ([]byte, error) {
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return data
+		return nil, fmt.Errorf("cdn: invalid encryption key (len %d): %w", len(key), err)
+	}
+	if len(iv) < 16 {
+		return nil, fmt.Errorf("cdn: encryption iv too short: %d", len(iv))
 	}
 
 	chunkIV := make([]byte, 16)
@@ -658,7 +678,7 @@ func cdnDecryptChunk(data, key, iv []byte, offset int64) []byte {
 			incrementIV(chunkIV)
 		}
 	}
-	return out
+	return out, nil
 }
 
 func cdnVerifyHash(data []byte, hash *tg.FileHash, baseOffset int64) bool {

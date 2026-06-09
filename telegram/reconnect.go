@@ -19,7 +19,8 @@ import (
 // permanently invalidated (revoked, unregistered, duplicated, or invalid).
 // Reconnect attempts stop when this returns true.
 func isAuthLostError(err error) bool {
-	return tgerr.Is(err,
+	return tgerr.Is(
+		err,
 		tgerr.ErrAuthKeyUnregistered,
 		tgerr.ErrAuthKeyInvalid,
 		tgerr.ErrAuthKeyDuplicated,

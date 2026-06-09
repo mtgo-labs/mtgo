@@ -513,8 +513,15 @@ func parseMTPAuthorization(data []byte) (mtpAuthorization, error) {
 	if err != nil {
 		return mtpAuthorization{}, fmt.Errorf("read key count: %w", err)
 	}
+	// keyCount is attacker-controlled untrusted input. Real tdata has only a
+	// handful of DC keys; reject implausible counts and do not use the value as
+	// an allocation hint, to avoid multi-GB map pre-allocation (DoS).
+	const maxMTPKeys = 64
+	if keyCount > maxMTPKeys {
+		return mtpAuthorization{}, fmt.Errorf("implausible key count %d", keyCount)
+	}
 
-	auth.Keys = make(map[int][256]byte, keyCount)
+	auth.Keys = make(map[int][256]byte)
 	for i := uint32(0); i < keyCount; i++ {
 		dcID, err := r.readUint32()
 		if err != nil {

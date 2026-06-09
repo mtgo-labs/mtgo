@@ -347,14 +347,13 @@ func TestParseBotCommandScope_Nil(t *testing.T) {
 	if got := types.ParseBotCommandScope(nil); got != nil {
 		t.Errorf("ParseBotCommandScope(nil) = %v, want nil", got)
 	}
-
 }
 
 func TestParseBotCommandScope_Types(t *testing.T) {
 	tests := []struct {
-		name    string
-		raw     tg.BotCommandScopeClass
-		wantTyp types.BotCommandScopeType
+		name     string
+		raw      tg.BotCommandScopeClass
+		wantTyp  types.BotCommandScopeType
 		wantChat int64
 		wantUser int64
 	}{
@@ -682,12 +681,12 @@ func TestParseBusinessBotRights_Nil(t *testing.T) {
 
 func TestParseBusinessBotRights(t *testing.T) {
 	raw := &tg.BusinessBotRights{
-		Reply:               true,
-		ReadMessages:        false,
-		DeleteSentMessages:  true,
-		EditName:            true,
-		ManageStories:       true,
-		TransferStars:       false,
+		Reply:              true,
+		ReadMessages:       false,
+		DeleteSentMessages: true,
+		EditName:           true,
+		ManageStories:      true,
+		TransferStars:      false,
 	}
 	got := types.ParseBusinessBotRights(raw)
 	if got == nil {

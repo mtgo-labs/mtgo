@@ -29,20 +29,20 @@ type dedupEntry struct {
 //	    APIHash: "your_api_hash",
 //	})
 type MemoryStorage struct {
-	mu            sync.RWMutex
-	dcID          int
-	apiID         int32
-	testMode      bool
-	authKey       []byte
-	sessionID     string
-	userID        int64
-	isBot         bool
-	date          int
-	state         []byte
-	firstName     string
-	lastName      string
-	username      string
-	apiHash       string
+	mu        sync.RWMutex
+	dcID      int
+	apiID     int32
+	testMode  bool
+	authKey   []byte
+	sessionID string
+	userID    int64
+	isBot     bool
+	date      int
+	state     []byte
+	firstName string
+	lastName  string
+	username  string
+	apiHash   string
 
 	peers          map[int64]storage.Peer
 	peerUsernames  map[string]int64
@@ -75,32 +75,32 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-func (m *MemoryStorage) SessionID() (string, error)      { return m.sessionID, nil }
-func (m *MemoryStorage) SetSessionID(v string) error     { m.sessionID = v; return nil }
-func (m *MemoryStorage) DCID() (int, error)              { return m.dcID, nil }
-func (m *MemoryStorage) SetDCID(v int) error             { m.dcID = v; return nil }
-func (m *MemoryStorage) APIID() (int32, error)           { return m.apiID, nil }
-func (m *MemoryStorage) SetAPIID(v int32) error          { m.apiID = v; return nil }
-func (m *MemoryStorage) TestMode() (bool, error)         { return m.testMode, nil }
-func (m *MemoryStorage) SetTestMode(v bool) error        { m.testMode = v; return nil }
-func (m *MemoryStorage) AuthKey() ([]byte, error)        { return append([]byte(nil), m.authKey...), nil }
-func (m *MemoryStorage) SetAuthKey(v []byte) error       { m.authKey = v; return nil }
-func (m *MemoryStorage) UserID() (int64, error)          { return m.userID, nil }
-func (m *MemoryStorage) SetUserID(v int64) error         { m.userID = v; return nil }
-func (m *MemoryStorage) IsBot() (bool, error)            { return m.isBot, nil }
-func (m *MemoryStorage) SetIsBot(v bool) error           { m.isBot = v; return nil }
-func (m *MemoryStorage) FirstName() (string, error)      { return m.firstName, nil }
-func (m *MemoryStorage) SetFirstName(v string) error     { m.firstName = v; return nil }
-func (m *MemoryStorage) LastName() (string, error)       { return m.lastName, nil }
-func (m *MemoryStorage) SetLastName(v string) error      { m.lastName = v; return nil }
-func (m *MemoryStorage) Username() (string, error)       { return m.username, nil }
-func (m *MemoryStorage) SetUsername(v string) error      { m.username = v; return nil }
-func (m *MemoryStorage) APIHash() (string, error)        { return m.apiHash, nil }
-func (m *MemoryStorage) SetAPIHash(v string) error       { m.apiHash = v; return nil }
-func (m *MemoryStorage) Date() (int, error)              { return m.date, nil }
-func (m *MemoryStorage) SetDate(v int) error             { m.date = v; return nil }
-func (m *MemoryStorage) State() ([]byte, error)          { return append([]byte(nil), m.state...), nil }
-func (m *MemoryStorage) SetState(v []byte) error         { m.state = v; return nil }
+func (m *MemoryStorage) SessionID() (string, error)  { return m.sessionID, nil }
+func (m *MemoryStorage) SetSessionID(v string) error { m.sessionID = v; return nil }
+func (m *MemoryStorage) DCID() (int, error)          { return m.dcID, nil }
+func (m *MemoryStorage) SetDCID(v int) error         { m.dcID = v; return nil }
+func (m *MemoryStorage) APIID() (int32, error)       { return m.apiID, nil }
+func (m *MemoryStorage) SetAPIID(v int32) error      { m.apiID = v; return nil }
+func (m *MemoryStorage) TestMode() (bool, error)     { return m.testMode, nil }
+func (m *MemoryStorage) SetTestMode(v bool) error    { m.testMode = v; return nil }
+func (m *MemoryStorage) AuthKey() ([]byte, error)    { return append([]byte(nil), m.authKey...), nil }
+func (m *MemoryStorage) SetAuthKey(v []byte) error   { m.authKey = v; return nil }
+func (m *MemoryStorage) UserID() (int64, error)      { return m.userID, nil }
+func (m *MemoryStorage) SetUserID(v int64) error     { m.userID = v; return nil }
+func (m *MemoryStorage) IsBot() (bool, error)        { return m.isBot, nil }
+func (m *MemoryStorage) SetIsBot(v bool) error       { m.isBot = v; return nil }
+func (m *MemoryStorage) FirstName() (string, error)  { return m.firstName, nil }
+func (m *MemoryStorage) SetFirstName(v string) error { m.firstName = v; return nil }
+func (m *MemoryStorage) LastName() (string, error)   { return m.lastName, nil }
+func (m *MemoryStorage) SetLastName(v string) error  { m.lastName = v; return nil }
+func (m *MemoryStorage) Username() (string, error)   { return m.username, nil }
+func (m *MemoryStorage) SetUsername(v string) error  { m.username = v; return nil }
+func (m *MemoryStorage) APIHash() (string, error)    { return m.apiHash, nil }
+func (m *MemoryStorage) SetAPIHash(v string) error   { m.apiHash = v; return nil }
+func (m *MemoryStorage) Date() (int, error)          { return m.date, nil }
+func (m *MemoryStorage) SetDate(v int) error         { m.date = v; return nil }
+func (m *MemoryStorage) State() ([]byte, error)      { return append([]byte(nil), m.state...), nil }
+func (m *MemoryStorage) SetState(v []byte) error     { m.state = v; return nil }
 
 func (m *MemoryStorage) ExportSessionString() (string, error) {
 	if len(m.authKey) == 0 {
@@ -205,6 +205,8 @@ func (m *MemoryStorage) DeletePeer(id int64) error {
 }
 
 func (m *MemoryStorage) SaveDCAuth(entry storage.DCAuthEntry) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.dcAuths == nil {
 		m.dcAuths = make(map[int]storage.DCAuthEntry)
 	}
@@ -213,6 +215,8 @@ func (m *MemoryStorage) SaveDCAuth(entry storage.DCAuthEntry) error {
 }
 
 func (m *MemoryStorage) LoadDCAuth(dcID int) (storage.DCAuthEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.dcAuths == nil {
 		return storage.DCAuthEntry{}, fmt.Errorf("dc auth not found: %d", dcID)
 	}
@@ -224,6 +228,8 @@ func (m *MemoryStorage) LoadDCAuth(dcID int) (storage.DCAuthEntry, error) {
 }
 
 func (m *MemoryStorage) LoadUpdateState(sessionID string) (*storage.UpdateState, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	state, ok := m.updateStates[sessionID]
 	if !ok {
 		return nil, nil
@@ -232,11 +238,15 @@ func (m *MemoryStorage) LoadUpdateState(sessionID string) (*storage.UpdateState,
 }
 
 func (m *MemoryStorage) SaveUpdateState(state *storage.UpdateState) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.updateStates[state.SessionID] = *state
 	return nil
 }
 
 func (m *MemoryStorage) LoadChannelUpdateState(sessionID string, channelID int64) (*storage.ChannelUpdateState, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	channels := m.channelStates[sessionID]
 	if channels == nil {
 		return nil, nil
@@ -249,6 +259,8 @@ func (m *MemoryStorage) LoadChannelUpdateState(sessionID string, channelID int64
 }
 
 func (m *MemoryStorage) LoadAllChannelUpdateStates(sessionID string) ([]*storage.ChannelUpdateState, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	channels := m.channelStates[sessionID]
 	if channels == nil {
 		return nil, nil
@@ -262,6 +274,8 @@ func (m *MemoryStorage) LoadAllChannelUpdateStates(sessionID string) ([]*storage
 }
 
 func (m *MemoryStorage) SaveChannelUpdateState(state *storage.ChannelUpdateState) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.channelStates[state.SessionID] == nil {
 		m.channelStates[state.SessionID] = make(map[int64]storage.ChannelUpdateState)
 	}
@@ -278,6 +292,8 @@ const maxDedupKeysPerSession = 10000
 const dedupExpiry = 30 * time.Minute
 
 func (m *MemoryStorage) SaveUpdateDedupKey(sessionID string, key string) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	set := m.updateDedup[sessionID]
 	if set == nil {
 		set = make(map[string]time.Time)
@@ -313,6 +329,8 @@ func (m *MemoryStorage) SaveUpdateDedupKey(sessionID string, key string) (bool, 
 }
 
 func (m *MemoryStorage) UpdateDedupKeyExists(sessionID string, key string) (bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	_, ok := m.updateDedup[sessionID]
 	if !ok {
 		return false, nil
@@ -322,6 +340,8 @@ func (m *MemoryStorage) UpdateDedupKeyExists(sessionID string, key string) (bool
 }
 
 func (m *MemoryStorage) EnqueueDurableUpdate(update *storage.DurableUpdate) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.durableUpdates[update.SessionID] == nil {
 		m.durableUpdates[update.SessionID] = make(map[string]storage.DurableUpdate)
 	}
@@ -330,11 +350,15 @@ func (m *MemoryStorage) EnqueueDurableUpdate(update *storage.DurableUpdate) erro
 }
 
 func (m *MemoryStorage) DeleteDurableUpdate(sessionID string, id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	delete(m.durableUpdates[sessionID], id)
 	return nil
 }
 
 func (m *MemoryStorage) LoadDurableUpdates(sessionID string, limit int) ([]*storage.DurableUpdate, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	var out []*storage.DurableUpdate
 	for _, item := range m.durableUpdates[sessionID] {
 		cp := item
@@ -347,9 +371,18 @@ func (m *MemoryStorage) LoadDurableUpdates(sessionID string, limit int) ([]*stor
 }
 
 func (m *MemoryStorage) MarkDurableUpdateFailed(sessionID string, id string, attempts int, lastErr string) error {
-	item := m.durableUpdates[sessionID][id]
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	inner := m.durableUpdates[sessionID]
+	if inner == nil {
+		return nil
+	}
+	item, ok := inner[id]
+	if !ok {
+		return nil
+	}
 	item.Attempts = attempts
 	item.LastError = lastErr
-	m.durableUpdates[sessionID][id] = item
+	inner[id] = item
 	return nil
 }

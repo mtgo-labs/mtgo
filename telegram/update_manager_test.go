@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/internal/storage"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func newTestStorage() storage.Storage {

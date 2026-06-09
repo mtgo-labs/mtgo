@@ -33,7 +33,8 @@ func TestAnswerInlineQuery_Basic(t *testing.T) {
 func TestAnswerInlineQuery_WithGallery(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
-	err := c.AnswerInlineQuery(context.Background(), 12345, nil,
+	err := c.AnswerInlineQuery(
+		context.Background(), 12345, nil,
 		&AnswerInlineQueryOption{Gallery: true},
 	)
 	if err != nil {
@@ -51,7 +52,8 @@ func TestAnswerInlineQuery_WithGallery(t *testing.T) {
 func TestAnswerInlineQuery_WithNextOffset(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
-	err := c.AnswerInlineQuery(context.Background(), 12345, nil,
+	err := c.AnswerInlineQuery(
+		context.Background(), 12345, nil,
 		&AnswerInlineQueryOption{NextOffset: "50"},
 	)
 	if err != nil {
@@ -69,7 +71,8 @@ func TestAnswerInlineQuery_WithNextOffset(t *testing.T) {
 func TestAnswerInlineQuery_WithSwitchPM(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
-	err := c.AnswerInlineQuery(context.Background(), 12345, nil,
+	err := c.AnswerInlineQuery(
+		context.Background(), 12345, nil,
 		&AnswerInlineQueryOption{SwitchPM: &tg.InlineBotSwitchPm{Text: "Go", StartParam: "start"}},
 	)
 	if err != nil {

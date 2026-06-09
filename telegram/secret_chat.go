@@ -80,12 +80,44 @@ func (sc *SecretChat) GetState() SecretChatState {
 	return sc.State
 }
 
-func (sc *SecretChat) NextOutSeqNo() int32 {
-	return atomic.AddInt32(&sc.OutSeqNo, 1) - 1
+// seqParity returns the parity bit x used to wire-encode this side's outgoing
+// sequence numbers, per https://core.telegram.org/api/end-to-end/seq_no:
+// x = 0 for the chat creator, x = 1 for the joining party. Outgoing is set once
+// at chat construction and is immutable afterwards.
+func (sc *SecretChat) seqParity() int32 {
+	if sc.Outgoing {
+		return 0
+	}
+	return 1
 }
 
+// NextOutSeqNo advances the outgoing-message counter and returns the
+// wire-encoded out_seq_no (2*count + x) to embed in the message being sent.
+func (sc *SecretChat) NextOutSeqNo() int32 {
+	count := atomic.AddInt32(&sc.OutSeqNo, 1) - 1
+	return count*2 + sc.seqParity()
+}
+
+// CurrentInSeqNo returns the wire-encoded in_seq_no (2*count + (1-x)) to embed
+// in an outgoing message, reflecting the number of messages received so far.
+// It reads the counter atomically and does not advance it.
+func (sc *SecretChat) CurrentInSeqNo() int32 {
+	count := atomic.LoadInt32(&sc.InSeqNo)
+	return count*2 + (1 - sc.seqParity())
+}
+
+// NextInSeqNo advances the received-message counter after a message is
+// successfully decrypted and returns the previous raw count.
 func (sc *SecretChat) NextInSeqNo() int32 {
 	return atomic.AddInt32(&sc.InSeqNo, 1) - 1
+}
+
+// ExpectedInboundParity returns the parity an inbound message's out_seq_no must
+// have: the complement of this side's outgoing parity. A received message whose
+// out_seq_no parity differs indicates a protocol violation (e.g. message
+// mirroring) and the chat should be treated as compromised.
+func (sc *SecretChat) ExpectedInboundParity() int32 {
+	return 1 - sc.seqParity()
 }
 
 func (sc *SecretChat) InputPeer() *tg.InputEncryptedChat {

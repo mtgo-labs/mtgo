@@ -107,7 +107,10 @@ func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*type
 			return nil, fmt.Errorf("unexpected authorization type %T", v.Authorization)
 		}
 		c.Log.Info("auth: QR login successful")
-		return types.ParseUser(auth.User), nil
+		user := types.ParseUser(auth.User)
+		c.SetMe(user)
+		c.saveMeToStorage(user)
+		return user, nil
 	case *tg.AuthLoginToken:
 		return nil, fmt.Errorf("QR code not yet scanned, retry later (expires in %d seconds)", v.Expires)
 	case *tg.AuthLoginTokenMigrateTo:

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
-	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 func TestConnStateTransitions(t *testing.T) {

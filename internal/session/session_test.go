@@ -1269,6 +1269,7 @@ func (p *panicTransport) Send(data []byte) error { return nil }
 func (p *panicTransport) Recv() ([]byte, error) {
 	panic("simulated transport panic")
 }
+
 func (p *panicTransport) Close() error {
 	p.closed = true
 	return nil
@@ -1863,7 +1864,7 @@ func TestBatchAckSentOnNonUpdates(t *testing.T) {
 			ack, ok := msg.Body.(*tg.MsgsAck)
 			if !ok {
 				continue
-				}
+			}
 			for _, id := range ack.MsgIds {
 				if id == serverMsgID {
 					t.Fatalf("Pong should NOT trigger quick ACK (expected batched ack via ackLoop), but got immediate ack for msgID %d", id)

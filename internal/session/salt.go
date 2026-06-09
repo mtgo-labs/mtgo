@@ -273,4 +273,7 @@ func (m *saltManager) promoteIfNeededLocked() {
 	} else {
 		m.pending = nil
 	}
+	// Wake any goroutine waiting in WaitForValid: a pending salt was just
+	// promoted to current and is now valid.
+	m.notify.Broadcast()
 }
