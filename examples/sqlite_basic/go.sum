@@ -23,10 +23,10 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mtgo-labs/mtgo v0.1.0 h1:PQIUTAy7brJDyezjzEy9cBA+YcHFA5tQhD5SckZisaM=
 github.com/mtgo-labs/mtgo v0.1.0/go.mod h1:6yhhHVjBH6M6lKvHAoAIK1fSKBf0wZjsspv0jePpOnY=
-github.com/mtgo-labs/storage v0.1.1 h1:7Squ14hTV2if8mRjBUq66JdL2pUaa+A3rc9LtoUmd58=
-github.com/mtgo-labs/storage v0.1.1/go.mod h1:sBMyZUmM0laJr1Zx4bAyYeQ6jpMCZJ64WPHcL8kNj70=
-github.com/mtgo-labs/storage/sqlite v0.1.0 h1:NmrWBwKUDkIEtTIj0h+3rUliG3fWDR9HSfaz4KWg9ag=
-github.com/mtgo-labs/storage/sqlite v0.1.0/go.mod h1:TOvZKylsQ3AFY7241w12G4jytmQd2xmY0NSYF7UQ3Fg=
+github.com/mtgo-labs/storage v0.4.0 h1:vfZGeLSrPux45y6S3PTtpQ302fEZxlItuzC2HRfTKl8=
+github.com/mtgo-labs/storage v0.4.0/go.mod h1:sBMyZUmM0laJr1Zx4bAyYeQ6jpMCZJ64WPHcL8kNj70=
+github.com/mtgo-labs/storage/sqlite v0.4.0 h1:+YuBdcSog3u3Pv2lUuL1Z3Iw9FRl3iKZ2UV3HYqQmN0=
+github.com/mtgo-labs/storage/sqlite v0.4.0/go.mod h1:lOqrHVTzy3ZSwYjmVyAtRvDUV1VH/YH2aIslpBB5iCI=
 github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdhx/f4=
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
