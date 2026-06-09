@@ -25,7 +25,10 @@ func TestCDNDecryptChunk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	decrypted := cdnDecryptChunk(encrypted, key, iv, 0)
+	decrypted, err := cdnDecryptChunk(encrypted, key, iv, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, originalData) {
 		t.Error("CDN decryption failed: data mismatch")
 	}
@@ -45,7 +48,10 @@ func TestCDNDecryptChunkWithOffset(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	decrypted := cdnDecryptChunk(encrypted[downloadChunkSize:], key, iv, int64(downloadChunkSize))
+	decrypted, err := cdnDecryptChunk(encrypted[downloadChunkSize:], key, iv, int64(downloadChunkSize))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, originalData[downloadChunkSize:]) {
 		t.Error("CDN decryption with offset failed: data mismatch")
 	}
@@ -76,7 +82,10 @@ func TestCDNVerifyHash(t *testing.T) {
 func TestCDNDecryptChunk_EmptyData(t *testing.T) {
 	key := make([]byte, 32)
 	iv := make([]byte, 32)
-	result := cdnDecryptChunk(nil, key, iv, 0)
+	result, err := cdnDecryptChunk(nil, key, iv, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if result != nil {
 		t.Errorf("expected nil for empty data, got %d bytes", len(result))
 	}
@@ -114,7 +123,10 @@ func TestCDNDecryptWithCTRIVDerivation(t *testing.T) {
 		}
 	}
 
-	decrypted := cdnDecryptChunk(encrypted, key, fullIV, 0)
+	decrypted, err := cdnDecryptChunk(encrypted, key, fullIV, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(decrypted, originalData) {
 		t.Error("CTR IV derivation mismatch")
 	}

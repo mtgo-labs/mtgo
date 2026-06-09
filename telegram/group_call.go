@@ -245,7 +245,10 @@ func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCD
 
 		switch f := result.(type) {
 		case *tg.UploadCDNFile:
-			chunk = cdnDecryptChunk(f.Bytes, redirect.EncryptionKey, redirect.EncryptionIv, 0)
+			chunk, err = cdnDecryptChunk(f.Bytes, redirect.EncryptionKey, redirect.EncryptionIv, 0)
+			if err != nil {
+				return nil, err
+			}
 			return chunk, nil
 		case *tg.UploadCDNFileReuploadNeeded:
 			_, reuploadErr := cdnRPC.UploadReuploadCDNFile(ctx, &tg.UploadReuploadCDNFileRequest{
