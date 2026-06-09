@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/mtgo-labs/mtgo v0.1.0
 	github.com/mtgo-labs/plugins/i18n v0.1.0
-	golang.org/x/text v0.37.0
+	golang.org/x/text v0.38.0
 )
 
 require (
