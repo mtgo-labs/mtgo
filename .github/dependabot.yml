@@ -1,21 +1,14 @@
 version: 2
 updates:
   - package-ecosystem: gomod
-    directories:
-      - "/"
-      - "/examples/i18n_bot"
-      - "/examples/middleware_bot"
-      - "/examples/mongodb_bot"
-      - "/examples/sqlite_basic"
+    directory: "/"
     schedule:
       interval: daily
     groups:
       golang:
-        group-by: dependency-name
         patterns:
           - "golang.org/x/*"
       mtgo-labs:
-        group-by: dependency-name
         patterns:
           - "github.com/mtgo-labs/*"
 
