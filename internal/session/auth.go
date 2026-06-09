@@ -251,10 +251,12 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		if dhPrime.BitLen() != 2048 {
 			return nil, fmt.Errorf("%w: bit length %d", ErrDHPrimeInvalid, dhPrime.BitLen())
 		}
+		// This client only trusts the well-known hardcoded DH prime. The MTProto
+		// spec requires a SAFE 2048-bit prime (both p and (p-1)/2 prime); rather
+		// than re-validate the safe-prime property of an arbitrary server-supplied
+		// value, reject anything that is not the known constant.
 		if dhPrime.Cmp(crypto.CurrentDHPrime) != 0 {
-			if !dhPrime.ProbablyPrime(64) {
-				return nil, ErrDHPrimeInvalid
-			}
+			return nil, ErrDHPrimeInvalid
 		}
 
 		g := big.NewInt(int64(dhInner.G))

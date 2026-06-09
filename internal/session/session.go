@@ -23,6 +23,9 @@ type sessionLogger interface {
 	Errorf(format string, v ...any)
 }
 
+// authKeyLength is the required size in bytes of an MTProto authorization key.
+const authKeyLength = 256
+
 // Transport abstracts the underlying network transport used by a Session to
 // send and receive raw byte payloads. Implementations must be safe for
 // concurrent use via Send and Recv from separate goroutines.
@@ -259,6 +262,12 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 	authKey, err := st.AuthKey()
 	if err != nil {
 		return nil, err
+	}
+	// A non-empty auth key must be exactly 256 bytes; a corrupted/truncated
+	// persisted key would otherwise panic later in the crypto Pack/Unpack paths
+	// (which index authKey[88:120] etc.). Reject it here with a clean error.
+	if len(authKey) != 0 && len(authKey) != authKeyLength {
+		return nil, fmt.Errorf("session: invalid stored auth key length %d, expected %d", len(authKey), authKeyLength)
 	}
 
 	var encodedSidBytes [8]byte

@@ -108,11 +108,12 @@ func TestComputeSRPDeterministic(t *testing.T) {
 	salt1 := make([]byte, 32)
 	salt2 := make([]byte, 32)
 
-	result1, err := ComputeSRP(salt1, salt2, g, p, make([]byte, 256), 1, "password")
+	srpB := pad256Big(new(big.Int).Exp(g, big.NewInt(12345), p))
+	result1, err := ComputeSRP(salt1, salt2, g, p, srpB, 1, "password")
 	if err != nil {
 		t.Fatal(err)
 	}
-	result2, err := ComputeSRP(salt1, salt2, g, p, make([]byte, 256), 1, "password")
+	result2, err := ComputeSRP(salt1, salt2, g, p, srpB, 1, "password")
 	if err != nil {
 		t.Fatal(err)
 	}
