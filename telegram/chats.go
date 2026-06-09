@@ -358,16 +358,25 @@ func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) 
 		return fmt.Errorf("resolve user: %w", err)
 	}
 
+	var userPeer tg.InputPeerClass
+	switch u := user.(type) {
+	case *tg.InputUser:
+		userPeer = &tg.InputPeerUser{UserID: u.UserID, AccessHash: u.AccessHash}
+	case *tg.InputUserSelf:
+		userPeer = &tg.InputPeerSelf{}
+	default:
+		return fmt.Errorf("BanChatMember: unsupported user type %T", user)
+	}
+
 	rpc := c.Raw()
 	_, err = rpc.ChannelsEditBanned(ctx, &tg.ChannelsEditBannedRequest{
 		Channel:     &tg.InputChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash},
-		Participant: peer,
+		Participant: userPeer,
 		BannedRights: &tg.ChatBannedRights{
 			Flags:        (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 10),
 			ViewMessages: true,
 		},
 	})
-	_ = user
 	return err
 }
 
