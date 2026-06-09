@@ -175,6 +175,9 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 }
 
 func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text string) (int64, error) {
+	if c.secretChats == nil {
+		return 0, ErrNoSecretChats
+	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
 		return 0, fmt.Errorf("telegram: secret chat %d not found", chatID)
@@ -195,7 +198,7 @@ func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text strin
 	msgLayer := &e2e.DecryptedMessageLayer{
 		RandomBytes: randomBytes,
 		Layer:       chat.Layer,
-		InSeqNo:     chat.InSeqNo,
+		InSeqNo:     chat.CurrentInSeqNo(),
 		OutSeqNo:    outSeq,
 		Message:     innerMsg,
 	}
@@ -225,6 +228,9 @@ func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text strin
 }
 
 func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.DecryptedMessageLayer, error) {
+	if c.secretChats == nil {
+		return nil, ErrNoSecretChats
+	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
 		return nil, fmt.Errorf("telegram: secret chat %d not found", chatID)
@@ -246,6 +252,13 @@ func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.Dec
 	layer, ok := obj.(*e2e.DecryptedMessageLayer)
 	if !ok {
 		return nil, fmt.Errorf("telegram: unexpected decrypted type %T", obj)
+	}
+
+	// The sender's out_seq_no must carry the parity opposite to ours; a
+	// mismatch signals a protocol violation (e.g. message mirroring) per
+	// https://core.telegram.org/api/end-to-end/seq_no.
+	if layer.OutSeqNo%2 != chat.ExpectedInboundParity() {
+		return nil, fmt.Errorf("telegram: secret chat %d: out_seq_no parity mismatch (got %d)", chatID, layer.OutSeqNo)
 	}
 
 	chat.NextInSeqNo()
@@ -498,6 +511,9 @@ func (h *encryptionUpdateHandler) handleEncryptedMessage(c *Client, ctx *Context
 }
 
 func (c *Client) SendLayerNotification(ctx context.Context, chatID int32) error {
+	if c.secretChats == nil {
+		return ErrNoSecretChats
+	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
 		return fmt.Errorf("telegram: secret chat %d not found", chatID)
@@ -518,7 +534,7 @@ func (c *Client) SendLayerNotification(ctx context.Context, chatID int32) error 
 	msgLayer := &e2e.DecryptedMessageLayer{
 		RandomBytes: randomBytes,
 		Layer:       chat.Layer,
-		InSeqNo:     chat.InSeqNo,
+		InSeqNo:     chat.CurrentInSeqNo(),
 		OutSeqNo:    outSeq,
 		Message:     serviceMsg,
 	}
@@ -566,6 +582,9 @@ type SecretFileOptions struct {
 }
 
 func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Reader, fileName string, fileSize int64, opts *SecretFileOptions) error {
+	if c.secretChats == nil {
+		return ErrNoSecretChats
+	}
 	if opts == nil {
 		opts = &SecretFileOptions{}
 	}
@@ -597,9 +616,9 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 	keyFP := crypto.FileKeyFingerprint(fileKey, fileIV)
 
 	encryptedFileData, err := crypto.EncryptFile(fileData, fileKey, fileIV)
-		if err != nil {
-			return fmt.Errorf("telegram: encrypt file: %w", err)
-		}
+	if err != nil {
+		return fmt.Errorf("telegram: encrypt file: %w", err)
+	}
 
 	uploadResult, err := c.UploadFile(ctx, bytes.NewReader(encryptedFileData), fileName, int64(len(encryptedFileData)), nil)
 	if err != nil {
@@ -638,7 +657,7 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 	msgLayer := &e2e.DecryptedMessageLayer{
 		RandomBytes: randomBytes,
 		Layer:       chat.Layer,
-		InSeqNo:     chat.InSeqNo,
+		InSeqNo:     chat.CurrentInSeqNo(),
 		OutSeqNo:    outSeq,
 		Message:     innerMsg,
 	}
