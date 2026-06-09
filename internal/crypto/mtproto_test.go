@@ -81,12 +81,12 @@ func TestPackUnpackRoundTrip(t *testing.T) {
 	}
 
 	packed, err := Pack(msg, salt, sessionID, authKey, authKeyIDBytes)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(packed) < 24 {
-			t.Fatal("packed data too short")
-		}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(packed) < 24 {
+		t.Fatal("packed data too short")
+	}
 
 	if !bytes.Equal(packed[:8], authKeyIDBytes) {
 		t.Fatal("auth_key_id mismatch")
@@ -122,11 +122,11 @@ func TestPackUnpackSecurityChecks(t *testing.T) {
 	}
 
 	packed, err := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		tampered := make([]byte, len(packed))
+	tampered := make([]byte, len(packed))
 	copy(tampered, packed)
 	tampered[0] ^= 0xFF
 
@@ -149,11 +149,11 @@ func TestPackUnpackSessionIDMismatch(t *testing.T) {
 	}
 
 	packed, err := Pack(msg, 0, sessionID, authKey, authKeyIDBytes)
-		if err != nil {
-			t.Fatal(err)
-		}
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		wrongSessionID := make([]byte, 8)
+	wrongSessionID := make([]byte, 8)
 	wrongSessionID[0] = 0xFF
 
 	_, _, err = Unpack(packed, wrongSessionID, authKey, authKeyIDBytes)

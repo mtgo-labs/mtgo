@@ -50,7 +50,8 @@ func TestLoginUser_Success(t *testing.T) {
 }
 
 func TestLoginUser_AlreadyAuthed(t *testing.T) {
-	c, mock := newClientWithLoginMock("+1234567890",
+	c, mock := newClientWithLoginMock(
+		"+1234567890",
 		func(_ context.Context, _ string) (string, error) { return "", nil }, nil,
 	)
 
@@ -66,7 +67,8 @@ func TestLoginUser_AlreadyAuthed(t *testing.T) {
 }
 
 func TestLoginUser_SendCodeError(t *testing.T) {
-	c, mock := newClientWithLoginMock("+1234567890",
+	c, mock := newClientWithLoginMock(
+		"+1234567890",
 		func(_ context.Context, _ string) (string, error) { return "12345", nil }, nil,
 	)
 
@@ -79,7 +81,8 @@ func TestLoginUser_SendCodeError(t *testing.T) {
 }
 
 func TestLoginUser_CodeFuncError(t *testing.T) {
-	c, mock := newClientWithLoginMock("+1234567890",
+	c, mock := newClientWithLoginMock(
+		"+1234567890",
 		func(_ context.Context, _ string) (string, error) {
 			return "", errors.New("user cancelled")
 		}, nil,

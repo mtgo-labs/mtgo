@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
-	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
 type updateManagerConfig struct {
@@ -60,7 +60,7 @@ type updateManager struct {
 	cancel    context.CancelFunc
 
 	// mu protects state, channels, health, and recoveryTimer.
-	mu sync.RWMutex
+	mu         sync.RWMutex
 	state      updateState
 	channels   map[int64]channelState
 	recovering bool

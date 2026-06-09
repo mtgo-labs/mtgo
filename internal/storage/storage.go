@@ -18,16 +18,18 @@ import (
 	extstorage "github.com/mtgo-labs/storage"
 )
 
-type PeerType = extstorage.PeerType
-type Peer = extstorage.Peer
-type Session = extstorage.Session
-type Conversation = extstorage.Conversation
-type PeerStore = extstorage.PeerStore
-type SessionStore = extstorage.SessionStore
-type ConversationStore = extstorage.ConversationStore
-type Adapter = extstorage.Adapter
-type DCAuthEntry = extstorage.DCAuthEntry
-type DCAuthStore = extstorage.DCAuthStore
+type (
+	PeerType          = extstorage.PeerType
+	Peer              = extstorage.Peer
+	Session           = extstorage.Session
+	Conversation      = extstorage.Conversation
+	PeerStore         = extstorage.PeerStore
+	SessionStore      = extstorage.SessionStore
+	ConversationStore = extstorage.ConversationStore
+	Adapter           = extstorage.Adapter
+	DCAuthEntry       = extstorage.DCAuthEntry
+	DCAuthStore       = extstorage.DCAuthStore
+)
 
 const (
 	PeerTypeUser    PeerType = extstorage.PeerTypeUser
@@ -131,7 +133,7 @@ type memoryAdapter struct {
 	sessionName string
 	sess        *Session
 
-	peers         map[int64]*Peer
+	peers          map[int64]*Peer
 	peerByUsername map[string]int64
 
 	updateStates   map[string]*UpdateState
@@ -458,6 +460,7 @@ func (a *adapterWrapper) SessionID() (string, error) {
 	}
 	return a.sess.SessionID, nil
 }
+
 func (a *adapterWrapper) SetSessionID(v string) error {
 	if sa, ok := a.ext.(SessionIDAware); ok {
 		sa.SetSessionName(v)
@@ -474,6 +477,7 @@ func (a *adapterWrapper) SetSessionID(v string) error {
 	}
 	return nil
 }
+
 func (a *adapterWrapper) DCID() (int, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -482,6 +486,7 @@ func (a *adapterWrapper) DCID() (int, error) {
 	}
 	return a.sess.DC, nil
 }
+
 func (a *adapterWrapper) SetDCID(v int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -493,6 +498,7 @@ func (a *adapterWrapper) SetDCID(v int) error {
 	a.sess.DC = v
 	return a.save()
 }
+
 func (a *adapterWrapper) APIID() (int32, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -501,6 +507,7 @@ func (a *adapterWrapper) APIID() (int32, error) {
 	}
 	return a.sess.APIID, nil
 }
+
 func (a *adapterWrapper) SetAPIID(v int32) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -510,6 +517,7 @@ func (a *adapterWrapper) SetAPIID(v int32) error {
 	a.sess.APIID = v
 	return a.save()
 }
+
 func (a *adapterWrapper) APIHash() (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -518,6 +526,7 @@ func (a *adapterWrapper) APIHash() (string, error) {
 	}
 	return a.sess.APIHash, nil
 }
+
 func (a *adapterWrapper) SetAPIHash(v string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -527,6 +536,7 @@ func (a *adapterWrapper) SetAPIHash(v string) error {
 	a.sess.APIHash = v
 	return a.save()
 }
+
 func (a *adapterWrapper) TestMode() (bool, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -535,6 +545,7 @@ func (a *adapterWrapper) TestMode() (bool, error) {
 	}
 	return a.sess.TestMode, nil
 }
+
 func (a *adapterWrapper) SetTestMode(v bool) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -544,6 +555,7 @@ func (a *adapterWrapper) SetTestMode(v bool) error {
 	a.sess.TestMode = v
 	return a.save()
 }
+
 func (a *adapterWrapper) AuthKey() ([]byte, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -552,6 +564,7 @@ func (a *adapterWrapper) AuthKey() ([]byte, error) {
 	}
 	return a.sess.AuthKey, nil
 }
+
 func (a *adapterWrapper) SetAuthKey(v []byte) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -561,6 +574,7 @@ func (a *adapterWrapper) SetAuthKey(v []byte) error {
 	a.sess.AuthKey = v
 	return a.save()
 }
+
 func (a *adapterWrapper) UserID() (int64, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -569,6 +583,7 @@ func (a *adapterWrapper) UserID() (int64, error) {
 	}
 	return a.sess.UserID, nil
 }
+
 func (a *adapterWrapper) SetUserID(v int64) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -578,6 +593,7 @@ func (a *adapterWrapper) SetUserID(v int64) error {
 	a.sess.UserID = v
 	return a.save()
 }
+
 func (a *adapterWrapper) IsBot() (bool, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -586,6 +602,7 @@ func (a *adapterWrapper) IsBot() (bool, error) {
 	}
 	return a.sess.IsBot, nil
 }
+
 func (a *adapterWrapper) SetIsBot(v bool) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -595,6 +612,7 @@ func (a *adapterWrapper) SetIsBot(v bool) error {
 	a.sess.IsBot = v
 	return a.save()
 }
+
 func (a *adapterWrapper) FirstName() (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -603,6 +621,7 @@ func (a *adapterWrapper) FirstName() (string, error) {
 	}
 	return a.sess.FirstName, nil
 }
+
 func (a *adapterWrapper) SetFirstName(v string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -612,6 +631,7 @@ func (a *adapterWrapper) SetFirstName(v string) error {
 	a.sess.FirstName = v
 	return a.save()
 }
+
 func (a *adapterWrapper) LastName() (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -620,6 +640,7 @@ func (a *adapterWrapper) LastName() (string, error) {
 	}
 	return a.sess.LastName, nil
 }
+
 func (a *adapterWrapper) SetLastName(v string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -629,6 +650,7 @@ func (a *adapterWrapper) SetLastName(v string) error {
 	a.sess.LastName = v
 	return a.save()
 }
+
 func (a *adapterWrapper) Username() (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -637,6 +659,7 @@ func (a *adapterWrapper) Username() (string, error) {
 	}
 	return a.sess.Username, nil
 }
+
 func (a *adapterWrapper) SetUsername(v string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -646,6 +669,7 @@ func (a *adapterWrapper) SetUsername(v string) error {
 	a.sess.Username = v
 	return a.save()
 }
+
 func (a *adapterWrapper) Date() (int, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -654,6 +678,7 @@ func (a *adapterWrapper) Date() (int, error) {
 	}
 	return a.sess.Date, nil
 }
+
 func (a *adapterWrapper) SetDate(v int) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -663,6 +688,7 @@ func (a *adapterWrapper) SetDate(v int) error {
 	a.sess.Date = v
 	return a.save()
 }
+
 func (a *adapterWrapper) State() ([]byte, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -671,6 +697,7 @@ func (a *adapterWrapper) State() ([]byte, error) {
 	}
 	return a.sess.State, nil
 }
+
 func (a *adapterWrapper) SetState(v []byte) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -680,6 +707,7 @@ func (a *adapterWrapper) SetState(v []byte) error {
 	a.sess.State = v
 	return a.save()
 }
+
 func (a *adapterWrapper) ExportSessionString() (string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -729,8 +757,8 @@ var prodDCAddresses = map[int]string{
 func dcIPv4Address(id int) string {
 	return prodDCAddresses[id]
 }
-func (a *adapterWrapper) Close() error             { return a.ext.Close() }
-func (a *adapterWrapper) SavePeer(p *Peer) error   { return a.ext.SavePeer(p) }
+func (a *adapterWrapper) Close() error           { return a.ext.Close() }
+func (a *adapterWrapper) SavePeer(p *Peer) error { return a.ext.SavePeer(p) }
 func (a *adapterWrapper) SavePeers(peers []*Peer) error {
 	for _, p := range peers {
 		if err := a.ext.SavePeer(p); err != nil {
@@ -739,12 +767,18 @@ func (a *adapterWrapper) SavePeers(peers []*Peer) error {
 	}
 	return nil
 }
+
 func (a *adapterWrapper) LoadPeers() ([]*Peer, error) {
 	return a.ext.LoadPeers()
 }
-func (a *adapterWrapper) GetPeer(id int64) (*Peer, error)                 { return a.ext.GetPeer(id) }
-func (a *adapterWrapper) GetPeerByUsername(username string) (*Peer, error) { return a.ext.GetPeerByUsername(username) }
-func (a *adapterWrapper) DeletePeer(id int64) error                       { return a.ext.DeletePeer(id) }
+
+func (a *adapterWrapper) GetPeer(id int64) (*Peer, error) { return a.ext.GetPeer(id) }
+
+func (a *adapterWrapper) GetPeerByUsername(username string) (*Peer, error) {
+	return a.ext.GetPeerByUsername(username)
+}
+
+func (a *adapterWrapper) DeletePeer(id int64) error { return a.ext.DeletePeer(id) }
 
 func (a *adapterWrapper) cs() ConversationStore {
 	if s, ok := a.ext.(ConversationStore); ok {
@@ -752,18 +786,21 @@ func (a *adapterWrapper) cs() ConversationStore {
 	}
 	return nil
 }
+
 func (a *adapterWrapper) SaveConversation(c *Conversation) error {
 	if s := a.cs(); s != nil {
 		return s.SaveConversation(c)
 	}
 	return nil
 }
+
 func (a *adapterWrapper) LoadConversation(chatID, userID int64) (*Conversation, error) {
 	if s := a.cs(); s != nil {
 		return s.LoadConversation(chatID, userID)
 	}
 	return nil, nil
 }
+
 func (a *adapterWrapper) DeleteConversation(chatID, userID int64) error {
 	if s := a.cs(); s != nil {
 		return s.DeleteConversation(chatID, userID)
@@ -777,66 +814,77 @@ func (a *adapterWrapper) uss() UpdateStateStore {
 	}
 	return nil
 }
+
 func (a *adapterWrapper) LoadUpdateState(sid string) (*UpdateState, error) {
 	if s := a.uss(); s != nil {
 		return s.LoadUpdateState(sid)
 	}
 	return nil, nil
 }
+
 func (a *adapterWrapper) SaveUpdateState(state *UpdateState) error {
 	if s := a.uss(); s != nil {
 		return s.SaveUpdateState(state)
 	}
 	return nil
 }
+
 func (a *adapterWrapper) LoadChannelUpdateState(sid string, cid int64) (*ChannelUpdateState, error) {
 	if s := a.uss(); s != nil {
 		return s.LoadChannelUpdateState(sid, cid)
 	}
 	return nil, nil
 }
+
 func (a *adapterWrapper) LoadAllChannelUpdateStates(sid string) ([]*ChannelUpdateState, error) {
 	if s := a.uss(); s != nil {
 		return s.LoadAllChannelUpdateStates(sid)
 	}
 	return nil, nil
 }
+
 func (a *adapterWrapper) SaveChannelUpdateState(state *ChannelUpdateState) error {
 	if s := a.uss(); s != nil {
 		return s.SaveChannelUpdateState(state)
 	}
 	return nil
 }
+
 func (a *adapterWrapper) SaveUpdateDedupKey(sid, key string) (bool, error) {
 	if s := a.uss(); s != nil {
 		return s.SaveUpdateDedupKey(sid, key)
 	}
 	return true, nil
 }
+
 func (a *adapterWrapper) UpdateDedupKeyExists(sid, key string) (bool, error) {
 	if s := a.uss(); s != nil {
 		return s.UpdateDedupKeyExists(sid, key)
 	}
 	return false, nil
 }
+
 func (a *adapterWrapper) EnqueueDurableUpdate(u *DurableUpdate) error {
 	if s := a.uss(); s != nil {
 		return s.EnqueueDurableUpdate(u)
 	}
 	return nil
 }
+
 func (a *adapterWrapper) DeleteDurableUpdate(sid, key string) error {
 	if s := a.uss(); s != nil {
 		return s.DeleteDurableUpdate(sid, key)
 	}
 	return nil
 }
+
 func (a *adapterWrapper) LoadDurableUpdates(sid string, limit int) ([]*DurableUpdate, error) {
 	if s := a.uss(); s != nil {
 		return s.LoadDurableUpdates(sid, limit)
 	}
 	return nil, nil
 }
+
 func (a *adapterWrapper) MarkDurableUpdateFailed(sid, key string, attempts int, lastErr string) error {
 	if s := a.uss(); s != nil {
 		return s.MarkDurableUpdateFailed(sid, key, attempts, lastErr)

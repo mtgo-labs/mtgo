@@ -621,7 +621,8 @@ func (s *BroadcastStream) buildFFmpegArgs(input string) []string {
 	args = append(args, "-re")
 
 	if s.src.audioOnly && s.src.image != "" {
-		args = append(args,
+		args = append(
+			args,
 			"-loop", "1",
 			"-i", s.src.image,
 		)
@@ -629,7 +630,8 @@ func (s *BroadcastStream) buildFFmpegArgs(input string) []string {
 			args = append(args, "-stream_loop", fmt.Sprintf("%d", s.cfg.LoopCount))
 		}
 		args = append(args, "-i", input)
-		args = append(args,
+		args = append(
+			args,
 			"-map", "0:v",
 			"-map", "1:a",
 			"-c:v", "libx264",
@@ -643,7 +645,8 @@ func (s *BroadcastStream) buildFFmpegArgs(input string) []string {
 			"-threads", "0",
 		)
 		args = append(args, s.audioArgs()...)
-		args = append(args,
+		args = append(
+			args,
 			"-shortest",
 			"-f", "flv",
 			"-rtmp_buffer", "100",
@@ -654,7 +657,8 @@ func (s *BroadcastStream) buildFFmpegArgs(input string) []string {
 		if s.cfg.LoopCount != 0 {
 			args = append(args, "-stream_loop", fmt.Sprintf("%d", s.cfg.LoopCount))
 		}
-		args = append(args,
+		args = append(
+			args,
 			"-i", input,
 			"-c:v", "libx264",
 			"-preset", "superfast",
@@ -666,7 +670,8 @@ func (s *BroadcastStream) buildFFmpegArgs(input string) []string {
 			"-threads", "0",
 		)
 		args = append(args, s.audioArgs()...)
-		args = append(args,
+		args = append(
+			args,
 			"-f", "flv",
 			"-rtmp_buffer", "100",
 			"-rtmp_live", "live",

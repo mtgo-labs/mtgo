@@ -218,5 +218,3 @@ func TestSaltEntryValidUntilFromFuture(t *testing.T) {
 		t.Errorf("ValidUntil() = %v, want %v", got, want)
 	}
 }
-
-

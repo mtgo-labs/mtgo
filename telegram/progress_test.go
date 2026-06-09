@@ -1,8 +1,9 @@
 package telegram
 
 import (
-	"github.com/mtgo-labs/mtgo/telegram/params"
 	"testing"
+
+	"github.com/mtgo-labs/mtgo/telegram/params"
 )
 
 func TestProgressInfo(t *testing.T) {

@@ -840,15 +840,15 @@ func (m *Message) setDirectServiceFields(raw tg.MessageActionClass, pm *PeerMap)
 		m.ForumTopicEdited = &ForumTopicEdited{
 			Title:         action.Title,
 			CustomEmojiID: fmt.Sprintf("%d", action.IconEmojiID),
-		IsClosed:      action.Closed,
-		IsHidden:      action.Hidden,
-	}
-	if action.Closed {
-		m.ForumTopicClosed = &ForumTopicClosed{}
-	}
-	if action.Hidden {
-		m.GeneralForumTopicHidden = &GeneralForumTopicHidden{}
-	}
+			IsClosed:      action.Closed,
+			IsHidden:      action.Hidden,
+		}
+		if action.Closed {
+			m.ForumTopicClosed = &ForumTopicClosed{}
+		}
+		if action.Hidden {
+			m.GeneralForumTopicHidden = &GeneralForumTopicHidden{}
+		}
 	case *tg.MessageActionBotAllowed:
 		m.WriteAccessAllowed = ParseWriteAccessAllowed(action)
 	case *tg.MessageActionSetChatWallPaper:

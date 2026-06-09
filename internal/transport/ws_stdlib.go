@@ -23,10 +23,10 @@ const (
 	wsOpPing   = 0x9
 	wsOpPong   = 0xA
 
-	wsFin    = 0x80
-	wsMask   = 0x80
-	wsLen16  = 126
-	wsLen64  = 127
+	wsFin                 = 0x80
+	wsMask                = 0x80
+	wsLen16               = 126
+	wsLen64               = 127
 	wsStatusNormalClosure = 1000
 )
 
@@ -36,14 +36,14 @@ var wsKeyGUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 // net.Conn that reads and writes WebSocket binary frames. It handles
 // fragmentation, masking (client→server), and close frame sending.
 type wsConn struct {
-	conn   net.Conn
-	br     *bufio.Reader
-	mu     sync.Mutex // serializes writes
+	conn net.Conn
+	br   *bufio.Reader
+	mu   sync.Mutex // serializes writes
 
-	readBuf    []byte // buffered bytes from the current frame
-	frameBuf   []byte // reusable buffer for reading frame payloads
-	readEOF    bool   // set when a final frame has been drained
-	readErr    error  // sticky read error
+	readBuf  []byte // buffered bytes from the current frame
+	frameBuf []byte // reusable buffer for reading frame payloads
+	readEOF  bool   // set when a final frame has been drained
+	readErr  error  // sticky read error
 }
 
 // wsReadWriter implements the io.ReadWriter needed by bufio.ReadWriter
@@ -115,19 +115,19 @@ func (c *wsConn) Close() error {
 }
 
 // LocalAddr implements net.Conn.
-func (c *wsConn) LocalAddr() net.Addr                { return c.conn.LocalAddr() }
+func (c *wsConn) LocalAddr() net.Addr { return c.conn.LocalAddr() }
 
 // RemoteAddr implements net.Conn.
-func (c *wsConn) RemoteAddr() net.Addr               { return c.conn.RemoteAddr() }
+func (c *wsConn) RemoteAddr() net.Addr { return c.conn.RemoteAddr() }
 
 // SetDeadline implements net.Conn.
-func (c *wsConn) SetDeadline(t time.Time) error       { return c.conn.SetDeadline(t) }
+func (c *wsConn) SetDeadline(t time.Time) error { return c.conn.SetDeadline(t) }
 
 // SetReadDeadline implements net.Conn.
-func (c *wsConn) SetReadDeadline(t time.Time) error   { return c.conn.SetReadDeadline(t) }
+func (c *wsConn) SetReadDeadline(t time.Time) error { return c.conn.SetReadDeadline(t) }
 
 // SetWriteDeadline implements net.Conn.
-func (c *wsConn) SetWriteDeadline(t time.Time) error  { return c.conn.SetWriteDeadline(t) }
+func (c *wsConn) SetWriteDeadline(t time.Time) error { return c.conn.SetWriteDeadline(t) }
 
 // --- frame I/O ---
 

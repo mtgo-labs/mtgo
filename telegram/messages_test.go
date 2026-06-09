@@ -114,7 +114,8 @@ func TestSendMessageProtectionAndInvertMediaFlags(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendMessage(context.Background(), 10, "hello",
+	_, err := c.SendMessage(
+		context.Background(), 10, "hello",
 		&params.SendMessage{NoForwards: true, InvertMedia: true},
 	)
 	if err != nil {
@@ -242,7 +243,8 @@ func TestEditMessageCaptionWithOptions(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.EditMessageCaption(context.Background(), 10, 55, "cap",
+	_, err := c.EditMessageCaption(
+		context.Background(), 10, 55, "cap",
 		&params.EditMessage{ReplyMarkup: &tg.ReplyInlineMarkup{}},
 	)
 	if err != nil {
@@ -316,7 +318,8 @@ func TestSearchMessages(t *testing.T) {
 		Chats:    []tg.ChatClass{},
 	})
 
-	_, err := c.SearchMessages(context.Background(), 10, "hello",
+	_, err := c.SearchMessages(
+		context.Background(), 10, "hello",
 		&SearchMessagesOption{Limit: 25},
 	)
 	if err != nil {
@@ -366,7 +369,8 @@ func TestSearchGlobal(t *testing.T) {
 		Chats:    []tg.ChatClass{},
 	})
 
-	_, err := c.SearchGlobal(context.Background(), "world",
+	_, err := c.SearchGlobal(
+		context.Background(), "world",
 		&SearchGlobalOption{Limit: 10},
 	)
 	if err != nil {
@@ -545,7 +549,8 @@ func TestSendReactionMultiple(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	err := c.SendReaction(context.Background(), 10, 55,
+	err := c.SendReaction(
+		context.Background(), 10, 55,
 		[]types.Reaction{
 			{Emoji: "\U0001F525"},
 			{CustomEmojiID: "12345"},
@@ -567,7 +572,8 @@ func TestSendReactionWithOptions(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	err := c.SendReaction(context.Background(), 10, 55,
+	err := c.SendReaction(
+		context.Background(), 10, 55,
 		[]types.Reaction{{Emoji: "\U0001F525"}},
 		&params.SendReactionOption{Big: true, AddToRecent: true},
 	)
@@ -722,7 +728,8 @@ func TestSendLocationWithReply(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendLocation(context.Background(), 10, 1.0, 2.0,
+	_, err := c.SendLocation(
+		context.Background(), 10, 1.0, 2.0,
 		&params.SendMessage{ReplyToMessageID: 42},
 	)
 	if err != nil {
@@ -794,7 +801,8 @@ func TestSendDiceCustomEmoticon(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendDice(context.Background(), 10,
+	_, err := c.SendDice(
+		context.Background(), 10,
 		&SendDiceOption{Emoticon: "\U0001F3AF"},
 	)
 	if err != nil {
@@ -858,7 +866,8 @@ func TestSendCachedMedia(t *testing.T) {
 		t.Fatalf("encode file_id: %v", err)
 	}
 
-	_, err = c.SendCachedMedia(context.Background(), 10, cachedFileID,
+	_, err = c.SendCachedMedia(
+		context.Background(), 10, cachedFileID,
 		&params.SendMessage{ReplyToMessageID: 10},
 	)
 	if err != nil {
@@ -888,7 +897,8 @@ func TestSendCachedMediaProtectionAndInvertMediaFlags(t *testing.T) {
 		t.Fatalf("encode file_id: %v", err)
 	}
 
-	_, err = c.SendCachedMedia(context.Background(), 10, cachedFileID,
+	_, err = c.SendCachedMedia(
+		context.Background(), 10, cachedFileID,
 		&params.SendMessage{NoForwards: true, InvertMedia: true},
 	)
 	if err != nil {
@@ -922,7 +932,8 @@ func TestSendMediaGroupProtectionAndInvertMediaFlags(t *testing.T) {
 			Message:  "caption",
 		},
 	}
-	_, err := c.SendMediaGroup(context.Background(), 10, items,
+	_, err := c.SendMediaGroup(
+		context.Background(), 10, items,
 		&params.SendMessage{NoForwards: true, InvertMedia: true},
 	)
 	if err != nil {
@@ -947,7 +958,8 @@ func TestEditMessageInvertMediaFlag(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.EditMessageText(context.Background(), 10, 55, "edited",
+	_, err := c.EditMessageText(
+		context.Background(), 10, 55, "edited",
 		&params.EditMessage{InvertMedia: true},
 	)
 	if err != nil {
@@ -993,7 +1005,8 @@ func TestEditInlineFlags(t *testing.T) {
 	inv.setResult(tg.MessagesEditInlineBotMessageTypeID, &tg.BoolTrue{})
 	inlineID := &tg.InputBotInlineMessageID{DCID: 1, ID: 2, AccessHash: 3}
 
-	_, err := c.EditInlineText(context.Background(), inlineID, "edited",
+	_, err := c.EditInlineText(
+		context.Background(), inlineID, "edited",
 		&EditInlineOpts{NoWebpage: true, InvertMedia: true},
 	)
 	if err != nil {

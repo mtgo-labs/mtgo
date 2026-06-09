@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-
 	"testing"
 )
 

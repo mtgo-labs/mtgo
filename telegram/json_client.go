@@ -37,7 +37,7 @@ func NewJSONClient(rpc *tg.RPCClient) *JSONClient {
 }
 
 var (
-	idToName    map[uint32]string
+	idToName     map[uint32]string
 	idToNameOnce sync.Once
 )
 
