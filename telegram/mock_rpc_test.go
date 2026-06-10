@@ -61,6 +61,15 @@ func (m *mockBotRPCInvoke) lastCall() tg.TLObject {
 	return m.calls[len(m.calls)-1]
 }
 
+func (m *mockBotRPCInvoke) getCall(index int) tg.TLObject {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if index < 0 || index >= len(m.calls) {
+		return nil
+	}
+	return m.calls[index]
+}
+
 func (m *mockBotRPCInvoke) callCount() int {
 	m.mu.Lock()
 	defer m.mu.Unlock()

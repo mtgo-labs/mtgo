@@ -332,11 +332,11 @@ func (c *Chat) PromoteMember(userID int64, adminRights *tg.ChatAdminRights) erro
 	return c.binder.BoundPromoteMember(c.ID, userID, adminRights)
 }
 
-func (c *Chat) Join(username string) (*Chat, error) {
+func (c *Chat) Join(link string) (*Chat, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundJoinChat(c.ID, username)
+	return c.binder.BoundJoinChat(c.ID, link)
 }
 
 func (c *Chat) Leave() error {
