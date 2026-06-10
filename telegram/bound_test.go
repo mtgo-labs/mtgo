@@ -233,7 +233,7 @@ func TestBoundJoinChat(t *testing.T) {
 		},
 	})
 
-	chat, err := c.BoundJoinChat(0, "testchannel")
+	chat, err := c.BoundJoinChat(0, "a1b2c3d4e5f6g7h8i9j0")
 	if err != nil {
 		t.Fatalf("BoundJoinChat() error: %v", err)
 	}
@@ -249,8 +249,121 @@ func TestBoundJoinChat(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected MessagesImportChatInviteRequest, got %T", mock.lastCall())
 	}
-	if req.Hash != "testchannel" {
-		t.Errorf("Hash = %q, want %q", req.Hash, "testchannel")
+	if req.Hash != "a1b2c3d4e5f6g7h8i9j0" {
+		t.Errorf("Hash = %q, want %q", req.Hash, "a1b2c3d4e5f6g7h8i9j0")
+	}
+}
+
+func TestBoundJoinChatURL(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+	mock.setResult(tg.MessagesImportChatInviteTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{},
+		Users:   []tg.UserClass{},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 200, Title: "Private Channel"},
+		},
+	})
+
+	chat, err := c.BoundJoinChat(0, "https://t.me/+tPknWlMV9eU3NThk")
+	if err != nil {
+		t.Fatalf("BoundJoinChat() error: %v", err)
+	}
+	if chat == nil {
+		t.Fatal("expected non-nil chat")
+	}
+
+	req, ok := mock.lastCall().(*tg.MessagesImportChatInviteRequest)
+	if !ok {
+		t.Fatalf("expected MessagesImportChatInviteRequest, got %T", mock.lastCall())
+	}
+	if req.Hash != "tPknWlMV9eU3NThk" {
+		t.Errorf("Hash = %q, want %q", req.Hash, "tPknWlMV9eU3NThk")
+	}
+}
+
+func TestBoundJoinChatByUsername(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+	mock.setResult(tg.ContactsResolveUsernameTypeID, &tg.ContactsResolvedPeer{
+		Peer: &tg.PeerChannel{ChannelID: 300},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 300, Title: "mtgo labs", AccessHash: 12345},
+		},
+		Users: []tg.UserClass{},
+	})
+	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{},
+		Users:   []tg.UserClass{},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 300, Title: "mtgo labs"},
+		},
+	})
+
+	chat, err := c.BoundJoinChat(0, "mtgo_labs")
+	if err != nil {
+		t.Fatalf("BoundJoinChat() error: %v", err)
+	}
+	if chat == nil {
+		t.Fatal("expected non-nil chat")
+	}
+	if mock.callCount() != 2 {
+		t.Fatalf("expected 2 RPC calls, got %d", mock.callCount())
+	}
+
+	resolveReq, ok := mock.getCall(0).(*tg.ContactsResolveUsernameRequest)
+	if !ok {
+		t.Fatalf("expected ContactsResolveUsernameRequest, got %T", mock.getCall(0))
+	}
+	if resolveReq.Username != "mtgo_labs" {
+		t.Errorf("Username = %q, want %q", resolveReq.Username, "mtgo_labs")
+	}
+
+	joinReq, ok := mock.getCall(1).(*tg.ChannelsJoinChannelRequest)
+	if !ok {
+		t.Fatalf("expected ChannelsJoinChannelRequest, got %T", mock.getCall(1))
+	}
+	if ch, ok := joinReq.Channel.(*tg.InputChannel); ok {
+		if ch.ChannelID != 300 {
+			t.Errorf("ChannelID = %d, want %d", ch.ChannelID, 300)
+		}
+		if ch.AccessHash != 12345 {
+			t.Errorf("AccessHash = %d, want %d", ch.AccessHash, 12345)
+		}
+	} else {
+		t.Fatalf("expected *tg.InputChannel, got %T", joinReq.Channel)
+	}
+}
+
+func TestBoundJoinChatURLUsername(t *testing.T) {
+	c, mock := newClientWithBotRPCMock(t)
+	mock.setResult(tg.ContactsResolveUsernameTypeID, &tg.ContactsResolvedPeer{
+		Peer: &tg.PeerChannel{ChannelID: 400},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 400, Title: "mtgo labs", AccessHash: 99},
+		},
+		Users: []tg.UserClass{},
+	})
+	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{},
+		Users:   []tg.UserClass{},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 400, Title: "mtgo labs"},
+		},
+	})
+
+	chat, err := c.BoundJoinChat(0, "https://t.me/mtgo_labs")
+	if err != nil {
+		t.Fatalf("BoundJoinChat() error: %v", err)
+	}
+	if chat == nil {
+		t.Fatal("expected non-nil chat")
+	}
+
+	resolveReq, ok := mock.getCall(0).(*tg.ContactsResolveUsernameRequest)
+	if !ok {
+		t.Fatalf("expected ContactsResolveUsernameRequest, got %T", mock.getCall(0))
+	}
+	if resolveReq.Username != "mtgo_labs" {
+		t.Errorf("Username = %q, want %q", resolveReq.Username, "mtgo_labs")
 	}
 }
 

@@ -199,8 +199,8 @@ type ChatBinder interface {
 	BoundRestrictMember(chatID int64, userID int64, bannedRights *tg.ChatBannedRights) error
 	// BoundPromoteMember grants the given admin rights to a user.
 	BoundPromoteMember(chatID int64, userID int64, adminRights *tg.ChatAdminRights) error
-	// BoundJoinChat joins a chat using its username.
-	BoundJoinChat(chatID int64, username string) (*Chat, error)
+	// BoundJoinChat joins a chat by username, invite link, or invite hash.
+	BoundJoinChat(chatID int64, link string) (*Chat, error)
 	// BoundLeaveChat removes the current user from the chat.
 	BoundLeaveChat(chatID int64) error
 	// BoundExportInviteLink generates a new primary invite link for the chat.

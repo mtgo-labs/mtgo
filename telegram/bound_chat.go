@@ -146,18 +146,23 @@ func (c *Client) BoundPromoteMember(chatID int64, userID int64, adminRights *tg.
 	return c.PromoteChatMember(context.Background(), chatID, userID, adminRights)
 }
 
-// BoundJoinChat joins a public chat or channel by its username. This is a
-// bound-method convenience wrapper around [Client.JoinChat].
+// BoundJoinChat joins a chat or channel by username, invite link, or invite hash.
+// This is a bound-method convenience wrapper around [Client.JoinChat].
+//
+// Accepted formats:
+//   - Full URL: https://t.me/username, https://t.me/+hash
+//   - Username: username, @username
+//   - Invite hash: +hash, hash
 //
 // Parameters:
-//   - chatID: unused (reserved for future invite-hash based joins)
-//   - username: public username of the chat or channel to join (without @)
+//   - chatID: unused (reserved for future use)
+//   - link: chat link in any of the formats above
 //
-// Returns the joined Chat object or an error if the username is empty or the
+// Returns the joined Chat object or an error if the link is empty or the
 // join fails.
-func (c *Client) BoundJoinChat(chatID int64, username string) (*types.Chat, error) {
-	if username != "" {
-		return c.JoinChat(context.Background(), username)
+func (c *Client) BoundJoinChat(chatID int64, link string) (*types.Chat, error) {
+	if link != "" {
+		return c.JoinChat(context.Background(), link)
 	}
 	return nil, ErrJoinRequiresInvite
 }

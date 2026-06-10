@@ -3,6 +3,8 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -67,23 +69,168 @@ func extractChatFromFull(result tg.ChatFullClass) (*types.Chat, error) {
 	}
 }
 
-// JoinChat joins a chat or channel using an invite link hash.
+// joinTarget represents a parsed join-chat link.
+type joinTarget struct {
+	username   string // public username (without @)
+	inviteHash string // invite link hash (without +)
+}
+
+// parseJoinLink extracts a username or invite hash from the given link.
 //
-// Parameters:
-//   - ctx: context for cancellation and deadlines
-//   - inviteHash: the hash portion of the invite link
+// Accepted formats:
+//   - Full URL: https://t.me/username, https://t.me/+hash, t.me/username
+//   - Username: username, @username
+//   - Invite hash: +hash, hash
+func parseJoinLink(link string) (joinTarget, error) {
+	s := strings.TrimSpace(link)
+	if s == "" {
+		return joinTarget{}, ErrJoinRequiresInvite
+	}
+
+	// Try parsing as URL.
+	if u, err := url.Parse(s); err == nil && u.Host != "" {
+		if target, ok := parseTmeHost(u.Host, u.Path); ok {
+			return target, nil
+		}
+	}
+
+	// Handle schemeless t.me links (e.g. "t.me/username").
+	if strings.Contains(s, "/") {
+		if idx := strings.Index(s, "/"); idx > 0 {
+			host := strings.ToLower(s[:idx])
+			if host == "t.me" || host == "telegram.me" || host == "telegram.dog" {
+				if target, ok := parseTmeHost(host, s[idx:]); ok {
+					return target, nil
+				}
+			}
+		}
+	}
+
+	// Strip @ prefix for usernames.
+	if strings.HasPrefix(s, "@") {
+		return joinTarget{username: s[1:]}, nil
+	}
+
+	// + prefix indicates invite hash.
+	if strings.HasPrefix(s, "+") {
+		return joinTarget{inviteHash: s[1:]}, nil
+	}
+
+	// Heuristic: invite hashes are base64url (A-Z, a-z, 0-9, -, _) and
+	// typically 20+ characters. Usernames are shorter and may contain
+	// letters, digits, and underscores but not dashes.
+	// If it contains a dash or is long enough, treat as invite hash.
+	if strings.ContainsAny(s, "-") || len(s) >= 20 {
+		return joinTarget{inviteHash: s}, nil
+	}
+
+	// Default: treat as username.
+	return joinTarget{username: s}, nil
+}
+
+// parseTmeHost parses the path of a t.me/telegram.me/telegram.dog URL.
+func parseTmeHost(host, path string) (joinTarget, bool) {
+	h := strings.ToLower(host)
+	if h != "t.me" && h != "telegram.me" && h != "telegram.dog" {
+		return joinTarget{}, false
+	}
+	p := strings.TrimPrefix(path, "/")
+	p = strings.TrimRight(p, "/")
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return joinTarget{}, false
+	}
+	if strings.HasPrefix(p, "+") {
+		return joinTarget{inviteHash: p[1:]}, true
+	}
+	p = strings.TrimPrefix(p, "@")
+	return joinTarget{username: p}, true
+}
+
+// JoinChat joins a chat or channel using a username, invite link, or invite hash.
 //
-// Returns the joined types.Chat on success. Returns an error if the invite is
-// invalid, expired, or the server returns an unexpected response type.
+// Accepted formats:
+//   - Full URL: https://t.me/username, https://t.me/+hash
+//   - Username: username, @username
+//   - Invite hash: +hash, hash
+//
+// For usernames, the method resolves the username and joins the channel.
+// For invite hashes, the method imports the chat invite.
+//
+// Returns the joined types.Chat on success.
 //
 // Example:
 //
-//	chat, err := client.JoinChat(ctx, "a1b2c3d4e5f6")
-//	if err != nil {
-//	    log.Fatal(err)
-//	}
-//	fmt.Printf("Joined: %s (ID: %d)\n", chat.Title, chat.ID)
-func (c *Client) JoinChat(ctx context.Context, inviteHash string) (*types.Chat, error) {
+//	chat, err := client.JoinChat(ctx, "https://t.me/mtgo_labs")
+//	chat, err := client.JoinChat(ctx, "https://t.me/+tPknWlMV9eU3NThk")
+//	chat, err := client.JoinChat(ctx, "@mtgo_labs")
+//	chat, err := client.JoinChat(ctx, "mtgo_labs")
+func (c *Client) JoinChat(ctx context.Context, link string) (*types.Chat, error) {
+	target, err := parseJoinLink(link)
+	if err != nil {
+		return nil, err
+	}
+
+	if target.username != "" {
+		return c.joinByUsername(ctx, target.username)
+	}
+	return c.joinByInviteHash(ctx, target.inviteHash)
+}
+
+// joinByUsername resolves a public username and joins the channel.
+func (c *Client) joinByUsername(ctx context.Context, username string) (*types.Chat, error) {
+	c.Log.Debugf("JoinChat username=%s", username)
+	rpc := c.Raw()
+
+	resolved, err := rpc.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+		Username: username,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("resolve username %q: %w", username, err)
+	}
+
+	// Find the channel in the resolved chats.
+	var channel *tg.Channel
+	for _, ch := range resolved.Chats {
+		if c, ok := ch.(*tg.Channel); ok {
+			channel = c
+			break
+		}
+	}
+	if channel == nil {
+		return nil, fmt.Errorf("resolve username %q: no channel found", username)
+	}
+
+	pm := types.NewPeerMapFromClasses(resolved.Users, resolved.Chats)
+
+	inputChannel := &tg.InputChannel{
+		ChannelID:  channel.ID,
+		AccessHash: channel.AccessHash,
+	}
+	result, err := rpc.ChannelsJoinChannel(ctx, &tg.ChannelsJoinChannelRequest{
+		Channel: inputChannel,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch v := result.(type) {
+	case *tg.Updates:
+		joinPM := types.NewPeerMapFromClasses(v.Users, v.Chats)
+		for _, chat := range v.Chats {
+			if ch, ok := chat.(*tg.Channel); ok {
+				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, joinPM), nil
+			}
+		}
+		// Fallback to the resolved channel info.
+		return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: channel.ID}, pm), nil
+	default:
+		return nil, fmt.Errorf("unexpected join result type %T", result)
+	}
+}
+
+// joinByInviteHash imports a chat invite link.
+func (c *Client) joinByInviteHash(ctx context.Context, inviteHash string) (*types.Chat, error) {
 	c.Log.Debugf("JoinChat hash_len=%d", len(inviteHash))
 	rpc := c.Raw()
 	result, err := rpc.MessagesImportChatInvite(ctx, &tg.MessagesImportChatInviteRequest{Hash: inviteHash})
@@ -94,12 +241,6 @@ func (c *Client) JoinChat(ctx context.Context, inviteHash string) (*types.Chat, 
 	switch v := result.(type) {
 	case *tg.Updates:
 		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		for _, u := range v.Updates {
-			if upd, ok := u.(*tg.UpdateNewChannelMessage); ok {
-				_ = upd
-				_ = pm
-			}
-		}
 		for _, chat := range v.Chats {
 			if ch, ok := chat.(*tg.Channel); ok {
 				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, pm), nil
