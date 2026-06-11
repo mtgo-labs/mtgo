@@ -5603,3 +5603,240 @@ func (c *RPCClient) AccountDeletePasskey(ctx context.Context, req *AccountDelete
 	_ = result
 	return true, nil
 }
+
+// AccountConfirmBotConnectionTypeID is the constructor ID for the RPC function account.confirmBotConnection.
+const AccountConfirmBotConnectionTypeID = 0x67ed1f68
+
+// AccountConfirmBotConnectionRequest represents TL type `account.confirmBotConnection#67ed1f68`.
+//
+// See https://core.telegram.org/method/account/confirmBotConnection for reference.
+type AccountConfirmBotConnectionRequest struct {
+	BotID InputUserClass `json:"bot_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x67ed1f68.
+func (v *AccountConfirmBotConnectionRequest) ConstructorID() uint32 {
+	return AccountConfirmBotConnectionTypeID
+}
+
+// Encode serializes AccountConfirmBotConnectionRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AccountConfirmBotConnectionRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountConfirmBotConnectionTypeID)
+	EncodeTLObject(b, v.BotID)
+	return nil
+}
+
+// AccountConfirmBotConnection invokes the account.confirmBotConnection RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AccountConfirmBotConnection(ctx context.Context, req *AccountConfirmBotConnectionRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// AccountGetWebBrowserSettingsTypeID is the constructor ID for the RPC function account.getWebBrowserSettings.
+const AccountGetWebBrowserSettingsTypeID = 0x56655768
+
+// AccountGetWebBrowserSettingsRequest represents TL type `account.getWebBrowserSettings#56655768`.
+//
+// See https://core.telegram.org/method/account/getWebBrowserSettings for reference.
+type AccountGetWebBrowserSettingsRequest struct {
+	Hash int64 `json:"hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x56655768.
+func (v *AccountGetWebBrowserSettingsRequest) ConstructorID() uint32 {
+	return AccountGetWebBrowserSettingsTypeID
+}
+
+// Encode serializes AccountGetWebBrowserSettingsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AccountGetWebBrowserSettingsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountGetWebBrowserSettingsTypeID)
+	WriteLong(b, v.Hash)
+	return nil
+}
+
+// AccountGetWebBrowserSettings invokes the account.getWebBrowserSettings RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AccountGetWebBrowserSettings(ctx context.Context, req *AccountGetWebBrowserSettingsRequest) (WebBrowserSettingsClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(WebBrowserSettingsClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// AccountUpdateWebBrowserSettingsTypeID is the constructor ID for the RPC function account.updateWebBrowserSettings.
+const AccountUpdateWebBrowserSettingsTypeID = 0x9adf82fe
+
+// AccountUpdateWebBrowserSettingsRequest represents TL type `account.updateWebBrowserSettings#9adf82fe`.
+//
+// See https://core.telegram.org/method/account/updateWebBrowserSettings for reference.
+type AccountUpdateWebBrowserSettingsRequest struct {
+	Flags               Fields `json:"-"`
+	OpenExternalBrowser bool   `json:"open_external_browser,omitempty"`
+	DisplayCloseButton  bool   `json:"display_close_button,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *AccountUpdateWebBrowserSettingsRequest) SetFlags() {
+	if v.OpenExternalBrowser {
+		v.Flags.Set(0)
+	}
+	if v.DisplayCloseButton {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x9adf82fe.
+func (v *AccountUpdateWebBrowserSettingsRequest) ConstructorID() uint32 {
+	return AccountUpdateWebBrowserSettingsTypeID
+}
+
+// Encode serializes AccountUpdateWebBrowserSettingsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AccountUpdateWebBrowserSettingsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountUpdateWebBrowserSettingsTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// AccountUpdateWebBrowserSettings invokes the account.updateWebBrowserSettings RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AccountUpdateWebBrowserSettings(ctx context.Context, req *AccountUpdateWebBrowserSettingsRequest) (WebBrowserSettingsClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(WebBrowserSettingsClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// AccountToggleWebBrowserSettingsExceptionTypeID is the constructor ID for the RPC function account.toggleWebBrowserSettingsException.
+const AccountToggleWebBrowserSettingsExceptionTypeID = 0x60ed4229
+
+// AccountToggleWebBrowserSettingsExceptionRequest represents TL type `account.toggleWebBrowserSettingsException#60ed4229`.
+//
+// See https://core.telegram.org/method/account/toggleWebBrowserSettingsException for reference.
+type AccountToggleWebBrowserSettingsExceptionRequest struct {
+	Flags               Fields `json:"-"`
+	Delete              bool   `json:"delete,omitempty"`
+	OpenExternalBrowser bool   `json:"open_external_browser,omitempty"`
+	URL                 string `json:"url,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *AccountToggleWebBrowserSettingsExceptionRequest) SetFlags() {
+	if v.Delete {
+		v.Flags.Set(1)
+	}
+	if v.OpenExternalBrowser {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x60ed4229.
+func (v *AccountToggleWebBrowserSettingsExceptionRequest) ConstructorID() uint32 {
+	return AccountToggleWebBrowserSettingsExceptionTypeID
+}
+
+// Encode serializes AccountToggleWebBrowserSettingsExceptionRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AccountToggleWebBrowserSettingsExceptionRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountToggleWebBrowserSettingsExceptionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteBool(b, v.OpenExternalBrowser)
+	}
+	WriteString(b, v.URL)
+	return nil
+}
+
+// AccountToggleWebBrowserSettingsException invokes the account.toggleWebBrowserSettingsException RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AccountToggleWebBrowserSettingsException(ctx context.Context, req *AccountToggleWebBrowserSettingsExceptionRequest) (UpdatesClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(UpdatesClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// AccountDeleteWebBrowserSettingsExceptionsTypeID is the constructor ID for the RPC function account.deleteWebBrowserSettingsExceptions.
+const AccountDeleteWebBrowserSettingsExceptionsTypeID = 0x86a0765d
+
+// AccountDeleteWebBrowserSettingsExceptionsRequest represents TL type `account.deleteWebBrowserSettingsExceptions#86a0765d`.
+//
+// See https://core.telegram.org/method/account/deleteWebBrowserSettingsExceptions for reference.
+type AccountDeleteWebBrowserSettingsExceptionsRequest struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x86a0765d.
+func (v *AccountDeleteWebBrowserSettingsExceptionsRequest) ConstructorID() uint32 {
+	return AccountDeleteWebBrowserSettingsExceptionsTypeID
+}
+
+// Encode serializes AccountDeleteWebBrowserSettingsExceptionsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AccountDeleteWebBrowserSettingsExceptionsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountDeleteWebBrowserSettingsExceptionsTypeID)
+	return nil
+}
+
+// AccountDeleteWebBrowserSettingsExceptions invokes the account.deleteWebBrowserSettingsExceptions RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AccountDeleteWebBrowserSettingsExceptions(ctx context.Context) (WebBrowserSettingsClass, error) {
+	result, err := c.invoke(ctx, &AccountDeleteWebBrowserSettingsExceptionsRequest{}, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(WebBrowserSettingsClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}

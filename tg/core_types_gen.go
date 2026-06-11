@@ -11062,6 +11062,85 @@ func init() {
 	}
 }
 
+// WebDomainExceptionTypeID is the constructor ID for TL type webDomainException.
+const WebDomainExceptionTypeID = 0x933ca597
+
+// WebDomainException represents the TL constructor webDomainException (0x933ca597).
+//
+// See https://core.telegram.org/constructor/webDomainException for reference.
+type WebDomainException struct {
+	Flags   Fields `json:"-"`
+	Domain  string `json:"domain,omitempty"`
+	URL     string `json:"url,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Favicon int64  `json:"favicon,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WebDomainException) SetFlags() {
+	if v.Favicon != 0 {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x933ca597.
+func (v *WebDomainException) ConstructorID() uint32 {
+	return WebDomainExceptionTypeID
+}
+
+// Encode serializes WebDomainException to a bytes.Buffer using the TL binary protocol.
+func (v *WebDomainException) Encode(b *bytes.Buffer) error {
+	WriteInt(b, WebDomainExceptionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Domain)
+	WriteString(b, v.URL)
+	WriteString(b, v.Title)
+	if v.Flags.Has(0) {
+		WriteLong(b, v.Favicon)
+	}
+	return nil
+}
+
+// DecodeWebDomainException deserializes a WebDomainException from a reader using the TL binary protocol.
+func DecodeWebDomainException(r *Reader) (*WebDomainException, error) {
+	v := &WebDomainException{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	_rDomain, _eDomain := r.ReadString()
+	if _eDomain != nil {
+		return nil, _eDomain
+	}
+	v.Domain = _rDomain
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	if v.Flags.Has(0) {
+		_rFavicon, _eFavicon := r.ReadInt64()
+		if _eFavicon != nil {
+			return nil, _eFavicon
+		}
+		v.Favicon = _rFavicon
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[WebDomainExceptionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWebDomainException(r)
+	}
+}
+
 // ResPQTypeID is the constructor ID for TL type resPQ.
 const ResPQTypeID = 0x05162463
 

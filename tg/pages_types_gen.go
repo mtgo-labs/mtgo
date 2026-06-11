@@ -62,6 +62,45 @@ const TextImageTypeID = 0x081ccf4f
 // TextAnchorTypeID is the constructor ID for TL type textAnchor.
 const TextAnchorTypeID = 0x35553762
 
+// TextMathTypeID is the constructor ID for TL type textMath.
+const TextMathTypeID = 0x9d2eac97
+
+// TextCustomEmojiTypeID is the constructor ID for TL type textCustomEmoji.
+const TextCustomEmojiTypeID = 0xa26156c0
+
+// TextSpoilerTypeID is the constructor ID for TL type textSpoiler.
+const TextSpoilerTypeID = 0x4c2a5d62
+
+// TextMentionTypeID is the constructor ID for TL type textMention.
+const TextMentionTypeID = 0xcd24cf44
+
+// TextHashtagTypeID is the constructor ID for TL type textHashtag.
+const TextHashtagTypeID = 0x519524ea
+
+// TextBotCommandTypeID is the constructor ID for TL type textBotCommand.
+const TextBotCommandTypeID = 0x02ff29d3
+
+// TextCashtagTypeID is the constructor ID for TL type textCashtag.
+const TextCashtagTypeID = 0x7b9e1801
+
+// TextAutoURLTypeID is the constructor ID for TL type textAutoUrl.
+const TextAutoURLTypeID = 0xac6a83aa
+
+// TextAutoEmailTypeID is the constructor ID for TL type textAutoEmail.
+const TextAutoEmailTypeID = 0xc556a45d
+
+// TextAutoPhoneTypeID is the constructor ID for TL type textAutoPhone.
+const TextAutoPhoneTypeID = 0x24c26789
+
+// TextBankCardTypeID is the constructor ID for TL type textBankCard.
+const TextBankCardTypeID = 0xb956812d
+
+// TextMentionNameTypeID is the constructor ID for TL type textMentionName.
+const TextMentionNameTypeID = 0x01a9fbfc
+
+// TextDateTypeID is the constructor ID for TL type textDate.
+const TextDateTypeID = 0xa5b45e2b
+
 // isRichText marks TextEmpty as implementing the RichTextClass interface.
 func (*TextEmpty) isRichText() {}
 
@@ -109,6 +148,45 @@ func (*TextImage) isRichText() {}
 
 // isRichText marks TextAnchor as implementing the RichTextClass interface.
 func (*TextAnchor) isRichText() {}
+
+// isRichText marks TextMath as implementing the RichTextClass interface.
+func (*TextMath) isRichText() {}
+
+// isRichText marks TextCustomEmoji as implementing the RichTextClass interface.
+func (*TextCustomEmoji) isRichText() {}
+
+// isRichText marks TextSpoiler as implementing the RichTextClass interface.
+func (*TextSpoiler) isRichText() {}
+
+// isRichText marks TextMention as implementing the RichTextClass interface.
+func (*TextMention) isRichText() {}
+
+// isRichText marks TextHashtag as implementing the RichTextClass interface.
+func (*TextHashtag) isRichText() {}
+
+// isRichText marks TextBotCommand as implementing the RichTextClass interface.
+func (*TextBotCommand) isRichText() {}
+
+// isRichText marks TextCashtag as implementing the RichTextClass interface.
+func (*TextCashtag) isRichText() {}
+
+// isRichText marks TextAutoURL as implementing the RichTextClass interface.
+func (*TextAutoURL) isRichText() {}
+
+// isRichText marks TextAutoEmail as implementing the RichTextClass interface.
+func (*TextAutoEmail) isRichText() {}
+
+// isRichText marks TextAutoPhone as implementing the RichTextClass interface.
+func (*TextAutoPhone) isRichText() {}
+
+// isRichText marks TextBankCard as implementing the RichTextClass interface.
+func (*TextBankCard) isRichText() {}
+
+// isRichText marks TextMentionName as implementing the RichTextClass interface.
+func (*TextMentionName) isRichText() {}
+
+// isRichText marks TextDate as implementing the RichTextClass interface.
+func (*TextDate) isRichText() {}
 
 // TextEmpty represents the TL constructor textEmpty (0xdc3d824f).
 //
@@ -747,6 +825,537 @@ func init() {
 	}
 }
 
+// TextMath represents the TL constructor textMath (0x9d2eac97).
+//
+// See https://core.telegram.org/constructor/textMath for reference.
+type TextMath struct {
+	Source string `json:"source,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9d2eac97.
+func (v *TextMath) ConstructorID() uint32 {
+	return TextMathTypeID
+}
+
+// Encode serializes TextMath to a bytes.Buffer using the TL binary protocol.
+func (v *TextMath) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextMathTypeID)
+	WriteString(b, v.Source)
+	return nil
+}
+
+// DecodeTextMath deserializes a TextMath from a reader using the TL binary protocol.
+func DecodeTextMath(r *Reader) (*TextMath, error) {
+	v := &TextMath{}
+	_rSource, _eSource := r.ReadString()
+	if _eSource != nil {
+		return nil, _eSource
+	}
+	v.Source = _rSource
+	return v, nil
+}
+
+func init() {
+	Registry[TextMathTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextMath(r)
+	}
+}
+
+// TextCustomEmoji represents the TL constructor textCustomEmoji (0xa26156c0).
+//
+// See https://core.telegram.org/constructor/textCustomEmoji for reference.
+type TextCustomEmoji struct {
+	DocumentID int64  `json:"document_id,omitempty"`
+	Alt        string `json:"alt,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa26156c0.
+func (v *TextCustomEmoji) ConstructorID() uint32 {
+	return TextCustomEmojiTypeID
+}
+
+// Encode serializes TextCustomEmoji to a bytes.Buffer using the TL binary protocol.
+func (v *TextCustomEmoji) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextCustomEmojiTypeID)
+	WriteLong(b, v.DocumentID)
+	WriteString(b, v.Alt)
+	return nil
+}
+
+// DecodeTextCustomEmoji deserializes a TextCustomEmoji from a reader using the TL binary protocol.
+func DecodeTextCustomEmoji(r *Reader) (*TextCustomEmoji, error) {
+	v := &TextCustomEmoji{}
+	_rDocumentID, _eDocumentID := r.ReadInt64()
+	if _eDocumentID != nil {
+		return nil, _eDocumentID
+	}
+	v.DocumentID = _rDocumentID
+	_rAlt, _eAlt := r.ReadString()
+	if _eAlt != nil {
+		return nil, _eAlt
+	}
+	v.Alt = _rAlt
+	return v, nil
+}
+
+func init() {
+	Registry[TextCustomEmojiTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextCustomEmoji(r)
+	}
+}
+
+// TextSpoiler represents the TL constructor textSpoiler (0x4c2a5d62).
+//
+// See https://core.telegram.org/constructor/textSpoiler for reference.
+type TextSpoiler struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x4c2a5d62.
+func (v *TextSpoiler) ConstructorID() uint32 {
+	return TextSpoilerTypeID
+}
+
+// Encode serializes TextSpoiler to a bytes.Buffer using the TL binary protocol.
+func (v *TextSpoiler) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextSpoilerTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextSpoiler deserializes a TextSpoiler from a reader using the TL binary protocol.
+func DecodeTextSpoiler(r *Reader) (*TextSpoiler, error) {
+	v := &TextSpoiler{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextSpoilerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextSpoiler(r)
+	}
+}
+
+// TextMention represents the TL constructor textMention (0xcd24cf44).
+//
+// See https://core.telegram.org/constructor/textMention for reference.
+type TextMention struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xcd24cf44.
+func (v *TextMention) ConstructorID() uint32 {
+	return TextMentionTypeID
+}
+
+// Encode serializes TextMention to a bytes.Buffer using the TL binary protocol.
+func (v *TextMention) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextMentionTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextMention deserializes a TextMention from a reader using the TL binary protocol.
+func DecodeTextMention(r *Reader) (*TextMention, error) {
+	v := &TextMention{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextMentionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextMention(r)
+	}
+}
+
+// TextHashtag represents the TL constructor textHashtag (0x519524ea).
+//
+// See https://core.telegram.org/constructor/textHashtag for reference.
+type TextHashtag struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x519524ea.
+func (v *TextHashtag) ConstructorID() uint32 {
+	return TextHashtagTypeID
+}
+
+// Encode serializes TextHashtag to a bytes.Buffer using the TL binary protocol.
+func (v *TextHashtag) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextHashtagTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextHashtag deserializes a TextHashtag from a reader using the TL binary protocol.
+func DecodeTextHashtag(r *Reader) (*TextHashtag, error) {
+	v := &TextHashtag{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextHashtagTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextHashtag(r)
+	}
+}
+
+// TextBotCommand represents the TL constructor textBotCommand (0x02ff29d3).
+//
+// See https://core.telegram.org/constructor/textBotCommand for reference.
+type TextBotCommand struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x02ff29d3.
+func (v *TextBotCommand) ConstructorID() uint32 {
+	return TextBotCommandTypeID
+}
+
+// Encode serializes TextBotCommand to a bytes.Buffer using the TL binary protocol.
+func (v *TextBotCommand) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextBotCommandTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextBotCommand deserializes a TextBotCommand from a reader using the TL binary protocol.
+func DecodeTextBotCommand(r *Reader) (*TextBotCommand, error) {
+	v := &TextBotCommand{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextBotCommandTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextBotCommand(r)
+	}
+}
+
+// TextCashtag represents the TL constructor textCashtag (0x7b9e1801).
+//
+// See https://core.telegram.org/constructor/textCashtag for reference.
+type TextCashtag struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7b9e1801.
+func (v *TextCashtag) ConstructorID() uint32 {
+	return TextCashtagTypeID
+}
+
+// Encode serializes TextCashtag to a bytes.Buffer using the TL binary protocol.
+func (v *TextCashtag) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextCashtagTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextCashtag deserializes a TextCashtag from a reader using the TL binary protocol.
+func DecodeTextCashtag(r *Reader) (*TextCashtag, error) {
+	v := &TextCashtag{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextCashtagTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextCashtag(r)
+	}
+}
+
+// TextAutoURL represents the TL constructor textAutoUrl (0xac6a83aa).
+//
+// See https://core.telegram.org/constructor/textAutoUrl for reference.
+type TextAutoURL struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xac6a83aa.
+func (v *TextAutoURL) ConstructorID() uint32 {
+	return TextAutoURLTypeID
+}
+
+// Encode serializes TextAutoURL to a bytes.Buffer using the TL binary protocol.
+func (v *TextAutoURL) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextAutoURLTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextAutoURL deserializes a TextAutoURL from a reader using the TL binary protocol.
+func DecodeTextAutoURL(r *Reader) (*TextAutoURL, error) {
+	v := &TextAutoURL{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextAutoURLTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextAutoURL(r)
+	}
+}
+
+// TextAutoEmail represents the TL constructor textAutoEmail (0xc556a45d).
+//
+// See https://core.telegram.org/constructor/textAutoEmail for reference.
+type TextAutoEmail struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xc556a45d.
+func (v *TextAutoEmail) ConstructorID() uint32 {
+	return TextAutoEmailTypeID
+}
+
+// Encode serializes TextAutoEmail to a bytes.Buffer using the TL binary protocol.
+func (v *TextAutoEmail) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextAutoEmailTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextAutoEmail deserializes a TextAutoEmail from a reader using the TL binary protocol.
+func DecodeTextAutoEmail(r *Reader) (*TextAutoEmail, error) {
+	v := &TextAutoEmail{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextAutoEmailTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextAutoEmail(r)
+	}
+}
+
+// TextAutoPhone represents the TL constructor textAutoPhone (0x24c26789).
+//
+// See https://core.telegram.org/constructor/textAutoPhone for reference.
+type TextAutoPhone struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x24c26789.
+func (v *TextAutoPhone) ConstructorID() uint32 {
+	return TextAutoPhoneTypeID
+}
+
+// Encode serializes TextAutoPhone to a bytes.Buffer using the TL binary protocol.
+func (v *TextAutoPhone) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextAutoPhoneTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextAutoPhone deserializes a TextAutoPhone from a reader using the TL binary protocol.
+func DecodeTextAutoPhone(r *Reader) (*TextAutoPhone, error) {
+	v := &TextAutoPhone{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextAutoPhoneTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextAutoPhone(r)
+	}
+}
+
+// TextBankCard represents the TL constructor textBankCard (0xb956812d).
+//
+// See https://core.telegram.org/constructor/textBankCard for reference.
+type TextBankCard struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb956812d.
+func (v *TextBankCard) ConstructorID() uint32 {
+	return TextBankCardTypeID
+}
+
+// Encode serializes TextBankCard to a bytes.Buffer using the TL binary protocol.
+func (v *TextBankCard) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextBankCardTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodeTextBankCard deserializes a TextBankCard from a reader using the TL binary protocol.
+func DecodeTextBankCard(r *Reader) (*TextBankCard, error) {
+	v := &TextBankCard{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[TextBankCardTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextBankCard(r)
+	}
+}
+
+// TextMentionName represents the TL constructor textMentionName (0x01a9fbfc).
+//
+// See https://core.telegram.org/constructor/textMentionName for reference.
+type TextMentionName struct {
+	Text   RichTextClass `json:"text,omitempty"`
+	UserID int64         `json:"user_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x01a9fbfc.
+func (v *TextMentionName) ConstructorID() uint32 {
+	return TextMentionNameTypeID
+}
+
+// Encode serializes TextMentionName to a bytes.Buffer using the TL binary protocol.
+func (v *TextMentionName) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextMentionNameTypeID)
+	EncodeTLObject(b, v.Text)
+	WriteLong(b, v.UserID)
+	return nil
+}
+
+// DecodeTextMentionName deserializes a TextMentionName from a reader using the TL binary protocol.
+func DecodeTextMentionName(r *Reader) (*TextMentionName, error) {
+	v := &TextMentionName{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	return v, nil
+}
+
+func init() {
+	Registry[TextMentionNameTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextMentionName(r)
+	}
+}
+
+// TextDate represents the TL constructor textDate (0xa5b45e2b).
+//
+// See https://core.telegram.org/constructor/textDate for reference.
+type TextDate struct {
+	Flags     Fields        `json:"-"`
+	Relative  bool          `json:"relative,omitempty"`
+	ShortTime bool          `json:"short_time,omitempty"`
+	LongTime  bool          `json:"long_time,omitempty"`
+	ShortDate bool          `json:"short_date,omitempty"`
+	LongDate  bool          `json:"long_date,omitempty"`
+	DayOfWeek bool          `json:"day_of_week,omitempty"`
+	Text      RichTextClass `json:"text,omitempty"`
+	Date      int32         `json:"date,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *TextDate) SetFlags() {
+	if v.Relative {
+		v.Flags.Set(0)
+	}
+	if v.ShortTime {
+		v.Flags.Set(1)
+	}
+	if v.LongTime {
+		v.Flags.Set(2)
+	}
+	if v.ShortDate {
+		v.Flags.Set(3)
+	}
+	if v.LongDate {
+		v.Flags.Set(4)
+	}
+	if v.DayOfWeek {
+		v.Flags.Set(5)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xa5b45e2b.
+func (v *TextDate) ConstructorID() uint32 {
+	return TextDateTypeID
+}
+
+// Encode serializes TextDate to a bytes.Buffer using the TL binary protocol.
+func (v *TextDate) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextDateTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	EncodeTLObject(b, v.Text)
+	WriteInt(b, uint32(v.Date))
+	return nil
+}
+
+// DecodeTextDate deserializes a TextDate from a reader using the TL binary protocol.
+func DecodeTextDate(r *Reader) (*TextDate, error) {
+	v := &TextDate{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Relative = v.Flags.Has(0)
+	v.ShortTime = v.Flags.Has(1)
+	v.LongTime = v.Flags.Has(2)
+	v.ShortDate = v.Flags.Has(3)
+	v.LongDate = v.Flags.Has(4)
+	v.DayOfWeek = v.Flags.Has(5)
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	return v, nil
+}
+
+func init() {
+	Registry[TextDateTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextDate(r)
+	}
+}
+
 // PageBlockClass is the interface for TL type PageBlock.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the PageBlock TL type.
@@ -831,7 +1440,7 @@ const PageBlockKickerTypeID = 0x1e148390
 const PageBlockTableTypeID = 0xbf4dea82
 
 // PageBlockOrderedListTypeID is the constructor ID for TL type pageBlockOrderedList.
-const PageBlockOrderedListTypeID = 0x9a8ae1e1
+const PageBlockOrderedListTypeID = 0x1fd6f6c1
 
 // PageBlockDetailsTypeID is the constructor ID for TL type pageBlockDetails.
 const PageBlockDetailsTypeID = 0x76768bed
@@ -841,6 +1450,36 @@ const PageBlockRelatedArticlesTypeID = 0x16115a96
 
 // PageBlockMapTypeID is the constructor ID for TL type pageBlockMap.
 const PageBlockMapTypeID = 0xa44f3ef6
+
+// PageBlockHeading1TypeID is the constructor ID for TL type pageBlockHeading1.
+const PageBlockHeading1TypeID = 0xbaff072f
+
+// PageBlockHeading2TypeID is the constructor ID for TL type pageBlockHeading2.
+const PageBlockHeading2TypeID = 0x096b2aec
+
+// PageBlockHeading3TypeID is the constructor ID for TL type pageBlockHeading3.
+const PageBlockHeading3TypeID = 0x67e731ad
+
+// PageBlockHeading4TypeID is the constructor ID for TL type pageBlockHeading4.
+const PageBlockHeading4TypeID = 0xb532772b
+
+// PageBlockHeading5TypeID is the constructor ID for TL type pageBlockHeading5.
+const PageBlockHeading5TypeID = 0xdbbe6c6a
+
+// PageBlockHeading6TypeID is the constructor ID for TL type pageBlockHeading6.
+const PageBlockHeading6TypeID = 0x682a41a9
+
+// PageBlockMathTypeID is the constructor ID for TL type pageBlockMath.
+const PageBlockMathTypeID = 0x59080c20
+
+// PageBlockThinkingTypeID is the constructor ID for TL type pageBlockThinking.
+const PageBlockThinkingTypeID = 0x3c29a3e2
+
+// InputPageBlockMapTypeID is the constructor ID for TL type inputPageBlockMap.
+const InputPageBlockMapTypeID = 0x574b617f
+
+// PageBlockBlockquoteBlocksTypeID is the constructor ID for TL type pageBlockBlockquoteBlocks.
+const PageBlockBlockquoteBlocksTypeID = 0x0e6e47c4
 
 // isPageBlock marks PageBlockUnsupported as implementing the PageBlockClass interface.
 func (*PageBlockUnsupported) isPageBlock() {}
@@ -928,6 +1567,36 @@ func (*PageBlockRelatedArticles) isPageBlock() {}
 
 // isPageBlock marks PageBlockMap as implementing the PageBlockClass interface.
 func (*PageBlockMap) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading1 as implementing the PageBlockClass interface.
+func (*PageBlockHeading1) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading2 as implementing the PageBlockClass interface.
+func (*PageBlockHeading2) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading3 as implementing the PageBlockClass interface.
+func (*PageBlockHeading3) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading4 as implementing the PageBlockClass interface.
+func (*PageBlockHeading4) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading5 as implementing the PageBlockClass interface.
+func (*PageBlockHeading5) isPageBlock() {}
+
+// isPageBlock marks PageBlockHeading6 as implementing the PageBlockClass interface.
+func (*PageBlockHeading6) isPageBlock() {}
+
+// isPageBlock marks PageBlockMath as implementing the PageBlockClass interface.
+func (*PageBlockMath) isPageBlock() {}
+
+// isPageBlock marks PageBlockThinking as implementing the PageBlockClass interface.
+func (*PageBlockThinking) isPageBlock() {}
+
+// isPageBlock marks InputPageBlockMap as implementing the PageBlockClass interface.
+func (*InputPageBlockMap) isPageBlock() {}
+
+// isPageBlock marks PageBlockBlockquoteBlocks as implementing the PageBlockClass interface.
+func (*PageBlockBlockquoteBlocks) isPageBlock() {}
 
 // PageBlockUnsupported represents the TL constructor pageBlockUnsupported (0x13567e8a).
 //
@@ -1471,6 +2140,7 @@ func init() {
 // See https://core.telegram.org/constructor/pageBlockPhoto for reference.
 type PageBlockPhoto struct {
 	Flags     Fields       `json:"-"`
+	Spoiler   bool         `json:"spoiler,omitempty"`
 	PhotoID   int64        `json:"photo_id,omitempty"`
 	Caption   *PageCaption `json:"caption,omitempty"`
 	URL       string       `json:"url,omitempty"`
@@ -1479,6 +2149,9 @@ type PageBlockPhoto struct {
 
 // SetFlags computes flags from non-zero optional fields.
 func (v *PageBlockPhoto) SetFlags() {
+	if v.Spoiler {
+		v.Flags.Set(1)
+	}
 	if v.URL != "" {
 		v.Flags.Set(0)
 	}
@@ -1516,6 +2189,7 @@ func DecodePageBlockPhoto(r *Reader) (*PageBlockPhoto, error) {
 		_f, _ = r.ReadUint32()
 		v.Flags = Fields(_f)
 	}
+	v.Spoiler = v.Flags.Has(1)
 	_rPhotoID, _ePhotoID := r.ReadInt64()
 	if _ePhotoID != nil {
 		return nil, _ePhotoID
@@ -1556,6 +2230,7 @@ type PageBlockVideo struct {
 	Flags    Fields       `json:"-"`
 	Autoplay bool         `json:"autoplay,omitempty"`
 	Loop     bool         `json:"loop,omitempty"`
+	Spoiler  bool         `json:"spoiler,omitempty"`
 	VideoID  int64        `json:"video_id,omitempty"`
 	Caption  *PageCaption `json:"caption,omitempty"`
 }
@@ -1567,6 +2242,9 @@ func (v *PageBlockVideo) SetFlags() {
 	}
 	if v.Loop {
 		v.Flags.Set(1)
+	}
+	if v.Spoiler {
+		v.Flags.Set(2)
 	}
 }
 
@@ -1595,6 +2273,7 @@ func DecodePageBlockVideo(r *Reader) (*PageBlockVideo, error) {
 	}
 	v.Autoplay = v.Flags.Has(0)
 	v.Loop = v.Flags.Has(1)
+	v.Spoiler = v.Flags.Has(2)
 	_rVideoID, _eVideoID := r.ReadInt64()
 	if _eVideoID != nil {
 		return nil, _eVideoID
@@ -2198,14 +2877,31 @@ func init() {
 	}
 }
 
-// PageBlockOrderedList represents the TL constructor pageBlockOrderedList (0x9a8ae1e1).
+// PageBlockOrderedList represents the TL constructor pageBlockOrderedList (0x1fd6f6c1).
 //
 // See https://core.telegram.org/constructor/pageBlockOrderedList for reference.
 type PageBlockOrderedList struct {
-	Items []PageListOrderedItemClass `json:"items,omitempty"`
+	Flags    Fields                     `json:"-"`
+	Reversed bool                       `json:"reversed,omitempty"`
+	Items    []PageListOrderedItemClass `json:"items,omitempty"`
+	Start    int32                      `json:"start,omitempty"`
+	Type     string                     `json:"type,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x9a8ae1e1.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PageBlockOrderedList) SetFlags() {
+	if v.Reversed {
+		v.Flags.Set(2)
+	}
+	if v.Start != 0 {
+		v.Flags.Set(0)
+	}
+	if v.Type != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x1fd6f6c1.
 func (v *PageBlockOrderedList) ConstructorID() uint32 {
 	return PageBlockOrderedListTypeID
 }
@@ -2213,10 +2909,18 @@ func (v *PageBlockOrderedList) ConstructorID() uint32 {
 // Encode serializes PageBlockOrderedList to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockOrderedList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageBlockOrderedListTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Items)))
 	for _, _item := range v.Items {
 		EncodeTLObject(b, _item)
+	}
+	if v.Flags.Has(0) {
+		WriteInt(b, uint32(v.Start))
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.Type)
 	}
 	return nil
 }
@@ -2224,6 +2928,12 @@ func (v *PageBlockOrderedList) Encode(b *bytes.Buffer) error {
 // DecodePageBlockOrderedList deserializes a PageBlockOrderedList from a reader using the TL binary protocol.
 func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 	v := &PageBlockOrderedList{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Reversed = v.Flags.Has(2)
 	_vhdrItems, _ehdrItems := r.ReadUint32()
 	if _ehdrItems != nil {
 		return nil, _ehdrItems
@@ -2244,6 +2954,20 @@ func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 		v.Items[_iItems] = _objItems.(PageListOrderedItemClass)
 	}
 	_ = _vhdrItems
+	if v.Flags.Has(0) {
+		_rStart, _eStart := r.ReadInt32()
+		if _eStart != nil {
+			return nil, _eStart
+		}
+		v.Start = _rStart
+	}
+	if v.Flags.Has(1) {
+		_rType, _eType := r.ReadString()
+		if _eType != nil {
+			return nil, _eType
+		}
+		v.Type = _rType
+	}
 	return v, nil
 }
 
@@ -2455,6 +3179,420 @@ func DecodePageBlockMap(r *Reader) (*PageBlockMap, error) {
 func init() {
 	Registry[PageBlockMapTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodePageBlockMap(r)
+	}
+}
+
+// PageBlockHeading1 represents the TL constructor pageBlockHeading1 (0xbaff072f).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading1 for reference.
+type PageBlockHeading1 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xbaff072f.
+func (v *PageBlockHeading1) ConstructorID() uint32 {
+	return PageBlockHeading1TypeID
+}
+
+// Encode serializes PageBlockHeading1 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading1) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading1TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading1 deserializes a PageBlockHeading1 from a reader using the TL binary protocol.
+func DecodePageBlockHeading1(r *Reader) (*PageBlockHeading1, error) {
+	v := &PageBlockHeading1{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading1TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading1(r)
+	}
+}
+
+// PageBlockHeading2 represents the TL constructor pageBlockHeading2 (0x096b2aec).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading2 for reference.
+type PageBlockHeading2 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x096b2aec.
+func (v *PageBlockHeading2) ConstructorID() uint32 {
+	return PageBlockHeading2TypeID
+}
+
+// Encode serializes PageBlockHeading2 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading2) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading2TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading2 deserializes a PageBlockHeading2 from a reader using the TL binary protocol.
+func DecodePageBlockHeading2(r *Reader) (*PageBlockHeading2, error) {
+	v := &PageBlockHeading2{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading2TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading2(r)
+	}
+}
+
+// PageBlockHeading3 represents the TL constructor pageBlockHeading3 (0x67e731ad).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading3 for reference.
+type PageBlockHeading3 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x67e731ad.
+func (v *PageBlockHeading3) ConstructorID() uint32 {
+	return PageBlockHeading3TypeID
+}
+
+// Encode serializes PageBlockHeading3 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading3) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading3TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading3 deserializes a PageBlockHeading3 from a reader using the TL binary protocol.
+func DecodePageBlockHeading3(r *Reader) (*PageBlockHeading3, error) {
+	v := &PageBlockHeading3{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading3TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading3(r)
+	}
+}
+
+// PageBlockHeading4 represents the TL constructor pageBlockHeading4 (0xb532772b).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading4 for reference.
+type PageBlockHeading4 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb532772b.
+func (v *PageBlockHeading4) ConstructorID() uint32 {
+	return PageBlockHeading4TypeID
+}
+
+// Encode serializes PageBlockHeading4 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading4) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading4TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading4 deserializes a PageBlockHeading4 from a reader using the TL binary protocol.
+func DecodePageBlockHeading4(r *Reader) (*PageBlockHeading4, error) {
+	v := &PageBlockHeading4{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading4TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading4(r)
+	}
+}
+
+// PageBlockHeading5 represents the TL constructor pageBlockHeading5 (0xdbbe6c6a).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading5 for reference.
+type PageBlockHeading5 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xdbbe6c6a.
+func (v *PageBlockHeading5) ConstructorID() uint32 {
+	return PageBlockHeading5TypeID
+}
+
+// Encode serializes PageBlockHeading5 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading5) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading5TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading5 deserializes a PageBlockHeading5 from a reader using the TL binary protocol.
+func DecodePageBlockHeading5(r *Reader) (*PageBlockHeading5, error) {
+	v := &PageBlockHeading5{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading5TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading5(r)
+	}
+}
+
+// PageBlockHeading6 represents the TL constructor pageBlockHeading6 (0x682a41a9).
+//
+// See https://core.telegram.org/constructor/pageBlockHeading6 for reference.
+type PageBlockHeading6 struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x682a41a9.
+func (v *PageBlockHeading6) ConstructorID() uint32 {
+	return PageBlockHeading6TypeID
+}
+
+// Encode serializes PageBlockHeading6 to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockHeading6) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockHeading6TypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockHeading6 deserializes a PageBlockHeading6 from a reader using the TL binary protocol.
+func DecodePageBlockHeading6(r *Reader) (*PageBlockHeading6, error) {
+	v := &PageBlockHeading6{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockHeading6TypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockHeading6(r)
+	}
+}
+
+// PageBlockMath represents the TL constructor pageBlockMath (0x59080c20).
+//
+// See https://core.telegram.org/constructor/pageBlockMath for reference.
+type PageBlockMath struct {
+	Source string `json:"source,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x59080c20.
+func (v *PageBlockMath) ConstructorID() uint32 {
+	return PageBlockMathTypeID
+}
+
+// Encode serializes PageBlockMath to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockMath) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockMathTypeID)
+	WriteString(b, v.Source)
+	return nil
+}
+
+// DecodePageBlockMath deserializes a PageBlockMath from a reader using the TL binary protocol.
+func DecodePageBlockMath(r *Reader) (*PageBlockMath, error) {
+	v := &PageBlockMath{}
+	_rSource, _eSource := r.ReadString()
+	if _eSource != nil {
+		return nil, _eSource
+	}
+	v.Source = _rSource
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockMathTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockMath(r)
+	}
+}
+
+// PageBlockThinking represents the TL constructor pageBlockThinking (0x3c29a3e2).
+//
+// See https://core.telegram.org/constructor/pageBlockThinking for reference.
+type PageBlockThinking struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3c29a3e2.
+func (v *PageBlockThinking) ConstructorID() uint32 {
+	return PageBlockThinkingTypeID
+}
+
+// Encode serializes PageBlockThinking to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockThinking) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockThinkingTypeID)
+	EncodeTLObject(b, v.Text)
+	return nil
+}
+
+// DecodePageBlockThinking deserializes a PageBlockThinking from a reader using the TL binary protocol.
+func DecodePageBlockThinking(r *Reader) (*PageBlockThinking, error) {
+	v := &PageBlockThinking{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	v.Text = _objText.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockThinkingTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockThinking(r)
+	}
+}
+
+// InputPageBlockMap represents the TL constructor inputPageBlockMap (0x574b617f).
+//
+// See https://core.telegram.org/constructor/inputPageBlockMap for reference.
+type InputPageBlockMap struct {
+	Geo     InputGeoPointClass `json:"geo,omitempty"`
+	Zoom    int32              `json:"zoom,omitempty"`
+	W       int32              `json:"w,omitempty"`
+	H       int32              `json:"h,omitempty"`
+	Caption *PageCaption       `json:"caption,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x574b617f.
+func (v *InputPageBlockMap) ConstructorID() uint32 {
+	return InputPageBlockMapTypeID
+}
+
+// Encode serializes InputPageBlockMap to a bytes.Buffer using the TL binary protocol.
+func (v *InputPageBlockMap) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputPageBlockMapTypeID)
+	EncodeTLObject(b, v.Geo)
+	WriteInt(b, uint32(v.Zoom))
+	WriteInt(b, uint32(v.W))
+	WriteInt(b, uint32(v.H))
+	EncodeTLObject(b, v.Caption)
+	return nil
+}
+
+// DecodeInputPageBlockMap deserializes a InputPageBlockMap from a reader using the TL binary protocol.
+func DecodeInputPageBlockMap(r *Reader) (*InputPageBlockMap, error) {
+	v := &InputPageBlockMap{}
+	_objGeo, _errGeo := ReadTLObject(r)
+	if _errGeo != nil {
+		return nil, _errGeo
+	}
+	v.Geo = _objGeo.(InputGeoPointClass)
+	_rZoom, _eZoom := r.ReadInt32()
+	if _eZoom != nil {
+		return nil, _eZoom
+	}
+	v.Zoom = _rZoom
+	_rW, _eW := r.ReadInt32()
+	if _eW != nil {
+		return nil, _eW
+	}
+	v.W = _rW
+	_rH, _eH := r.ReadInt32()
+	if _eH != nil {
+		return nil, _eH
+	}
+	v.H = _rH
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
+	v.Caption = _objCaption.(*PageCaption)
+	return v, nil
+}
+
+func init() {
+	Registry[InputPageBlockMapTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputPageBlockMap(r)
+	}
+}
+
+// PageBlockBlockquoteBlocks represents the TL constructor pageBlockBlockquoteBlocks (0x0e6e47c4).
+//
+// See https://core.telegram.org/constructor/pageBlockBlockquoteBlocks for reference.
+type PageBlockBlockquoteBlocks struct {
+	Blocks  []PageBlockClass `json:"blocks,omitempty"`
+	Caption RichTextClass    `json:"caption,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x0e6e47c4.
+func (v *PageBlockBlockquoteBlocks) ConstructorID() uint32 {
+	return PageBlockBlockquoteBlocksTypeID
+}
+
+// Encode serializes PageBlockBlockquoteBlocks to a bytes.Buffer using the TL binary protocol.
+func (v *PageBlockBlockquoteBlocks) Encode(b *bytes.Buffer) error {
+	WriteInt(b, PageBlockBlockquoteBlocksTypeID)
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Blocks)))
+	for _, _item := range v.Blocks {
+		EncodeTLObject(b, _item)
+	}
+	EncodeTLObject(b, v.Caption)
+	return nil
+}
+
+// DecodePageBlockBlockquoteBlocks deserializes a PageBlockBlockquoteBlocks from a reader using the TL binary protocol.
+func DecodePageBlockBlockquoteBlocks(r *Reader) (*PageBlockBlockquoteBlocks, error) {
+	v := &PageBlockBlockquoteBlocks{}
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
+	v.Blocks = make([]PageBlockClass, _cntBlocks)
+	for _iBlocks := range v.Blocks {
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
+		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+	}
+	_ = _vhdrBlocks
+	_objCaption, _errCaption := ReadTLObject(r)
+	if _errCaption != nil {
+		return nil, _errCaption
+	}
+	v.Caption = _objCaption.(RichTextClass)
+	return v, nil
+}
+
+func init() {
+	Registry[PageBlockBlockquoteBlocksTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePageBlockBlockquoteBlocks(r)
 	}
 }
 
@@ -2682,10 +3820,10 @@ type PageListItemClass interface {
 }
 
 // PageListItemTextTypeID is the constructor ID for TL type pageListItemText.
-const PageListItemTextTypeID = 0xb92fb6cd
+const PageListItemTextTypeID = 0x2f58683c
 
 // PageListItemBlocksTypeID is the constructor ID for TL type pageListItemBlocks.
-const PageListItemBlocksTypeID = 0x25e073fc
+const PageListItemBlocksTypeID = 0x63ca67aa
 
 // isPageListItem marks PageListItemText as implementing the PageListItemClass interface.
 func (*PageListItemText) isPageListItem() {}
@@ -2693,14 +3831,27 @@ func (*PageListItemText) isPageListItem() {}
 // isPageListItem marks PageListItemBlocks as implementing the PageListItemClass interface.
 func (*PageListItemBlocks) isPageListItem() {}
 
-// PageListItemText represents the TL constructor pageListItemText (0xb92fb6cd).
+// PageListItemText represents the TL constructor pageListItemText (0x2f58683c).
 //
 // See https://core.telegram.org/constructor/pageListItemText for reference.
 type PageListItemText struct {
-	Text RichTextClass `json:"text,omitempty"`
+	Flags    Fields        `json:"-"`
+	Checkbox bool          `json:"checkbox,omitempty"`
+	Checked  bool          `json:"checked,omitempty"`
+	Text     RichTextClass `json:"text,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0xb92fb6cd.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PageListItemText) SetFlags() {
+	if v.Checkbox {
+		v.Flags.Set(0)
+	}
+	if v.Checked {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x2f58683c.
 func (v *PageListItemText) ConstructorID() uint32 {
 	return PageListItemTextTypeID
 }
@@ -2708,6 +3859,8 @@ func (v *PageListItemText) ConstructorID() uint32 {
 // Encode serializes PageListItemText to a bytes.Buffer using the TL binary protocol.
 func (v *PageListItemText) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageListItemTextTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	EncodeTLObject(b, v.Text)
 	return nil
 }
@@ -2715,6 +3868,13 @@ func (v *PageListItemText) Encode(b *bytes.Buffer) error {
 // DecodePageListItemText deserializes a PageListItemText from a reader using the TL binary protocol.
 func DecodePageListItemText(r *Reader) (*PageListItemText, error) {
 	v := &PageListItemText{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Checkbox = v.Flags.Has(0)
+	v.Checked = v.Flags.Has(1)
 	_objText, _errText := ReadTLObject(r)
 	if _errText != nil {
 		return nil, _errText
@@ -2729,14 +3889,27 @@ func init() {
 	}
 }
 
-// PageListItemBlocks represents the TL constructor pageListItemBlocks (0x25e073fc).
+// PageListItemBlocks represents the TL constructor pageListItemBlocks (0x63ca67aa).
 //
 // See https://core.telegram.org/constructor/pageListItemBlocks for reference.
 type PageListItemBlocks struct {
-	Blocks []PageBlockClass `json:"blocks,omitempty"`
+	Flags    Fields           `json:"-"`
+	Checkbox bool             `json:"checkbox,omitempty"`
+	Checked  bool             `json:"checked,omitempty"`
+	Blocks   []PageBlockClass `json:"blocks,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x25e073fc.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PageListItemBlocks) SetFlags() {
+	if v.Checkbox {
+		v.Flags.Set(0)
+	}
+	if v.Checked {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x63ca67aa.
 func (v *PageListItemBlocks) ConstructorID() uint32 {
 	return PageListItemBlocksTypeID
 }
@@ -2744,6 +3917,8 @@ func (v *PageListItemBlocks) ConstructorID() uint32 {
 // Encode serializes PageListItemBlocks to a bytes.Buffer using the TL binary protocol.
 func (v *PageListItemBlocks) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageListItemBlocksTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
@@ -2755,6 +3930,13 @@ func (v *PageListItemBlocks) Encode(b *bytes.Buffer) error {
 // DecodePageListItemBlocks deserializes a PageListItemBlocks from a reader using the TL binary protocol.
 func DecodePageListItemBlocks(r *Reader) (*PageListItemBlocks, error) {
 	v := &PageListItemBlocks{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Checkbox = v.Flags.Has(0)
+	v.Checked = v.Flags.Has(1)
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks

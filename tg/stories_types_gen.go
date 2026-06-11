@@ -15,10 +15,10 @@ type PageListOrderedItemClass interface {
 }
 
 // PageListOrderedItemTextTypeID is the constructor ID for TL type pageListOrderedItemText.
-const PageListOrderedItemTextTypeID = 0x5e068047
+const PageListOrderedItemTextTypeID = 0x15031189
 
 // PageListOrderedItemBlocksTypeID is the constructor ID for TL type pageListOrderedItemBlocks.
-const PageListOrderedItemBlocksTypeID = 0x98dd8936
+const PageListOrderedItemBlocksTypeID = 0x8ff2d5f0
 
 // isPageListOrderedItem marks PageListOrderedItemText as implementing the PageListOrderedItemClass interface.
 func (*PageListOrderedItemText) isPageListOrderedItem() {}
@@ -26,15 +26,39 @@ func (*PageListOrderedItemText) isPageListOrderedItem() {}
 // isPageListOrderedItem marks PageListOrderedItemBlocks as implementing the PageListOrderedItemClass interface.
 func (*PageListOrderedItemBlocks) isPageListOrderedItem() {}
 
-// PageListOrderedItemText represents the TL constructor pageListOrderedItemText (0x5e068047).
+// PageListOrderedItemText represents the TL constructor pageListOrderedItemText (0x15031189).
 //
 // See https://core.telegram.org/constructor/pageListOrderedItemText for reference.
 type PageListOrderedItemText struct {
-	Num  string        `json:"num,omitempty"`
-	Text RichTextClass `json:"text,omitempty"`
+	Flags    Fields        `json:"-"`
+	Checkbox bool          `json:"checkbox,omitempty"`
+	Checked  bool          `json:"checked,omitempty"`
+	Num      string        `json:"num,omitempty"`
+	Text     RichTextClass `json:"text,omitempty"`
+	Value    int32         `json:"value,omitempty"`
+	Type     string        `json:"type,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x5e068047.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PageListOrderedItemText) SetFlags() {
+	if v.Checkbox {
+		v.Flags.Set(0)
+	}
+	if v.Checked {
+		v.Flags.Set(1)
+	}
+	if v.Num != "" {
+		v.Flags.Set(2)
+	}
+	if v.Value != 0 {
+		v.Flags.Set(3)
+	}
+	if v.Type != "" {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x15031189.
 func (v *PageListOrderedItemText) ConstructorID() uint32 {
 	return PageListOrderedItemTextTypeID
 }
@@ -42,24 +66,57 @@ func (v *PageListOrderedItemText) ConstructorID() uint32 {
 // Encode serializes PageListOrderedItemText to a bytes.Buffer using the TL binary protocol.
 func (v *PageListOrderedItemText) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageListOrderedItemTextTypeID)
-	WriteString(b, v.Num)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(2) {
+		WriteString(b, v.Num)
+	}
 	EncodeTLObject(b, v.Text)
+	if v.Flags.Has(3) {
+		WriteInt(b, uint32(v.Value))
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.Type)
+	}
 	return nil
 }
 
 // DecodePageListOrderedItemText deserializes a PageListOrderedItemText from a reader using the TL binary protocol.
 func DecodePageListOrderedItemText(r *Reader) (*PageListOrderedItemText, error) {
 	v := &PageListOrderedItemText{}
-	_rNum, _eNum := r.ReadString()
-	if _eNum != nil {
-		return nil, _eNum
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
 	}
-	v.Num = _rNum
+	v.Checkbox = v.Flags.Has(0)
+	v.Checked = v.Flags.Has(1)
+	if v.Flags.Has(2) {
+		_rNum, _eNum := r.ReadString()
+		if _eNum != nil {
+			return nil, _eNum
+		}
+		v.Num = _rNum
+	}
 	_objText, _errText := ReadTLObject(r)
 	if _errText != nil {
 		return nil, _errText
 	}
 	v.Text = _objText.(RichTextClass)
+	if v.Flags.Has(3) {
+		_rValue, _eValue := r.ReadInt32()
+		if _eValue != nil {
+			return nil, _eValue
+		}
+		v.Value = _rValue
+	}
+	if v.Flags.Has(4) {
+		_rType, _eType := r.ReadString()
+		if _eType != nil {
+			return nil, _eType
+		}
+		v.Type = _rType
+	}
 	return v, nil
 }
 
@@ -69,15 +126,39 @@ func init() {
 	}
 }
 
-// PageListOrderedItemBlocks represents the TL constructor pageListOrderedItemBlocks (0x98dd8936).
+// PageListOrderedItemBlocks represents the TL constructor pageListOrderedItemBlocks (0x8ff2d5f0).
 //
 // See https://core.telegram.org/constructor/pageListOrderedItemBlocks for reference.
 type PageListOrderedItemBlocks struct {
-	Num    string           `json:"num,omitempty"`
-	Blocks []PageBlockClass `json:"blocks,omitempty"`
+	Flags    Fields           `json:"-"`
+	Checkbox bool             `json:"checkbox,omitempty"`
+	Checked  bool             `json:"checked,omitempty"`
+	Num      string           `json:"num,omitempty"`
+	Blocks   []PageBlockClass `json:"blocks,omitempty"`
+	Value    int32            `json:"value,omitempty"`
+	Type     string           `json:"type,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x98dd8936.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PageListOrderedItemBlocks) SetFlags() {
+	if v.Checkbox {
+		v.Flags.Set(0)
+	}
+	if v.Checked {
+		v.Flags.Set(1)
+	}
+	if v.Num != "" {
+		v.Flags.Set(2)
+	}
+	if v.Value != 0 {
+		v.Flags.Set(3)
+	}
+	if v.Type != "" {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x8ff2d5f0.
 func (v *PageListOrderedItemBlocks) ConstructorID() uint32 {
 	return PageListOrderedItemBlocksTypeID
 }
@@ -85,11 +166,21 @@ func (v *PageListOrderedItemBlocks) ConstructorID() uint32 {
 // Encode serializes PageListOrderedItemBlocks to a bytes.Buffer using the TL binary protocol.
 func (v *PageListOrderedItemBlocks) Encode(b *bytes.Buffer) error {
 	WriteInt(b, PageListOrderedItemBlocksTypeID)
-	WriteString(b, v.Num)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(2) {
+		WriteString(b, v.Num)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
 		EncodeTLObject(b, _item)
+	}
+	if v.Flags.Has(3) {
+		WriteInt(b, uint32(v.Value))
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.Type)
 	}
 	return nil
 }
@@ -97,11 +188,20 @@ func (v *PageListOrderedItemBlocks) Encode(b *bytes.Buffer) error {
 // DecodePageListOrderedItemBlocks deserializes a PageListOrderedItemBlocks from a reader using the TL binary protocol.
 func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, error) {
 	v := &PageListOrderedItemBlocks{}
-	_rNum, _eNum := r.ReadString()
-	if _eNum != nil {
-		return nil, _eNum
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
 	}
-	v.Num = _rNum
+	v.Checkbox = v.Flags.Has(0)
+	v.Checked = v.Flags.Has(1)
+	if v.Flags.Has(2) {
+		_rNum, _eNum := r.ReadString()
+		if _eNum != nil {
+			return nil, _eNum
+		}
+		v.Num = _rNum
+	}
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
@@ -122,6 +222,20 @@ func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, err
 		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
 	}
 	_ = _vhdrBlocks
+	if v.Flags.Has(3) {
+		_rValue, _eValue := r.ReadInt32()
+		if _eValue != nil {
+			return nil, _eValue
+		}
+		v.Value = _rValue
+	}
+	if v.Flags.Has(4) {
+		_rType, _eType := r.ReadString()
+		if _eType != nil {
+			return nil, _eType
+		}
+		v.Type = _rType
+	}
 	return v, nil
 }
 

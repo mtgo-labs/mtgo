@@ -367,10 +367,10 @@ const KeyboardButtonWebViewTypeID = 0xe846b1a0
 const KeyboardButtonSimpleWebViewTypeID = 0xe15c4370
 
 // KeyboardButtonRequestPeerTypeID is the constructor ID for TL type keyboardButtonRequestPeer.
-const KeyboardButtonRequestPeerTypeID = 0x53d7bfd8
+const KeyboardButtonRequestPeerTypeID = 0x5b0f15f5
 
 // InputKeyboardButtonRequestPeerTypeID is the constructor ID for TL type inputKeyboardButtonRequestPeer.
-const InputKeyboardButtonRequestPeerTypeID = 0xc9662d05
+const InputKeyboardButtonRequestPeerTypeID = 0x02b78156
 
 // KeyboardButtonCopyTypeID is the constructor ID for TL type keyboardButtonCopy.
 const KeyboardButtonCopyTypeID = 0xbcc4af10
@@ -1526,17 +1526,26 @@ func init() {
 	}
 }
 
-// KeyboardButtonRequestPeer represents the TL constructor keyboardButtonRequestPeer (0x53d7bfd8).
+// KeyboardButtonRequestPeer represents the TL constructor keyboardButtonRequestPeer (0x5b0f15f5).
 //
 // See https://core.telegram.org/constructor/keyboardButtonRequestPeer for reference.
 type KeyboardButtonRequestPeer struct {
+	Flags       Fields               `json:"-"`
+	Style       *KeyboardButtonStyle `json:"style,omitempty"`
 	Text        string               `json:"text,omitempty"`
 	ButtonID    int32                `json:"button_id,omitempty"`
 	PeerType    RequestPeerTypeClass `json:"peer_type,omitempty"`
 	MaxQuantity int32                `json:"max_quantity,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x53d7bfd8.
+// SetFlags computes flags from non-zero optional fields.
+func (v *KeyboardButtonRequestPeer) SetFlags() {
+	if v.Style != nil {
+		v.Flags.Set(10)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x5b0f15f5.
 func (v *KeyboardButtonRequestPeer) ConstructorID() uint32 {
 	return KeyboardButtonRequestPeerTypeID
 }
@@ -1544,6 +1553,11 @@ func (v *KeyboardButtonRequestPeer) ConstructorID() uint32 {
 // Encode serializes KeyboardButtonRequestPeer to a bytes.Buffer using the TL binary protocol.
 func (v *KeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, KeyboardButtonRequestPeerTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(10) {
+		EncodeTLObject(b, v.Style)
+	}
 	WriteString(b, v.Text)
 	WriteInt(b, uint32(v.ButtonID))
 	EncodeTLObject(b, v.PeerType)
@@ -1554,6 +1568,18 @@ func (v *KeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonRequestPeer deserializes a KeyboardButtonRequestPeer from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestPeer(r *Reader) (*KeyboardButtonRequestPeer, error) {
 	v := &KeyboardButtonRequestPeer{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	if v.Flags.Has(10) {
+		_objStyle, _errStyle := ReadTLObject(r)
+		if _errStyle != nil {
+			return nil, _errStyle
+		}
+		v.Style = _objStyle.(*KeyboardButtonStyle)
+	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
 		return nil, _eText
@@ -1583,7 +1609,7 @@ func init() {
 	}
 }
 
-// InputKeyboardButtonRequestPeer represents the TL constructor inputKeyboardButtonRequestPeer (0xc9662d05).
+// InputKeyboardButtonRequestPeer represents the TL constructor inputKeyboardButtonRequestPeer (0x02b78156).
 //
 // See https://core.telegram.org/constructor/inputKeyboardButtonRequestPeer for reference.
 type InputKeyboardButtonRequestPeer struct {
@@ -1591,6 +1617,7 @@ type InputKeyboardButtonRequestPeer struct {
 	NameRequested     bool                 `json:"name_requested,omitempty"`
 	UsernameRequested bool                 `json:"username_requested,omitempty"`
 	PhotoRequested    bool                 `json:"photo_requested,omitempty"`
+	Style             *KeyboardButtonStyle `json:"style,omitempty"`
 	Text              string               `json:"text,omitempty"`
 	ButtonID          int32                `json:"button_id,omitempty"`
 	PeerType          RequestPeerTypeClass `json:"peer_type,omitempty"`
@@ -1608,9 +1635,12 @@ func (v *InputKeyboardButtonRequestPeer) SetFlags() {
 	if v.PhotoRequested {
 		v.Flags.Set(2)
 	}
+	if v.Style != nil {
+		v.Flags.Set(10)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xc9662d05.
+// ConstructorID returns the TL constructor identifier 0x02b78156.
 func (v *InputKeyboardButtonRequestPeer) ConstructorID() uint32 {
 	return InputKeyboardButtonRequestPeerTypeID
 }
@@ -1620,6 +1650,9 @@ func (v *InputKeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 	WriteInt(b, InputKeyboardButtonRequestPeerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(10) {
+		EncodeTLObject(b, v.Style)
+	}
 	WriteString(b, v.Text)
 	WriteInt(b, uint32(v.ButtonID))
 	EncodeTLObject(b, v.PeerType)
@@ -1638,6 +1671,13 @@ func DecodeInputKeyboardButtonRequestPeer(r *Reader) (*InputKeyboardButtonReques
 	v.NameRequested = v.Flags.Has(0)
 	v.UsernameRequested = v.Flags.Has(1)
 	v.PhotoRequested = v.Flags.Has(2)
+	if v.Flags.Has(10) {
+		_objStyle, _errStyle := ReadTLObject(r)
+		if _errStyle != nil {
+			return nil, _errStyle
+		}
+		v.Style = _objStyle.(*KeyboardButtonStyle)
+	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
 		return nil, _eText
@@ -3461,6 +3501,7 @@ type WebViewResultURL struct {
 	Flags      Fields `json:"-"`
 	Fullsize   bool   `json:"fullsize,omitempty"`
 	Fullscreen bool   `json:"fullscreen,omitempty"`
+	SameOrigin bool   `json:"same_origin,omitempty"`
 	QueryID    int64  `json:"query_id,omitempty"`
 	URL        string `json:"url,omitempty"`
 }
@@ -3472,6 +3513,9 @@ func (v *WebViewResultURL) SetFlags() {
 	}
 	if v.Fullscreen {
 		v.Flags.Set(2)
+	}
+	if v.SameOrigin {
+		v.Flags.Set(3)
 	}
 	if v.QueryID != 0 {
 		v.Flags.Set(0)
@@ -3505,6 +3549,7 @@ func DecodeWebViewResultURL(r *Reader) (*WebViewResultURL, error) {
 	}
 	v.Fullsize = v.Flags.Has(1)
 	v.Fullscreen = v.Flags.Has(2)
+	v.SameOrigin = v.Flags.Has(3)
 	if v.Flags.Has(0) {
 		_rQueryID, _eQueryID := r.ReadInt64()
 		if _eQueryID != nil {

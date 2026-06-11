@@ -1018,6 +1018,7 @@ type User struct {
 	BotForumCanManageTopics bool                  `json:"bot_forum_can_manage_topics,omitempty"`
 	BotCanManageBots        bool                  `json:"bot_can_manage_bots,omitempty"`
 	BotGuestchat            bool                  `json:"bot_guestchat,omitempty"`
+	BotGuard                bool                  `json:"bot_guard,omitempty"`
 	ID                      int64                 `json:"id,omitempty"`
 	AccessHash              int64                 `json:"access_hash,omitempty"`
 	FirstName               string                `json:"first_name,omitempty"`
@@ -1128,6 +1129,9 @@ func (v *User) SetFlags() {
 	}
 	if v.BotGuestchat {
 		v.Flags2.Set(19)
+	}
+	if v.BotGuard {
+		v.Flags2.Set(20)
 	}
 	if v.AccessHash != 0 {
 		v.Flags.Set(0)
@@ -1310,6 +1314,7 @@ func DecodeUser(r *Reader) (*User, error) {
 	v.BotForumCanManageTopics = v.Flags2.Has(17)
 	v.BotCanManageBots = v.Flags2.Has(18)
 	v.BotGuestchat = v.Flags2.Has(19)
+	v.BotGuard = v.Flags2.Has(20)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -12537,5 +12542,160 @@ func DecodeStarGiftAuctionUserState(r *Reader) (*StarGiftAuctionUserState, error
 func init() {
 	Registry[StarGiftAuctionUserStateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeStarGiftAuctionUserState(r)
+	}
+}
+
+// JoinChatBotResultClass is the interface for TL type JoinChatBotResult.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the JoinChatBotResult TL type.
+type JoinChatBotResultClass interface {
+	TLObject
+	isJoinChatBotResult()
+}
+
+// JoinChatBotResultApprovedTypeID is the constructor ID for TL type joinChatBotResultApproved.
+const JoinChatBotResultApprovedTypeID = 0xae152a69
+
+// JoinChatBotResultDeclinedTypeID is the constructor ID for TL type joinChatBotResultDeclined.
+const JoinChatBotResultDeclinedTypeID = 0x0efa0194
+
+// JoinChatBotResultQueuedTypeID is the constructor ID for TL type joinChatBotResultQueued.
+const JoinChatBotResultQueuedTypeID = 0x98a3a840
+
+// JoinChatBotResultWebViewTypeID is the constructor ID for TL type joinChatBotResultWebView.
+const JoinChatBotResultWebViewTypeID = 0xd6e3b813
+
+// isJoinChatBotResult marks JoinChatBotResultApproved as implementing the JoinChatBotResultClass interface.
+func (*JoinChatBotResultApproved) isJoinChatBotResult() {}
+
+// isJoinChatBotResult marks JoinChatBotResultDeclined as implementing the JoinChatBotResultClass interface.
+func (*JoinChatBotResultDeclined) isJoinChatBotResult() {}
+
+// isJoinChatBotResult marks JoinChatBotResultQueued as implementing the JoinChatBotResultClass interface.
+func (*JoinChatBotResultQueued) isJoinChatBotResult() {}
+
+// isJoinChatBotResult marks JoinChatBotResultWebView as implementing the JoinChatBotResultClass interface.
+func (*JoinChatBotResultWebView) isJoinChatBotResult() {}
+
+// JoinChatBotResultApproved represents the TL constructor joinChatBotResultApproved (0xae152a69).
+//
+// See https://core.telegram.org/constructor/joinChatBotResultApproved for reference.
+type JoinChatBotResultApproved struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xae152a69.
+func (v *JoinChatBotResultApproved) ConstructorID() uint32 {
+	return JoinChatBotResultApprovedTypeID
+}
+
+// Encode serializes JoinChatBotResultApproved to a bytes.Buffer using the TL binary protocol.
+func (v *JoinChatBotResultApproved) Encode(b *bytes.Buffer) error {
+	WriteInt(b, JoinChatBotResultApprovedTypeID)
+	return nil
+}
+
+// DecodeJoinChatBotResultApproved deserializes a JoinChatBotResultApproved from a reader using the TL binary protocol.
+func DecodeJoinChatBotResultApproved(r *Reader) (*JoinChatBotResultApproved, error) {
+	v := &JoinChatBotResultApproved{}
+	return v, nil
+}
+
+func init() {
+	Registry[JoinChatBotResultApprovedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeJoinChatBotResultApproved(r)
+	}
+}
+
+// JoinChatBotResultDeclined represents the TL constructor joinChatBotResultDeclined (0x0efa0194).
+//
+// See https://core.telegram.org/constructor/joinChatBotResultDeclined for reference.
+type JoinChatBotResultDeclined struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x0efa0194.
+func (v *JoinChatBotResultDeclined) ConstructorID() uint32 {
+	return JoinChatBotResultDeclinedTypeID
+}
+
+// Encode serializes JoinChatBotResultDeclined to a bytes.Buffer using the TL binary protocol.
+func (v *JoinChatBotResultDeclined) Encode(b *bytes.Buffer) error {
+	WriteInt(b, JoinChatBotResultDeclinedTypeID)
+	return nil
+}
+
+// DecodeJoinChatBotResultDeclined deserializes a JoinChatBotResultDeclined from a reader using the TL binary protocol.
+func DecodeJoinChatBotResultDeclined(r *Reader) (*JoinChatBotResultDeclined, error) {
+	v := &JoinChatBotResultDeclined{}
+	return v, nil
+}
+
+func init() {
+	Registry[JoinChatBotResultDeclinedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeJoinChatBotResultDeclined(r)
+	}
+}
+
+// JoinChatBotResultQueued represents the TL constructor joinChatBotResultQueued (0x98a3a840).
+//
+// See https://core.telegram.org/constructor/joinChatBotResultQueued for reference.
+type JoinChatBotResultQueued struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x98a3a840.
+func (v *JoinChatBotResultQueued) ConstructorID() uint32 {
+	return JoinChatBotResultQueuedTypeID
+}
+
+// Encode serializes JoinChatBotResultQueued to a bytes.Buffer using the TL binary protocol.
+func (v *JoinChatBotResultQueued) Encode(b *bytes.Buffer) error {
+	WriteInt(b, JoinChatBotResultQueuedTypeID)
+	return nil
+}
+
+// DecodeJoinChatBotResultQueued deserializes a JoinChatBotResultQueued from a reader using the TL binary protocol.
+func DecodeJoinChatBotResultQueued(r *Reader) (*JoinChatBotResultQueued, error) {
+	v := &JoinChatBotResultQueued{}
+	return v, nil
+}
+
+func init() {
+	Registry[JoinChatBotResultQueuedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeJoinChatBotResultQueued(r)
+	}
+}
+
+// JoinChatBotResultWebView represents the TL constructor joinChatBotResultWebView (0xd6e3b813).
+//
+// See https://core.telegram.org/constructor/joinChatBotResultWebView for reference.
+type JoinChatBotResultWebView struct {
+	URL string `json:"url,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd6e3b813.
+func (v *JoinChatBotResultWebView) ConstructorID() uint32 {
+	return JoinChatBotResultWebViewTypeID
+}
+
+// Encode serializes JoinChatBotResultWebView to a bytes.Buffer using the TL binary protocol.
+func (v *JoinChatBotResultWebView) Encode(b *bytes.Buffer) error {
+	WriteInt(b, JoinChatBotResultWebViewTypeID)
+	WriteString(b, v.URL)
+	return nil
+}
+
+// DecodeJoinChatBotResultWebView deserializes a JoinChatBotResultWebView from a reader using the TL binary protocol.
+func DecodeJoinChatBotResultWebView(r *Reader) (*JoinChatBotResultWebView, error) {
+	v := &JoinChatBotResultWebView{}
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	return v, nil
+}
+
+func init() {
+	Registry[JoinChatBotResultWebViewTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeJoinChatBotResultWebView(r)
 	}
 }

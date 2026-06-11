@@ -545,9 +545,9 @@ func (c *RPCClient) MessagesSetTyping(ctx context.Context, req *MessagesSetTypin
 }
 
 // MessagesSendMessageTypeID is the constructor ID for the RPC function messages.sendMessage.
-const MessagesSendMessageTypeID = 0x545cd15a
+const MessagesSendMessageTypeID = 0xfef48f62
 
-// MessagesSendMessageRequest represents TL type `messages.sendMessage#545cd15a`.
+// MessagesSendMessageRequest represents TL type `messages.sendMessage#fef48f62`.
 //
 // See https://core.telegram.org/method/messages/sendMessage for reference.
 type MessagesSendMessageRequest struct {
@@ -573,6 +573,7 @@ type MessagesSendMessageRequest struct {
 	Effect                 int64                        `json:"effect,omitempty"`
 	AllowPaidStars         int64                        `json:"allow_paid_stars,omitempty"`
 	SuggestedPost          *SuggestedPost               `json:"suggested_post,omitempty"`
+	RichMessage            InputRichMessageClass        `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -631,9 +632,12 @@ func (v *MessagesSendMessageRequest) SetFlags() {
 	if v.SuggestedPost != nil {
 		v.Flags.Set(22)
 	}
+	if v.RichMessage != nil {
+		v.Flags.Set(23)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x545cd15a.
+// ConstructorID returns the TL constructor identifier 0xfef48f62.
 func (v *MessagesSendMessageRequest) ConstructorID() uint32 {
 	return MessagesSendMessageTypeID
 }
@@ -679,6 +683,9 @@ func (v *MessagesSendMessageRequest) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(22) {
 		EncodeTLObject(b, v.SuggestedPost)
+	}
+	if v.Flags.Has(23) {
+		EncodeTLObject(b, v.RichMessage)
 	}
 	return nil
 }
@@ -2306,16 +2313,16 @@ func (c *RPCClient) MessagesCheckChatInvite(ctx context.Context, req *MessagesCh
 }
 
 // MessagesImportChatInviteTypeID is the constructor ID for the RPC function messages.importChatInvite.
-const MessagesImportChatInviteTypeID = 0x6c50051c
+const MessagesImportChatInviteTypeID = 0xde91436e
 
-// MessagesImportChatInviteRequest represents TL type `messages.importChatInvite#6c50051c`.
+// MessagesImportChatInviteRequest represents TL type `messages.importChatInvite#de91436e`.
 //
 // See https://core.telegram.org/method/messages/importChatInvite for reference.
 type MessagesImportChatInviteRequest struct {
 	Hash string `json:"hash,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x6c50051c.
+// ConstructorID returns the TL constructor identifier 0xde91436e.
 func (v *MessagesImportChatInviteRequest) ConstructorID() uint32 {
 	return MessagesImportChatInviteTypeID
 }
@@ -2334,14 +2341,14 @@ func (v *MessagesImportChatInviteRequest) Encode(b *bytes.Buffer) error {
 //   - req: the request parameters
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) MessagesImportChatInvite(ctx context.Context, req *MessagesImportChatInviteRequest) (UpdatesClass, error) {
+func (c *RPCClient) MessagesImportChatInvite(ctx context.Context, req *MessagesImportChatInviteRequest) (ChatInviteJoinResultClass, error) {
 	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
 		return nil, err
 	}
-	if _c, _ok := result.(UpdatesClass); _ok {
+	if _c, _ok := result.(ChatInviteJoinResultClass); _ok {
 		return _c, nil
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
@@ -3219,24 +3226,25 @@ func (c *RPCClient) MessagesGetMessageEditData(ctx context.Context, req *Message
 }
 
 // MessagesEditMessageTypeID is the constructor ID for the RPC function messages.editMessage.
-const MessagesEditMessageTypeID = 0x51e842e1
+const MessagesEditMessageTypeID = 0xb106e66c
 
-// MessagesEditMessageRequest represents TL type `messages.editMessage#51e842e1`.
+// MessagesEditMessageRequest represents TL type `messages.editMessage#b106e66c`.
 //
 // See https://core.telegram.org/method/messages/editMessage for reference.
 type MessagesEditMessageRequest struct {
-	Flags                Fields               `json:"-"`
-	NoWebpage            bool                 `json:"no_webpage,omitempty"`
-	InvertMedia          bool                 `json:"invert_media,omitempty"`
-	Peer                 InputPeerClass       `json:"peer,omitempty"`
-	ID                   int32                `json:"id,omitempty"`
-	Message              string               `json:"message,omitempty"`
-	Media                InputMediaClass      `json:"media,omitempty"`
-	ReplyMarkup          ReplyMarkupClass     `json:"reply_markup,omitempty"`
-	Entities             []MessageEntityClass `json:"entities,omitempty"`
-	ScheduleDate         int32                `json:"schedule_date,omitempty"`
-	ScheduleRepeatPeriod int32                `json:"schedule_repeat_period,omitempty"`
-	QuickReplyShortcutID int32                `json:"quick_reply_shortcut_id,omitempty"`
+	Flags                Fields                `json:"-"`
+	NoWebpage            bool                  `json:"no_webpage,omitempty"`
+	InvertMedia          bool                  `json:"invert_media,omitempty"`
+	Peer                 InputPeerClass        `json:"peer,omitempty"`
+	ID                   int32                 `json:"id,omitempty"`
+	Message              string                `json:"message,omitempty"`
+	Media                InputMediaClass       `json:"media,omitempty"`
+	ReplyMarkup          ReplyMarkupClass      `json:"reply_markup,omitempty"`
+	Entities             []MessageEntityClass  `json:"entities,omitempty"`
+	ScheduleDate         int32                 `json:"schedule_date,omitempty"`
+	ScheduleRepeatPeriod int32                 `json:"schedule_repeat_period,omitempty"`
+	QuickReplyShortcutID int32                 `json:"quick_reply_shortcut_id,omitempty"`
+	RichMessage          InputRichMessageClass `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3268,9 +3276,12 @@ func (v *MessagesEditMessageRequest) SetFlags() {
 	if v.QuickReplyShortcutID != 0 {
 		v.Flags.Set(17)
 	}
+	if v.RichMessage != nil {
+		v.Flags.Set(23)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x51e842e1.
+// ConstructorID returns the TL constructor identifier 0xb106e66c.
 func (v *MessagesEditMessageRequest) ConstructorID() uint32 {
 	return MessagesEditMessageTypeID
 }
@@ -3307,6 +3318,9 @@ func (v *MessagesEditMessageRequest) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(17) {
 		WriteInt(b, uint32(v.QuickReplyShortcutID))
 	}
+	if v.Flags.Has(23) {
+		EncodeTLObject(b, v.RichMessage)
+	}
 	return nil
 }
 
@@ -3331,9 +3345,9 @@ func (c *RPCClient) MessagesEditMessage(ctx context.Context, req *MessagesEditMe
 }
 
 // MessagesEditInlineBotMessageTypeID is the constructor ID for the RPC function messages.editInlineBotMessage.
-const MessagesEditInlineBotMessageTypeID = 0x83557dba
+const MessagesEditInlineBotMessageTypeID = 0xa423bb51
 
-// MessagesEditInlineBotMessageRequest represents TL type `messages.editInlineBotMessage#83557dba`.
+// MessagesEditInlineBotMessageRequest represents TL type `messages.editInlineBotMessage#a423bb51`.
 //
 // See https://core.telegram.org/method/messages/editInlineBotMessage for reference.
 type MessagesEditInlineBotMessageRequest struct {
@@ -3345,6 +3359,7 @@ type MessagesEditInlineBotMessageRequest struct {
 	Media       InputMediaClass              `json:"media,omitempty"`
 	ReplyMarkup ReplyMarkupClass             `json:"reply_markup,omitempty"`
 	Entities    []MessageEntityClass         `json:"entities,omitempty"`
+	RichMessage InputRichMessageClass        `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3367,9 +3382,12 @@ func (v *MessagesEditInlineBotMessageRequest) SetFlags() {
 	if v.Entities != nil {
 		v.Flags.Set(3)
 	}
+	if v.RichMessage != nil {
+		v.Flags.Set(23)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x83557dba.
+// ConstructorID returns the TL constructor identifier 0xa423bb51.
 func (v *MessagesEditInlineBotMessageRequest) ConstructorID() uint32 {
 	return MessagesEditInlineBotMessageTypeID
 }
@@ -3395,6 +3413,9 @@ func (v *MessagesEditInlineBotMessageRequest) Encode(b *bytes.Buffer) error {
 		for _, _item := range v.Entities {
 			EncodeTLObject(b, _item)
 		}
+	}
+	if v.Flags.Has(23) {
+		EncodeTLObject(b, v.RichMessage)
 	}
 	return nil
 }
@@ -3600,22 +3621,23 @@ func (c *RPCClient) MessagesGetPeerDialogs(ctx context.Context, req *MessagesGet
 }
 
 // MessagesSaveDraftTypeID is the constructor ID for the RPC function messages.saveDraft.
-const MessagesSaveDraftTypeID = 0x54ae308e
+const MessagesSaveDraftTypeID = 0xad0fa15c
 
-// MessagesSaveDraftRequest represents TL type `messages.saveDraft#54ae308e`.
+// MessagesSaveDraftRequest represents TL type `messages.saveDraft#ad0fa15c`.
 //
 // See https://core.telegram.org/method/messages/saveDraft for reference.
 type MessagesSaveDraftRequest struct {
-	Flags         Fields               `json:"-"`
-	NoWebpage     bool                 `json:"no_webpage,omitempty"`
-	InvertMedia   bool                 `json:"invert_media,omitempty"`
-	ReplyTo       InputReplyToClass    `json:"reply_to,omitempty"`
-	Peer          InputPeerClass       `json:"peer,omitempty"`
-	Message       string               `json:"message,omitempty"`
-	Entities      []MessageEntityClass `json:"entities,omitempty"`
-	Media         InputMediaClass      `json:"media,omitempty"`
-	Effect        int64                `json:"effect,omitempty"`
-	SuggestedPost *SuggestedPost       `json:"suggested_post,omitempty"`
+	Flags         Fields                `json:"-"`
+	NoWebpage     bool                  `json:"no_webpage,omitempty"`
+	InvertMedia   bool                  `json:"invert_media,omitempty"`
+	ReplyTo       InputReplyToClass     `json:"reply_to,omitempty"`
+	Peer          InputPeerClass        `json:"peer,omitempty"`
+	Message       string                `json:"message,omitempty"`
+	Entities      []MessageEntityClass  `json:"entities,omitempty"`
+	Media         InputMediaClass       `json:"media,omitempty"`
+	Effect        int64                 `json:"effect,omitempty"`
+	SuggestedPost *SuggestedPost        `json:"suggested_post,omitempty"`
+	RichMessage   InputRichMessageClass `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3641,9 +3663,12 @@ func (v *MessagesSaveDraftRequest) SetFlags() {
 	if v.SuggestedPost != nil {
 		v.Flags.Set(8)
 	}
+	if v.RichMessage != nil {
+		v.Flags.Set(9)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x54ae308e.
+// ConstructorID returns the TL constructor identifier 0xad0fa15c.
 func (v *MessagesSaveDraftRequest) ConstructorID() uint32 {
 	return MessagesSaveDraftTypeID
 }
@@ -3673,6 +3698,9 @@ func (v *MessagesSaveDraftRequest) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(8) {
 		EncodeTLObject(b, v.SuggestedPost)
+	}
+	if v.Flags.Has(9) {
+		EncodeTLObject(b, v.RichMessage)
 	}
 	return nil
 }
@@ -13446,9 +13474,9 @@ func (c *RPCClient) MessagesReadPollVotes(ctx context.Context, req *MessagesRead
 }
 
 // MessagesSetBotGuestChatResultTypeID is the constructor ID for the RPC function messages.setBotGuestChatResult.
-const MessagesSetBotGuestChatResultTypeID = 0x052b08db
+const MessagesSetBotGuestChatResultTypeID = 0xb8f106e3
 
-// MessagesSetBotGuestChatResultRequest represents TL type `messages.setBotGuestChatResult#052b08db`.
+// MessagesSetBotGuestChatResultRequest represents TL type `messages.setBotGuestChatResult#b8f106e3`.
 //
 // See https://core.telegram.org/method/messages/setBotGuestChatResult for reference.
 type MessagesSetBotGuestChatResultRequest struct {
@@ -13456,7 +13484,7 @@ type MessagesSetBotGuestChatResultRequest struct {
 	Result  InputBotInlineResultClass `json:"result,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x052b08db.
+// ConstructorID returns the TL constructor identifier 0xb8f106e3.
 func (v *MessagesSetBotGuestChatResultRequest) ConstructorID() uint32 {
 	return MessagesSetBotGuestChatResultTypeID
 }
@@ -13476,15 +13504,17 @@ func (v *MessagesSetBotGuestChatResultRequest) Encode(b *bytes.Buffer) error {
 //   - req: the request parameters
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) MessagesSetBotGuestChatResult(ctx context.Context, req *MessagesSetBotGuestChatResultRequest) (bool, error) {
+func (c *RPCClient) MessagesSetBotGuestChatResult(ctx context.Context, req *MessagesSetBotGuestChatResultRequest) (InputBotInlineMessageIDClass, error) {
 	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	_ = result
-	return true, nil
+	if _c, _ok := result.(InputBotInlineMessageIDClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
 }
 
 // MessagesDeleteParticipantReactionsTypeID is the constructor ID for the RPC function messages.deleteParticipantReactions.
@@ -13613,6 +13643,50 @@ func (v *MessagesGetPersonalChannelHistoryRequest) Encode(b *bytes.Buffer) error
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) MessagesGetPersonalChannelHistory(ctx context.Context, req *MessagesGetPersonalChannelHistoryRequest) (MessagesClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(MessagesClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesGetRichMessageTypeID is the constructor ID for the RPC function messages.getRichMessage.
+const MessagesGetRichMessageTypeID = 0x501569cf
+
+// MessagesGetRichMessageRequest represents TL type `messages.getRichMessage#501569cf`.
+//
+// See https://core.telegram.org/method/messages/getRichMessage for reference.
+type MessagesGetRichMessageRequest struct {
+	Peer InputPeerClass `json:"peer,omitempty"`
+	ID   int32          `json:"id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x501569cf.
+func (v *MessagesGetRichMessageRequest) ConstructorID() uint32 {
+	return MessagesGetRichMessageTypeID
+}
+
+// Encode serializes MessagesGetRichMessageRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesGetRichMessageRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesGetRichMessageTypeID)
+	EncodeTLObject(b, v.Peer)
+	WriteInt(b, uint32(v.ID))
+	return nil
+}
+
+// MessagesGetRichMessage invokes the messages.getRichMessage RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesGetRichMessage(ctx context.Context, req *MessagesGetRichMessageRequest) (MessagesClass, error) {
 	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})

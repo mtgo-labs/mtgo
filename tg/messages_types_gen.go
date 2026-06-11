@@ -18,7 +18,7 @@ type ChatFullClass interface {
 const ChatFullTypeID = 0x2633421b
 
 // ChannelFullTypeID is the constructor ID for TL type channelFull.
-const ChannelFullTypeID = 0xe4e0b29d
+const ChannelFullTypeID = 0xa04e8d3a
 
 // MessagesChatFullTypeID is the constructor ID for TL type messages.chatFull.
 const MessagesChatFullTypeID = 0xe5d7d19c
@@ -317,7 +317,7 @@ func init() {
 	}
 }
 
-// ChannelFull represents the TL constructor channelFull (0xe4e0b29d).
+// ChannelFull represents the TL constructor channelFull (0xa04e8d3a).
 //
 // See https://core.telegram.org/constructor/channelFull for reference.
 type ChannelFull struct {
@@ -389,6 +389,7 @@ type ChannelFull struct {
 	StargiftsCount         int32                   `json:"stargifts_count,omitempty"`
 	SendPaidMessagesStars  int64                   `json:"send_paid_messages_stars,omitempty"`
 	MainTab                ProfileTabClass         `json:"main_tab,omitempty"`
+	GuardBotID             int64                   `json:"guard_bot_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -564,9 +565,12 @@ func (v *ChannelFull) SetFlags() {
 	if v.MainTab != nil {
 		v.Flags2.Set(22)
 	}
+	if v.GuardBotID != 0 {
+		v.Flags2.Set(23)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xe4e0b29d.
+// ConstructorID returns the TL constructor identifier 0xa04e8d3a.
 func (v *ChannelFull) ConstructorID() uint32 {
 	return ChannelFullTypeID
 }
@@ -697,6 +701,9 @@ func (v *ChannelFull) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags2.Has(22) {
 		EncodeTLObject(b, v.MainTab)
+	}
+	if v.Flags2.Has(23) {
+		WriteLong(b, v.GuardBotID)
 	}
 	return nil
 }
@@ -1047,6 +1054,13 @@ func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 		}
 		v.MainTab = _objMainTab.(ProfileTabClass)
 	}
+	if v.Flags2.Has(23) {
+		_rGuardBotID, _eGuardBotID := r.ReadInt64()
+		if _eGuardBotID != nil {
+			return nil, _eGuardBotID
+		}
+		v.GuardBotID = _rGuardBotID
+	}
 	return v, nil
 }
 
@@ -1156,7 +1170,7 @@ type MessageClass interface {
 const MessageEmptyTypeID = 0x90a6ca84
 
 // MessageTypeID is the constructor ID for TL type message.
-const MessageTypeID = 0x95ef6f2b
+const MessageTypeID = 0x7600b9d3
 
 // MessageServiceTypeID is the constructor ID for TL type messageService.
 const MessageServiceTypeID = 0x7a800e0a
@@ -1232,7 +1246,7 @@ func init() {
 	}
 }
 
-// Message represents the TL constructor message (0x95ef6f2b).
+// Message represents the TL constructor message (0x7600b9d3).
 //
 // See https://core.telegram.org/constructor/message for reference.
 type Message struct {
@@ -1286,6 +1300,7 @@ type Message struct {
 	SuggestedPost           *SuggestedPost          `json:"suggested_post,omitempty"`
 	ScheduleRepeatPeriod    int32                   `json:"schedule_repeat_period,omitempty"`
 	SummaryFromLanguage     string                  `json:"summary_from_language,omitempty"`
+	RichMessage             *RichMessage            `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -1422,9 +1437,12 @@ func (v *Message) SetFlags() {
 	if v.SummaryFromLanguage != "" {
 		v.Flags2.Set(11)
 	}
+	if v.RichMessage != nil {
+		v.Flags2.Set(13)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x95ef6f2b.
+// ConstructorID returns the TL constructor identifier 0x7600b9d3.
 func (v *Message) ConstructorID() uint32 {
 	return MessageTypeID
 }
@@ -1533,6 +1551,9 @@ func (v *Message) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags2.Has(11) {
 		WriteString(b, v.SummaryFromLanguage)
+	}
+	if v.Flags2.Has(13) {
+		EncodeTLObject(b, v.RichMessage)
 	}
 	return nil
 }
@@ -1817,6 +1838,13 @@ func DecodeMessage(r *Reader) (*Message, error) {
 			return nil, _eSummaryFromLanguage
 		}
 		v.SummaryFromLanguage = _rSummaryFromLanguage
+	}
+	if v.Flags2.Has(13) {
+		_objRichMessage, _errRichMessage := ReadTLObject(r)
+		if _errRichMessage != nil {
+			return nil, _errRichMessage
+		}
+		v.RichMessage = _objRichMessage.(*RichMessage)
 	}
 	return v, nil
 }
@@ -10848,6 +10876,12 @@ const SendMessageEmojiInteractionSeenTypeID = 0xb665902e
 // SendMessageTextDraftActionTypeID is the constructor ID for TL type sendMessageTextDraftAction.
 const SendMessageTextDraftActionTypeID = 0x376d975c
 
+// InputSendMessageRichMessageDraftActionTypeID is the constructor ID for TL type inputSendMessageRichMessageDraftAction.
+const InputSendMessageRichMessageDraftActionTypeID = 0xe2b23b51
+
+// SendMessageRichMessageDraftActionTypeID is the constructor ID for TL type sendMessageRichMessageDraftAction.
+const SendMessageRichMessageDraftActionTypeID = 0xa2cb24f9
+
 // isSendMessageAction marks SendMessageTypingAction as implementing the SendMessageActionClass interface.
 func (*SendMessageTypingAction) isSendMessageAction() {}
 
@@ -10904,6 +10938,12 @@ func (*SendMessageEmojiInteractionSeen) isSendMessageAction() {}
 
 // isSendMessageAction marks SendMessageTextDraftAction as implementing the SendMessageActionClass interface.
 func (*SendMessageTextDraftAction) isSendMessageAction() {}
+
+// isSendMessageAction marks InputSendMessageRichMessageDraftAction as implementing the SendMessageActionClass interface.
+func (*InputSendMessageRichMessageDraftAction) isSendMessageAction() {}
+
+// isSendMessageAction marks SendMessageRichMessageDraftAction as implementing the SendMessageActionClass interface.
+func (*SendMessageRichMessageDraftAction) isSendMessageAction() {}
 
 // SendMessageTypingAction represents the TL constructor sendMessageTypingAction (0x16bf744e).
 //
@@ -11537,6 +11577,92 @@ func DecodeSendMessageTextDraftAction(r *Reader) (*SendMessageTextDraftAction, e
 func init() {
 	Registry[SendMessageTextDraftActionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeSendMessageTextDraftAction(r)
+	}
+}
+
+// InputSendMessageRichMessageDraftAction represents the TL constructor inputSendMessageRichMessageDraftAction (0xe2b23b51).
+//
+// See https://core.telegram.org/constructor/inputSendMessageRichMessageDraftAction for reference.
+type InputSendMessageRichMessageDraftAction struct {
+	RandomID    int64                 `json:"random_id,omitempty"`
+	RichMessage InputRichMessageClass `json:"rich_message,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xe2b23b51.
+func (v *InputSendMessageRichMessageDraftAction) ConstructorID() uint32 {
+	return InputSendMessageRichMessageDraftActionTypeID
+}
+
+// Encode serializes InputSendMessageRichMessageDraftAction to a bytes.Buffer using the TL binary protocol.
+func (v *InputSendMessageRichMessageDraftAction) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputSendMessageRichMessageDraftActionTypeID)
+	WriteLong(b, v.RandomID)
+	EncodeTLObject(b, v.RichMessage)
+	return nil
+}
+
+// DecodeInputSendMessageRichMessageDraftAction deserializes a InputSendMessageRichMessageDraftAction from a reader using the TL binary protocol.
+func DecodeInputSendMessageRichMessageDraftAction(r *Reader) (*InputSendMessageRichMessageDraftAction, error) {
+	v := &InputSendMessageRichMessageDraftAction{}
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_objRichMessage, _errRichMessage := ReadTLObject(r)
+	if _errRichMessage != nil {
+		return nil, _errRichMessage
+	}
+	v.RichMessage = _objRichMessage.(InputRichMessageClass)
+	return v, nil
+}
+
+func init() {
+	Registry[InputSendMessageRichMessageDraftActionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputSendMessageRichMessageDraftAction(r)
+	}
+}
+
+// SendMessageRichMessageDraftAction represents the TL constructor sendMessageRichMessageDraftAction (0xa2cb24f9).
+//
+// See https://core.telegram.org/constructor/sendMessageRichMessageDraftAction for reference.
+type SendMessageRichMessageDraftAction struct {
+	RandomID    int64        `json:"random_id,omitempty"`
+	RichMessage *RichMessage `json:"rich_message,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xa2cb24f9.
+func (v *SendMessageRichMessageDraftAction) ConstructorID() uint32 {
+	return SendMessageRichMessageDraftActionTypeID
+}
+
+// Encode serializes SendMessageRichMessageDraftAction to a bytes.Buffer using the TL binary protocol.
+func (v *SendMessageRichMessageDraftAction) Encode(b *bytes.Buffer) error {
+	WriteInt(b, SendMessageRichMessageDraftActionTypeID)
+	WriteLong(b, v.RandomID)
+	EncodeTLObject(b, v.RichMessage)
+	return nil
+}
+
+// DecodeSendMessageRichMessageDraftAction deserializes a SendMessageRichMessageDraftAction from a reader using the TL binary protocol.
+func DecodeSendMessageRichMessageDraftAction(r *Reader) (*SendMessageRichMessageDraftAction, error) {
+	v := &SendMessageRichMessageDraftAction{}
+	_rRandomID, _eRandomID := r.ReadInt64()
+	if _eRandomID != nil {
+		return nil, _eRandomID
+	}
+	v.RandomID = _rRandomID
+	_objRichMessage, _errRichMessage := ReadTLObject(r)
+	if _errRichMessage != nil {
+		return nil, _errRichMessage
+	}
+	v.RichMessage = _objRichMessage.(*RichMessage)
+	return v, nil
+}
+
+func init() {
+	Registry[SendMessageRichMessageDraftActionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeSendMessageRichMessageDraftAction(r)
 	}
 }
 
@@ -15370,6 +15496,9 @@ const InputBotInlineMessageMediaInvoiceTypeID = 0xd7e78225
 // InputBotInlineMessageMediaWebPageTypeID is the constructor ID for TL type inputBotInlineMessageMediaWebPage.
 const InputBotInlineMessageMediaWebPageTypeID = 0xbddcc510
 
+// InputBotInlineMessageRichMessageTypeID is the constructor ID for TL type inputBotInlineMessageRichMessage.
+const InputBotInlineMessageRichMessageTypeID = 0xb43df56c
+
 // isInputBotInlineMessage marks InputBotInlineMessageMediaAuto as implementing the InputBotInlineMessageClass interface.
 func (*InputBotInlineMessageMediaAuto) isInputBotInlineMessage() {}
 
@@ -15393,6 +15522,9 @@ func (*InputBotInlineMessageMediaInvoice) isInputBotInlineMessage() {}
 
 // isInputBotInlineMessage marks InputBotInlineMessageMediaWebPage as implementing the InputBotInlineMessageClass interface.
 func (*InputBotInlineMessageMediaWebPage) isInputBotInlineMessage() {}
+
+// isInputBotInlineMessage marks InputBotInlineMessageRichMessage as implementing the InputBotInlineMessageClass interface.
+func (*InputBotInlineMessageRichMessage) isInputBotInlineMessage() {}
 
 // InputBotInlineMessageMediaAuto represents the TL constructor inputBotInlineMessageMediaAuto (0x3380c786).
 //
@@ -16171,6 +16303,68 @@ func init() {
 	}
 }
 
+// InputBotInlineMessageRichMessage represents the TL constructor inputBotInlineMessageRichMessage (0xb43df56c).
+//
+// See https://core.telegram.org/constructor/inputBotInlineMessageRichMessage for reference.
+type InputBotInlineMessageRichMessage struct {
+	Flags       Fields                `json:"-"`
+	ReplyMarkup ReplyMarkupClass      `json:"reply_markup,omitempty"`
+	RichMessage InputRichMessageClass `json:"rich_message,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputBotInlineMessageRichMessage) SetFlags() {
+	if v.ReplyMarkup != nil {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xb43df56c.
+func (v *InputBotInlineMessageRichMessage) ConstructorID() uint32 {
+	return InputBotInlineMessageRichMessageTypeID
+}
+
+// Encode serializes InputBotInlineMessageRichMessage to a bytes.Buffer using the TL binary protocol.
+func (v *InputBotInlineMessageRichMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputBotInlineMessageRichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(2) {
+		EncodeTLObject(b, v.ReplyMarkup)
+	}
+	EncodeTLObject(b, v.RichMessage)
+	return nil
+}
+
+// DecodeInputBotInlineMessageRichMessage deserializes a InputBotInlineMessageRichMessage from a reader using the TL binary protocol.
+func DecodeInputBotInlineMessageRichMessage(r *Reader) (*InputBotInlineMessageRichMessage, error) {
+	v := &InputBotInlineMessageRichMessage{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	if v.Flags.Has(2) {
+		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
+		if _errReplyMarkup != nil {
+			return nil, _errReplyMarkup
+		}
+		v.ReplyMarkup = _objReplyMarkup.(ReplyMarkupClass)
+	}
+	_objRichMessage, _errRichMessage := ReadTLObject(r)
+	if _errRichMessage != nil {
+		return nil, _errRichMessage
+	}
+	v.RichMessage = _objRichMessage.(InputRichMessageClass)
+	return v, nil
+}
+
+func init() {
+	Registry[InputBotInlineMessageRichMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputBotInlineMessageRichMessage(r)
+	}
+}
+
 // BotInlineMessageClass is the interface for TL type BotInlineMessage.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the BotInlineMessage TL type.
@@ -16200,6 +16394,9 @@ const BotInlineMessageMediaInvoiceTypeID = 0x354a9b09
 // BotInlineMessageMediaWebPageTypeID is the constructor ID for TL type botInlineMessageMediaWebPage.
 const BotInlineMessageMediaWebPageTypeID = 0x809ad9a6
 
+// BotInlineMessageRichMessageTypeID is the constructor ID for TL type botInlineMessageRichMessage.
+const BotInlineMessageRichMessageTypeID = 0x0a617e7b
+
 // isBotInlineMessage marks BotInlineMessageMediaAuto as implementing the BotInlineMessageClass interface.
 func (*BotInlineMessageMediaAuto) isBotInlineMessage() {}
 
@@ -16220,6 +16417,9 @@ func (*BotInlineMessageMediaInvoice) isBotInlineMessage() {}
 
 // isBotInlineMessage marks BotInlineMessageMediaWebPage as implementing the BotInlineMessageClass interface.
 func (*BotInlineMessageMediaWebPage) isBotInlineMessage() {}
+
+// isBotInlineMessage marks BotInlineMessageRichMessage as implementing the BotInlineMessageClass interface.
+func (*BotInlineMessageRichMessage) isBotInlineMessage() {}
 
 // BotInlineMessageMediaAuto represents the TL constructor botInlineMessageMediaAuto (0x764cf810).
 //
@@ -16941,6 +17141,68 @@ func DecodeBotInlineMessageMediaWebPage(r *Reader) (*BotInlineMessageMediaWebPag
 func init() {
 	Registry[BotInlineMessageMediaWebPageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBotInlineMessageMediaWebPage(r)
+	}
+}
+
+// BotInlineMessageRichMessage represents the TL constructor botInlineMessageRichMessage (0x0a617e7b).
+//
+// See https://core.telegram.org/constructor/botInlineMessageRichMessage for reference.
+type BotInlineMessageRichMessage struct {
+	Flags       Fields           `json:"-"`
+	ReplyMarkup ReplyMarkupClass `json:"reply_markup,omitempty"`
+	RichMessage *RichMessage     `json:"rich_message,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *BotInlineMessageRichMessage) SetFlags() {
+	if v.ReplyMarkup != nil {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x0a617e7b.
+func (v *BotInlineMessageRichMessage) ConstructorID() uint32 {
+	return BotInlineMessageRichMessageTypeID
+}
+
+// Encode serializes BotInlineMessageRichMessage to a bytes.Buffer using the TL binary protocol.
+func (v *BotInlineMessageRichMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BotInlineMessageRichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(2) {
+		EncodeTLObject(b, v.ReplyMarkup)
+	}
+	EncodeTLObject(b, v.RichMessage)
+	return nil
+}
+
+// DecodeBotInlineMessageRichMessage deserializes a BotInlineMessageRichMessage from a reader using the TL binary protocol.
+func DecodeBotInlineMessageRichMessage(r *Reader) (*BotInlineMessageRichMessage, error) {
+	v := &BotInlineMessageRichMessage{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	if v.Flags.Has(2) {
+		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
+		if _errReplyMarkup != nil {
+			return nil, _errReplyMarkup
+		}
+		v.ReplyMarkup = _objReplyMarkup.(ReplyMarkupClass)
+	}
+	_objRichMessage, _errRichMessage := ReadTLObject(r)
+	if _errRichMessage != nil {
+		return nil, _errRichMessage
+	}
+	v.RichMessage = _objRichMessage.(*RichMessage)
+	return v, nil
+}
+
+func init() {
+	Registry[BotInlineMessageRichMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBotInlineMessageRichMessage(r)
 	}
 }
 
@@ -17773,7 +18035,7 @@ type DraftMessageClass interface {
 const DraftMessageEmptyTypeID = 0x1b0c841a
 
 // DraftMessageTypeID is the constructor ID for TL type draftMessage.
-const DraftMessageTypeID = 0x96eaa5eb
+const DraftMessageTypeID = 0x60fe3294
 
 // isDraftMessage marks DraftMessageEmpty as implementing the DraftMessageClass interface.
 func (*DraftMessageEmpty) isDraftMessage() {}
@@ -17836,7 +18098,7 @@ func init() {
 	}
 }
 
-// DraftMessage represents the TL constructor draftMessage (0x96eaa5eb).
+// DraftMessage represents the TL constructor draftMessage (0x60fe3294).
 //
 // See https://core.telegram.org/constructor/draftMessage for reference.
 type DraftMessage struct {
@@ -17850,6 +18112,7 @@ type DraftMessage struct {
 	Date          int32                `json:"date,omitempty"`
 	Effect        int64                `json:"effect,omitempty"`
 	SuggestedPost *SuggestedPost       `json:"suggested_post,omitempty"`
+	RichMessage   *RichMessage         `json:"rich_message,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -17875,9 +18138,12 @@ func (v *DraftMessage) SetFlags() {
 	if v.SuggestedPost != nil {
 		v.Flags.Set(8)
 	}
+	if v.RichMessage != nil {
+		v.Flags.Set(9)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x96eaa5eb.
+// ConstructorID returns the TL constructor identifier 0x60fe3294.
 func (v *DraftMessage) ConstructorID() uint32 {
 	return DraftMessageTypeID
 }
@@ -17907,6 +18173,9 @@ func (v *DraftMessage) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(8) {
 		EncodeTLObject(b, v.SuggestedPost)
+	}
+	if v.Flags.Has(9) {
+		EncodeTLObject(b, v.RichMessage)
 	}
 	return nil
 }
@@ -17980,6 +18249,13 @@ func DecodeDraftMessage(r *Reader) (*DraftMessage, error) {
 			return nil, _errSuggestedPost
 		}
 		v.SuggestedPost = _objSuggestedPost.(*SuggestedPost)
+	}
+	if v.Flags.Has(9) {
+		_objRichMessage, _errRichMessage := ReadTLObject(r)
+		if _errRichMessage != nil {
+			return nil, _errRichMessage
+		}
+		v.RichMessage = _objRichMessage.(*RichMessage)
 	}
 	return v, nil
 }
@@ -21030,6 +21306,7 @@ type MessageReplyHeader struct {
 	ReplyToScheduled bool                 `json:"reply_to_scheduled,omitempty"`
 	ForumTopic       bool                 `json:"forum_topic,omitempty"`
 	Quote            bool                 `json:"quote,omitempty"`
+	ReplyToEphemeral bool                 `json:"reply_to_ephemeral,omitempty"`
 	ReplyToMsgID     int32                `json:"reply_to_msg_id,omitempty"`
 	ReplyToPeerID    PeerClass            `json:"reply_to_peer_id,omitempty"`
 	ReplyFrom        *MessageFwdHeader    `json:"reply_from,omitempty"`
@@ -21052,6 +21329,9 @@ func (v *MessageReplyHeader) SetFlags() {
 	}
 	if v.Quote {
 		v.Flags.Set(9)
+	}
+	if v.ReplyToEphemeral {
+		v.Flags.Set(13)
 	}
 	if v.ReplyToMsgID != 0 {
 		v.Flags.Set(4)
@@ -21143,6 +21423,7 @@ func DecodeMessageReplyHeader(r *Reader) (*MessageReplyHeader, error) {
 	v.ReplyToScheduled = v.Flags.Has(2)
 	v.ForumTopic = v.Flags.Has(3)
 	v.Quote = v.Flags.Has(9)
+	v.ReplyToEphemeral = v.Flags.Has(13)
 	if v.Flags.Has(4) {
 		_rReplyToMsgID, _eReplyToMsgID := r.ReadInt32()
 		if _eReplyToMsgID != nil {
@@ -29050,5 +29331,778 @@ func DecodeMessagesComposedMessageWithAi(r *Reader) (*MessagesComposedMessageWit
 func init() {
 	Registry[MessagesComposedMessageWithAiTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessagesComposedMessageWithAi(r)
+	}
+}
+
+// ChatInviteJoinResultClass is the interface for TL type ChatInviteJoinResult.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the ChatInviteJoinResult TL type.
+type ChatInviteJoinResultClass interface {
+	TLObject
+	isChatInviteJoinResult()
+}
+
+// MessagesChatInviteJoinResultOkTypeID is the constructor ID for TL type messages.chatInviteJoinResultOk.
+const MessagesChatInviteJoinResultOkTypeID = 0x445663a7
+
+// MessagesChatInviteJoinResultWebViewTypeID is the constructor ID for TL type messages.chatInviteJoinResultWebView.
+const MessagesChatInviteJoinResultWebViewTypeID = 0x2f51c337
+
+// isChatInviteJoinResult marks MessagesChatInviteJoinResultOk as implementing the ChatInviteJoinResultClass interface.
+func (*MessagesChatInviteJoinResultOk) isChatInviteJoinResult() {}
+
+// isChatInviteJoinResult marks MessagesChatInviteJoinResultWebView as implementing the ChatInviteJoinResultClass interface.
+func (*MessagesChatInviteJoinResultWebView) isChatInviteJoinResult() {}
+
+// MessagesChatInviteJoinResultOk represents the TL constructor messages.chatInviteJoinResultOk (0x445663a7).
+//
+// See https://core.telegram.org/constructor/messages.chatInviteJoinResultOk for reference.
+type MessagesChatInviteJoinResultOk struct {
+	Updates UpdatesClass `json:"updates,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x445663a7.
+func (v *MessagesChatInviteJoinResultOk) ConstructorID() uint32 {
+	return MessagesChatInviteJoinResultOkTypeID
+}
+
+// Encode serializes MessagesChatInviteJoinResultOk to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesChatInviteJoinResultOk) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesChatInviteJoinResultOkTypeID)
+	EncodeTLObject(b, v.Updates)
+	return nil
+}
+
+// DecodeMessagesChatInviteJoinResultOk deserializes a MessagesChatInviteJoinResultOk from a reader using the TL binary protocol.
+func DecodeMessagesChatInviteJoinResultOk(r *Reader) (*MessagesChatInviteJoinResultOk, error) {
+	v := &MessagesChatInviteJoinResultOk{}
+	_objUpdates, _errUpdates := ReadTLObject(r)
+	if _errUpdates != nil {
+		return nil, _errUpdates
+	}
+	v.Updates = _objUpdates.(UpdatesClass)
+	return v, nil
+}
+
+func init() {
+	Registry[MessagesChatInviteJoinResultOkTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessagesChatInviteJoinResultOk(r)
+	}
+}
+
+// MessagesChatInviteJoinResultWebView represents the TL constructor messages.chatInviteJoinResultWebView (0x2f51c337).
+//
+// See https://core.telegram.org/constructor/messages.chatInviteJoinResultWebView for reference.
+type MessagesChatInviteJoinResultWebView struct {
+	BotID   int64             `json:"bot_id,omitempty"`
+	Webview *WebViewResultURL `json:"webview,omitempty"`
+	Users   []UserClass       `json:"users,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x2f51c337.
+func (v *MessagesChatInviteJoinResultWebView) ConstructorID() uint32 {
+	return MessagesChatInviteJoinResultWebViewTypeID
+}
+
+// Encode serializes MessagesChatInviteJoinResultWebView to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesChatInviteJoinResultWebView) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesChatInviteJoinResultWebViewTypeID)
+	WriteLong(b, v.BotID)
+	EncodeTLObject(b, v.Webview)
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Users)))
+	for _, _item := range v.Users {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeMessagesChatInviteJoinResultWebView deserializes a MessagesChatInviteJoinResultWebView from a reader using the TL binary protocol.
+func DecodeMessagesChatInviteJoinResultWebView(r *Reader) (*MessagesChatInviteJoinResultWebView, error) {
+	v := &MessagesChatInviteJoinResultWebView{}
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	_objWebview, _errWebview := ReadTLObject(r)
+	if _errWebview != nil {
+		return nil, _errWebview
+	}
+	v.Webview = _objWebview.(*WebViewResultURL)
+	_vhdrUsers, _ehdrUsers := r.ReadUint32()
+	if _ehdrUsers != nil {
+		return nil, _ehdrUsers
+	}
+	_cntUsers, _ecntUsers := r.ReadUint32()
+	if _ecntUsers != nil {
+		return nil, _ecntUsers
+	}
+	if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
+	v.Users = make([]UserClass, _cntUsers)
+	for _iUsers := range v.Users {
+		_objUsers, _errUsers := ReadTLObject(r)
+		if _errUsers != nil {
+			return nil, _errUsers
+		}
+		v.Users[_iUsers] = _objUsers.(UserClass)
+	}
+	_ = _vhdrUsers
+	return v, nil
+}
+
+func init() {
+	Registry[MessagesChatInviteJoinResultWebViewTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessagesChatInviteJoinResultWebView(r)
+	}
+}
+
+// RichMessageTypeID is the constructor ID for TL type richMessage.
+const RichMessageTypeID = 0xbaf39d8b
+
+// RichMessage represents the TL constructor richMessage (0xbaf39d8b).
+//
+// See https://core.telegram.org/constructor/richMessage for reference.
+type RichMessage struct {
+	Flags     Fields           `json:"-"`
+	Rtl       bool             `json:"rtl,omitempty"`
+	Part      bool             `json:"part,omitempty"`
+	Blocks    []PageBlockClass `json:"blocks,omitempty"`
+	Photos    []PhotoClass     `json:"photos,omitempty"`
+	Documents []DocumentClass  `json:"documents,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *RichMessage) SetFlags() {
+	if v.Rtl {
+		v.Flags.Set(0)
+	}
+	if v.Part {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xbaf39d8b.
+func (v *RichMessage) ConstructorID() uint32 {
+	return RichMessageTypeID
+}
+
+// Encode serializes RichMessage to a bytes.Buffer using the TL binary protocol.
+func (v *RichMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Blocks)))
+	for _, _item := range v.Blocks {
+		EncodeTLObject(b, _item)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Photos)))
+	for _, _item := range v.Photos {
+		EncodeTLObject(b, _item)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Documents)))
+	for _, _item := range v.Documents {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeRichMessage deserializes a RichMessage from a reader using the TL binary protocol.
+func DecodeRichMessage(r *Reader) (*RichMessage, error) {
+	v := &RichMessage{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Rtl = v.Flags.Has(0)
+	v.Part = v.Flags.Has(1)
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
+	v.Blocks = make([]PageBlockClass, _cntBlocks)
+	for _iBlocks := range v.Blocks {
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
+		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+	}
+	_ = _vhdrBlocks
+	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+	if _ehdrPhotos != nil {
+		return nil, _ehdrPhotos
+	}
+	_cntPhotos, _ecntPhotos := r.ReadUint32()
+	if _ecntPhotos != nil {
+		return nil, _ecntPhotos
+	}
+	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+		return nil, _errPhotos
+	}
+	v.Photos = make([]PhotoClass, _cntPhotos)
+	for _iPhotos := range v.Photos {
+		_objPhotos, _errPhotos := ReadTLObject(r)
+		if _errPhotos != nil {
+			return nil, _errPhotos
+		}
+		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
+	}
+	_ = _vhdrPhotos
+	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+	if _ehdrDocuments != nil {
+		return nil, _ehdrDocuments
+	}
+	_cntDocuments, _ecntDocuments := r.ReadUint32()
+	if _ecntDocuments != nil {
+		return nil, _ecntDocuments
+	}
+	if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+		return nil, _errDocuments
+	}
+	v.Documents = make([]DocumentClass, _cntDocuments)
+	for _iDocuments := range v.Documents {
+		_objDocuments, _errDocuments := ReadTLObject(r)
+		if _errDocuments != nil {
+			return nil, _errDocuments
+		}
+		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
+	}
+	_ = _vhdrDocuments
+	return v, nil
+}
+
+func init() {
+	Registry[RichMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRichMessage(r)
+	}
+}
+
+// InputRichMessageClass is the interface for TL type InputRichMessage.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the InputRichMessage TL type.
+type InputRichMessageClass interface {
+	TLObject
+	isInputRichMessage()
+}
+
+// InputRichMessageTypeID is the constructor ID for TL type inputRichMessage.
+const InputRichMessageTypeID = 0xe4c449fc
+
+// InputRichMessageHTMLTypeID is the constructor ID for TL type inputRichMessageHTML.
+const InputRichMessageHTMLTypeID = 0xd4eab551
+
+// InputRichMessageMarkdownTypeID is the constructor ID for TL type inputRichMessageMarkdown.
+const InputRichMessageMarkdownTypeID = 0x09ac8186
+
+// isInputRichMessage marks InputRichMessage as implementing the InputRichMessageClass interface.
+func (*InputRichMessage) isInputRichMessage() {}
+
+// isInputRichMessage marks InputRichMessageHTML as implementing the InputRichMessageClass interface.
+func (*InputRichMessageHTML) isInputRichMessage() {}
+
+// isInputRichMessage marks InputRichMessageMarkdown as implementing the InputRichMessageClass interface.
+func (*InputRichMessageMarkdown) isInputRichMessage() {}
+
+// InputRichMessage represents the TL constructor inputRichMessage (0xe4c449fc).
+//
+// See https://core.telegram.org/constructor/inputRichMessage for reference.
+type InputRichMessage struct {
+	Flags      Fields               `json:"-"`
+	Rtl        bool                 `json:"rtl,omitempty"`
+	Noautolink bool                 `json:"noautolink,omitempty"`
+	Blocks     []PageBlockClass     `json:"blocks,omitempty"`
+	Photos     []InputPhotoClass    `json:"photos,omitempty"`
+	Documents  []InputDocumentClass `json:"documents,omitempty"`
+	Users      []InputUserClass     `json:"users,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputRichMessage) SetFlags() {
+	if v.Rtl {
+		v.Flags.Set(0)
+	}
+	if v.Noautolink {
+		v.Flags.Set(1)
+	}
+	if v.Photos != nil {
+		v.Flags.Set(2)
+	}
+	if v.Documents != nil {
+		v.Flags.Set(3)
+	}
+	if v.Users != nil {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xe4c449fc.
+func (v *InputRichMessage) ConstructorID() uint32 {
+	return InputRichMessageTypeID
+}
+
+// Encode serializes InputRichMessage to a bytes.Buffer using the TL binary protocol.
+func (v *InputRichMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputRichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Blocks)))
+	for _, _item := range v.Blocks {
+		EncodeTLObject(b, _item)
+	}
+	if v.Flags.Has(2) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Photos)))
+		for _, _item := range v.Photos {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(3) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Documents)))
+		for _, _item := range v.Documents {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(4) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Users)))
+		for _, _item := range v.Users {
+			EncodeTLObject(b, _item)
+		}
+	}
+	return nil
+}
+
+// DecodeInputRichMessage deserializes a InputRichMessage from a reader using the TL binary protocol.
+func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
+	v := &InputRichMessage{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Rtl = v.Flags.Has(0)
+	v.Noautolink = v.Flags.Has(1)
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
+	v.Blocks = make([]PageBlockClass, _cntBlocks)
+	for _iBlocks := range v.Blocks {
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
+		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+	}
+	_ = _vhdrBlocks
+	if v.Flags.Has(2) {
+		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+		if _ehdrPhotos != nil {
+			return nil, _ehdrPhotos
+		}
+		_cntPhotos, _ecntPhotos := r.ReadUint32()
+		if _ecntPhotos != nil {
+			return nil, _ecntPhotos
+		}
+		if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+			return nil, _errPhotos
+		}
+		v.Photos = make([]InputPhotoClass, _cntPhotos)
+		for _iPhotos := range v.Photos {
+			_objPhotos, _errPhotos := ReadTLObject(r)
+			if _errPhotos != nil {
+				return nil, _errPhotos
+			}
+			v.Photos[_iPhotos] = _objPhotos.(InputPhotoClass)
+		}
+		_ = _vhdrPhotos
+	}
+	if v.Flags.Has(3) {
+		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+		if _ehdrDocuments != nil {
+			return nil, _ehdrDocuments
+		}
+		_cntDocuments, _ecntDocuments := r.ReadUint32()
+		if _ecntDocuments != nil {
+			return nil, _ecntDocuments
+		}
+		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+			return nil, _errDocuments
+		}
+		v.Documents = make([]InputDocumentClass, _cntDocuments)
+		for _iDocuments := range v.Documents {
+			_objDocuments, _errDocuments := ReadTLObject(r)
+			if _errDocuments != nil {
+				return nil, _errDocuments
+			}
+			v.Documents[_iDocuments] = _objDocuments.(InputDocumentClass)
+		}
+		_ = _vhdrDocuments
+	}
+	if v.Flags.Has(4) {
+		_vhdrUsers, _ehdrUsers := r.ReadUint32()
+		if _ehdrUsers != nil {
+			return nil, _ehdrUsers
+		}
+		_cntUsers, _ecntUsers := r.ReadUint32()
+		if _ecntUsers != nil {
+			return nil, _ecntUsers
+		}
+		if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+			return nil, _errUsers
+		}
+		v.Users = make([]InputUserClass, _cntUsers)
+		for _iUsers := range v.Users {
+			_objUsers, _errUsers := ReadTLObject(r)
+			if _errUsers != nil {
+				return nil, _errUsers
+			}
+			v.Users[_iUsers] = _objUsers.(InputUserClass)
+		}
+		_ = _vhdrUsers
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputRichMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputRichMessage(r)
+	}
+}
+
+// InputRichMessageHTML represents the TL constructor inputRichMessageHTML (0xd4eab551).
+//
+// See https://core.telegram.org/constructor/inputRichMessageHTML for reference.
+type InputRichMessageHTML struct {
+	Flags      Fields               `json:"-"`
+	Rtl        bool                 `json:"rtl,omitempty"`
+	Noautolink bool                 `json:"noautolink,omitempty"`
+	HTML       string               `json:"html,omitempty"`
+	Photos     []InputPhotoClass    `json:"photos,omitempty"`
+	Documents  []InputDocumentClass `json:"documents,omitempty"`
+	Users      []InputUserClass     `json:"users,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputRichMessageHTML) SetFlags() {
+	if v.Rtl {
+		v.Flags.Set(0)
+	}
+	if v.Noautolink {
+		v.Flags.Set(1)
+	}
+	if v.Photos != nil {
+		v.Flags.Set(2)
+	}
+	if v.Documents != nil {
+		v.Flags.Set(3)
+	}
+	if v.Users != nil {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xd4eab551.
+func (v *InputRichMessageHTML) ConstructorID() uint32 {
+	return InputRichMessageHTMLTypeID
+}
+
+// Encode serializes InputRichMessageHTML to a bytes.Buffer using the TL binary protocol.
+func (v *InputRichMessageHTML) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputRichMessageHTMLTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.HTML)
+	if v.Flags.Has(2) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Photos)))
+		for _, _item := range v.Photos {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(3) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Documents)))
+		for _, _item := range v.Documents {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(4) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Users)))
+		for _, _item := range v.Users {
+			EncodeTLObject(b, _item)
+		}
+	}
+	return nil
+}
+
+// DecodeInputRichMessageHTML deserializes a InputRichMessageHTML from a reader using the TL binary protocol.
+func DecodeInputRichMessageHTML(r *Reader) (*InputRichMessageHTML, error) {
+	v := &InputRichMessageHTML{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Rtl = v.Flags.Has(0)
+	v.Noautolink = v.Flags.Has(1)
+	_rHTML, _eHTML := r.ReadString()
+	if _eHTML != nil {
+		return nil, _eHTML
+	}
+	v.HTML = _rHTML
+	if v.Flags.Has(2) {
+		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+		if _ehdrPhotos != nil {
+			return nil, _ehdrPhotos
+		}
+		_cntPhotos, _ecntPhotos := r.ReadUint32()
+		if _ecntPhotos != nil {
+			return nil, _ecntPhotos
+		}
+		if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+			return nil, _errPhotos
+		}
+		v.Photos = make([]InputPhotoClass, _cntPhotos)
+		for _iPhotos := range v.Photos {
+			_objPhotos, _errPhotos := ReadTLObject(r)
+			if _errPhotos != nil {
+				return nil, _errPhotos
+			}
+			v.Photos[_iPhotos] = _objPhotos.(InputPhotoClass)
+		}
+		_ = _vhdrPhotos
+	}
+	if v.Flags.Has(3) {
+		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+		if _ehdrDocuments != nil {
+			return nil, _ehdrDocuments
+		}
+		_cntDocuments, _ecntDocuments := r.ReadUint32()
+		if _ecntDocuments != nil {
+			return nil, _ecntDocuments
+		}
+		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+			return nil, _errDocuments
+		}
+		v.Documents = make([]InputDocumentClass, _cntDocuments)
+		for _iDocuments := range v.Documents {
+			_objDocuments, _errDocuments := ReadTLObject(r)
+			if _errDocuments != nil {
+				return nil, _errDocuments
+			}
+			v.Documents[_iDocuments] = _objDocuments.(InputDocumentClass)
+		}
+		_ = _vhdrDocuments
+	}
+	if v.Flags.Has(4) {
+		_vhdrUsers, _ehdrUsers := r.ReadUint32()
+		if _ehdrUsers != nil {
+			return nil, _ehdrUsers
+		}
+		_cntUsers, _ecntUsers := r.ReadUint32()
+		if _ecntUsers != nil {
+			return nil, _ecntUsers
+		}
+		if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+			return nil, _errUsers
+		}
+		v.Users = make([]InputUserClass, _cntUsers)
+		for _iUsers := range v.Users {
+			_objUsers, _errUsers := ReadTLObject(r)
+			if _errUsers != nil {
+				return nil, _errUsers
+			}
+			v.Users[_iUsers] = _objUsers.(InputUserClass)
+		}
+		_ = _vhdrUsers
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputRichMessageHTMLTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputRichMessageHTML(r)
+	}
+}
+
+// InputRichMessageMarkdown represents the TL constructor inputRichMessageMarkdown (0x09ac8186).
+//
+// See https://core.telegram.org/constructor/inputRichMessageMarkdown for reference.
+type InputRichMessageMarkdown struct {
+	Flags      Fields               `json:"-"`
+	Rtl        bool                 `json:"rtl,omitempty"`
+	Noautolink bool                 `json:"noautolink,omitempty"`
+	Markdown   string               `json:"markdown,omitempty"`
+	Photos     []InputPhotoClass    `json:"photos,omitempty"`
+	Documents  []InputDocumentClass `json:"documents,omitempty"`
+	Users      []InputUserClass     `json:"users,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputRichMessageMarkdown) SetFlags() {
+	if v.Rtl {
+		v.Flags.Set(0)
+	}
+	if v.Noautolink {
+		v.Flags.Set(1)
+	}
+	if v.Photos != nil {
+		v.Flags.Set(2)
+	}
+	if v.Documents != nil {
+		v.Flags.Set(3)
+	}
+	if v.Users != nil {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x09ac8186.
+func (v *InputRichMessageMarkdown) ConstructorID() uint32 {
+	return InputRichMessageMarkdownTypeID
+}
+
+// Encode serializes InputRichMessageMarkdown to a bytes.Buffer using the TL binary protocol.
+func (v *InputRichMessageMarkdown) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputRichMessageMarkdownTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Markdown)
+	if v.Flags.Has(2) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Photos)))
+		for _, _item := range v.Photos {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(3) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Documents)))
+		for _, _item := range v.Documents {
+			EncodeTLObject(b, _item)
+		}
+	}
+	if v.Flags.Has(4) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Users)))
+		for _, _item := range v.Users {
+			EncodeTLObject(b, _item)
+		}
+	}
+	return nil
+}
+
+// DecodeInputRichMessageMarkdown deserializes a InputRichMessageMarkdown from a reader using the TL binary protocol.
+func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error) {
+	v := &InputRichMessageMarkdown{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Rtl = v.Flags.Has(0)
+	v.Noautolink = v.Flags.Has(1)
+	_rMarkdown, _eMarkdown := r.ReadString()
+	if _eMarkdown != nil {
+		return nil, _eMarkdown
+	}
+	v.Markdown = _rMarkdown
+	if v.Flags.Has(2) {
+		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+		if _ehdrPhotos != nil {
+			return nil, _ehdrPhotos
+		}
+		_cntPhotos, _ecntPhotos := r.ReadUint32()
+		if _ecntPhotos != nil {
+			return nil, _ecntPhotos
+		}
+		if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+			return nil, _errPhotos
+		}
+		v.Photos = make([]InputPhotoClass, _cntPhotos)
+		for _iPhotos := range v.Photos {
+			_objPhotos, _errPhotos := ReadTLObject(r)
+			if _errPhotos != nil {
+				return nil, _errPhotos
+			}
+			v.Photos[_iPhotos] = _objPhotos.(InputPhotoClass)
+		}
+		_ = _vhdrPhotos
+	}
+	if v.Flags.Has(3) {
+		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+		if _ehdrDocuments != nil {
+			return nil, _ehdrDocuments
+		}
+		_cntDocuments, _ecntDocuments := r.ReadUint32()
+		if _ecntDocuments != nil {
+			return nil, _ecntDocuments
+		}
+		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+			return nil, _errDocuments
+		}
+		v.Documents = make([]InputDocumentClass, _cntDocuments)
+		for _iDocuments := range v.Documents {
+			_objDocuments, _errDocuments := ReadTLObject(r)
+			if _errDocuments != nil {
+				return nil, _errDocuments
+			}
+			v.Documents[_iDocuments] = _objDocuments.(InputDocumentClass)
+		}
+		_ = _vhdrDocuments
+	}
+	if v.Flags.Has(4) {
+		_vhdrUsers, _ehdrUsers := r.ReadUint32()
+		if _ehdrUsers != nil {
+			return nil, _ehdrUsers
+		}
+		_cntUsers, _ecntUsers := r.ReadUint32()
+		if _ecntUsers != nil {
+			return nil, _ecntUsers
+		}
+		if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
+			return nil, _errUsers
+		}
+		v.Users = make([]InputUserClass, _cntUsers)
+		for _iUsers := range v.Users {
+			_objUsers, _errUsers := ReadTLObject(r)
+			if _errUsers != nil {
+				return nil, _errUsers
+			}
+			v.Users[_iUsers] = _objUsers.(InputUserClass)
+		}
+		_ = _vhdrUsers
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputRichMessageMarkdownTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputRichMessageMarkdown(r)
 	}
 }

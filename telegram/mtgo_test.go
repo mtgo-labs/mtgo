@@ -7,8 +7,8 @@ import (
 )
 
 func TestLayer(t *testing.T) {
-	if tg.Layer != 225 {
-		t.Fatalf("expected layer 225, got %d", tg.Layer)
+	if tg.Layer != 227 {
+		t.Fatalf("expected layer 227, got %d", tg.Layer)
 	}
 }
 
