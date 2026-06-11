@@ -215,11 +215,13 @@ func (c *Client) joinByUsername(ctx context.Context, username string) (*types.Ch
 	}
 
 	switch v := result.(type) {
-	case *tg.Updates:
-		joinPM := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		for _, chat := range v.Chats {
-			if ch, ok := chat.(*tg.Channel); ok {
-				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, joinPM), nil
+	case *tg.MessagesChatInviteJoinResultOk:
+		if u, ok := v.Updates.(*tg.Updates); ok {
+			joinPM := types.NewPeerMapFromClasses(u.Users, u.Chats)
+			for _, chat := range u.Chats {
+				if ch, ok := chat.(*tg.Channel); ok {
+					return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, joinPM), nil
+				}
 			}
 		}
 		// Fallback to the resolved channel info.
@@ -239,11 +241,13 @@ func (c *Client) joinByInviteHash(ctx context.Context, inviteHash string) (*type
 	}
 
 	switch v := result.(type) {
-	case *tg.Updates:
-		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
-		for _, chat := range v.Chats {
-			if ch, ok := chat.(*tg.Channel); ok {
-				return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, pm), nil
+	case *tg.MessagesChatInviteJoinResultOk:
+		if u, ok := v.Updates.(*tg.Updates); ok {
+			pm := types.NewPeerMapFromClasses(u.Users, u.Chats)
+			for _, chat := range u.Chats {
+				if ch, ok := chat.(*tg.Channel); ok {
+					return types.ParseChatFromPeer(&tg.PeerChannel{ChannelID: ch.ID}, pm), nil
+				}
 			}
 		}
 		return nil, ErrJoinNoInfo

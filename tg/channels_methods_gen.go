@@ -689,16 +689,16 @@ func (c *RPCClient) ChannelsUpdateUsername(ctx context.Context, req *ChannelsUpd
 }
 
 // ChannelsJoinChannelTypeID is the constructor ID for the RPC function channels.joinChannel.
-const ChannelsJoinChannelTypeID = 0x24b524c5
+const ChannelsJoinChannelTypeID = 0x7f6a1e22
 
-// ChannelsJoinChannelRequest represents TL type `channels.joinChannel#24b524c5`.
+// ChannelsJoinChannelRequest represents TL type `channels.joinChannel#7f6a1e22`.
 //
 // See https://core.telegram.org/method/channels/joinChannel for reference.
 type ChannelsJoinChannelRequest struct {
 	Channel InputChannelClass `json:"channel,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x24b524c5.
+// ConstructorID returns the TL constructor identifier 0x7f6a1e22.
 func (v *ChannelsJoinChannelRequest) ConstructorID() uint32 {
 	return ChannelsJoinChannelTypeID
 }
@@ -717,14 +717,14 @@ func (v *ChannelsJoinChannelRequest) Encode(b *bytes.Buffer) error {
 //   - req: the request parameters
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
-func (c *RPCClient) ChannelsJoinChannel(ctx context.Context, req *ChannelsJoinChannelRequest) (UpdatesClass, error) {
+func (c *RPCClient) ChannelsJoinChannel(ctx context.Context, req *ChannelsJoinChannelRequest) (ChatInviteJoinResultClass, error) {
 	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})
 	if err != nil {
 		return nil, err
 	}
-	if _c, _ok := result.(UpdatesClass); _ok {
+	if _c, _ok := result.(ChatInviteJoinResultClass); _ok {
 		return _c, nil
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
@@ -1781,17 +1781,30 @@ func (c *RPCClient) ChannelsToggleJoinToSend(ctx context.Context, req *ChannelsT
 }
 
 // ChannelsToggleJoinRequestTypeID is the constructor ID for the RPC function channels.toggleJoinRequest.
-const ChannelsToggleJoinRequestTypeID = 0x4c2985b6
+const ChannelsToggleJoinRequestTypeID = 0x0ecc2618
 
-// ChannelsToggleJoinRequestRequest represents TL type `channels.toggleJoinRequest#4c2985b6`.
+// ChannelsToggleJoinRequestRequest represents TL type `channels.toggleJoinRequest#0ecc2618`.
 //
 // See https://core.telegram.org/method/channels/toggleJoinRequest for reference.
 type ChannelsToggleJoinRequestRequest struct {
-	Channel InputChannelClass `json:"channel,omitempty"`
-	Enabled bool              `json:"enabled,omitempty"`
+	Flags          Fields            `json:"-"`
+	ApplyToInvites bool              `json:"apply_to_invites,omitempty"`
+	Channel        InputChannelClass `json:"channel,omitempty"`
+	Enabled        bool              `json:"enabled,omitempty"`
+	GuardBot       InputUserClass    `json:"guard_bot,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x4c2985b6.
+// SetFlags computes flags from non-zero optional fields.
+func (v *ChannelsToggleJoinRequestRequest) SetFlags() {
+	if v.ApplyToInvites {
+		v.Flags.Set(1)
+	}
+	if v.GuardBot != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x0ecc2618.
 func (v *ChannelsToggleJoinRequestRequest) ConstructorID() uint32 {
 	return ChannelsToggleJoinRequestTypeID
 }
@@ -1799,8 +1812,13 @@ func (v *ChannelsToggleJoinRequestRequest) ConstructorID() uint32 {
 // Encode serializes ChannelsToggleJoinRequestRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChannelsToggleJoinRequestRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ChannelsToggleJoinRequestTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	EncodeTLObject(b, v.Channel)
 	WriteBool(b, v.Enabled)
+	if v.Flags.Has(0) {
+		EncodeTLObject(b, v.GuardBot)
+	}
 	return nil
 }
 

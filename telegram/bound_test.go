@@ -225,11 +225,13 @@ func TestBoundBanMemberPeerNotFound(t *testing.T) {
 
 func TestBoundJoinChat(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
-	mock.setResult(tg.MessagesImportChatInviteTypeID, &tg.Updates{
-		Updates: []tg.UpdateClass{},
-		Users:   []tg.UserClass{},
-		Chats: []tg.ChatClass{
-			&tg.Channel{ID: 100, Title: "Test Channel"},
+	mock.setResult(tg.MessagesImportChatInviteTypeID, &tg.MessagesChatInviteJoinResultOk{
+		Updates: &tg.Updates{
+			Updates: []tg.UpdateClass{},
+			Users:   []tg.UserClass{},
+			Chats: []tg.ChatClass{
+				&tg.Channel{ID: 100, Title: "Test Channel"},
+			},
 		},
 	})
 
@@ -256,11 +258,13 @@ func TestBoundJoinChat(t *testing.T) {
 
 func TestBoundJoinChatURL(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
-	mock.setResult(tg.MessagesImportChatInviteTypeID, &tg.Updates{
-		Updates: []tg.UpdateClass{},
-		Users:   []tg.UserClass{},
-		Chats: []tg.ChatClass{
-			&tg.Channel{ID: 200, Title: "Private Channel"},
+	mock.setResult(tg.MessagesImportChatInviteTypeID, &tg.MessagesChatInviteJoinResultOk{
+		Updates: &tg.Updates{
+			Updates: []tg.UpdateClass{},
+			Users:   []tg.UserClass{},
+			Chats: []tg.ChatClass{
+				&tg.Channel{ID: 200, Title: "Private Channel"},
+			},
 		},
 	})
 
@@ -290,11 +294,13 @@ func TestBoundJoinChatByUsername(t *testing.T) {
 		},
 		Users: []tg.UserClass{},
 	})
-	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.Updates{
-		Updates: []tg.UpdateClass{},
-		Users:   []tg.UserClass{},
-		Chats: []tg.ChatClass{
-			&tg.Channel{ID: 300, Title: "mtgo labs"},
+	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.MessagesChatInviteJoinResultOk{
+		Updates: &tg.Updates{
+			Updates: []tg.UpdateClass{},
+			Users:   []tg.UserClass{},
+			Chats: []tg.ChatClass{
+				&tg.Channel{ID: 300, Title: "mtgo labs"},
+			},
 		},
 	})
 
@@ -342,11 +348,13 @@ func TestBoundJoinChatURLUsername(t *testing.T) {
 		},
 		Users: []tg.UserClass{},
 	})
-	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.Updates{
-		Updates: []tg.UpdateClass{},
-		Users:   []tg.UserClass{},
-		Chats: []tg.ChatClass{
-			&tg.Channel{ID: 400, Title: "mtgo labs"},
+	mock.setResult(tg.ChannelsJoinChannelTypeID, &tg.MessagesChatInviteJoinResultOk{
+		Updates: &tg.Updates{
+			Updates: []tg.UpdateClass{},
+			Users:   []tg.UserClass{},
+			Chats: []tg.ChatClass{
+				&tg.Channel{ID: 400, Title: "mtgo labs"},
+			},
 		},
 	})
 

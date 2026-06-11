@@ -297,7 +297,7 @@ const UpdateBotCommandsTypeID = 0x4d712f2e
 const UpdatePendingJoinRequestsTypeID = 0x7063c3db
 
 // UpdateBotChatInviteRequesterTypeID is the constructor ID for TL type updateBotChatInviteRequester.
-const UpdateBotChatInviteRequesterTypeID = 0x11dfa986
+const UpdateBotChatInviteRequesterTypeID = 0x7cb34d79
 
 // UpdateMessageReactionsTypeID is the constructor ID for TL type updateMessageReactions.
 const UpdateMessageReactionsTypeID = 0x1e297bfa
@@ -481,6 +481,18 @@ const UpdateBotGuestChatQueryTypeID = 0xcdd4093d
 
 // UpdateAiComposeTonesTypeID is the constructor ID for TL type updateAiComposeTones.
 const UpdateAiComposeTonesTypeID = 0x8c0f91fb
+
+// UpdateJoinChatWebViewDecisionTypeID is the constructor ID for TL type updateJoinChatWebViewDecision.
+const UpdateJoinChatWebViewDecisionTypeID = 0xbdac7e70
+
+// UpdateNewBotConnectionTypeID is the constructor ID for TL type updateNewBotConnection.
+const UpdateNewBotConnectionTypeID = 0xb22083a6
+
+// UpdateWebBrowserSettingsTypeID is the constructor ID for TL type updateWebBrowserSettings.
+const UpdateWebBrowserSettingsTypeID = 0xc39a2ade
+
+// UpdateWebBrowserExceptionTypeID is the constructor ID for TL type updateWebBrowserException.
+const UpdateWebBrowserExceptionTypeID = 0x140502d1
 
 // isUpdate marks UpdateNewMessage as implementing the UpdateClass interface.
 func (*UpdateNewMessage) isUpdate() {}
@@ -949,6 +961,18 @@ func (*UpdateBotGuestChatQuery) isUpdate() {}
 
 // isUpdate marks UpdateAiComposeTones as implementing the UpdateClass interface.
 func (*UpdateAiComposeTones) isUpdate() {}
+
+// isUpdate marks UpdateJoinChatWebViewDecision as implementing the UpdateClass interface.
+func (*UpdateJoinChatWebViewDecision) isUpdate() {}
+
+// isUpdate marks UpdateNewBotConnection as implementing the UpdateClass interface.
+func (*UpdateNewBotConnection) isUpdate() {}
+
+// isUpdate marks UpdateWebBrowserSettings as implementing the UpdateClass interface.
+func (*UpdateWebBrowserSettings) isUpdate() {}
+
+// isUpdate marks UpdateWebBrowserException as implementing the UpdateClass interface.
+func (*UpdateWebBrowserException) isUpdate() {}
 
 // UpdateNewMessage represents the TL constructor updateNewMessage (0x1f2b0afd).
 //
@@ -6418,19 +6442,28 @@ func init() {
 	}
 }
 
-// UpdateBotChatInviteRequester represents the TL constructor updateBotChatInviteRequester (0x11dfa986).
+// UpdateBotChatInviteRequester represents the TL constructor updateBotChatInviteRequester (0x7cb34d79).
 //
 // See https://core.telegram.org/constructor/updateBotChatInviteRequester for reference.
 type UpdateBotChatInviteRequester struct {
-	Peer   PeerClass               `json:"peer,omitempty"`
-	Date   int32                   `json:"date,omitempty"`
-	UserID int64                   `json:"user_id,omitempty"`
-	About  string                  `json:"about,omitempty"`
-	Invite ExportedChatInviteClass `json:"invite,omitempty"`
-	Qts    int32                   `json:"qts,omitempty"`
+	Flags   Fields                  `json:"-"`
+	Peer    PeerClass               `json:"peer,omitempty"`
+	Date    int32                   `json:"date,omitempty"`
+	UserID  int64                   `json:"user_id,omitempty"`
+	About   string                  `json:"about,omitempty"`
+	Invite  ExportedChatInviteClass `json:"invite,omitempty"`
+	Qts     int32                   `json:"qts,omitempty"`
+	QueryID int64                   `json:"query_id,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x11dfa986.
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateBotChatInviteRequester) SetFlags() {
+	if v.QueryID != 0 {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x7cb34d79.
 func (v *UpdateBotChatInviteRequester) ConstructorID() uint32 {
 	return UpdateBotChatInviteRequesterTypeID
 }
@@ -6438,18 +6471,28 @@ func (v *UpdateBotChatInviteRequester) ConstructorID() uint32 {
 // Encode serializes UpdateBotChatInviteRequester to a bytes.Buffer using the TL binary protocol.
 func (v *UpdateBotChatInviteRequester) Encode(b *bytes.Buffer) error {
 	WriteInt(b, UpdateBotChatInviteRequesterTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	EncodeTLObject(b, v.Peer)
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.UserID)
 	WriteString(b, v.About)
 	EncodeTLObject(b, v.Invite)
 	WriteInt(b, uint32(v.Qts))
+	if v.Flags.Has(0) {
+		WriteLong(b, v.QueryID)
+	}
 	return nil
 }
 
 // DecodeUpdateBotChatInviteRequester deserializes a UpdateBotChatInviteRequester from a reader using the TL binary protocol.
 func DecodeUpdateBotChatInviteRequester(r *Reader) (*UpdateBotChatInviteRequester, error) {
 	v := &UpdateBotChatInviteRequester{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
 		return nil, _errPeer
@@ -6480,6 +6523,13 @@ func DecodeUpdateBotChatInviteRequester(r *Reader) (*UpdateBotChatInviteRequeste
 		return nil, _eQts
 	}
 	v.Qts = _rQts
+	if v.Flags.Has(0) {
+		_rQueryID, _eQueryID := r.ReadInt64()
+		if _eQueryID != nil {
+			return nil, _eQueryID
+		}
+		v.QueryID = _rQueryID
+	}
 	return v, nil
 }
 
@@ -9545,6 +9595,269 @@ func DecodeUpdateAiComposeTones(r *Reader) (*UpdateAiComposeTones, error) {
 func init() {
 	Registry[UpdateAiComposeTonesTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateAiComposeTones(r)
+	}
+}
+
+// UpdateJoinChatWebViewDecision represents the TL constructor updateJoinChatWebViewDecision (0xbdac7e70).
+//
+// See https://core.telegram.org/constructor/updateJoinChatWebViewDecision for reference.
+type UpdateJoinChatWebViewDecision struct {
+	Peer    PeerClass              `json:"peer,omitempty"`
+	QueryID int64                  `json:"query_id,omitempty"`
+	Result  JoinChatBotResultClass `json:"result,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xbdac7e70.
+func (v *UpdateJoinChatWebViewDecision) ConstructorID() uint32 {
+	return UpdateJoinChatWebViewDecisionTypeID
+}
+
+// Encode serializes UpdateJoinChatWebViewDecision to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateJoinChatWebViewDecision) Encode(b *bytes.Buffer) error {
+	WriteInt(b, UpdateJoinChatWebViewDecisionTypeID)
+	EncodeTLObject(b, v.Peer)
+	WriteLong(b, v.QueryID)
+	EncodeTLObject(b, v.Result)
+	return nil
+}
+
+// DecodeUpdateJoinChatWebViewDecision deserializes a UpdateJoinChatWebViewDecision from a reader using the TL binary protocol.
+func DecodeUpdateJoinChatWebViewDecision(r *Reader) (*UpdateJoinChatWebViewDecision, error) {
+	v := &UpdateJoinChatWebViewDecision{}
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	v.Peer = _objPeer.(PeerClass)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objResult, _errResult := ReadTLObject(r)
+	if _errResult != nil {
+		return nil, _errResult
+	}
+	v.Result = _objResult.(JoinChatBotResultClass)
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateJoinChatWebViewDecisionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateJoinChatWebViewDecision(r)
+	}
+}
+
+// UpdateNewBotConnection represents the TL constructor updateNewBotConnection (0xb22083a6).
+//
+// See https://core.telegram.org/constructor/updateNewBotConnection for reference.
+type UpdateNewBotConnection struct {
+	Flags     Fields `json:"-"`
+	Confirmed bool   `json:"confirmed,omitempty"`
+	BotID     int64  `json:"bot_id,omitempty"`
+	Date      int32  `json:"date,omitempty"`
+	Device    string `json:"device,omitempty"`
+	Location  string `json:"location,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateNewBotConnection) SetFlags() {
+	if v.Confirmed {
+		v.Flags.Set(0)
+	}
+	if v.Date != 0 {
+		v.Flags.Set(1)
+	}
+	if v.Device != "" {
+		v.Flags.Set(1)
+	}
+	if v.Location != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xb22083a6.
+func (v *UpdateNewBotConnection) ConstructorID() uint32 {
+	return UpdateNewBotConnectionTypeID
+}
+
+// Encode serializes UpdateNewBotConnection to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateNewBotConnection) Encode(b *bytes.Buffer) error {
+	WriteInt(b, UpdateNewBotConnectionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.BotID)
+	if v.Flags.Has(1) {
+		WriteInt(b, uint32(v.Date))
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.Device)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.Location)
+	}
+	return nil
+}
+
+// DecodeUpdateNewBotConnection deserializes a UpdateNewBotConnection from a reader using the TL binary protocol.
+func DecodeUpdateNewBotConnection(r *Reader) (*UpdateNewBotConnection, error) {
+	v := &UpdateNewBotConnection{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Confirmed = v.Flags.Has(0)
+	_rBotID, _eBotID := r.ReadInt64()
+	if _eBotID != nil {
+		return nil, _eBotID
+	}
+	v.BotID = _rBotID
+	if v.Flags.Has(1) {
+		_rDate, _eDate := r.ReadInt32()
+		if _eDate != nil {
+			return nil, _eDate
+		}
+		v.Date = _rDate
+	}
+	if v.Flags.Has(1) {
+		_rDevice, _eDevice := r.ReadString()
+		if _eDevice != nil {
+			return nil, _eDevice
+		}
+		v.Device = _rDevice
+	}
+	if v.Flags.Has(1) {
+		_rLocation, _eLocation := r.ReadString()
+		if _eLocation != nil {
+			return nil, _eLocation
+		}
+		v.Location = _rLocation
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateNewBotConnectionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateNewBotConnection(r)
+	}
+}
+
+// UpdateWebBrowserSettings represents the TL constructor updateWebBrowserSettings (0xc39a2ade).
+//
+// See https://core.telegram.org/constructor/updateWebBrowserSettings for reference.
+type UpdateWebBrowserSettings struct {
+	Flags               Fields `json:"-"`
+	OpenExternalBrowser bool   `json:"open_external_browser,omitempty"`
+	DisplayCloseButton  bool   `json:"display_close_button,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateWebBrowserSettings) SetFlags() {
+	if v.OpenExternalBrowser {
+		v.Flags.Set(0)
+	}
+	if v.DisplayCloseButton {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xc39a2ade.
+func (v *UpdateWebBrowserSettings) ConstructorID() uint32 {
+	return UpdateWebBrowserSettingsTypeID
+}
+
+// Encode serializes UpdateWebBrowserSettings to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWebBrowserSettings) Encode(b *bytes.Buffer) error {
+	WriteInt(b, UpdateWebBrowserSettingsTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// DecodeUpdateWebBrowserSettings deserializes a UpdateWebBrowserSettings from a reader using the TL binary protocol.
+func DecodeUpdateWebBrowserSettings(r *Reader) (*UpdateWebBrowserSettings, error) {
+	v := &UpdateWebBrowserSettings{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.OpenExternalBrowser = v.Flags.Has(0)
+	v.DisplayCloseButton = v.Flags.Has(1)
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWebBrowserSettingsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWebBrowserSettings(r)
+	}
+}
+
+// UpdateWebBrowserException represents the TL constructor updateWebBrowserException (0x140502d1).
+//
+// See https://core.telegram.org/constructor/updateWebBrowserException for reference.
+type UpdateWebBrowserException struct {
+	Flags               Fields              `json:"-"`
+	Delete              bool                `json:"delete,omitempty"`
+	OpenExternalBrowser bool                `json:"open_external_browser,omitempty"`
+	Exception           *WebDomainException `json:"exception,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateWebBrowserException) SetFlags() {
+	if v.Delete {
+		v.Flags.Set(1)
+	}
+	if v.OpenExternalBrowser {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x140502d1.
+func (v *UpdateWebBrowserException) ConstructorID() uint32 {
+	return UpdateWebBrowserExceptionTypeID
+}
+
+// Encode serializes UpdateWebBrowserException to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWebBrowserException) Encode(b *bytes.Buffer) error {
+	WriteInt(b, UpdateWebBrowserExceptionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteBool(b, v.OpenExternalBrowser)
+	}
+	EncodeTLObject(b, v.Exception)
+	return nil
+}
+
+// DecodeUpdateWebBrowserException deserializes a UpdateWebBrowserException from a reader using the TL binary protocol.
+func DecodeUpdateWebBrowserException(r *Reader) (*UpdateWebBrowserException, error) {
+	v := &UpdateWebBrowserException{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Delete = v.Flags.Has(1)
+	if v.Flags.Has(0) {
+		_rOpenExternalBrowser, _eOpenExternalBrowser := r.ReadBool()
+		if _eOpenExternalBrowser != nil {
+			return nil, _eOpenExternalBrowser
+		}
+		v.OpenExternalBrowser = _rOpenExternalBrowser
+	}
+	_objException, _errException := ReadTLObject(r)
+	if _errException != nil {
+		return nil, _errException
+	}
+	v.Exception = _objException.(*WebDomainException)
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWebBrowserExceptionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWebBrowserException(r)
 	}
 }
 

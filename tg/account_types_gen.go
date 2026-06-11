@@ -5311,9 +5311,9 @@ func init() {
 }
 
 // ConnectedBotTypeID is the constructor ID for TL type connectedBot.
-const ConnectedBotTypeID = 0xcd64636c
+const ConnectedBotTypeID = 0x033ed001
 
-// ConnectedBot represents the TL constructor connectedBot (0xcd64636c).
+// ConnectedBot represents the TL constructor connectedBot (0x033ed001).
 //
 // See https://core.telegram.org/constructor/connectedBot for reference.
 type ConnectedBot struct {
@@ -5321,13 +5321,25 @@ type ConnectedBot struct {
 	BotID      int64                  `json:"bot_id,omitempty"`
 	Recipients *BusinessBotRecipients `json:"recipients,omitempty"`
 	Rights     *BusinessBotRights     `json:"rights,omitempty"`
+	Device     string                 `json:"device,omitempty"`
+	Date       int32                  `json:"date,omitempty"`
+	Location   string                 `json:"location,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
 func (v *ConnectedBot) SetFlags() {
+	if v.Device != "" {
+		v.Flags.Set(0)
+	}
+	if v.Date != 0 {
+		v.Flags.Set(1)
+	}
+	if v.Location != "" {
+		v.Flags.Set(2)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xcd64636c.
+// ConstructorID returns the TL constructor identifier 0x033ed001.
 func (v *ConnectedBot) ConstructorID() uint32 {
 	return ConnectedBotTypeID
 }
@@ -5340,6 +5352,15 @@ func (v *ConnectedBot) Encode(b *bytes.Buffer) error {
 	WriteLong(b, v.BotID)
 	EncodeTLObject(b, v.Recipients)
 	EncodeTLObject(b, v.Rights)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Device)
+	}
+	if v.Flags.Has(1) {
+		WriteInt(b, uint32(v.Date))
+	}
+	if v.Flags.Has(2) {
+		WriteString(b, v.Location)
+	}
 	return nil
 }
 
@@ -5366,6 +5387,27 @@ func DecodeConnectedBot(r *Reader) (*ConnectedBot, error) {
 		return nil, _errRights
 	}
 	v.Rights = _objRights.(*BusinessBotRights)
+	if v.Flags.Has(0) {
+		_rDevice, _eDevice := r.ReadString()
+		if _eDevice != nil {
+			return nil, _eDevice
+		}
+		v.Device = _rDevice
+	}
+	if v.Flags.Has(1) {
+		_rDate, _eDate := r.ReadInt32()
+		if _eDate != nil {
+			return nil, _eDate
+		}
+		v.Date = _rDate
+	}
+	if v.Flags.Has(2) {
+		_rLocation, _eLocation := r.ReadString()
+		if _eLocation != nil {
+			return nil, _eLocation
+		}
+		v.Location = _rLocation
+	}
 	return v, nil
 }
 
@@ -6688,5 +6730,164 @@ func DecodeAccountPasskeyRegistrationOptions(r *Reader) (*AccountPasskeyRegistra
 func init() {
 	Registry[AccountPasskeyRegistrationOptionsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAccountPasskeyRegistrationOptions(r)
+	}
+}
+
+// WebBrowserSettingsClass is the interface for TL type WebBrowserSettings.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the WebBrowserSettings TL type.
+type WebBrowserSettingsClass interface {
+	TLObject
+	isWebBrowserSettings()
+}
+
+// AccountWebBrowserSettingsNotModifiedTypeID is the constructor ID for TL type account.webBrowserSettingsNotModified.
+const AccountWebBrowserSettingsNotModifiedTypeID = 0xc31c8f4e
+
+// AccountWebBrowserSettingsTypeID is the constructor ID for TL type account.webBrowserSettings.
+const AccountWebBrowserSettingsTypeID = 0x79eb8cb3
+
+// isWebBrowserSettings marks AccountWebBrowserSettingsNotModified as implementing the WebBrowserSettingsClass interface.
+func (*AccountWebBrowserSettingsNotModified) isWebBrowserSettings() {}
+
+// isWebBrowserSettings marks AccountWebBrowserSettings as implementing the WebBrowserSettingsClass interface.
+func (*AccountWebBrowserSettings) isWebBrowserSettings() {}
+
+// AccountWebBrowserSettingsNotModified represents the TL constructor account.webBrowserSettingsNotModified (0xc31c8f4e).
+//
+// See https://core.telegram.org/constructor/account.webBrowserSettingsNotModified for reference.
+type AccountWebBrowserSettingsNotModified struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xc31c8f4e.
+func (v *AccountWebBrowserSettingsNotModified) ConstructorID() uint32 {
+	return AccountWebBrowserSettingsNotModifiedTypeID
+}
+
+// Encode serializes AccountWebBrowserSettingsNotModified to a bytes.Buffer using the TL binary protocol.
+func (v *AccountWebBrowserSettingsNotModified) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountWebBrowserSettingsNotModifiedTypeID)
+	return nil
+}
+
+// DecodeAccountWebBrowserSettingsNotModified deserializes a AccountWebBrowserSettingsNotModified from a reader using the TL binary protocol.
+func DecodeAccountWebBrowserSettingsNotModified(r *Reader) (*AccountWebBrowserSettingsNotModified, error) {
+	v := &AccountWebBrowserSettingsNotModified{}
+	return v, nil
+}
+
+func init() {
+	Registry[AccountWebBrowserSettingsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeAccountWebBrowserSettingsNotModified(r)
+	}
+}
+
+// AccountWebBrowserSettings represents the TL constructor account.webBrowserSettings (0x79eb8cb3).
+//
+// See https://core.telegram.org/constructor/account.webBrowserSettings for reference.
+type AccountWebBrowserSettings struct {
+	Flags               Fields                `json:"-"`
+	OpenExternalBrowser bool                  `json:"open_external_browser,omitempty"`
+	DisplayCloseButton  bool                  `json:"display_close_button,omitempty"`
+	ExternalExceptions  []*WebDomainException `json:"external_exceptions,omitempty"`
+	InappExceptions     []*WebDomainException `json:"inapp_exceptions,omitempty"`
+	Hash                int64                 `json:"hash,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *AccountWebBrowserSettings) SetFlags() {
+	if v.OpenExternalBrowser {
+		v.Flags.Set(0)
+	}
+	if v.DisplayCloseButton {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x79eb8cb3.
+func (v *AccountWebBrowserSettings) ConstructorID() uint32 {
+	return AccountWebBrowserSettingsTypeID
+}
+
+// Encode serializes AccountWebBrowserSettings to a bytes.Buffer using the TL binary protocol.
+func (v *AccountWebBrowserSettings) Encode(b *bytes.Buffer) error {
+	WriteInt(b, AccountWebBrowserSettingsTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.ExternalExceptions)))
+	for _, _item := range v.ExternalExceptions {
+		EncodeTLObject(b, _item)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.InappExceptions)))
+	for _, _item := range v.InappExceptions {
+		EncodeTLObject(b, _item)
+	}
+	WriteLong(b, v.Hash)
+	return nil
+}
+
+// DecodeAccountWebBrowserSettings deserializes a AccountWebBrowserSettings from a reader using the TL binary protocol.
+func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, error) {
+	v := &AccountWebBrowserSettings{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.OpenExternalBrowser = v.Flags.Has(0)
+	v.DisplayCloseButton = v.Flags.Has(1)
+	_vhdrExternalExceptions, _ehdrExternalExceptions := r.ReadUint32()
+	if _ehdrExternalExceptions != nil {
+		return nil, _ehdrExternalExceptions
+	}
+	_cntExternalExceptions, _ecntExternalExceptions := r.ReadUint32()
+	if _ecntExternalExceptions != nil {
+		return nil, _ecntExternalExceptions
+	}
+	if _errExternalExceptions := checkVectorCount(_cntExternalExceptions); _errExternalExceptions != nil {
+		return nil, _errExternalExceptions
+	}
+	v.ExternalExceptions = make([]*WebDomainException, _cntExternalExceptions)
+	for _iExternalExceptions := range v.ExternalExceptions {
+		_objExternalExceptions, _errExternalExceptions := ReadTLObject(r)
+		if _errExternalExceptions != nil {
+			return nil, _errExternalExceptions
+		}
+		v.ExternalExceptions[_iExternalExceptions] = _objExternalExceptions.(*WebDomainException)
+	}
+	_ = _vhdrExternalExceptions
+	_vhdrInappExceptions, _ehdrInappExceptions := r.ReadUint32()
+	if _ehdrInappExceptions != nil {
+		return nil, _ehdrInappExceptions
+	}
+	_cntInappExceptions, _ecntInappExceptions := r.ReadUint32()
+	if _ecntInappExceptions != nil {
+		return nil, _ecntInappExceptions
+	}
+	if _errInappExceptions := checkVectorCount(_cntInappExceptions); _errInappExceptions != nil {
+		return nil, _errInappExceptions
+	}
+	v.InappExceptions = make([]*WebDomainException, _cntInappExceptions)
+	for _iInappExceptions := range v.InappExceptions {
+		_objInappExceptions, _errInappExceptions := ReadTLObject(r)
+		if _errInappExceptions != nil {
+			return nil, _errInappExceptions
+		}
+		v.InappExceptions[_iInappExceptions] = _objInappExceptions.(*WebDomainException)
+	}
+	_ = _vhdrInappExceptions
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	return v, nil
+}
+
+func init() {
+	Registry[AccountWebBrowserSettingsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeAccountWebBrowserSettings(r)
 	}
 }

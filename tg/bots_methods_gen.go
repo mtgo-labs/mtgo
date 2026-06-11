@@ -1713,3 +1713,45 @@ func (c *RPCClient) BotsEditAccessSettings(ctx context.Context, req *BotsEditAcc
 	_ = result
 	return true, nil
 }
+
+// BotsSetJoinChatResultsTypeID is the constructor ID for the RPC function bots.setJoinChatResults.
+const BotsSetJoinChatResultsTypeID = 0xe71a4810
+
+// BotsSetJoinChatResultsRequest represents TL type `bots.setJoinChatResults#e71a4810`.
+//
+// See https://core.telegram.org/method/bots/setJoinChatResults for reference.
+type BotsSetJoinChatResultsRequest struct {
+	QueryID int64                  `json:"query_id,omitempty"`
+	Result  JoinChatBotResultClass `json:"result,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xe71a4810.
+func (v *BotsSetJoinChatResultsRequest) ConstructorID() uint32 {
+	return BotsSetJoinChatResultsTypeID
+}
+
+// Encode serializes BotsSetJoinChatResultsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *BotsSetJoinChatResultsRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, BotsSetJoinChatResultsTypeID)
+	WriteLong(b, v.QueryID)
+	EncodeTLObject(b, v.Result)
+	return nil
+}
+
+// BotsSetJoinChatResults invokes the bots.setJoinChatResults RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) BotsSetJoinChatResults(ctx context.Context, req *BotsSetJoinChatResultsRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}

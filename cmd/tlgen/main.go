@@ -13,7 +13,7 @@ import (
 func main() {
 	sourceDir := flag.String("source", "compiler/source", "directory containing .tl files")
 	outDir := flag.String("out", "tg", "output directory for generated Go files")
-	layer := flag.Int("layer", 224, "API layer number")
+	layer := flag.Int("layer", 227, "API layer number")
 	e2eSchema := flag.String("e2e", "", "path to e2e secret chat TL schema (generates tg/e2e/ if set)")
 	flag.Parse()
 

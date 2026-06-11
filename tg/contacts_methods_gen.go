@@ -416,17 +416,30 @@ func (c *RPCClient) ContactsGetBlocked(ctx context.Context, req *ContactsGetBloc
 }
 
 // ContactsSearchTypeID is the constructor ID for the RPC function contacts.search.
-const ContactsSearchTypeID = 0x11f812d8
+const ContactsSearchTypeID = 0x05f58d0f
 
-// ContactsSearchRequest represents TL type `contacts.search#11f812d8`.
+// ContactsSearchRequest represents TL type `contacts.search#05f58d0f`.
 //
 // See https://core.telegram.org/method/contacts/search for reference.
 type ContactsSearchRequest struct {
-	Q     string `json:"q,omitempty"`
-	Limit int32  `json:"limit,omitempty"`
+	Flags      Fields `json:"-"`
+	Broadcasts bool   `json:"broadcasts,omitempty"`
+	Bots       bool   `json:"bots,omitempty"`
+	Q          string `json:"q,omitempty"`
+	Limit      int32  `json:"limit,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x11f812d8.
+// SetFlags computes flags from non-zero optional fields.
+func (v *ContactsSearchRequest) SetFlags() {
+	if v.Broadcasts {
+		v.Flags.Set(0)
+	}
+	if v.Bots {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x05f58d0f.
 func (v *ContactsSearchRequest) ConstructorID() uint32 {
 	return ContactsSearchTypeID
 }
@@ -434,6 +447,8 @@ func (v *ContactsSearchRequest) ConstructorID() uint32 {
 // Encode serializes ContactsSearchRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsSearchRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, ContactsSearchTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Q)
 	WriteInt(b, uint32(v.Limit))
 	return nil

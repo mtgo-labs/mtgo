@@ -4,6 +4,10 @@ package tg
 
 // ConstructorMapUpdates maps constructor IDs to factory functions.
 var ConstructorMapUpdates = map[uint32]func() TLObject{
+	0xa56c2a3e: func() TLObject { return &UpdatesState{} },
+	0x3e11affb: func() TLObject { return &UpdatesChannelDifferenceEmpty{} },
+	0xa4bcc6fe: func() TLObject { return &UpdatesChannelDifferenceTooLong{} },
+	0x2064674e: func() TLObject { return &UpdatesChannelDifference{} },
 	0x5d75a138: func() TLObject { return &UpdatesDifferenceEmpty{} },
 	0x00f49ca0: func() TLObject { return &UpdatesDifference{} },
 	0xa8fb1981: func() TLObject { return &UpdatesDifferenceSlice{} },
@@ -16,10 +20,6 @@ var ConstructorMapUpdates = map[uint32]func() TLObject{
 	0x74ae4240: func() TLObject { return &Updates{} },
 	0x9015e101: func() TLObject { return &UpdateShortSentMessage{} },
 	0xf385c1f6: func() TLObject { return &LangPackDifference{} },
-	0x3e11affb: func() TLObject { return &UpdatesChannelDifferenceEmpty{} },
-	0xa4bcc6fe: func() TLObject { return &UpdatesChannelDifferenceTooLong{} },
-	0x2064674e: func() TLObject { return &UpdatesChannelDifference{} },
-	0xa56c2a3e: func() TLObject { return &UpdatesState{} },
 	0x1f2b0afd: func() TLObject { return &UpdateNewMessage{} },
 	0x4e90bfd6: func() TLObject { return &UpdateMessageID{} },
 	0xa20db0e5: func() TLObject { return &UpdateDeleteMessages{} },
@@ -114,7 +114,7 @@ var ConstructorMapUpdates = map[uint32]func() TLObject{
 	0x0b783982: func() TLObject { return &UpdateGroupCallConnection{} },
 	0x4d712f2e: func() TLObject { return &UpdateBotCommands{} },
 	0x7063c3db: func() TLObject { return &UpdatePendingJoinRequests{} },
-	0x11dfa986: func() TLObject { return &UpdateBotChatInviteRequester{} },
+	0x7cb34d79: func() TLObject { return &UpdateBotChatInviteRequester{} },
 	0x1e297bfa: func() TLObject { return &UpdateMessageReactions{} },
 	0x17b7a20b: func() TLObject { return &UpdateAttachMenuBots{} },
 	0x1592b79d: func() TLObject { return &UpdateWebViewResultSent{} },
@@ -176,4 +176,8 @@ var ConstructorMapUpdates = map[uint32]func() TLObject{
 	0x4880ed9a: func() TLObject { return &UpdateManagedBot{} },
 	0xcdd4093d: func() TLObject { return &UpdateBotGuestChatQuery{} },
 	0x8c0f91fb: func() TLObject { return &UpdateAiComposeTones{} },
+	0xbdac7e70: func() TLObject { return &UpdateJoinChatWebViewDecision{} },
+	0xb22083a6: func() TLObject { return &UpdateNewBotConnection{} },
+	0xc39a2ade: func() TLObject { return &UpdateWebBrowserSettings{} },
+	0x140502d1: func() TLObject { return &UpdateWebBrowserException{} },
 }
