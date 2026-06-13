@@ -222,6 +222,16 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	c.Log.Info("auth: signed out successfully")
+	// The server session is now invalid. Also purge the persisted credentials so
+	// a later reconnect does not silently re-import the (now server-rejected)
+	// auth key, and so the on-disk key/user identity cannot be exfiltrated after
+	// an explicit logout on a persistent storage backend.
+	if c.storage != nil {
+		_ = c.storage.SetAuthKey(nil)
+		_ = c.storage.SetUserID(0)
+		_ = c.storage.SetAPIHash("")
+		_ = c.storage.SetIsBot(false)
+	}
 	_ = c.Disconnect()
 	return true, nil
 }

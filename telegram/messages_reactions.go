@@ -71,6 +71,18 @@ func (c *Client) VotePoll(ctx context.Context, chatID int64, messageID int32, op
 
 func (c *Client) StopPoll(ctx context.Context, chatID int64, messageID int32) error {
 	c.Log.Debugf("StopPoll chat_id=%d msg_id=%d", chatID, messageID)
+
+	// Closing a poll via editMessage requires the poll's existing ID; sending an
+	// empty poll (ID 0) is rejected by the server. Fetch the message to obtain it.
+	msgs, err := c.GetMessages(ctx, chatID, []int32{messageID})
+	if err != nil {
+		return fmt.Errorf("stop poll: get message: %w", err)
+	}
+	if len(msgs) == 0 || msgs[0].Poll == nil {
+		return fmt.Errorf("stop poll: message %d has no poll", messageID)
+	}
+	pollID := msgs[0].Poll.ID
+
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
@@ -78,15 +90,12 @@ func (c *Client) StopPoll(ctx context.Context, chatID int64, messageID int32) er
 
 	rpc := c.Raw()
 	_, err = rpc.MessagesEditMessage(ctx, &tg.MessagesEditMessageRequest{
-		Flags: (1 << 13),
-		Peer:  peer,
-		ID:    messageID,
+		Peer: peer,
+		ID:   messageID,
 		Media: &tg.InputMediaPoll{
 			Poll: &tg.Poll{
-				ID:       0,
-				Closed:   true,
-				Question: &tg.TextWithEntities{Text: ""},
-				Answers:  []tg.PollAnswerClass{},
+				ID:     pollID,
+				Closed: true,
 			},
 		},
 	})

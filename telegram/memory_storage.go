@@ -75,60 +75,188 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-func (m *MemoryStorage) SessionID() (string, error)  { return m.sessionID, nil }
-func (m *MemoryStorage) SetSessionID(v string) error { m.sessionID = v; return nil }
-func (m *MemoryStorage) DCID() (int, error)          { return m.dcID, nil }
-func (m *MemoryStorage) SetDCID(v int) error         { m.dcID = v; return nil }
-func (m *MemoryStorage) APIID() (int32, error)       { return m.apiID, nil }
-func (m *MemoryStorage) SetAPIID(v int32) error      { m.apiID = v; return nil }
-func (m *MemoryStorage) TestMode() (bool, error)     { return m.testMode, nil }
-func (m *MemoryStorage) SetTestMode(v bool) error    { m.testMode = v; return nil }
-func (m *MemoryStorage) AuthKey() ([]byte, error)    { return append([]byte(nil), m.authKey...), nil }
-func (m *MemoryStorage) SetAuthKey(v []byte) error   { m.authKey = v; return nil }
-func (m *MemoryStorage) UserID() (int64, error)      { return m.userID, nil }
-func (m *MemoryStorage) SetUserID(v int64) error     { m.userID = v; return nil }
-func (m *MemoryStorage) IsBot() (bool, error)        { return m.isBot, nil }
-func (m *MemoryStorage) SetIsBot(v bool) error       { m.isBot = v; return nil }
-func (m *MemoryStorage) FirstName() (string, error)  { return m.firstName, nil }
-func (m *MemoryStorage) SetFirstName(v string) error { m.firstName = v; return nil }
-func (m *MemoryStorage) LastName() (string, error)   { return m.lastName, nil }
-func (m *MemoryStorage) SetLastName(v string) error  { m.lastName = v; return nil }
-func (m *MemoryStorage) Username() (string, error)   { return m.username, nil }
-func (m *MemoryStorage) SetUsername(v string) error  { m.username = v; return nil }
-func (m *MemoryStorage) APIHash() (string, error)    { return m.apiHash, nil }
-func (m *MemoryStorage) SetAPIHash(v string) error   { m.apiHash = v; return nil }
-func (m *MemoryStorage) Date() (int, error)          { return m.date, nil }
-func (m *MemoryStorage) SetDate(v int) error         { m.date = v; return nil }
-func (m *MemoryStorage) State() ([]byte, error)      { return append([]byte(nil), m.state...), nil }
-func (m *MemoryStorage) SetState(v []byte) error     { m.state = v; return nil }
+func (m *MemoryStorage) SessionID() (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.sessionID, nil
+}
+func (m *MemoryStorage) SetSessionID(v string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sessionID = v
+	return nil
+}
+func (m *MemoryStorage) DCID() (int, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.dcID, nil
+}
+func (m *MemoryStorage) SetDCID(v int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.dcID = v
+	return nil
+}
+func (m *MemoryStorage) APIID() (int32, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.apiID, nil
+}
+func (m *MemoryStorage) SetAPIID(v int32) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.apiID = v
+	return nil
+}
+func (m *MemoryStorage) TestMode() (bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.testMode, nil
+}
+func (m *MemoryStorage) SetTestMode(v bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.testMode = v
+	return nil
+}
+func (m *MemoryStorage) AuthKey() ([]byte, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return append([]byte(nil), m.authKey...), nil
+}
+func (m *MemoryStorage) SetAuthKey(v []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Defensive copy: callers may reuse the slice buffer after the call.
+	m.authKey = append([]byte(nil), v...)
+	return nil
+}
+func (m *MemoryStorage) UserID() (int64, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.userID, nil
+}
+func (m *MemoryStorage) SetUserID(v int64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.userID = v
+	return nil
+}
+func (m *MemoryStorage) IsBot() (bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.isBot, nil
+}
+func (m *MemoryStorage) SetIsBot(v bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.isBot = v
+	return nil
+}
+func (m *MemoryStorage) FirstName() (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.firstName, nil
+}
+func (m *MemoryStorage) SetFirstName(v string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.firstName = v
+	return nil
+}
+func (m *MemoryStorage) LastName() (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.lastName, nil
+}
+func (m *MemoryStorage) SetLastName(v string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.lastName = v
+	return nil
+}
+func (m *MemoryStorage) Username() (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.username, nil
+}
+func (m *MemoryStorage) SetUsername(v string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.username = v
+	return nil
+}
+func (m *MemoryStorage) APIHash() (string, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.apiHash, nil
+}
+func (m *MemoryStorage) SetAPIHash(v string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.apiHash = v
+	return nil
+}
+func (m *MemoryStorage) Date() (int, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.date, nil
+}
+func (m *MemoryStorage) SetDate(v int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.date = v
+	return nil
+}
+func (m *MemoryStorage) State() ([]byte, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return append([]byte(nil), m.state...), nil
+}
+func (m *MemoryStorage) SetState(v []byte) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	// Defensive copy: callers may reuse the slice buffer after the call.
+	m.state = append([]byte(nil), v...)
+	return nil
+}
 
 func (m *MemoryStorage) ExportSessionString() (string, error) {
-	if len(m.authKey) == 0 {
+	m.mu.RLock()
+	authKey := append([]byte(nil), m.authKey...)
+	apiID := m.apiID
+	dcID := m.dcID
+	testMode := m.testMode
+	userID := m.userID
+	isBot := m.isBot
+	m.mu.RUnlock()
+
+	if len(authKey) == 0 {
 		return "", nil
 	}
-	if m.apiID == 0 {
+	if apiID == 0 {
 		return "", fmt.Errorf("telegram: cannot export session: api_id not stored")
 	}
 
 	buf := make([]byte, 0, 271)
-	buf = append(buf, byte(m.dcID))
-	apiID := make([]byte, 4)
-	binary.BigEndian.PutUint32(apiID, uint32(m.apiID))
-	buf = append(buf, apiID...)
-	testMode := byte(0)
-	if m.testMode {
-		testMode = 1
+	buf = append(buf, byte(dcID))
+	apiIDBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(apiIDBytes, uint32(apiID))
+	buf = append(buf, apiIDBytes...)
+	testModeByte := byte(0)
+	if testMode {
+		testModeByte = 1
 	}
-	buf = append(buf, testMode)
-	buf = append(buf, m.authKey...)
-	userID := make([]byte, 8)
-	binary.BigEndian.PutUint64(userID, uint64(m.userID))
-	buf = append(buf, userID...)
-	isBot := byte(0)
-	if m.isBot {
-		isBot = 1
+	buf = append(buf, testModeByte)
+	buf = append(buf, authKey...)
+	userIDBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(userIDBytes, uint64(userID))
+	buf = append(buf, userIDBytes...)
+	isBotByte := byte(0)
+	if isBot {
+		isBotByte = 1
 	}
-	buf = append(buf, isBot)
+	buf = append(buf, isBotByte)
 
 	encoded := base64.URLEncoding.EncodeToString(buf)
 	encoded = strings.TrimRight(encoded, "=")

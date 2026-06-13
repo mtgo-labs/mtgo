@@ -453,18 +453,45 @@ func TestReadHistory(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	inv.setResult(tg.MessagesReadHistoryTypeID, &tg.MessagesAffectedMessages{
-		PTS:      100,
-		PTSCount: 5,
-	})
+	inv.setResult(tg.ChannelsReadHistoryTypeID, &tg.Updates{})
 
 	err := c.ReadHistory(context.Background(), 10, 500)
 	if err != nil {
 		t.Fatalf("ReadHistory() error: %v", err)
 	}
+	// A channel/supergroup peer must dispatch to channels.readHistory, not
+	// messages.readHistory (which silently no-ops for channels).
+	req, ok := inv.lastCall().(*tg.ChannelsReadHistoryRequest)
+	if !ok {
+		t.Fatalf("expected ChannelsReadHistoryRequest, got %T", inv.lastCall())
+	}
+	ch, ok := req.Channel.(*tg.InputChannel)
+	if !ok {
+		t.Fatalf("expected *tg.InputChannel, got %T", req.Channel)
+	}
+	if ch.ChannelID != 10 || ch.AccessHash != 20 {
+		t.Errorf("Channel = (%d, %d), want (10, 20)", ch.ChannelID, ch.AccessHash)
+	}
+	if req.MaxID != 500 {
+		t.Errorf("MaxID = %d, want 500", req.MaxID)
+	}
+}
+
+func TestReadHistoryBasicChat(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChat{ChatID: 10})
+
+	inv.setResult(tg.MessagesReadHistoryTypeID, &tg.MessagesAffectedMessages{
+		PTS:      100,
+		PTSCount: 5,
+	})
+
+	if err := c.ReadHistory(context.Background(), 10, 500); err != nil {
+		t.Fatalf("ReadHistory() error: %v", err)
+	}
 	req, ok := inv.lastCall().(*tg.MessagesReadHistoryRequest)
 	if !ok {
-		t.Fatalf("expected MessagesReadHistoryRequest, got %T", inv.lastCall())
+		t.Fatalf("expected MessagesReadHistoryRequest for basic chat, got %T", inv.lastCall())
 	}
 	if req.MaxID != 500 {
 		t.Errorf("MaxID = %d, want 500", req.MaxID)
@@ -645,8 +672,15 @@ func TestStopPoll(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	err := c.StopPoll(context.Background(), 10, 55)
-	if err != nil {
+	// StopPoll fetches the message to obtain the poll's existing ID, then closes
+	// it via editMessage with Closed set.
+	inv.setResult(tg.ChannelsGetMessagesTypeID, &tg.MessagesMessages{
+		Messages: []tg.MessageClass{
+			&tg.Message{ID: 55, Media: &tg.MessageMediaPoll{Poll: &tg.Poll{ID: 777}}},
+		},
+	})
+
+	if err := c.StopPoll(context.Background(), 10, 55); err != nil {
 		t.Fatalf("StopPoll() error: %v", err)
 	}
 	req, ok := inv.lastCall().(*tg.MessagesEditMessageRequest)
@@ -656,8 +690,18 @@ func TestStopPoll(t *testing.T) {
 	if req.ID != 55 {
 		t.Errorf("ID = %d, want 55", req.ID)
 	}
-	if req.Media == nil {
-		t.Error("Media should not be nil for StopPoll")
+	poll, ok := req.Media.(*tg.InputMediaPoll)
+	if !ok {
+		t.Fatalf("expected *tg.InputMediaPoll, got %T", req.Media)
+	}
+	if poll.Poll == nil {
+		t.Fatal("InputMediaPoll.Poll is nil")
+	}
+	if poll.Poll.ID != 777 {
+		t.Errorf("poll ID = %d, want 777 (fetched from the message)", poll.Poll.ID)
+	}
+	if !poll.Poll.Closed {
+		t.Error("poll should be closed")
 	}
 }
 

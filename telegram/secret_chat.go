@@ -120,6 +120,19 @@ func (sc *SecretChat) ExpectedInboundParity() int32 {
 	return 1 - sc.seqParity()
 }
 
+// expectedInboundSeqNo returns the exact wire out_seq_no the next inbound message
+// must carry: (received-count)*2 + inbound-parity. Any deviation — a replay
+// (same or lower seq), a gap, or a reordering — is a protocol violation per
+// https://core.telegram.org/api/end-to-end/seq_no and the chat must be discarded.
+func (sc *SecretChat) expectedInboundSeqNo() int32 {
+	return atomic.LoadInt32(&sc.InSeqNo)*2 + sc.ExpectedInboundParity()
+}
+
+// outCount returns the number of messages this side has sent so far.
+func (sc *SecretChat) outCount() int32 {
+	return atomic.LoadInt32(&sc.OutSeqNo)
+}
+
 func (sc *SecretChat) InputPeer() *tg.InputEncryptedChat {
 	return &tg.InputEncryptedChat{
 		ChatID:     sc.ID,

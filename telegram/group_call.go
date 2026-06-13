@@ -147,8 +147,17 @@ func (r *CallReader) Scale() int32 {
 	return r.scale
 }
 
-// SetScale sets the stream scale factor for chunk retrieval.
+// SetScale sets the stream scale factor for chunk retrieval. Valid scale values
+// are 0–3 (chunk durations of 1000>>scale ms). Out-of-range values are clamped:
+// negative values would panic on shift, and values >= 10 would yield a zero
+// advance and spin NextChunk forever.
 func (r *CallReader) SetScale(scale int32) {
+	switch {
+	case scale < 0:
+		scale = 0
+	case scale > 3:
+		scale = 3
+	}
 	r.scale = scale
 }
 

@@ -99,6 +99,63 @@ func TestHTMLParser_TextURL(t *testing.T) {
 	}
 }
 
+// TestHTMLParser_OffsetsAfterEntity verifies that entity offsets remain correct
+// when an HTML-escaped character (which shrinks during unescaping) precedes a
+// formatted region. Regression test for the htmlUnescape offset bug.
+func TestHTMLParser_OffsetsAfterEntity(t *testing.T) {
+	p := NewHTMLParser()
+	text, entities, err := p.Parse(`<b>bold</b> &amp; <i>italic</i>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "bold & italic"; text != want {
+		t.Fatalf("text = %q, want %q", text, want)
+	}
+	if len(entities) != 2 {
+		t.Fatalf("entities = %d, want 2", len(entities))
+	}
+	bold, ok := entities[0].(*tl.MessageEntityBold)
+	if !ok {
+		t.Fatalf("expected MessageEntityBold, got %T", entities[0])
+	}
+	if bold.Offset != 0 || bold.Length != 4 {
+		t.Errorf("bold = {Offset:%d, Length:%d}, want {0, 4}", bold.Offset, bold.Length)
+	}
+	ital, ok := entities[1].(*tl.MessageEntityItalic)
+	if !ok {
+		t.Fatalf("expected MessageEntityItalic, got %T", entities[1])
+	}
+	// "bold & " is 7 bytes, so italic starts at offset 7 and spans 6 bytes.
+	if ital.Offset != 7 || ital.Length != 6 {
+		t.Errorf("italic = {Offset:%d, Length:%d}, want {7, 6}", ital.Offset, ital.Length)
+	}
+}
+
+// TestHTMLParser_MentionNameValidation verifies that a malformed or
+// non-positive tg://user?id= falls back to a TextURL instead of a forged
+// mention of an arbitrary user id.
+func TestHTMLParser_MentionNameValidation(t *testing.T) {
+	p := NewHTMLParser()
+
+	// Valid positive id → mention.
+	_, entities, err := p.Parse(`<a href="tg://user?id=12345">u</a>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := entities[0].(*tl.InputMessageEntityMentionName); !ok {
+		t.Errorf("expected MentionName for valid id, got %T", entities[0])
+	}
+
+	// Invalid id → TextURL fallback (no forged mention).
+	_, entities, err = p.Parse(`<a href="tg://user?id=-1">u</a>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := entities[0].(*tl.MessageEntityTextURL); !ok {
+		t.Errorf("expected TextURL fallback for invalid id, got %T", entities[0])
+	}
+}
+
 func TestHTMLParser_Nested(t *testing.T) {
 	p := NewHTMLParser()
 	text, entities, err := p.Parse("<b>hello <i>world</i></b>")

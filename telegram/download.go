@@ -556,7 +556,7 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 	iv := make([]byte, len(redirect.EncryptionIv))
 	copy(iv, redirect.EncryptionIv)
 
-	hashIndex := 0
+	hasher := &cdnHashChecker{hashes: redirect.FileHashes}
 	var totalWritten int64
 	offset := int64(0)
 
@@ -598,24 +598,12 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 			return totalWritten, err
 		}
 
-		// Verify every CDN hash whose range is fully contained in this chunk.
-		// hash.Offset is absolute into the file, so translate by the chunk base
-		// (offset). A mismatch means the CDN served corrupted/tampered data and
-		// must abort the download rather than write bad bytes.
-		for hashIndex < len(redirect.FileHashes) {
-			h := redirect.FileHashes[hashIndex]
-			if h == nil {
-				hashIndex++
-				continue
-			}
-			if h.Offset+int64(h.Limit) > offset+int64(len(decrypted)) {
-				// Hash extends past this chunk; verify it on a later chunk.
-				break
-			}
-			if !cdnVerifyHash(decrypted, h, offset) {
-				return totalWritten, fmt.Errorf("cdn: hash verification failed at offset %d", h.Offset)
-			}
-			hashIndex++
+		// Verify CDN file hashes. hash.Offset is absolute into the file; a hash
+		// may span a chunk boundary, so the checker buffers bytes of the
+		// in-progress hash across consecutive chunks. A mismatch means the CDN
+		// served corrupted/tampered data and the download must abort.
+		if err := hasher.feed(decrypted, offset); err != nil {
+			return totalWritten, err
 		}
 
 		n, err := writer.Write(decrypted)
@@ -659,10 +647,11 @@ func cdnDecryptChunk(data, key, iv []byte, offset int64) ([]byte, error) {
 	chunkIV := make([]byte, 16)
 	copy(chunkIV, iv[:16])
 
-	chunkIndex := offset / 16
-	for i := int64(0); i < chunkIndex; i++ {
-		incrementIV(chunkIV)
-	}
+	// Derive the CTR counter for the first 16-byte block of this chunk. The IV
+	// is a 128-bit little-endian counter (incrementIV adds 1 to it per block),
+	// so advancing offset/16 blocks is a single O(1) add rather than an O(N)
+	// loop — this keeps large CDN downloads linear rather than quadratic.
+	addToIVLE(chunkIV, offset/16)
 
 	out := make([]byte, len(data))
 	keystream := make([]byte, 16)
@@ -681,25 +670,99 @@ func cdnDecryptChunk(data, key, iv []byte, offset int64) ([]byte, error) {
 	return out, nil
 }
 
+// addToIVLE adds n to the 128-bit little-endian integer represented by the
+// 16-byte iv, matching incrementIV's carry direction (byte 15 is the least
+// significant). Equivalent to calling incrementIV n times but in O(1).
+func addToIVLE(iv []byte, n int64) {
+	if n <= 0 {
+		return
+	}
+	carry := uint64(n)
+	for i := 15; i >= 0 && carry != 0; i-- {
+		sum := uint64(iv[i]) + (carry & 0xff)
+		iv[i] = byte(sum)
+		carry = (sum >> 8) + (carry >> 8)
+	}
+}
+
+// cdnHashChecker verifies CDN file hashes in stream order. A hash may span a
+// chunk boundary, so the checker buffers bytes of the in-progress hash across
+// consecutive chunks. Each hash is verified exactly once it becomes complete.
+type cdnHashChecker struct {
+	hashes []*tg.FileHash
+	idx    int
+	buf    []byte
+}
+
+// feed offers the decrypted bytes covering absolute range [base, base+len(data))
+// and verifies every hash that completes within this range. Returns an error on
+// any mismatch.
+func (c *cdnHashChecker) feed(data []byte, base int64) error {
+	chunkEnd := base + int64(len(data))
+	for c.idx < len(c.hashes) {
+		h := c.hashes[c.idx]
+		if h == nil {
+			c.idx++
+			continue
+		}
+		if h.Offset >= chunkEnd {
+			return nil // hash starts in a later chunk
+		}
+		hashEnd := h.Offset + int64(h.Limit)
+
+		// Fast path: hash fully contained in this chunk with nothing carried
+		// over from a previous chunk (the normal case when hashes align to chunk
+		// boundaries).
+		if len(c.buf) == 0 && h.Offset >= base && hashEnd <= chunkEnd {
+			if !cdnVerifyHash(data, h, base) {
+				return fmt.Errorf("cdn: hash verification failed at offset %d", h.Offset)
+			}
+			c.idx++
+			continue
+		}
+
+		// Spanning hash: append this chunk's contribution and verify once the
+		// full range has been accumulated.
+		start := h.Offset
+		if start < base {
+			start = base
+		}
+		end := hashEnd
+		if end > chunkEnd {
+			end = chunkEnd
+		}
+		c.buf = append(c.buf, data[start-base:end-base]...)
+
+		if hashEnd <= chunkEnd {
+			computed := sha256.Sum256(c.buf)
+			if !bytes.Equal(computed[:], h.Hash) {
+				return fmt.Errorf("cdn: hash verification failed at offset %d", h.Offset)
+			}
+			c.buf = c.buf[:0]
+			c.idx++
+		} else {
+			return nil // extends past this chunk; wait for more
+		}
+	}
+	return nil
+}
+
 func cdnVerifyHash(data []byte, hash *tg.FileHash, baseOffset int64) bool {
 	if hash == nil {
 		return true
 	}
-
-	effectiveOffset := hash.Offset
-	if baseOffset > 0 {
-		effectiveOffset = hash.Offset - baseOffset
+	// The hash must be fully contained within [baseOffset, baseOffset+len(data)).
+	// A hash that starts before or ends after this chunk cannot be verified from
+	// this chunk alone and is handled by cdnHashChecker's spanning path.
+	if hash.Offset < baseOffset {
+		return false
 	}
-	if effectiveOffset < 0 {
-		effectiveOffset = 0
-	}
-
-	end := effectiveOffset + int64(hash.Limit)
+	start := hash.Offset - baseOffset
+	end := start + int64(hash.Limit)
 	if end > int64(len(data)) {
 		return false
 	}
-
-	chunk := data[effectiveOffset:end]
+	chunk := data[start:end]
 	computed := sha256.Sum256(chunk)
 	return bytes.Equal(computed[:], hash.Hash)
 }

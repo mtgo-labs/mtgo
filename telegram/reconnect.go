@@ -204,6 +204,20 @@ func (c *Client) reconnectOnce() error {
 		return fmt.Errorf("session start: %w", err)
 	}
 
+	// Watch for session exit and trigger reconnect when it dies. Register the
+	// watcher immediately after Connect succeeds — before publishing the session
+	// or running update recovery — so a session that dies during that window is
+	// still observed. Otherwise the client can be left stuck reporting
+	// "connected" with no reconnect ever firing.
+	c.sessionWg.Add(1)
+	go func() {
+		defer c.sessionWg.Done()
+		<-sess.SessionDone()
+		if c.state.IsConnected() {
+			c.triggerReconnect(fmt.Errorf("session exited"))
+		}
+	}()
+
 	c.mu.Lock()
 	c.session = sess
 	c.mu.Unlock()
@@ -211,8 +225,6 @@ func (c *Client) reconnectOnce() error {
 	c.state.SetConnected()
 	c.state.SetDC(dcID)
 	c.state.ResetReconnectCount()
-
-	c.sessionWg.Add(1)
 
 	c.mu.RLock()
 	um := c.updateManager
@@ -222,15 +234,6 @@ func (c *Client) reconnectOnce() error {
 			c.Log.Warnf("recover updates after reconnect: %v", err)
 		}
 	}
-
-	// Watch for session exit and trigger reconnect when it dies.
-	go func() {
-		defer c.sessionWg.Done()
-		<-sess.SessionDone()
-		if c.state.IsConnected() {
-			c.triggerReconnect(fmt.Errorf("session exited"))
-		}
-	}()
 
 	return nil
 }

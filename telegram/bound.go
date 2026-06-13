@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -789,14 +790,56 @@ func (c *Client) BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*par
 	if err != nil {
 		return nil, err
 	}
+	o := params.GetOptDef(&params.EditPrivacy{}, opts...)
 	result, err := c.Raw().StoriesEditStory(ctx, &tg.StoriesEditStoryRequest{
-		Peer: peer,
-		ID:   storyID,
+		Peer:         peer,
+		ID:           storyID,
+		PrivacyRules: storyPrivacyRules(o),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return extractStoryFromUpdates(result)
+}
+
+// storyPrivacyRules converts a high-level EditPrivacy option into the
+// []InputPrivacyRuleClass expected by stories.editStory. Without this the edit
+// is a silent no-op: SetFlags only emits the privacy_rules flag when the field
+// is non-nil, so omitting it makes the server ignore the privacy change.
+func storyPrivacyRules(o *params.EditPrivacy) []tg.InputPrivacyRuleClass {
+	if o == nil {
+		return []tg.InputPrivacyRuleClass{&tg.InputPrivacyValueAllowAll{}}
+	}
+
+	var rules []tg.InputPrivacyRuleClass
+	switch strings.ToLower(strings.TrimSpace(o.Privacy)) {
+	case "", "everybody", "all", "public":
+		rules = append(rules, &tg.InputPrivacyValueAllowAll{})
+	case "contacts":
+		rules = append(rules, &tg.InputPrivacyValueAllowContacts{})
+	case "close_friends", "closefriends":
+		rules = append(rules, &tg.InputPrivacyValueAllowCloseFriends{})
+	case "nobody", "none", "private":
+		rules = append(rules, &tg.InputPrivacyValueDisallowAll{})
+	default:
+		rules = append(rules, &tg.InputPrivacyValueAllowAll{})
+	}
+
+	if len(o.AllowedUsers) > 0 {
+		users := make([]tg.InputUserClass, 0, len(o.AllowedUsers))
+		for _, id := range o.AllowedUsers {
+			users = append(users, &tg.InputUser{UserID: id})
+		}
+		rules = append(rules, &tg.InputPrivacyValueAllowUsers{Users: users})
+	}
+	if len(o.DisallowedUsers) > 0 {
+		users := make([]tg.InputUserClass, 0, len(o.DisallowedUsers))
+		for _, id := range o.DisallowedUsers {
+			users = append(users, &tg.InputUser{UserID: id})
+		}
+		rules = append(rules, &tg.InputPrivacyValueDisallowUsers{Users: users})
+	}
+	return rules
 }
 
 func (c *Client) BoundStoryReact(peerID int64, storyID int32, opts ...*params.React) error {
