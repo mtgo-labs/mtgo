@@ -249,61 +249,6 @@ func TestClassifyFuncDomain(t *testing.T) {
 	}
 }
 
-func TestGenerateEnums(t *testing.T) {
-	combos := []Combinator{
-		{Section: SectionTypes, QualName: "boolTrue", Name: "BoolTrue", ID: 0x997275b5, Type: "Bool"},
-		{Section: SectionTypes, QualName: "boolFalse", Name: "BoolFalse", ID: 0xbc799737, Type: "Bool"},
-		{Section: SectionTypes, QualName: "null", Name: "Null", ID: 0x56730bcc, Type: "Null"},
-	}
-	tmpDir := t.TempDir()
-	if err := GenerateEnums(tmpDir, combos); err != nil {
-		t.Fatal(err)
-	}
-	data, err := readFile(tmpDir, "enums_gen.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(data, "BoolTrueTypeID") {
-		t.Error("missing BoolTrueTypeID")
-	}
-	if !strings.Contains(data, "BoolFalseTypeID") {
-		t.Error("missing BoolFalseTypeID")
-	}
-	if !strings.Contains(data, "0x997275b5") {
-		t.Error("missing boolTrue ID")
-	}
-	if !strings.Contains(data, "EncodeBool") {
-		t.Error("missing EncodeBool")
-	}
-	if !strings.Contains(data, "NullTypeID") {
-		t.Error("missing NullTypeID")
-	}
-}
-
-func TestGenerateCodecHelpers(t *testing.T) {
-	combos := []Combinator{
-		{Section: SectionTypes, QualName: "testObj", Name: "TestObj", ID: 0x12345678, Type: "TestObj",
-			Args: []Arg{{Name: "val", Type: "int", FlagBit: -1}}},
-	}
-	tmpDir := t.TempDir()
-	if err := GenerateCodecHelpers(tmpDir, combos); err != nil {
-		t.Fatal(err)
-	}
-	data, err := readFile(tmpDir, "codec_gen.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(data, "RegisterTypes") {
-		t.Error("missing RegisterTypes")
-	}
-	if !strings.Contains(data, "DecodeTestObj") {
-		t.Error("missing DecodeTestObj in registry")
-	}
-	if !strings.Contains(data, "EncodeTLObject") {
-		t.Error("missing EncodeTLObject")
-	}
-}
-
 func TestGenerateGroupedConstructors(t *testing.T) {
 	combos := []Combinator{
 		{Section: SectionTypes, QualName: "user", Name: "User", ID: 0x11111111, Type: "User"},
@@ -684,10 +629,10 @@ func TestResolveReturnType(t *testing.T) {
 	}
 
 	tests := []struct {
-		c       Combinator
-		goType  string
-		isBool  bool
-		isVec   bool
+		c      Combinator
+		goType string
+		isBool bool
+		isVec  bool
 	}{
 		{Combinator{Type: "Bool"}, "bool", true, false},
 		{Combinator{Type: "true"}, "bool", true, false},

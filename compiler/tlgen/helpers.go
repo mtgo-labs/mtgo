@@ -340,13 +340,7 @@ func resolveReturnType(c Combinator, baseTypes map[string]bool, typeToConstructo
 
 	if strings.HasPrefix(tlType, "Vector<") {
 		rt.IsVector = true
-		inner := strings.TrimSuffix(strings.TrimPrefix(tlType, "Vector<"), ">")
-		if inner == "Bool" || inner == "true" {
-			rt.IsBool = false
-			rt.GoType = "TLObject"
-		} else {
-			rt.GoType = "TLObject"
-		}
+		rt.GoType = "TLObject"
 		return rt
 	}
 
