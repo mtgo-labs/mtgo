@@ -254,11 +254,23 @@ func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.Dec
 		return nil, fmt.Errorf("telegram: unexpected decrypted type %T", obj)
 	}
 
-	// The sender's out_seq_no must carry the parity opposite to ours; a
-	// mismatch signals a protocol violation (e.g. message mirroring) per
-	// https://core.telegram.org/api/end-to-end/seq_no.
-	if layer.OutSeqNo%2 != chat.ExpectedInboundParity() {
-		return nil, fmt.Errorf("telegram: secret chat %d: out_seq_no parity mismatch (got %d)", chatID, layer.OutSeqNo)
+	// Enforce the full E2E seq_no contract per
+	// https://core.telegram.org/api/end-to-end/seq_no. The inbound out_seq_no
+	// must equal the next expected receive sequence number; anything else is a
+	// replay, a gap, or a reordering. The peer's in_seq_no (their ACK of our
+	// messages) must carry our parity and must not acknowledge messages we have
+	// not yet sent. Any violation means the chat is compromised and is discarded.
+	if layer.OutSeqNo != chat.expectedInboundSeqNo() {
+		chat.SetState(SecretChatStateDiscarded)
+		return nil, fmt.Errorf("telegram: secret chat %d: out_seq_no mismatch (got %d, want %d)", chatID, layer.OutSeqNo, chat.expectedInboundSeqNo())
+	}
+	if layer.InSeqNo%2 != chat.seqParity() {
+		chat.SetState(SecretChatStateDiscarded)
+		return nil, fmt.Errorf("telegram: secret chat %d: in_seq_no parity mismatch (got %d)", chatID, layer.InSeqNo)
+	}
+	if acked := (layer.InSeqNo - chat.seqParity()) / 2; acked < 0 || acked > chat.outCount() {
+		chat.SetState(SecretChatStateDiscarded)
+		return nil, fmt.Errorf("telegram: secret chat %d: in_seq_no acknowledges unsent messages (got %d, sent %d)", chatID, acked, chat.outCount())
 	}
 
 	chat.NextInSeqNo()

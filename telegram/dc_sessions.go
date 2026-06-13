@@ -51,6 +51,12 @@ func (d *dcSessions) get(dcID int) (*dcSessionEntry, bool) {
 func (d *dcSessions) put(dcID int, e *dcSessionEntry) {
 	d.mu.Lock()
 	d.entries[dcID] = e
+	// The per-DC init lock is only needed while the entry is being created;
+	// once the entry exists every future caller returns from get() without
+	// touching initLocks, so drop it to keep initLocks bounded. Safe because
+	// entries are never removed: any later getInitLock(dcID) caller would first
+	// hit the entry in get() and never reach getInitLock.
+	delete(d.initLocks, dcID)
 	d.mu.Unlock()
 }
 
@@ -221,7 +227,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 
 	query := input
 	if !d.apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(d.client.cfg, input)
+		query = wrapInitConnection(d.client.config(), input)
 	}
 
 	result, err := d.sess.Invoke(ctx, query, 2, timeout)
@@ -244,7 +250,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	query := input
 	if !d.apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(d.client.cfg, input)
+		query = wrapInitConnection(d.client.config(), input)
 	}
 
 	data, err := d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)

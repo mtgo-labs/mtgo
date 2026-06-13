@@ -1,8 +1,8 @@
 package telegram
 
 import (
-	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
@@ -142,13 +142,33 @@ func (d *socksDialer) Dial(network, address string, timeout time.Duration) (net.
 	if err != nil {
 		return nil, fmt.Errorf("socks connect to %s: %w", d.proxyAddr, err)
 	}
-	if d.version == "socks4" {
-		return d.socks4Handshake(conn, address)
+	// Bound the handshake so a half-open proxy that accepts the TCP connection
+	// but never replies does not hang the dialer indefinitely.
+	if timeout > 0 {
+		_ = conn.SetReadDeadline(time.Now().Add(timeout))
 	}
-	return d.socks5Handshake(conn, address)
+	if d.version == "socks4" {
+		conn, err = d.socks4Handshake(conn, address)
+	} else {
+		conn, err = d.socks5Handshake(conn, address)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if timeout > 0 {
+		_ = conn.SetReadDeadline(time.Time{}) // clear; MTProto sets its own deadlines
+	}
+	return conn, nil
 }
 
 func (d *socksDialer) socks5Handshake(conn net.Conn, address string) (net.Conn, error) {
+	// SOCKS5 length prefixes are a single byte; longer credentials silently
+	// corrupt the handshake, so reject them up front with a clear error.
+	if len(d.username) > 255 || len(d.password) > 255 {
+		conn.Close()
+		return nil, fmt.Errorf("socks5: username/password must be <= 255 bytes")
+	}
+
 	var authMethods []byte
 	if d.username != "" {
 		authMethods = []byte{0x05, 0x02, 0x00, 0x02}
@@ -216,6 +236,10 @@ func (d *socksDialer) socks5Handshake(conn net.Conn, address string) (net.Conn, 
 			req = append(req, ip.To16()...)
 		}
 	} else {
+		if len(host) > 255 {
+			conn.Close()
+			return nil, fmt.Errorf("socks5: host name too long (%d bytes)", len(host))
+		}
 		req = append(req, 0x03, byte(len(host)))
 		req = append(req, []byte(host)...)
 	}
@@ -343,6 +367,10 @@ func (d *httpProxyDialer) Dial(network, address string, timeout time.Duration) (
 	if err != nil {
 		return nil, fmt.Errorf("http proxy connect to %s: %w", d.proxyAddr, err)
 	}
+	// Bound the handshake so a half-open proxy does not hang the dialer.
+	if timeout > 0 {
+		_ = conn.SetReadDeadline(time.Now().Add(timeout))
+	}
 	req := fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\n", address, address)
 	if d.username != "" {
 		req += fmt.Sprintf("Proxy-Authorization: Basic %s\r\n",
@@ -364,6 +392,9 @@ func (d *httpProxyDialer) Dial(network, address string, timeout time.Duration) (
 		conn.Close()
 		return nil, fmt.Errorf("http proxy: %s", strings.Split(resp, "\r\n")[0])
 	}
+	if timeout > 0 {
+		_ = conn.SetReadDeadline(time.Time{}) // clear; MTProto sets its own deadlines
+	}
 	return conn, nil
 }
 
@@ -380,17 +411,23 @@ func readFull(conn net.Conn, buf []byte) (int, error) {
 }
 
 func readUntil(conn net.Conn, buf []byte, delimiter []byte) (int, error) {
-	br := bufio.NewReader(conn)
+	// Read directly from conn (not via bufio) so that any bytes the proxy sends
+	// after the delimiter — e.g. the first tunneled MTProto bytes pipelined
+	// behind the CONNECT response — remain in the kernel buffer for the caller
+	// to read. A bufio.Reader here would trap and discard them.
 	total := 0
+	one := make([]byte, 1)
 	for total < len(buf) {
-		b, err := br.ReadByte()
+		n, err := conn.Read(one)
+		if n > 0 {
+			buf[total] = one[0]
+			total++
+			if total >= len(delimiter) && bytesEndsWith(buf[:total], delimiter) {
+				return total, nil
+			}
+		}
 		if err != nil {
 			return total, err
-		}
-		buf[total] = b
-		total++
-		if total >= len(delimiter) && bytesEndsWith(buf[:total], delimiter) {
-			return total, nil
 		}
 	}
 	return total, ErrProxyResponseTooLarge
@@ -404,40 +441,7 @@ func bytesEndsWith(data, suffix []byte) bool {
 }
 
 func basicAuth(user, pass string) string {
-	s := user + ":" + pass
-	dst := make([]byte, ((len(s)+2)/3)*4)
-	j := 0
-	for i := 0; i < len(s); i += 3 {
-		var buf [3]byte
-		n := copy(buf[:], s[i:])
-		_ = n
-		_ = j
-	}
-	v := []byte(s)
-	for i := 0; i < len(v); i += 3 {
-		b := uint32(v[i]) << 16
-		if i+1 < len(v) {
-			b |= uint32(v[i+1]) << 8
-		}
-		if i+2 < len(v) {
-			b |= uint32(v[i+2])
-		}
-		const enc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-		dst[j] = enc[b>>18&0x3F]
-		dst[j+1] = enc[b>>12&0x3F]
-		dst[j+2] = enc[b>>6&0x3F]
-		dst[j+3] = enc[b&0x3F]
-		j += 4
-	}
-	rem := len(v) % 3
-	switch rem {
-	case 1:
-		dst[j-2] = '='
-		dst[j-1] = '='
-	case 2:
-		dst[j-1] = '='
-	}
-	return string(dst)
+	return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
 }
 
 func newProxyDialer(p *Proxy, forward transport.Dialer) transport.Dialer {

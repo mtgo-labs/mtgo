@@ -131,3 +131,64 @@ func TestCDNDecryptWithCTRIVDerivation(t *testing.T) {
 		t.Error("CTR IV derivation mismatch")
 	}
 }
+
+// TestCDNAddToIVLE confirms the O(1) counter advance matches repeated
+// incrementIV calls (the O(N) path it replaces) across several magnitudes,
+// including values that carry across byte boundaries.
+func TestCDNAddToIVLE(t *testing.T) {
+	cases := []int64{1, 2, 255, 256, 65536, 1<<20, (1 << 20) + 257}
+	for _, n := range cases {
+		base := make([]byte, 16)
+		_, _ = rand.Read(base)
+
+		want := make([]byte, 16)
+		copy(want, base)
+		for i := int64(0); i < n; i++ {
+			incrementIV(want)
+		}
+
+		got := make([]byte, 16)
+		copy(got, base)
+		addToIVLE(got, n)
+
+		if !bytes.Equal(got, want) {
+			t.Errorf("addToIVLE(_, %d) = %x, want %x (base %x)", n, got, want, base)
+		}
+	}
+}
+
+// TestCDNHashCheckerSpanning verifies that a hash straddling a chunk boundary
+// is verified correctly using bytes from both chunks (the regression fixed in
+// M1: the old code hashed the wrong window and falsely rejected valid data).
+func TestCDNHashCheckerSpanning(t *testing.T) {
+	full := make([]byte, 1024)
+	_, _ = rand.Read(full)
+
+	const chunkSize = 256
+	// A hash that starts in chunk 1 (offset 240) and ends in chunk 2 (offset 272).
+	spanning := full[240:272]
+	h := sha256.Sum256(spanning)
+	hashes := []*tg.FileHash{{Offset: 240, Limit: 32, Hash: h[:]}}
+
+	c := &cdnHashChecker{hashes: hashes}
+	if err := c.feed(full[0:chunkSize], 0); err != nil {
+		t.Fatalf("feed chunk 0: %v", err)
+	}
+	if err := c.feed(full[chunkSize : 2*chunkSize], chunkSize); err != nil {
+		t.Fatalf("feed chunk 1 (hash completes here): %v", err)
+	}
+	if c.idx != len(hashes) {
+		t.Errorf("after feed: idx = %d, want %d", c.idx, len(hashes))
+	}
+
+	// A tampered spanning region must be rejected.
+	tampered := append([]byte(nil), full...)
+	tampered[260] ^= 0xff
+	bad := &cdnHashChecker{hashes: hashes}
+	if err := bad.feed(tampered[0:chunkSize], 0); err != nil {
+		t.Fatalf("feed chunk 0 (tampered): unexpected error before hash completes: %v", err)
+	}
+	if err := bad.feed(tampered[chunkSize : 2*chunkSize], chunkSize); err == nil {
+		t.Fatal("tampered spanning hash should fail verification")
+	}
+}

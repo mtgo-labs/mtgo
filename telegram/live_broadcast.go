@@ -54,6 +54,9 @@ type BroadcastStream struct {
 	stderr     bytes.Buffer
 	cancelFunc context.CancelFunc
 
+	stdinWg sync.WaitGroup // tracks the pipe-feeder goroutine
+	procWg  sync.WaitGroup // tracks the watchProcess reaper goroutine
+
 	mu        sync.Mutex
 	onError   func(int64, error)
 	onEnd     func(int64)
@@ -341,17 +344,18 @@ func (s *BroadcastStream) PlayAudioWithImage(audioSource interface{}, imageFile 
 // Pause stops the ffmpeg process and records the current playback position for later resume.
 func (s *BroadcastStream) Pause() error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if s.state != BroadcastPlaying {
+		s.mu.Unlock()
 		return fmt.Errorf("pause: stream is %s", s.state)
 	}
 
 	s.src.pausedAt = time.Since(s.src.startTime) + s.src.seekPos
-	if s.cancelFunc != nil {
-		s.cancelFunc()
-	}
 	s.state = BroadcastPaused
+	s.mu.Unlock()
+
+	// Fully stop and reap the process so Resume does not race a still-running
+	// ffmpeg (which could briefly leave two processes live).
+	s.teardownProcess()
 	return nil
 }
 
@@ -486,23 +490,51 @@ func (s *BroadcastStream) IsMuted() bool {
 //	// Output: stream state: stopped
 func (s *BroadcastStream) Stop() error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if s.state == BroadcastIdle || s.state == BroadcastStopped {
+		s.mu.Unlock()
 		return nil
 	}
 
 	s.state = BroadcastStopped
-	if s.cancelFunc != nil {
-		s.cancelFunc()
-	}
-	if s.stdin != nil {
-		s.stdin.Close()
-	}
-	if s.cmd != nil && s.cmd.Process != nil {
-		s.cmd.Process.Kill()
-	}
+	s.mu.Unlock()
+
+	s.teardownProcess()
 	return nil
+}
+
+// teardownProcess cancels the ffmpeg context, kills the process, waits for the
+// pipe-feeder goroutine (so we never Close the stdin fd concurrently with a
+// Write), waits for watchProcess to reap the process, and clears the
+// cmd/stdin/cancel handles. It must be called WITHOUT holding s.mu and does not
+// change s.state.
+func (s *BroadcastStream) teardownProcess() {
+	s.mu.Lock()
+	cancel := s.cancelFunc
+	stdin := s.stdin
+	cmd := s.cmd
+	s.mu.Unlock()
+
+	if cancel != nil {
+		cancel()
+	}
+	if cmd != nil && cmd.Process != nil {
+		_ = cmd.Process.Kill()
+	}
+	// Killing the process unblocks any in-flight stdin Write (broken pipe), so
+	// the feeder can exit before we touch the fd. Closes after this point are
+	// serialized with the feeder's own Close (a benign double-close otherwise).
+	s.stdinWg.Wait()
+	if stdin != nil {
+		_ = stdin.Close()
+	}
+	// Let watchProcess reap the process and run its callbacks/transition.
+	s.procWg.Wait()
+
+	s.mu.Lock()
+	s.cmd = nil
+	s.stdin = nil
+	s.cancelFunc = nil
+	s.mu.Unlock()
 }
 
 // SetBitrate updates the video bitrate for subsequent playback.
@@ -566,18 +598,29 @@ func (s *BroadcastStream) startFFmpeg(input string, pipeInput bool) error {
 	s.mu.Unlock()
 
 	if pipeInput && s.src.data != nil {
+		data := s.src.data
+		stdin := s.stdin
+		s.stdinWg.Add(1)
 		go func() {
-			defer s.stdin.Close()
+			defer s.stdinWg.Done()
 			defer func() {
 				if r := recover(); r != nil {
 					s.client.Log.Errorf("broadcast stdin write panic: %v", r)
 				}
 			}()
-			s.stdin.Write(s.src.data)
+			if _, err := stdin.Write(data); err != nil {
+				return
+			}
+			// Signal EOF so ffmpeg finishes processing the finite pipe input.
+			_ = stdin.Close()
 		}()
 	}
 
-	go s.watchProcess(ctx)
+	s.procWg.Add(1)
+	go func() {
+		defer s.procWg.Done()
+		s.watchProcess(ctx)
+	}()
 	return nil
 }
 
@@ -697,6 +740,10 @@ func (s *BroadcastStream) audioArgs() []string {
 
 func doubleBitrate(bitrate string) string {
 	var val int
-	fmt.Sscanf(bitrate, "%dk", &val)
+	if _, err := fmt.Sscanf(bitrate, "%dk", &val); err != nil || val <= 0 {
+		// Unrecognized format (e.g. "2M", "2000K", empty): pass through so ffmpeg
+		// gets a valid -bufsize rather than a broken "0k".
+		return bitrate
+	}
 	return fmt.Sprintf("%dk", val*2)
 }

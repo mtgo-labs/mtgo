@@ -26,12 +26,20 @@ func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) err
 		return fmt.Errorf("resolve peer: %w", err)
 	}
 
+	// messages.readHistory only marks basic chats as read; channel/supergroup
+	// history requires channels.readHistory. Dispatch on the peer type so a
+	// channel read does not silently no-op.
 	rpc := c.Raw()
-	_, err = rpc.MessagesReadHistory(ctx, &tg.MessagesReadHistoryRequest{
-		Peer:  peer,
-		MaxID: maxID,
-	})
-	if err != nil {
+	if ch, ok := peer.(*tg.InputPeerChannel); ok {
+		_, err = rpc.ChannelsReadHistory(ctx, &tg.ChannelsReadHistoryRequest{
+			Channel: &tg.InputChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash},
+			MaxID:   maxID,
+		})
+	} else {
+		_, err = rpc.MessagesReadHistory(ctx, &tg.MessagesReadHistoryRequest{
+			Peer:  peer,
+			MaxID: maxID,
+		})
 	}
 	return err
 }
@@ -57,8 +65,6 @@ func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
 	_, err = rpc.MessagesReadMentions(ctx, &tg.MessagesReadMentionsRequest{
 		Peer: peer,
 	})
-	if err != nil {
-	}
 	return err
 }
 
@@ -83,8 +89,6 @@ func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 	_, err = rpc.MessagesReadReactions(ctx, &tg.MessagesReadReactionsRequest{
 		Peer: peer,
 	})
-	if err != nil {
-	}
 	return err
 }
 
