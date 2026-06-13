@@ -4,10 +4,6 @@ package tg
 
 // ConstructorMapMedia maps constructor IDs to factory functions.
 var ConstructorMapMedia = map[uint32]func() TLObject{
-	0xde33b094: func() TLObject { return &VideoSize{} },
-	0xf85c413c: func() TLObject { return &VideoSizeEmojiMarkup{} },
-	0x0da082fe: func() TLObject { return &VideoSizeStickerMarkup{} },
-	0xaed6dbb2: func() TLObject { return &MaskCoords{} },
 	0x1cd7bf0d: func() TLObject { return &InputPhotoEmpty{} },
 	0x3bb3b94a: func() TLObject { return &InputPhoto{} },
 	0x0e17e23c: func() TLObject { return &PhotoSizeEmpty{} },
@@ -16,6 +12,10 @@ var ConstructorMapMedia = map[uint32]func() TLObject{
 	0xe0b0bc2e: func() TLObject { return &PhotoStrippedSize{} },
 	0xfa3efb95: func() TLObject { return &PhotoSizeProgressive{} },
 	0xd8214d41: func() TLObject { return &PhotoPathSize{} },
+	0x72f0eaae: func() TLObject { return &InputDocumentEmpty{} },
+	0x1abfb575: func() TLObject { return &InputDocument{} },
+	0x36f8c871: func() TLObject { return &DocumentEmpty{} },
+	0x8fd4c4d8: func() TLObject { return &Document{} },
 	0x6c37c15c: func() TLObject { return &DocumentAttributeImageSize{} },
 	0x11b58939: func() TLObject { return &DocumentAttributeAnimated{} },
 	0x6319d612: func() TLObject { return &DocumentAttributeSticker{} },
@@ -24,12 +24,9 @@ var ConstructorMapMedia = map[uint32]func() TLObject{
 	0x15590068: func() TLObject { return &DocumentAttributeFilename{} },
 	0x9801d2f7: func() TLObject { return &DocumentAttributeHasStickers{} },
 	0xfd149899: func() TLObject { return &DocumentAttributeCustomEmoji{} },
-	0x36f8c871: func() TLObject { return &DocumentEmpty{} },
-	0x8fd4c4d8: func() TLObject { return &Document{} },
+	0xaed6dbb2: func() TLObject { return &MaskCoords{} },
 	0x1c570ed1: func() TLObject { return &WebDocument{} },
 	0xf9c8bcc6: func() TLObject { return &WebDocumentNoProxy{} },
-	0x72f0eaae: func() TLObject { return &InputDocumentEmpty{} },
-	0x1abfb575: func() TLObject { return &InputDocument{} },
 	0x9bed434d: func() TLObject { return &InputWebDocument{} },
 	0x54b56617: func() TLObject { return &WebPageAttributeTheme{} },
 	0x2e94c3e7: func() TLObject { return &WebPageAttributeStory{} },
@@ -38,4 +35,7 @@ var ConstructorMapMedia = map[uint32]func() TLObject{
 	0x31cad303: func() TLObject { return &WebPageAttributeStarGiftCollection{} },
 	0x01c641c2: func() TLObject { return &WebPageAttributeStarGiftAuction{} },
 	0x7781fe18: func() TLObject { return &WebPageAttributeAiComposeTone{} },
+	0xde33b094: func() TLObject { return &VideoSize{} },
+	0xf85c413c: func() TLObject { return &VideoSizeEmojiMarkup{} },
+	0x0da082fe: func() TLObject { return &VideoSizeStickerMarkup{} },
 }
