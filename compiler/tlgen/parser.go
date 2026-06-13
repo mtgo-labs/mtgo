@@ -2,6 +2,7 @@ package tlgen
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -18,11 +19,13 @@ var (
 func Parse(r io.Reader) ([]Combinator, error) {
 	var combos []Combinator
 	section := SectionTypes
+	lineNo := 0
 
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 
 	for scanner.Scan() {
+		lineNo++
 		line := strings.TrimSpace(scanner.Text())
 
 		if line == "" || strings.HasPrefix(line, "//") {
@@ -39,17 +42,33 @@ func Parse(r io.Reader) ([]Combinator, error) {
 			continue
 		}
 
-		if m := combinatorRe.FindStringSubmatch(line); m != nil {
-			combo := parseCombinator(section, m[1], m[2], m[3], m[4])
-			combos = append(combos, combo)
+		m := combinatorRe.FindStringSubmatch(line)
+		if m == nil {
+			// Non-combinator lines are intentionally skipped. The TL schema
+			// contains builtin primitive declarations (e.g. "int ? = Int;",
+			// "vector {t:Type} # [ t ] = Vector t;" in mtproto.tl) that use a
+			// different grammar and are not codegen targets.
+			continue
 		}
+
+		combo, err := parseCombinator(section, m[1], m[2], m[3], m[4])
+		if err != nil {
+			return nil, fmt.Errorf("line %d: %w", lineNo, err)
+		}
+		combos = append(combos, combo)
 	}
 
-	return combos, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("line %d: %w", lineNo, err)
+	}
+	return combos, nil
 }
 
-func parseCombinator(section Section, name, hexID, argsStr, retType string) Combinator {
-	id, _ := strconv.ParseUint(hexID, 16, 32)
+func parseCombinator(section Section, name, hexID, argsStr, retType string) (Combinator, error) {
+	id, err := strconv.ParseUint(hexID, 16, 32)
+	if err != nil {
+		return Combinator{}, fmt.Errorf("invalid constructor id %q: %w", hexID, err)
+	}
 
 	parts := strings.SplitN(name, ".", 2)
 	namespace := ""
@@ -67,7 +86,10 @@ func parseCombinator(section Section, name, hexID, argsStr, retType string) Comb
 		typeName = typeParts[1]
 	}
 
-	args := parseArgs(argsStr)
+	args, err := parseArgs(argsStr)
+	if err != nil {
+		return Combinator{}, err
+	}
 
 	category := "Types"
 	if section == SectionFunctions {
@@ -85,12 +107,12 @@ func parseCombinator(section Section, name, hexID, argsStr, retType string) Comb
 		TypeSpace: typeSpace,
 		Type:      typeName,
 		Category:  category,
-	}
+	}, nil
 }
 
-func parseArgs(s string) []Arg {
+func parseArgs(s string) ([]Arg, error) {
 	if s == "" {
-		return nil
+		return nil, nil
 	}
 
 	fields := strings.Fields(s)
@@ -98,8 +120,20 @@ func parseArgs(s string) []Arg {
 
 	for _, field := range fields {
 		field = strings.TrimSuffix(field, ",")
+		if field == "" {
+			continue
+		}
+
+		// Skip generic type parameters, e.g. {X:Type}.
+		if strings.HasPrefix(field, "{") {
+			continue
+		}
+
 		m := argRe.FindStringSubmatch(field)
 		if m == nil {
+			// Tokens from builtin combinator grammar (e.g. the "# [ t ]"
+			// portion of "vector#1cb5c415 {t:Type} # [ t ] = Vector t;")
+			// don't follow the name:type field format and are skipped.
 			continue
 		}
 
@@ -112,7 +146,10 @@ func parseArgs(s string) []Arg {
 		}
 
 		if fm := flagsRe.FindStringSubmatch(typeStr); fm != nil {
-			bit, _ := strconv.Atoi(fm[2])
+			bit, err := strconv.Atoi(fm[2])
+			if err != nil {
+				return nil, fmt.Errorf("invalid flag bit %q in field %q: %w", fm[2], field, err)
+			}
 			args = append(args, Arg{
 				Name:     name,
 				Type:     fm[3],
@@ -135,5 +172,5 @@ func parseArgs(s string) []Arg {
 		})
 	}
 
-	return args
+	return args, nil
 }

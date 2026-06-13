@@ -2,6 +2,7 @@ package tlgen
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -69,5 +70,52 @@ func TestParseMinimal(t *testing.T) {
 	}
 	if fn.ID != 0x87654321 {
 		t.Fatalf("expected 0x87654321, got 0x%x", fn.ID)
+	}
+}
+
+func TestParseInvalidHexID(t *testing.T) {
+	// Hex value too wide for uint32 (> 8 digits) triggers a ParseUint error.
+	src := "badObj#123456789 val:int = BadObj;"
+	_, err := Parse(strings.NewReader(src))
+	if err == nil {
+		t.Fatal("expected error for oversized hex id, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid constructor id") {
+		t.Fatalf("error should mention constructor id, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "line 1") {
+		t.Fatalf("error should include line number, got: %v", err)
+	}
+}
+
+func TestParseInvalidFlagBit(t *testing.T) {
+	// A flag bit that overflows int triggers an Atoi error.
+	src := "badFlags#abcdef00 flags:# val:flags.9999999999999999999999?int = BadFlags;"
+	_, err := Parse(strings.NewReader(src))
+	if err == nil {
+		t.Fatal("expected error for invalid flag bit, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid flag bit") {
+		t.Fatalf("error should mention flag bit, got: %v", err)
+	}
+}
+
+func TestParseBuiltinPrimitivesSkipped(t *testing.T) {
+	// Builtin primitive declarations that don't match combinatorRe are
+	// silently skipped, not errors.
+	src := `int ? = Int;
+long ? = Long;
+string ? = String;
+vector {t:Type} # [ t ] = Vector t;
+realObj#deadbeef val:int = RealObj;`
+	combos, err := Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatalf("expected no error for builtins, got: %v", err)
+	}
+	if len(combos) != 1 {
+		t.Fatalf("expected 1 combinator (builtins skipped), got %d", len(combos))
+	}
+	if combos[0].Name != "realObj" {
+		t.Fatalf("expected realObj, got %s", combos[0].Name)
 	}
 }
