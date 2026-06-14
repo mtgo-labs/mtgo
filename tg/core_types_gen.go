@@ -11141,6 +11141,112 @@ func init() {
 	}
 }
 
+// InputRichFileClass is the interface for TL type InputRichFile.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the InputRichFile TL type.
+type InputRichFileClass interface {
+	TLObject
+	isInputRichFile()
+}
+
+// InputRichFilePhotoTypeID is the constructor ID for TL type inputRichFilePhoto.
+const InputRichFilePhotoTypeID = 0x9b00622b
+
+// InputRichFileDocumentTypeID is the constructor ID for TL type inputRichFileDocument.
+const InputRichFileDocumentTypeID = 0x83281dbd
+
+// isInputRichFile marks InputRichFilePhoto as implementing the InputRichFileClass interface.
+func (*InputRichFilePhoto) isInputRichFile() {}
+
+// isInputRichFile marks InputRichFileDocument as implementing the InputRichFileClass interface.
+func (*InputRichFileDocument) isInputRichFile() {}
+
+// InputRichFilePhoto represents the TL constructor inputRichFilePhoto (0x9b00622b).
+//
+// See https://core.telegram.org/constructor/inputRichFilePhoto for reference.
+type InputRichFilePhoto struct {
+	ID    string          `json:"id,omitempty"`
+	Photo InputPhotoClass `json:"photo,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9b00622b.
+func (v *InputRichFilePhoto) ConstructorID() uint32 {
+	return InputRichFilePhotoTypeID
+}
+
+// Encode serializes InputRichFilePhoto to a bytes.Buffer using the TL binary protocol.
+func (v *InputRichFilePhoto) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputRichFilePhotoTypeID)
+	WriteString(b, v.ID)
+	EncodeTLObject(b, v.Photo)
+	return nil
+}
+
+// DecodeInputRichFilePhoto deserializes a InputRichFilePhoto from a reader using the TL binary protocol.
+func DecodeInputRichFilePhoto(r *Reader) (*InputRichFilePhoto, error) {
+	v := &InputRichFilePhoto{}
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
+	v.Photo = _objPhoto.(InputPhotoClass)
+	return v, nil
+}
+
+func init() {
+	Registry[InputRichFilePhotoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputRichFilePhoto(r)
+	}
+}
+
+// InputRichFileDocument represents the TL constructor inputRichFileDocument (0x83281dbd).
+//
+// See https://core.telegram.org/constructor/inputRichFileDocument for reference.
+type InputRichFileDocument struct {
+	ID       string             `json:"id,omitempty"`
+	Document InputDocumentClass `json:"document,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x83281dbd.
+func (v *InputRichFileDocument) ConstructorID() uint32 {
+	return InputRichFileDocumentTypeID
+}
+
+// Encode serializes InputRichFileDocument to a bytes.Buffer using the TL binary protocol.
+func (v *InputRichFileDocument) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputRichFileDocumentTypeID)
+	WriteString(b, v.ID)
+	EncodeTLObject(b, v.Document)
+	return nil
+}
+
+// DecodeInputRichFileDocument deserializes a InputRichFileDocument from a reader using the TL binary protocol.
+func DecodeInputRichFileDocument(r *Reader) (*InputRichFileDocument, error) {
+	v := &InputRichFileDocument{}
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_objDocument, _errDocument := ReadTLObject(r)
+	if _errDocument != nil {
+		return nil, _errDocument
+	}
+	v.Document = _objDocument.(InputDocumentClass)
+	return v, nil
+}
+
+func init() {
+	Registry[InputRichFileDocumentTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputRichFileDocument(r)
+	}
+}
+
 // ResPQTypeID is the constructor ID for TL type resPQ.
 const ResPQTypeID = 0x05162463
 

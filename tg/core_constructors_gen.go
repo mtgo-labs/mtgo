@@ -184,6 +184,8 @@ var ConstructorMapCore = map[uint32]func() TLObject{
 	0xa2c0f695: func() TLObject { return &ProfileTabGifs{} },
 	0x310240cc: func() TLObject { return &AuctionBidLevel{} },
 	0x933ca597: func() TLObject { return &WebDomainException{} },
+	0x9b00622b: func() TLObject { return &InputRichFilePhoto{} },
+	0x83281dbd: func() TLObject { return &InputRichFileDocument{} },
 	0x05162463: func() TLObject { return &ResPQ{} },
 	0x83c95aec: func() TLObject { return &PQInnerData{} },
 	0xa9f55f95: func() TLObject { return &PQInnerDataDC{} },

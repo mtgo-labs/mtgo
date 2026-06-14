@@ -29603,10 +29603,10 @@ type InputRichMessageClass interface {
 const InputRichMessageTypeID = 0xe4c449fc
 
 // InputRichMessageHTMLTypeID is the constructor ID for TL type inputRichMessageHTML.
-const InputRichMessageHTMLTypeID = 0xd4eab551
+const InputRichMessageHTMLTypeID = 0xdacb836a
 
 // InputRichMessageMarkdownTypeID is the constructor ID for TL type inputRichMessageMarkdown.
-const InputRichMessageMarkdownTypeID = 0x09ac8186
+const InputRichMessageMarkdownTypeID = 0x004b572c
 
 // isInputRichMessage marks InputRichMessage as implementing the InputRichMessageClass interface.
 func (*InputRichMessage) isInputRichMessage() {}
@@ -29793,7 +29793,7 @@ func init() {
 	}
 }
 
-// InputRichMessageHTML represents the TL constructor inputRichMessageHTML (0xd4eab551).
+// InputRichMessageHTML represents the TL constructor inputRichMessageHTML (0xdacb836a).
 //
 // See https://core.telegram.org/constructor/inputRichMessageHTML for reference.
 type InputRichMessageHTML struct {
@@ -29801,9 +29801,7 @@ type InputRichMessageHTML struct {
 	Rtl        bool                 `json:"rtl,omitempty"`
 	Noautolink bool                 `json:"noautolink,omitempty"`
 	HTML       string               `json:"html,omitempty"`
-	Photos     []InputPhotoClass    `json:"photos,omitempty"`
-	Documents  []InputDocumentClass `json:"documents,omitempty"`
-	Users      []InputUserClass     `json:"users,omitempty"`
+	Files      []InputRichFileClass `json:"files,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -29814,18 +29812,12 @@ func (v *InputRichMessageHTML) SetFlags() {
 	if v.Noautolink {
 		v.Flags.Set(1)
 	}
-	if v.Photos != nil {
+	if v.Files != nil {
 		v.Flags.Set(2)
-	}
-	if v.Documents != nil {
-		v.Flags.Set(3)
-	}
-	if v.Users != nil {
-		v.Flags.Set(4)
 	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xd4eab551.
+// ConstructorID returns the TL constructor identifier 0xdacb836a.
 func (v *InputRichMessageHTML) ConstructorID() uint32 {
 	return InputRichMessageHTMLTypeID
 }
@@ -29838,22 +29830,8 @@ func (v *InputRichMessageHTML) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.HTML)
 	if v.Flags.Has(2) {
 		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Photos)))
-		for _, _item := range v.Photos {
-			EncodeTLObject(b, _item)
-		}
-	}
-	if v.Flags.Has(3) {
-		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Documents)))
-		for _, _item := range v.Documents {
-			EncodeTLObject(b, _item)
-		}
-	}
-	if v.Flags.Has(4) {
-		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Users)))
-		for _, _item := range v.Users {
+		WriteInt(b, uint32(len(v.Files)))
+		for _, _item := range v.Files {
 			EncodeTLObject(b, _item)
 		}
 	}
@@ -29876,70 +29854,26 @@ func DecodeInputRichMessageHTML(r *Reader) (*InputRichMessageHTML, error) {
 	}
 	v.HTML = _rHTML
 	if v.Flags.Has(2) {
-		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
-		if _ehdrPhotos != nil {
-			return nil, _ehdrPhotos
+		_vhdrFiles, _ehdrFiles := r.ReadUint32()
+		if _ehdrFiles != nil {
+			return nil, _ehdrFiles
 		}
-		_cntPhotos, _ecntPhotos := r.ReadUint32()
-		if _ecntPhotos != nil {
-			return nil, _ecntPhotos
+		_cntFiles, _ecntFiles := r.ReadUint32()
+		if _ecntFiles != nil {
+			return nil, _ecntFiles
 		}
-		if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
-			return nil, _errPhotos
+		if _errFiles := checkVectorCount(_cntFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
-		v.Photos = make([]InputPhotoClass, _cntPhotos)
-		for _iPhotos := range v.Photos {
-			_objPhotos, _errPhotos := ReadTLObject(r)
-			if _errPhotos != nil {
-				return nil, _errPhotos
+		v.Files = make([]InputRichFileClass, _cntFiles)
+		for _iFiles := range v.Files {
+			_objFiles, _errFiles := ReadTLObject(r)
+			if _errFiles != nil {
+				return nil, _errFiles
 			}
-			v.Photos[_iPhotos] = _objPhotos.(InputPhotoClass)
+			v.Files[_iFiles] = _objFiles.(InputRichFileClass)
 		}
-		_ = _vhdrPhotos
-	}
-	if v.Flags.Has(3) {
-		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
-		if _ehdrDocuments != nil {
-			return nil, _ehdrDocuments
-		}
-		_cntDocuments, _ecntDocuments := r.ReadUint32()
-		if _ecntDocuments != nil {
-			return nil, _ecntDocuments
-		}
-		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
-			return nil, _errDocuments
-		}
-		v.Documents = make([]InputDocumentClass, _cntDocuments)
-		for _iDocuments := range v.Documents {
-			_objDocuments, _errDocuments := ReadTLObject(r)
-			if _errDocuments != nil {
-				return nil, _errDocuments
-			}
-			v.Documents[_iDocuments] = _objDocuments.(InputDocumentClass)
-		}
-		_ = _vhdrDocuments
-	}
-	if v.Flags.Has(4) {
-		_vhdrUsers, _ehdrUsers := r.ReadUint32()
-		if _ehdrUsers != nil {
-			return nil, _ehdrUsers
-		}
-		_cntUsers, _ecntUsers := r.ReadUint32()
-		if _ecntUsers != nil {
-			return nil, _ecntUsers
-		}
-		if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
-			return nil, _errUsers
-		}
-		v.Users = make([]InputUserClass, _cntUsers)
-		for _iUsers := range v.Users {
-			_objUsers, _errUsers := ReadTLObject(r)
-			if _errUsers != nil {
-				return nil, _errUsers
-			}
-			v.Users[_iUsers] = _objUsers.(InputUserClass)
-		}
-		_ = _vhdrUsers
+		_ = _vhdrFiles
 	}
 	return v, nil
 }
@@ -29950,7 +29884,7 @@ func init() {
 	}
 }
 
-// InputRichMessageMarkdown represents the TL constructor inputRichMessageMarkdown (0x09ac8186).
+// InputRichMessageMarkdown represents the TL constructor inputRichMessageMarkdown (0x004b572c).
 //
 // See https://core.telegram.org/constructor/inputRichMessageMarkdown for reference.
 type InputRichMessageMarkdown struct {
@@ -29958,9 +29892,7 @@ type InputRichMessageMarkdown struct {
 	Rtl        bool                 `json:"rtl,omitempty"`
 	Noautolink bool                 `json:"noautolink,omitempty"`
 	Markdown   string               `json:"markdown,omitempty"`
-	Photos     []InputPhotoClass    `json:"photos,omitempty"`
-	Documents  []InputDocumentClass `json:"documents,omitempty"`
-	Users      []InputUserClass     `json:"users,omitempty"`
+	Files      []InputRichFileClass `json:"files,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -29971,18 +29903,12 @@ func (v *InputRichMessageMarkdown) SetFlags() {
 	if v.Noautolink {
 		v.Flags.Set(1)
 	}
-	if v.Photos != nil {
+	if v.Files != nil {
 		v.Flags.Set(2)
-	}
-	if v.Documents != nil {
-		v.Flags.Set(3)
-	}
-	if v.Users != nil {
-		v.Flags.Set(4)
 	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x09ac8186.
+// ConstructorID returns the TL constructor identifier 0x004b572c.
 func (v *InputRichMessageMarkdown) ConstructorID() uint32 {
 	return InputRichMessageMarkdownTypeID
 }
@@ -29995,22 +29921,8 @@ func (v *InputRichMessageMarkdown) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Markdown)
 	if v.Flags.Has(2) {
 		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Photos)))
-		for _, _item := range v.Photos {
-			EncodeTLObject(b, _item)
-		}
-	}
-	if v.Flags.Has(3) {
-		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Documents)))
-		for _, _item := range v.Documents {
-			EncodeTLObject(b, _item)
-		}
-	}
-	if v.Flags.Has(4) {
-		WriteInt(b, 0x1cb5c415)
-		WriteInt(b, uint32(len(v.Users)))
-		for _, _item := range v.Users {
+		WriteInt(b, uint32(len(v.Files)))
+		for _, _item := range v.Files {
 			EncodeTLObject(b, _item)
 		}
 	}
@@ -30033,70 +29945,26 @@ func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error
 	}
 	v.Markdown = _rMarkdown
 	if v.Flags.Has(2) {
-		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
-		if _ehdrPhotos != nil {
-			return nil, _ehdrPhotos
+		_vhdrFiles, _ehdrFiles := r.ReadUint32()
+		if _ehdrFiles != nil {
+			return nil, _ehdrFiles
 		}
-		_cntPhotos, _ecntPhotos := r.ReadUint32()
-		if _ecntPhotos != nil {
-			return nil, _ecntPhotos
+		_cntFiles, _ecntFiles := r.ReadUint32()
+		if _ecntFiles != nil {
+			return nil, _ecntFiles
 		}
-		if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
-			return nil, _errPhotos
+		if _errFiles := checkVectorCount(_cntFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
-		v.Photos = make([]InputPhotoClass, _cntPhotos)
-		for _iPhotos := range v.Photos {
-			_objPhotos, _errPhotos := ReadTLObject(r)
-			if _errPhotos != nil {
-				return nil, _errPhotos
+		v.Files = make([]InputRichFileClass, _cntFiles)
+		for _iFiles := range v.Files {
+			_objFiles, _errFiles := ReadTLObject(r)
+			if _errFiles != nil {
+				return nil, _errFiles
 			}
-			v.Photos[_iPhotos] = _objPhotos.(InputPhotoClass)
+			v.Files[_iFiles] = _objFiles.(InputRichFileClass)
 		}
-		_ = _vhdrPhotos
-	}
-	if v.Flags.Has(3) {
-		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
-		if _ehdrDocuments != nil {
-			return nil, _ehdrDocuments
-		}
-		_cntDocuments, _ecntDocuments := r.ReadUint32()
-		if _ecntDocuments != nil {
-			return nil, _ecntDocuments
-		}
-		if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
-			return nil, _errDocuments
-		}
-		v.Documents = make([]InputDocumentClass, _cntDocuments)
-		for _iDocuments := range v.Documents {
-			_objDocuments, _errDocuments := ReadTLObject(r)
-			if _errDocuments != nil {
-				return nil, _errDocuments
-			}
-			v.Documents[_iDocuments] = _objDocuments.(InputDocumentClass)
-		}
-		_ = _vhdrDocuments
-	}
-	if v.Flags.Has(4) {
-		_vhdrUsers, _ehdrUsers := r.ReadUint32()
-		if _ehdrUsers != nil {
-			return nil, _ehdrUsers
-		}
-		_cntUsers, _ecntUsers := r.ReadUint32()
-		if _ecntUsers != nil {
-			return nil, _ecntUsers
-		}
-		if _errUsers := checkVectorCount(_cntUsers); _errUsers != nil {
-			return nil, _errUsers
-		}
-		v.Users = make([]InputUserClass, _cntUsers)
-		for _iUsers := range v.Users {
-			_objUsers, _errUsers := ReadTLObject(r)
-			if _errUsers != nil {
-				return nil, _errUsers
-			}
-			v.Users[_iUsers] = _objUsers.(InputUserClass)
-		}
-		_ = _vhdrUsers
+		_ = _vhdrFiles
 	}
 	return v, nil
 }
