@@ -37,6 +37,8 @@ jobs:
         include:
           # Multi-module repos list every sub-module directory.
           # Single-module repos use "." for the repo root.
+          - repo: mtgo-cli
+            modules: "."
           - repo: plugins
             modules: "conversations i18n"
           - repo: plugins-template
