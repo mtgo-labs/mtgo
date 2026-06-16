@@ -1995,8 +1995,10 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		upd.ChatMember = types.ParseChatMemberUpdated(v, userClassesFromPeerMap(pm), pm)
 	case *tg.UpdateChannelParticipant:
 		upd.ChatMember = types.ParseChatMemberUpdated(v, userClassesFromPeerMap(pm), pm)
-	case *tg.UpdateMessageReactions:
-		upd.MessageReaction = &types.MessageReactions{}
+	case *tg.UpdateBotMessageReaction:
+		upd.MessageReaction = types.ParseMessageReactionUpdate(v)
+	case *tg.UpdateBotMessageReactions:
+		upd.MessageReactionCount = types.ParseMessageReactionCountUpdate(v)
 	case *tg.UpdateMessagePoll:
 		upd.Poll = &types.PollUpdate{PollID: v.PollID}
 	case *tg.UpdateBotPrecheckoutQuery:

@@ -12,16 +12,16 @@ type MessageReactionHandler struct {
 	// callbackCtx is invoked with only the handler Context when a Context-only callback is provided.
 	callbackCtx func(*Context)
 	// callbackClient is invoked with the Client and MessageReactions when a client-type callback is provided.
-	callbackClient func(*Client, *types.MessageReactions)
+	callbackClient func(*Client, *types.MessageReactionUpdate)
 	// callbackFull is invoked with both the Context and MessageReactions when a full-type callback is provided.
-	callbackFull func(*Context, *types.MessageReactions)
+	callbackFull func(*Context, *types.MessageReactionUpdate)
 }
 
 // NewMessageReactionHandler creates a handler for message reaction updates.
 // The callback must be one of:
 //   - func(*Context):                         receives only the handler context
-//   - func(*Client, *types.MessageReactions): receives the client and the reaction update
-//   - func(*Context, *types.MessageReactions): receives both the context and the reaction update
+//   - func(*Client, *types.MessageReactionUpdate): receives the client and the reaction update
+//   - func(*Context, *types.MessageReactionUpdate): receives both the context and the reaction update
 //
 // Optional filters can be provided to further restrict which updates are handled.
 func NewMessageReactionHandler(callback interface{}, filters ...Filter) *MessageReactionHandler {
@@ -29,9 +29,9 @@ func NewMessageReactionHandler(callback interface{}, filters ...Filter) *Message
 	switch fn := callback.(type) {
 	case func(*Context):
 		h.callbackCtx = fn
-	case func(*Client, *types.MessageReactions):
+	case func(*Client, *types.MessageReactionUpdate):
 		h.callbackClient = fn
-	case func(*Context, *types.MessageReactions):
+	case func(*Context, *types.MessageReactionUpdate):
 		h.callbackFull = fn
 	}
 	return h

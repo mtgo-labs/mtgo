@@ -91,12 +91,12 @@ type Context struct {
 
 	// MessageReaction is populated when a user adds or changes a reaction on
 	// a message. Nil for all other update types.
-	MessageReaction *types.MessageReactions
+	MessageReaction *types.MessageReactionUpdate
 
 	// MessageReactionCount is populated when the aggregate reaction count on
 	// a message changes (e.g. anonymous reactions). Nil for all other update
 	// types.
-	MessageReactionCount *types.MessageReactions
+	MessageReactionCount *types.MessageReactionCountUpdate
 
 	// Poll is populated when a poll state is updated (new vote or poll
 	// closure). Nil for all other update types.

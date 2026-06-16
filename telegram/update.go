@@ -38,9 +38,9 @@ type Update struct {
 	// ChatMember is populated when a member's status in a chat changes (e.g. joined, kicked).
 	ChatMember *types.ChatMemberUpdated
 	// MessageReaction is populated when a user adds or changes a reaction on a message.
-	MessageReaction *types.MessageReactions
+	MessageReaction *types.MessageReactionUpdate
 	// MessageReactionCount is populated when the anonymous reaction count on a message changes.
-	MessageReactionCount *types.MessageReactions
+	MessageReactionCount *types.MessageReactionCountUpdate
 	// Poll is populated when a poll's state is updated (new votes, closed, etc.).
 	Poll *types.PollUpdate
 	// BusinessConnection is populated when a business connection is created or updated.
