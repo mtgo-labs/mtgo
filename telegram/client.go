@@ -2055,6 +2055,16 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		upd.ShippingQuery.SetBinder(c)
 	case *tg.UpdateBotBusinessConnect:
 		upd.BusinessConnection = types.ParseBusinessConnection(v.Connection, nil)
+	case *tg.UpdateBotNewBusinessMessage:
+		upd.BusinessMessage = types.ParseMessage(v.Message, pm)
+		bindMessage(upd.BusinessMessage, c)
+		c.resolveMessagePeers(upd.BusinessMessage, users, chats)
+	case *tg.UpdateBotEditBusinessMessage:
+		upd.EditedBusinessMessage = types.ParseMessage(v.Message, pm)
+		bindMessage(upd.EditedBusinessMessage, c)
+		c.resolveMessagePeers(upd.EditedBusinessMessage, users, chats)
+	case *tg.UpdateBotDeleteBusinessMessage:
+		upd.DeletedBusinessMessages = &types.DeletedMessages{Messages: v.Messages}
 	case *tg.UpdateBotChatInviteRequester:
 		upd.ChatJoinRequest = types.ParseChatJoinRequest(v, users, chats)
 		if upd.ChatJoinRequest != nil {
