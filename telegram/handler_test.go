@@ -254,7 +254,7 @@ func TestPollHandler_Check(t *testing.T) {
 	if h.Check(&Update{}) {
 		t.Error("expected false for nil poll")
 	}
-	if !h.Check(&Update{Poll: &types.PollUpdate{PollID: 1}}) {
+	if !h.Check(&Update{Poll: &types.PollUpdated{PollID: 1}}) {
 		t.Error("expected true for non-nil poll")
 	}
 }
@@ -863,7 +863,7 @@ func TestDispatcher_DispatchPoll(t *testing.T) {
 	d := NewHandlerDispatcher()
 	called := false
 	d.AddHandler(NewPollHandler(func(ctx *Context) { called = true }))
-	d.Dispatch(nil, &Update{Poll: &types.PollUpdate{PollID: 1}})
+	d.Dispatch(nil, &Update{Poll: &types.PollUpdated{PollID: 1}})
 	if !called {
 		t.Error("expected poll handler to be called")
 	}
