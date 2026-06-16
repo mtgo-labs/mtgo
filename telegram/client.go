@@ -2079,6 +2079,22 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 			story.SetBinder(c)
 		}
 		upd.Story = story
+	case *tg.UpdateBotChatBoost:
+		var chatID int64
+		switch p := v.Peer.(type) {
+		case *tg.PeerChat:
+			chatID = -p.ChatID
+		case *tg.PeerChannel:
+			chatID = -1_000_000_000_000 - p.ChannelID
+		case *tg.PeerUser:
+			chatID = p.UserID
+		}
+		boost := types.ParseChatBoost(v.Boost, pm)
+		var chat *types.Chat
+		if ch, ok := chats[chatID]; ok {
+			chat = ch
+		}
+		upd.ChatBoost = types.ParseChatBoostUpdated(chat, boost, v.Boost.Stars)
 	}
 
 	return upd
