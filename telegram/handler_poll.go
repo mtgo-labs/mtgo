@@ -12,16 +12,16 @@ type PollHandler struct {
 	// callbackCtx is invoked with only the handler Context when a Context-only callback is provided.
 	callbackCtx func(*Context)
 	// callbackClient is invoked with the Client and PollUpdate when a client-type callback is provided.
-	callbackClient func(*Client, *types.PollUpdate)
+	callbackClient func(*Client, *types.PollUpdated)
 	// callbackFull is invoked with both the Context and PollUpdate when a full-type callback is provided.
-	callbackFull func(*Context, *types.PollUpdate)
+	callbackFull func(*Context, *types.PollUpdated)
 }
 
 // NewPollHandler creates a handler for poll state updates.
 // The callback must be one of:
 //   - func(*Context):                     receives only the handler context
-//   - func(*Client, *types.PollUpdate):   receives the client and the poll update
-//   - func(*Context, *types.PollUpdate):  receives both the context and the poll update
+//   - func(*Client, *types.PollUpdated):   receives the client and the poll update
+//   - func(*Context, *types.PollUpdated):  receives both the context and the poll update
 //
 // Optional filters can be provided to further restrict which updates are handled.
 func NewPollHandler(callback interface{}, filters ...Filter) *PollHandler {
@@ -29,9 +29,9 @@ func NewPollHandler(callback interface{}, filters ...Filter) *PollHandler {
 	switch fn := callback.(type) {
 	case func(*Context):
 		h.callbackCtx = fn
-	case func(*Client, *types.PollUpdate):
+	case func(*Client, *types.PollUpdated):
 		h.callbackClient = fn
-	case func(*Context, *types.PollUpdate):
+	case func(*Context, *types.PollUpdated):
 		h.callbackFull = fn
 	}
 	return h

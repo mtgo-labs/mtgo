@@ -42,7 +42,9 @@ type Update struct {
 	// MessageReactionCount is populated when the anonymous reaction count on a message changes.
 	MessageReactionCount *types.MessageReactionCountUpdate
 	// Poll is populated when a poll's state is updated (new votes, closed, etc.).
-	Poll *types.PollUpdate
+	Poll *types.PollUpdated
+	// PollAnswer is populated when a user votes in a non-anonymous poll.
+	PollAnswer *types.PollAnswerUpdate
 	// BusinessConnection is populated when a business connection is created or updated.
 	BusinessConnection *types.BusinessConnection
 	// Story is populated when a story event is received (new, deleted, or updated).

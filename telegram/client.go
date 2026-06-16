@@ -2000,7 +2000,9 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 	case *tg.UpdateBotMessageReactions:
 		upd.MessageReactionCount = types.ParseMessageReactionCountUpdate(v)
 	case *tg.UpdateMessagePoll:
-		upd.Poll = &types.PollUpdate{PollID: v.PollID}
+		upd.Poll = types.ParsePollUpdated(v)
+	case *tg.UpdateMessagePollVote:
+		upd.PollAnswer = types.ParsePollAnswerUpdate(v)
 	case *tg.UpdateBotPrecheckoutQuery:
 		upd.PreCheckoutQuery = &types.PreCheckoutQuery{
 			ID:          v.QueryID,

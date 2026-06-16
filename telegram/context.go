@@ -100,7 +100,9 @@ type Context struct {
 
 	// Poll is populated when a poll state is updated (new vote or poll
 	// closure). Nil for all other update types.
-	Poll *types.PollUpdate
+	Poll *types.PollUpdated
+	// PollAnswer is populated when a user changes their vote in a non-anonymous
+	PollAnswer *types.PollAnswerUpdate
 
 	// BusinessConnection is populated when a business connection is
 	// established or its settings change. Nil for all other update types.

@@ -167,6 +167,7 @@ func populateContext(ctx *Context, update *Update) {
 	ctx.MessageReaction = update.MessageReaction
 	ctx.MessageReactionCount = update.MessageReactionCount
 	ctx.Poll = update.Poll
+	ctx.PollAnswer = update.PollAnswer
 	ctx.BusinessConnection = update.BusinessConnection
 	ctx.Story = update.Story
 	ctx.ChatBoost = update.ChatBoost
