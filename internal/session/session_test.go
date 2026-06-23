@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -1142,16 +1143,41 @@ func TestTransportErrorCodeKillsReadLoop(t *testing.T) {
 	mt := newMockTransport()
 	s.SetTransport(mt)
 
-	cleanup := startTestWorkers(s, mt)
-	defer cleanup()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s.ackCh = make(chan int64, 1024)
+	s.pingCbs = make(map[int64]chan struct{})
+	s.done = make(chan struct{})
+	s.sm.forceSetState(StateActive)
+	go func() { _ = s.ackLoop(ctx) }()
 
+	errCh := make(chan error, 1)
+	go func() { errCh <- s.readLoop(ctx) }()
+	defer func() {
+		cancel()
+		close(s.done)
+		mt.Close()
+	}()
+
+	// Transport errors are 4-byte signed negative int32 values.
+	// -404 = 0xFFFFFE6C = auth key not found.
+	var errCodeVal int32 = -404
 	errCode := make([]byte, 4)
-	binary.LittleEndian.PutUint32(errCode, uint32(404))
+	binary.LittleEndian.PutUint32(errCode, uint32(errCodeVal))
 	mt.recvCh <- errCode
 
-	// readLoop should exit after receiving the transport error code.
-	// Give it a moment to process.
-	time.Sleep(100 * time.Millisecond)
+	select {
+	case err := <-errCh:
+		var te *transport.TransportError
+		if !errors.As(err, &te) {
+			t.Fatalf("expected *TransportError, got %T: %v", err, err)
+		}
+		if te.Code != -404 {
+			t.Errorf("Code = %d, want -404", te.Code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("readLoop did not exit after transport error")
+	}
 }
 
 type failingTransport struct {

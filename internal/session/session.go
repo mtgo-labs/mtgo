@@ -15,6 +15,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 	"github.com/mtgo-labs/mtgo/internal/storage"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -1485,12 +1486,21 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 			}
 			return err
 		}
-		if len(data) == 4 {
-			code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
-			if code < 0 {
-				continue
-			}
-			return fmt.Errorf("transport error: code %d", -code)
+		if te := transport.DetectTransportError(data); te != nil {
+			// Transport error from server (auth key not found, flood,
+			// invalid DC, etc.). Propagate to close the session so the
+			// reconnect logic can inspect the error code.
+			// See https://core.telegram.org/mtproto/mtproto-transports#transport-errors
+			s.pending.RejectAll(te)
+			return te
+		}
+		if transport.IsQuickAckToken(data) {
+			// Quick ACK token from server (4 bytes, bit 31 set).
+			// Indicates the server received and accepted a previously sent
+			// payload for processing. Does not indicate RPC completion — the
+			// server will still send msgs_ack and the RPC result separately.
+			// See https://core.telegram.org/mtproto/mtproto-transports#quick-ack
+			continue
 		}
 
 		raw, decrypted, err := unpackIncomingMessageEnvelope(data, s.sessionIDBytes(), authKey, authKeyID)
