@@ -166,6 +166,17 @@ func (a *Auth) generateRandomBN(bits int) (*big.Int, error) {
 // Returns an AuthResult with the established key, salt, and server time, or an
 // error describing which step failed.
 func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
+	return a.createKey(conn, 0)
+}
+
+// CreateTemp performs a DH exchange to generate a temporary auth key for PFS.
+// The key will expire after expiresIn seconds on the server side.
+// Uses p_q_inner_data_temp_dc instead of p_q_inner_data_dc.
+func (a *Auth) CreateTemp(conn authTransport, expiresIn int32) (*AuthResult, error) {
+	return a.createKey(conn, expiresIn)
+}
+
+func (a *Auth) createKey(conn authTransport, tempExpiresIn int32) (*AuthResult, error) {
 	nonce, err := randomInt128()
 	if err != nil {
 		return nil, fmt.Errorf("step 1: generate nonce: %w", err)
@@ -214,17 +225,31 @@ func (a *Auth) Create(conn authTransport) (*AuthResult, error) {
 		return nil, fmt.Errorf("step 6: generate new_nonce: %w", err)
 	}
 
-	pqInnerData := &tg.PQInnerDataDC{
-		PQ:          resPQ.PQ,
-		P:           pStr,
-		Q:           qStr,
-		Nonce:       nonce,
-		ServerNonce: resPQ.ServerNonce,
-		NewNonce:    newNonce,
-		DC:          a.innerDataDC(),
+	var innerData tg.TLObject
+	if tempExpiresIn > 0 {
+		innerData = &tg.PQInnerDataTempDC{
+			PQ:          resPQ.PQ,
+			P:           pStr,
+			Q:           qStr,
+			Nonce:       nonce,
+			ServerNonce: resPQ.ServerNonce,
+			NewNonce:    newNonce,
+			DC:          a.innerDataDC(),
+			ExpiresIn:   tempExpiresIn,
+		}
+	} else {
+		innerData = &tg.PQInnerDataDC{
+			PQ:          resPQ.PQ,
+			P:           pStr,
+			Q:           qStr,
+			Nonce:       nonce,
+			ServerNonce: resPQ.ServerNonce,
+			NewNonce:    newNonce,
+			DC:          a.innerDataDC(),
+		}
 	}
 
-	pqInnerBytes, err := a.serializeTL(pqInnerData)
+	pqInnerBytes, err := a.serializeTL(innerData)
 	if err != nil {
 		return nil, fmt.Errorf("step 6: serialize PQInnerData: %w", err)
 	}
