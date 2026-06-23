@@ -216,29 +216,24 @@ func TestValidateGAPrimeMinusOne(t *testing.T) {
 }
 
 func TestValidateGAValid(t *testing.T) {
-	lowerBound := new(big.Int).Sub(
-		CurrentDHPrime,
-		new(big.Int).Lsh(big.NewInt(1), uint(SecretChatMinGA)),
-	)
-	validGA := new(big.Int).Sub(CurrentDHPrime, big.NewInt(100))
+	// p/2 is safely within [2^1984, p - 2^1984].
+	validGA := new(big.Int).Rsh(CurrentDHPrime, 1)
 	if !ValidateGA(validGA, CurrentDHPrime) {
-		t.Fatal("ValidateGA should accept ga near p (within lower bound)")
-	}
-	if validGA.Cmp(lowerBound) < 0 {
-		t.Fatal("test ga should be above lower bound")
+		t.Fatal("ValidateGA should accept ga in valid mid-range")
 	}
 }
 
 func TestValidateGABelowLowerBound(t *testing.T) {
-	lowerBound := new(big.Int).Sub(
-		CurrentDHPrime,
-		new(big.Int).Lsh(big.NewInt(1), uint(SecretChatMinGA)),
-	)
-	midRange := new(big.Int).Rsh(CurrentDHPrime, 1)
-	if ValidateGA(midRange, CurrentDHPrime) {
-		t.Fatal("ValidateGA should reject ga in mid range (below lower bound)")
+	// ga below 2^1984 should be rejected.
+	tooSmall := new(big.Int).Lsh(big.NewInt(1), 1000) // 2^1000, well below 2^1984
+	if ValidateGA(tooSmall, CurrentDHPrime) {
+		t.Fatal("ValidateGA should reject ga below 2^1984")
 	}
-	_ = lowerBound
+	// ga above p - 2^1984 should also be rejected.
+	tooLarge := new(big.Int).Sub(CurrentDHPrime, big.NewInt(100))
+	if ValidateGA(tooLarge, CurrentDHPrime) {
+		t.Fatal("ValidateGA should reject ga near p (above upper bound)")
+	}
 }
 
 func TestSecretEncryptDecryptRoundTripOutgoing(t *testing.T) {

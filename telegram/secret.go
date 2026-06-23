@@ -45,8 +45,8 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 		dhPrime = new(big.Int).SetBytes(cfg.P)
 		g = cfg.G
 		dhVersion = cfg.Version
-		if dhPrime.BitLen() < 2048 || !dhPrime.ProbablyPrime(20) {
-			return nil, fmt.Errorf("telegram: server sent invalid DH prime")
+		if !crypto.ValidateDHPrime(dhPrime) {
+			return nil, fmt.Errorf("telegram: server sent invalid DH prime (not a safe 2048-bit prime)")
 		}
 		if g < 2 || g > 7 {
 			return nil, fmt.Errorf("telegram: invalid DH generator: %d", g)
@@ -65,6 +65,9 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 	}
 
 	ga := crypto.ComputeGA(g, mySecret, dhPrime)
+	if !crypto.ValidateGA(ga, dhPrime) {
+		return nil, fmt.Errorf("telegram: generated g_a failed range validation")
+	}
 	gaBytes := ga.Bytes()
 
 	randomID := int32(0)
@@ -133,8 +136,8 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 		chat.DHPrime = new(big.Int).SetBytes(cfg.P)
 		chat.G = cfg.G
 		chat.DHConfigVersion = cfg.Version
-		if chat.DHPrime.BitLen() < 2048 || !chat.DHPrime.ProbablyPrime(20) {
-			return nil, fmt.Errorf("telegram: server sent invalid DH prime")
+		if !crypto.ValidateDHPrime(chat.DHPrime) {
+			return nil, fmt.Errorf("telegram: server sent invalid DH prime (not a safe 2048-bit prime)")
 		}
 		if chat.G < 2 || chat.G > 7 {
 			return nil, fmt.Errorf("telegram: invalid DH generator: %d", chat.G)
@@ -148,6 +151,9 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 	}
 
 	gb := crypto.ComputeGA(chat.G, mySecret, chat.DHPrime)
+	if !crypto.ValidateGA(gb, chat.DHPrime) {
+		return nil, fmt.Errorf("telegram: generated g_b failed range validation")
+	}
 	gbBytes := gb.Bytes()
 
 	authKey := crypto.ComputeSharedKey(chat.GA, mySecret, chat.DHPrime)
@@ -171,6 +177,13 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 	chat.mu.Unlock()
 
 	c.secretChats.Put(chat)
+
+	// Notify the remote client of our supported layer immediately after
+	// key exchange, per the E2E spec.
+	if err := c.notifyLayer(ctx, chat); err != nil {
+		c.Log.Warnf("telegram: notifyLayer after accept: %v", err)
+	}
+
 	return chat, nil
 }
 
@@ -225,6 +238,52 @@ func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text strin
 	}
 
 	return randomID, nil
+}
+
+// notifyLayer sends a decryptedMessageActionNotifyLayer service message to the
+// remote peer, informing them of our supported E2E layer. Must be called
+// immediately after the secret chat key exchange completes.
+//
+// See https://core.telegram.org/api/end-to-end#notifying-the-remote-client-about-your-local-layer
+func (c *Client) notifyLayer(ctx context.Context, chat *SecretChat) error {
+	outSeq := chat.NextOutSeqNo()
+	randomBytes := make([]byte, 32)
+	rand.Read(randomBytes)
+
+	serviceMsg := &e2e.DecryptedMessageService{
+		RandomID: generateRandomInt64(),
+		Action: &e2e.DecryptedMessageActionNotifyLayer{
+			Layer: chat.Layer,
+		},
+	}
+
+	msgLayer := &e2e.DecryptedMessageLayer{
+		RandomBytes: randomBytes,
+		Layer:       chat.Layer,
+		InSeqNo:     chat.CurrentInSeqNo(),
+		OutSeqNo:    outSeq,
+		Message:     serviceMsg,
+	}
+
+	var msgBuf bytes.Buffer
+	if err := msgLayer.Encode(&msgBuf); err != nil {
+		return fmt.Errorf("telegram: encode notifyLayer: %w", err)
+	}
+
+	encrypted, err := crypto.SecretEncrypt(msgBuf.Bytes(), chat.AuthKey, true)
+	if err != nil {
+		return fmt.Errorf("telegram: encrypt notifyLayer: %w", err)
+	}
+
+	_, err = c.RPC().MessagesSendEncrypted(ctx, &tg.MessagesSendEncryptedRequest{
+		Peer:     chat.InputPeer(),
+		RandomID: generateRandomInt64(),
+		Data:     encrypted,
+	})
+	if err != nil {
+		return fmt.Errorf("telegram: send notifyLayer: %w", err)
+	}
+	return nil
 }
 
 func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.DecryptedMessageLayer, error) {
@@ -478,6 +537,12 @@ func (h *encryptionUpdateHandler) handleEncryptionUpdate(c *Client, ctx *Context
 		sc.mu.Unlock()
 		ctx.Update.SecretChat = sc
 		ctx.SecretChat = sc
+
+		// Notify the remote client of our supported layer immediately after
+		// key exchange completes, per the E2E spec.
+		if err := c.notifyLayer(context.Background(), sc); err != nil {
+			c.Log.Warnf("telegram: notifyLayer after complete: %v", err)
+		}
 
 	case *tg.EncryptedChatDiscarded:
 		if sc, ok := c.secretChats.Get(chat.ID); ok {

@@ -91,6 +91,10 @@ func KeyVisualization(key []byte) []string {
 	return result
 }
 
+// ValidateGA checks that g_a (or g_b) is in the valid range required by the
+// secret chat DH exchange: 2^(2048-64) < ga < dhPrime - 2^(2048-64).
+//
+// See https://core.telegram.org/api/end-to-end#sending-a-request
 func ValidateGA(ga *big.Int, dhPrime *big.Int) bool {
 	if ga.Cmp(one) <= 0 {
 		return false
@@ -99,8 +103,28 @@ func ValidateGA(ga *big.Int, dhPrime *big.Int) bool {
 	if ga.Cmp(primeMinus1) >= 0 {
 		return false
 	}
-	lowerBound := new(big.Int).Sub(dhPrime, new(big.Int).Lsh(one, uint(SecretChatMinGA)))
-	return ga.Cmp(lowerBound) >= 0
+	// Spec: check that ga is between 2^(2048-64) and p - 2^(2048-64).
+	twoPow1984 := new(big.Int).Lsh(one, uint(SecretChatMinGA))
+	upperBound := new(big.Int).Sub(dhPrime, twoPow1984)
+	return ga.Cmp(twoPow1984) > 0 && ga.Cmp(upperBound) < 0
+}
+
+// ValidateDHPrime checks that p is a safe 2048-bit prime: both p and (p-1)/2
+// must be prime. Uses 20 rounds of Miller-Rabin, matching Telegram's
+// recommended confidence level for cached DH parameters.
+//
+// See https://core.telegram.org/api/end-to-end#sending-a-request
+func ValidateDHPrime(p *big.Int) bool {
+	if p.BitLen() != 2048 {
+		return false
+	}
+	if !p.ProbablyPrime(20) {
+		return false
+	}
+	// Check that (p-1)/2 is also prime (safe prime / Sophie Germain).
+	pMinus1Over2 := new(big.Int).Sub(p, one)
+	pMinus1Over2.Rsh(pMinus1Over2, 1)
+	return pMinus1Over2.ProbablyPrime(20)
 }
 
 func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
