@@ -80,6 +80,36 @@ func TestCamelToSnake(t *testing.T) {
 	}
 }
 
+func TestJSONTagFromTL(t *testing.T) {
+	// TL field names are already snake_case and are the canonical JSON keys.
+	// The JSON tag must equal the input verbatim — no lossy round-trip.
+	tests := []struct {
+		input string
+		want  string
+	}{
+		// Regression cases: these were corrupted by the old
+		// CamelToSnake(SnakeToPascal(...)) round-trip.
+		{"force_try_ipv6", "force_try_ipv6"}, // was "force_try_i_pv6"
+		{"webfile_dc_id", "webfile_dc_id"},   // was "webfile_dcid"
+		{"ipv6", "ipv6"},                     // was "i_pv6"
+		{"dc_txt_domain_name", "dc_txt_domain_name"},
+		// Common fields that already round-tripped correctly.
+		{"this_dc", "this_dc"},
+		{"chat_id", "chat_id"},
+		{"access_hash", "access_hash"},
+		{"edit_time_limit", "edit_time_limit"},
+		{"megagroup_size_max", "megagroup_size_max"},
+		{"msg_id", "msg_id"},
+	}
+
+	for _, tt := range tests {
+		got := jsonTagFromTL(tt.input)
+		if got != tt.want {
+			t.Errorf("jsonTagFromTL(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestReadExpr(t *testing.T) {
 	tests := []struct {
 		arg    Arg

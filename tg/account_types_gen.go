@@ -2373,8 +2373,8 @@ type AccountPassword struct {
 	HasSecureValues         bool                       `json:"has_secure_values,omitempty"`
 	HasPassword             bool                       `json:"has_password,omitempty"`
 	CurrentAlgo             PasswordKdfAlgoClass       `json:"current_algo,omitempty"`
-	SRPB                    []byte                     `json:"srpb,omitempty"`
-	SRPID                   int64                      `json:"srpid,omitempty"`
+	SRPB                    []byte                     `json:"srp_B,omitempty"`
+	SRPID                   int64                      `json:"srp_id,omitempty"`
 	Hint                    string                     `json:"hint,omitempty"`
 	EmailUnconfirmedPattern string                     `json:"email_unconfirmed_pattern,omitempty"`
 	NewAlgo                 PasswordKdfAlgoClass       `json:"new_algo,omitempty"`
@@ -5584,7 +5584,7 @@ type BotBusinessConnection struct {
 	Disabled     bool               `json:"disabled,omitempty"`
 	ConnectionID string             `json:"connection_id,omitempty"`
 	UserID       int64              `json:"user_id,omitempty"`
-	DCID         int32              `json:"dcid,omitempty"`
+	DCID         int32              `json:"dc_id,omitempty"`
 	Date         int32              `json:"date,omitempty"`
 	Rights       *BusinessBotRights `json:"rights,omitempty"`
 }

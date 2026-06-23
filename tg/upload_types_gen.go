@@ -80,7 +80,7 @@ func init() {
 //
 // See https://core.telegram.org/constructor/upload.fileCdnRedirect for reference.
 type UploadFileCDNRedirect struct {
-	DCID          int32       `json:"dcid,omitempty"`
+	DCID          int32       `json:"dc_id,omitempty"`
 	FileToken     []byte      `json:"file_token,omitempty"`
 	EncryptionKey []byte      `json:"encryption_key,omitempty"`
 	EncryptionIv  []byte      `json:"encryption_iv,omitempty"`

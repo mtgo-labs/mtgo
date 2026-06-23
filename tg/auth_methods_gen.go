@@ -16,7 +16,7 @@ const AuthSendCodeTypeID = 0xa677244f
 // See https://core.telegram.org/method/auth/sendCode for reference.
 type AuthSendCodeRequest struct {
 	PhoneNumber string        `json:"phone_number,omitempty"`
-	APIID       int32         `json:"apiid,omitempty"`
+	APIID       int32         `json:"api_id,omitempty"`
 	APIHash     string        `json:"api_hash,omitempty"`
 	Settings    *CodeSettings `json:"settings,omitempty"`
 }
@@ -265,7 +265,7 @@ const AuthExportAuthorizationTypeID = 0xe5bfffcd
 //
 // See https://core.telegram.org/method/auth/exportAuthorization for reference.
 type AuthExportAuthorizationRequest struct {
-	DCID int32 `json:"dcid,omitempty"`
+	DCID int32 `json:"dc_id,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xe5bfffcd.
@@ -398,7 +398,7 @@ const AuthImportBotAuthorizationTypeID = 0x67a3ff2c
 // See https://core.telegram.org/method/auth/importBotAuthorization for reference.
 type AuthImportBotAuthorizationRequest struct {
 	Flags        int32  `json:"flags,omitempty"`
-	APIID        int32  `json:"apiid,omitempty"`
+	APIID        int32  `json:"api_id,omitempty"`
 	APIHash      string `json:"api_hash,omitempty"`
 	BotAuthToken string `json:"bot_auth_token,omitempty"`
 }
@@ -723,7 +723,7 @@ const AuthExportLoginTokenTypeID = 0xb7e085fe
 //
 // See https://core.telegram.org/method/auth/exportLoginToken for reference.
 type AuthExportLoginTokenRequest struct {
-	APIID     int32   `json:"apiid,omitempty"`
+	APIID     int32   `json:"api_id,omitempty"`
 	APIHash   string  `json:"api_hash,omitempty"`
 	ExceptIds []int64 `json:"except_ids,omitempty"`
 }
@@ -893,7 +893,7 @@ const AuthImportWebTokenAuthorizationTypeID = 0x2db873a9
 //
 // See https://core.telegram.org/method/auth/importWebTokenAuthorization for reference.
 type AuthImportWebTokenAuthorizationRequest struct {
-	APIID        int32  `json:"apiid,omitempty"`
+	APIID        int32  `json:"api_id,omitempty"`
 	APIHash      string `json:"api_hash,omitempty"`
 	WebAuthToken string `json:"web_auth_token,omitempty"`
 }
@@ -1143,7 +1143,7 @@ const AuthInitPasskeyLoginTypeID = 0x518ad0b7
 //
 // See https://core.telegram.org/method/auth/initPasskeyLogin for reference.
 type AuthInitPasskeyLoginRequest struct {
-	APIID   int32  `json:"apiid,omitempty"`
+	APIID   int32  `json:"api_id,omitempty"`
 	APIHash string `json:"api_hash,omitempty"`
 }
 
@@ -1189,7 +1189,7 @@ const AuthFinishPasskeyLoginTypeID = 0x9857ad07
 type AuthFinishPasskeyLoginRequest struct {
 	Flags         Fields                      `json:"-"`
 	Credential    InputPasskeyCredentialClass `json:"credential,omitempty"`
-	FromDCID      int32                       `json:"from_dcid,omitempty"`
+	FromDCID      int32                       `json:"from_dc_id,omitempty"`
 	FromAuthKeyID int64                       `json:"from_auth_key_id,omitempty"`
 }
 

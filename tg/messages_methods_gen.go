@@ -1538,7 +1538,7 @@ const MessagesRequestEncryptionTypeID = 0xf64daf43
 type MessagesRequestEncryptionRequest struct {
 	UserID   InputUserClass `json:"user_id,omitempty"`
 	RandomID int32          `json:"random_id,omitempty"`
-	GA       []byte         `json:"ga,omitempty"`
+	GA       []byte         `json:"g_a,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xf64daf43.
@@ -1583,7 +1583,7 @@ const MessagesAcceptEncryptionTypeID = 0x3dbc0415
 // See https://core.telegram.org/method/messages/acceptEncryption for reference.
 type MessagesAcceptEncryptionRequest struct {
 	Peer           *InputEncryptedChat `json:"peer,omitempty"`
-	GB             []byte              `json:"gb,omitempty"`
+	GB             []byte              `json:"g_b,omitempty"`
 	KeyFingerprint int64               `json:"key_fingerprint,omitempty"`
 }
 

@@ -13,6 +13,7 @@ type fieldData struct {
 	IsFlags  bool
 	FlagName string
 	FlagBit  int
+	Doc      string
 }
 
 type flagSync struct {
@@ -394,8 +395,17 @@ func fieldNameFromTL(tlName string) string {
 	return SnakeToPascal(tlName)
 }
 
+// jsonTagFromTL returns the JSON struct tag key for a TL field name.
+//
+// TL field names are already snake_case (e.g. "force_try_ipv6",
+// "webfile_dc_id", "dc_txt_domain_name") and ARE the canonical JSON keys.
+// The previous implementation round-tripped through PascalCase
+// (CamelToSnake(SnakeToPascal(tlName))), which is lossy: CamelToSnake has no
+// acronym awareness and corrupted multi-acronym fields ("ipv6" -> "i_pv6",
+// "dc_id" -> "dcid"). Returning the TL name directly is both correct and
+// simpler.
 func jsonTagFromTL(tlName string) string {
-	return CamelToSnake(SnakeToPascal(tlName))
+	return tlName
 }
 
 func buildTypeData(c Combinator, section string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator, allNames map[string]bool) typeTemplateData {
@@ -445,6 +455,7 @@ func buildTypeData(c Combinator, section string, baseTypes map[string]bool, type
 			IsFlags:  false,
 			FlagName: arg.FlagName,
 			FlagBit:  arg.FlagBit,
+			Doc:      fieldDescription(c.QualName, arg.Name),
 		}
 
 		if arg.FlagBit >= 0 {

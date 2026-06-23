@@ -670,9 +670,17 @@ func generateFunctionsMap(cfg genConfig, outDir string, combos []Combinator) err
 
 func writeTypeStruct(buf *strings.Builder, cfg genConfig, td typeTemplateData) {
 	if cfg.structDocLink {
-		fmt.Fprintf(buf, "\n// %s represents the TL constructor %s (0x%08x).\n//\n// See https://core.telegram.org/constructor/%s for reference.\ntype %s struct {\n", td.Name, td.QualName, td.ID, td.QualName, td.Name)
+		fmt.Fprintf(buf, "\n// %s represents the TL constructor %s (0x%08x).\n", td.Name, td.QualName, td.ID)
+		if d := structDescription(td.QualName); d != "" {
+			fmt.Fprintf(buf, "//\n// %s\n", d)
+		}
+		fmt.Fprintf(buf, "//\n// See https://core.telegram.org/constructor/%s for reference.\ntype %s struct {\n", td.QualName, td.Name)
 	} else {
-		fmt.Fprintf(buf, "\n// %s represents the TL constructor %s (0x%08x).\ntype %s struct {\n", td.Name, td.QualName, td.ID, td.Name)
+		fmt.Fprintf(buf, "\n// %s represents the TL constructor %s (0x%08x).\n", td.Name, td.QualName, td.ID)
+		if d := structDescription(td.QualName); d != "" {
+			fmt.Fprintf(buf, "//\n// %s\n", d)
+		}
+		fmt.Fprintf(buf, "type %s struct {\n", td.Name)
 	}
 	writeTypeFields(buf, cfg, td.Fields)
 	buf.WriteString("}\n")
@@ -681,6 +689,9 @@ func writeTypeStruct(buf *strings.Builder, cfg genConfig, td typeTemplateData) {
 func writeTypeFields(buf *strings.Builder, cfg genConfig, fields []fieldData) {
 	for _, f := range fields {
 		goType := cfg.xformType(f.GoType)
+		if f.Doc != "" {
+			fmt.Fprintf(buf, "\t// %s %s\n", f.Name, f.Doc)
+		}
 		if f.IsFlags {
 			fmt.Fprintf(buf, "\t%s %s `json:\"-\"`\n", f.Name, goType)
 		} else {

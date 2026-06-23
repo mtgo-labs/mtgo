@@ -1550,7 +1550,7 @@ type UserProfilePhoto struct {
 	Personal      bool   `json:"personal,omitempty"`
 	PhotoID       int64  `json:"photo_id,omitempty"`
 	StrippedThumb []byte `json:"stripped_thumb,omitempty"`
-	DCID          int32  `json:"dcid,omitempty"`
+	DCID          int32  `json:"dc_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3206,7 +3206,7 @@ type ChatPhoto struct {
 	HasVideo      bool   `json:"has_video,omitempty"`
 	PhotoID       int64  `json:"photo_id,omitempty"`
 	StrippedThumb []byte `json:"stripped_thumb,omitempty"`
-	DCID          int32  `json:"dcid,omitempty"`
+	DCID          int32  `json:"dc_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -4103,7 +4103,7 @@ type EncryptedChatRequested struct {
 	Date          int32  `json:"date,omitempty"`
 	AdminID       int64  `json:"admin_id,omitempty"`
 	ParticipantID int64  `json:"participant_id,omitempty"`
-	GA            []byte `json:"ga,omitempty"`
+	GA            []byte `json:"g_a,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -4198,7 +4198,7 @@ type EncryptedChat struct {
 	Date           int32  `json:"date,omitempty"`
 	AdminID        int64  `json:"admin_id,omitempty"`
 	ParticipantID  int64  `json:"participant_id,omitempty"`
-	GAOrB          []byte `json:"ga_or_b,omitempty"`
+	GAOrB          []byte `json:"g_a_or_b,omitempty"`
 	KeyFingerprint int64  `json:"key_fingerprint,omitempty"`
 }
 

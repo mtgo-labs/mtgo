@@ -259,7 +259,7 @@ type InputFile struct {
 	ID          int64  `json:"id,omitempty"`
 	Parts       int32  `json:"parts,omitempty"`
 	Name        string `json:"name,omitempty"`
-	MD5Checksum string `json:"md5checksum,omitempty"`
+	MD5Checksum string `json:"md5_checksum,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xf52ff27f.
@@ -2458,17 +2458,24 @@ const DCOptionTypeID = 0x18b7a10d
 //
 // See https://core.telegram.org/constructor/dcOption for reference.
 type DCOption struct {
-	Flags        Fields `json:"-"`
-	IPv6         bool   `json:"i_pv6,omitempty"`
-	MediaOnly    bool   `json:"media_only,omitempty"`
-	TcpoOnly     bool   `json:"tcpo_only,omitempty"`
-	CDN          bool   `json:"cdn,omitempty"`
-	Static       bool   `json:"static,omitempty"`
+	Flags Fields `json:"-"`
+	// IPv6 indicates whether this endpoint uses an IPv6 address.
+	IPv6 bool `json:"ipv6,omitempty"`
+	// MediaOnly indicates that this endpoint should only be used for media transfers.
+	MediaOnly bool `json:"media_only,omitempty"`
+	// TcpoOnly indicates that this endpoint only supports TCP+TLS (fake transport), not plain MTProto over TCP.
+	TcpoOnly bool `json:"tcpo_only,omitempty"`
+	// CDN indicates that this is a CDN redirect endpoint for file downloads.
+	CDN bool `json:"cdn,omitempty"`
+	// Static indicates that this is a static, non-changing endpoint.
+	Static bool `json:"static,omitempty"`
+	// ThisPortOnly indicates that only this specific port should be used.
 	ThisPortOnly bool   `json:"this_port_only,omitempty"`
 	ID           int32  `json:"id,omitempty"`
 	IpAddress    string `json:"ip_address,omitempty"`
 	Port         int32  `json:"port,omitempty"`
-	Secret       []byte `json:"secret,omitempty"`
+	// Secret is the MTProxy secret bytes for this endpoint, if applicable.
+	Secret []byte `json:"secret,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -2565,56 +2572,94 @@ const ConfigTypeID = 0xcc1a241e
 
 // Config represents the TL constructor config (0xcc1a241e).
 //
+// The library does not auto-apply any fields from Config. Callers must read and use values (edit_time_limit, dc_options, etc.) as needed for their application layer.
+//
 // See https://core.telegram.org/constructor/config for reference.
 type Config struct {
-	Flags                   Fields        `json:"-"`
-	DefaultP2pContacts      bool          `json:"default_p2p_contacts,omitempty"`
-	PreloadFeaturedStickers bool          `json:"preload_featured_stickers,omitempty"`
-	RevokePmInbox           bool          `json:"revoke_pm_inbox,omitempty"`
-	BlockedMode             bool          `json:"blocked_mode,omitempty"`
-	ForceTryIPv6            bool          `json:"force_try_i_pv6,omitempty"`
-	Date                    int32         `json:"date,omitempty"`
-	Expires                 int32         `json:"expires,omitempty"`
-	TestMode                bool          `json:"test_mode,omitempty"`
-	ThisDC                  int32         `json:"this_dc,omitempty"`
-	DCOptions               []*DCOption   `json:"dc_options,omitempty"`
-	DCTxtDomainName         string        `json:"dc_txt_domain_name,omitempty"`
-	ChatSizeMax             int32         `json:"chat_size_max,omitempty"`
-	MegagroupSizeMax        int32         `json:"megagroup_size_max,omitempty"`
-	ForwardedCountMax       int32         `json:"forwarded_count_max,omitempty"`
-	OnlineUpdatePeriodMs    int32         `json:"online_update_period_ms,omitempty"`
-	OfflineBlurTimeoutMs    int32         `json:"offline_blur_timeout_ms,omitempty"`
-	OfflineIdleTimeoutMs    int32         `json:"offline_idle_timeout_ms,omitempty"`
-	OnlineCloudTimeoutMs    int32         `json:"online_cloud_timeout_ms,omitempty"`
-	NotifyCloudDelayMs      int32         `json:"notify_cloud_delay_ms,omitempty"`
-	NotifyDefaultDelayMs    int32         `json:"notify_default_delay_ms,omitempty"`
-	PushChatPeriodMs        int32         `json:"push_chat_period_ms,omitempty"`
-	PushChatLimit           int32         `json:"push_chat_limit,omitempty"`
-	EditTimeLimit           int32         `json:"edit_time_limit,omitempty"`
-	RevokeTimeLimit         int32         `json:"revoke_time_limit,omitempty"`
-	RevokePmTimeLimit       int32         `json:"revoke_pm_time_limit,omitempty"`
-	RatingEDecay            int32         `json:"rating_e_decay,omitempty"`
-	StickersRecentLimit     int32         `json:"stickers_recent_limit,omitempty"`
-	ChannelsReadMediaPeriod int32         `json:"channels_read_media_period,omitempty"`
-	TmpSessions             int32         `json:"tmp_sessions,omitempty"`
-	CallReceiveTimeoutMs    int32         `json:"call_receive_timeout_ms,omitempty"`
-	CallRingTimeoutMs       int32         `json:"call_ring_timeout_ms,omitempty"`
-	CallConnectTimeoutMs    int32         `json:"call_connect_timeout_ms,omitempty"`
-	CallPacketTimeoutMs     int32         `json:"call_packet_timeout_ms,omitempty"`
-	MeURLPrefix             string        `json:"me_url_prefix,omitempty"`
-	AutoupdateURLPrefix     string        `json:"autoupdate_url_prefix,omitempty"`
-	GIFSearchUsername       string        `json:"gif_search_username,omitempty"`
-	VenueSearchUsername     string        `json:"venue_search_username,omitempty"`
-	ImgSearchUsername       string        `json:"img_search_username,omitempty"`
-	StaticMapsProvider      string        `json:"static_maps_provider,omitempty"`
-	CaptionLengthMax        int32         `json:"caption_length_max,omitempty"`
-	MessageLengthMax        int32         `json:"message_length_max,omitempty"`
-	WebfileDCID             int32         `json:"webfile_dcid,omitempty"`
-	SuggestedLangCode       string        `json:"suggested_lang_code,omitempty"`
-	LangPackVersion         int32         `json:"lang_pack_version,omitempty"`
-	BaseLangPackVersion     int32         `json:"base_lang_pack_version,omitempty"`
-	ReactionsDefault        ReactionClass `json:"reactions_default,omitempty"`
-	AutologinToken          string        `json:"autologin_token,omitempty"`
+	Flags                   Fields `json:"-"`
+	DefaultP2pContacts      bool   `json:"default_p2p_contacts,omitempty"`
+	PreloadFeaturedStickers bool   `json:"preload_featured_stickers,omitempty"`
+	RevokePmInbox           bool   `json:"revoke_pm_inbox,omitempty"`
+	BlockedMode             bool   `json:"blocked_mode,omitempty"`
+	ForceTryIPv6            bool   `json:"force_try_ipv6,omitempty"`
+	// Date is the current date at the server (Unix timestamp).
+	Date int32 `json:"date,omitempty"`
+	// Expires is the expiration timestamp of this config; refetch via help.getConfig when it expires.
+	Expires int32 `json:"expires,omitempty"`
+	// TestMode indicates whether the client is connected to the test data centers.
+	TestMode bool `json:"test_mode,omitempty"`
+	// ThisDC is the ID of the data center that returned this config.
+	ThisDC int32 `json:"this_dc,omitempty"`
+	// DCOptions is the list of data center connection options.
+	DCOptions []*DCOption `json:"dc_options,omitempty"`
+	// DCTxtDomainName is the domain name for fetching the encrypted DC list from DNS TXT records.
+	DCTxtDomainName string `json:"dc_txt_domain_name,omitempty"`
+	// ChatSizeMax is the maximum member count for normal (basic) groups.
+	ChatSizeMax int32 `json:"chat_size_max,omitempty"`
+	// MegagroupSizeMax is the maximum member count for supergroups.
+	MegagroupSizeMax int32 `json:"megagroup_size_max,omitempty"`
+	// ForwardedCountMax is the maximum number of messages that can be forwarded at once.
+	ForwardedCountMax int32 `json:"forwarded_count_max,omitempty"`
+	// OnlineUpdatePeriodMs is the interval (in milliseconds) at which the client should call account.updateStatus.
+	OnlineUpdatePeriodMs int32 `json:"online_update_period_ms,omitempty"`
+	// OfflineBlurTimeoutMs is the delay (in milliseconds) before the offline status should be sent to the server.
+	OfflineBlurTimeoutMs int32 `json:"offline_blur_timeout_ms,omitempty"`
+	// OfflineIdleTimeoutMs is the time (in milliseconds) without user activity after which the client is treated as offline.
+	OfflineIdleTimeoutMs int32 `json:"offline_idle_timeout_ms,omitempty"`
+	// OnlineCloudTimeoutMs is the time window (in milliseconds) during which being online on another client delays the offline notification.
+	OnlineCloudTimeoutMs int32 `json:"online_cloud_timeout_ms,omitempty"`
+	// NotifyCloudDelayMs is the delay (in milliseconds) for the offline notification when online from another client.
+	NotifyCloudDelayMs int32 `json:"notify_cloud_delay_ms,omitempty"`
+	// NotifyDefaultDelayMs is the delay (in milliseconds) for notifications when another client is online.
+	NotifyDefaultDelayMs int32 `json:"notify_default_delay_ms,omitempty"`
+	// PushChatPeriodMs is the push notification period (in milliseconds) for chat messages. Not for client use.
+	PushChatPeriodMs int32 `json:"push_chat_period_ms,omitempty"`
+	// PushChatLimit is the maximum number of push chat notifications. Not for client use.
+	PushChatLimit int32 `json:"push_chat_limit,omitempty"`
+	// EditTimeLimit is the maximum age (in seconds) of a message that may still be edited; messages older than this cannot be edited.
+	EditTimeLimit int32 `json:"edit_time_limit,omitempty"`
+	// RevokeTimeLimit is the maximum age (in seconds) of a channel or supergroup message that may be deleted.
+	RevokeTimeLimit int32 `json:"revoke_time_limit,omitempty"`
+	// RevokePmTimeLimit is the maximum age (in seconds) of a private message that may be deleted for both participants.
+	RevokePmTimeLimit int32 `json:"revoke_pm_time_limit,omitempty"`
+	// RatingEDecay is the exponential decay rate for computing top peer rating.
+	RatingEDecay int32 `json:"rating_e_decay,omitempty"`
+	// StickersRecentLimit is the maximum number of recent stickers retained.
+	StickersRecentLimit int32 `json:"stickers_recent_limit,omitempty"`
+	// ChannelsReadMediaPeriod is the period (in seconds) after which round videos and voice messages in channels must be marked as read.
+	ChannelsReadMediaPeriod int32 `json:"channels_read_media_period,omitempty"`
+	// TmpSessions is the number of temporary Telegram Passport sessions.
+	TmpSessions int32 `json:"tmp_sessions,omitempty"`
+	// CallReceiveTimeoutMs is the maximum outgoing ring time (in milliseconds) for VoIP calls before hanging up.
+	CallReceiveTimeoutMs int32 `json:"call_receive_timeout_ms,omitempty"`
+	// CallRingTimeoutMs is the maximum incoming ring time (in milliseconds) for VoIP calls before auto-refusing.
+	CallRingTimeoutMs int32 `json:"call_ring_timeout_ms,omitempty"`
+	// CallConnectTimeoutMs is the VoIP connection timeout (in milliseconds) before aborting the call.
+	CallConnectTimeoutMs int32 `json:"call_connect_timeout_ms,omitempty"`
+	// CallPacketTimeoutMs is the maximum time (in milliseconds) without receiving a VoIP packet before aborting the call.
+	CallPacketTimeoutMs int32 `json:"call_packet_timeout_ms,omitempty"`
+	// MeURLPrefix is the domain prefix used to parse tg:// and t.me deep links.
+	MeURLPrefix         string `json:"me_url_prefix,omitempty"`
+	AutoupdateURLPrefix string `json:"autoupdate_url_prefix,omitempty"`
+	GIFSearchUsername   string `json:"gif_search_username,omitempty"`
+	VenueSearchUsername string `json:"venue_search_username,omitempty"`
+	ImgSearchUsername   string `json:"img_search_username,omitempty"`
+	StaticMapsProvider  string `json:"static_maps_provider,omitempty"`
+	// CaptionLengthMax is the maximum media caption length in UTF-8 codepoints (not bytes).
+	CaptionLengthMax int32 `json:"caption_length_max,omitempty"`
+	// MessageLengthMax is the maximum message length in UTF-8 codepoints (not bytes).
+	MessageLengthMax int32 `json:"message_length_max,omitempty"`
+	// WebfileDCID is the data center ID to use for downloading webfiles.
+	WebfileDCID int32 `json:"webfile_dc_id,omitempty"`
+	// SuggestedLangCode is the suggested language pack code for the client.
+	SuggestedLangCode string `json:"suggested_lang_code,omitempty"`
+	// LangPackVersion is the version of the suggested language pack.
+	LangPackVersion int32 `json:"lang_pack_version,omitempty"`
+	// BaseLangPackVersion is the version of the base language pack.
+	BaseLangPackVersion int32         `json:"base_lang_pack_version,omitempty"`
+	ReactionsDefault    ReactionClass `json:"reactions_default,omitempty"`
+	// AutologinToken is the token for seamless Telegram Login URL authorization.
+	AutologinToken string `json:"autologin_token,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3590,7 +3635,7 @@ const CDNPublicKeyTypeID = 0xc982eaba
 //
 // See https://core.telegram.org/constructor/cdnPublicKey for reference.
 type CDNPublicKey struct {
-	DCID      int32  `json:"dcid,omitempty"`
+	DCID      int32  `json:"dc_id,omitempty"`
 	PublicKey string `json:"public_key,omitempty"`
 }
 
@@ -4508,7 +4553,7 @@ func (*InputSecureFile) isInputSecureFile() {}
 type InputSecureFileUploaded struct {
 	ID          int64  `json:"id,omitempty"`
 	Parts       int32  `json:"parts,omitempty"`
-	MD5Checksum string `json:"md5checksum,omitempty"`
+	MD5Checksum string `json:"md5_checksum,omitempty"`
 	FileHash    []byte `json:"file_hash,omitempty"`
 	Secret      []byte `json:"secret,omitempty"`
 }
@@ -4665,7 +4710,7 @@ type SecureFile struct {
 	ID         int64  `json:"id,omitempty"`
 	AccessHash int64  `json:"access_hash,omitempty"`
 	Size       int64  `json:"size,omitempty"`
-	DCID       int32  `json:"dcid,omitempty"`
+	DCID       int32  `json:"dc_id,omitempty"`
 	Date       int32  `json:"date,omitempty"`
 	FileHash   []byte `json:"file_hash,omitempty"`
 	Secret     []byte `json:"secret,omitempty"`
@@ -11782,7 +11827,7 @@ type ServerDHInnerData struct {
 	ServerNonce [16]byte `json:"server_nonce,omitempty"`
 	G           int32    `json:"g,omitempty"`
 	DHPrime     string   `json:"dh_prime,omitempty"`
-	GA          string   `json:"ga,omitempty"`
+	GA          string   `json:"g_a,omitempty"`
 	ServerTime  int32    `json:"server_time,omitempty"`
 }
 
@@ -11855,7 +11900,7 @@ type ClientDHInnerData struct {
 	Nonce       [16]byte `json:"nonce,omitempty"`
 	ServerNonce [16]byte `json:"server_nonce,omitempty"`
 	RetryID     int64    `json:"retry_id,omitempty"`
-	GB          string   `json:"gb,omitempty"`
+	GB          string   `json:"g_b,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0x6643b654.
@@ -13159,7 +13204,7 @@ func (*IpPortSecret) isIpPort() {}
 //
 // See https://core.telegram.org/constructor/ipPort for reference.
 type IpPort struct {
-	IPv4 int32 `json:"i_pv4,omitempty"`
+	IPv4 int32 `json:"ipv4,omitempty"`
 	Port int32 `json:"port,omitempty"`
 }
 
@@ -13202,7 +13247,7 @@ func init() {
 //
 // See https://core.telegram.org/constructor/ipPortSecret for reference.
 type IpPortSecret struct {
-	IPv4   int32  `json:"i_pv4,omitempty"`
+	IPv4   int32  `json:"ipv4,omitempty"`
 	Port   int32  `json:"port,omitempty"`
 	Secret []byte `json:"secret,omitempty"`
 }
@@ -13256,7 +13301,7 @@ const AccessPointRuleTypeID = 0x4679b65f
 // See https://core.telegram.org/constructor/accessPointRule for reference.
 type AccessPointRule struct {
 	PhonePrefixRules string        `json:"phone_prefix_rules,omitempty"`
-	DCID             int32         `json:"dcid,omitempty"`
+	DCID             int32         `json:"dc_id,omitempty"`
 	Ips              []IpPortClass `json:"ips,omitempty"`
 }
 

@@ -80,7 +80,7 @@ type Photo struct {
 	Date          int32            `json:"date,omitempty"`
 	Sizes         []PhotoSizeClass `json:"sizes,omitempty"`
 	VideoSizes    []VideoSizeClass `json:"video_sizes,omitempty"`
-	DCID          int32            `json:"dcid,omitempty"`
+	DCID          int32            `json:"dc_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.

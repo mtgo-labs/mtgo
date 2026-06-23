@@ -62,7 +62,7 @@ type EncryptedFile struct {
 	ID             int64 `json:"id,omitempty"`
 	AccessHash     int64 `json:"access_hash,omitempty"`
 	Size           int64 `json:"size,omitempty"`
-	DCID           int32 `json:"dcid,omitempty"`
+	DCID           int32 `json:"dc_id,omitempty"`
 	KeyFingerprint int32 `json:"key_fingerprint,omitempty"`
 }
 
@@ -186,7 +186,7 @@ func init() {
 type InputEncryptedFileUploaded struct {
 	ID             int64  `json:"id,omitempty"`
 	Parts          int32  `json:"parts,omitempty"`
-	MD5Checksum    string `json:"md5checksum,omitempty"`
+	MD5Checksum    string `json:"md5_checksum,omitempty"`
 	KeyFingerprint int32  `json:"key_fingerprint,omitempty"`
 }
 

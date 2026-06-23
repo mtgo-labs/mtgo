@@ -13513,7 +13513,7 @@ type StickerSet struct {
 	Title              string           `json:"title,omitempty"`
 	ShortName          string           `json:"short_name,omitempty"`
 	Thumbs             []PhotoSizeClass `json:"thumbs,omitempty"`
-	ThumbDCID          int32            `json:"thumb_dcid,omitempty"`
+	ThumbDCID          int32            `json:"thumb_dc_id,omitempty"`
 	ThumbVersion       int32            `json:"thumb_version,omitempty"`
 	ThumbDocumentID    int64            `json:"thumb_document_id,omitempty"`
 	Count              int32            `json:"count,omitempty"`
@@ -17777,7 +17777,7 @@ func (*InputBotInlineMessageID64) isInputBotInlineMessageID() {}
 //
 // See https://core.telegram.org/constructor/inputBotInlineMessageID for reference.
 type InputBotInlineMessageID struct {
-	DCID       int32 `json:"dcid,omitempty"`
+	DCID       int32 `json:"dc_id,omitempty"`
 	ID         int64 `json:"id,omitempty"`
 	AccessHash int64 `json:"access_hash,omitempty"`
 }
@@ -17827,7 +17827,7 @@ func init() {
 //
 // See https://core.telegram.org/constructor/inputBotInlineMessageID64 for reference.
 type InputBotInlineMessageID64 struct {
-	DCID       int32 `json:"dcid,omitempty"`
+	DCID       int32 `json:"dc_id,omitempty"`
 	OwnerID    int64 `json:"owner_id,omitempty"`
 	ID         int32 `json:"id,omitempty"`
 	AccessHash int64 `json:"access_hash,omitempty"`

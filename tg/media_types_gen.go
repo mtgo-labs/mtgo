@@ -610,7 +610,7 @@ type Document struct {
 	Size          int64                    `json:"size,omitempty"`
 	Thumbs        []PhotoSizeClass         `json:"thumbs,omitempty"`
 	VideoThumbs   []VideoSizeClass         `json:"video_thumbs,omitempty"`
-	DCID          int32                    `json:"dcid,omitempty"`
+	DCID          int32                    `json:"dc_id,omitempty"`
 	Attributes    []DocumentAttributeClass `json:"attributes,omitempty"`
 }
 

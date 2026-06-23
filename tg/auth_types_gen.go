@@ -420,7 +420,7 @@ type Authorization struct {
 	DeviceModel               string `json:"device_model,omitempty"`
 	Platform                  string `json:"platform,omitempty"`
 	SystemVersion             string `json:"system_version,omitempty"`
-	APIID                     int32  `json:"apiid,omitempty"`
+	APIID                     int32  `json:"api_id,omitempty"`
 	AppName                   string `json:"app_name,omitempty"`
 	AppVersion                string `json:"app_version,omitempty"`
 	DateCreated               int32  `json:"date_created,omitempty"`
@@ -1885,9 +1885,9 @@ func init() {
 //
 // See https://core.telegram.org/constructor/inputCheckPasswordSRP for reference.
 type InputCheckPasswordSRP struct {
-	SRPID int64  `json:"srpid,omitempty"`
-	A     []byte `json:"a,omitempty"`
-	M1    []byte `json:"m1,omitempty"`
+	SRPID int64  `json:"srp_id,omitempty"`
+	A     []byte `json:"A,omitempty"`
+	M1    []byte `json:"M1,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xd27ff082.
@@ -2287,7 +2287,7 @@ func init() {
 //
 // See https://core.telegram.org/constructor/auth.loginTokenMigrateTo for reference.
 type AuthLoginTokenMigrateTo struct {
-	DCID  int32  `json:"dcid,omitempty"`
+	DCID  int32  `json:"dc_id,omitempty"`
 	Token []byte `json:"token,omitempty"`
 }
 

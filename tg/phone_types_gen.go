@@ -441,7 +441,7 @@ type PhoneCallRequested struct {
 	Date          int32              `json:"date,omitempty"`
 	AdminID       int64              `json:"admin_id,omitempty"`
 	ParticipantID int64              `json:"participant_id,omitempty"`
-	GAHash        []byte             `json:"ga_hash,omitempty"`
+	GAHash        []byte             `json:"g_a_hash,omitempty"`
 	Protocol      *PhoneCallProtocol `json:"protocol,omitempty"`
 }
 
@@ -536,7 +536,7 @@ type PhoneCallAccepted struct {
 	Date          int32              `json:"date,omitempty"`
 	AdminID       int64              `json:"admin_id,omitempty"`
 	ParticipantID int64              `json:"participant_id,omitempty"`
-	GB            []byte             `json:"gb,omitempty"`
+	GB            []byte             `json:"g_b,omitempty"`
 	Protocol      *PhoneCallProtocol `json:"protocol,omitempty"`
 }
 
@@ -633,7 +633,7 @@ type PhoneCall struct {
 	Date                int32                  `json:"date,omitempty"`
 	AdminID             int64                  `json:"admin_id,omitempty"`
 	ParticipantID       int64                  `json:"participant_id,omitempty"`
-	GAOrB               []byte                 `json:"ga_or_b,omitempty"`
+	GAOrB               []byte                 `json:"g_a_or_b,omitempty"`
 	KeyFingerprint      int64                  `json:"key_fingerprint,omitempty"`
 	Protocol            *PhoneCallProtocol     `json:"protocol,omitempty"`
 	Connections         []PhoneConnectionClass `json:"connections,omitempty"`
@@ -960,7 +960,7 @@ type PhoneConnection struct {
 	TCP     bool   `json:"tcp,omitempty"`
 	ID      int64  `json:"id,omitempty"`
 	Ip      string `json:"ip,omitempty"`
-	IPv6    string `json:"i_pv6,omitempty"`
+	IPv6    string `json:"ipv6,omitempty"`
 	Port    int32  `json:"port,omitempty"`
 	PeerTag []byte `json:"peer_tag,omitempty"`
 }
@@ -1042,7 +1042,7 @@ type PhoneConnectionWebrtc struct {
 	Stun     bool   `json:"stun,omitempty"`
 	ID       int64  `json:"id,omitempty"`
 	Ip       string `json:"ip,omitempty"`
-	IPv6     string `json:"i_pv6,omitempty"`
+	IPv6     string `json:"ipv6,omitempty"`
 	Port     int32  `json:"port,omitempty"`
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
@@ -1134,7 +1134,7 @@ const PhoneCallProtocolTypeID = 0xfc878fc8
 // See https://core.telegram.org/constructor/phoneCallProtocol for reference.
 type PhoneCallProtocol struct {
 	Flags           Fields   `json:"-"`
-	UDPP2p          bool     `json:"udpp2p,omitempty"`
+	UDPP2p          bool     `json:"udp_p2p,omitempty"`
 	UDPReflector    bool     `json:"udp_reflector,omitempty"`
 	MinLayer        int32    `json:"min_layer,omitempty"`
 	MaxLayer        int32    `json:"max_layer,omitempty"`
@@ -1299,7 +1299,7 @@ type GroupCall struct {
 	AccessHash               int64     `json:"access_hash,omitempty"`
 	ParticipantsCount        int32     `json:"participants_count,omitempty"`
 	Title                    string    `json:"title,omitempty"`
-	StreamDCID               int32     `json:"stream_dcid,omitempty"`
+	StreamDCID               int32     `json:"stream_dc_id,omitempty"`
 	RecordStartDate          int32     `json:"record_start_date,omitempty"`
 	ScheduleDate             int32     `json:"schedule_date,omitempty"`
 	UnmutedVideoCount        int32     `json:"unmuted_video_count,omitempty"`

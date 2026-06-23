@@ -98,7 +98,7 @@ const InitConnectionTypeID = 0xc1cd5ea9
 // See https://core.telegram.org/method/initConnection for reference.
 type InitConnectionRequest struct {
 	Flags          Fields            `json:"-"`
-	APIID          int32             `json:"apiid,omitempty"`
+	APIID          int32             `json:"api_id,omitempty"`
 	DeviceModel    string            `json:"device_model,omitempty"`
 	SystemVersion  string            `json:"system_version,omitempty"`
 	AppVersion     string            `json:"app_version,omitempty"`

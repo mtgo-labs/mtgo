@@ -59,7 +59,7 @@ type PhoneRequestCallRequest struct {
 	Video    bool               `json:"video,omitempty"`
 	UserID   InputUserClass     `json:"user_id,omitempty"`
 	RandomID int32              `json:"random_id,omitempty"`
-	GAHash   []byte             `json:"ga_hash,omitempty"`
+	GAHash   []byte             `json:"g_a_hash,omitempty"`
 	Protocol *PhoneCallProtocol `json:"protocol,omitempty"`
 }
 
@@ -115,7 +115,7 @@ const PhoneAcceptCallTypeID = 0x3bd2b4a0
 // See https://core.telegram.org/method/phone/acceptCall for reference.
 type PhoneAcceptCallRequest struct {
 	Peer     *InputPhoneCall    `json:"peer,omitempty"`
-	GB       []byte             `json:"gb,omitempty"`
+	GB       []byte             `json:"g_b,omitempty"`
 	Protocol *PhoneCallProtocol `json:"protocol,omitempty"`
 }
 
@@ -161,7 +161,7 @@ const PhoneConfirmCallTypeID = 0x2efe1722
 // See https://core.telegram.org/method/phone/confirmCall for reference.
 type PhoneConfirmCallRequest struct {
 	Peer           *InputPhoneCall    `json:"peer,omitempty"`
-	GA             []byte             `json:"ga,omitempty"`
+	GA             []byte             `json:"g_a,omitempty"`
 	KeyFingerprint int64              `json:"key_fingerprint,omitempty"`
 	Protocol       *PhoneCallProtocol `json:"protocol,omitempty"`
 }
