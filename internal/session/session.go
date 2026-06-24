@@ -1068,6 +1068,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	var lastErr error
 	var backoff time.Duration
 	maxAttempts := retries
+	totalWait := time.Duration(0) // accumulated FLOOD_WAIT sleep, bounded by maxFloodWaitBudget
 	badSaltRetries := 0
 	for i := 0; i < maxAttempts; i++ {
 		if i > 0 {
@@ -1123,6 +1124,16 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
 			if wait, ok := parseFloodWait(rpcErr.ErrorMessage); ok {
+				// Bound total flood-wait time; beyond the budget, surface a synthetic
+				// 429 (Too Many Requests: retry after N) like the reference
+				// NetQueryDelayer, instead of blocking the caller indefinitely.
+				if totalWait+wait > maxFloodWaitBudget {
+					seconds := int(wait.Seconds())
+					if seconds < 1 {
+						seconds = 1
+					}
+					return nil, fmt.Errorf("invoke %s: %w", methodName, tgerr.New(429, fmt.Sprintf("FLOOD_WAIT_%d", seconds)))
+				}
 				msgID := s.msgFactory.AllocateMsgID()
 				s.floodWaits.Delay(query, msgID, wait)
 				if s.log != nil {
@@ -1143,6 +1154,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				if s.log != nil {
 					s.log.Warnf("flood wait retry method=%s msg_id=%d duration=%v", methodName, msgID, wait)
 				}
+				totalWait += wait
 				maxAttempts++
 				continue
 			}
@@ -1168,6 +1180,13 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	}
 	return nil, fmt.Errorf("invoke %s: retries exhausted (%d): %w", methodName, retries, lastErr)
 }
+
+// maxFloodWaitBudget bounds the total time Invoke blocks on FLOOD_WAIT sleeps
+// before surfacing a synthetic 429 (Too Many Requests: retry after N). Mirrors
+// TDLib NetQueryDelayer's total_timeout_limit_: short waits are retried within
+// the budget; a wait that would exceed it is surfaced as 429 so the Bot API
+// caller can honour retry_after instead of hanging.
+const maxFloodWaitBudget = 60 * time.Second
 
 func parseFloodWait(message string) (time.Duration, bool) {
 	const prefix = "FLOOD_WAIT_"
@@ -2093,6 +2112,14 @@ func (m *TempKeyManager) IsEnabled() bool {
 	return m.enabled
 }
 
+// IsBound reports whether the temp key has been successfully bound to the
+// permanent key via auth.bindTempAuthKey.
+func (m *TempKeyManager) IsBound() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.bound
+}
+
 // PermKey returns the permanent auth key. Used for fallback when bind fails.
 func (m *TempKeyManager) PermKey() []byte {
 	m.mu.Lock()
@@ -2155,10 +2182,8 @@ func (m *TempKeyManager) Generate(transport Transport) error {
 		TestMode: m.testMode,
 	}
 
-	// Request a temp key with the appropriate expiry. The server honours the
-	// expires_in value from p_q_inner_data_temp_dc and stores the key in RAM
-	// only — see https://core.telegram.org/api/pfs.
-	expiresIn := int32(2 * 60 * 60) // 2 hours (within server max of ~24h)
+	// Request a temp key with 24h expiry, matching MadelineProto's PFS_DURATION.
+	expiresIn := int32(24 * 60 * 60) // 24 hours
 	result, err := auth.CreateTemp(transport, expiresIn)
 	if err != nil {
 		return fmt.Errorf("temp key DH exchange: %w", err)

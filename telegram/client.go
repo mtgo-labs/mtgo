@@ -1238,17 +1238,27 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 	return nil
 }
 
-// performPFS generates a temporary auth key for Perfect Forward Secrecy if
-// Config.PFS is enabled. The temp key is generated via an unencrypted DH
-// exchange on the same raw transport, then set as the session's active auth
-// key. The actual binding (auth.bindTempAuthKey) happens in bindPFS after the
-// encrypted session starts.
+// performPFS generates a temporary auth key for Perfect Forward Secrecy.
+// Matches MadelineProto's always-on PFS approach.
 //
-// If temp key generation fails, the session continues with the permanent key
-// (PFS is opt-in, not mandatory).
+// On first connect: generates a new temp key via unencrypted DH exchange.
+// On reconnect: reuses the existing temp key if still valid (avoids DH overhead).
+// Falls back to permanent key on failure (non-fatal).
 func (c *Client) performPFS(sess *session.Session, st storage.Storage, dc session.DataCenter, sessionTp *sessionTransport) error {
 	if !c.config().PFS {
 		return nil
+	}
+
+	// Check if session already has a valid temp key from a previous connection.
+	if existing := sess.PFS(); existing != nil {
+		if !existing.NeedsRotation() && existing.IsBound() {
+			tempKey, _ := existing.GetKey()
+			if len(tempKey) > 0 {
+				c.Log.Debug("PFS: reusing existing temp key (still valid)")
+				return nil
+			}
+		}
+		c.Log.Debug("PFS: temp key expired or unbound, generating new one")
 	}
 
 	permKey, _ := st.AuthKey()
@@ -1256,9 +1266,9 @@ func (c *Client) performPFS(sess *session.Session, st storage.Storage, dc sessio
 		return nil
 	}
 
-	c.Log.Debug("PFS: generating temporary auth key")
+	c.Log.Debug("PFS: generating temporary auth key (24h expiry)")
 
-	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, false, st)
+	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, true, st)
 	if err := mgr.Generate(sessionTp); err != nil {
 		c.Log.Warnf("PFS: temp key generation failed, continuing with perm key: %v", err)
 		return nil // non-fatal
