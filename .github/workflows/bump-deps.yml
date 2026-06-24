@@ -60,7 +60,7 @@ jobs:
           fi
 
       - name: Checkout ${{ matrix.repo }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: mtgo-labs/${{ matrix.repo }}
           token: ${{ secrets.MTGO_LABS_PAT }}
