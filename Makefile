@@ -1,4 +1,4 @@
-.PHONY: all fmt fmt-check tidy vet lint test test-race bench bench-compare clean
+.PHONY: all fmt fmt-check tidy vet lint test test-race bench bench-compare bench-baseline clean
 
 # Benchmark packages (kept in sync with .github/workflows/benchmark.yml)
 BENCH_PKGS  := ./internal/crypto/ ./internal/session/ ./internal/transport/ ./tg/ ./tgerr/ ./telegram/fileid/ ./telegram/types/ ./telegram/parser/
@@ -61,9 +61,17 @@ bench-compare: _benchstat
 	@echo "==> benchstat old.txt new.txt"
 	@benchstat old.txt new.txt
 
+## bench-baseline: regenerate the committed bench_baseline.txt (count=10)
+##   Run locally on stable hardware, then commit the result.
+##   CI compares current-commit results against this file.
+bench-baseline:
+	go test $(BENCH_FLAGS) -count=10 $(BENCH_PKGS) > bench_baseline.txt 2>&1
+	@echo "==> Wrote bench_baseline.txt"
+	@benchstat bench_baseline.txt | head -5
+
 ## clean: remove benchmark artifacts
 clean:
-	rm -f old.txt new.txt
+	rm -f old.txt new.txt bench_result.txt
 
 # ---- Internal helpers ----
 

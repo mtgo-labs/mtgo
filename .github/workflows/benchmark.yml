@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0 # need full history for worktree comparison
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -42,15 +40,6 @@ jobs:
 
       - name: Install benchstat
         run: go install golang.org/x/perf/cmd/benchstat@latest
-
-      - name: Determine comparison ref
-        id: ref
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
-          else
-            echo "base_ref=HEAD~1" >> $GITHUB_OUTPUT
-          fi
 
       - name: Run benchmarks on current commit
         run: |
@@ -65,30 +54,17 @@ jobs:
             ./telegram/parser/ \
             2>&1 | tee new.txt
 
-      - name: Run benchmarks on base ref
-        run: |
-          BASE="${{ steps.ref.outputs.base_ref }}"
-          git worktree add -q /tmp/base "$BASE"
-          (
-            cd /tmp/base
-            go test -run=xxx -bench=. -benchmem -benchtime=1s -count=5 \
-              ./internal/crypto/ \
-              ./internal/session/ \
-              ./internal/transport/ \
-              ./tg/ \
-              ./tgerr/ \
-              ./telegram/fileid/ \
-              ./telegram/types/ \
-              ./telegram/parser/ \
-              2>&1 | tee /tmp/base/old.txt
-          )
-          cp /tmp/base/old.txt old.txt
-          git worktree remove --force /tmp/base
-
       - name: Compare with benchstat
         id: compare
+        if: always()
         run: |
-          benchstat old.txt new.txt > bench_result.txt 2>&1 || true
+          if [ ! -f new.txt ]; then
+            echo "Benchmark run did not complete — no results to compare." > bench_result.txt
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          benchstat bench_baseline.txt new.txt > bench_result.txt 2>&1 || true
           cat bench_result.txt
 
           # Check for regressions (>10% slower)
@@ -104,12 +80,15 @@ jobs:
           {
             echo '## Benchmark Comparison'
             echo ''
-            echo "Comparing ${{ steps.ref.outputs.base_ref }} -> current commit"
+            echo 'Comparing committed `bench_baseline.txt` → current commit'
+            echo ''
+            echo '> Baseline captured on AMD Ryzen 5 7600X. ns/op deltas reflect hardware differences with CI; **focus on B/op and allocs/op for regressions.**'
             echo ''
             echo '```'
-            cat bench_result.txt
+            cat bench_result.txt 2>/dev/null || echo '(no benchmark result available)'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Post PR comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v9
@@ -129,6 +108,10 @@ jobs:
 
             const body = [
               `<details><summary><b>${title}</b></summary>`,
+              '',
+              'Comparing committed `bench_baseline.txt` → current commit',
+              '',
+              '> Baseline from AMD Ryzen 5 7600X. Focus on **B/op and allocs/op**; ns/op varies by CI hardware.',
               '',
               '```',
               result,

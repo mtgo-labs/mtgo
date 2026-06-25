@@ -48,3 +48,8 @@ AGENTS.specify.md
 
 # OpenCode dev tooling
 .opencode/
+
+# Benchmark artifacts (bench_baseline.txt is committed — do NOT ignore)
+new.txt
+old.txt
+bench_result.txt
