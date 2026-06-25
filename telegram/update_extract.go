@@ -58,10 +58,62 @@ func extractUpdateMeta(update tg.UpdateClass) updateMeta {
 		meta.Pts, meta.PtsCount = u.PTS, u.PTSCount
 		meta.Key = buildKey("pinned:", strconv.FormatInt(int64(u.PTS), 10), ":", int32ListKey(u.Messages))
 	case *tg.UpdateNewEncryptedMessage:
-		meta.Qts = u.Qts
-		meta.Key = buildKey("encrypted:", strconv.FormatInt(int64(u.Qts), 10))
+		setQts(&meta, "encrypted:", u.Qts)
+	// qts-bearing updates: these share Telegram's single monotonic qts sequence
+	// (alongside encrypted messages) and must flow through qts gap-recovery +
+	// dedup — otherwise a missed qts is never fetched via getDifference, and
+	// worse, without a unique key they collapse onto the default "type:<id>" key
+	// and get dedup-dropped (only the first of each type survives). Mirrors
+	// TDLib, which tracks qts for all of these.
+	case *tg.UpdateMessagePollVote:
+		setQts(&meta, "poll-vote:", u.Qts)
+	case *tg.UpdateChatParticipant:
+		setQts(&meta, "chat-participant:", u.Qts)
+	case *tg.UpdateChannelParticipant:
+		setQts(&meta, "channel-participant:", u.Qts)
+	case *tg.UpdateBotStopped:
+		setQts(&meta, "bot-stopped:", u.Qts)
+	case *tg.UpdateBotChatInviteRequester:
+		setQts(&meta, "bot-invite-request:", u.Qts)
+	case *tg.UpdateBotChatBoost:
+		setQts(&meta, "bot-boost:", u.Qts)
+	case *tg.UpdateBotMessageReaction:
+		setQts(&meta, "bot-reaction:", u.Qts)
+	case *tg.UpdateBotMessageReactions:
+		setQts(&meta, "bot-reactions:", u.Qts)
+	case *tg.UpdateBotBusinessConnect:
+		setQts(&meta, "bot-business:", u.Qts)
+	case *tg.UpdateBotNewBusinessMessage:
+		setQts(&meta, "bot-business-new:", u.Qts)
+	case *tg.UpdateBotEditBusinessMessage:
+		setQts(&meta, "bot-business-edit:", u.Qts)
+	case *tg.UpdateBotDeleteBusinessMessage:
+		setQts(&meta, "bot-business-delete:", u.Qts)
+	case *tg.UpdateBotPurchasedPaidMedia:
+		setQts(&meta, "bot-paid-media:", u.Qts)
+	case *tg.UpdateManagedBot:
+		setQts(&meta, "managed-bot:", u.Qts)
+	case *tg.UpdateBotGuestChatQuery:
+		setQts(&meta, "bot-guest-chat:", u.Qts)
+	// Bot query updates carry no qts (delivered via the common stream), so they
+	// can't participate in qts gap-recovery — but they still need a unique dedup
+	// key (their query_id) instead of the default type-id key, which would
+	// otherwise collapse every distinct query into one and dedup-drop the rest.
+	case *tg.UpdateBotCallbackQuery:
+		meta.Key = buildKey("bot-callback:", strconv.FormatInt(u.QueryID, 10))
+	case *tg.UpdateBotShippingQuery:
+		meta.Key = buildKey("bot-shipping:", strconv.FormatInt(u.QueryID, 10))
+	case *tg.UpdateBotPrecheckoutQuery:
+		meta.Key = buildKey("bot-precheckout:", strconv.FormatInt(u.QueryID, 10))
 	}
 	return meta
+}
+
+// setQts records a qts-bearing update's monotonic qts (driving qts gap-recovery
+// and dedup via classifyAccountUpdate) and a qts-unique dedup key.
+func setQts(meta *updateMeta, prefix string, qts int32) {
+	meta.Qts = qts
+	meta.Key = buildKey(prefix, strconv.FormatInt(int64(qts), 10))
 }
 
 func messageID(msg tg.MessageClass) int32 {
