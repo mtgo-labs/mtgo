@@ -10,14 +10,13 @@ import (
 )
 
 var (
-	benchAuthKey    [256]byte
-	benchAuthKeyID  [8]byte
-	benchSessionID  [8]byte
-	benchSalt       int64 = 0x12345678
-	benchMsgKey     [16]byte
-	benchPackedData []byte
-	benchPlaintext  []byte
-	benchEncrypted  []byte
+	benchAuthKey   [256]byte
+	benchAuthKeyID [8]byte
+	benchSessionID [8]byte
+	benchSalt      int64 = 0x12345678
+	benchMsgKey    [16]byte
+	benchPlaintext []byte
+	benchEncrypted []byte
 )
 
 func init() {

@@ -157,7 +157,7 @@ func SecretEncrypt(plaintext, key []byte, outgoing bool) ([]byte, error) {
 	}
 
 	var stackBuf [4096]byte
-	msgKeyLargeInput := stackBuf[:0]
+	var msgKeyLargeInput []byte
 	if 32+len(data) > len(stackBuf) {
 		msgKeyLargeInput = make([]byte, 32+len(data))
 	} else {
@@ -201,7 +201,7 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 	}
 
 	var stackBuf [4096]byte
-	msgKeyLargeInput := stackBuf[:0]
+	var msgKeyLargeInput []byte
 	if 32+len(decrypted) > len(stackBuf) {
 		msgKeyLargeInput = make([]byte, 32+len(decrypted))
 	} else {
@@ -225,7 +225,11 @@ func SecretDecrypt(ciphertext, key []byte, outgoing bool) ([]byte, error) {
 		return nil, errDecryptionFailed
 	}
 	paddingLen := len(decrypted) - 4 - msgLen
-	if paddingLen < SecretChatMinPadding || paddingLen > SecretChatMaxPadding {
+	// Telegram requires minimum padding; total data must be 16-byte aligned.
+	// No strict upper bound — encrypt adds up to 15 extra bytes for alignment
+	// beyond the initial random padding range, so the actual padding can exceed
+	// SecretChatMaxPadding.
+	if paddingLen < SecretChatMinPadding || len(decrypted)%16 != 0 {
 		ReleaseAESBuf(decrypted)
 		return nil, errDecryptionFailed
 	}
