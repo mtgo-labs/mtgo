@@ -1,6 +1,9 @@
 name: Benchmark
 
 "on":
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -26,8 +29,10 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout PR
+      - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # need full history for worktree comparison
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -38,7 +43,16 @@ jobs:
       - name: Install benchstat
         run: go install golang.org/x/perf/cmd/benchstat@latest
 
-      - name: Run benchmarks on PR branch
+      - name: Determine comparison ref
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "base_ref=HEAD~1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run benchmarks on current commit
         run: |
           go test -run=xxx -bench=. -benchmem -benchtime=1s -count=5 \
             ./internal/crypto/ \
@@ -51,33 +65,25 @@ jobs:
             ./telegram/parser/ \
             2>&1 | tee new.txt
 
-      - name: Checkout base branch
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.base_ref }}
-          path: base
-          clean: false
-
-      - name: Copy go.mod from base
+      - name: Run benchmarks on base ref
         run: |
-          cp base/go.mod go.mod
-          cp base/go.sum go.sum
-
-      - name: Run benchmarks on base branch
-        run: |
-          # Copy base source files over the current checkout
-          rsync -a --delete --exclude='.git' --exclude='base' --exclude='new.txt' base/ ./
-          rm -rf base
-          go test -run=xxx -bench=. -benchmem -benchtime=1s -count=5 \
-            ./internal/crypto/ \
-            ./internal/session/ \
-            ./internal/transport/ \
-            ./tg/ \
-            ./tgerr/ \
-            ./telegram/fileid/ \
-            ./telegram/types/ \
-            ./telegram/parser/ \
-            2>&1 | tee old.txt
+          BASE="${{ steps.ref.outputs.base_ref }}"
+          git worktree add -q /tmp/base "$BASE"
+          (
+            cd /tmp/base
+            go test -run=xxx -bench=. -benchmem -benchtime=1s -count=5 \
+              ./internal/crypto/ \
+              ./internal/session/ \
+              ./internal/transport/ \
+              ./tg/ \
+              ./tgerr/ \
+              ./telegram/fileid/ \
+              ./telegram/types/ \
+              ./telegram/parser/ \
+              2>&1 | tee /tmp/base/old.txt
+          )
+          cp /tmp/base/old.txt old.txt
+          git worktree remove --force /tmp/base
 
       - name: Compare with benchstat
         id: compare
@@ -92,8 +98,20 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Post comment
+      - name: Write job summary
         if: always()
+        run: |
+          {
+            echo '## Benchmark Comparison'
+            echo ''
+            echo "Comparing ${{ steps.ref.outputs.base_ref }} -> current commit"
+            echo ''
+            echo '```'
+            cat bench_result.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Post PR comment
+        if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v9
         with:
           script: |
