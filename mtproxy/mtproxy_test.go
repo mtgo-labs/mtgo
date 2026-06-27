@@ -2,6 +2,7 @@ package mtproxy
 
 import (
 	"bytes"
+	"encoding/binary"
 	"testing"
 )
 
@@ -97,8 +98,9 @@ func TestBuildClientHello(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(hello) != 517 {
-		t.Errorf("hello len = %d, want 517", len(hello))
+	// Dynamic length now (Chrome-accurate extensions) — just sanity-check bounds.
+	if len(hello) < 300 || len(hello) > 800 {
+		t.Errorf("hello len = %d, expected 300..800", len(hello))
 	}
 	if len(clientRandom) != 32 {
 		t.Errorf("clientRandom len = %d, want 32", len(clientRandom))
@@ -112,12 +114,55 @@ func TestBuildClientHello(t *testing.T) {
 	if hello[9] != 0x03 || hello[10] != 0x03 {
 		t.Errorf("version = %x, want 0303 (TLS 1.2)", hello[9:11])
 	}
+	// ClientRandom is at bytes 11..42 and must be non-zero (digest injected).
+	allZero := true
+	for _, b := range hello[11:43] {
+		if b != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
+		t.Error("ClientRandom is all zeros — digest not injected")
+	}
+	// Verify extensions are present (extensions length at offset after
+	// record header + handshake header + version + random + session_id +
+	// cipher_suites + compression).
+	if hello[5] != 0x01 {
+		t.Fatalf("expected ClientHello type at offset 5")
+	}
 }
 
-func TestGenerateFakeKeyShare(t *testing.T) {
-	key := generateFakeKeyShare()
-	if len(key) != 32 {
-		t.Errorf("key share len = %d, want 32", len(key))
+func TestBuildClientHelloContainsExtensions(t *testing.T) {
+	secret := make([]byte, 16)
+	hello, _, err := buildClientHello(secret, "www.google.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Check for key extension types in the raw bytes.
+	// Each extension is: type(2) + length(2). We look for the type values.
+	extTypes := map[uint16]string{
+		0x0000: "server_name",
+		0x0017: "extended_master_secret",
+		0xFF01: "renegotiation_info",
+		0x000A: "supported_groups",
+		0x0010: "ALPN",
+		0x0033: "key_share",
+		0x002B: "supported_versions",
+		0x002D: "psk_key_exchange_modes",
+	}
+	found := make(map[uint16]bool)
+	for i := 0; i+3 < len(hello); i++ {
+		et := binary.BigEndian.Uint16(hello[i:])
+		if name, ok := extTypes[et]; ok && i+4 <= len(hello) {
+			found[et] = true
+			_ = name
+		}
+	}
+	for et, name := range extTypes {
+		if !found[et] {
+			t.Errorf("extension %s (0x%04x) not found in ClientHello", name, et)
+		}
 	}
 }
 

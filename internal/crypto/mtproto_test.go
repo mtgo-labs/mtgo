@@ -161,3 +161,65 @@ func TestPackUnpackSessionIDMismatch(t *testing.T) {
 		t.Fatal("expected error on session_id mismatch")
 	}
 }
+
+func TestEncryptedPaddingLen(t *testing.T) {
+	for _, l := range []int{0, 1, 8, 16, 17, 50, 100, 255, 500, 1000} {
+		minPad := encryptedPaddingLen(l, 0x00)
+		maxPad := encryptedPaddingLen(l, 0x0F)
+
+		if minPad < 12 {
+			t.Errorf("l=%d: minPad=%d < 12", l, minPad)
+		}
+		if maxPad > 1024 {
+			t.Errorf("l=%d: maxPad=%d > 1024", l, maxPad)
+		}
+		if (l+minPad)%16 != 0 {
+			t.Errorf("l=%d minPad=%d: (l+pad)%%16=%d != 0", l, minPad, (l+minPad)%16)
+		}
+		if (l+maxPad)%16 != 0 {
+			t.Errorf("l=%d maxPad=%d: (l+pad)%%16=%d != 0", l, maxPad, (l+maxPad)%16)
+		}
+		// Jitter span: max (low nibble 0xF) minus min (low nibble 0) = 15*16.
+		if maxPad-minPad != 240 {
+			t.Errorf("l=%d: jitter=%d, want 240", l, maxPad-minPad)
+		}
+	}
+}
+
+func TestPackRawUnpackLargeBodyRoundTrip(t *testing.T) {
+	authKey := make([]byte, 1024)
+	authKeyIDFull := sha256.Sum256(authKey)
+	authKeyIDBytes := authKeyIDFull[:8]
+	sessionID := make([]byte, 8)
+	for i := range sessionID {
+		sessionID[i] = 0xAB
+	}
+
+	bodyBytes := make([]byte, 500)
+	for i := range bodyBytes {
+		bodyBytes[i] = byte(i)
+	}
+
+	msgID := int64(0x600000000000000B)
+	seqNo := uint32(1)
+	salt := int64(123456789)
+
+	// Run several iterations to exercise different random padding values.
+	for i := 0; i < 20; i++ {
+		packed, err := PackRaw(msgID, seqNo, bodyBytes, salt, sessionID, authKey, authKeyIDBytes)
+		if err != nil {
+			t.Fatalf("iter %d: PackRaw: %v", i, err)
+		}
+
+		raw, _, err := UnpackEnvelope(packed, sessionID, authKey, authKeyIDBytes)
+		if err != nil {
+			t.Fatalf("iter %d: UnpackEnvelope failed with randomized padding: %v", i, err)
+		}
+		if raw.MsgID != msgID {
+			t.Fatalf("iter %d: MsgID mismatch: got %d, want %d", i, raw.MsgID, msgID)
+		}
+		if !bytes.Equal(raw.BodyRaw, bodyBytes) {
+			t.Fatalf("iter %d: body bytes mismatch", i)
+		}
+	}
+}

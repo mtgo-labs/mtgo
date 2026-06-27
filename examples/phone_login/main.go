@@ -14,8 +14,8 @@ import (
 // On first run (no saved session), Connect() detects that the session is
 // not authorized and automatically prompts for:
 //
-//   1. Verification code (sent to the phone number via SMS/Telegram)
-//   2. 2FA password (if the account has two-factor authentication enabled)
+//  1. Verification code (sent to the phone number via SMS/Telegram)
+//  2. 2FA password (if the account has two-factor authentication enabled)
 //
 // On subsequent runs, the saved session is reused and no prompts appear.
 //

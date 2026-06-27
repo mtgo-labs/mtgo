@@ -2064,30 +2064,6 @@ func TestSessionHasUnknownQueriesEmpty(t *testing.T) {
 	}
 }
 
-func TestSessionRecoveryRejectsQueryLostReconnect(t *testing.T) {
-	s := newSessionWithAuthKey(t)
-	mt := newMockTransport()
-	s.SetTransport(mt)
-
-	cleanup := startTestWorkers(s, mt)
-	defer cleanup()
-
-	// Register a pending query.
-	_, _ = s.pending.Register(5001, false)
-
-	// Simulate the recovery rejecting a query (as if state query failed).
-	// The query should be rejected with ErrQueryLostReconnect.
-	s.resendSingleQuery(5001)
-
-	// The pending query should be rejected.
-	// Verify by checking that the handle is completed.
-	// Note: we can't easily check the error without the handle reference,
-	// but we can verify the query is no longer pending.
-	if s.pending.Has(5001) {
-		t.Fatal("query 5001 should no longer be pending after resendSingleQuery")
-	}
-}
-
 func TestDCOptionPoolFindBest(t *testing.T) {
 	pool := NewDCOptionPool(2, 16*time.Second)
 

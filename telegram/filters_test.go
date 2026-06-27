@@ -192,7 +192,7 @@ func TestCommand(t *testing.T) {
 		{"/start arg1 arg2", true},
 		{"/START", false}, // NOTE: Command matching is case-sensitive despite the doc comment
 		{"/unknown", false},
-		{"start", false},  // missing leading slash
+		{"start", false}, // missing leading slash
 		{"", false},
 	}
 	for _, c := range cases {

@@ -16,8 +16,8 @@ import (
 // On first run (no saved session), Connect() detects the session is not
 // authorized and automatically prompts for:
 //
-//   1. Verification code (sent via SMS/Telegram)
-//   2. 2FA password (if enabled)
+//  1. Verification code (sent via SMS/Telegram)
+//  2. 2FA password (if enabled)
 //
 // The session is saved to disk, so subsequent runs reuse it without prompts.
 //
@@ -48,15 +48,15 @@ func main() {
 			return
 		}
 
-		switch {
-		case msg.Text == "/ping":
+		switch msg.Text {
+		case "/ping":
 			msg.Reply("pong")
-		case msg.Text == "/me":
+		case "/me":
 			me := client.Me()
 			if me != nil {
 				msg.Reply(fmt.Sprintf("ID: %d\nName: %s\nUsername: @%s", me.ID, me.FirstName, me.Username))
 			}
-		case msg.Text == "/session":
+		case "/session":
 			s, err := client.ExportSessionString()
 			if err != nil {
 				msg.Reply(fmt.Sprintf("error: %v", err))

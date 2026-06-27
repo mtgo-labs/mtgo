@@ -77,10 +77,6 @@ var (
 	// Ported from td/td/telegram/net/Session.cpp:1297-1309 (MAX_INFLIGHT_QUERIES).
 	ErrTooManyPending = errors.New("session: too many pending queries to recover")
 
-	// ErrQueryLostReconnect is returned when a query could not be recovered
-	// after reconnect. The caller should retry the RPC call.
-	ErrQueryLostReconnect = errors.New("session: query lost during reconnect — retry")
-
 	// ErrWriteCircuitOpen is returned when the write circuit breaker has
 	// tripped due to consecutive write failures.
 	ErrWriteCircuitOpen = errors.New("session: write circuit breaker open")

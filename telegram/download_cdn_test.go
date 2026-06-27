@@ -136,7 +136,7 @@ func TestCDNDecryptWithCTRIVDerivation(t *testing.T) {
 // incrementIV calls (the O(N) path it replaces) across several magnitudes,
 // including values that carry across byte boundaries.
 func TestCDNAddToIVLE(t *testing.T) {
-	cases := []int64{1, 2, 255, 256, 65536, 1<<20, (1 << 20) + 257}
+	cases := []int64{1, 2, 255, 256, 65536, 1 << 20, (1 << 20) + 257}
 	for _, n := range cases {
 		base := make([]byte, 16)
 		_, _ = rand.Read(base)
@@ -174,7 +174,7 @@ func TestCDNHashCheckerSpanning(t *testing.T) {
 	if err := c.feed(full[0:chunkSize], 0); err != nil {
 		t.Fatalf("feed chunk 0: %v", err)
 	}
-	if err := c.feed(full[chunkSize : 2*chunkSize], chunkSize); err != nil {
+	if err := c.feed(full[chunkSize:2*chunkSize], chunkSize); err != nil {
 		t.Fatalf("feed chunk 1 (hash completes here): %v", err)
 	}
 	if c.idx != len(hashes) {
@@ -188,7 +188,7 @@ func TestCDNHashCheckerSpanning(t *testing.T) {
 	if err := bad.feed(tampered[0:chunkSize], 0); err != nil {
 		t.Fatalf("feed chunk 0 (tampered): unexpected error before hash completes: %v", err)
 	}
-	if err := bad.feed(tampered[chunkSize : 2*chunkSize], chunkSize); err == nil {
+	if err := bad.feed(tampered[chunkSize:2*chunkSize], chunkSize); err == nil {
 		t.Fatal("tampered spanning hash should fail verification")
 	}
 }

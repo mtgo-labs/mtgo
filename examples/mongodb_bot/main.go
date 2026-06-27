@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mtgo-labs/mtgo/telegram"
-	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/internal/storage"
 	extmongodb "github.com/mtgo-labs/mtgo/internal/storage/mongodb"
+	"github.com/mtgo-labs/mtgo/telegram"
+	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
 func main() {

@@ -170,12 +170,6 @@ func (c *Client) config() Config {
 	return cfg
 }
 
-func (c *Client) setConfig(cfg Config) {
-	c.cfgMu.Lock()
-	c.cfg = cfg
-	c.cfgMu.Unlock()
-}
-
 func (c *Client) updateConfig(fn func(cfg *Config)) {
 	c.cfgMu.Lock()
 	fn(&c.cfg)
@@ -515,6 +509,12 @@ func (c *Config) mergeConfig(src *Config) {
 	}
 	c.UpdateRecoveryEnabled = src.UpdateRecoveryEnabled
 	c.Log = src.Log
+	if src.AlwaysObfuscate {
+		c.AlwaysObfuscate = true
+	}
+	if src.MaxChannelDiffConcurrency != 0 {
+		c.MaxChannelDiffConcurrency = src.MaxChannelDiffConcurrency
+	}
 }
 
 // IsConnected reports whether the client has an active connection to Telegram.
@@ -1176,7 +1176,7 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 		c.dcOptionPool.RecordFailure(dc)
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
 	}
-	tp, err := newTCPTransport(c.config().TransportMode, conn)
+	tp, err := c.createTransport(conn)
 	if err != nil {
 		conn.Close()
 		c.dcOptionPool.RecordFailure(dc)
@@ -1534,9 +1534,10 @@ func (c *Client) postConnect() {
 
 	if c.config().UpdateRecoveryEnabled && !c.config().NoUpdates {
 		umCfg := updateManagerConfig{
-			QueueSize:       c.config().UpdateQueueSize,
-			DurableQueue:    c.config().DurableUpdateQueue,
-			MaxHandlerRetry: c.config().MaxUpdateHandlerRetry,
+			QueueSize:                 c.config().UpdateQueueSize,
+			DurableQueue:              c.config().DurableUpdateQueue,
+			MaxHandlerRetry:           c.config().MaxUpdateHandlerRetry,
+			MaxChannelDiffConcurrency: c.config().MaxChannelDiffConcurrency,
 		}
 		// Enable the inbound dispatch queue when InboundQueueDepth > 0.
 		if c.config().InboundQueueDepth > 0 {
@@ -1907,6 +1908,7 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 	userMap := buildUserMap(parsedUsers)
 	chatMap := buildChatMap(parsedChats)
 	pm := types.NewPeerMapFromClasses(parsedUsers, parsedChats)
+	c.backfillMinAccessHashes(chatMap, userMap)
 
 	for _, rawUpd := range rawUpdates {
 		upd := c.toUpdate(rawUpd, userMap, chatMap, pm)
@@ -2659,7 +2661,11 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 		if !ok || user.AccessHash == 0 {
 			continue
 		}
-		c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
+		hash := user.AccessHash
+		if user.Min {
+			hash = 0
+		}
+		c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: hash})
 		username := user.Username
 		if username != "" {
 			c.cacheUsername(username, user.ID)
@@ -2667,7 +2673,7 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 		entries = append(entries, &storage.Peer{
 			ID:          user.ID,
 			Type:        storage.PeerTypeUser,
-			AccessHash:  user.AccessHash,
+			AccessHash:  hash,
 			Username:    username,
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
@@ -2686,6 +2692,9 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			})
 		case *tg.Channel:
 			accessHash := v.AccessHash
+			if v.Min {
+				accessHash = 0
+			}
 			c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: accessHash})
 			username := v.Username
 			if username != "" {
@@ -2704,6 +2713,37 @@ func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClas
 			for _, entry := range entries {
 				_ = ps.SavePeer(entry)
 			}
+		}
+	}
+}
+
+// backfillMinAccessHashes replaces a min entity's access hash with the known
+// full hash from the peer store, so handlers can build a usable InputPeer from
+// update entities even for chats delivered as min. No-op when the peer store
+// has no full hash (no regression).
+func (c *Client) backfillMinAccessHashes(chatMap map[int64]*types.Chat, userMap map[int64]*types.User) {
+	ps := c.peerStore()
+	if ps == nil {
+		return
+	}
+	for _, ch := range chatMap {
+		if !ch.IsMin {
+			continue
+		}
+		raw, ok := ch.Raw.(*tg.Channel)
+		if !ok {
+			continue
+		}
+		if p, err := ps.GetPeer(raw.ID); err == nil && p != nil && p.AccessHash != 0 && p.AccessHash != ch.AccessHash {
+			ch.AccessHash = p.AccessHash
+		}
+	}
+	for _, u := range userMap {
+		if !u.IsMin {
+			continue
+		}
+		if p, err := ps.GetPeer(u.ID); err == nil && p != nil && p.AccessHash != 0 && p.AccessHash != u.AccessHash {
+			u.AccessHash = p.AccessHash
 		}
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"math/big"
 	"net"
 	"testing"
 	"time"
@@ -69,9 +68,9 @@ func (e *errConn) Write(p []byte) (int, error) {
 func (e *errConn) Close() error                       { return nil }
 func (e *errConn) LocalAddr() net.Addr                { return nil }
 func (e *errConn) RemoteAddr() net.Addr               { return nil }
-func (e *errConn) SetDeadline(t time.Time) error       { return nil }
-func (e *errConn) SetReadDeadline(t time.Time) error   { return nil }
-func (e *errConn) SetWriteDeadline(t time.Time) error  { return nil }
+func (e *errConn) SetDeadline(t time.Time) error      { return nil }
+func (e *errConn) SetReadDeadline(t time.Time) error  { return nil }
+func (e *errConn) SetWriteDeadline(t time.Time) error { return nil }
 
 type failAfterN struct {
 	net.Conn
@@ -549,17 +548,6 @@ func TestHandshake(t *testing.T) {
 			t.Error("expected error")
 		}
 	})
-}
-
-func TestCurve25519DoubleX(t *testing.T) {
-	x := big.NewInt(42)
-	result := curve25519DoubleX(x)
-	if result == nil {
-		t.Error("result should not be nil")
-	}
-	if result.Sign() < 0 {
-		t.Error("result should be non-negative")
-	}
 }
 
 func testCTR() *crypto.CTRCipher {

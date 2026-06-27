@@ -42,17 +42,8 @@ type wsConn struct {
 
 	readBuf  []byte // buffered bytes from the current frame
 	frameBuf []byte // reusable buffer for reading frame payloads
-	readEOF  bool   // set when a final frame has been drained
 	readErr  error  // sticky read error
 }
-
-// wsReadWriter implements the io.ReadWriter needed by bufio.ReadWriter
-type wsReadWriter struct {
-	*wsConn
-}
-
-func (w *wsReadWriter) Read(p []byte) (int, error)  { return w.conn.Read(p) }
-func (w *wsReadWriter) Write(p []byte) (int, error) { return w.conn.Write(p) }
 
 // newWSConn creates a new wsConn atop an already-upgraded TCP connection.
 // If br is nil, a fresh bufio.Reader is created.
@@ -141,14 +132,14 @@ func (c *wsConn) readFrame() (op byte, payload []byte, err error) {
 	masked := header[1]&wsMask != 0
 
 	length := int64(header[1] & 0x7F)
-	switch {
-	case length == wsLen16:
+	switch length {
+	case wsLen16:
 		var b [2]byte
 		if _, err = io.ReadFull(c.br, b[:]); err != nil {
 			return 0, nil, err
 		}
 		length = int64(binary.BigEndian.Uint16(b[:]))
-	case length == wsLen64:
+	case wsLen64:
 		var b [8]byte
 		if _, err = io.ReadFull(c.br, b[:]); err != nil {
 			return 0, nil, err

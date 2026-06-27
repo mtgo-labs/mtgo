@@ -25,6 +25,10 @@ type updateManagerConfig struct {
 	// instead of calling DispatchSafe inline. When nil/disabled, dispatch
 	// stays synchronous (current behavior — Constitution Principle IV).
 	InboundQueue *InboundUpdateQueue
+
+	// MaxChannelDiffConcurrency limits concurrent getChannelDifference
+	// RPCs. 0 means unlimited.
+	MaxChannelDiffConcurrency int
 }
 
 // UpdateHealth holds diagnostic metrics about the update processing pipeline,
@@ -76,6 +80,10 @@ type updateManager struct {
 	recoveryTimer *time.Timer
 
 	health UpdateHealth
+
+	// channelDiffSem limits concurrent getChannelDifference RPCs across
+	// all tracked channels. nil = unlimited.
+	channelDiffSem chan struct{}
 }
 
 func newUpdateManager(c *Client, st storage.Storage, cfg updateManagerConfig) *updateManager {
@@ -87,7 +95,7 @@ func newUpdateManager(c *Client, st storage.Storage, cfg updateManagerConfig) *u
 	if sid, err := st.SessionID(); err == nil {
 		sessionID = sid
 	}
-	return &updateManager{
+	mgr := &updateManager{
 		client:    c,
 		store:     store,
 		cfg:       cfg,
@@ -96,6 +104,10 @@ func newUpdateManager(c *Client, st storage.Storage, cfg updateManagerConfig) *u
 		channels:  make(map[int64]channelState),
 		done:      make(chan struct{}),
 	}
+	if cfg.MaxChannelDiffConcurrency > 0 {
+		mgr.channelDiffSem = make(chan struct{}, cfg.MaxChannelDiffConcurrency)
+	}
+	return mgr
 }
 
 func (m *updateManager) Start(ctx context.Context) error {
@@ -221,6 +233,7 @@ func (m *updateManager) processUpdates(ctx context.Context, updates tg.UpdatesCl
 	userMap := buildUserMap(parsedUsers)
 	chatMap := buildChatMap(parsedChats)
 	pm := buildPeerMapFromClasses(parsedUsers, parsedChats)
+	m.client.backfillMinAccessHashes(chatMap, userMap)
 	for _, raw := range rawUpdates {
 		if err := m.applyUpdate(ctx, raw, updates, userMap, chatMap, pm); err != nil {
 			m.client.Log.Warnf("apply update: %v", err)
@@ -465,6 +478,34 @@ func (m *updateManager) advanceState(meta updateMeta) {
 	}
 }
 
+// ApplyAffected applies the pts increment from a messages.affectedMessages /
+// messages.affectedHistory RPC result, keeping local pts in sync after a
+// self-initiated read or delete. pts==0 is ignored (would reset the sequence).
+// channelID 0 targets the common sequence; a non-zero channelID targets that
+// channel only if it is already tracked. Never regresses pts.
+func (m *updateManager) ApplyAffected(ctx context.Context, channelID int64, pts, ptsCount int) {
+	if pts == 0 {
+		return
+	}
+	if channelID != 0 {
+		m.mu.RLock()
+		ch, ok := m.channels[channelID]
+		m.mu.RUnlock()
+		if !ok || pts <= int(ch.Pts) {
+			return
+		}
+		m.advanceState(updateMeta{IsChannel: true, ChannelID: channelID, ChannelPts: int32(pts), PtsCount: int32(ptsCount)})
+		return
+	}
+	m.mu.RLock()
+	cur := m.state.Pts
+	m.mu.RUnlock()
+	if pts <= int(cur) {
+		return
+	}
+	m.advanceState(updateMeta{Pts: int32(pts), PtsCount: int32(ptsCount)})
+}
+
 func classifyAccountUpdate(state updateState, meta updateMeta) gapKind {
 	if meta.Pts > 0 {
 		expected := state.Pts + meta.PtsCount
@@ -547,11 +588,12 @@ func (m *updateManager) doGapRecovery(ctx context.Context, container tg.UpdatesC
 		}
 	}
 	retryKind := m.classifyUpdate(meta)
-	if retryKind == duplicateUpdate {
+	switch retryKind {
+	case duplicateUpdate:
 		m.mu.Lock()
 		m.health.DuplicateCount++
 		m.mu.Unlock()
-	} else if retryKind == noGap {
+	case noGap:
 		_ = m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
 	}
 }

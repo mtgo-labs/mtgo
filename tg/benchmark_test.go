@@ -18,18 +18,18 @@ func BenchmarkEncodePong(b *testing.B) {
 
 func BenchmarkEncodeConfig(b *testing.B) {
 	v := &Config{
-		Date:               1700000000,
-		Expires:            1700003600,
-		ThisDC:             2,
-		ChatSizeMax:        200,
-		MegagroupSizeMax:   200000,
-		ForwardedCountMax:  100,
-		EditTimeLimit:      172800,
-		MessageLengthMax:   4096,
-		CaptionLengthMax:   1024,
-		WebfileDCID:        4,
-		MeURLPrefix:        "https://t.me/",
-		DCTxtDomainName:    "v4.web.telegram.org",
+		Date:              1700000000,
+		Expires:           1700003600,
+		ThisDC:            2,
+		ChatSizeMax:       200,
+		MegagroupSizeMax:  200000,
+		ForwardedCountMax: 100,
+		EditTimeLimit:     172800,
+		MessageLengthMax:  4096,
+		CaptionLengthMax:  1024,
+		WebfileDCID:       4,
+		MeURLPrefix:       "https://t.me/",
+		DCTxtDomainName:   "v4.web.telegram.org",
 	}
 	b.ReportAllocs()
 	for b.Loop() {

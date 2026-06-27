@@ -51,6 +51,19 @@ func KDF(authKey, msgKey []byte, outgoing bool) (aesKey, aesIV [32]byte) {
 	return aesKey, aesIV
 }
 
+// encryptedPaddingLen returns the padding length for a plaintext of length
+// bufLen: at least 12 bytes, 16-aligned, plus a random 0..15 extra 16-byte
+// blocks so the ciphertext length is not a deterministic client fingerprint.
+// Max is 27+240=267 bytes, within the MTProto-2.0 12..1024 bound.
+func encryptedPaddingLen(bufLen int, randByte byte) int {
+	pad := (16 - (bufLen % 16)) % 16
+	if pad < 12 {
+		pad += 16
+	}
+	pad += int(randByte&0x0F) * 16
+	return pad
+}
+
 // Pack serializes, pads, and encrypts a message for transmission. It assembles
 // the plaintext (salt + sessionID + encoded message + random padding), computes
 // msgKey as SHA-256(authKey[88:120] + plaintext)[8:24], derives the AES key/IV
@@ -74,13 +87,11 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	dataBuf.Write(msgBuf.Bytes())
 	bufPool.Put(msgBuf)
 
-	paddingLen := (-(dataBuf.Len()+12)%16 + 12)
-	if paddingLen < 12 {
-		paddingLen += 16
-	}
-	var padding [28]byte
-	rand.Read(padding[:paddingLen])
-	dataBuf.Write(padding[:paddingLen])
+	var jb [1]byte
+	rand.Read(jb[:])
+	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
+	rand.Read(padding)
+	dataBuf.Write(padding)
 
 	data := dataBuf.Bytes()
 
@@ -126,13 +137,11 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 	tg.WriteInt(dataBuf, uint32(len(bodyBytes)))
 	dataBuf.Write(bodyBytes)
 
-	paddingLen := (-(dataBuf.Len()+12)%16 + 12)
-	if paddingLen < 12 {
-		paddingLen += 16
-	}
-	var padding [28]byte
-	rand.Read(padding[:paddingLen])
-	dataBuf.Write(padding[:paddingLen])
+	var jb [1]byte
+	rand.Read(jb[:])
+	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
+	rand.Read(padding)
+	dataBuf.Write(padding)
 
 	data := dataBuf.Bytes()
 

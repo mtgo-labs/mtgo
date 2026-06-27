@@ -251,7 +251,7 @@ func (c *Client) reconnectOnce() error {
 			return fmt.Errorf("dial %s: %w", addr, err)
 		}
 
-		tp, err := newTCPTransport(c.config().TransportMode, conn)
+		tp, err := c.createTransport(conn)
 		if err != nil {
 			conn.Close()
 			return err

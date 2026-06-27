@@ -402,3 +402,97 @@ func TestStartLoadsPersistedChannelStates(t *testing.T) {
 		t.Fatalf("state pts = %d, want 10", mgr.state.Pts)
 	}
 }
+
+func TestApplyAffectedCommonPts(t *testing.T) {
+	mgr := testUpdateManager(t)
+	mgr.ApplyAffected(context.Background(), 0, 100, 5)
+	if mgr.state.Pts != 100 {
+		t.Fatalf("pts = %d, want 100", mgr.state.Pts)
+	}
+}
+
+func TestApplyAffectedZeroPtsNoop(t *testing.T) {
+	mgr := testUpdateManager(t)
+	mgr.state.Pts = 50
+	mgr.ApplyAffected(context.Background(), 0, 0, 0)
+	if mgr.state.Pts != 50 {
+		t.Fatalf("pts = %d, want 50 (unchanged)", mgr.state.Pts)
+	}
+}
+
+func TestApplyAffectedNoRegression(t *testing.T) {
+	mgr := testUpdateManager(t)
+	mgr.state.Pts = 100
+	mgr.ApplyAffected(context.Background(), 0, 50, 1)
+	if mgr.state.Pts != 100 {
+		t.Fatalf("pts = %d, want 100 (no regression)", mgr.state.Pts)
+	}
+}
+
+func TestApplyAffectedChannel(t *testing.T) {
+	mgr := testUpdateManager(t)
+	mgr.channels[77] = channelState{ChannelID: 77, Pts: 10}
+
+	mgr.ApplyAffected(context.Background(), 77, 14, 4)
+	if mgr.channels[77].Pts != 14 {
+		t.Fatalf("channel 77 pts = %d, want 14", mgr.channels[77].Pts)
+	}
+	// Common pts must be untouched.
+	if mgr.state.Pts != 0 {
+		t.Fatalf("common pts = %d, want 0", mgr.state.Pts)
+	}
+
+	// Channel pts must not regress.
+	mgr.ApplyAffected(context.Background(), 77, 8, 1)
+	if mgr.channels[77].Pts != 14 {
+		t.Fatalf("channel 77 pts regressed to %d, want 14", mgr.channels[77].Pts)
+	}
+
+	// Unknown channel is a no-op.
+	mgr.ApplyAffected(context.Background(), 99, 20, 1)
+	if _, ok := mgr.channels[99]; ok {
+		t.Fatal("unknown channel 99 should not be tracked")
+	}
+}
+
+func TestChannelIDFromRequest(t *testing.T) {
+	tests := []struct {
+		name string
+		req  tg.TLObject
+		want int64
+	}{
+		{
+			name: "channels.deleteMessages",
+			req:  &tg.ChannelsDeleteMessagesRequest{Channel: &tg.InputChannel{ChannelID: 77}},
+			want: 77,
+		},
+		{
+			name: "messages.readHistory user peer",
+			req:  &tg.MessagesReadHistoryRequest{Peer: &tg.InputPeerUser{}},
+			want: 0,
+		},
+		{
+			name: "messages.readHistory channel peer",
+			req:  &tg.MessagesReadHistoryRequest{Peer: &tg.InputPeerChannel{ChannelID: 88}},
+			want: 88,
+		},
+		{
+			name: "channels.readHistory",
+			req:  &tg.ChannelsReadHistoryRequest{Channel: &tg.InputChannel{ChannelID: 99}},
+			want: 99,
+		},
+		{
+			name: "unrelated request",
+			req:  &tg.MessagesSendMessageRequest{},
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := channelIDFromRequest(tt.req)
+			if got != tt.want {
+				t.Fatalf("channelIDFromRequest = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}

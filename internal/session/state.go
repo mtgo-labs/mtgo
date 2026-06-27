@@ -107,10 +107,6 @@ func (sm *stateMachine) isActive() bool {
 	return SessionState(sm.state.Load()) == StateActive
 }
 
-func (sm *stateMachine) isClosed() bool {
-	return SessionState(sm.state.Load()) == StateClosed
-}
-
 func (sm *stateMachine) forceSetState(state SessionState) {
 	sm.mu.Lock()
 	sm.state.Store(uint32(state))

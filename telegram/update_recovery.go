@@ -153,6 +153,19 @@ func (m *updateManager) RecoverChannel(ctx context.Context, rpc differenceRPC, c
 		m.mu.Unlock()
 	}()
 
+	// Acquire the concurrency-limiting semaphore before the RPC call.
+	// This bounds the number of simultaneous getChannelDifference requests
+	// across all channels. If MaxChannelDiffConcurrency is 0 (unlimited),
+	// channelDiffSem is nil and the acquire is a no-op.
+	if m.channelDiffSem != nil {
+		select {
+		case m.channelDiffSem <- struct{}{}:
+			defer func() { <-m.channelDiffSem }()
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
 	for {
 		m.mu.Lock()
 		currentPts := m.channels[channelID].Pts

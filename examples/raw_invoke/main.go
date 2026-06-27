@@ -73,8 +73,8 @@ func main() {
 
 	// 5. MessagesSendMessage — send a raw message
 	sent, err := rpc.MessagesSendMessage(ctx, &tg.MessagesSendMessageRequest{
-		Peer:    &tg.InputPeerSelf{},
-		Message: "Hello from raw invoke!",
+		Peer:     &tg.InputPeerSelf{},
+		Message:  "Hello from raw invoke!",
 		RandomID: client.RandomID(),
 	})
 	if err != nil {

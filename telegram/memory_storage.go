@@ -11,11 +11,6 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/storage"
 )
 
-type dedupEntry struct {
-	key string
-	ts  time.Time
-}
-
 // MemoryStorage implements the storage interface with in-memory maps, suitable for testing
 // and ephemeral sessions. It stores peers, DC auth entries, update states, and deduplication
 // data in Go maps. All data is lost when the process exits.
@@ -274,13 +269,37 @@ func (m *MemoryStorage) SavePeer(p *storage.Peer) error {
 	if m.peerUsernames == nil {
 		m.peerUsernames = make(map[string]int64)
 	}
-	if old, ok := m.peers[p.ID]; ok && old.Username != "" {
-		delete(m.peerUsernames, strings.ToLower(old.Username))
+	merged := *p
+	if old, ok := m.peers[p.ID]; ok {
+		if merged.AccessHash == 0 {
+			merged.AccessHash = old.AccessHash
+		}
+		if merged.Username == "" {
+			merged.Username = old.Username
+		}
+		if merged.FirstName == "" {
+			merged.FirstName = old.FirstName
+		}
+		if merged.LastName == "" {
+			merged.LastName = old.LastName
+		}
+		if merged.PhoneNumber == "" {
+			merged.PhoneNumber = old.PhoneNumber
+		}
+		if !merged.IsBot {
+			merged.IsBot = old.IsBot
+		}
+		if merged.Language == "" {
+			merged.Language = old.Language
+		}
+		if old.Username != "" && merged.Username != old.Username {
+			delete(m.peerUsernames, strings.ToLower(old.Username))
+		}
 	}
-	if p.Username != "" {
-		m.peerUsernames[strings.ToLower(p.Username)] = p.ID
+	if merged.Username != "" {
+		m.peerUsernames[strings.ToLower(merged.Username)] = merged.ID
 	}
-	m.peers[p.ID] = *p
+	m.peers[merged.ID] = merged
 	return nil
 }
 

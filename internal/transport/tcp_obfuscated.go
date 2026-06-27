@@ -32,10 +32,7 @@ func isForbiddenNonce(nonce []byte) bool {
 		}
 	}
 	secondInt := binary.LittleEndian.Uint32(nonce[4:8])
-	if secondInt == 0 {
-		return true
-	}
-	return false
+	return secondInt == 0
 }
 
 // TCPObfuscated wraps an inner Transport with AES-CTR encryption to hide

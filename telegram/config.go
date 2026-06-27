@@ -460,6 +460,41 @@ type Config struct {
 	// this interval. When 0 (default), the bundled static keys are used
 	// exclusively (current behavior).
 	RSAKeyRotationInterval time.Duration
+
+	// AlwaysObfuscate wraps direct TCP connections in the obfuscated2
+	// transport, mirroring tdesktop which always obfuscates even non-proxy
+	// connections. This prevents ISP/DPI from identifying the connection as
+	// MTProto by the transport tag byte. When false (default), direct
+	// connections use the raw transport (Abridged/Intermediate/Full).
+	// MTProxy connections are always obfuscated regardless of this flag.
+	AlwaysObfuscate bool
+
+	// MaxChannelDiffConcurrency limits how many concurrent
+	// updates.getChannelDifference requests may be in flight across all
+	// tracked channels. When 0 (default), there is no limit. A value of
+	// 3-5 protects accounts in many active channels from FLOOD_WAIT.
+	// Ported from TDLib MAX_CONCURRENT_GET_CHANNEL_DIFFERENCES.
+	MaxChannelDiffConcurrency int
+}
+
+// DeviceTDesktopWindows returns a DeviceConfig that mimics Telegram Desktop
+// on Windows, matching the device identity tdesktop reports. Use this to
+// blend in with desktop clients in environments where client fingerprinting
+// matters.
+//
+// Example:
+//
+//	cfg.Device = telegram.DeviceTDesktopWindows()
+func DeviceTDesktopWindows() DeviceConfig {
+	return DeviceConfig{
+		DeviceModel:    "Desktop",
+		SystemVersion:  "Windows 10",
+		AppVersion:     "5.10.0 x64",
+		LangPack:       "tdesktop",
+		LangCode:       "en",
+		SystemLangCode: "en-US",
+		ClientPlatform: types.ClientPlatformDesktop,
+	}
 }
 
 // DefaultConfig provides production-ready defaults for a new client. Override

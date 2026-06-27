@@ -136,7 +136,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 		return nil, fmt.Errorf("download: dial DC %d (%s:%d): %w", dcID, addr, port, err)
 	}
 
-	tp, err := newTCPTransport(c.config().TransportMode, conn)
+	tp, err := c.createTransport(conn)
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("download: transport DC %d: %w", dcID, err)

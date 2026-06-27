@@ -10,13 +10,13 @@ import (
 
 func BenchmarkParseUser(b *testing.B) {
 	raw := &tg.User{
-		ID:            123456789,
-		FirstName:     "Test",
-		LastName:      "User",
-		Username:      "testuser",
-		Phone:         "1234567890",
-		AccessHash:    987654321,
-		Bot:           true,
+		ID:         123456789,
+		FirstName:  "Test",
+		LastName:   "User",
+		Username:   "testuser",
+		Phone:      "1234567890",
+		AccessHash: 987654321,
+		Bot:        true,
 	}
 	b.ReportAllocs()
 	for b.Loop() {
@@ -28,11 +28,11 @@ func BenchmarkParseUser(b *testing.B) {
 
 func BenchmarkParseChatFromChat(b *testing.B) {
 	raw := &tg.Chat{
-		ID:           123456,
-		Title:        "Test Group",
+		ID:                123456,
+		Title:             "Test Group",
 		ParticipantsCount: 100,
-		Date:         1700000000,
-		Version:      1,
+		Date:              1700000000,
+		Version:           1,
 	}
 	b.ReportAllocs()
 	for b.Loop() {

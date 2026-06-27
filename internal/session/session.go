@@ -121,10 +121,6 @@ func (s *Session) hasDecodedResults() bool {
 	return s.pending.HasAny()
 }
 
-func (s *Session) hasRawResults() bool {
-	return s.pending.HasAnyRaw()
-}
-
 func (s *Session) checkWrite() error {
 	switch s.sm.State() {
 	case StateActive, StateConnecting:
@@ -437,8 +433,8 @@ type Session struct {
 	// Production-hardening fields (end of struct to keep hot-path fields in
 	// the first 6 cache lines — only accessed when features are enabled).
 	containerTracker *ContainerTracker
-	floodWaits        *FloodWaitQueue
-	outboundBatcher   *OutboundBatcher
+	floodWaits       *FloodWaitQueue
+	outboundBatcher  *OutboundBatcher
 }
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
@@ -2072,26 +2068,22 @@ func (s *Session) SetUpdateHandler(fn func(tg.TLObject)) {
 	s.mu.Unlock()
 }
 
-// recovery cap — max unknown queries to recover on reconnect.
-// Ported from td/td/telegram/net/Session.cpp:1297-1309 (MAX_INFLIGHT_QUERIES).
-const maxRecoveryQueries = 1024
-
 // TempKeyManager manages PFS temporary auth key lifecycle.
 // Ported from td/td/telegram/net/Session.cpp:1488-1498 (auth_loop TmpAuthKey).
 type TempKeyManager struct {
-	dcID        int
-	testMode    bool
-	permKey     []byte        // permanent auth key
-	tempKey     []byte        // current temp auth key
-	tempKeyID   int64         // SHA1-based temp key ID
-	expiresAt   time.Time     // when the temp key expires
-	bound       bool          // whether auth.bindTempAuthKey succeeded
-	enabled     bool          // PFS mode flag
-	persistKey  bool          // whether to persist temp key to storage
-	createdAt   time.Time     // when this manager (and perm key) was initialized
-	needInit    bool          // caller must call initConnection after bind
-	storage     storage.Storage
-	mu          sync.Mutex
+	dcID       int
+	testMode   bool
+	permKey    []byte    // permanent auth key
+	tempKey    []byte    // current temp auth key
+	tempKeyID  int64     // SHA1-based temp key ID
+	expiresAt  time.Time // when the temp key expires
+	bound      bool      // whether auth.bindTempAuthKey succeeded
+	enabled    bool      // PFS mode flag
+	persistKey bool      // whether to persist temp key to storage
+	createdAt  time.Time // when this manager (and perm key) was initialized
+	needInit   bool      // caller must call initConnection after bind
+	storage    storage.Storage
+	mu         sync.Mutex
 }
 
 // NewTempKeyManager creates a new temp key manager.
@@ -2386,170 +2378,6 @@ func (m *TempKeyManager) SaveToStorage() error {
 	// TODO: implement storage save for temp key
 	// Key: temp_auth_key_{dcID}
 	return nil
-}
-
-// Message state constants from msgs_state_info.Info byte values.
-const (
-	msgStateReceivedNotProcessed = 1
-	msgStateReceivedAndProcessed = 2
-	msgStateError                = 3
-	msgStateNoInfo               = 4
-)
-
-// recoverUnknownQueries queries the server for the status of pending RPCs
-// whose fate is unknown after a transport disconnect. It sends msgs_state_req
-// and processes the response to resolve, reject, or re-send each query.
-// Ported from td/td/telegram/net/Session.cpp:1297-1309 (ask_info logic).
-func (s *Session) recoverUnknownQueries(ctx context.Context) {
-	unknownIDs := s.pending.GetUnknown()
-	if len(unknownIDs) == 0 {
-		return
-	}
-
-	// Reject excess queries beyond the recovery cap.
-	rejected := s.pending.RejectExcessUnknowns(maxRecoveryQueries)
-	if rejected > 0 {
-		if s.log != nil {
-			s.log.Warnf("recovery: rejected %d excess unknown queries (cap %d)", rejected, maxRecoveryQueries)
-		}
-	}
-
-	// Re-fetch after rejection (only recoverable ones remain).
-	unknownIDs = s.pending.GetUnknown()
-	if len(unknownIDs) == 0 {
-		return
-	}
-
-	if s.log != nil {
-		s.log.Warnf("recovery: querying status of %d unknown queries", len(unknownIDs))
-	}
-
-	// Send msgs_state_req to query server for status of unknown messages.
-	stateReq := &tg.MsgsStateReq{MsgIds: unknownIDs}
-	result, err := s.Invoke(ctx, stateReq, 1, 10*time.Second)
-	if err != nil {
-		if s.log != nil {
-			s.log.Warnf("recovery: msgs_state_req failed: %v — re-sending all unknown queries", err)
-		}
-		// On failure, re-send all unknown queries (server may have lost them).
-		s.resendUnknownQueries(unknownIDs)
-		return
-	}
-
-	stateInfo, ok := result.(*tg.MsgsStateInfo)
-	if !ok {
-		if s.log != nil {
-			s.log.Warnf("recovery: unexpected response type %T — re-sending all unknown queries", result)
-		}
-		s.resendUnknownQueries(unknownIDs)
-		return
-	}
-
-	// Parse the state info and process each message.
-	s.processStateInfo(stateInfo, unknownIDs)
-}
-
-// processStateInfo handles the msgs_state_info response, resolving, rejecting,
-// or re-sending queries based on their server-reported state.
-func (s *Session) processStateInfo(info *tg.MsgsStateInfo, msgIDs []int64) {
-	infoBytes := []byte(info.Info)
-	if len(infoBytes) != len(msgIDs) {
-		if s.log != nil {
-			s.log.Warnf("recovery: state info length mismatch: got %d, want %d — re-sending all", len(infoBytes), len(msgIDs))
-		}
-		s.resendUnknownQueries(msgIDs)
-		return
-	}
-
-	resolved, resent, waited := 0, 0, 0
-	for i, msgID := range msgIDs {
-		state := int(infoBytes[i])
-		switch state {
-		case msgStateReceivedAndProcessed:
-			// Server has the result — it will be delivered when the new
-			// session's readLoop processes it. Mark as known.
-			resolved++
-
-		case msgStateError:
-			// Server reports an error for this message. Reject it.
-			if s.pending.Reject(msgID, fmt.Errorf("session: server reported error for msg %d", msgID)) {
-				resolved++
-			}
-
-		case msgStateNoInfo:
-			// Server has no info — it never received the message. Re-send.
-			s.resendSingleQuery(msgID)
-			resent++
-
-		case msgStateReceivedNotProcessed:
-			// Server received but hasn't processed yet. Wait — the result
-			// will come through the normal readLoop.
-			waited++
-
-		default:
-			if s.log != nil {
-				s.log.Warnf("recovery: unknown state %d for msg %d — re-sending", state, msgID)
-			}
-			s.resendSingleQuery(msgID)
-			resent++
-		}
-	}
-
-	if s.log != nil {
-		s.log.Warnf("recovery complete: resolved=%d, resent=%d, waited=%d", resolved, resent, waited)
-	}
-}
-
-// resendUnknownQueries re-sends all unknown queries (fallback when state query fails).
-func (s *Session) resendUnknownQueries(msgIDs []int64) {
-	for _, msgID := range msgIDs {
-		s.resendSingleQuery(msgID)
-	}
-}
-
-// resendSingleQuery re-sends a single pending query by its message ID.
-func (s *Session) resendSingleQuery(msgID int64) {
-	// Get the pending handle, remove it, and re-invoke the query.
-	// The handle contains the original query in the result field (set during Register).
-	// For now, we reject with a retryable error so the caller can retry.
-	// TODO: store the original query in the CallHandle for automatic re-send.
-	if s.pending.Reject(msgID, ErrQueryLostReconnect) {
-		if s.log != nil {
-			s.log.Warnf("recovery: rejected msg %d for caller retry (automatic re-send not yet implemented)", msgID)
-		}
-	}
-}
-
-// handleNewSessionCreated processes the server's new_session_created
-// notification, reconciling unknown queries against the new session boundary.
-// Ported from td/td/telegram/net/Session.cpp:700-734 (on_new_session_created).
-func (s *Session) handleNewSessionCreated(obj *tg.NewSessionCreated) {
-	// The server sends new_session_created when a new session is established.
-	// The first_msg_id indicates the boundary — queries with msg_id < first_msg_id
-	// were on the old session and need recovery.
-	if s.log != nil {
-		s.log.Warnf("new_session_created: first_msg_id=%d, unique_id=%d", obj.FirstMsgID, obj.UniqueID)
-	}
-
-	// Update server salt from the notification.
-	s.saltMgr.StoreSimple(obj.ServerSalt)
-
-	// Reconcile unknown queries against the new session boundary.
-	unknownIDs := s.pending.GetUnknown()
-	var oldSession []int64
-	for _, msgID := range unknownIDs {
-		if msgID < obj.FirstMsgID {
-			oldSession = append(oldSession, msgID)
-		}
-	}
-
-	if len(oldSession) > 0 {
-		if s.log != nil {
-			s.log.Warnf("new_session_created: %d queries from old session need recovery", len(oldSession))
-		}
-		// Re-send queries from the old session that the server may have lost.
-		s.resendUnknownQueries(oldSession)
-	}
 }
 
 // PrepareForReconnect marks all pending queries as unknown and returns their

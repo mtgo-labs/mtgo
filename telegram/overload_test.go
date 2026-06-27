@@ -62,7 +62,7 @@ func TestOverload_HighPriorityDeferredAdmitted(t *testing.T) {
 	}()
 
 	time.Sleep(50 * time.Millisecond) // let the goroutine start waiting
-	r1()                               // free the slot
+	r1()                              // free the slot
 
 	select {
 	case err := <-done:

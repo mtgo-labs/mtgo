@@ -62,7 +62,7 @@ type InlineQuery struct {
 	// PeerType describes the chat the inline query originated from; maps to the
 	// Bot API inline-query chat_type.
 	PeerType tg.InlineQueryPeerTypeClass
-	binder Binder
+	binder   Binder
 }
 
 // ParseCallbackQuery extracts a CallbackQuery from an MTProto update.

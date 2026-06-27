@@ -746,17 +746,6 @@ func (a *adapterWrapper) ExportSessionString() (string, error) {
 	return encoded, nil
 }
 
-var prodDCAddresses = map[int]string{
-	1: "149.154.175.53",
-	2: "149.154.167.51",
-	3: "149.154.175.100",
-	4: "149.154.167.91",
-	5: "149.154.171.5",
-}
-
-func dcIPv4Address(id int) string {
-	return prodDCAddresses[id]
-}
 func (a *adapterWrapper) Close() error           { return a.ext.Close() }
 func (a *adapterWrapper) SavePeer(p *Peer) error { return a.ext.SavePeer(p) }
 func (a *adapterWrapper) SavePeers(peers []*Peer) error {

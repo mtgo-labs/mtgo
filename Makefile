@@ -51,12 +51,12 @@ bench-compare: _benchstat
 	@echo "==> Benchmarking current HEAD → new.txt"
 	@go test $(BENCH_FLAGS) -count=$(BENCH_COUNT) $(BENCH_PKGS) 2>&1 | tee new.txt
 	@echo ""
-	@echo "==> Benchmarking $(REF) → old.txt (isolated worktree)"
+	@echo "==> Benchmarking $(REF) → old.txt (detached sibling worktree)"
 	@set -e; \
-	WT=$$(mktemp -d); \
+	WT=$$(TMPDIR="$$(dirname "$(CURDIR)")" mktemp -d); \
 	trap 'git worktree remove --force $$WT 2>/dev/null; rm -rf $$WT' EXIT; \
-	git worktree add -q "$$WT" "$(REF)"; \
-	( cd "$$WT" && go test $(BENCH_FLAGS) -count=$(BENCH_COUNT) $(BENCH_PKGS) ) 2>&1 | tee old.txt
+	git worktree add --detach -q "$$WT" "$(REF)"; \
+	( cd "$$WT" && GOWORK=off go test $(BENCH_FLAGS) -count=$(BENCH_COUNT) $(BENCH_PKGS) ) 2>&1 | tee old.txt
 	@echo ""
 	@echo "==> benchstat old.txt new.txt"
 	@benchstat old.txt new.txt

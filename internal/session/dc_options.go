@@ -39,10 +39,10 @@ type DCOptionWithHealth struct {
 // DCOptionPool manages candidate endpoints for a single DC with health scoring.
 // Ported from td/td/telegram/net/DcOptionsSet.h (find_connection).
 type DCOptionPool struct {
-	dcID    int
-	options []DCOptionWithHealth
+	dcID     int
+	options  []DCOptionWithHealth
 	coolDown time.Duration // cool-down after failure before retry
-	mu      sync.RWMutex
+	mu       sync.RWMutex
 }
 
 // NewDCOptionPool creates a new endpoint pool for the given DC.
@@ -175,7 +175,7 @@ func (p *DCOptionPool) OptionCount() int {
 
 // Errors for DCOptionPool.
 var (
-	ErrNoEndpoints        = NewSessionError("dc_options: no endpoints available")
+	ErrNoEndpoints         = NewSessionError("dc_options: no endpoints available")
 	ErrAllEndpointsFailing = NewSessionError("dc_options: all endpoints failing (cool-down active)")
 )
 

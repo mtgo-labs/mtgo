@@ -6,9 +6,9 @@ import (
 
 func BenchmarkEncodeFileID(b *testing.B) {
 	fid := FileID{
-		Type:        FileTypePhoto,
-		ID:          123456789,
-		AccessHash:  987654321,
+		Type:          FileTypePhoto,
+		ID:            123456789,
+		AccessHash:    987654321,
 		FileReference: []byte("abc123ref"),
 	}
 	b.ReportAllocs()
@@ -20,9 +20,9 @@ func BenchmarkEncodeFileID(b *testing.B) {
 
 func BenchmarkDecodeFileID(b *testing.B) {
 	fid := FileID{
-		Type:        FileTypeDocument,
-		ID:          123456789,
-		AccessHash:  987654321,
+		Type:          FileTypeDocument,
+		ID:            123456789,
+		AccessHash:    987654321,
 		FileReference: []byte("abc123ref"),
 	}
 	encoded, _ := Encode(fid)
@@ -35,9 +35,9 @@ func BenchmarkDecodeFileID(b *testing.B) {
 
 func BenchmarkEncodeDecodeRoundTrip(b *testing.B) {
 	fid := FileID{
-		Type:        FileTypeVideo,
-		ID:          555555,
-		AccessHash:  777777,
+		Type:          FileTypeVideo,
+		ID:            555555,
+		AccessHash:    777777,
 		FileReference: []byte("ref"),
 	}
 	b.ReportAllocs()

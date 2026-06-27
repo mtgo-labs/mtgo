@@ -33,4 +33,3 @@ func ParseChosenInlineResult(raw *tg.UpdateBotInlineSend) *ChosenInlineResult {
 		MsgID:    raw.MsgID,
 	}
 }
-

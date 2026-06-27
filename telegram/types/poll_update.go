@@ -31,10 +31,10 @@ func ParsePollUpdated(raw *tg.UpdateMessagePoll) *PollUpdated {
 // user votes. Built from updateMessagePollVote. The Options are the raw option
 // byte identifiers the user voted for; mtgo-bot-api maps them to option indices.
 type PollAnswerUpdate struct {
-	PollID   int64
-	ChatID   int64
-	UserID   int64
-	Options  [][]byte // raw option identifiers voted
+	PollID  int64
+	ChatID  int64
+	UserID  int64
+	Options [][]byte // raw option identifiers voted
 }
 
 // ParsePollAnswerUpdate converts a TL updateMessagePollVote into a PollAnswerUpdate.
