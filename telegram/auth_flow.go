@@ -117,7 +117,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 			return c.loginPassword(ctx, pwFn)
 		}
 		if errors.Is(err, ErrSignUpRequired) {
-			return c.loginSignUp(ctx, phone, hash, codeFn)
+		return c.loginSignUp(ctx, phone, hash)
 		}
 		if tgerr.Is(err, "PHONE_CODE_INVALID") || tgerr.Is(err, "PHONE_CODE_EMPTY") {
 			fmt.Fprintf(os.Stderr, "login: invalid code (%d/%d)\n", attempt+1, maxAuthRetries)
@@ -152,7 +152,7 @@ func (c *Client) loginPassword(ctx context.Context, pwFn PasswordFunc) error {
 	return fmt.Errorf("login: too many invalid password attempts")
 }
 
-func (c *Client) loginSignUp(ctx context.Context, phone, hash string, codeFn CodeFunc) error {
+func (c *Client) loginSignUp(ctx context.Context, phone, hash string) error {
 	fmt.Print("Phone number not registered. Enter first name to sign up: ")
 	firstName, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {

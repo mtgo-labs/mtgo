@@ -962,6 +962,7 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	if err != nil {
 		return err
 	}
+	defer c.migratingDC.Store(false)
 	testSession := c.testSession
 	testDialer := c.testDialer
 
@@ -1037,7 +1038,6 @@ func (c *Client) initStorage() (storage.Storage, bool, error) {
 	}
 	c.storage = st
 	migratingDC := c.migratingDC.Load()
-	c.migratingDC.Store(false)
 	c.mu.Unlock()
 
 	if c.config().SessionName != "" {
@@ -1350,14 +1350,12 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	}
 	c.Log.Info("encrypted session started")
 
-	c.sessionWg.Add(1)
-	go func() {
-		defer c.sessionWg.Done()
+	c.sessionWg.Go(func() {
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
 			c.triggerReconnect(fmt.Errorf("session exited"))
 		}
-	}()
+	})
 
 	c.mu.Lock()
 	c.session = sess
@@ -1748,10 +1746,7 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 		retryQuery = wrapInitConnection(c.cfg, query)
 	}
 
-	retries := c.config().Retries
-	if retries < 1 {
-		retries = 1
-	}
+	retries := max(c.config().Retries, 1)
 	result, err := c.Invoke(ctx, retryQuery, retries, 30*time.Second)
 	if err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
@@ -1872,10 +1867,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	if timeout < time.Second {
 		timeout = time.Second
 	}
-	retries := c.config().Retries
-	if retries < 1 {
-		retries = 1
-	}
+	retries := max(c.config().Retries, 1)
 
 	return sess.InvokeRaw(ctx, query, retries, timeout)
 }
