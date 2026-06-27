@@ -117,7 +117,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 			return c.loginPassword(ctx, pwFn)
 		}
 		if errors.Is(err, ErrSignUpRequired) {
-		return c.loginSignUp(ctx, phone, hash)
+			return c.loginSignUp(ctx, phone, hash)
 		}
 		if tgerr.Is(err, "PHONE_CODE_INVALID") || tgerr.Is(err, "PHONE_CODE_EMPTY") {
 			fmt.Fprintf(os.Stderr, "login: invalid code (%d/%d)\n", attempt+1, maxAuthRetries)
@@ -172,15 +172,17 @@ func (c *Client) loginSignUp(ctx context.Context, phone, hash string) error {
 	return nil
 }
 
-// isAuthorized checks whether the current session has a valid user ID
-// stored in the storage backend, which indicates a previous successful login.
+// isAuthorized checks whether storage contains either user metadata or an auth
+// key. User metadata is preferred, but a persisted auth key is enough to avoid
+// sending a new login code; the user can be restored with users.getFullUser.
 func (c *Client) isAuthorized() bool {
 	if c.storage == nil {
 		return false
 	}
 	uid, err := c.storage.UserID()
-	if err != nil || uid == 0 {
-		return false
+	if err == nil && uid != 0 {
+		return true
 	}
-	return true
+	authKey, err := c.storage.AuthKey()
+	return err == nil && len(authKey) != 0
 }

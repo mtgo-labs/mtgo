@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mtgo-labs/mtgo/internal/storage"
-	extmongodb "github.com/mtgo-labs/mtgo/internal/storage/mongodb"
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/telegram/types"
+	"github.com/mtgo-labs/storage"
+	extmongodb "github.com/mtgo-labs/storage/mongodb"
 )
 
 func main() {
@@ -27,11 +27,17 @@ func main() {
 		mongoDB = "mtgo"
 	}
 
+	store, err := extmongodb.Open(context.Background(), extmongodb.Config{URI: mongoURI, Database: mongoDB})
+	if err != nil {
+		log.Fatalf("open mongodb storage: %v", err)
+	}
+	defer store.Close()
+
 	client, err := telegram.NewClient(mustAtoi(apiID), apiHash, &telegram.Config{
 		BotToken:    botToken,
 		SessionName: "mongodb_bot",
 		SavePeers:   true,
-		Storage:     extmongodb.New(extmongodb.Config{URI: mongoURI, Database: mongoDB}),
+		Storage:     storage.NewAdapter(store),
 	})
 	if err != nil {
 		log.Fatalf("new client: %v", err)

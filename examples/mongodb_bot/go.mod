@@ -9,10 +9,10 @@ require (
 )
 
 require (
-	github.com/bytedance/gopkg v0.1.1 // indirect
-	github.com/cloudwego/gopkg v0.1.4 // indirect
-	github.com/cloudwego/netpoll v0.7.2 // indirect
-	github.com/coder/websocket v1.8.14 // indirect
+	github.com/bytedance/gopkg v0.1.4 // indirect
+	github.com/cloudwego/gopkg v0.1.10 // indirect
+	github.com/cloudwego/netpoll v0.7.3 // indirect
+	github.com/coder/websocket v1.8.15 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
@@ -22,5 +22,6 @@ require (
 	go.mongodb.org/mongo-driver/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 )

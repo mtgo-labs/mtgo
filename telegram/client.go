@@ -1453,24 +1453,8 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 		}
 	}
 
-	c.mu.RLock()
-	meSet := c.me != nil
-	c.mu.RUnlock()
-	if !meSet && st != nil {
-		if uid, err := st.UserID(); err == nil && uid != 0 {
-			isBot, _ := st.IsBot()
-			me := &types.User{
-				ID:        uid,
-				IsBot:     isBot,
-				FirstName: func() string { v, _ := st.FirstName(); return v }(),
-				LastName:  func() string { v, _ := st.LastName(); return v }(),
-				Username:  func() string { v, _ := st.Username(); return v }(),
-			}
-			c.mu.Lock()
-			c.me = me
-			c.mu.Unlock()
-			c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
-		}
+	if err := c.restoreAuthorizedUser(st); err != nil {
+		c.Log.Debugf("user restore skipped: %v", err)
 	}
 
 	needLogin := !c.isAuthorized() && c.config().PhoneNumber != "" && c.config().BotToken == "" && c.config().SessionString == "" && !c.migratingDC.Load()
@@ -1481,6 +1465,53 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 			return fmt.Errorf("phone login: %w", err)
 		}
 	}
+	return nil
+}
+
+func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
+	c.mu.RLock()
+	meSet := c.me != nil
+	c.mu.RUnlock()
+	if meSet || st == nil {
+		return nil
+	}
+
+	if uid, err := st.UserID(); err == nil && uid != 0 {
+		isBot, _ := st.IsBot()
+		me := &types.User{
+			ID:        uid,
+			IsBot:     isBot,
+			FirstName: func() string { v, _ := st.FirstName(); return v }(),
+			LastName:  func() string { v, _ := st.LastName(); return v }(),
+			Username:  func() string { v, _ := st.Username(); return v }(),
+		}
+		c.mu.Lock()
+		c.me = me
+		c.mu.Unlock()
+		c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
+		return nil
+	}
+
+	authKey, err := st.AuthKey()
+	if err != nil {
+		return err
+	}
+	if len(authKey) == 0 {
+		return nil
+	}
+
+	timeout := c.config().ReqTimeout
+	if timeout <= 0 {
+		timeout = 60 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	me, err := c.GetMe(ctx)
+	if err != nil {
+		return err
+	}
+	c.saveMeToStorage(me)
+	c.Log.Debug("user restored from auth key: id=", me.ID, " username=", me.Username)
 	return nil
 }
 
@@ -1736,18 +1767,17 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 	if err := st.SetDCID(targetDC); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("save dc_id: %w", err)}
 	}
+	if err := st.SetAuthKey(nil); err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("clear auth key: %w", err)}
+	}
+	c.updateConfig(func(cfg *Config) { cfg.DC = targetDC })
 
 	if err := c.connectTransport(30 * time.Second); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
 
-	retryQuery := query
-	if needsInitConnection(query) {
-		retryQuery = wrapInitConnection(c.cfg, query)
-	}
-
 	retries := max(c.config().Retries, 1)
-	result, err := c.Invoke(ctx, retryQuery, retries, 30*time.Second)
+	result, err := c.Invoke(ctx, query, retries, 30*time.Second)
 	if err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
