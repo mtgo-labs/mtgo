@@ -71,7 +71,7 @@ type DcAuthManager struct {
 }
 
 // NewDcAuthManager creates a new DC auth manager.
-func NewDcAuthManager(mainDCID int, exportFunc ExportFunc, importFunc ImportFunc, _ interface{}) *DcAuthManager {
+func NewDcAuthManager(mainDCID int, exportFunc ExportFunc, importFunc ImportFunc, _ any) *DcAuthManager {
 	return &DcAuthManager{
 		mainDCID:   mainDCID,
 		dcs:        make(map[int]*DcAuthState),

@@ -24,7 +24,7 @@ type ChosenInlineResultHandler struct {
 //   - func(*Context, *types.ChosenInlineResult): receives both the context and the chosen result
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewChosenInlineResultHandler(callback interface{}, filters ...Filter) *ChosenInlineResultHandler {
+func NewChosenInlineResultHandler(callback any, filters ...Filter) *ChosenInlineResultHandler {
 	h := &ChosenInlineResultHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

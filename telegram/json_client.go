@@ -76,7 +76,7 @@ func findFactory(typeName string) (func() tg.TLObject, bool) {
 	return nil, false
 }
 
-func extractInterfaceJSON(raw map[string]interface{}) map[string]json.RawMessage {
+func extractInterfaceJSON(raw map[string]any) map[string]json.RawMessage {
 	result := map[string]json.RawMessage{}
 	for key, val := range raw {
 		if key == "_" {
@@ -84,7 +84,7 @@ func extractInterfaceJSON(raw map[string]interface{}) map[string]json.RawMessage
 		}
 
 		// Handle single interface objects
-		nested, ok := val.(map[string]interface{})
+		nested, ok := val.(map[string]any)
 		if ok {
 			typeName, hasType := nested["_"]
 			if hasType {
@@ -103,14 +103,14 @@ func extractInterfaceJSON(raw map[string]interface{}) map[string]json.RawMessage
 		}
 
 		// Handle arrays of interface objects (e.g. []InputUserClass)
-		arr, isArr := val.([]interface{})
+		arr, isArr := val.([]any)
 		if !isArr {
 			continue
 		}
 		if len(arr) == 0 {
 			continue
 		}
-		firstObj, isObj := arr[0].(map[string]interface{})
+		firstObj, isObj := arr[0].(map[string]any)
 		if !isObj {
 			continue
 		}
@@ -156,7 +156,7 @@ func setInterfaceFields(req tg.TLObject, ifaceJSON map[string]json.RawMessage) {
 			}
 			sliceVal := reflect.MakeSlice(field.Type(), 0, len(rawSlice))
 			for _, rawItem := range rawSlice {
-				var tmp map[string]interface{}
+				var tmp map[string]any
 				if err := json.Unmarshal(rawItem, &tmp); err != nil {
 					continue
 				}
@@ -186,7 +186,7 @@ func setInterfaceFields(req tg.TLObject, ifaceJSON map[string]json.RawMessage) {
 			continue
 		}
 
-		var tmp map[string]interface{}
+		var tmp map[string]any
 		if err := json.Unmarshal(rawMsg, &tmp); err != nil {
 			continue
 		}
@@ -233,16 +233,16 @@ func camelOrPascalToSnake(s string) string {
 	return buf.String()
 }
 
-func convertKeysToSnakeCase(v interface{}) interface{} {
+func convertKeysToSnakeCase(v any) any {
 	switch val := v.(type) {
-	case map[string]interface{}:
-		result := make(map[string]interface{}, len(val))
+	case map[string]any:
+		result := make(map[string]any, len(val))
 		for k, v := range val {
 			result[camelOrPascalToSnake(k)] = convertKeysToSnakeCase(v)
 		}
 		return result
-	case []interface{}:
-		result := make([]interface{}, len(val))
+	case []any:
+		result := make([]any, len(val))
 		for i, item := range val {
 			result[i] = convertKeysToSnakeCase(item)
 		}
@@ -258,7 +258,7 @@ func encodeResultToJSON(obj tg.TLObject, useSnakeCase bool) ([]byte, error) {
 		return nil, fmt.Errorf("telegram: marshal result: %w", err)
 	}
 
-	var raw map[string]interface{}
+	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("telegram: unmarshal result: %w", err)
 	}
@@ -306,7 +306,7 @@ func (c *JSONClient) InvokeJSON(ctx context.Context, functionName string, payloa
 	}
 
 	if len(payload) > 0 {
-		var raw map[string]interface{}
+		var raw map[string]any
 		if err := json.Unmarshal(payload, &raw); err != nil {
 			return nil, fmt.Errorf("telegram: invalid JSON payload: %w", err)
 		}

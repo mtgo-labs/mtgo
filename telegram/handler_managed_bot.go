@@ -24,7 +24,7 @@ type ManagedBotHandler struct {
 //   - func(*Context, *types.ManagedBotUpdated):  receives both the context and the managed bot update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewManagedBotHandler(callback interface{}, filters ...Filter) *ManagedBotHandler {
+func NewManagedBotHandler(callback any, filters ...Filter) *ManagedBotHandler {
 	h := &ManagedBotHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

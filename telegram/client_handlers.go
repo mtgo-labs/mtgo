@@ -21,7 +21,7 @@ package telegram
 //	client.OnMessage(func(ctx *telegram.Context) {
 //	    ctx.Reply("You sent a photo!")
 //	}, telegram.Photo())
-func (c *Client) OnMessage(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnMessage(callback any, filters ...Filter) Handler {
 	h := NewMessageHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -41,7 +41,7 @@ func (c *Client) OnMessage(callback interface{}, filters ...Filter) Handler {
 //	client.OnEditedMessage(func(ctx *telegram.Context) {
 //	    ctx.Reply("I saw you edit that!")
 //	})
-func (c *Client) OnEditedMessage(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnEditedMessage(callback any, filters ...Filter) Handler {
 	h := NewEditedMessageHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -55,7 +55,7 @@ func (c *Client) OnEditedMessage(callback interface{}, filters ...Filter) Handle
 //
 // Optional filters restrict which business messages trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnBusinessMessage(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnBusinessMessage(callback any, filters ...Filter) Handler {
 	h := NewBusinessMessageHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -69,7 +69,7 @@ func (c *Client) OnBusinessMessage(callback interface{}, filters ...Filter) Hand
 //
 // Optional filters restrict which edited business messages trigger the handler.
 // Returns the registered Handler for later removal.
-func (c *Client) OnEditedBusinessMessage(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnEditedBusinessMessage(callback any, filters ...Filter) Handler {
 	h := NewEditedBusinessMessageHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -83,7 +83,7 @@ func (c *Client) OnEditedBusinessMessage(callback interface{}, filters ...Filter
 //
 // Optional filters restrict which deletions trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnDeletedMessages(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnDeletedMessages(callback any, filters ...Filter) Handler {
 	h := NewDeletedMessagesHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -97,7 +97,7 @@ func (c *Client) OnDeletedMessages(callback interface{}, filters ...Filter) Hand
 //
 // Optional filters restrict which deletions trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnDeletedBusinessMessages(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnDeletedBusinessMessages(callback any, filters ...Filter) Handler {
 	h := NewDeletedBusinessMessagesHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -112,7 +112,7 @@ func (c *Client) OnDeletedBusinessMessages(callback interface{}, filters ...Filt
 // The GuestMessage filter is applied automatically. Additional optional filters
 // can further restrict which guest messages trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnGuestMessage(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnGuestMessage(callback any, filters ...Filter) Handler {
 	h := NewGuestMessageHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -133,7 +133,7 @@ func (c *Client) OnGuestMessage(callback interface{}, filters ...Filter) Handler
 //	    ctx.Answer("Button pressed!", false)
 //	    ctx.CallbackEditText("Processing...")
 //	})
-func (c *Client) OnCallbackQuery(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnCallbackQuery(callback any, filters ...Filter) Handler {
 	h := NewCallbackQueryHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -154,7 +154,7 @@ func (c *Client) OnCallbackQuery(callback interface{}, filters ...Filter) Handle
 //	    results := []tg.InputBotInlineResultClass{...}
 //	    ctx.AnswerInlineQuery(results)
 //	})
-func (c *Client) OnInlineQuery(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnInlineQuery(callback any, filters ...Filter) Handler {
 	h := NewInlineQueryHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -168,7 +168,7 @@ func (c *Client) OnInlineQuery(callback interface{}, filters ...Filter) Handler 
 //
 // Optional filters restrict which results trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnChosenInlineResult(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnChosenInlineResult(callback any, filters ...Filter) Handler {
 	h := NewChosenInlineResultHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -182,7 +182,7 @@ func (c *Client) OnChosenInlineResult(callback interface{}, filters ...Filter) H
 //
 // Optional filters restrict which status changes trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnUserStatus(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnUserStatus(callback any, filters ...Filter) Handler {
 	h := NewUserStatusHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -202,7 +202,7 @@ func (c *Client) OnUserStatus(callback interface{}, filters ...Filter) Handler {
 //	client.OnChatMember(func(ctx *telegram.Context) {
 //	    log.Println("Chat member status changed")
 //	})
-func (c *Client) OnChatMember(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnChatMember(callback any, filters ...Filter) Handler {
 	h := NewChatMemberHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -216,7 +216,7 @@ func (c *Client) OnChatMember(callback interface{}, filters ...Filter) Handler {
 //
 // Optional filters restrict which reactions trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnMessageReaction(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnMessageReaction(callback any, filters ...Filter) Handler {
 	h := NewMessageReactionHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -230,7 +230,7 @@ func (c *Client) OnMessageReaction(callback interface{}, filters ...Filter) Hand
 //
 // Optional filters restrict which updates trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnMessageReactionCount(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnMessageReactionCount(callback any, filters ...Filter) Handler {
 	h := NewMessageReactionCountHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -244,7 +244,7 @@ func (c *Client) OnMessageReactionCount(callback interface{}, filters ...Filter)
 //
 // Optional filters restrict which poll updates trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnPoll(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnPoll(callback any, filters ...Filter) Handler {
 	h := NewPollHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -258,7 +258,7 @@ func (c *Client) OnPoll(callback interface{}, filters ...Filter) Handler {
 //
 // Optional filters restrict which updates trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnBusinessConnection(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnBusinessConnection(callback any, filters ...Filter) Handler {
 	h := NewBusinessConnectionHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -271,7 +271,7 @@ func (c *Client) OnBusinessConnection(callback interface{}, filters ...Filter) H
 //
 // Optional filters restrict which story updates trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnStory(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnStory(callback any, filters ...Filter) Handler {
 	h := NewStoryHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -284,7 +284,7 @@ func (c *Client) OnStory(callback interface{}, filters ...Filter) Handler {
 //
 // Optional filters restrict which boost updates trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnChatBoost(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnChatBoost(callback any, filters ...Filter) Handler {
 	h := NewChatBoostHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -298,7 +298,7 @@ func (c *Client) OnChatBoost(callback interface{}, filters ...Filter) Handler {
 //
 // Optional filters restrict which join requests trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnChatJoinRequest(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnChatJoinRequest(callback any, filters ...Filter) Handler {
 	h := NewChatJoinRequestHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -312,7 +312,7 @@ func (c *Client) OnChatJoinRequest(callback interface{}, filters ...Filter) Hand
 //
 // Optional filters restrict which queries trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnPreCheckoutQuery(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnPreCheckoutQuery(callback any, filters ...Filter) Handler {
 	h := NewPreCheckoutQueryHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -326,7 +326,7 @@ func (c *Client) OnPreCheckoutQuery(callback interface{}, filters ...Filter) Han
 //
 // Optional filters restrict which queries trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnShippingQuery(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnShippingQuery(callback any, filters ...Filter) Handler {
 	h := NewShippingQueryHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -340,7 +340,7 @@ func (c *Client) OnShippingQuery(callback interface{}, filters ...Filter) Handle
 //
 // Optional filters restrict which purchases trigger the handler. Returns the
 // registered Handler for later removal.
-func (c *Client) OnPurchasedPaidMedia(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnPurchasedPaidMedia(callback any, filters ...Filter) Handler {
 	h := NewPurchasedPaidMediaHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -354,7 +354,7 @@ func (c *Client) OnPurchasedPaidMedia(callback interface{}, filters ...Filter) H
 //
 // Optional filters restrict which updates trigger the handler. Returns the registered
 // Handler for later removal.
-func (c *Client) OnManagedBot(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnManagedBot(callback any, filters ...Filter) Handler {
 	h := NewManagedBotHandler(callback, filters...)
 	c.registerHandler(h)
 	return h
@@ -370,7 +370,7 @@ func (c *Client) OnManagedBot(callback interface{}, filters ...Filter) Handler {
 //	client.OnRawUpdate(func(ctx *telegram.Context) {
 //	    log.Printf("raw update received: %+v", ctx.Update)
 //	})
-func (c *Client) OnRawUpdate(callback interface{}, filters ...Filter) Handler {
+func (c *Client) OnRawUpdate(callback any, filters ...Filter) Handler {
 	h := NewRawUpdateHandler(callback, filters...)
 	c.registerHandler(h)
 	return h

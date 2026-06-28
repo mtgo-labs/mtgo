@@ -24,7 +24,7 @@ type GuestMessageHandler struct {
 //	client.AddHandler(telegram.NewGuestMessageHandler(func(ctx *telegram.Context, msg *types.Message) {
 //		fmt.Printf("guest message from user %d: %s\n", msg.From.ID, msg.Text)
 //	}))
-func NewGuestMessageHandler(callback interface{}, filters ...Filter) *GuestMessageHandler {
+func NewGuestMessageHandler(callback any, filters ...Filter) *GuestMessageHandler {
 	allFilters := append([]Filter{GuestMessage}, filters...)
 	h := &GuestMessageHandler{baseHandler: baseHandler{filters: mergeFilters(allFilters)}}
 	switch fn := callback.(type) {

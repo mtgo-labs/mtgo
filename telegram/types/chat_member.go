@@ -1,6 +1,7 @@
 package types
 
 import (
+	"maps"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -169,9 +170,7 @@ func mergeUserClasses(base map[int64]tg.UserClass, users []tg.UserClass) map[int
 		return base
 	}
 	merged := make(map[int64]tg.UserClass, len(base)+len(users))
-	for id, user := range base {
-		merged[id] = user
-	}
+	maps.Copy(merged, base)
 	for _, user := range users {
 		if parsed := ParseUser(user); parsed != nil {
 			merged[parsed.ID] = user

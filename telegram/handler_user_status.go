@@ -24,7 +24,7 @@ type UserStatusHandler struct {
 //   - func(*Context, *types.UserStatusUpdated):  receives both the context and the status update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewUserStatusHandler(callback interface{}, filters ...Filter) *UserStatusHandler {
+func NewUserStatusHandler(callback any, filters ...Filter) *UserStatusHandler {
 	h := &UserStatusHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

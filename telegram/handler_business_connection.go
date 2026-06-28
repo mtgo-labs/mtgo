@@ -24,7 +24,7 @@ type BusinessConnectionHandler struct {
 //   - func(*Context, *types.BusinessConnection): receives both the context and the business connection
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewBusinessConnectionHandler(callback interface{}, filters ...Filter) *BusinessConnectionHandler {
+func NewBusinessConnectionHandler(callback any, filters ...Filter) *BusinessConnectionHandler {
 	h := &BusinessConnectionHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

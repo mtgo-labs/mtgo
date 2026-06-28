@@ -36,7 +36,7 @@ type Context struct {
 
 	// PluginData stores per-request plugin state. Plugins use this to attach
 	// data (like locale, translator) to the current update context.
-	PluginData map[string]interface{}
+	PluginData map[string]any
 
 	// Message is populated when the update contains a new incoming message
 	// from a user or group. Nil for all other update types.
@@ -211,7 +211,7 @@ func (c *Context) StopPropagation() {
 // update's peer cache. Returns the matching User or Chat object on success,
 // or nil when no peer with the given ID is available. Useful for resolving
 // forward-from or reply-to senders without an additional API call.
-func (c *Context) ResolvePeer(id int64) interface{} {
+func (c *Context) ResolvePeer(id int64) any {
 	if c.Update == nil {
 		return nil
 	}

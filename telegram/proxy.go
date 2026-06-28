@@ -23,7 +23,7 @@ import (
 //	https://[user:pass@]host:port
 //	mtproxy://secret@host:port
 //	tg://proxy?server=host&port=port&secret=secret
-func ProxyFromURL(raw string) (interface{}, error) {
+func ProxyFromURL(raw string) (any, error) {
 	if strings.HasPrefix(raw, "tg://proxy?") {
 		return parseTgProxy(raw)
 	}

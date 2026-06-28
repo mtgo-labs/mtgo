@@ -1089,7 +1089,7 @@ type AnswerCallback struct {
 //	err := shippingQuery.Answer(opt)
 type AnswerShipping struct {
 	Ok              bool
-	ShippingOptions interface{}
+	ShippingOptions any
 	ErrorMsg        string
 }
 
@@ -1145,7 +1145,7 @@ type StoryForward struct {
 	PaidMessageStarCount *int64
 	ProtectContent       bool
 	AllowPaidBroadcast   bool
-	ReplyParameters      interface{}
+	ReplyParameters      any
 	ReplyMarkup          tl.ReplyMarkupClass
 	MessageEffectID      *int64
 }
@@ -1166,7 +1166,7 @@ type StoryCopy struct {
 	ParseMode       ParseMode
 	CaptionEntities []tl.MessageEntityClass
 	Period          *int32
-	MediaAreas      interface{}
+	MediaAreas      any
 	Privacy         string
 	AllowedUsers    []int64
 	DisallowedUsers []int64

@@ -105,7 +105,7 @@ func rleDecode(data []byte) []byte {
 	return buf.Bytes()
 }
 
-func packLE(w *bytes.Buffer, v interface{}) {
+func packLE(w *bytes.Buffer, v any) {
 	switch x := v.(type) {
 	case int8:
 		w.WriteByte(byte(x))
@@ -124,7 +124,7 @@ func packLE(w *bytes.Buffer, v interface{}) {
 	}
 }
 
-func unpackLE(r *bytes.Reader, v interface{}) error {
+func unpackLE(r *bytes.Reader, v any) error {
 	switch x := v.(type) {
 	case *int8:
 		b, err := r.ReadByte()

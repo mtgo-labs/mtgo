@@ -24,7 +24,7 @@ type DeletedBusinessMessagesHandler struct {
 //   - func(*Context, *types.DeletedMessages): receives both the context and the deleted messages info
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewDeletedBusinessMessagesHandler(callback interface{}, filters ...Filter) *DeletedBusinessMessagesHandler {
+func NewDeletedBusinessMessagesHandler(callback any, filters ...Filter) *DeletedBusinessMessagesHandler {
 	h := &DeletedBusinessMessagesHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

@@ -24,7 +24,7 @@ type PreCheckoutQueryHandler struct {
 //   - func(*Context, *types.PreCheckoutQuery):  receives both the context and the pre-checkout query
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewPreCheckoutQueryHandler(callback interface{}, filters ...Filter) *PreCheckoutQueryHandler {
+func NewPreCheckoutQueryHandler(callback any, filters ...Filter) *PreCheckoutQueryHandler {
 	h := &PreCheckoutQueryHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

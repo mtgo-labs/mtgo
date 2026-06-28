@@ -56,7 +56,7 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string]any{
 			"user_id":     data.User.ID,
 			"first_name":  data.User.FirstName,
 			"username":    data.User.Username,

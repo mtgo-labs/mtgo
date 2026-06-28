@@ -214,7 +214,7 @@ func TestNewProxyDialer(t *testing.T) {
 	}
 }
 
-func typeName(v interface{}) string {
+func typeName(v any) string {
 	switch v.(type) {
 	case *socksDialer:
 		return "*telegram.socksDialer"

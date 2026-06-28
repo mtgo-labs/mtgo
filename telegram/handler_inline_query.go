@@ -34,7 +34,7 @@ type InlineQueryHandler struct {
 //	    ctx.AnswerInlineQuery(results)
 //	})
 //	client.AddHandler(h)
-func NewInlineQueryHandler(callback interface{}, filters ...Filter) *InlineQueryHandler {
+func NewInlineQueryHandler(callback any, filters ...Filter) *InlineQueryHandler {
 	h := &InlineQueryHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

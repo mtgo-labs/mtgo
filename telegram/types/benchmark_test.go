@@ -116,5 +116,6 @@ func BenchmarkPeerMapResolve(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		_ = pm.Users[123456789]
+		_ = pm.Chats[100]
 	}
 }

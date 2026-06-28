@@ -24,7 +24,7 @@ type MessageReactionCountHandler struct {
 //   - func(*Context, *types.MessageReactionCountUpdate): receives both the context and the reaction counts
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewMessageReactionCountHandler(callback interface{}, filters ...Filter) *MessageReactionCountHandler {
+func NewMessageReactionCountHandler(callback any, filters ...Filter) *MessageReactionCountHandler {
 	h := &MessageReactionCountHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

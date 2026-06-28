@@ -13,7 +13,7 @@ type RawUpdateHandler struct {
 // The callback must be of type func(*Context). Optional filters can be provided
 // to restrict which updates trigger the handler, but unlike typed handlers this
 // accepts all update types by default.
-func NewRawUpdateHandler(callback interface{}, filters ...Filter) *RawUpdateHandler {
+func NewRawUpdateHandler(callback any, filters ...Filter) *RawUpdateHandler {
 	h := &RawUpdateHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	if fn, ok := callback.(func(*Context)); ok {
 		h.callbackCtx = fn

@@ -24,7 +24,7 @@ type StoryHandler struct {
 //   - func(*Context, *types.Story):   receives both the context and the story
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewStoryHandler(callback interface{}, filters ...Filter) *StoryHandler {
+func NewStoryHandler(callback any, filters ...Filter) *StoryHandler {
 	h := &StoryHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

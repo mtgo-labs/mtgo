@@ -24,7 +24,7 @@ type ChatBoostHandler struct {
 //   - func(*Context, *types.ChatBoostUpdated): receives both the context and the boost update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewChatBoostHandler(callback interface{}, filters ...Filter) *ChatBoostHandler {
+func NewChatBoostHandler(callback any, filters ...Filter) *ChatBoostHandler {
 	h := &ChatBoostHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

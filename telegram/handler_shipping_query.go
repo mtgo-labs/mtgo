@@ -25,7 +25,7 @@ type ShippingQueryHandler struct {
 //   - func(*Context, *types.ShippingQuery):  receives both the context and the shipping query
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewShippingQueryHandler(callback interface{}, filters ...Filter) *ShippingQueryHandler {
+func NewShippingQueryHandler(callback any, filters ...Filter) *ShippingQueryHandler {
 	h := &ShippingQueryHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

@@ -221,7 +221,7 @@ func (r *CallReader) NextChunk(ctx context.Context) ([]byte, error) {
 		r.currentTS += 1000 >> r.scale
 		return f.Bytes, nil
 	case *tg.UploadFileCDNRedirect:
-		chunk, err := r.readCDNChunk(ctx, f, input)
+		chunk, err := r.readCDNChunk(ctx, f)
 		if err != nil {
 			return nil, fmt.Errorf("call reader: cdn chunk: %w", err)
 		}
@@ -235,7 +235,7 @@ func (r *CallReader) NextChunk(ctx context.Context) ([]byte, error) {
 // readCDNChunk downloads a stream chunk via CDN, decrypts it, and returns
 // the plaintext bytes. Handles UploadCDNFileReuploadNeeded by re-uploading
 // the file token before retrying.
-func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCDNRedirect, location tg.InputFileLocationClass) ([]byte, error) {
+func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCDNRedirect) ([]byte, error) {
 	cdnRPC, err := r.client.dcRPC(ctx, int(redirect.DCID))
 	if err != nil {
 		return nil, fmt.Errorf("connect to cdn dc %d: %w", redirect.DCID, err)

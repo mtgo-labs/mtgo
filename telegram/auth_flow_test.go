@@ -118,7 +118,7 @@ func TestLoginUser_InvalidCodeRetryThenSuccess(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				&tgerr.Error{Code: 400, Type: "PHONE_CODE_INVALID"},
 				&tg.AuthAuthorization{User: &tg.User{ID: 42}},
@@ -152,7 +152,7 @@ func TestLoginUser_InvalidCodeEmptyRetryThenSuccess(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				&tgerr.Error{Code: 400, Type: "PHONE_CODE_EMPTY"},
 				&tg.AuthAuthorization{User: &tg.User{ID: 42}},
@@ -186,7 +186,7 @@ func TestLoginUser_TooManyInvalidCodes(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				&tgerr.Error{Code: 400, Type: "PHONE_CODE_INVALID"},
 				&tgerr.Error{Code: 400, Type: "PHONE_CODE_INVALID"},
@@ -228,7 +228,7 @@ func TestLoginUser_2FATriggered(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				&tgerr.Error{Code: 401, Type: "SESSION_PASSWORD_NEEDED"},
 			},
@@ -263,7 +263,7 @@ func TestLoginUser_2FAPasswordFuncError(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				// Return 2FA error without real SRP — just test that the flow
 				// branches correctly. Since we can't mock through CheckPassword
@@ -299,7 +299,7 @@ func TestLoginUser_SignInOtherError(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthSignInTypeID: {
 				errors.New("some other rpc error"),
 			},
@@ -340,7 +340,7 @@ func TestLoginPassword_TooManyAttempts(t *testing.T) {
 
 	seq := &sequentialMock{
 		parent: mock,
-		responses: map[uint32][]interface{}{
+		responses: map[uint32][]any{
 			tg.AuthCheckPasswordTypeID: {
 				&tgerr.Error{Code: 400, Type: "PASSWORD_HASH_INVALID"},
 				&tgerr.Error{Code: 400, Type: "PASSWORD_HASH_INVALID"},
@@ -435,7 +435,7 @@ func TestTerminalPasswordFunc(t *testing.T) {
 // per constructor ID, then falls back to the parent mock's static results.
 type sequentialMock struct {
 	parent    *mockBotRPCInvoke
-	responses map[uint32][]interface{}
+	responses map[uint32][]any
 	index     map[uint32]int
 }
 

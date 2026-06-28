@@ -40,7 +40,7 @@ func TestInvokeJSONBasic(t *testing.T) {
 		t.Fatalf("InvokeJSON failed: %v", err)
 	}
 
-	var resultMap map[string]interface{}
+	var resultMap map[string]any
 	if err := json.Unmarshal(result, &resultMap); err != nil {
 		t.Fatalf("result is not valid JSON: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestInvokeJSONSnakeCase(t *testing.T) {
 		t.Fatalf("InvokeJSON with snakeCase failed: %v", err)
 	}
 
-	var resultMap map[string]interface{}
+	var resultMap map[string]any
 	if err := json.Unmarshal(result, &resultMap); err != nil {
 		t.Fatalf("result is not valid JSON: %v", err)
 	}

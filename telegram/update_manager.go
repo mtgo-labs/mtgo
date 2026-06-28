@@ -235,13 +235,13 @@ func (m *updateManager) processUpdates(ctx context.Context, updates tg.UpdatesCl
 	pm := buildPeerMapFromClasses(parsedUsers, parsedChats)
 	m.client.backfillMinAccessHashes(chatMap, userMap)
 	for _, raw := range rawUpdates {
-		if err := m.applyUpdate(ctx, raw, updates, userMap, chatMap, pm); err != nil {
+		if err := m.applyUpdate(ctx, raw, userMap, chatMap, pm); err != nil {
 			m.client.Log.Warnf("apply update: %v", err)
 		}
 	}
 }
 
-func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, container tg.UpdatesClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
+func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	meta := extractUpdateMeta(raw)
 
 	if _, ok := raw.(*tg.UpdateChannelTooLong); ok {
@@ -255,7 +255,7 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 	}
 
 	if meta.IsChannel {
-		return m.applyChannelUpdate(ctx, raw, meta, container, userMap, chatMap, pm)
+		return m.applyChannelUpdate(ctx, raw, meta, userMap, chatMap, pm)
 	}
 
 	kind := m.classifyUpdate(meta)
@@ -269,7 +269,7 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 		m.mu.Lock()
 		m.health.LastGap = time.Now()
 		m.mu.Unlock()
-		m.bufferGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
+		m.bufferGapRecovery(ctx, raw, meta, userMap, chatMap, pm)
 		return nil
 	case noGap:
 	}
@@ -283,10 +283,10 @@ func (m *updateManager) applyUpdate(ctx context.Context, raw tg.UpdateClass, con
 		}
 	}
 
-	return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
+	return m.deliverUpdate(raw, meta, userMap, chatMap, pm)
 }
 
-func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateClass, meta updateMeta, container tg.UpdatesClass, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
+func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	m.mu.RLock()
 	ch, ok := m.channels[meta.ChannelID]
 	m.mu.RUnlock()
@@ -322,14 +322,14 @@ func (m *updateManager) applyChannelUpdate(ctx context.Context, raw tg.UpdateCla
 				return nil
 			}
 			if retryKind == noGap {
-				return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
+				return m.deliverUpdate(raw, meta, userMap, chatMap, pm)
 			}
 		}
 		return nil
 	case noGap:
 	}
 
-	return m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
+	return m.deliverUpdate(raw, meta, userMap, chatMap, pm)
 }
 
 func (m *updateManager) classifyUpdate(meta updateMeta) gapKind {
@@ -338,7 +338,7 @@ func (m *updateManager) classifyUpdate(meta updateMeta) gapKind {
 	return classifyAccountUpdate(m.state, meta)
 }
 
-func (m *updateManager) deliverUpdate(container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
+func (m *updateManager) deliverUpdate(raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) error {
 	if m.cfg.DurableQueue && meta.Key != "" {
 		nowUnix := time.Now().Unix()
 		record := &storage.DurableUpdate{
@@ -557,7 +557,7 @@ func buildPeerMapFromClasses(users []tg.UserClass, chats []tg.ChatClass) *types.
 // filled by the next arriving update before the timer fires, the expensive
 // getDifference call is skipped. If the timer fires and the gap persists,
 // RecoverAccount is triggered.
-func (m *updateManager) bufferGapRecovery(ctx context.Context, container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
+func (m *updateManager) bufferGapRecovery(ctx context.Context, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
 	m.mu.Lock()
 	if m.recoveryTimer != nil {
 		m.mu.Unlock()
@@ -565,19 +565,19 @@ func (m *updateManager) bufferGapRecovery(ctx context.Context, container tg.Upda
 	}
 	if m.cfg.GapBuffer <= 0 {
 		m.mu.Unlock()
-		m.doGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
+		m.doGapRecovery(ctx, raw, meta, userMap, chatMap, pm)
 		return
 	}
 	m.recoveryTimer = time.AfterFunc(m.cfg.GapBuffer, func() {
 		m.mu.Lock()
 		m.recoveryTimer = nil
 		m.mu.Unlock()
-		m.doGapRecovery(ctx, container, raw, meta, userMap, chatMap, pm)
+		m.doGapRecovery(ctx, raw, meta, userMap, chatMap, pm)
 	})
 	m.mu.Unlock()
 }
 
-func (m *updateManager) doGapRecovery(ctx context.Context, container tg.UpdatesClass, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
+func (m *updateManager) doGapRecovery(ctx context.Context, raw tg.UpdateClass, meta updateMeta, userMap map[int64]*types.User, chatMap map[int64]*types.Chat, pm *types.PeerMap) {
 	kind := m.classifyUpdate(meta)
 	if kind == noGap || kind == duplicateUpdate {
 		return
@@ -594,6 +594,6 @@ func (m *updateManager) doGapRecovery(ctx context.Context, container tg.UpdatesC
 		m.health.DuplicateCount++
 		m.mu.Unlock()
 	case noGap:
-		_ = m.deliverUpdate(container, raw, meta, userMap, chatMap, pm)
+		_ = m.deliverUpdate(raw, meta, userMap, chatMap, pm)
 	}
 }

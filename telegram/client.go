@@ -37,7 +37,7 @@ import (
 )
 
 var updatePool = sync.Pool{
-	New: func() interface{} { return &Update{} },
+	New: func() any { return &Update{} },
 }
 
 type sessionKey struct {
@@ -2324,7 +2324,7 @@ func userClassesFromPeerMap(pm *types.PeerMap) map[int64]tg.UserClass {
 //	}
 //
 //	fmt.Println(peer)
-func (c *Client) ResolvePeer(ctx context.Context, peerID interface{}) (tg.InputPeerClass, error) {
+func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
@@ -2349,10 +2349,36 @@ func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeer
 	if err == nil {
 		return peer, nil
 	}
+	if c.IsBot() {
+		return c.resolveNumericPeerForBot(id)
+	}
+	return c.resolveNumericPeerForAccount(ctx, id)
+}
+
+func (c *Client) resolveNumericPeerForBot(id int64) (tg.InputPeerClass, error) {
+	if peer, ok := inputPeerFromBareChatID(id); ok {
+		return peer, nil
+	}
+	return nil, fmt.Errorf("could not resolve chat: %w", ErrPeerNotFound)
+}
+
+func (c *Client) resolveNumericPeerForAccount(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	if peer, ok := inputPeerFromBareChatID(id); ok {
+		return peer, nil
+	}
 	if preloadErr := c.preloadDialogPeer(ctx, id); preloadErr != nil && !errors.Is(preloadErr, ErrPeerNotFound) {
 		return nil, preloadErr
 	}
 	return ChatID(id).resolve(ctx, c)
+}
+
+func inputPeerFromBareChatID(id int64) (tg.InputPeerClass, bool) {
+	if id < 0 {
+		if _, ok := rawChannelID(id); !ok {
+			return &tg.InputPeerChat{ChatID: -id}, true
+		}
+	}
+	return nil, false
 }
 
 func (c *Client) preloadDialogPeer(ctx context.Context, id int64) error {

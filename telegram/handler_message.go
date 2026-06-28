@@ -32,7 +32,7 @@ type MessageHandler struct {
 //		},
 //		telegram.CommandFilter("ping"),
 //	))
-func NewMessageHandler(callback interface{}, filters ...Filter) *MessageHandler {
+func NewMessageHandler(callback any, filters ...Filter) *MessageHandler {
 	h := &MessageHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

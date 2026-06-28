@@ -507,6 +507,12 @@ func shouldParallelDownload(fileSize int64, writer io.Writer, opts *params.Downl
 }
 
 func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int) int {
+	// Cross-DC downloads use a single worker to avoid DC session auth race
+	// conditions (AUTH_KEY_UNREGISTERED) when multiple sessions are created
+	// before auth export/import completes.
+	if dcID > 0 && homeDC > 0 && dcID != homeDC {
+		return 1
+	}
 	if opts != nil && opts.Workers == 1 {
 		return 1
 	}
@@ -514,9 +520,6 @@ func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int
 		return clampTransferWorkers(opts.Workers)
 	}
 	if fileSize <= int64(downloadChunkSize) {
-		return 1
-	}
-	if dcID > 0 && homeDC > 0 && dcID != homeDC {
 		return 1
 	}
 	parts := int((fileSize + int64(downloadChunkSize) - 1) / int64(downloadChunkSize))
@@ -1183,7 +1186,7 @@ type downloadInput struct {
 	mimeType string
 }
 
-func resolveDownloadInput(input interface{}) (*downloadInput, error) {
+func resolveDownloadInput(input any) (*downloadInput, error) {
 	switch v := input.(type) {
 	case *types.Message:
 		if v.Media == nil {
@@ -1294,7 +1297,7 @@ func sanitizeFileName(name string) string {
 	return cleaned
 }
 
-func (c *Client) downloadToPath(ctx context.Context, input interface{}, filePath string, progress params.ProgressFunc) (string, error) {
+func (c *Client) downloadToPath(ctx context.Context, input any, filePath string, progress params.ProgressFunc) (string, error) {
 	if err := c.ensureConnected(); err != nil {
 		return "", err
 	}
@@ -1339,7 +1342,7 @@ func (c *Client) downloadToPath(ctx context.Context, input interface{}, filePath
 	return abs, nil
 }
 
-func (c *Client) downloadBytes(ctx context.Context, input interface{}, progress params.ProgressFunc) ([]byte, error) {
+func (c *Client) downloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
@@ -1373,7 +1376,7 @@ func (c *Client) downloadBytes(ctx context.Context, input interface{}, progress 
 //   - progress: optional progress callback
 //
 // Returns the absolute path of the downloaded file.
-func (c *Client) Download(ctx context.Context, input interface{}, fileName string, progress params.ProgressFunc) (string, error) {
+func (c *Client) Download(ctx context.Context, input any, fileName string, progress params.ProgressFunc) (string, error) {
 	return c.downloadToPath(ctx, input, fileName, progress)
 }
 
@@ -1386,7 +1389,7 @@ func (c *Client) Download(ctx context.Context, input interface{}, fileName strin
 //   - progress: optional progress callback
 //
 // Returns the raw file contents as a byte slice.
-func (c *Client) DownloadBytes(ctx context.Context, input interface{}, progress params.ProgressFunc) ([]byte, error) {
+func (c *Client) DownloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
 	return c.downloadBytes(ctx, input, progress)
 }
 
@@ -1407,7 +1410,7 @@ type StreamChunk struct {
 //   - ctx: context for cancellation and timeout
 //   - input: *types.Message or types.Media to stream
 //   - opts: optional download settings (chunk size). May be nil for defaults.
-func (c *Client) StreamMedia(ctx context.Context, input interface{}, opts *params.Download) (<-chan StreamChunk, error) {
+func (c *Client) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}

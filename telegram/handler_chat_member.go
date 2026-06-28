@@ -24,7 +24,7 @@ type ChatMemberHandler struct {
 //   - func(*Context, *types.ChatMemberUpdated): receives both the context and the member update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewChatMemberHandler(callback interface{}, filters ...Filter) *ChatMemberHandler {
+func NewChatMemberHandler(callback any, filters ...Filter) *ChatMemberHandler {
 	h := &ChatMemberHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

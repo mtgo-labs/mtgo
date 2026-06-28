@@ -32,7 +32,7 @@ type CallbackQueryHandler struct {
 //		},
 //		telegram.PrefixFilter("action_"),
 //	))
-func NewCallbackQueryHandler(callback interface{}, filters ...Filter) *CallbackQueryHandler {
+func NewCallbackQueryHandler(callback any, filters ...Filter) *CallbackQueryHandler {
 	h := &CallbackQueryHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

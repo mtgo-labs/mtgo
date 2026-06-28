@@ -32,7 +32,7 @@ type EditedMessageHandler struct {
 //		},
 //		telegram.ChatFilter(chatID),
 //	))
-func NewEditedMessageHandler(callback interface{}, filters ...Filter) *EditedMessageHandler {
+func NewEditedMessageHandler(callback any, filters ...Filter) *EditedMessageHandler {
 	h := &EditedMessageHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

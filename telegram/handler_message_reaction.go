@@ -24,7 +24,7 @@ type MessageReactionHandler struct {
 //   - func(*Context, *types.MessageReactionUpdate): receives both the context and the reaction update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewMessageReactionHandler(callback interface{}, filters ...Filter) *MessageReactionHandler {
+func NewMessageReactionHandler(callback any, filters ...Filter) *MessageReactionHandler {
 	h := &MessageReactionHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

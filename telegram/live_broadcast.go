@@ -248,7 +248,7 @@ func (s *BroadcastStream) OnEnd(fn func(int64)) {
 //	if err := stream.Play(data); err != nil {
 //		log.Fatal(err)
 //	}
-func (s *BroadcastStream) Play(source interface{}) error {
+func (s *BroadcastStream) Play(source any) error {
 	if s.url == "" || s.key == "" {
 		return ErrNoRTMPURL
 	}
@@ -290,7 +290,7 @@ func (s *BroadcastStream) Play(source interface{}) error {
 }
 
 // PlayAudioWithImage streams an audio source combined with a static image as video.
-func (s *BroadcastStream) PlayAudioWithImage(audioSource interface{}, imageFile string) error {
+func (s *BroadcastStream) PlayAudioWithImage(audioSource any, imageFile string) error {
 	if s.url == "" || s.key == "" {
 		return ErrNoRTMPURL
 	}

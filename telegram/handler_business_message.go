@@ -24,7 +24,7 @@ type BusinessMessageHandler struct {
 //   - func(*Context, *types.Message):   receives both the context and the business message
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewBusinessMessageHandler(callback interface{}, filters ...Filter) *BusinessMessageHandler {
+func NewBusinessMessageHandler(callback any, filters ...Filter) *BusinessMessageHandler {
 	h := &BusinessMessageHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

@@ -24,7 +24,7 @@ type PollHandler struct {
 //   - func(*Context, *types.PollUpdated):  receives both the context and the poll update
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewPollHandler(callback interface{}, filters ...Filter) *PollHandler {
+func NewPollHandler(callback any, filters ...Filter) *PollHandler {
 	h := &PollHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

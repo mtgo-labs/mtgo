@@ -24,7 +24,7 @@ type ChatJoinRequestHandler struct {
 //   - func(*Context, *types.ChatJoinRequest):  receives both the context and the join request
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewChatJoinRequestHandler(callback interface{}, filters ...Filter) *ChatJoinRequestHandler {
+func NewChatJoinRequestHandler(callback any, filters ...Filter) *ChatJoinRequestHandler {
 	h := &ChatJoinRequestHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):

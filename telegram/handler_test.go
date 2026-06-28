@@ -1049,7 +1049,7 @@ func TestIntegration_CommandFilter(t *testing.T) {
 
 func TestIntegration_ContextResolvePeer(t *testing.T) {
 	d := NewHandlerDispatcher()
-	var resolved interface{}
+	var resolved any
 	d.AddHandler(NewMessageHandler(func(ctx *Context) {
 		resolved = ctx.ResolvePeer(1)
 	}))

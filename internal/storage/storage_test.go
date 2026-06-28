@@ -79,102 +79,102 @@ func TestSessionFieldRoundTrip(t *testing.T) {
 	tests := []struct {
 		name  string
 		set   func() error
-		get   func() (interface{}, error)
-		want  interface{}
-		equal func(got, want interface{}) bool
+		get   func() (any, error)
+		want  any
+		equal func(got, want any) bool
 	}{
 		{
 			"SessionID",
 			func() error { return s.SetSessionID("sess-123") },
-			func() (interface{}, error) { return s.SessionID() },
+			func() (any, error) { return s.SessionID() },
 			"sess-123",
-			func(g, w interface{}) bool { return g.(string) == w.(string) },
+			func(g, w any) bool { return g.(string) == w.(string) },
 		},
 		{
 			"DCID",
 			func() error { return s.SetDCID(2) },
-			func() (interface{}, error) { return s.DCID() },
+			func() (any, error) { return s.DCID() },
 			2,
-			func(g, w interface{}) bool { return g.(int) == w.(int) },
+			func(g, w any) bool { return g.(int) == w.(int) },
 		},
 		{
 			"APIID",
 			func() error { return s.SetAPIID(12345) },
-			func() (interface{}, error) { return s.APIID() },
+			func() (any, error) { return s.APIID() },
 			int32(12345),
-			func(g, w interface{}) bool { return g.(int32) == w.(int32) },
+			func(g, w any) bool { return g.(int32) == w.(int32) },
 		},
 		{
 			"APIHash",
 			func() error { return s.SetAPIHash("deadbeef") },
-			func() (interface{}, error) { return s.APIHash() },
+			func() (any, error) { return s.APIHash() },
 			"deadbeef",
-			func(g, w interface{}) bool { return g.(string) == w.(string) },
+			func(g, w any) bool { return g.(string) == w.(string) },
 		},
 		{
 			"TestMode",
 			func() error { return s.SetTestMode(true) },
-			func() (interface{}, error) { return s.TestMode() },
+			func() (any, error) { return s.TestMode() },
 			true,
-			func(g, w interface{}) bool { return g.(bool) == w.(bool) },
+			func(g, w any) bool { return g.(bool) == w.(bool) },
 		},
 		{
 			"AuthKey",
 			func() error { return s.SetAuthKey([]byte{1, 2, 3, 4}) },
-			func() (interface{}, error) { return s.AuthKey() },
+			func() (any, error) { return s.AuthKey() },
 			[]byte{1, 2, 3, 4},
-			func(g, w interface{}) bool {
+			func(g, w any) bool {
 				return string(g.([]byte)) == string(w.([]byte))
 			},
 		},
 		{
 			"UserID",
 			func() error { return s.SetUserID(9876543210) },
-			func() (interface{}, error) { return s.UserID() },
+			func() (any, error) { return s.UserID() },
 			int64(9876543210),
-			func(g, w interface{}) bool { return g.(int64) == w.(int64) },
+			func(g, w any) bool { return g.(int64) == w.(int64) },
 		},
 		{
 			"IsBot",
 			func() error { return s.SetIsBot(true) },
-			func() (interface{}, error) { return s.IsBot() },
+			func() (any, error) { return s.IsBot() },
 			true,
-			func(g, w interface{}) bool { return g.(bool) == w.(bool) },
+			func(g, w any) bool { return g.(bool) == w.(bool) },
 		},
 		{
 			"FirstName",
 			func() error { return s.SetFirstName("Alice") },
-			func() (interface{}, error) { return s.FirstName() },
+			func() (any, error) { return s.FirstName() },
 			"Alice",
-			func(g, w interface{}) bool { return g.(string) == w.(string) },
+			func(g, w any) bool { return g.(string) == w.(string) },
 		},
 		{
 			"LastName",
 			func() error { return s.SetLastName("Smith") },
-			func() (interface{}, error) { return s.LastName() },
+			func() (any, error) { return s.LastName() },
 			"Smith",
-			func(g, w interface{}) bool { return g.(string) == w.(string) },
+			func(g, w any) bool { return g.(string) == w.(string) },
 		},
 		{
 			"Username",
 			func() error { return s.SetUsername("alice") },
-			func() (interface{}, error) { return s.Username() },
+			func() (any, error) { return s.Username() },
 			"alice",
-			func(g, w interface{}) bool { return g.(string) == w.(string) },
+			func(g, w any) bool { return g.(string) == w.(string) },
 		},
 		{
 			"Date",
 			func() error { return s.SetDate(1700000000) },
-			func() (interface{}, error) { return s.Date() },
+			func() (any, error) { return s.Date() },
 			1700000000,
-			func(g, w interface{}) bool { return g.(int) == w.(int) },
+			func(g, w any) bool { return g.(int) == w.(int) },
 		},
 		{
 			"State",
 			func() error { return s.SetState([]byte{0xAA, 0xBB}) },
-			func() (interface{}, error) { return s.State() },
+			func() (any, error) { return s.State() },
 			[]byte{0xAA, 0xBB},
-			func(g, w interface{}) bool {
+			func(g, w any) bool {
 				return string(g.([]byte)) == string(w.([]byte))
 			},
 		},

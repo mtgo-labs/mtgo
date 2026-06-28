@@ -24,7 +24,7 @@ type PurchasedPaidMediaHandler struct {
 //   - func(*Context, *types.PurchasedPaidMedia): receives both the context and the purchase details
 //
 // Optional filters can be provided to further restrict which updates are handled.
-func NewPurchasedPaidMediaHandler(callback interface{}, filters ...Filter) *PurchasedPaidMediaHandler {
+func NewPurchasedPaidMediaHandler(callback any, filters ...Filter) *PurchasedPaidMediaHandler {
 	h := &PurchasedPaidMediaHandler{baseHandler: baseHandler{filters: mergeFilters(filters)}}
 	switch fn := callback.(type) {
 	case func(*Context):
