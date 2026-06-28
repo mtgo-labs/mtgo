@@ -133,14 +133,21 @@ func (d *dcSessions) cleanup() {
 	d.pools = make(map[int]*dcSessionPool)
 }
 
+func (c *Client) homeDC() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.session != nil {
+		return c.session.DC().ID
+	}
+	return c.state.DC()
+}
+
 func (c *Client) dcRPC(ctx context.Context, dcID int) (*tg.RPCClient, error) {
 	if dcID <= 0 {
 		return c.Raw(), nil
 	}
 
-	c.mu.RLock()
-	homeDC := c.state.DC()
-	c.mu.RUnlock()
+	homeDC := c.homeDC()
 	if dcID == homeDC || homeDC == 0 {
 		return c.Raw(), nil
 	}
@@ -184,14 +191,12 @@ func (c *Client) dcRPCPool(ctx context.Context, dcID int, size int) ([]*tg.RPCCl
 		return []*tg.RPCClient{rpc}, nil
 	}
 
-	c.mu.RLock()
-	homeDC := c.state.DC()
-	c.mu.RUnlock()
+	homeDC := c.homeDC()
 	// Same-DC: the main session multiplexes concurrent requests natively and
 	// has robust reconnection logic. Return it for every worker instead of
 	// creating fragile side sessions that share the auth key and cascade-fail
 	// when one is replaced (killing sessions other workers still use).
-	if dcID == homeDC {
+	if dcID == homeDC || homeDC == 0 {
 		mainRPC := c.Raw()
 		rpcs := make([]*tg.RPCClient, size)
 		for i := range rpcs {
@@ -254,11 +259,9 @@ func (c *Client) replaceDCRPCPoolEntry(ctx context.Context, dcID int, size int, 
 		return c.dcRPC(ctx, dcID)
 	}
 
-	c.mu.RLock()
-	homeDC := c.state.DC()
-	c.mu.RUnlock()
+	homeDC := c.homeDC()
 	// Same-DC: cannot replace the main session; return it as-is.
-	if dcID == homeDC {
+	if dcID == homeDC || homeDC == 0 {
 		return c.Raw(), nil
 	}
 
@@ -349,6 +352,10 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 	cfg := c.cfg
 	log := c.Log
 	mainSess := c.session
+	homeDC := c.state.DC()
+	if mainSess != nil {
+		homeDC = mainSess.DC().ID
+	}
 	c.mu.RUnlock()
 
 	dcStorage := NewMemoryStorage()
@@ -361,7 +368,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 	configureSessionDispatch(sess, cfg, log)
 	sess.SetUpdateHandler(func(obj tg.TLObject) {})
 
-	if mainSess != nil && mainSess.DC().ID == dcID {
+	if mainSess != nil && dcID == homeDC {
 		authKey := mainSess.AuthKey()
 		if len(authKey) == 0 {
 			sessionTp.Close()

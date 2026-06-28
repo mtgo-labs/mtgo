@@ -1682,11 +1682,37 @@ func (c *Client) UpdateHealth() UpdateHealth {
 // Returns ErrNotConnected if the client was never connected.
 func (c *Client) Disconnect() error {
 	if err := c.state.requireConnected(); err != nil {
-		return err
+		if !errors.Is(err, ErrNotConnected) || !c.hasActiveResources() {
+			return err
+		}
 	}
 	c.stopPlugins(context.Background())
 	c.cleanupSessions()
 	return nil
+}
+
+func (c *Client) hasActiveResources() bool {
+	c.mu.RLock()
+	hasMain := c.session != nil || c.storage != nil || c.updateManager != nil
+	c.mu.RUnlock()
+	if hasMain {
+		return true
+	}
+
+	c.sessionsMu.Lock()
+	hasSessions := len(c.sessions) > 0
+	c.sessionsMu.Unlock()
+	if hasSessions {
+		return true
+	}
+
+	if c.dcSessions != nil {
+		c.dcSessions.mu.Lock()
+		hasDCSessions := len(c.dcSessions.entries) > 0 || len(c.dcSessions.pools) > 0
+		c.dcSessions.mu.Unlock()
+		return hasDCSessions
+	}
+	return false
 }
 
 // Close permanently closes the client, stopping all reconnect and health-check goroutines.
@@ -2318,10 +2344,6 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID interface{}) (tg.InputP
 // Returns ErrNotConnected if the client is not connected, or an error if the dcID is unknown
 // or session creation fails.
 func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN bool) (*session.Session, error) {
-	if err := c.ensureConnected(); err != nil {
-		return nil, err
-	}
-
 	if !isMedia && !isCDN {
 		c.mu.RLock()
 		st := c.storage
@@ -2334,6 +2356,10 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 				return mainSess, nil
 			}
 		}
+	}
+
+	if err := c.ensureConnected(); err != nil {
+		return nil, err
 	}
 
 	key := sessionKey{dcID: dcID, isMedia: isMedia}

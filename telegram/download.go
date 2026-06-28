@@ -729,10 +729,8 @@ func (c *Client) recoverDownloadWorkerRPC(ctx context.Context, dcID int, poolSiz
 	}
 	// Same-DC (or unknown DC): the main session recovers independently.
 	// Return it directly instead of creating/replacing side sessions.
-	c.mu.RLock()
-	homeDC := c.state.DC()
-	c.mu.RUnlock()
-	if dcID <= 0 || dcID == homeDC {
+	homeDC := c.homeDC()
+	if dcID <= 0 || dcID == homeDC || homeDC == 0 {
 		return c.Raw(), true, nil
 	}
 	rpc, dcErr := c.replaceDCRPCPoolEntry(ctx, dcID, poolSize, workerIdx)

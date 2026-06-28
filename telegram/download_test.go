@@ -6,9 +6,13 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"net"
 	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -280,6 +284,104 @@ func TestDownloadToWriterRecoversClosedDCSessionAtOffset(t *testing.T) {
 	}
 	if !bytes.Equal(buf.Bytes(), data) {
 		t.Fatal("downloaded data does not match original")
+	}
+}
+
+// failingDialer implements transport.Dialer, always failing — used to verify
+// that recoverDownloadRPC evicts a dead cross-DC session even when recreation
+// itself cannot succeed (no network in unit tests).
+type failingDialer struct{}
+
+func (failingDialer) Dial(string, string, time.Duration) (net.Conn, error) {
+	return nil, errors.New("test: no network")
+}
+
+func TestIsRecoverableDownloadError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"nil", nil, false},
+		{"unrelated", errors.New("io: unexpected EOF"), false},
+		{"not connected", ErrNotConnected, true},
+		{"bare session closed", errors.New("send: session: closed"), true},
+		{"wrapped session closed",
+			errors.New("download: get file at offset 0: invoke *tg.UploadGetFileRequest(cid=be5335be): retries exhausted (2): invoke *tg.UploadGetFileRequest(cid=be5335be): send: session: closed"),
+			true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isRecoverableDownloadError(tt.err); got != tt.want {
+				t.Errorf("isRecoverableDownloadError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRecoverDownloadRPC_EvictsDeadCrossDCSession(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.state.SetDC(2) // home DC 2 → DC 4 is cross-DC
+
+	// Pre-seed a dead cross-DC session.
+	c.dcSessions.put(4, &dcSessionEntry{
+		rpc: tg.NewRPCClient(&mockDownloadInvoker{err: errors.New("send: session: closed")}),
+	})
+	if _, ok := c.dcSessions.get(4); !ok {
+		t.Fatal("pre-seeded DC session not in cache")
+	}
+
+	// Recreation fails fast (no network in unit tests).
+	c.testDialer = transport.Dialer(failingDialer{})
+
+	// The exact error the user reported.
+	downloadErr := errors.New("download: get file at offset 0: invoke *tg.UploadGetFileRequest(cid=be5335be): retries exhausted (2): invoke *tg.UploadGetFileRequest(cid=be5335be): send: session: closed")
+
+	_, recovered, err := c.recoverDownloadRPC(context.Background(), 4, downloadErr)
+
+	// Recreation fails without network, but the dead session MUST be evicted.
+	if _, ok := c.dcSessions.get(4); ok {
+		t.Fatal("dead cross-DC session was not evicted from cache")
+	}
+	if recovered {
+		t.Fatal("expected recovery to fail without network, got recovered=true")
+	}
+	if err == nil {
+		t.Fatal("expected reconnect error, got nil")
+	}
+}
+
+func TestRecoverDownloadWorkerRPCUsesSessionDCForSameDC(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.state.SetDC(2)
+
+	st := NewMemoryStorage()
+	mainSess, err := session.NewSession(session.DataCenter{ID: 1}, st, "Test", "0.1", "en", "en")
+	if err != nil {
+		t.Fatalf("NewSession() = %v", err)
+	}
+	c.mu.Lock()
+	c.session = mainSess
+	c.testInvoker = newMockDownloadInvoker([]byte("ok"))
+	c.mu.Unlock()
+	c.testDialer = transport.Dialer(failingDialer{})
+
+	rpc, recovered, err := c.recoverDownloadWorkerRPC(context.Background(), 1, 4, 0, errors.New("send: session: closed"))
+	if err != nil {
+		t.Fatalf("recoverDownloadWorkerRPC() error = %v", err)
+	}
+	if !recovered {
+		t.Fatal("recoverDownloadWorkerRPC() recovered = false, want true")
+	}
+	var buf bytes.Buffer
+	_, _, err = downloadToFileRPC(context.Background(), rpc, &tg.InputDocumentFileLocation{ID: 1, AccessHash: 2}, 2, &buf, nil)
+	if err != nil {
+		t.Fatalf("recovered RPC did not use main invoker: %v", err)
+	}
+	if got := buf.String(); got != "ok" {
+		t.Fatalf("recovered RPC downloaded %q, want %q", got, "ok")
 	}
 }
 
