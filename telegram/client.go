@@ -2358,10 +2358,6 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 		}
 	}
 
-	if err := c.ensureConnected(); err != nil {
-		return nil, err
-	}
-
 	key := sessionKey{dcID: dcID, isMedia: isMedia}
 
 	c.sessionsMu.Lock()
@@ -2370,6 +2366,13 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 		return sess, nil
 	}
 	c.sessionsMu.Unlock()
+
+	c.mu.RLock()
+	testFactory := c.testSessionF
+	c.mu.RUnlock()
+	if err := c.ensureConnected(); err != nil && testFactory == nil {
+		return nil, err
+	}
 
 	addr := ResolveDCAddress(dcID, c.config().TestMode)
 	if addr == "" {
@@ -2380,8 +2383,8 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	var sess *session.Session
 	var err error
 
-	if c.testSessionF != nil {
-		sess, err = c.testSessionF(ctx, dcID, addr, port, nil)
+	if testFactory != nil {
+		sess, err = testFactory(ctx, dcID, addr, port, nil)
 	} else {
 		dc := session.DataCenter{
 			ID:       dcID,
