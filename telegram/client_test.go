@@ -615,6 +615,39 @@ func TestResolvePeerEmpty(t *testing.T) {
 	}
 }
 
+func TestResolvePeerLoadsChannelFromDialogs(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{
+		Dialogs: []tg.DialogClass{
+			&tg.Dialog{
+				Peer:       &tg.PeerChannel{ChannelID: 4461866327},
+				TopMessage: 7,
+			},
+		},
+		Messages: []tg.MessageClass{
+			&tg.Message{ID: 7, Date: 123},
+		},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 4461866327, AccessHash: 998877},
+		},
+	})
+
+	peer, err := c.ResolvePeer(context.Background(), int64(-1004461866327))
+	if err != nil {
+		t.Fatalf("ResolvePeer() = %v", err)
+	}
+	ch, ok := peer.(*tg.InputPeerChannel)
+	if !ok {
+		t.Fatalf("ResolvePeer() = %T, want *tg.InputPeerChannel", peer)
+	}
+	if ch.ChannelID != 4461866327 {
+		t.Errorf("ChannelID = %d, want 4461866327", ch.ChannelID)
+	}
+	if ch.AccessHash != 998877 {
+		t.Errorf("AccessHash = %d, want 998877", ch.AccessHash)
+	}
+}
+
 func TestExportSessionStringNotConnected(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 	_, err := c.ExportSessionString()

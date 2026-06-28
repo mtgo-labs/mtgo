@@ -740,6 +740,50 @@ func TestSendContact(t *testing.T) {
 	}
 }
 
+func TestSendMediaResolvesPeerFromDialogs(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{
+		Dialogs: []tg.DialogClass{
+			&tg.Dialog{
+				Peer:       &tg.PeerChannel{ChannelID: 4461866327},
+				TopMessage: 7,
+			},
+		},
+		Messages: []tg.MessageClass{
+			&tg.Message{ID: 7, Date: 123},
+		},
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 4461866327, AccessHash: 998877},
+		},
+	})
+
+	_, err := c.SendMedia(
+		context.Background(),
+		-1004461866327,
+		&tg.InputMediaPhoto{ID: &tg.InputPhoto{ID: 1, AccessHash: 2}},
+		"caption",
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("SendMedia() error: %v", err)
+	}
+
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	peer, ok := req.Peer.(*tg.InputPeerChannel)
+	if !ok {
+		t.Fatalf("Peer = %T, want *tg.InputPeerChannel", req.Peer)
+	}
+	if peer.ChannelID != 4461866327 {
+		t.Errorf("ChannelID = %d, want 4461866327", peer.ChannelID)
+	}
+	if peer.AccessHash != 998877 {
+		t.Errorf("AccessHash = %d, want 998877", peer.AccessHash)
+	}
+}
+
 func TestSendLocation(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})

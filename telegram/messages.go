@@ -516,7 +516,10 @@ func (c *Client) SendMedia(ctx context.Context, chatID int64, media tg.InputMedi
 	c.Log.Debugf("SendMedia chat_id=%d", chatID)
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
-		return nil, fmt.Errorf("resolve peer: %w", err)
+		peer, err = c.ResolvePeer(ctx, chatID)
+		if err != nil {
+			return nil, fmt.Errorf("resolve peer: %w", err)
+		}
 	}
 	opt := params.GetOptDef(&params.SendMessage{}, opts...)
 	return c.sendMediaInternal(ctx, peer, media, caption, opt)

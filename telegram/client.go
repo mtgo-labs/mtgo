@@ -2332,9 +2332,9 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID interface{}) (tg.InputP
 	case tg.InputPeerClass:
 		return p, nil
 	case int64:
-		return ChatID(p).resolve(ctx, c)
+		return c.resolveNumericPeer(ctx, p)
 	case int:
-		return ChatID(int64(p)).resolve(ctx, c)
+		return c.resolveNumericPeer(ctx, int64(p))
 	case string:
 		return ChatRefFrom(p).resolve(ctx, c)
 	case ChatRef:
@@ -2342,6 +2342,122 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID interface{}) (tg.InputP
 	default:
 		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrPeerNotFound, peerID)
 	}
+}
+
+func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	peer, err := ChatID(id).resolve(ctx, c)
+	if err == nil {
+		return peer, nil
+	}
+	if preloadErr := c.preloadDialogPeer(ctx, id); preloadErr != nil && !errors.Is(preloadErr, ErrPeerNotFound) {
+		return nil, preloadErr
+	}
+	return ChatID(id).resolve(ctx, c)
+}
+
+func (c *Client) preloadDialogPeer(ctx context.Context, id int64) error {
+	const (
+		dialogPageLimit = 100
+		maxDialogPages  = 20
+	)
+
+	rpc := c.Raw()
+	offsetPeer := tg.InputPeerClass(&tg.InputPeerEmpty{})
+	var offsetDate int32
+	var offsetID int32
+
+	for page := 0; page < maxDialogPages; page++ {
+		result, err := rpc.MessagesGetDialogs(ctx, &tg.MessagesGetDialogsRequest{
+			OffsetDate: offsetDate,
+			OffsetID:   offsetID,
+			OffsetPeer: offsetPeer,
+			Limit:      dialogPageLimit,
+		})
+		if err != nil {
+			return err
+		}
+
+		dialogs, messages, users, chats, ok := unpackDialogs(result)
+		if !ok {
+			return ErrPeerNotFound
+		}
+
+		c.cachePeersFromUpdates(users, chats)
+		if _, err := c.ResolvePeerCache(id); err == nil {
+			return nil
+		}
+		if len(dialogs) == 0 {
+			break
+		}
+
+		nextPeer, nextID, nextDate, ok := c.nextDialogOffset(dialogs, messages)
+		if !ok {
+			break
+		}
+		offsetPeer = nextPeer
+		offsetID = nextID
+		offsetDate = nextDate
+	}
+
+	return ErrPeerNotFound
+}
+
+func unpackDialogs(result tg.DialogsClass) ([]tg.DialogClass, []tg.MessageClass, []tg.UserClass, []tg.ChatClass, bool) {
+	switch v := result.(type) {
+	case *tg.MessagesDialogs:
+		return v.Dialogs, v.Messages, v.Users, v.Chats, true
+	case *tg.MessagesDialogsSlice:
+		return v.Dialogs, v.Messages, v.Users, v.Chats, true
+	case *tg.MessagesDialogsNotModified:
+		return nil, nil, nil, nil, false
+	default:
+		return nil, nil, nil, nil, false
+	}
+}
+
+func (c *Client) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.MessageClass) (tg.InputPeerClass, int32, int32, bool) {
+	last, ok := dialogs[len(dialogs)-1].(*tg.Dialog)
+	if !ok || last.Peer == nil {
+		return nil, 0, 0, false
+	}
+	peerID, ok := peerClassID(last.Peer)
+	if !ok {
+		return nil, 0, 0, false
+	}
+	peer, err := c.ResolvePeerCache(peerID)
+	if err != nil {
+		return nil, 0, 0, false
+	}
+	return peer, last.TopMessage, messageDate(messages, last.TopMessage), true
+}
+
+func peerClassID(peer tg.PeerClass) (int64, bool) {
+	switch p := peer.(type) {
+	case *tg.PeerUser:
+		return p.UserID, true
+	case *tg.PeerChat:
+		return p.ChatID, true
+	case *tg.PeerChannel:
+		return p.ChannelID, true
+	default:
+		return 0, false
+	}
+}
+
+func messageDate(messages []tg.MessageClass, id int32) int32 {
+	for _, msg := range messages {
+		switch m := msg.(type) {
+		case *tg.Message:
+			if m.ID == id {
+				return m.Date
+			}
+		case *tg.MessageService:
+			if m.ID == id {
+				return m.Date
+			}
+		}
+	}
+	return 0
 }
 
 // GetSession returns or creates a session for the specified data center. If isMedia or isCDN
