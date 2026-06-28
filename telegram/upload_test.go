@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 
@@ -25,6 +26,9 @@ type mockRPCInvoker struct {
 	errPart           int32
 	fileID            int64
 	invokes           atomic.Int32
+	delay             time.Duration
+	active            atomic.Int32
+	maxActive         atomic.Int32
 }
 
 func newMockRPCInvoker() *mockRPCInvoker {
@@ -41,6 +45,21 @@ func newMockRPCInvoker() *mockRPCInvoker {
 
 func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	m.invokes.Add(1)
+	switch input.(type) {
+	case *tg.UploadSaveFilePartRequest, *tg.UploadSaveBigFilePartRequest:
+		if m.delay > 0 {
+			active := m.active.Add(1)
+			for {
+				maxActive := m.maxActive.Load()
+				if active <= maxActive || m.maxActive.CompareAndSwap(maxActive, active) {
+					break
+				}
+			}
+			time.Sleep(m.delay)
+			m.active.Add(-1)
+		}
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -301,6 +320,44 @@ func TestUploadFile_ConcurrentWorkers(t *testing.T) {
 	}
 	if !bytes.Equal(reassembled, data) {
 		t.Error("reassembled data does not match original")
+	}
+}
+
+func TestUploadFile_DefaultWorkersParallelizeKnownFiles(t *testing.T) {
+	size := int64(uploadPartSize * 5)
+	data := make([]byte, size)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	mock.delay = 10 * time.Millisecond
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "default_parallel.bin", size, nil)
+	if err != nil {
+		t.Fatalf("UploadFile() error: %v", err)
+	}
+	if got := mock.maxActive.Load(); got <= 1 {
+		t.Fatalf("default known-size upload max concurrency = %d, want > 1", got)
+	}
+}
+
+func TestUploadFile_WorkersOneKeepsKnownFilesSerial(t *testing.T) {
+	size := int64(uploadPartSize * 5)
+	data := make([]byte, size)
+	_, _ = rand.Read(data)
+
+	mock := newMockRPCInvoker()
+	mock.delay = 10 * time.Millisecond
+	rpc := tg.NewRPCClient(mock)
+
+	ctx := context.Background()
+	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "serial.bin", size, &UploadOptions{Workers: 1})
+	if err != nil {
+		t.Fatalf("UploadFile() error: %v", err)
+	}
+	if got := mock.maxActive.Load(); got != 1 {
+		t.Fatalf("Workers=1 max concurrency = %d, want 1", got)
 	}
 }
 

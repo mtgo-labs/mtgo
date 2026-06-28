@@ -19,14 +19,17 @@ const (
 	// maxFileSize is the maximum allowed file size in bytes for uploads.
 	// Set to 2 GB, which is the Telegram Bot API / MTProto limit for file uploads.
 	maxFileSize = 2 << 30
+
+	defaultTransferWorkers = 4
+	maxTransferWorkers     = 8
 )
 
 // UploadOptions configures optional parameters for file upload operations.
-// Pass a nil pointer to accept all defaults (single worker, no progress reporting).
+// Pass a nil pointer to accept all defaults (automatic workers, no progress reporting).
 type UploadOptions struct {
 	// Workers controls the number of concurrent goroutines used to upload file parts.
-	// Values greater than 8 are clamped to 8. A value of 0 or less falls back to 1 (serial upload).
-	// Use higher values for large files to saturate network bandwidth.
+	// Values greater than 8 are clamped to 8. A value of 0 or less lets the client choose
+	// a sensible default for known-size files. Set Workers to 1 to force serial upload.
 	Workers int
 
 	// Progress is an optional callback invoked after each part is successfully uploaded.

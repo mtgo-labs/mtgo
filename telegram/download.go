@@ -23,6 +23,8 @@ import (
 
 const maxDownloadRecoveries = 10
 
+var errParallelDownloadUnsupported = errors.New("download: parallel download unsupported for response")
+
 // FileChunk represents a single chunk of data received during a streamed file download.
 // It is delivered over the channel returned by StreamFile. Each chunk contains the raw
 // data bytes, cumulative download progress, and an optional terminal error.
@@ -99,9 +101,28 @@ func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocation
 		return nil, fmt.Errorf("download: dc rpc: %w", err)
 	}
 
+	if shouldParallelDownload(fileSize, (*memoryBuffer)(nil), opts, int(dcID), c.homeDC()) {
+		buf := memoryBuffer{data: make([]byte, int(fileSize))}
+		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadPoolSize(opts, fileSize, int(dcID), c.homeDC()))
+		if err != nil {
+			return nil, fmt.Errorf("download: dc rpc pool: %w", err)
+		}
+		written, err := c.downloadToWriterAt(ctx, rpcs, int(dcID), location, fileSize, &buf, opts)
+		if err != nil {
+			if errors.Is(err, errParallelDownloadUnsupported) && written == 0 {
+				goto serialDownload
+			}
+			return nil, err
+		}
+		if written >= fileSize {
+			return buf.Bytes(), nil
+		}
+	}
+
+serialDownload:
 	var buf memoryBuffer
 	if fileSize > 0 {
-		buf.data = make([]byte, 0, fileSize)
+		buf.data = make([]byte, 0, int(fileSize))
 	}
 	_, err = c.downloadToWriter(ctx, rpc, int(dcID), location, fileSize, &buf, opts)
 	if err != nil {
@@ -165,14 +186,25 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 	}
 	defer f.Close()
 
-	if shouldParallelDownload(fileSize, f, opts) {
-		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadPoolSize(opts))
+	if shouldParallelDownload(fileSize, f, opts, int(dcID), c.homeDC()) {
+		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadPoolSize(opts, fileSize, int(dcID), c.homeDC()))
 		if err != nil {
 			os.Remove(filePath)
 			return fmt.Errorf("download: dc rpc pool: %w", err)
 		}
 		written, err := c.downloadToWriterAt(ctx, rpcs, int(dcID), location, fileSize, f, opts)
 		if err != nil {
+			if errors.Is(err, errParallelDownloadUnsupported) && written == 0 {
+				if _, seekErr := f.Seek(0, io.SeekStart); seekErr != nil {
+					os.Remove(filePath)
+					return fmt.Errorf("download: seek file: %w", seekErr)
+				}
+				if truncateErr := f.Truncate(0); truncateErr != nil {
+					os.Remove(filePath)
+					return fmt.Errorf("download: truncate file: %w", truncateErr)
+				}
+				goto serialFileDownload
+			}
 			os.Remove(filePath)
 			return err
 		}
@@ -181,6 +213,7 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 		}
 	}
 
+serialFileDownload:
 	_, err = c.downloadToWriter(ctx, rpc, int(dcID), location, fileSize, f, opts)
 	if err != nil {
 		os.Remove(filePath)
@@ -338,15 +371,34 @@ func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationCl
 }
 
 type memoryBuffer struct {
+	mu   sync.Mutex
 	data []byte
 }
 
 func (m *memoryBuffer) Write(p []byte) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.data = append(m.data, p...)
 	return len(p), nil
 }
 
+func (m *memoryBuffer) WriteAt(p []byte, off int64) (int, error) {
+	if off < 0 {
+		return 0, fmt.Errorf("negative offset %d", off)
+	}
+	end := off + int64(len(p))
+	if end > int64(len(m.data)) {
+		return 0, io.ErrShortWrite
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copy(m.data[off:end], p)
+	return len(p), nil
+}
+
 func (m *memoryBuffer) Bytes() []byte {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.data
 }
 
@@ -446,27 +498,33 @@ func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID i
 	return written, nil
 }
 
-func shouldParallelDownload(fileSize int64, writer io.Writer, opts *params.Download) bool {
-	if fileSize <= 0 || opts == nil || opts.Workers <= 1 {
+func shouldParallelDownload(fileSize int64, writer io.Writer, opts *params.Download, dcID int, homeDC int) bool {
+	if fileSize <= 0 || downloadWorkers(opts, fileSize, dcID, homeDC) <= 1 {
 		return false
 	}
 	_, ok := writer.(io.WriterAt)
 	return ok
 }
 
-func downloadWorkers(opts *params.Download) int {
-	workers := 1
-	if opts != nil && opts.Workers > 0 {
-		workers = opts.Workers
+func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int) int {
+	if opts != nil && opts.Workers == 1 {
+		return 1
 	}
-	if workers > 8 {
-		workers = 8
+	if opts != nil && opts.Workers > 1 {
+		return clampTransferWorkers(opts.Workers)
 	}
-	return workers
+	if fileSize <= int64(downloadChunkSize) {
+		return 1
+	}
+	if dcID > 0 && homeDC > 0 && dcID != homeDC {
+		return 1
+	}
+	parts := int((fileSize + int64(downloadChunkSize) - 1) / int64(downloadChunkSize))
+	return min(defaultTransferWorkers, parts)
 }
 
-func downloadPoolSize(opts *params.Download) int {
-	return downloadWorkers(opts)
+func downloadPoolSize(opts *params.Download, fileSize int64, dcID int, homeDC int) int {
+	return downloadWorkers(opts, fileSize, dcID, homeDC)
 }
 
 func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.WriterAt, opts *params.Download) (int64, error) {
@@ -475,7 +533,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 		chunkSize = opts.ChunkSize
 	}
 
-	workers := downloadWorkers(opts)
+	workers := downloadWorkers(opts, fileSize, dcID, c.homeDC())
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -534,6 +592,10 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 					var ok bool
 					file, ok = res.(*tg.UploadFile)
 					if !ok {
+						if _, ok := res.(*tg.UploadFileCDNRedirect); ok {
+							results <- result{offset: j.offset, err: errParallelDownloadUnsupported}
+							return
+						}
 						results <- result{offset: j.offset, err: fmt.Errorf("download: unexpected result type %T", res)}
 						return
 					}

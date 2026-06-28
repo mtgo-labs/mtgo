@@ -27,6 +27,9 @@ type mockDownloadInvoker struct {
 	err         error
 	cdnRedirect bool
 	failOnceAt  int64
+	delay       time.Duration
+	active      atomic.Int32
+	maxActive   atomic.Int32
 }
 
 func newMockDownloadInvoker(data []byte) *mockDownloadInvoker {
@@ -45,6 +48,17 @@ func (m *mockDownloadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, 
 	req, ok := input.(*tg.UploadGetFileRequest)
 	if !ok {
 		return nil, fmt.Errorf("unexpected request type: %T", input)
+	}
+	if m.delay > 0 {
+		active := m.active.Add(1)
+		for {
+			maxActive := m.maxActive.Load()
+			if active <= maxActive || m.maxActive.CompareAndSwap(maxActive, active) {
+				break
+			}
+		}
+		time.Sleep(m.delay)
+		m.active.Add(-1)
 	}
 
 	if m.cdnRedirect {
@@ -186,6 +200,54 @@ func TestDownloadFile_ProgressCallback(t *testing.T) {
 	}
 	if callCount == 0 {
 		t.Error("progress callback was never called")
+	}
+}
+
+func TestClientDownloadFile_DefaultWorkersParallelizeMemoryDownload(t *testing.T) {
+	data := make([]byte, downloadChunkSize*5+123)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	mock.delay = 10 * time.Millisecond
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = mock
+
+	got, err := c.DownloadFile(context.Background(), &tg.InputDocumentFileLocation{
+		ID: 100, AccessHash: 200,
+	}, int64(len(data)), nil)
+	if err != nil {
+		t.Fatalf("DownloadFile() error: %v", err)
+	}
+	if !bytes.Equal(got, data) {
+		t.Fatal("downloaded data does not match original")
+	}
+	if maxActive := mock.maxActive.Load(); maxActive <= 1 {
+		t.Fatalf("default in-memory download max concurrency = %d, want > 1", maxActive)
+	}
+}
+
+func TestClientDownloadFile_WorkersOneKeepsMemoryDownloadSerial(t *testing.T) {
+	data := make([]byte, downloadChunkSize*5+123)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	mock.delay = 10 * time.Millisecond
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = mock
+
+	got, err := c.DownloadFile(context.Background(), &tg.InputDocumentFileLocation{
+		ID: 100, AccessHash: 200,
+	}, int64(len(data)), &params.Download{Workers: 1})
+	if err != nil {
+		t.Fatalf("DownloadFile() error: %v", err)
+	}
+	if !bytes.Equal(got, data) {
+		t.Fatal("downloaded data does not match original")
+	}
+	if maxActive := mock.maxActive.Load(); maxActive != 1 {
+		t.Fatalf("Workers=1 in-memory download max concurrency = %d, want 1", maxActive)
 	}
 }
 

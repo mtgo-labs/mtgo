@@ -140,13 +140,7 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 }
 
 func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, opts *UploadOptions) (tg.InputFileClass, int64, error) {
-	workers := 1
-	if opts != nil && opts.Workers > 0 {
-		workers = opts.Workers
-	}
-	if workers > 8 {
-		workers = 8
-	}
+	workers := uploadStreamWorkers(opts)
 
 	fileID, err := generateFileID()
 	if err != nil {
@@ -170,6 +164,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 	var resultsMu sync.Mutex
 	var wg sync.WaitGroup
 	var hasErr atomic.Bool
+	var uploadedBytes atomic.Int64
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
@@ -226,10 +221,11 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 				}
 
 				if opts != nil && opts.Progress != nil {
+					done := uploadedBytes.Add(int64(len(job.data)))
 					opts.Progress(params.ProgressInfo{
 						FileName:      fileName,
 						TotalBytes:    0,
-						UploadedBytes: job.totalSize,
+						UploadedBytes: done,
 						IsUpload:      true,
 					})
 				}
@@ -306,13 +302,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 }
 
 func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
-	workers := 1
-	if opts != nil && opts.Workers > 0 {
-		workers = opts.Workers
-	}
-	if workers > 8 {
-		workers = 8
-	}
+	workers := uploadKnownWorkers(opts, fileSize)
 
 	fileID, err := generateFileID()
 	if err != nil {
@@ -344,6 +334,7 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 	results := make(chan partResult, totalParts)
 	var wg sync.WaitGroup
 	var hasErr atomic.Bool
+	var uploadedBytes atomic.Int64
 
 	for w := 0; w < workers; w++ {
 		wg.Add(1)
@@ -397,7 +388,7 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 				results <- partResult{index: job.partIdx}
 
 				if opts != nil && opts.Progress != nil {
-					done := min(int64(job.partIdx+1)*uploadPartSize, fileSize)
+					done := uploadedBytes.Add(int64(len(job.data)))
 					opts.Progress(params.ProgressInfo{
 						FileName:      fileName,
 						TotalBytes:    fileSize,
@@ -476,6 +467,48 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 		Name:        fileName,
 		MD5Checksum: md5Str,
 	}, fileSize, nil
+}
+
+func uploadStreamWorkers(opts *UploadOptions) int {
+	if opts == nil || opts.Workers <= 1 {
+		return 1
+	}
+	return clampTransferWorkers(opts.Workers)
+}
+
+func uploadKnownWorkers(opts *UploadOptions, fileSize int64) int {
+	if opts != nil && opts.Workers == 1 {
+		return 1
+	}
+	if opts != nil && opts.Workers > 1 {
+		return clampTransferWorkers(opts.Workers)
+	}
+	parts := uploadPartCount(fileSize)
+	if parts <= 1 {
+		return 1
+	}
+	return min(defaultTransferWorkers, parts)
+}
+
+func uploadPartCount(fileSize int64) int {
+	if fileSize <= 0 {
+		return 0
+	}
+	parts := int((fileSize + int64(uploadPartSize) - 1) / int64(uploadPartSize))
+	if parts < 1 {
+		return 1
+	}
+	return parts
+}
+
+func clampTransferWorkers(workers int) int {
+	if workers < 1 {
+		return 1
+	}
+	if workers > maxTransferWorkers {
+		return maxTransferWorkers
+	}
+	return workers
 }
 
 func generateFileID() (int64, error) {
