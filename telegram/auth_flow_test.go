@@ -394,8 +394,8 @@ func TestIsAuthorized(t *testing.T) {
 	if err := st.SetAuthKey(make([]byte, 256)); err != nil {
 		t.Fatalf("SetAuthKey: %v", err)
 	}
-	if !c.isAuthorized() {
-		t.Error("storage with auth key should be authorized")
+	if c.isAuthorized() {
+		t.Error("auth key without user ID should NOT be authorized")
 	}
 	if err := st.SetAuthKey(nil); err != nil {
 		t.Fatalf("SetAuthKey nil: %v", err)

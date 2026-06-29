@@ -172,17 +172,14 @@ func (c *Client) loginSignUp(ctx context.Context, phone, hash string) error {
 	return nil
 }
 
-// isAuthorized checks whether storage contains either user metadata or an auth
-// key. User metadata is preferred, but a persisted auth key is enough to avoid
-// sending a new login code; the user can be restored with users.getFullUser.
+// isAuthorized checks whether storage contains a user ID, indicating a prior
+// successful authentication (auth.signIn or auth.importBotAuthorization).
+// A bare auth key from DH exchange is NOT sufficient — the key is valid for
+// encryption but has no associated user session until login completes.
 func (c *Client) isAuthorized() bool {
 	if c.storage == nil {
 		return false
 	}
 	uid, err := c.storage.UserID()
-	if err == nil && uid != 0 {
-		return true
-	}
-	authKey, err := c.storage.AuthKey()
-	return err == nil && len(authKey) != 0
+	return err == nil && uid != 0
 }

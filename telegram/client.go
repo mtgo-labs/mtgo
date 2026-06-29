@@ -1089,6 +1089,16 @@ func (c *Client) importSessionString(st storage.Storage) error {
 	if err := st.SetAPIID(c.config().APIID); err != nil {
 		return fmt.Errorf("telegram: import session api_id: %w", err)
 	}
+	if uid, err := src.UserID(); err == nil && uid != 0 {
+		if err := st.SetUserID(uid); err != nil {
+			return fmt.Errorf("telegram: import session user_id: %w", err)
+		}
+	}
+	if isBot, err := src.IsBot(); err == nil {
+		if err := st.SetIsBot(isBot); err != nil {
+			c.Log.Warnf("import session is_bot: %v", err)
+		}
+	}
 	return nil
 }
 
@@ -1515,6 +1525,14 @@ func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
 	defer cancel()
 	me, err := c.GetMe(ctx)
 	if err != nil {
+		// AUTH_KEY_UNREGISTERED (401) means the auth key has no associated
+		// user session. This is expected for freshly created keys (DH exchange
+		// without prior auth.signIn/importBotAuthorization). Treat as a non-error
+		// so the caller can proceed to the login flow or return to the user.
+		if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 401 {
+			c.Log.Debug("auth key has no user session; skipping user restore")
+			return nil
+		}
 		return err
 	}
 	c.saveMeToStorage(me)
