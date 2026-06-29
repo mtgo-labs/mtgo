@@ -1252,6 +1252,7 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 		c.Log.Warnf("save test mode: %v", err)
 	}
 	c.Log.Debug("DH exchange complete; auth_key=", len(result.AuthKey), " bytes")
+	syncStorage(st)
 	return nil
 }
 
@@ -2753,6 +2754,17 @@ func (c *Client) saveMeToStorage(user *types.User) {
 	_ = st.SetFirstName(user.FirstName)
 	_ = st.SetLastName(user.LastName)
 	_ = st.SetUsername(user.Username)
+	syncStorage(st)
+}
+
+// syncStorage flushes pending session changes to durable storage. It is a
+// no-op for storage backends that do not implement a Sync method (e.g.
+// in-memory storage).
+func syncStorage(st storage.Storage) {
+	type syncer interface{ Sync() error }
+	if s, ok := st.(syncer); ok {
+		_ = s.Sync()
+	}
 }
 
 // ServerTime returns the current estimated server time adjusted by the configured timezone offset.
