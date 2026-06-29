@@ -1823,6 +1823,9 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 	if err := st.SetAuthKey(nil); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("clear auth key: %w", err)}
 	}
+	if err := st.SetUserID(0); err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("clear user id: %w", err)}
+	}
 	c.updateConfig(func(cfg *Config) { cfg.DC = targetDC })
 
 	if err := c.connectTransport(30 * time.Second); err != nil {
