@@ -5754,6 +5754,42 @@ func (v *MessageActionTopicEdit) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetClosed sets value of Closed conditional field.
+func (v *MessageActionTopicEdit) SetClosed(value bool) {
+	v.Flags.Set(2)
+	v.Closed = value
+}
+
+// GetClosed returns value of Closed conditional field and a boolean
+// that is true if the field was set.
+func (v *MessageActionTopicEdit) GetClosed() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.Closed, true
+}
+
+// SetHidden sets value of Hidden conditional field.
+func (v *MessageActionTopicEdit) SetHidden(value bool) {
+	v.Flags.Set(3)
+	v.Hidden = value
+}
+
+// GetHidden returns value of Hidden conditional field and a boolean
+// that is true if the field was set.
+func (v *MessageActionTopicEdit) GetHidden() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.Hidden, true
+}
+
 // DecodeMessageActionTopicEdit deserializes a MessageActionTopicEdit from a reader using the TL binary protocol.
 func DecodeMessageActionTopicEdit(r *Reader) (*MessageActionTopicEdit, error) {
 	v := &MessageActionTopicEdit{}

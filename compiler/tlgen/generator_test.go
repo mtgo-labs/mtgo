@@ -321,6 +321,12 @@ func TestGenerateTypes(t *testing.T) {
 	if !strings.Contains(content, "v.OptBool = _rOptBool") {
 		t.Fatal("optional Bool field should decode into direct bool value")
 	}
+	if !strings.Contains(content, "func (v *TestFlags) SetOptBool(value bool)") {
+		t.Fatal("missing SetOptBool helper for optional Bool field")
+	}
+	if !strings.Contains(content, "func (v *TestFlags) GetOptBool() (value bool, ok bool)") {
+		t.Fatal("missing GetOptBool helper for optional Bool field")
+	}
 	if !strings.Contains(content, "OptString") || !strings.Contains(content, "string") {
 		t.Fatal("optional string field should be direct string")
 	}

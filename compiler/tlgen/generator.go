@@ -408,6 +408,7 @@ func generateGroupedTypes(cfg genConfig, outDir string, combos []Combinator, lay
 				constName := td.Name + "TypeID"
 				fmt.Fprintf(&buf, "\n// ConstructorID returns the TL constructor identifier 0x%08x.\nfunc (v *%s) ConstructorID() uint32 {\n\treturn %s\n}\n", td.ID, td.Name, constName)
 				writeEncodeMethod(&buf, cfg, td.Name, constName, td)
+				writeBoolFlagHelpers(&buf, td.Name, td)
 				writeDecodeMethod(&buf, cfg, td.Name, td)
 				fmt.Fprintf(&buf, "\nfunc init() {\n\tRegistry[%s] = func(r %s) (%s, error) {\n\t\treturn Decode%s(r)\n\t}\n}\n", constName, cfg.reader, cfg.tlObject, td.Name)
 			}
@@ -504,8 +505,8 @@ func generateGroupedFunctions(cfg genConfig, outDir string, combos []Combinator,
 
 			writeSetFlags(&buf, structName, td, len(td.FlagSyncs) > 0)
 			fmt.Fprintf(&buf, "\n// ConstructorID returns the TL constructor identifier 0x%08x.\nfunc (v *%s) ConstructorID() uint32 {\n\treturn %s\n}\n", td.ID, structName, constName)
-
 			writeEncodeMethod(&buf, cfg, structName, constName, td)
+			writeBoolFlagHelpers(&buf, structName, td)
 			generateInvokeMethod(&buf, cfg, td, retType, structName)
 
 			maps.Copy(nsAllNames, groupAllNames)
@@ -709,6 +710,38 @@ func writeSetFlags(buf *strings.Builder, name string, td typeTemplateData, shoul
 		fmt.Fprintf(buf, "\tif %s {\n\t\tv.%s.Set(%d)\n\t}\n", flagSyncCondition(fs), fs.FlagName, fs.Bit)
 	}
 	buf.WriteString("}\n")
+}
+
+// writeBoolFlagHelpers generates Set<Field>(value bool) and Get<Field>() (value
+// bool, ok bool) methods for TL "flags.N?Bool" fields. These fields are
+// tri-state (absent / true / false). The Set method sets the flag bit and the
+// value; the Get method returns the value and whether the field was present.
+func writeBoolFlagHelpers(buf *strings.Builder, name string, td typeTemplateData) {
+	for _, f := range td.Fields {
+		if !f.IsOptBool {
+			continue
+		}
+		fmt.Fprintf(buf, `
+// Set%s sets value of %s conditional field.
+func (v *%s) Set%s(value bool) {
+	v.%s.Set(%d)
+	v.%s = value
+}
+
+// Get%s returns value of %s conditional field and a boolean
+// that is true if the field was set.
+func (v *%s) Get%s() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.%s.Has(%d) {
+		return value, false
+	}
+	return v.%s, true
+}
+`, f.Name, f.Name, name, f.Name, f.FlagName, f.FlagBit, f.Name,
+			f.Name, f.Name, name, f.Name, f.FlagName, f.FlagBit, f.Name)
+	}
 }
 
 func writeEncodeMethod(buf *strings.Builder, cfg genConfig, name, constName string, td typeTemplateData) {

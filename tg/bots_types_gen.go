@@ -1214,6 +1214,24 @@ func (v *KeyboardButtonRequestPoll) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetQuiz sets value of Quiz conditional field.
+func (v *KeyboardButtonRequestPoll) SetQuiz(value bool) {
+	v.Flags.Set(0)
+	v.Quiz = value
+}
+
+// GetQuiz returns value of Quiz conditional field and a boolean
+// that is true if the field was set.
+func (v *KeyboardButtonRequestPoll) GetQuiz() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.Quiz, true
+}
+
 // DecodeKeyboardButtonRequestPoll deserializes a KeyboardButtonRequestPoll from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestPoll(r *Reader) (*KeyboardButtonRequestPoll, error) {
 	v := &KeyboardButtonRequestPoll{}

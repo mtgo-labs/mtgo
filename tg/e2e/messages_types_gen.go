@@ -1244,7 +1244,7 @@ type DecryptedMessageMediaExternalDocument struct {
 	MimeType   string                   `json:"mime_type,omitempty"`
 	Size       int32                    `json:"size,omitempty"`
 	Thumb      PhotoSizeClass           `json:"thumb,omitempty"`
-	DCID       int32                    `json:"dcid,omitempty"`
+	DCID       int32                    `json:"dc_id,omitempty"`
 	Attributes []DocumentAttributeClass `json:"attributes,omitempty"`
 }
 
@@ -2214,7 +2214,7 @@ func init() {
 // DecryptedMessageActionRequestKey represents the TL constructor decryptedMessageActionRequestKey (0xf3c9611b).
 type DecryptedMessageActionRequestKey struct {
 	ExchangeID int64  `json:"exchange_id,omitempty"`
-	GA         []byte `json:"ga,omitempty"`
+	GA         []byte `json:"g_a,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0xf3c9611b.
@@ -2255,7 +2255,7 @@ func init() {
 // DecryptedMessageActionAcceptKey represents the TL constructor decryptedMessageActionAcceptKey (0x6fe1735b).
 type DecryptedMessageActionAcceptKey struct {
 	ExchangeID     int64  `json:"exchange_id,omitempty"`
-	GB             []byte `json:"gb,omitempty"`
+	GB             []byte `json:"g_b,omitempty"`
 	KeyFingerprint int64  `json:"key_fingerprint,omitempty"`
 }
 

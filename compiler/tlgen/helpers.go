@@ -7,13 +7,14 @@ import (
 )
 
 type fieldData struct {
-	Name     string
-	GoType   string
-	JSONTag  string
-	IsFlags  bool
-	FlagName string
-	FlagBit  int
-	Doc      string
+	Name      string
+	GoType    string
+	JSONTag   string
+	IsFlags   bool
+	IsOptBool bool // TL "flags.N?Bool" (tri-state: absent/true/false)
+	FlagName  string
+	FlagBit   int
+	Doc       string
 }
 
 type flagSync struct {
@@ -449,13 +450,14 @@ func buildTypeData(c Combinator, section string, baseTypes map[string]bool, type
 		gt := resolveGoTypeForField(arg, section, baseTypes, typeToConstructor)
 
 		fd := fieldData{
-			Name:     fieldNameFromTL(arg.Name),
-			GoType:   gt,
-			JSONTag:  jsonTagFromTL(arg.Name),
-			IsFlags:  false,
-			FlagName: arg.FlagName,
-			FlagBit:  arg.FlagBit,
-			Doc:      fieldDescription(c.QualName, arg.Name),
+			Name:      fieldNameFromTL(arg.Name),
+			GoType:    gt,
+			JSONTag:   jsonTagFromTL(arg.Name),
+			IsFlags:   false,
+			IsOptBool: arg.Type == "Bool" && arg.FlagBit >= 0,
+			FlagName:  arg.FlagName,
+			FlagBit:   arg.FlagBit,
+			Doc:       fieldDescription(c.QualName, arg.Name),
 		}
 
 		if arg.FlagBit >= 0 {

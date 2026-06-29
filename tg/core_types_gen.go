@@ -7034,6 +7034,24 @@ func (v *CodeSettings) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetAppSandbox sets value of AppSandbox conditional field.
+func (v *CodeSettings) SetAppSandbox(value bool) {
+	v.Flags.Set(8)
+	v.AppSandbox = value
+}
+
+// GetAppSandbox returns value of AppSandbox conditional field and a boolean
+// that is true if the field was set.
+func (v *CodeSettings) GetAppSandbox() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(8) {
+		return value, false
+	}
+	return v.AppSandbox, true
+}
+
 // DecodeCodeSettings deserializes a CodeSettings from a reader using the TL binary protocol.
 func DecodeCodeSettings(r *Reader) (*CodeSettings, error) {
 	v := &CodeSettings{}

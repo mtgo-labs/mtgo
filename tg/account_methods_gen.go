@@ -3337,6 +3337,42 @@ func (v *AccountChangeAuthorizationSettingsRequest) Encode(b *bytes.Buffer) erro
 	return nil
 }
 
+// SetEncryptedRequestsDisabled sets value of EncryptedRequestsDisabled conditional field.
+func (v *AccountChangeAuthorizationSettingsRequest) SetEncryptedRequestsDisabled(value bool) {
+	v.Flags.Set(0)
+	v.EncryptedRequestsDisabled = value
+}
+
+// GetEncryptedRequestsDisabled returns value of EncryptedRequestsDisabled conditional field and a boolean
+// that is true if the field was set.
+func (v *AccountChangeAuthorizationSettingsRequest) GetEncryptedRequestsDisabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.EncryptedRequestsDisabled, true
+}
+
+// SetCallRequestsDisabled sets value of CallRequestsDisabled conditional field.
+func (v *AccountChangeAuthorizationSettingsRequest) SetCallRequestsDisabled(value bool) {
+	v.Flags.Set(1)
+	v.CallRequestsDisabled = value
+}
+
+// GetCallRequestsDisabled returns value of CallRequestsDisabled conditional field and a boolean
+// that is true if the field was set.
+func (v *AccountChangeAuthorizationSettingsRequest) GetCallRequestsDisabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.CallRequestsDisabled, true
+}
+
 // AccountChangeAuthorizationSettings invokes the account.changeAuthorizationSettings RPC method on the server.
 //
 // Parameters:
@@ -5779,6 +5815,24 @@ func (v *AccountToggleWebBrowserSettingsExceptionRequest) Encode(b *bytes.Buffer
 	}
 	WriteString(b, v.URL)
 	return nil
+}
+
+// SetOpenExternalBrowser sets value of OpenExternalBrowser conditional field.
+func (v *AccountToggleWebBrowserSettingsExceptionRequest) SetOpenExternalBrowser(value bool) {
+	v.Flags.Set(0)
+	v.OpenExternalBrowser = value
+}
+
+// GetOpenExternalBrowser returns value of OpenExternalBrowser conditional field and a boolean
+// that is true if the field was set.
+func (v *AccountToggleWebBrowserSettingsExceptionRequest) GetOpenExternalBrowser() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.OpenExternalBrowser, true
 }
 
 // AccountToggleWebBrowserSettingsException invokes the account.toggleWebBrowserSettingsException RPC method on the server.

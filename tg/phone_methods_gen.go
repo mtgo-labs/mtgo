@@ -780,6 +780,42 @@ func (v *PhoneToggleGroupCallSettingsRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetJoinMuted sets value of JoinMuted conditional field.
+func (v *PhoneToggleGroupCallSettingsRequest) SetJoinMuted(value bool) {
+	v.Flags.Set(0)
+	v.JoinMuted = value
+}
+
+// GetJoinMuted returns value of JoinMuted conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneToggleGroupCallSettingsRequest) GetJoinMuted() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.JoinMuted, true
+}
+
+// SetMessagesEnabled sets value of MessagesEnabled conditional field.
+func (v *PhoneToggleGroupCallSettingsRequest) SetMessagesEnabled(value bool) {
+	v.Flags.Set(2)
+	v.MessagesEnabled = value
+}
+
+// GetMessagesEnabled returns value of MessagesEnabled conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneToggleGroupCallSettingsRequest) GetMessagesEnabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.MessagesEnabled, true
+}
+
 // PhoneToggleGroupCallSettings invokes the phone.toggleGroupCallSettings RPC method on the server.
 //
 // Parameters:
@@ -990,6 +1026,24 @@ func (v *PhoneToggleGroupCallRecordRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetVideoPortrait sets value of VideoPortrait conditional field.
+func (v *PhoneToggleGroupCallRecordRequest) SetVideoPortrait(value bool) {
+	v.Flags.Set(2)
+	v.VideoPortrait = value
+}
+
+// GetVideoPortrait returns value of VideoPortrait conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneToggleGroupCallRecordRequest) GetVideoPortrait() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.VideoPortrait, true
+}
+
 // PhoneToggleGroupCallRecord invokes the phone.toggleGroupCallRecord RPC method on the server.
 //
 // Parameters:
@@ -1081,6 +1135,96 @@ func (v *PhoneEditGroupCallParticipantRequest) Encode(b *bytes.Buffer) error {
 		WriteBool(b, v.PresentationPaused)
 	}
 	return nil
+}
+
+// SetMuted sets value of Muted conditional field.
+func (v *PhoneEditGroupCallParticipantRequest) SetMuted(value bool) {
+	v.Flags.Set(0)
+	v.Muted = value
+}
+
+// GetMuted returns value of Muted conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneEditGroupCallParticipantRequest) GetMuted() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.Muted, true
+}
+
+// SetRaiseHand sets value of RaiseHand conditional field.
+func (v *PhoneEditGroupCallParticipantRequest) SetRaiseHand(value bool) {
+	v.Flags.Set(2)
+	v.RaiseHand = value
+}
+
+// GetRaiseHand returns value of RaiseHand conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneEditGroupCallParticipantRequest) GetRaiseHand() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.RaiseHand, true
+}
+
+// SetVideoStopped sets value of VideoStopped conditional field.
+func (v *PhoneEditGroupCallParticipantRequest) SetVideoStopped(value bool) {
+	v.Flags.Set(3)
+	v.VideoStopped = value
+}
+
+// GetVideoStopped returns value of VideoStopped conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneEditGroupCallParticipantRequest) GetVideoStopped() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.VideoStopped, true
+}
+
+// SetVideoPaused sets value of VideoPaused conditional field.
+func (v *PhoneEditGroupCallParticipantRequest) SetVideoPaused(value bool) {
+	v.Flags.Set(4)
+	v.VideoPaused = value
+}
+
+// GetVideoPaused returns value of VideoPaused conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneEditGroupCallParticipantRequest) GetVideoPaused() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(4) {
+		return value, false
+	}
+	return v.VideoPaused, true
+}
+
+// SetPresentationPaused sets value of PresentationPaused conditional field.
+func (v *PhoneEditGroupCallParticipantRequest) SetPresentationPaused(value bool) {
+	v.Flags.Set(5)
+	v.PresentationPaused = value
+}
+
+// GetPresentationPaused returns value of PresentationPaused conditional field and a boolean
+// that is true if the field was set.
+func (v *PhoneEditGroupCallParticipantRequest) GetPresentationPaused() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(5) {
+		return value, false
+	}
+	return v.PresentationPaused, true
 }
 
 // PhoneEditGroupCallParticipant invokes the phone.editGroupCallParticipant RPC method on the server.

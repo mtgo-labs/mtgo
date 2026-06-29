@@ -7386,6 +7386,24 @@ func (v *MessagesEditExportedChatInviteRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetRequestNeeded sets value of RequestNeeded conditional field.
+func (v *MessagesEditExportedChatInviteRequest) SetRequestNeeded(value bool) {
+	v.Flags.Set(3)
+	v.RequestNeeded = value
+}
+
+// GetRequestNeeded returns value of RequestNeeded conditional field and a boolean
+// that is true if the field was set.
+func (v *MessagesEditExportedChatInviteRequest) GetRequestNeeded() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.RequestNeeded, true
+}
+
 // MessagesEditExportedChatInvite invokes the messages.editExportedChatInvite RPC method on the server.
 //
 // Parameters:
@@ -8343,6 +8361,24 @@ func (v *MessagesSetChatAvailableReactionsRequest) Encode(b *bytes.Buffer) error
 		WriteBool(b, v.PaidEnabled)
 	}
 	return nil
+}
+
+// SetPaidEnabled sets value of PaidEnabled conditional field.
+func (v *MessagesSetChatAvailableReactionsRequest) SetPaidEnabled(value bool) {
+	v.Flags.Set(1)
+	v.PaidEnabled = value
+}
+
+// GetPaidEnabled returns value of PaidEnabled conditional field and a boolean
+// that is true if the field was set.
+func (v *MessagesSetChatAvailableReactionsRequest) GetPaidEnabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.PaidEnabled, true
 }
 
 // MessagesSetChatAvailableReactions invokes the messages.setChatAvailableReactions RPC method on the server.
@@ -12534,6 +12570,42 @@ func (v *MessagesEditForumTopicRequest) Encode(b *bytes.Buffer) error {
 		WriteBool(b, v.Hidden)
 	}
 	return nil
+}
+
+// SetClosed sets value of Closed conditional field.
+func (v *MessagesEditForumTopicRequest) SetClosed(value bool) {
+	v.Flags.Set(2)
+	v.Closed = value
+}
+
+// GetClosed returns value of Closed conditional field and a boolean
+// that is true if the field was set.
+func (v *MessagesEditForumTopicRequest) GetClosed() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.Closed, true
+}
+
+// SetHidden sets value of Hidden conditional field.
+func (v *MessagesEditForumTopicRequest) SetHidden(value bool) {
+	v.Flags.Set(3)
+	v.Hidden = value
+}
+
+// GetHidden returns value of Hidden conditional field and a boolean
+// that is true if the field was set.
+func (v *MessagesEditForumTopicRequest) GetHidden() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.Hidden, true
 }
 
 // MessagesEditForumTopic invokes the messages.editForumTopic RPC method on the server.

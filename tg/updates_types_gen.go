@@ -9831,6 +9831,24 @@ func (v *UpdateWebBrowserException) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetOpenExternalBrowser sets value of OpenExternalBrowser conditional field.
+func (v *UpdateWebBrowserException) SetOpenExternalBrowser(value bool) {
+	v.Flags.Set(0)
+	v.OpenExternalBrowser = value
+}
+
+// GetOpenExternalBrowser returns value of OpenExternalBrowser conditional field and a boolean
+// that is true if the field was set.
+func (v *UpdateWebBrowserException) GetOpenExternalBrowser() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.OpenExternalBrowser, true
+}
+
 // DecodeUpdateWebBrowserException deserializes a UpdateWebBrowserException from a reader using the TL binary protocol.
 func DecodeUpdateWebBrowserException(r *Reader) (*UpdateWebBrowserException, error) {
 	v := &UpdateWebBrowserException{}

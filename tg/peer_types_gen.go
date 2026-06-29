@@ -3552,6 +3552,78 @@ func (v *InputPeerNotifySettings) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetShowPreviews sets value of ShowPreviews conditional field.
+func (v *InputPeerNotifySettings) SetShowPreviews(value bool) {
+	v.Flags.Set(0)
+	v.ShowPreviews = value
+}
+
+// GetShowPreviews returns value of ShowPreviews conditional field and a boolean
+// that is true if the field was set.
+func (v *InputPeerNotifySettings) GetShowPreviews() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.ShowPreviews, true
+}
+
+// SetSilent sets value of Silent conditional field.
+func (v *InputPeerNotifySettings) SetSilent(value bool) {
+	v.Flags.Set(1)
+	v.Silent = value
+}
+
+// GetSilent returns value of Silent conditional field and a boolean
+// that is true if the field was set.
+func (v *InputPeerNotifySettings) GetSilent() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.Silent, true
+}
+
+// SetStoriesMuted sets value of StoriesMuted conditional field.
+func (v *InputPeerNotifySettings) SetStoriesMuted(value bool) {
+	v.Flags.Set(6)
+	v.StoriesMuted = value
+}
+
+// GetStoriesMuted returns value of StoriesMuted conditional field and a boolean
+// that is true if the field was set.
+func (v *InputPeerNotifySettings) GetStoriesMuted() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(6) {
+		return value, false
+	}
+	return v.StoriesMuted, true
+}
+
+// SetStoriesHideSender sets value of StoriesHideSender conditional field.
+func (v *InputPeerNotifySettings) SetStoriesHideSender(value bool) {
+	v.Flags.Set(7)
+	v.StoriesHideSender = value
+}
+
+// GetStoriesHideSender returns value of StoriesHideSender conditional field and a boolean
+// that is true if the field was set.
+func (v *InputPeerNotifySettings) GetStoriesHideSender() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(7) {
+		return value, false
+	}
+	return v.StoriesHideSender, true
+}
+
 // DecodeInputPeerNotifySettings deserializes a InputPeerNotifySettings from a reader using the TL binary protocol.
 func DecodeInputPeerNotifySettings(r *Reader) (*InputPeerNotifySettings, error) {
 	v := &InputPeerNotifySettings{}
@@ -3720,6 +3792,78 @@ func (v *PeerNotifySettings) Encode(b *bytes.Buffer) error {
 		EncodeTLObject(b, v.StoriesOtherSound)
 	}
 	return nil
+}
+
+// SetShowPreviews sets value of ShowPreviews conditional field.
+func (v *PeerNotifySettings) SetShowPreviews(value bool) {
+	v.Flags.Set(0)
+	v.ShowPreviews = value
+}
+
+// GetShowPreviews returns value of ShowPreviews conditional field and a boolean
+// that is true if the field was set.
+func (v *PeerNotifySettings) GetShowPreviews() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.ShowPreviews, true
+}
+
+// SetSilent sets value of Silent conditional field.
+func (v *PeerNotifySettings) SetSilent(value bool) {
+	v.Flags.Set(1)
+	v.Silent = value
+}
+
+// GetSilent returns value of Silent conditional field and a boolean
+// that is true if the field was set.
+func (v *PeerNotifySettings) GetSilent() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.Silent, true
+}
+
+// SetStoriesMuted sets value of StoriesMuted conditional field.
+func (v *PeerNotifySettings) SetStoriesMuted(value bool) {
+	v.Flags.Set(6)
+	v.StoriesMuted = value
+}
+
+// GetStoriesMuted returns value of StoriesMuted conditional field and a boolean
+// that is true if the field was set.
+func (v *PeerNotifySettings) GetStoriesMuted() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(6) {
+		return value, false
+	}
+	return v.StoriesMuted, true
+}
+
+// SetStoriesHideSender sets value of StoriesHideSender conditional field.
+func (v *PeerNotifySettings) SetStoriesHideSender(value bool) {
+	v.Flags.Set(7)
+	v.StoriesHideSender = value
+}
+
+// GetStoriesHideSender returns value of StoriesHideSender conditional field and a boolean
+// that is true if the field was set.
+func (v *PeerNotifySettings) GetStoriesHideSender() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(7) {
+		return value, false
+	}
+	return v.StoriesHideSender, true
 }
 
 // DecodePeerNotifySettings deserializes a PeerNotifySettings from a reader using the TL binary protocol.
@@ -10658,6 +10802,42 @@ func (v *RequestPeerTypeUser) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetBot sets value of Bot conditional field.
+func (v *RequestPeerTypeUser) SetBot(value bool) {
+	v.Flags.Set(0)
+	v.Bot = value
+}
+
+// GetBot returns value of Bot conditional field and a boolean
+// that is true if the field was set.
+func (v *RequestPeerTypeUser) GetBot() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.Bot, true
+}
+
+// SetPremium sets value of Premium conditional field.
+func (v *RequestPeerTypeUser) SetPremium(value bool) {
+	v.Flags.Set(1)
+	v.Premium = value
+}
+
+// GetPremium returns value of Premium conditional field and a boolean
+// that is true if the field was set.
+func (v *RequestPeerTypeUser) GetPremium() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.Premium, true
+}
+
 // DecodeRequestPeerTypeUser deserializes a RequestPeerTypeUser from a reader using the TL binary protocol.
 func DecodeRequestPeerTypeUser(r *Reader) (*RequestPeerTypeUser, error) {
 	v := &RequestPeerTypeUser{}
@@ -10747,6 +10927,42 @@ func (v *RequestPeerTypeChat) Encode(b *bytes.Buffer) error {
 		EncodeTLObject(b, v.BotAdminRights)
 	}
 	return nil
+}
+
+// SetHasUsername sets value of HasUsername conditional field.
+func (v *RequestPeerTypeChat) SetHasUsername(value bool) {
+	v.Flags.Set(3)
+	v.HasUsername = value
+}
+
+// GetHasUsername returns value of HasUsername conditional field and a boolean
+// that is true if the field was set.
+func (v *RequestPeerTypeChat) GetHasUsername() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.HasUsername, true
+}
+
+// SetForum sets value of Forum conditional field.
+func (v *RequestPeerTypeChat) SetForum(value bool) {
+	v.Flags.Set(4)
+	v.Forum = value
+}
+
+// GetForum returns value of Forum conditional field and a boolean
+// that is true if the field was set.
+func (v *RequestPeerTypeChat) GetForum() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(4) {
+		return value, false
+	}
+	return v.Forum, true
 }
 
 // DecodeRequestPeerTypeChat deserializes a RequestPeerTypeChat from a reader using the TL binary protocol.
@@ -10843,6 +11059,24 @@ func (v *RequestPeerTypeBroadcast) Encode(b *bytes.Buffer) error {
 		EncodeTLObject(b, v.BotAdminRights)
 	}
 	return nil
+}
+
+// SetHasUsername sets value of HasUsername conditional field.
+func (v *RequestPeerTypeBroadcast) SetHasUsername(value bool) {
+	v.Flags.Set(3)
+	v.HasUsername = value
+}
+
+// GetHasUsername returns value of HasUsername conditional field and a boolean
+// that is true if the field was set.
+func (v *RequestPeerTypeBroadcast) GetHasUsername() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.HasUsername, true
 }
 
 // DecodeRequestPeerTypeBroadcast deserializes a RequestPeerTypeBroadcast from a reader using the TL binary protocol.

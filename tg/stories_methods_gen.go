@@ -1791,6 +1791,24 @@ func (v *StoriesStartLiveRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetMessagesEnabled sets value of MessagesEnabled conditional field.
+func (v *StoriesStartLiveRequest) SetMessagesEnabled(value bool) {
+	v.Flags.Set(6)
+	v.MessagesEnabled = value
+}
+
+// GetMessagesEnabled returns value of MessagesEnabled conditional field and a boolean
+// that is true if the field was set.
+func (v *StoriesStartLiveRequest) GetMessagesEnabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(6) {
+		return value, false
+	}
+	return v.MessagesEnabled, true
+}
+
 // StoriesStartLive invokes the stories.startLive RPC method on the server.
 //
 // Parameters:

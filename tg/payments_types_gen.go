@@ -8140,6 +8140,24 @@ func (v *PaymentsSavedStarGifts) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetChatNotificationsEnabled sets value of ChatNotificationsEnabled conditional field.
+func (v *PaymentsSavedStarGifts) SetChatNotificationsEnabled(value bool) {
+	v.Flags.Set(1)
+	v.ChatNotificationsEnabled = value
+}
+
+// GetChatNotificationsEnabled returns value of ChatNotificationsEnabled conditional field and a boolean
+// that is true if the field was set.
+func (v *PaymentsSavedStarGifts) GetChatNotificationsEnabled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(1) {
+		return value, false
+	}
+	return v.ChatNotificationsEnabled, true
+}
+
 // DecodePaymentsSavedStarGifts deserializes a PaymentsSavedStarGifts from a reader using the TL binary protocol.
 func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 	v := &PaymentsSavedStarGifts{}

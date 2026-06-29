@@ -122,6 +122,24 @@ func (v *AicomposeUpdateToneRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetDisplayAuthor sets value of DisplayAuthor conditional field.
+func (v *AicomposeUpdateToneRequest) SetDisplayAuthor(value bool) {
+	v.Flags.Set(0)
+	v.DisplayAuthor = value
+}
+
+// GetDisplayAuthor returns value of DisplayAuthor conditional field and a boolean
+// that is true if the field was set.
+func (v *AicomposeUpdateToneRequest) GetDisplayAuthor() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.DisplayAuthor, true
+}
+
 // AicomposeUpdateTone invokes the aicompose.updateTone RPC method on the server.
 //
 // Parameters:

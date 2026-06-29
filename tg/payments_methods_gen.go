@@ -1345,6 +1345,24 @@ func (v *PaymentsChangeStarsSubscriptionRequest) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
+// SetCanceled sets value of Canceled conditional field.
+func (v *PaymentsChangeStarsSubscriptionRequest) SetCanceled(value bool) {
+	v.Flags.Set(0)
+	v.Canceled = value
+}
+
+// GetCanceled returns value of Canceled conditional field and a boolean
+// that is true if the field was set.
+func (v *PaymentsChangeStarsSubscriptionRequest) GetCanceled() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.Canceled, true
+}
+
 // PaymentsChangeStarsSubscription invokes the payments.changeStarsSubscription RPC method on the server.
 //
 // Parameters:

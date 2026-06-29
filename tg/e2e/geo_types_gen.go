@@ -77,7 +77,7 @@ func init() {
 
 // FileLocation represents the TL constructor fileLocation (0x53d69076).
 type FileLocation struct {
-	DCID     int32 `json:"dcid,omitempty"`
+	DCID     int32 `json:"dc_id,omitempty"`
 	VolumeID int64 `json:"volume_id,omitempty"`
 	LocalID  int32 `json:"local_id,omitempty"`
 	Secret   int64 `json:"secret,omitempty"`
