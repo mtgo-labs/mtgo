@@ -360,16 +360,29 @@ func (c *Client) OnManagedBot(callback any, filters ...Filter) Handler {
 	return h
 }
 
-// OnRawUpdate registers a catch-all handler that fires for every incoming update,
-// regardless of type. The callback must be of type func(*Context). Optional filters
-// can restrict which updates trigger the handler. Returns the registered Handler
-// for later removal.
+// OnRawUpdate registers a handler for raw TL updates. The callback signature
+// determines the filtering behavior:
 //
-// Example:
+//   - func(*Context): catch-all, fires for every update.
+//   - func(T): typed, fires only when Raw is of type T (a *tg.UpdateXxx).
+//   - func(*Context, T): typed with context access.
+//   - func(*Client, T): typed with client access.
 //
-//	client.OnRawUpdate(func(ctx *telegram.Context) {
-//	    log.Printf("raw update received: %+v", ctx.Update)
+// The typed forms automatically filter by update type — no manual
+// type-switching needed:
+//
+//	client.OnRawUpdate(func(upd *tg.UpdatePhoneCallSignalingData) {
+//	    log.Printf("signaling data: %x", upd.Data)
 //	})
+//
+// With context:
+//
+//	client.OnRawUpdate(func(ctx *telegram.Context, upd *tg.UpdateUserTyping) {
+//	    log.Printf("user %d is typing", upd.UserID)
+//	})
+//
+// Optional filters further restrict which updates trigger the handler.
+// Returns the registered Handler for later removal.
 func (c *Client) OnRawUpdate(callback any, filters ...Filter) Handler {
 	h := NewRawUpdateHandler(callback, filters...)
 	c.registerHandler(h)

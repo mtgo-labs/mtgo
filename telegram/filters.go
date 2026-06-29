@@ -1219,3 +1219,20 @@ func mediaTypeIs(ctx *Context, want types.MessageMediaType) bool {
 	}
 	return media.MediaType() == want
 }
+
+// UpdateType returns a Filter that matches only raw updates whose Raw field
+// is of the specified TL update type T. Use with OnRawUpdate for type-safe
+// filtering without manual type-switching.
+//
+// Example:
+//
+//	client.OnRawUpdate(func(ctx *telegram.Context) {
+//	    upd := ctx.Update.Raw.(*tg.UpdateUserTyping)
+//	    log.Printf("user %d is typing", upd.UserID)
+//	}, telegram.UpdateType[*tg.UpdateUserTyping]())
+func UpdateType[T any]() Filter {
+	return func(ctx *Context) bool {
+		_, ok := ctx.Update.Raw.(T)
+		return ok
+	}
+}
