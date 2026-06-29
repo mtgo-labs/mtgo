@@ -2346,20 +2346,31 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass
 	if err := c.ensureConnected(); err != nil {
 		return nil, err
 	}
+	var (
+		peer tg.InputPeerClass
+		err  error
+	)
 	switch p := peerID.(type) {
 	case tg.InputPeerClass:
-		return p, nil
+		peer = p
 	case int64:
-		return c.resolveNumericPeer(ctx, p)
+		peer, err = c.resolveNumericPeer(ctx, p)
 	case int:
-		return c.resolveNumericPeer(ctx, int64(p))
+		peer, err = c.resolveNumericPeer(ctx, int64(p))
 	case string:
-		return ChatRefFrom(p).resolve(ctx, c)
+		peer, err = ChatRefFrom(p).resolve(ctx, c)
 	case ChatRef:
-		return p.resolve(ctx, c)
+		peer, err = p.resolve(ctx, c)
 	default:
 		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrPeerNotFound, peerID)
 	}
+	if err != nil {
+		return nil, err
+	}
+	if c.IsBot() {
+		return c.resolveBotPeerAccessHash(ctx, peer)
+	}
+	return peer, nil
 }
 
 func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeerClass, error) {
@@ -2368,16 +2379,93 @@ func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeer
 		return peer, nil
 	}
 	if c.IsBot() {
-		return c.resolveNumericPeerForBot(id)
+		return c.resolveNumericPeerForBot(ctx, id)
 	}
 	return c.resolveNumericPeerForAccount(ctx, id)
 }
 
-func (c *Client) resolveNumericPeerForBot(id int64) (tg.InputPeerClass, error) {
+func (c *Client) resolveNumericPeerForBot(ctx context.Context, id int64) (tg.InputPeerClass, error) {
 	if peer, ok := inputPeerFromBareChatID(id); ok {
 		return peer, nil
 	}
+	if raw, ok := rawChannelID(id); ok {
+		peer, err := c.resolveBotPeerAccessHash(ctx, &tg.InputPeerChannel{ChannelID: raw})
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve chat: %w", err)
+		}
+		return peer, nil
+	}
+	if id > 0 {
+		peer, err := c.resolveBotPeerAccessHash(ctx, &tg.InputPeerUser{UserID: id})
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve chat: %w", err)
+		}
+		return peer, nil
+	}
 	return nil, fmt.Errorf("could not resolve chat: %w", ErrPeerNotFound)
+}
+
+func (c *Client) resolveBotPeerAccessHash(ctx context.Context, peer tg.InputPeerClass) (tg.InputPeerClass, error) {
+	switch p := peer.(type) {
+	case *tg.InputPeerUser:
+		if p.AccessHash != 0 {
+			return peer, nil
+		}
+		return c.resolveBotUserAccessHash(ctx, p.UserID)
+	case *tg.InputPeerChannel:
+		if p.AccessHash != 0 {
+			return peer, nil
+		}
+		return c.resolveBotChannelAccessHash(ctx, p.ChannelID)
+	default:
+		return peer, nil
+	}
+}
+
+func (c *Client) resolveBotUserAccessHash(ctx context.Context, userID int64) (tg.InputPeerClass, error) {
+	rpc := c.Raw()
+	result, err := rpc.UsersGetUsers(ctx, &tg.UsersGetUsersRequest{
+		ID: []tg.InputUserClass{
+			&tg.InputUser{UserID: userID, AccessHash: 0},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: get user %d: %v", ErrPeerNotFound, userID, err)
+	}
+	users := usersFromUsersGetUsers(result)
+	c.cachePeersFromUpdates(users, nil)
+	for _, u := range users {
+		user, ok := u.(*tg.User)
+		if ok && user.ID == userID && user.AccessHash != 0 {
+			peer := &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash}
+			c.CachePeer(user.ID, peer)
+			return peer, nil
+		}
+	}
+	return nil, ErrPeerNotFound
+}
+
+func (c *Client) resolveBotChannelAccessHash(ctx context.Context, channelID int64) (tg.InputPeerClass, error) {
+	rpc := c.Raw()
+	result, err := rpc.ChannelsGetChannels(ctx, &tg.ChannelsGetChannelsRequest{
+		ID: []tg.InputChannelClass{
+			&tg.InputChannel{ChannelID: channelID, AccessHash: 0},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: get channel %d: %v", ErrPeerNotFound, channelID, err)
+	}
+	chats := chatsFromChatsClass(result)
+	c.cachePeersFromUpdates(nil, chats)
+	for _, ch := range chats {
+		channel, ok := ch.(*tg.Channel)
+		if ok && channel.ID == channelID && channel.AccessHash != 0 {
+			peer := &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash}
+			c.CachePeer(channel.ID, peer)
+			return peer, nil
+		}
+	}
+	return nil, ErrPeerNotFound
 }
 
 func (c *Client) resolveNumericPeerForAccount(ctx context.Context, id int64) (tg.InputPeerClass, error) {
@@ -2457,6 +2545,31 @@ func unpackDialogs(result tg.DialogsClass) ([]tg.DialogClass, []tg.MessageClass,
 	default:
 		return nil, nil, nil, nil, false
 	}
+}
+
+func chatsFromChatsClass(result tg.ChatsClass) []tg.ChatClass {
+	switch v := result.(type) {
+	case *tg.MessagesChats:
+		return v.Chats
+	case *tg.MessagesChatsSlice:
+		return v.Chats
+	default:
+		return nil
+	}
+}
+
+func usersFromUsersGetUsers(result tg.TLObject) []tg.UserClass {
+	vector, ok := result.(*tg.GenericVector)
+	if !ok {
+		return nil
+	}
+	users := make([]tg.UserClass, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if user, ok := item.(tg.UserClass); ok {
+			users = append(users, user)
+		}
+	}
+	return users
 }
 
 func (c *Client) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.MessageClass) (tg.InputPeerClass, int32, int32, bool) {

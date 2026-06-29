@@ -784,6 +784,47 @@ func TestSendMediaResolvesPeerFromDialogs(t *testing.T) {
 	}
 }
 
+func TestSendMediaBotEnrichesCachedZeroAccessHashPeer(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	st := NewMemoryStorage()
+	if err := st.SetIsBot(true); err != nil {
+		t.Fatalf("SetIsBot() = %v", err)
+	}
+	c.storage = st
+	c.CachePeer(12345, &tg.InputPeerUser{UserID: 12345, AccessHash: 0})
+	inv.setResult(tg.UsersGetUsersTypeID, &tg.GenericVector{
+		Items: []tg.TLObject{
+			&tg.User{ID: 12345, AccessHash: 667788},
+		},
+	})
+
+	_, err := c.SendMedia(
+		context.Background(),
+		12345,
+		&tg.InputMediaPhoto{ID: &tg.InputPhoto{ID: 1, AccessHash: 2}},
+		"caption",
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("SendMedia() error: %v", err)
+	}
+
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	peer, ok := req.Peer.(*tg.InputPeerUser)
+	if !ok {
+		t.Fatalf("Peer = %T, want *tg.InputPeerUser", req.Peer)
+	}
+	if peer.UserID != 12345 {
+		t.Errorf("UserID = %d, want 12345", peer.UserID)
+	}
+	if peer.AccessHash != 667788 {
+		t.Errorf("AccessHash = %d, want 667788", peer.AccessHash)
+	}
+}
+
 func TestSendLocation(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})

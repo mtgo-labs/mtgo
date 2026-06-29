@@ -672,20 +672,112 @@ func TestResolvePeerBotResolvesBasicChatWithoutDialogs(t *testing.T) {
 	}
 }
 
-func TestResolvePeerBotDoesNotPreloadDialogsForChannel(t *testing.T) {
+func TestResolvePeerBotResolvesChannelAccessHashWithoutDialogs(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	st := NewMemoryStorage()
 	if err := st.SetIsBot(true); err != nil {
 		t.Fatalf("SetIsBot() = %v", err)
 	}
 	c.storage = st
+	inv.setResult(tg.ChannelsGetChannelsTypeID, &tg.MessagesChats{
+		Chats: []tg.ChatClass{
+			&tg.Channel{ID: 4461866327, AccessHash: 998877},
+		},
+	})
 
-	_, err := c.ResolvePeer(context.Background(), int64(-1004461866327))
-	if !errors.Is(err, ErrPeerNotFound) {
-		t.Fatalf("ResolvePeer() = %v, want ErrPeerNotFound", err)
+	peer, err := c.ResolvePeer(context.Background(), int64(-1004461866327))
+	if err != nil {
+		t.Fatalf("ResolvePeer() = %v", err)
 	}
-	if inv.callCount() != 0 {
-		t.Fatalf("ResolvePeer() made %d RPC calls, want 0", inv.callCount())
+	ch, ok := peer.(*tg.InputPeerChannel)
+	if !ok {
+		t.Fatalf("ResolvePeer() = %T, want *tg.InputPeerChannel", peer)
+	}
+	if ch.ChannelID != 4461866327 {
+		t.Errorf("ChannelID = %d, want 4461866327", ch.ChannelID)
+	}
+	if ch.AccessHash != 998877 {
+		t.Errorf("AccessHash = %d, want 998877", ch.AccessHash)
+	}
+	if inv.callCount() != 1 {
+		t.Fatalf("ResolvePeer() made %d RPC calls, want 1", inv.callCount())
+	}
+	req, ok := inv.lastCall().(*tg.ChannelsGetChannelsRequest)
+	if !ok {
+		t.Fatalf("RPC = %T, want *tg.ChannelsGetChannelsRequest", inv.lastCall())
+	}
+	input, ok := req.ID[0].(*tg.InputChannel)
+	if !ok {
+		t.Fatalf("ID[0] = %T, want *tg.InputChannel", req.ID[0])
+	}
+	if input.ChannelID != 4461866327 || input.AccessHash != 0 {
+		t.Fatalf("ID[0] = %+v, want channel_id=4461866327 access_hash=0", input)
+	}
+}
+
+func TestResolvePeerBotResolvesUserAccessHash(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	st := NewMemoryStorage()
+	if err := st.SetIsBot(true); err != nil {
+		t.Fatalf("SetIsBot() = %v", err)
+	}
+	c.storage = st
+	inv.setResult(tg.UsersGetUsersTypeID, &tg.GenericVector{
+		Items: []tg.TLObject{
+			&tg.User{ID: 12345, AccessHash: 667788},
+		},
+	})
+
+	peer, err := c.ResolvePeer(context.Background(), int64(12345))
+	if err != nil {
+		t.Fatalf("ResolvePeer() = %v", err)
+	}
+	user, ok := peer.(*tg.InputPeerUser)
+	if !ok {
+		t.Fatalf("ResolvePeer() = %T, want *tg.InputPeerUser", peer)
+	}
+	if user.UserID != 12345 {
+		t.Errorf("UserID = %d, want 12345", user.UserID)
+	}
+	if user.AccessHash != 667788 {
+		t.Errorf("AccessHash = %d, want 667788", user.AccessHash)
+	}
+	req, ok := inv.lastCall().(*tg.UsersGetUsersRequest)
+	if !ok {
+		t.Fatalf("RPC = %T, want *tg.UsersGetUsersRequest", inv.lastCall())
+	}
+	input, ok := req.ID[0].(*tg.InputUser)
+	if !ok {
+		t.Fatalf("ID[0] = %T, want *tg.InputUser", req.ID[0])
+	}
+	if input.UserID != 12345 || input.AccessHash != 0 {
+		t.Fatalf("ID[0] = %+v, want user_id=12345 access_hash=0", input)
+	}
+}
+
+func TestResolvePeerBotEnrichesZeroAccessHashInputPeer(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	st := NewMemoryStorage()
+	if err := st.SetIsBot(true); err != nil {
+		t.Fatalf("SetIsBot() = %v", err)
+	}
+	c.storage = st
+	inv.setResult(tg.UsersGetUsersTypeID, &tg.GenericVector{
+		Items: []tg.TLObject{
+			&tg.User{ID: 12345, AccessHash: 667788},
+		},
+	})
+
+	peer, err := c.ResolvePeer(context.Background(), &tg.InputPeerUser{UserID: 12345, AccessHash: 0})
+	if err != nil {
+		t.Fatalf("ResolvePeer() = %v", err)
+	}
+	user, ok := peer.(*tg.InputPeerUser)
+	if !ok {
+		t.Fatalf("ResolvePeer() = %T, want *tg.InputPeerUser", peer)
+	}
+	if user.AccessHash != 667788 {
+		t.Errorf("AccessHash = %d, want 667788", user.AccessHash)
 	}
 }
 

@@ -83,6 +83,11 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 		if err != nil {
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
+	} else if c.IsBot() {
+		peer, err = c.resolveBotPeerAccessHash(ctx, peer)
+		if err != nil {
+			return nil, fmt.Errorf("resolve peer: %w", err)
+		}
 	}
 	opt := params.GetOptDef(&params.SendMessage{}, opts...)
 
@@ -517,6 +522,11 @@ func (c *Client) SendMedia(ctx context.Context, chatID int64, media tg.InputMedi
 	peer, err := resolvePeer(c, chatID)
 	if err != nil {
 		peer, err = c.ResolvePeer(ctx, chatID)
+		if err != nil {
+			return nil, fmt.Errorf("resolve peer: %w", err)
+		}
+	} else if c.IsBot() {
+		peer, err = c.resolveBotPeerAccessHash(ctx, peer)
 		if err != nil {
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
