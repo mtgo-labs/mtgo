@@ -44,7 +44,7 @@ jobs:
           - repo: mtgo-ipc
             modules: "."
           - repo: plugins
-            modules: "conversations i18n"
+            modules: "conversations i18n scheduler fsm throttle"
           - repo: plugins-template
             modules: "."
           - repo: middlewares-template
