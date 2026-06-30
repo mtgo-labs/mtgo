@@ -91,6 +91,7 @@ jobs:
 
       - name: Post PR comment
         if: github.event_name == 'pull_request' && always()
+        continue-on-error: true   # fork PRs: GITHUB_TOKEN can't write issue comments
         uses: actions/github-script@v9
         with:
           script: |
