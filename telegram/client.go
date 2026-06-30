@@ -1116,7 +1116,7 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 		IPv6:     c.config().IPv6,
 	}
 	if dc.Address() == "" {
-		return nil, fmt.Errorf("unknown dc_id: %d", dc.ID)
+		return nil, fmt.Errorf("%w: %d", ErrUnknownDC, dc.ID)
 	}
 	sess, err := session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)
 	if err != nil {
@@ -2434,7 +2434,7 @@ func (c *Client) resolveBotUserAccessHash(ctx context.Context, userID int64) (tg
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: get user %d: %v", ErrPeerNotFound, userID, err)
+		return nil, fmt.Errorf("%w: get user %d: %w", ErrPeerNotFound, userID, err)
 	}
 	users := usersFromUsersGetUsers(result)
 	c.cachePeersFromUpdates(users, nil)
@@ -2457,7 +2457,7 @@ func (c *Client) resolveBotChannelAccessHash(ctx context.Context, channelID int6
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: get channel %d: %v", ErrPeerNotFound, channelID, err)
+		return nil, fmt.Errorf("%w: get channel %d: %w", ErrPeerNotFound, channelID, err)
 	}
 	chats := chatsFromChatsClass(result)
 	c.cachePeersFromUpdates(nil, chats)
@@ -2662,7 +2662,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 
 	addr := ResolveDCAddress(dcID, c.config().TestMode)
 	if addr == "" {
-		return nil, fmt.Errorf("unknown dc_id: %d", dcID)
+		return nil, fmt.Errorf("%w: %d", ErrUnknownDC, dcID)
 	}
 	port := DefaultDCPort(c.config().TestMode)
 

@@ -38,7 +38,7 @@ func (m *updateManager) RecoverAccount(ctx context.Context, rpc differenceRPC) e
 		m.mu.Unlock()
 		diff, err := rpc.UpdatesGetDifference(ctx, req)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrDifferenceRecovery, err)
+			return fmt.Errorf("%w: %w", ErrDifferenceRecovery, err)
 		}
 		done, err := m.applyDifference(ctx, diff)
 		if err != nil {
@@ -179,7 +179,7 @@ func (m *updateManager) RecoverChannel(ctx context.Context, rpc differenceRPC, c
 		}
 		result, err := rpc.UpdatesGetChannelDifference(ctx, req)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrChannelDifference, err)
+			return fmt.Errorf("%w: %w", ErrChannelDifference, err)
 		}
 
 		done, err := m.applyChannelDifference(ctx, result, channelID)

@@ -50,7 +50,7 @@ func DecodeGramjs(s string) (*SessionData, error) {
 	}
 
 	if len(payload) < 5+256 {
-		return nil, fmt.Errorf("payload too short: %d bytes", len(payload))
+		return nil, fmt.Errorf("%w: %d bytes", errPayloadTooShort, len(payload))
 	}
 
 	dcID := int(payload[0])

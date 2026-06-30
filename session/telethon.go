@@ -83,7 +83,7 @@ func DecodeTelethon(s string) (*SessionData, error) {
 
 func decodeTelethonV1(payload []byte, dcID int) (*SessionData, error) {
 	if len(payload) < 1+4+2+256 {
-		return nil, fmt.Errorf("payload too short: %d bytes", len(payload))
+		return nil, fmt.Errorf("%w: %d bytes", errPayloadTooShort, len(payload))
 	}
 
 	var ipLen int
@@ -114,7 +114,7 @@ func decodeTelethonV1(payload []byte, dcID int) (*SessionData, error) {
 // decodeTelethonV2 decodes: dc_id(1B) + ip(4B|16B) + port(2B) + api_id(4B) + auth_key(256B)
 func decodeTelethonV2(payload []byte, dcID int) (*SessionData, error) {
 	if len(payload) < 1+4+2+4+256 {
-		return nil, fmt.Errorf("payload too short: %d bytes", len(payload))
+		return nil, fmt.Errorf("%w: %d bytes", errPayloadTooShort, len(payload))
 	}
 
 	var ipLen int

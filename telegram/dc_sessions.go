@@ -322,7 +322,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 	}
 	addr := dc.Address()
 	if addr == "" {
-		return nil, fmt.Errorf("download: unknown dc_id: %d", dcID)
+		return nil, fmt.Errorf("download: %w: %d", ErrUnknownDC, dcID)
 	}
 	port := dc.Port()
 

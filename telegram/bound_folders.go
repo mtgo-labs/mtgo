@@ -66,7 +66,7 @@ func (c *Client) BoundIncludeChat(folderID int32, chatID int64) error {
 			return c.BoundEditFolder(df)
 		}
 	}
-	return fmt.Errorf("folder %d not found", folderID)
+	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
 func (c *Client) BoundExcludeChat(folderID int32, chatID int64) error {
@@ -84,7 +84,7 @@ func (c *Client) BoundExcludeChat(folderID int32, chatID int64) error {
 			return c.BoundEditFolder(df)
 		}
 	}
-	return fmt.Errorf("folder %d not found", folderID)
+	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
 func (c *Client) BoundUpdateFolderColor(folderID int32, color int32) error {
@@ -98,7 +98,7 @@ func (c *Client) BoundUpdateFolderColor(folderID int32, color int32) error {
 			return c.BoundEditFolder(df)
 		}
 	}
-	return fmt.Errorf("folder %d not found", folderID)
+	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
 func (c *Client) BoundPinChatInFolder(folderID int32, chatID int64) error {
@@ -116,7 +116,7 @@ func (c *Client) BoundPinChatInFolder(folderID int32, chatID int64) error {
 			return c.BoundEditFolder(df)
 		}
 	}
-	return fmt.Errorf("folder %d not found", folderID)
+	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
 func (c *Client) BoundRemoveChatFromFolder(folderID int32, chatID int64) error {
@@ -136,7 +136,7 @@ func (c *Client) BoundRemoveChatFromFolder(folderID int32, chatID int64) error {
 			return c.BoundEditFolder(df)
 		}
 	}
-	return fmt.Errorf("folder %d not found", folderID)
+	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
 func removePeerFromSlice(peers []tg.InputPeerClass, target tg.InputPeerClass) []tg.InputPeerClass {

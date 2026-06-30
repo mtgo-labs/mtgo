@@ -346,7 +346,7 @@ func (s *BroadcastStream) Pause() error {
 	s.mu.Lock()
 	if s.state != BroadcastPlaying {
 		s.mu.Unlock()
-		return fmt.Errorf("pause: stream is %s", s.state)
+		return fmt.Errorf("%w: %s", ErrStreamNotPlaying, s.state)
 	}
 
 	s.src.pausedAt = time.Since(s.src.startTime) + s.src.seekPos
@@ -423,7 +423,7 @@ func (s *BroadcastStream) Mute() error {
 	}
 	if s.state != BroadcastPlaying {
 		s.mu.Unlock()
-		return fmt.Errorf("mute: stream is %s", s.state)
+		return fmt.Errorf("%w: %s", ErrStreamNotPlaying, s.state)
 	}
 
 	s.src.muted = true
@@ -452,7 +452,7 @@ func (s *BroadcastStream) Unmute() error {
 	}
 	if s.state != BroadcastPlaying {
 		s.mu.Unlock()
-		return fmt.Errorf("unmute: stream is %s", s.state)
+		return fmt.Errorf("%w: %s", ErrStreamNotPlaying, s.state)
 	}
 
 	s.src.muted = false

@@ -29,7 +29,7 @@ func (s *BroadcastStream) FeedChunk(data []byte) error {
 	s.mu.Lock()
 	if s.state != BroadcastPlaying {
 		s.mu.Unlock()
-		return fmt.Errorf("feed chunk: stream is %s", s.state)
+		return fmt.Errorf("feed chunk: %w: %s", ErrStreamNotPlaying, s.state)
 	}
 	if s.stdin == nil {
 		s.mu.Unlock()
@@ -48,7 +48,7 @@ func (s *BroadcastStream) FeedReader(r io.Reader) error {
 	s.mu.Lock()
 	if s.state != BroadcastPlaying {
 		s.mu.Unlock()
-		return fmt.Errorf("feed reader: stream is %s", s.state)
+		return fmt.Errorf("feed reader: %w: %s", ErrStreamNotPlaying, s.state)
 	}
 	if s.stdin == nil {
 		s.mu.Unlock()

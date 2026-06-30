@@ -12,6 +12,7 @@ var (
 	errPayloadTooShortForIsBot  = errors.New("payload too short for is_bot")
 	errDCOptionTooShortForPort  = errors.New("DC option too short for port")
 	errNotEnoughBytesForTLLen   = errors.New("not enough bytes for TL length prefix")
+	errPayloadTooShort         = errors.New("payload too short")
 )
 
 // mtcute format uses TL serialization primitives.
@@ -82,7 +83,7 @@ func DecodeMtcute(s string) (*SessionData, error) {
 	}
 
 	if len(payload) < 5 {
-		return nil, fmt.Errorf("payload too short: %d bytes", len(payload))
+		return nil, fmt.Errorf("%w: %d bytes", errPayloadTooShort, len(payload))
 	}
 
 	off := 0

@@ -392,7 +392,7 @@ func DecodeGotgExtended(s string) (*SessionData, error) {
 		return nil, fmt.Errorf("gotg_extended: base64 decode: %w", err)
 	}
 	if len(payload) < 27+256 {
-		return nil, fmt.Errorf("gotg_extended: payload too short: %d", len(payload))
+		return nil, fmt.Errorf("gotg_extended: %w: %d", errPayloadTooShort, len(payload))
 	}
 
 	dc := int(int32(binary.LittleEndian.Uint32(payload[0:4])))

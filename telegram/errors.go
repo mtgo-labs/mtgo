@@ -205,6 +205,15 @@ var (
 	// ErrNoSecretChats is returned when trying to accept or read a secret chat
 	// but no pending secret chats are available.
 	ErrNoSecretChats = errors.New("telegram: no pending secret chats")
+	// ErrSecretChatNotFound is returned when a secret chat with the given ID
+	// does not exist in the client's secret chat manager.
+	ErrSecretChatNotFound = errors.New("telegram: secret chat not found")
+	// ErrSecretChatNotReady is returned when a secret chat is not in the ready
+	// state for sending or receiving messages.
+	ErrSecretChatNotReady = errors.New("telegram: secret chat not ready")
+	// ErrSecretChatNoAuthKey is returned when a secret chat has not completed
+	// the key exchange.
+	ErrSecretChatNoAuthKey = errors.New("telegram: secret chat has no auth key")
 	// ErrBusinessConnIDRequired is returned when a business connection operation
 	// is attempted without providing the required connection ID.
 	ErrBusinessConnIDRequired = errors.New("business: connection id is required")
@@ -263,6 +272,23 @@ var (
 	// ErrJoinRequiresInvite is returned when attempting to join a chat without
 	// providing either a username or an invite hash.
 	ErrJoinRequiresInvite = errors.New("join requires a username or invite hash")
+)
+
+// Folder and DC routing errors.
+var (
+	// ErrFolderNotFound is returned when a dialog filter with the given ID
+	// cannot be found in the user's folder list.
+	ErrFolderNotFound = errors.New("folder not found")
+	// ErrUnknownDC is returned when a DC ID does not match any known data center
+	// configuration.
+	ErrUnknownDC = errors.New("unknown dc_id")
+)
+
+// Broadcast stream state errors.
+var (
+	// ErrStreamNotPlaying is returned when a pause, mute, or unmute operation
+	// is attempted on a stream that is not in the playing state.
+	ErrStreamNotPlaying = errors.New("stream is not playing")
 )
 
 // Context message operation errors.

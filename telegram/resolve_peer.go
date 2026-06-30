@@ -235,12 +235,12 @@ func (c *Client) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerCl
 			Phone: phone,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%w: resolve phone %s: %v", ErrPeerNotFound, phone, err)
+			return nil, fmt.Errorf("%w: resolve phone %s: %w", ErrPeerNotFound, phone, err)
 		}
 		c.resolveAndCache(result)
 		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
 		if err != nil {
-			return nil, fmt.Errorf("%w: phone %s: %v", ErrPeerNotFound, phone, err)
+			return nil, fmt.Errorf("%w: phone %s: %w", ErrPeerNotFound, phone, err)
 		}
 		return inputPeer, nil
 	})
@@ -294,12 +294,12 @@ func (c *Client) ResolveUsername(ctx context.Context, username string) (tg.Input
 			Username: username,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%w: resolve @%s: %v", ErrPeerNotFound, username, err)
+			return nil, fmt.Errorf("%w: resolve @%s: %w", ErrPeerNotFound, username, err)
 		}
 		c.resolveAndCache(result)
 		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
 		if err != nil {
-			return nil, fmt.Errorf("%w: @%s: %v", ErrPeerNotFound, username, err)
+			return nil, fmt.Errorf("%w: @%s: %w", ErrPeerNotFound, username, err)
 		}
 		return inputPeer, nil
 	})

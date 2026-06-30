@@ -408,7 +408,7 @@ func (m *updateManager) dispatchUpdate(upd *Update, meta updateMeta) error {
 		}
 	}
 
-	return fmt.Errorf("%w: %v", ErrUpdateHandlerFailed, lastErr)
+	return fmt.Errorf("%w: %w", ErrUpdateHandlerFailed, lastErr)
 }
 
 func (m *updateManager) replayDurableQueue() error {
