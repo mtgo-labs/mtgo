@@ -41,6 +41,8 @@ jobs:
             modules: "."
           - repo: mtgo-cli
             modules: "."
+          - repo: mtgo-ipc
+            modules: "."
           - repo: plugins
             modules: "conversations i18n"
           - repo: plugins-template
