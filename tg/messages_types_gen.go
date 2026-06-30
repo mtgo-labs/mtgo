@@ -29495,138 +29495,6 @@ func init() {
 	}
 }
 
-// RichMessageTypeID is the constructor ID for TL type richMessage.
-const RichMessageTypeID = 0xbaf39d8b
-
-// RichMessage represents the TL constructor richMessage (0xbaf39d8b).
-//
-// See https://core.telegram.org/constructor/richMessage for reference.
-type RichMessage struct {
-	Flags     Fields           `json:"-"`
-	Rtl       bool             `json:"rtl,omitempty"`
-	Part      bool             `json:"part,omitempty"`
-	Blocks    []PageBlockClass `json:"blocks,omitempty"`
-	Photos    []PhotoClass     `json:"photos,omitempty"`
-	Documents []DocumentClass  `json:"documents,omitempty"`
-}
-
-// SetFlags computes flags from non-zero optional fields.
-func (v *RichMessage) SetFlags() {
-	if v.Rtl {
-		v.Flags.Set(0)
-	}
-	if v.Part {
-		v.Flags.Set(1)
-	}
-}
-
-// ConstructorID returns the TL constructor identifier 0xbaf39d8b.
-func (v *RichMessage) ConstructorID() uint32 {
-	return RichMessageTypeID
-}
-
-// Encode serializes RichMessage to a bytes.Buffer using the TL binary protocol.
-func (v *RichMessage) Encode(b *bytes.Buffer) error {
-	WriteInt(b, RichMessageTypeID)
-	v.SetFlags()
-	WriteInt(b, uint32(v.Flags))
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Blocks)))
-	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
-	}
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Photos)))
-	for _, _item := range v.Photos {
-		EncodeTLObject(b, _item)
-	}
-	WriteInt(b, 0x1cb5c415)
-	WriteInt(b, uint32(len(v.Documents)))
-	for _, _item := range v.Documents {
-		EncodeTLObject(b, _item)
-	}
-	return nil
-}
-
-// DecodeRichMessage deserializes a RichMessage from a reader using the TL binary protocol.
-func DecodeRichMessage(r *Reader) (*RichMessage, error) {
-	v := &RichMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
-	}
-	v.Rtl = v.Flags.Has(0)
-	v.Part = v.Flags.Has(1)
-	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
-	if _ehdrBlocks != nil {
-		return nil, _ehdrBlocks
-	}
-	_cntBlocks, _ecntBlocks := r.ReadUint32()
-	if _ecntBlocks != nil {
-		return nil, _ecntBlocks
-	}
-	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
-		return nil, _errBlocks
-	}
-	v.Blocks = make([]PageBlockClass, _cntBlocks)
-	for _iBlocks := range v.Blocks {
-		_objBlocks, _errBlocks := ReadTLObject(r)
-		if _errBlocks != nil {
-			return nil, _errBlocks
-		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
-	}
-	_ = _vhdrBlocks
-	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
-	if _ehdrPhotos != nil {
-		return nil, _ehdrPhotos
-	}
-	_cntPhotos, _ecntPhotos := r.ReadUint32()
-	if _ecntPhotos != nil {
-		return nil, _ecntPhotos
-	}
-	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
-		return nil, _errPhotos
-	}
-	v.Photos = make([]PhotoClass, _cntPhotos)
-	for _iPhotos := range v.Photos {
-		_objPhotos, _errPhotos := ReadTLObject(r)
-		if _errPhotos != nil {
-			return nil, _errPhotos
-		}
-		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
-	}
-	_ = _vhdrPhotos
-	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
-	if _ehdrDocuments != nil {
-		return nil, _ehdrDocuments
-	}
-	_cntDocuments, _ecntDocuments := r.ReadUint32()
-	if _ecntDocuments != nil {
-		return nil, _ecntDocuments
-	}
-	if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
-		return nil, _errDocuments
-	}
-	v.Documents = make([]DocumentClass, _cntDocuments)
-	for _iDocuments := range v.Documents {
-		_objDocuments, _errDocuments := ReadTLObject(r)
-		if _errDocuments != nil {
-			return nil, _errDocuments
-		}
-		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
-	}
-	_ = _vhdrDocuments
-	return v, nil
-}
-
-func init() {
-	Registry[RichMessageTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeRichMessage(r)
-	}
-}
-
 // InputRichMessageClass is the interface for TL type InputRichMessage.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the InputRichMessage TL type.
@@ -30008,5 +29876,137 @@ func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error
 func init() {
 	Registry[InputRichMessageMarkdownTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputRichMessageMarkdown(r)
+	}
+}
+
+// RichMessageTypeID is the constructor ID for TL type richMessage.
+const RichMessageTypeID = 0xbaf39d8b
+
+// RichMessage represents the TL constructor richMessage (0xbaf39d8b).
+//
+// See https://core.telegram.org/constructor/richMessage for reference.
+type RichMessage struct {
+	Flags     Fields           `json:"-"`
+	Rtl       bool             `json:"rtl,omitempty"`
+	Part      bool             `json:"part,omitempty"`
+	Blocks    []PageBlockClass `json:"blocks,omitempty"`
+	Photos    []PhotoClass     `json:"photos,omitempty"`
+	Documents []DocumentClass  `json:"documents,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *RichMessage) SetFlags() {
+	if v.Rtl {
+		v.Flags.Set(0)
+	}
+	if v.Part {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xbaf39d8b.
+func (v *RichMessage) ConstructorID() uint32 {
+	return RichMessageTypeID
+}
+
+// Encode serializes RichMessage to a bytes.Buffer using the TL binary protocol.
+func (v *RichMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, RichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Blocks)))
+	for _, _item := range v.Blocks {
+		EncodeTLObject(b, _item)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Photos)))
+	for _, _item := range v.Photos {
+		EncodeTLObject(b, _item)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Documents)))
+	for _, _item := range v.Documents {
+		EncodeTLObject(b, _item)
+	}
+	return nil
+}
+
+// DecodeRichMessage deserializes a RichMessage from a reader using the TL binary protocol.
+func DecodeRichMessage(r *Reader) (*RichMessage, error) {
+	v := &RichMessage{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Rtl = v.Flags.Has(0)
+	v.Part = v.Flags.Has(1)
+	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
+	if _ehdrBlocks != nil {
+		return nil, _ehdrBlocks
+	}
+	_cntBlocks, _ecntBlocks := r.ReadUint32()
+	if _ecntBlocks != nil {
+		return nil, _ecntBlocks
+	}
+	if _errBlocks := checkVectorCount(_cntBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
+	v.Blocks = make([]PageBlockClass, _cntBlocks)
+	for _iBlocks := range v.Blocks {
+		_objBlocks, _errBlocks := ReadTLObject(r)
+		if _errBlocks != nil {
+			return nil, _errBlocks
+		}
+		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+	}
+	_ = _vhdrBlocks
+	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
+	if _ehdrPhotos != nil {
+		return nil, _ehdrPhotos
+	}
+	_cntPhotos, _ecntPhotos := r.ReadUint32()
+	if _ecntPhotos != nil {
+		return nil, _ecntPhotos
+	}
+	if _errPhotos := checkVectorCount(_cntPhotos); _errPhotos != nil {
+		return nil, _errPhotos
+	}
+	v.Photos = make([]PhotoClass, _cntPhotos)
+	for _iPhotos := range v.Photos {
+		_objPhotos, _errPhotos := ReadTLObject(r)
+		if _errPhotos != nil {
+			return nil, _errPhotos
+		}
+		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
+	}
+	_ = _vhdrPhotos
+	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
+	if _ehdrDocuments != nil {
+		return nil, _ehdrDocuments
+	}
+	_cntDocuments, _ecntDocuments := r.ReadUint32()
+	if _ecntDocuments != nil {
+		return nil, _ecntDocuments
+	}
+	if _errDocuments := checkVectorCount(_cntDocuments); _errDocuments != nil {
+		return nil, _errDocuments
+	}
+	v.Documents = make([]DocumentClass, _cntDocuments)
+	for _iDocuments := range v.Documents {
+		_objDocuments, _errDocuments := ReadTLObject(r)
+		if _errDocuments != nil {
+			return nil, _errDocuments
+		}
+		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
+	}
+	_ = _vhdrDocuments
+	return v, nil
+}
+
+func init() {
+	Registry[RichMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeRichMessage(r)
 	}
 }

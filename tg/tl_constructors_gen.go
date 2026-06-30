@@ -447,10 +447,10 @@ var ConstructorMap = map[uint32]func() TLObject{
 	0x90d7adfa: func() TLObject { return &MessagesComposedMessageWithAi{} },
 	0x445663a7: func() TLObject { return &MessagesChatInviteJoinResultOk{} },
 	0x2f51c337: func() TLObject { return &MessagesChatInviteJoinResultWebView{} },
-	0xbaf39d8b: func() TLObject { return &RichMessage{} },
 	0xe4c449fc: func() TLObject { return &InputRichMessage{} },
 	0xdacb836a: func() TLObject { return &InputRichMessageHTML{} },
 	0x004b572c: func() TLObject { return &InputRichMessageMarkdown{} },
+	0xbaf39d8b: func() TLObject { return &RichMessage{} },
 	// peer types
 	0x7f3b18ea: func() TLObject { return &InputPeerEmpty{} },
 	0x7da07ec9: func() TLObject { return &InputPeerSelf{} },
