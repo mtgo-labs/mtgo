@@ -92,7 +92,7 @@ func NewRawUpdateHandler(callback any, filters ...Filter) *RawUpdateHandler {
 	}
 
 	// updateType must be a pointer (e.g. *tg.UpdatePhoneCall)
-	if updType.Kind() != reflect.Ptr {
+	if updType.Kind() != reflect.Pointer {
 		return h
 	}
 
