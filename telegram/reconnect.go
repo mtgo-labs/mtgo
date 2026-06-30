@@ -199,7 +199,7 @@ func (c *Client) reconnectOnce() error {
 		IPv6:     c.config().IPv6,
 	}
 	if dc.Address() == "" {
-		return fmt.Errorf("unknown dc_id: %d", dcID)
+		return fmt.Errorf("%w: %d", ErrUnknownDC, dcID)
 	}
 
 	sess, err := session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)

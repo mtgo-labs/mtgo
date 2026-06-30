@@ -2,8 +2,13 @@ package tg
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
+
+// errMessageBodyTooLarge is returned when a decoded MTProto message body exceeds
+// the maximum allowed size (1 MiB).
+var errMessageBodyTooLarge = errors.New("message body too large")
 
 const MTProtoMessageID = 0x5BB8E511
 
@@ -42,7 +47,7 @@ func DecodeMTProtoMessage(r *Reader) (*MTProtoMessage, error) {
 		return nil, err
 	}
 	if length > 1<<20 {
-		return nil, fmt.Errorf("message body too large: %d bytes", length)
+		return nil, fmt.Errorf("%w: %d bytes", errMessageBodyTooLarge, length)
 	}
 	bodyData, err := r.ReadRawBytes(int(length))
 	if err != nil {
@@ -83,7 +88,7 @@ func DecodeMTProtoMessageRaw(r *Reader) (*MTProtoMessageRaw, error) {
 		return nil, err
 	}
 	if length > 1<<20 {
-		return nil, fmt.Errorf("message body too large: %d bytes", length)
+		return nil, fmt.Errorf("%w: %d bytes", errMessageBodyTooLarge, length)
 	}
 	bodyData, err := r.ReadRawBytes(int(length))
 	if err != nil {

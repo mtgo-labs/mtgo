@@ -59,7 +59,7 @@ func ParseWebAppData(secretKey []byte, initData string, maxAge time.Duration) (*
 
 	vals, err := url.ParseQuery(initData)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", types.ErrWebAppDataInvalid, err)
+		return nil, fmt.Errorf("%w: %w", types.ErrWebAppDataInvalid, err)
 	}
 
 	raw := make(map[string]string, len(vals))
@@ -78,7 +78,7 @@ func ParseWebAppData(secretKey []byte, initData string, maxAge time.Duration) (*
 
 	authDateUnix, err := strconv.ParseInt(authDateStr, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid auth_date: %v", types.ErrWebAppDataInvalid, err)
+		return nil, fmt.Errorf("%w: invalid auth_date: %w", types.ErrWebAppDataInvalid, err)
 	}
 	authDate := time.Unix(authDateUnix, 0)
 
@@ -122,7 +122,7 @@ func ParseWebAppData(secretKey []byte, initData string, maxAge time.Duration) (*
 
 	if userJSON, ok := raw["user"]; ok && userJSON != "" {
 		if err := json.Unmarshal([]byte(userJSON), &result.User); err != nil {
-			return nil, fmt.Errorf("%w: invalid user JSON: %v", types.ErrWebAppDataInvalid, err)
+			return nil, fmt.Errorf("%w: invalid user JSON: %w", types.ErrWebAppDataInvalid, err)
 		}
 	}
 

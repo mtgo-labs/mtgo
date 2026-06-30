@@ -117,7 +117,7 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
-		return nil, fmt.Errorf("telegram: secret chat %d not found", chatID)
+		return nil, fmt.Errorf("%w: %d", ErrSecretChatNotFound, chatID)
 	}
 	if chat.GetState() != SecretChatStateWaiting {
 		return nil, fmt.Errorf("telegram: secret chat %d not in waiting state", chatID)
@@ -193,10 +193,10 @@ func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text strin
 	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
-		return 0, fmt.Errorf("telegram: secret chat %d not found", chatID)
+		return 0, fmt.Errorf("%w: %d", ErrSecretChatNotFound, chatID)
 	}
 	if chat.GetState() != SecretChatStateReady {
-		return 0, fmt.Errorf("telegram: secret chat %d not ready", chatID)
+		return 0, fmt.Errorf("%w: %d", ErrSecretChatNotReady, chatID)
 	}
 
 	outSeq := chat.NextOutSeqNo()
@@ -292,10 +292,10 @@ func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.Dec
 	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
-		return nil, fmt.Errorf("telegram: secret chat %d not found", chatID)
+		return nil, fmt.Errorf("%w: %d", ErrSecretChatNotFound, chatID)
 	}
 	if chat.AuthKey == nil {
-		return nil, fmt.Errorf("telegram: secret chat %d has no auth key", chatID)
+		return nil, fmt.Errorf("%w: %d", ErrSecretChatNoAuthKey, chatID)
 	}
 
 	plaintext, err := crypto.SecretDecrypt(ciphertext, chat.AuthKey, false)
@@ -593,10 +593,10 @@ func (c *Client) SendLayerNotification(ctx context.Context, chatID int32) error 
 	}
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
-		return fmt.Errorf("telegram: secret chat %d not found", chatID)
+		return fmt.Errorf("%w: %d", ErrSecretChatNotFound, chatID)
 	}
 	if chat.GetState() != SecretChatStateReady {
-		return fmt.Errorf("telegram: secret chat %d not ready", chatID)
+		return fmt.Errorf("%w: %d", ErrSecretChatNotReady, chatID)
 	}
 
 	outSeq := chat.NextOutSeqNo()
@@ -668,10 +668,10 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 
 	chat, ok := c.secretChats.Get(chatID)
 	if !ok {
-		return fmt.Errorf("telegram: secret chat %d not found", chatID)
+		return fmt.Errorf("%w: %d", ErrSecretChatNotFound, chatID)
 	}
 	if chat.GetState() != SecretChatStateReady {
-		return fmt.Errorf("telegram: secret chat %d not ready", chatID)
+		return fmt.Errorf("%w: %d", ErrSecretChatNotReady, chatID)
 	}
 
 	fileData, err := io.ReadAll(reader)
