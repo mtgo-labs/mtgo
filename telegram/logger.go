@@ -374,5 +374,5 @@ func formatArgs(v ...any) string {
 	if len(v) == 1 {
 		return fmt.Sprint(v[0])
 	}
-	return strings.Trim(fmt.Sprint(v...), " ")
+	return strings.TrimSuffix(fmt.Sprintln(v...), "\n")
 }
