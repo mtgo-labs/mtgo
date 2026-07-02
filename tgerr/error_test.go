@@ -3,6 +3,7 @@ package tgerr
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -300,5 +301,137 @@ func TestFloodWait_nonFlood(t *testing.T) {
 	}
 	if err == nil {
 		t.Error("FloodWait() err = nil for non-flood, want the original error")
+	}
+}
+
+// testErrorInfo is a test double implementing ErrorInfo for cross-type checks.
+type testErrorInfo struct {
+	code int
+	msg  string
+	typ  string
+	arg  int
+}
+
+func (e *testErrorInfo) Error() string        { return e.msg }
+func (e *testErrorInfo) ErrorCode() int       { return e.code }
+func (e *testErrorInfo) ErrorMessage() string { return e.msg }
+func (e *testErrorInfo) ErrorType() string    { return e.typ }
+func (e *testErrorInfo) ErrorArg() int        { return e.arg }
+
+func TestError_IsTransient(t *testing.T) {
+	tests := []struct {
+		name string
+		err  *Error
+		want bool
+	}{
+		{"flood wait (420)", New(420, "FLOOD_WAIT_60"), true},
+		{"internal (500)", New(500, "INTERNAL"), true},
+		{"bad request (400)", New(400, "MESSAGE_EMPTY"), false},
+		{"unauthorized (401)", New(401, "AUTH_KEY_INVALID"), false},
+		{"migration (303)", New(303, "FILE_MIGRATE_4"), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.err.IsTransient(); got != tt.want {
+				t.Fatalf("IsTransient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestError_IsTransient_nil(t *testing.T) {
+	var e *Error
+	if e.IsTransient() {
+		t.Fatal("nil Error should not be transient")
+	}
+}
+
+func TestIsTransient(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"flood wait", New(420, "FLOOD_WAIT_60"), true},
+		{"internal", New(500, "INTERNAL"), true},
+		{"bad request", New(400, "MESSAGE_EMPTY"), false},
+		{"nil", nil, false},
+		{"non-RPC error", fmt.Errorf("boom"), false},
+		{"wrapped transient", fmt.Errorf("wrapped: %w", New(420, "FLOOD_WAIT_60")), true},
+		{"wrapped permanent", fmt.Errorf("wrapped: %w", New(400, "MESSAGE_EMPTY")), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsTransient(tt.err); got != tt.want {
+				t.Fatalf("IsTransient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsRetryable(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		// RPC errors
+		{"rpc flood wait", New(420, "FLOOD_WAIT_60"), true},
+		{"rpc internal", New(500, "INTERNAL"), true},
+		{"rpc bad request", New(400, "MESSAGE_EMPTY"), false},
+		{"rpc unauthorized", New(401, "AUTH_KEY_INVALID"), false},
+		{"rpc migration", New(303, "FILE_MIGRATE_4"), false},
+
+		// Client errors (via test double)
+		{"reconnect", &testErrorInfo{code: 0, msg: "reconnect failed", typ: "RECONNECT", arg: 3}, true},
+		{"unsafe migration", &testErrorInfo{code: 303, msg: "unsafe", typ: "UNSAFE_MIGRATION"}, false},
+
+		// Wrapped errors
+		{"wrapped rpc flood", fmt.Errorf("ctx: %w", New(420, "FLOOD_WAIT_60")), true},
+		{"wrapped reconnect", fmt.Errorf("ctx: %w", &testErrorInfo{typ: "RECONNECT"}), true},
+		{"wrapped rpc bad request", fmt.Errorf("ctx: %w", New(400, "MESSAGE_EMPTY")), false},
+
+		// Edge cases
+		{"nil", nil, false},
+		{"non-ErrorInfo error", fmt.Errorf("plain error"), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsRetryable(tt.err); got != tt.want {
+				t.Fatalf("IsRetryable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestError_ErrorInfo(t *testing.T) {
+	e := New(420, "FLOOD_WAIT_60")
+	if e.ErrorCode() != 420 {
+		t.Errorf("ErrorCode() = %d, want 420", e.ErrorCode())
+	}
+	if e.ErrorMessage() != "FLOOD_WAIT_60" {
+		t.Errorf("ErrorMessage() = %q, want %q", e.ErrorMessage(), "FLOOD_WAIT_60")
+	}
+	if e.ErrorType() != "FLOOD_WAIT" {
+		t.Errorf("ErrorType() = %q, want %q", e.ErrorType(), "FLOOD_WAIT")
+	}
+	if e.ErrorArg() != 60 {
+		t.Errorf("ErrorArg() = %d, want 60", e.ErrorArg())
+	}
+}
+
+func TestSecurityCheckMismatch_ErrorInfo(t *testing.T) {
+	e := &SecurityCheckMismatch{Name: "DH_hello"}
+	if e.ErrorCode() != 0 {
+		t.Errorf("ErrorCode() = %d, want 0", e.ErrorCode())
+	}
+	if e.ErrorType() != "SECURITY_CHECK_MISMATCH" {
+		t.Errorf("ErrorType() = %q, want %q", e.ErrorType(), "SECURITY_CHECK_MISMATCH")
+	}
+	if e.ErrorArg() != 0 {
+		t.Errorf("ErrorArg() = %d, want 0", e.ErrorArg())
+	}
+	if !strings.Contains(e.ErrorMessage(), "DH_hello") {
+		t.Errorf("ErrorMessage() = %q, want to contain %q", e.ErrorMessage(), "DH_hello")
 	}
 }

@@ -15,3 +15,17 @@ type SecurityCheckMismatch struct {
 func (e *SecurityCheckMismatch) Error() string {
 	return fmt.Sprintf("security check failed: %s", e.Name)
 }
+
+// ErrorCode returns 0; security check mismatches have no numeric code.
+func (e *SecurityCheckMismatch) ErrorCode() int { return 0 }
+
+// ErrorMessage returns the name of the failed security check.
+func (e *SecurityCheckMismatch) ErrorMessage() string {
+	return "security check failed: " + e.Name
+}
+
+// ErrorType returns "SECURITY_CHECK_MISMATCH".
+func (e *SecurityCheckMismatch) ErrorType() string { return "SECURITY_CHECK_MISMATCH" }
+
+// ErrorArg returns 0; security check mismatches have no numeric argument.
+func (e *SecurityCheckMismatch) ErrorArg() int { return 0 }

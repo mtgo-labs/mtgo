@@ -23,6 +23,45 @@ type Error struct {
 	Argument int
 }
 
+// ErrorInfo is implemented by all mtgo error types that carry structured
+// diagnostic metadata. It provides a uniform way to extract code, message,
+// type, and argument regardless of the concrete error type.
+//
+// Methods use the Error prefix to avoid clashing with struct field names
+// (e.g. Error.Code is a field; ErrorCode() is the interface method).
+type ErrorInfo interface {
+	error
+
+	// ErrorCode returns the error's numeric code. For RPC errors this is
+	// the Telegram error code (e.g. 400, 420, 500); for transport errors
+	// it is the negative transport code (e.g. -404). Returns 0 for errors
+	// that have no numeric code.
+	ErrorCode() int
+
+	// ErrorMessage returns a human-readable description of the error.
+	ErrorMessage() string
+
+	// ErrorType returns the error's type name (e.g. "FLOOD_WAIT",
+	// "TRANSPORT", "MIGRATION"). Returns "" for errors without a type.
+	ErrorType() string
+
+	// ErrorArg returns the error's numeric argument (e.g. the wait time in
+	// seconds for FLOOD_WAIT_60). Returns 0 if the error has no argument.
+	ErrorArg() int
+}
+
+// ErrorCode returns the numeric RPC error code.
+func (e *Error) ErrorCode() int { return e.Code }
+
+// ErrorMessage returns the original error string from Telegram.
+func (e *Error) ErrorMessage() string { return e.Message }
+
+// ErrorType returns the parsed error type (message with numeric suffix removed).
+func (e *Error) ErrorType() string { return e.Type }
+
+// ErrorArg returns the numeric argument parsed from the error message.
+func (e *Error) ErrorArg() int { return e.Argument }
+
 // New creates a new Error with the given RPC error code and message string.
 // It extracts the error type and numeric argument from msg automatically.
 func New(code int, msg string) *Error {
@@ -89,6 +128,18 @@ func (e *Error) IsCodeOneOf(codes ...int) bool {
 	return false
 }
 
+// IsTransient reports whether the error represents a temporary server-side
+// condition that may resolve on retry (codes 420 and 500). Returns false
+// for permanent errors such as bad request (400), unauthorized (401),
+// forbidden (403), or migration redirects (303). It is safe to call on a
+// nil Error.
+func (e *Error) IsTransient() bool {
+	if e == nil {
+		return false
+	}
+	return e.Code == 420 || e.Code == 500
+}
+
 func (e *Error) extractArgument() {
 	if e.Message == "" {
 		return
@@ -153,6 +204,40 @@ func Is(err error, tt ...string) bool {
 func IsCode(err error, code ...int) bool {
 	if rpcErr, ok := As(err); ok {
 		return rpcErr.IsCodeOneOf(code...)
+	}
+	return false
+}
+
+// IsTransient reports whether err wraps an *Error with a transient error code
+// (420 or 500), indicating the operation may succeed on retry.
+func IsTransient(err error) bool {
+	if rpcErr, ok := As(err); ok {
+		return rpcErr.IsTransient()
+	}
+	return false
+}
+
+// IsRetryable reports whether err wraps any error type that represents a
+// transient condition worth retrying. Unlike IsTransient (which only checks
+// RPC codes 420/500), this covers all error types in the mtgo ecosystem:
+//
+//   - RPC flood wait (code 420) and internal server errors (code 500)
+//   - Reconnection failures
+//
+// Migration errors (code 303) are excluded because they require DC switching,
+// not a blind retry.
+func IsRetryable(err error) bool {
+	var info ErrorInfo
+	if !errors.As(err, &info) {
+		return false
+	}
+	code := info.ErrorCode()
+	if code == 420 || code == 500 {
+		return true
+	}
+	switch info.ErrorType() {
+	case "RECONNECT":
+		return true
 	}
 	return false
 }

@@ -321,6 +321,10 @@ func (e *ReconnectError) Error() string {
 }
 
 func (e *ReconnectError) Unwrap() error { return e.Err }
+func (e *ReconnectError) ErrorCode() int      { return 0 }
+func (e *ReconnectError) ErrorMessage() string { return fmt.Sprintf("reconnect failed after %d attempts", e.Attempts) }
+func (e *ReconnectError) ErrorType() string    { return "RECONNECT" }
+func (e *ReconnectError) ErrorArg() int         { return e.Attempts }
 
 // MigrationError indicates a failure to migrate the connection to a different DC.
 //
@@ -343,6 +347,10 @@ func (e *MigrationError) Error() string {
 }
 
 func (e *MigrationError) Unwrap() error { return e.Err }
+func (e *MigrationError) ErrorCode() int      { return 303 }
+func (e *MigrationError) ErrorMessage() string { return fmt.Sprintf("DC migration to DC %d failed", e.TargetDC) }
+func (e *MigrationError) ErrorType() string    { return "MIGRATION" }
+func (e *MigrationError) ErrorArg() int         { return e.TargetDC }
 
 // UnsafeMigrationError indicates a non-idempotent request was interrupted by a DC migration.
 // The request is not automatically retried because it may have already been applied.
@@ -365,3 +373,8 @@ type UnsafeMigrationError struct {
 func (e *UnsafeMigrationError) Error() string {
 	return fmt.Sprintf("client: refusing to retry non-idempotent %q after DC migration to DC %d", e.Method, e.TargetDC)
 }
+
+func (e *UnsafeMigrationError) ErrorCode() int      { return 303 }
+func (e *UnsafeMigrationError) ErrorMessage() string { return fmt.Sprintf("non-idempotent %q interrupted by migration to DC %d", e.Method, e.TargetDC) }
+func (e *UnsafeMigrationError) ErrorType() string    { return "UNSAFE_MIGRATION" }
+func (e *UnsafeMigrationError) ErrorArg() int         { return e.TargetDC }

@@ -55,6 +55,11 @@ func (e *UnknownConstructorError) Error() string {
 	return "tg: unknown constructor ID 0x" + itox(e.ID)
 }
 
+func (e *UnknownConstructorError) ErrorCode() int      { return 0 }
+func (e *UnknownConstructorError) ErrorMessage() string { return e.Error() }
+func (e *UnknownConstructorError) ErrorType() string    { return "UNKNOWN_CONSTRUCTOR" }
+func (e *UnknownConstructorError) ErrorArg() int         { return int(e.ID) }
+
 func itox(v uint32) string {
 	const hex = "0123456789abcdef"
 	b := make([]byte, 8)
