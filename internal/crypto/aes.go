@@ -7,41 +7,25 @@ import (
 	"sync"
 )
 
-var (
-	igeBufPool = sync.Pool{
-		New: func() any {
-			buf := make([]byte, 0, 4096)
-			return &buf
-		},
-	}
+var igeBufPool = sync.Pool{
+	New: func() any {
+		buf := make([]byte, 0, 4096)
+		return &buf
+	},
+}
 
-	aesBlockCache sync.Map
-)
-
-type aesBlockKey [32]byte
-
-// GetAESBlock returns a cached cipher.Block for the given key. Since
-// cipher.Block is immutable and goroutine-safe, the same block can be
-// shared across concurrent callers using the same key.
+// GetAESBlock creates a new cipher.Block for the given key.
+//
+// Each MTProto message derives a unique AES key via KDF (msg_key is a
+// per-message SHA-256 digest), so caching cipher.Block instances keyed on the
+// AES key would grow unbounded with zero cache hits on the hot path. Just
+// create a fresh block every call — AES key expansion is cheap and the block
+// is immediately eligible for GC after use.
 func GetAESBlock(key []byte) (cipher.Block, error) {
 	if len(key) != 16 && len(key) != 24 && len(key) != 32 {
 		return nil, fmt.Errorf("crypto/aes: invalid key size %d", len(key))
 	}
-
-	var kk aesBlockKey
-	copy(kk[:], key)
-
-	if v, ok := aesBlockCache.Load(kk); ok {
-		return v.(cipher.Block), nil
-	}
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	actual, _ := aesBlockCache.LoadOrStore(kk, block)
-	return actual.(cipher.Block), nil
+	return aes.NewCipher(key)
 }
 
 func getAESBuf(size int) []byte {
