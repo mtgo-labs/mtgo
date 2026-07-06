@@ -54,7 +54,7 @@ func NewOutboundBatcher(s *Session, maxContainerBytes int, coalesceWindow time.D
 		maxContainerBytes = 1 << 20 // 1 MiB
 	}
 	if coalesceWindow <= 0 {
-		coalesceWindow = time.Millisecond
+		coalesceWindow = 10 * time.Millisecond
 	}
 	return &OutboundBatcher{
 		session:           s,
