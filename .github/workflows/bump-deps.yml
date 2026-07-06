@@ -49,6 +49,7 @@ jobs:
             modules: "."
           - repo: wasm
             modules: "."
+            wasm: true
           - repo: plugins
             modules: "conversations i18n scheduler fsm throttle updatesrecovery rawdebug"
           - repo: plugins-template
@@ -85,6 +86,7 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
           MODULES: ${{ matrix.modules }}
+          IS_WASM: ${{ matrix.wasm }}
         run: |
           set -euo pipefail
           for mod in $MODULES; do
@@ -93,8 +95,12 @@ jobs:
               cd "$mod"
               go get "github.com/mtgo-labs/mtgo@$VERSION"
               go mod tidy
-              go vet ./...
-              go test ./...
+              if [ "$IS_WASM" = "true" ]; then
+                GOOS=js GOARCH=wasm go build ./...
+              else
+                go vet ./...
+                go test ./...
+              fi
             )
             echo "::endgroup::"
           done
