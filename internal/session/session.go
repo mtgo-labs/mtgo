@@ -426,7 +426,7 @@ type Session struct {
 	// log receives structured log output. When nil, logging is suppressed.
 	log sessionLogger
 
-	consecWriteFailures   int
+	consecWriteFailures   atomic.Int32
 	writeBreakerThreshold int
 	writeBreakerOpen      atomic.Bool
 
@@ -447,7 +447,7 @@ func (s *Session) SetOnPanic(fn func(panicValue any)) {
 // EnableOutboundBatching creates and starts an OutboundBatcher on this session.
 // When enabled, Send coalesces concurrent RPCs into msg_container messages.
 // Pass maxContainerBytes=0 for the default 1 MiB, and coalesceWindow=0 for the
-// default 1ms. Call before sending RPCs. To disable, call CloseOutboundBatching.
+// default 10ms. Call before sending RPCs. To disable, call CloseOutboundBatching.
 func (s *Session) EnableOutboundBatching(maxContainerBytes int, coalesceWindow time.Duration) {
 	b := NewOutboundBatcher(s, maxContainerBytes, coalesceWindow)
 	b.Start()
@@ -522,20 +522,31 @@ func (s *Session) SetWriteBreakerThreshold(n int) {
 	s.writeBreakerThreshold = n
 }
 
+// ResetWriteBreaker clears the write circuit breaker, resetting the failure
+// counter and re-enabling writes. Safe to call from any goroutine.
+// Call after session reconnection or when the transport is known-good.
+func (s *Session) ResetWriteBreaker() {
+	s.consecWriteFailures.Store(0)
+	s.writeBreakerOpen.Store(false)
+}
+
+// trackWriteResult updates the write circuit breaker. Consecutive failures open the
+// breaker, which blocks new writes via ErrWriteCircuitOpen but does NOT kill the
+// session. Successful writes reset both counter and breaker flag.
 func (s *Session) trackWriteResult(err error) {
 	if s.writeBreakerThreshold <= 0 {
 		return
 	}
 	if err != nil {
-		s.consecWriteFailures++
-		if s.consecWriteFailures >= s.writeBreakerThreshold && !s.writeBreakerOpen.Load() {
+		newCount := s.consecWriteFailures.Add(1)
+		if int(newCount) >= s.writeBreakerThreshold && !s.writeBreakerOpen.Load() {
 			s.writeBreakerOpen.Store(true)
-			if s.group != nil {
-				s.group.Cancel()
-			}
 		}
 	} else {
-		s.consecWriteFailures = 0
+		s.consecWriteFailures.Store(0)
+		if s.writeBreakerOpen.Load() {
+			s.writeBreakerOpen.Store(false)
+		}
 	}
 }
 
@@ -593,16 +604,15 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		msgIDValidator: newMsgIDValidator(func() int64 {
 			return time.Now().Unix()
 		}),
-		pending:          NewPendingManager(),
-		containerTracker: NewContainerTracker(),
-		floodWaits:       &FloodWaitQueue{},
-		pingInterval:     60 * time.Second,
-		pongTimeout:      30 * time.Second,
-		updateSem:        make(chan struct{}, 128),
-		saltMgr:          newSaltManager(time.Now),
-		sm:               newStateMachine(),
-
-		writeBreakerThreshold: 3,
+		pending:               NewPendingManager(),
+		containerTracker:      NewContainerTracker(),
+		floodWaits:            &FloodWaitQueue{},
+		pingInterval:          60 * time.Second,
+		pongTimeout:           30 * time.Second,
+		updateSem:             make(chan struct{}, 128),
+		saltMgr:               newSaltManager(time.Now),
+		writeBreakerThreshold: 10,
+		sm:                    newStateMachine(),
 	}
 
 	if len(authKey) > 0 {
@@ -1238,7 +1248,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
-	s.consecWriteFailures = 0
+	s.consecWriteFailures.Store(0)
 	s.writeBreakerOpen.Store(false)
 	s.sm.transition(StateIdle, StateConnecting)
 
