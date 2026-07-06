@@ -1295,8 +1295,8 @@ func TestWriteCircuitBreakerResetsOnSuccess(t *testing.T) {
 		t.Fatalf("expected success after clearing fail, got %v", err)
 	}
 
-	if s.consecWriteFailures != 0 {
-		t.Fatalf("consecWriteFailures=%d, want 0 after success", s.consecWriteFailures)
+	if s.consecWriteFailures.Load() != 0 {
+		t.Fatalf("consecWriteFailures=%d, want 0 after success", s.consecWriteFailures.Load())
 	}
 
 	ft.SetFail(fmt.Errorf("write failed"))
@@ -1817,7 +1817,7 @@ func TestCompletedCallsFreePendingCapacity(t *testing.T) {
 	}
 }
 
-func TestWriteBreakerTriggersGroupCancel(t *testing.T) {
+func TestWriteBreakerBlocksWritesButKeepsSessionAlive(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	ft := newFailingTransport()
 	s.SetTransport(ft)
@@ -1836,6 +1836,7 @@ func TestWriteBreakerTriggersGroupCancel(t *testing.T) {
 
 	ft.SetFail(fmt.Errorf("write failed"))
 
+	// Two consecutive failures should open the breaker.
 	err := s.writeEncryptedDirect(make([]byte, 10), time.Second)
 	if err == nil {
 		t.Fatal("expected error")
@@ -1849,10 +1850,52 @@ func TestWriteBreakerTriggersGroupCancel(t *testing.T) {
 		t.Fatal("breaker should be open")
 	}
 
+	// The group context should NOT be cancelled — the session stays alive.
 	select {
 	case <-g.ctx.Done():
-	case <-time.After(2 * time.Second):
-		t.Fatal("group context should have been cancelled")
+		t.Fatal("group context should NOT be cancelled when breaker opens")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	// Subsequent writes should get ErrWriteCircuitOpen.
+	err = s.writeEncryptedDirect(make([]byte, 10), time.Second)
+	if !errors.Is(err, ErrWriteCircuitOpen) {
+		t.Fatalf("expected ErrWriteCircuitOpen, got %v", err)
+	}
+
+	close(s.done)
+}
+
+func TestResetWriteBreaker(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	ft := newFailingTransport()
+	s.SetTransport(ft)
+	s.done = make(chan struct{})
+	s.sm.forceSetState(StateActive)
+	s.writeBreakerThreshold = 2
+
+	// Open the breaker.
+	ft.SetFail(fmt.Errorf("write failed"))
+	_ = s.writeEncryptedDirect(make([]byte, 10), time.Second)
+	_ = s.writeEncryptedDirect(make([]byte, 10), time.Second)
+	if !s.writeBreakerOpen.Load() {
+		t.Fatal("breaker should be open")
+	}
+
+	// Reset should clear it.
+	s.ResetWriteBreaker()
+	if s.writeBreakerOpen.Load() {
+		t.Fatal("breaker should be closed after reset")
+	}
+	if s.consecWriteFailures.Load() != 0 {
+		t.Fatalf("consecWriteFailures=%d after reset", s.consecWriteFailures.Load())
+	}
+
+	// Writes should succeed again after reset.
+	ft.SetFail(nil)
+	err := s.writeEncryptedDirect(make([]byte, 10), time.Second)
+	if err != nil {
+		t.Fatalf("expected success after reset, got %v", err)
 	}
 
 	close(s.done)
