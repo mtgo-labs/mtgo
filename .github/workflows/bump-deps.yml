@@ -47,6 +47,8 @@ jobs:
             modules: "."
           - repo: device-manager
             modules: "."
+          - repo: wasm
+            modules: "."
           - repo: plugins
             modules: "conversations i18n scheduler fsm throttle updatesrecovery rawdebug"
           - repo: plugins-template

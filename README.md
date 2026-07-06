@@ -395,6 +395,7 @@ Licensed under the [Apache License 2.0](LICENSE).
 | [mtgo-ipc](https://github.com/mtgo-labs/mtgo-ipc) | Standalone IPC bridge — JSON-RPC over Unix socket, lets any language drive mtgo |
 | [session-converter](https://github.com/mtgo-labs/session-converter) | Convert session strings between Telethon, Pyrogram, GramJS, mtcute, MTKruto, gogram, gotgproto + SQLite import |
 | [device-manager](https://github.com/mtgo-labs/device-manager) | Generate realistic Telegram client device profiles — Android, iOS, macOS, Desktop, Web |
+| [wasm](https://github.com/mtgo-labs/wasm) | Run mtgo in the browser via WebAssembly — WebSocket transport + JS bridge, available on npm as `@mtgo-labs/wasm` |
 | [storage](https://github.com/mtgo-labs/storage) | Persistent storage adapters (SQLite, PostgreSQL, MongoDB) |
 | [plugins](https://github.com/mtgo-labs/plugins) | Official plugins (conversations, i18n) |
 | [middlewares](https://github.com/mtgo-labs/middlewares) | Invoker middleware (flood wait, rate limiting) |
