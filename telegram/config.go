@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"context"
+	"net"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/storage"
@@ -332,6 +334,22 @@ type Config struct {
 	// WebSocketTLS enables TLS encryption on the WebSocket transport. Should
 	// be true in production to prevent MITM attacks on the WS connection.
 	WebSocketTLS bool
+	// WSDialer, when set, replaces the default WebSocket dialer used when
+	// WebSocket is true. Use this to inject a custom WebSocket implementation
+	// — most notably a browser WebSocket (via syscall/js) for GOOS=js GOARCH=wasm
+	// builds.
+	//
+	// The dialer must return a fully-framed net.Conn (obfuscated2 layer applied).
+	// Callers supplying a raw bytestream (e.g. a browser WebSocket stream) should
+	// wrap their factory with NewWSDialer, which applies the obfuscation layer
+	// internally so the caller never touches internal/transport:
+	//
+	//	cfg.WebSocket = true
+	//	cfg.WebSocketTLS = true
+	//	cfg.WSDialer = telegram.NewWSDialer(browserRawWSFactory)
+	//
+	// Has no effect unless WebSocket is true.
+	WSDialer func(ctx context.Context, addr string) (net.Conn, error)
 	// ServerAddr is an optional override for the DC address to connect to.
 	// When set, the client dials this address directly instead of resolving
 	// the DC address from the built-in datacenter map. Format: "host:port".

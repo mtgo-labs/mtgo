@@ -16,7 +16,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
+	"net"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -255,7 +256,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		connPool:          session.NewConnectionPool(c.ConnPoolTTL),
 		sessionRouter:     session.NewSessionRouter(5 * time.Minute),
 		Log:               logger,
-		rng:               rand.New(rand.NewSource(time.Now().UnixNano())),
+		rng:               rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())^0x9E3779B97F4A7C15)),
 	}
 
 	client.dcAuthManager = session.NewDcAuthManager(2, func(ctx context.Context, fromDC, toDC int) (*tg.AuthExportedAuthorization, error) {
@@ -486,6 +487,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.WebSocketTLS {
 		c.WebSocketTLS = true
 	}
+	if src.WSDialer != nil {
+		c.WSDialer = src.WSDialer
+	}
 	if src.DC != 0 {
 		c.DC = src.DC
 	}
@@ -541,10 +545,10 @@ func (c *Client) IsConnected() bool {
 // contention on the global math/rand mutex under high concurrency.
 func (c *Client) RandomID() int64 {
 	if c.rng == nil {
-		return rand.Int63()
+		return rand.Int64()
 	}
 	c.rngMu.Lock()
-	id := c.rng.Int63()
+	id := c.rng.Int64()
 	c.rngMu.Unlock()
 	return id
 }
@@ -1155,7 +1159,13 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.config().WebSocketTLS)
 		wsCtx, wsCancel := dialerCtx(timeout)
 		defer wsCancel()
-		wsConn, err := transport.DialWebsocket(wsCtx, wsAddr)
+		var wsConn net.Conn
+		var err error
+		if c.config().WSDialer != nil {
+			wsConn, err = c.config().WSDialer(wsCtx, wsAddr)
+		} else {
+			wsConn, err = transport.DialWebsocket(wsCtx, wsAddr)
+		}
 		if err != nil {
 			c.dcOptionPool.RecordFailure(dc)
 			return nil, fmt.Errorf("ws dial %s: %w", wsAddr, err)

@@ -86,12 +86,26 @@ func DialWebsocket(ctx context.Context, addr string) (net.Conn, error) {
 		return nil, fmt.Errorf("ws: dial: %w", err)
 	}
 
-	obfsConn, err := dialObfuscated2(wsConn, 0xEE)
+	return WrapObfuscatedWS(wsConn)
+}
+
+// WrapObfuscatedWS wraps an already-connected WebSocket bytestream with the
+// MTProto obfuscated2 framing layer (initiator mode, 0xEE marker).
+//
+// This is intended for custom WebSocket dialers that obtain the underlying
+// stream themselves (e.g. a browser WebSocket via syscall/js in GOOS=js builds,
+// which performs its own TLS and HTTP upgrade) and only need the obfuscation
+// layer applied on top. The returned net.Conn is suitable for use with
+// NewTCPIntermediateNoHeader.
+//
+// On error the connection is closed; on success the caller owns the returned
+// conn.
+func WrapObfuscatedWS(conn net.Conn) (net.Conn, error) {
+	obfsConn, err := dialObfuscated2(conn, 0xEE)
 	if err != nil {
-		wsConn.Close()
+		conn.Close()
 		return nil, err
 	}
-
 	return &wsConnCloser{Conn: obfsConn}, nil
 }
 
