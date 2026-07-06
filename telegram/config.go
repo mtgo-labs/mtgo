@@ -467,9 +467,12 @@ type Config struct {
 	// OutboundMaxContainerBytes caps the serialized size of a single container.
 	// When 0 and OutboundBatchEnabled is true, defaults to 1 MiB.
 	OutboundMaxContainerBytes int
-	// OutboundCoalesceWindow is the micro-window engaged only when N>1 RPCs
-	// are queued and a send is in flight. Lone/idle RPCs always flush
-	// immediately. When 0 and OutboundBatchEnabled is true, defaults to 1ms.
+	// OutboundCoalesceWindow is the max time to wait for additional RPCs
+	// before sending. The window engages only when N>1 RPCs are queued and a
+	// send is in flight; lone/idle RPCs always flush immediately (zero added
+	// latency). When 0 and OutboundBatchEnabled is true, defaults to 10ms.
+	// Set to -1 to disable the coalesce window (items already queued are
+	// packed, but the batcher does not wait for more).
 	OutboundCoalesceWindow time.Duration
 
 	// RSAKeyRotationInterval enables the PublicRsaKeyWatchdog: a background
