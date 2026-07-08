@@ -2406,13 +2406,27 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass
 
 func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeerClass, error) {
 	peer, err := ChatID(id).resolve(ctx, c)
-	if err == nil {
+	if err == nil && hasAccessHash(peer) {
 		return peer, nil
 	}
 	if c.IsBot() {
 		return c.resolveNumericPeerForBot(ctx, id)
 	}
 	return c.resolveNumericPeerForAccount(ctx, id)
+}
+
+// hasAccessHash returns false when peer is a channel or user with a zero
+// access hash. Such peers (typically cached from min entities) are unusable
+// for API calls like channels.getFullChannel and must be re-resolved.
+func hasAccessHash(peer tg.InputPeerClass) bool {
+	switch p := peer.(type) {
+	case *tg.InputPeerChannel:
+		return p.AccessHash != 0
+	case *tg.InputPeerUser:
+		return p.AccessHash != 0
+	default:
+		return true
+	}
 }
 
 func (c *Client) resolveNumericPeerForBot(ctx context.Context, id int64) (tg.InputPeerClass, error) {
@@ -2506,7 +2520,40 @@ func (c *Client) resolveNumericPeerForAccount(ctx context.Context, id int64) (tg
 	if preloadErr := c.preloadDialogPeer(ctx, id); preloadErr != nil && !errors.Is(preloadErr, ErrPeerNotFound) {
 		return nil, preloadErr
 	}
-	return ChatID(id).resolve(ctx, c)
+	peer, err := ChatID(id).resolve(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+	// If dialog preload couldn't find a full hash, try username resolution
+	// as a last resort before returning a zero-hash peer.
+	if !hasAccessHash(peer) {
+		if resolved, err := c.resolvePeerByUsername(ctx, id); err == nil {
+			return resolved, nil
+		}
+	}
+	return peer, nil
+}
+
+// resolvePeerByUsername attempts to resolve a peer via its cached username
+// when the access hash is unknown (min entity). This is the fallback path
+// after dialog preload fails to find the peer.
+func (c *Client) resolvePeerByUsername(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	username := c.lookupUsername(id)
+	if username == "" {
+		return nil, ErrPeerNotFound
+	}
+	return c.ResolveUsername(ctx, username)
+}
+
+func (c *Client) lookupUsername(peerID int64) string {
+	c.peerCacheMu.RLock()
+	defer c.peerCacheMu.RUnlock()
+	for username, id := range c.usernameCache {
+		if id == peerID {
+			return username
+		}
+	}
+	return ""
 }
 
 func inputPeerFromBareChatID(id int64) (tg.InputPeerClass, bool) {
@@ -2924,6 +2971,12 @@ func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
 	id = canonicalPeerID(id, peer)
 	c.peerCacheMu.Lock()
 	defer c.peerCacheMu.Unlock()
+
+	// Don't let a zero-hash min entity overwrite a known full hash.
+	if existing, ok := c.peerCache[id]; ok {
+		peer = preserveAccessHash(existing, peer)
+	}
+
 	if _, exists := c.peerCache[id]; !exists {
 		c.peerCacheOrder = append(c.peerCacheOrder, id)
 	}
@@ -2949,6 +3002,25 @@ func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
 			_ = ps.SavePeer(entry)
 		}
 	}
+}
+
+// preserveAccessHash copies a non-zero access hash from the existing cached
+// peer when the incoming peer has a zero hash. This prevents min entities
+// (which carry no usable access hash) from poisoning a previously-good cache
+// entry. The storage backend already merges correctly via mergePeer; this
+// brings the in-memory cache to the same guarantee.
+func preserveAccessHash(existing, incoming tg.InputPeerClass) tg.InputPeerClass {
+	switch e := existing.(type) {
+	case *tg.InputPeerChannel:
+		if c, ok := incoming.(*tg.InputPeerChannel); ok && c.AccessHash == 0 && e.AccessHash != 0 {
+			return &tg.InputPeerChannel{ChannelID: c.ChannelID, AccessHash: e.AccessHash}
+		}
+	case *tg.InputPeerUser:
+		if u, ok := incoming.(*tg.InputPeerUser); ok && u.AccessHash == 0 && e.AccessHash != 0 {
+			return &tg.InputPeerUser{UserID: u.UserID, AccessHash: e.AccessHash}
+		}
+	}
+	return incoming
 }
 
 func peerLookupIDs(id int64) []int64 {
