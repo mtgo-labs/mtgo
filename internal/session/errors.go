@@ -79,6 +79,10 @@ var (
 	// ErrMsgNotReceived indicates the server reported via msgs_state_info that
 	// a sent message was not received. The caller should retry.
 	ErrMsgNotReceived = errors.New("session: message not received by server")
+
+	// ErrRPCDropped indicates the pending RPC was dropped by the client via
+	// rpc_drop_answer. The original caller receives this error.
+	ErrRPCDropped = errors.New("session: rpc dropped by client")
 )
 
 // ErrorClass classifies a transport or session error for reconnect decisions.

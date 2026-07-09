@@ -1195,6 +1195,30 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	return nil, fmt.Errorf("invoke %s: retries exhausted (%d): %w", methodName, retries, lastErr)
 }
 
+// DropRPC sends rpc_drop_answer for the given msg_id, asking the server to
+// cancel the in-flight RPC. After the server responds, the pending handle for
+// msgID is rejected with ErrRPCDropped so the original caller unblocks.
+//
+// This is a best-effort cancel — the server may have already processed the
+// request. The server's response indicates the outcome:
+//   - RPCAnswerUnknown: the server has no record of msgID (already gone).
+//   - RPCAnswerDroppedRunning: the RPC was running and the result was discarded.
+//   - RPCAnswerDropped: the RPC result was discarded.
+func (s *Session) DropRPC(ctx context.Context, msgID int64) error {
+	result, err := s.Invoke(ctx, &tg.RPCDropAnswerRequest{ReqMsgID: msgID}, 1, 10*time.Second)
+	if err != nil {
+		return err
+	}
+	// Reject the pending handle so the original caller unblocks with a typed
+	// error. If the handle already completed (server raced ahead), Reject is
+	// a no-op.
+	s.pending.Reject(msgID, ErrRPCDropped)
+	if _, ok := result.(tg.RPCDropAnswerClass); !ok {
+		return fmt.Errorf("session: drop rpc: unexpected result type %T", result)
+	}
+	return nil
+}
+
 // maxFloodWaitBudget bounds the total time Invoke blocks on FLOOD_WAIT sleeps
 // before surfacing a synthetic 429 (Too Many Requests: retry after N). Mirrors
 // TDLib NetQueryDelayer's total_timeout_limit_: short waits are retried within
