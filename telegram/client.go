@@ -164,6 +164,9 @@ type Client struct {
 	testDialer   transport.Dialer
 	testResolver PeerResolver
 
+	// dedup prevents duplicate update dispatch when the same update arrives
+	// from both an RPC response and the server push stream.
+	dedup *dedupCache
 	// rng is a per-client random source, avoiding contention on the global
 	// math/rand mutex under high concurrency.
 	rng   *rand.Rand
@@ -248,6 +251,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		dialer:            dialer,
 		peerCache:         make(map[int64]tg.InputPeerClass),
 		usernameCache:     make(map[string]int64),
+		dedup:             newDedupCache(),
 		resolveCoalescer:  resolveCoalescer{inFlight: make(map[string][]chan resolveResult)},
 		handlerDispatcher: NewHandlerDispatcher(),
 		dcSessions:        newDCSessions(),
@@ -1960,6 +1964,27 @@ func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]by
 	return c.InvokeWithRawResult(ctx, query)
 }
 
+// DropRPC cancels an in-flight RPC on the server side by sending
+// rpc_drop_answer for the given message ID. After the server confirms, the
+// pending handle for msgID is rejected with session.ErrRPCDropped so the
+// original Invoke caller unblocks.
+//
+// This is a best-effort cancel — the server may have already processed the
+// request. Returns an error if the client is not connected or the server
+// fails to respond.
+func (c *Client) DropRPC(ctx context.Context, msgID int64) error {
+	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+	c.mu.RLock()
+	sess := c.session
+	c.mu.RUnlock()
+	if sess == nil {
+		return ErrNotConnected
+	}
+	return sess.DropRPC(ctx, msgID)
+}
+
 // HandleUpdates processes an incoming Telegram UpdatesClass by flattening it
 // into individual updates and dispatching them to registered handlers.
 //
@@ -1987,6 +2012,14 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 
 	for _, rawUpd := range rawUpdates {
 		upd := c.toUpdate(rawUpd, userMap, chatMap, pm)
+
+		// Dedup: skip updates whose signature was dispatched recently
+		// (e.g. arrived both from an RPC response and the push stream).
+		if !c.dedup.checkAndAdd(updateDedupKey(rawUpd)) {
+			upd.reset()
+			updatePool.Put(upd)
+			continue
+		}
 
 		if disp != nil {
 			pkt := UpdatePacket{

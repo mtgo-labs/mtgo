@@ -47,6 +47,10 @@ var (
 	// ErrUpdateHandlerFailed is returned when a registered update handler
 	// returns an error or panics during dispatch.
 	ErrUpdateHandlerFailed = errors.New("telegram: update handler failed")
+	// ErrRPCDropped is returned when an in-flight RPC is dropped by the client
+	// via DropRPC (rpc_drop_answer). The original Invoke caller receives this
+	// error wrapped in the session error chain.
+	ErrRPCDropped = errors.New("telegram: rpc dropped by client")
 )
 
 // Client initialization and authentication errors.

@@ -466,6 +466,15 @@ func TestInvokeWithRawResult(t *testing.T) {
 	}
 }
 
+func TestDropRPCNotConnected(t *testing.T) {
+	c, _ := NewClient(12345, "hash", nil)
+
+	err := c.DropRPC(context.Background(), 12345)
+	if !errors.Is(err, ErrNotConnected) {
+		t.Errorf("DropRPC() = %v, want ErrNotConnected", err)
+	}
+}
+
 func setupTestServerForClient(c *Client, st storage.Storage) *testServer {
 	srv, err := newTestServer(nil)
 	if err != nil {
