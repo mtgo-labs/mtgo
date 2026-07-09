@@ -2,9 +2,11 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -214,4 +216,74 @@ func (c *Client) RPC() *tg.RPCClient { return c.Raw() }
 func (c *Client) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error) {
 	jc := NewJSONClient(c.Raw())
 	return jc.InvokeJSON(ctx, functionName, payload, useSnakeCase)
+}
+
+// isSessionDeadErr reports whether err indicates the underlying session is no
+// longer usable (closed, draining, or disconnected). These are the errors that
+// trigger reconnect-retry when RetryRPCOnReconnect is enabled.
+func isSessionDeadErr(err error) bool {
+	return errors.Is(err, session.ErrSessionClosed) ||
+		errors.Is(err, session.ErrDraining) ||
+		errors.Is(err, session.ErrNotConnected) ||
+		errors.Is(err, ErrNotConnected)
+}
+
+// waitForConnect blocks until the client reports a connected state, the context
+// is cancelled, or the client is closed. Returns nil when connected. The 50 ms
+// poll interval is negligible compared to the seconds-long reconnect cycle.
+func (c *Client) waitForConnect(ctx context.Context) error {
+	if c.state.IsConnected() {
+		return nil
+	}
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			switch {
+			case c.state.IsConnected():
+				return nil
+			case c.state.IsClosed():
+				return ErrClientClosed
+			}
+		}
+	}
+}
+
+// retrySessionErr retries fn when it returns a session-death error, waiting for
+// reconnection between attempts. When RetryRPCOnReconnect is disabled, fn is
+// called exactly once.
+func (c *Client) retrySessionErr(ctx context.Context, fn func() error) error {
+	if !c.config().RetryRPCOnReconnect {
+		return fn()
+	}
+
+	maxRetries := c.config().MaxRPCReconnectRetries
+	if maxRetries == 0 {
+		maxRetries = 3
+	}
+
+	var lastErr error
+	for attempt := 0; maxRetries < 0 || attempt <= maxRetries; attempt++ {
+		err := fn()
+		if err == nil {
+			return nil
+		}
+		if !isSessionDeadErr(err) {
+			return err
+		}
+		lastErr = err
+		if c.Log != nil {
+			c.Log.Debugf("RPC reconnect retry attempt=%d err=%v", attempt+1, err)
+		}
+		if waitErr := c.waitForConnect(ctx); waitErr != nil {
+			if lastErr != nil {
+				return fmt.Errorf("%w (last session error: %v)", waitErr, lastErr)
+			}
+			return waitErr
+		}
+	}
+	return fmt.Errorf("session closed after %d reconnect retries: %w", maxRetries, lastErr)
 }

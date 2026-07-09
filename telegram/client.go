@@ -518,6 +518,12 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.AlwaysObfuscate {
 		c.AlwaysObfuscate = true
 	}
+	if src.RetryRPCOnReconnect {
+		c.RetryRPCOnReconnect = true
+	}
+	if src.MaxRPCReconnectRetries != 0 {
+		c.MaxRPCReconnectRetries = src.MaxRPCReconnectRetries
+	}
 }
 
 // IsConnected reports whether the client has an active connection to Telegram.
@@ -1822,23 +1828,20 @@ func (c *Client) migrateExportImport(ctx context.Context, targetDC int, query tg
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
-		return nil, err
+		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+			return nil, err
+		}
+		// Wait for reconnection, then proceed.
+		if waitErr := c.waitForConnect(ctx); waitErr != nil {
+			return nil, err
+		}
 	}
 
-	// Route query to the appropriate session slot.
-	// Currently all slots share the same session, but the routing
-	// infrastructure is in place for future multi-session support.
-	slotType := session.RouteQuery(query)
-	_ = slotType // routing decision logged for future use
+	_ = session.RouteQuery(query) // routing decision logged for future use
 
 	c.mu.RLock()
-	sess := c.session
 	oc := c.overloadController
 	c.mu.RUnlock()
-
-	if sess == nil {
-		return nil, ErrNotConnected
-	}
 
 	// Overload control: gate admission by priority (FR-018). When disabled
 	// (MaxInFlightRPCs == 0), Admit is a no-op (backward compat).
@@ -1851,7 +1854,18 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		defer release()
 	}
 
-	result, err := sess.Invoke(ctx, query, retries, timeout)
+	var result tg.TLObject
+	err := c.retrySessionErr(ctx, func() error {
+		c.mu.RLock()
+		sess := c.session
+		c.mu.RUnlock()
+		if sess == nil {
+			return ErrNotConnected
+		}
+		var invokeErr error
+		result, invokeErr = sess.Invoke(ctx, query, retries, timeout)
+		return invokeErr
+	})
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
@@ -1869,18 +1883,30 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
+		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+			return nil, err
+		}
+		if waitErr := c.waitForConnect(ctx); waitErr != nil {
+			return nil, err
+		}
+	}
+
+	var result tg.TLObject
+	err := c.retrySessionErr(ctx, func() error {
+		c.mu.RLock()
+		sess := c.session
+		c.mu.RUnlock()
+		if sess == nil {
+			return ErrNotConnected
+		}
+		var invokeErr error
+		result, invokeErr = sess.Invoke(ctx, query, retries, timeout)
+		return invokeErr
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	c.mu.RLock()
-	sess := c.session
-	c.mu.RUnlock()
-
-	if sess == nil {
-		return nil, ErrNotConnected
-	}
-
-	return sess.Invoke(ctx, query, retries, timeout)
+	return result, nil
 }
 
 // InvokeWithRawResult sends a TLObject query and returns the raw MTProto
@@ -1889,15 +1915,12 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 // gzip_packed, the bytes start with the gzip_packed constructor.
 func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]byte, error) {
 	if err := c.ensureConnected(); err != nil {
-		return nil, err
-	}
-
-	c.mu.RLock()
-	sess := c.session
-	c.mu.RUnlock()
-
-	if sess == nil {
-		return nil, ErrNotConnected
+		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+			return nil, err
+		}
+		if waitErr := c.waitForConnect(ctx); waitErr != nil {
+			return nil, err
+		}
 	}
 
 	timeout := c.config().ReqTimeout
@@ -1914,7 +1937,22 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	}
 	retries := max(c.config().Retries, 1)
 
-	return sess.InvokeRaw(ctx, query, retries, timeout)
+	var result []byte
+	err := c.retrySessionErr(ctx, func() error {
+		c.mu.RLock()
+		sess := c.session
+		c.mu.RUnlock()
+		if sess == nil {
+			return ErrNotConnected
+		}
+		var invokeErr error
+		result, invokeErr = sess.InvokeRaw(ctx, query, retries, timeout)
+		return invokeErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // InvokeWithRawByte is deprecated. Use [Client.InvokeWithRawResult].

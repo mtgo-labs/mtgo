@@ -458,6 +458,27 @@ type Config struct {
 	// connections use the raw transport (Abridged/Intermediate/Full).
 	// MTProxy connections are always obfuscated regardless of this flag.
 	AlwaysObfuscate bool
+
+	// RetryRPCOnReconnect enables automatic retry of in-flight RPC calls
+	// when the transport disconnects. When enabled, Client.Invoke
+	// transparently waits for reconnection and re-sends the query on the
+	// new session instead of returning ErrSessionClosed to the caller.
+	//
+	// Callers see only a latency spike, not an error. The retry budget is
+	// bounded by MaxRPCReconnectRetries and the caller's context deadline.
+	//
+	// WARNING: enabling this may cause duplicate execution of
+	// non-idempotent operations (e.g., messages.sendMessage) because the
+	// server may have already processed the original request before the
+	// disconnect. Read-only operations (get*, checks) are always safe to
+	// retry.
+	RetryRPCOnReconnect bool
+
+	// MaxRPCReconnectRetries limits how many reconnect-retry cycles a single
+	// Invoke call tolerates before surfacing the error. Defaults to 3 when
+	// RetryRPCOnReconnect is enabled and this is 0. Set to -1 for unlimited
+	// retries (bounded only by the context deadline).
+	MaxRPCReconnectRetries int
 }
 
 // DeviceTDesktopWindows returns a DeviceConfig that mimics Telegram Desktop
