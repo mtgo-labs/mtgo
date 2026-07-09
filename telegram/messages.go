@@ -23,6 +23,30 @@ func toParserMode(mode params.ParseMode) (parser.ParseMode, bool) {
 	}
 }
 
+// buildReplyTo constructs the reply-to parameter for message sending,
+// handling forum topic routing. Mirrors PyrogramMod's get_reply_head_fm:
+//   - Explicit ReplyTo takes precedence.
+//   - ReplyToMessageID only: simple reply to that message.
+//   - MessageThreadID only: send to topic (reply_to_msg_id = top_msg_id = thread).
+//   - Both set: reply to message inside topic (reply_to_msg_id = reply, top_msg_id = thread).
+func buildReplyTo(replyTo tg.InputReplyToClass, replyToMessageID, messageThreadID int32) tg.InputReplyToClass {
+	if replyTo != nil {
+		return replyTo
+	}
+	if replyToMessageID == 0 && messageThreadID == 0 {
+		return nil
+	}
+	msgID := replyToMessageID
+	if msgID == 0 {
+		msgID = messageThreadID
+	}
+	rt := &tg.InputReplyToMessage{ReplyToMsgID: msgID}
+	if messageThreadID != 0 {
+		rt.TopMsgID = messageThreadID
+	}
+	return rt
+}
+
 // parseText resolves the effective parse mode from opts → client default,
 // then parses formatted text into plain text + entities.
 // If entities are already provided or parse mode is unset, returns text unchanged.
@@ -123,19 +147,9 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 		flags.Set(16)
 	}
 
-	var replyTo tg.InputReplyToClass
-	if opt.ReplyTo != nil {
+	replyTo := buildReplyTo(opt.ReplyTo, opt.ReplyToMessageID, opt.MessageThreadID)
+	if replyTo != nil {
 		flags.Set(0)
-		replyTo = opt.ReplyTo
-	} else if opt.ReplyToMessageID != 0 {
-		flags.Set(0)
-		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
-	} else if opt.MessageThreadID != 0 {
-		flags.Set(0)
-		replyTo = &tg.InputReplyToMessage{
-			ReplyToMsgID: opt.MessageThreadID,
-			TopMsgID:     opt.MessageThreadID,
-		}
 	}
 	if opt.ReplyMarkup != nil {
 		flags.Set(2)
@@ -571,19 +585,9 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 		flags.Set(16)
 	}
 
-	var replyTo tg.InputReplyToClass
-	if opt.ReplyTo != nil {
+	replyTo := buildReplyTo(opt.ReplyTo, opt.ReplyToMessageID, opt.MessageThreadID)
+	if replyTo != nil {
 		flags.Set(0)
-		replyTo = opt.ReplyTo
-	} else if opt.ReplyToMessageID != 0 {
-		flags.Set(0)
-		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
-	} else if opt.MessageThreadID != 0 {
-		flags.Set(0)
-		replyTo = &tg.InputReplyToMessage{
-			ReplyToMsgID: opt.MessageThreadID,
-			TopMsgID:     opt.MessageThreadID,
-		}
 	}
 	if opt.ReplyMarkup != nil {
 		flags |= (1 << 2)
