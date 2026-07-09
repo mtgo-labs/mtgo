@@ -107,7 +107,6 @@ Never edit `*_gen.go` files directly. If a TL type is missing or wrong, fix the 
 - **Per-DC Backoff**: `PerDCBackoff` keeps reconnect delays independent per DC, preventing one failing DC from delaying unrelated DCs. Ported from TDLib `ConnectionCreator::ClientInfo::Backoff`.
 - **Flood Wait Handling**: `FloodWaitQueue` records delayed FLOOD_WAIT queries while `Session.Invoke` parses `FLOOD_WAIT_X`, waits, and retries without surfacing the first flood error to callers. Ported from TDLib `NetQueryDelayer`.
 - **PFS (Perfect Forward Secrecy)**: `TempKeyManager` generates temp auth keys via DH exchange, binds via `auth.bindTempAuthKey`. Opt-in via `Config.PFS`. Temp keys persisted across reconnects. Ported from TDLib `Session::auth_loop`.
-- **Inbound Update Queue**: `InboundUpdateQueue` decouples update reception from handler dispatch with a bounded sharded worker pool. Per-routing-key ordering preserved; hybrid overflow policy (block-first, shed + `getDifference` recovery). Opt-in via `Config.InboundQueueDepth`. Ported from TDLib `tdactor` mailbox backpressure.
 - **Outbound Container Packing**: `OutboundBatcher` coalesces concurrent RPCs into MTProto `msg_container#73f1f8dc` via adaptive flushing (immediate on idle/lone, batch when N>1 queued). Per-priority FIFOs (High/Low). Opt-in via `Config.OutboundBatchEnabled`. Ported from TDLib `net/Session.h` outbound container packing.
 - **Cryptographic Trust**: `RSAKeySet` wraps bundled canonical Telegram RSA keys as the immutable trust root; `PublicRsaKeyWatchdog` fetches and verifies rotated keys against the trust set (fail-closed). `ErrKeyVerificationFailed` typed error for MITM detection. Opt-in via `Config.RSAKeyRotationInterval`. Ported from TDLib `net/PublicRsaKeyWatchdog.h`.
 - **Overload Control**: `OverloadController` gates RPC admission by priority — low-priority fast-fails at capacity (`ErrOverload`), high-priority gets bounded deferred admission. `LoadSnapshot` aggregates queue depths, in-flight counts, throttle level for observability. Opt-in via `Config.MaxInFlightRPCs`. Ported from TDLib `net/NetQueryDispatcher.h`.
@@ -133,7 +132,7 @@ Artifacts:
 - `specs/003-production-hardening/plan.md` — Implementation plan with research, constitution check
 - `specs/003-production-hardening/research.md` — 5 design decisions grounded in TDLib + codebase
 - `specs/003-production-hardening/data-model.md` — 7 entities with state transitions
-- `specs/003-production-hardening/contracts/` — Interface contracts (inbound-queue, outbound-batcher, crypto-trust, overload-control)
+- `specs/003-production-hardening/contracts/` — Interface contracts (outbound-batcher, crypto-trust, overload-control)
 - `specs/003-production-hardening/quickstart.md` — 10 validation scenarios
 - `specs/003-production-hardening/tasks.md` — 38 tasks across 4 user stories + setup + foundational + polish
 
