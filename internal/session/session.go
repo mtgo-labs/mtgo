@@ -112,6 +112,7 @@ const (
 	initialSaltFetchWait = 15 * time.Second
 	saltFetchInterval    = time.Hour
 	ackFlushInterval     = 30 * time.Second
+	pfsRenewalInterval   = 60 * time.Second
 )
 
 // hasDecodedResults returns true if any goroutine is waiting for a decoded TL
@@ -1285,6 +1286,7 @@ func (s *Session) runLoop(ctx context.Context) error {
 	g.Go(s.pingLoop)
 	g.Go(s.saltLoop)
 	g.Go(s.handleClose)
+	g.Go(s.pfsRenewalLoop)
 
 	err := g.Wait()
 	s.sm.transitionTo(StateClosed)
@@ -1708,6 +1710,36 @@ func (s *Session) saltLoop(ctx context.Context) error {
 	}
 }
 
+// pfsRenewalLoop is an errgroup goroutine that proactively renews the PFS
+// temporary key before it expires. When NeedsRotation returns true the loop
+// returns an error, which cancels the errgroup and triggers a reconnect that
+// generates a fresh temp key. If PFS is disabled the loop is a no-op that
+// blocks until the context is cancelled.
+//
+// Ported from tdesktop's create_gen_auth_key_actor renewal timer and
+// gotd/td's session.rekey logic. See https://core.telegram.org/api/pfs.
+func (s *Session) pfsRenewalLoop(ctx context.Context) error {
+	pfs := s.PFS()
+	if pfs == nil || !pfs.IsEnabled() {
+		<-ctx.Done()
+		return ctx.Err()
+	}
+
+	ticker := time.NewTicker(pfsRenewalInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			if pfs.NeedsRotation() {
+				return fmt.Errorf("session: pfs temp key needs rotation")
+			}
+		}
+	}
+}
+
 func (s *Session) fetchSaltsWithRetry(ctx context.Context) {
 	for attempt := 0; attempt < saltPrefetchMaxRetries; attempt++ {
 		select {
@@ -1838,10 +1870,28 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 20 {
 			return false
 		}
-		s.pending.Resolve(int64(binary.LittleEndian.Uint64(body[4:12])), &tg.BadMsgNotification{
-			BadMsgID:    int64(binary.LittleEndian.Uint64(body[4:12])),
+		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
+		errorCode := int32(binary.LittleEndian.Uint32(body[16:20]))
+		if errorCode == 16 || errorCode == 17 {
+			// Codes 16 (msg_id too low) and 17 (msg_id too high) indicate
+			// client/server clock drift. The server's current time is encoded
+			// in the upper 32 bits of bad_msg_id.
+			serverTime := badMsgID >> 32
+			s.msgFactory.UpdateServerTime(time.Unix(serverTime, 0))
+			if s.log != nil {
+				s.log.Warnf("session: time corrected (code=%d) server_time=%d", errorCode, serverTime)
+			}
+			if errorCode == 17 && s.log != nil {
+				s.log.Warnf("session: msg_id too high (code=17), reconnect recommended to reset session")
+			}
+			// Reject so the caller retries with the corrected time offset.
+			s.pending.Reject(badMsgID, fmt.Errorf("session: time correction applied (code %d)", errorCode))
+			return true
+		}
+		s.pending.Resolve(badMsgID, &tg.BadMsgNotification{
+			BadMsgID:    badMsgID,
 			BadMsgSeqno: int32(binary.LittleEndian.Uint32(body[12:16])),
-			ErrorCode:   int32(binary.LittleEndian.Uint32(body[16:20])),
+			ErrorCode:   errorCode,
 		})
 	case tg.BadServerSaltTypeID:
 		if len(body) < 28 {
