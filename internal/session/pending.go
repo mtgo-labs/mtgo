@@ -3,6 +3,7 @@ package session
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -18,6 +19,18 @@ type CallHandle struct {
 	rawResult []byte        // stored raw result bytes
 	err       error         // stored error
 	isRaw     bool          // true for SendRaw waiters
+	sentAt    int64         // unix-nano timestamp when the query was sent (for state checks)
+	acked     atomic.Bool   // true when the server acknowledged receipt
+}
+
+// SentAt returns the time the query was sent.
+func (h *CallHandle) SentAt() time.Time {
+	return time.Unix(0, h.sentAt)
+}
+
+// IsAcked reports whether the server has acknowledged receipt of this query.
+func (h *CallHandle) IsAcked() bool {
+	return h.acked.Load()
 }
 
 // Done returns a channel that is closed when the handle is completed.
@@ -85,8 +98,9 @@ func (pm *PendingManager) Register(msgID int64, isRaw bool) (*CallHandle, error)
 		return nil, ErrBusy
 	}
 	h := &CallHandle{
-		done:  make(chan struct{}),
-		isRaw: isRaw,
+		done:   make(chan struct{}),
+		isRaw:  isRaw,
+		sentAt: time.Now().UnixNano(),
 	}
 	pm.pending[msgID] = h
 	pm.mu.Unlock()
@@ -228,60 +242,38 @@ func (pm *PendingManager) Count() int64 {
 	return pm.totalPending.Load()
 }
 
-// MarkAllUnknown transitions all pending (acked or unacked) queries to the
-// unknown state. Called on transport disconnect to mark queries whose fate is
-// unknown until recovery queries are sent on reconnect.
-// Ported from td/td/telegram/net/Session.cpp:700-734 (sent_queries_ → unknown_queries_).
-func (pm *PendingManager) MarkAllUnknown() []int64 {
+// MarkAcked marks the pending handle for msgID as acknowledged by the server.
+// No-op if the message is not pending or already completed.
+func (pm *PendingManager) MarkAcked(msgID int64) {
 	pm.mu.Lock()
-	ids := make([]int64, 0, len(pm.pending))
-	for msgID := range pm.pending {
-		ids = append(ids, msgID)
-	}
+	h, ok := pm.pending[msgID]
 	pm.mu.Unlock()
-	return ids
+	if ok {
+		h.acked.Store(true)
+	}
 }
 
-// GetUnknown returns the message IDs of all pending queries (which are now
-// considered "unknown" after MarkAllUnknown was called). These are the queries
-// that need recovery via msgs_state_req on reconnect.
-func (pm *PendingManager) GetUnknown() []int64 {
+// OverduePending returns the message IDs of content-related pending queries
+// that have been sent more than threshold ago and have not been acknowledged.
+// These are candidates for msgs_state_req reconciliation.
+func (pm *PendingManager) OverduePending(threshold time.Duration) []int64 {
+	cutoff := time.Now().Add(-threshold).UnixNano()
 	pm.mu.Lock()
-	ids := make([]int64, 0, len(pm.pending))
-	for msgID := range pm.pending {
+	defer pm.mu.Unlock()
+	var ids []int64
+	for msgID, h := range pm.pending {
+		if h.isRaw {
+			continue
+		}
+		if h.acked.Load() {
+			continue
+		}
+		if h.sentAt > cutoff {
+			continue
+		}
 		ids = append(ids, msgID)
 	}
-	pm.mu.Unlock()
 	return ids
-}
-
-// RejectExcessUnknowns rejects pending queries beyond the given cap with
-// ErrTooManyPending. Returns the number of rejected queries.
-// Ported from td/td/telegram/net/Session.cpp:1297-1309 (MAX_INFLIGHT_QUERIES check).
-func (pm *PendingManager) RejectExcessUnknowns(cap int) int {
-	pm.mu.Lock()
-	if len(pm.pending) <= cap {
-		pm.mu.Unlock()
-		return 0
-	}
-	// Collect excess IDs (keep earliest registered, reject newest)
-	excess := make([]int64, 0)
-	count := 0
-	for msgID := range pm.pending {
-		count++
-		if count > cap {
-			excess = append(excess, msgID)
-		}
-	}
-	pm.mu.Unlock()
-
-	rejected := 0
-	for _, msgID := range excess {
-		if pm.Reject(msgID, ErrTooManyPending) {
-			rejected++
-		}
-	}
-	return rejected
 }
 
 // remove extracts and deletes the handle from the map.

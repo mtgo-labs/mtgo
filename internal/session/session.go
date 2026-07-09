@@ -435,6 +435,8 @@ type Session struct {
 	containerTracker *ContainerTracker
 	floodWaits       *FloodWaitQueue
 	outboundBatcher  *OutboundBatcher
+	stateReqMu       sync.Mutex
+	stateReqs        map[int64]*pendingStateReq
 }
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
@@ -1248,6 +1250,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
+	s.stateReqs = make(map[int64]*pendingStateReq)
 	s.consecWriteFailures.Store(0)
 	s.writeBreakerOpen.Store(false)
 	s.sm.transition(StateIdle, StateConnecting)
@@ -1278,6 +1281,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 // is cancelled or a goroutine returns a fatal error.
 func (s *Session) runLoop(ctx context.Context) error {
 	g := s.group
+	g.Go(s.stateCheckLoop)
 	g.Go(s.pingLoop)
 	g.Go(s.saltLoop)
 	g.Go(s.handleClose)
@@ -1871,6 +1875,8 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		}
 	case tg.MsgsStateReqTypeID:
 		s.handleRawMsgsStateReq(body[4:])
+	case tg.MsgsStateInfoTypeID:
+		s.handleRawMsgsStateInfo(body[4:])
 	case tg.MsgResendReqTypeID:
 		s.handleRawMsgResendReq(body[4:])
 	case tg.MsgsAllInfoTypeID:
@@ -1888,6 +1894,7 @@ func (s *Session) handleRawMsgsAck(body []byte) {
 		return
 	}
 	for _, ackedID := range msgIDs {
+		s.pending.MarkAcked(ackedID)
 		s.containerTracker.AckContainer(ackedID)
 		s.containerTracker.AckChild(ackedID)
 	}
@@ -2393,19 +2400,6 @@ func (m *TempKeyManager) SaveToStorage() error {
 	// TODO: implement storage save for temp key
 	// Key: temp_auth_key_{dcID}
 	return nil
-}
-
-// PrepareForReconnect marks all pending queries as unknown and returns their
-// IDs. Call this before stopping the session to preserve pending queries for
-// recovery on the next session.
-// Ported from td/td/telegram/net/SessionProxy.cpp:177-183 (on_failed → close+open).
-func (s *Session) PrepareForReconnect() []int64 {
-	return s.pending.MarkAllUnknown()
-}
-
-// HasUnknownQueries reports whether there are pending queries marked as unknown.
-func (s *Session) HasUnknownQueries() bool {
-	return len(s.pending.GetUnknown()) > 0
 }
 
 // Connect sets the transport and starts the session. It requires that an auth

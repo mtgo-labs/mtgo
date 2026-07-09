@@ -72,14 +72,13 @@ var (
 	// No bytes are written to the transport when this error is returned.
 	ErrBusy = errors.New("session: too many pending RPCs")
 
-	// ErrTooManyPending is returned when the number of unknown queries
-	// to recover after reconnect exceeds the recovery cap (1024).
-	// Ported from td/td/telegram/net/Session.cpp:1297-1309 (MAX_INFLIGHT_QUERIES).
-	ErrTooManyPending = errors.New("session: too many pending queries to recover")
-
 	// ErrWriteCircuitOpen is returned when the write circuit breaker has
 	// tripped due to consecutive write failures.
 	ErrWriteCircuitOpen = errors.New("session: write circuit breaker open")
+
+	// ErrMsgNotReceived indicates the server reported via msgs_state_info that
+	// a sent message was not received. The caller should retry.
+	ErrMsgNotReceived = errors.New("session: message not received by server")
 )
 
 // ErrorClass classifies a transport or session error for reconnect decisions.
