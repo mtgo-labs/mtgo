@@ -414,40 +414,9 @@ type Config struct {
 	// Defaults to 16 seconds.
 	// Ported from td/td/telegram/net/ConnectionCreator.cpp (MAX_BACKOFF desktop).
 	EndpointCoolDown time.Duration
-
-	// UpdateQueueSize is the buffered channel capacity for incoming updates.
-	// Larger values absorb bursts but increase memory usage. Defaults to 1024.
-	UpdateQueueSize int
-	// DurableUpdateQueue persists undelivered updates across reconnects so
-	// that no update is lost during brief network outages. Defaults to true.
-	DurableUpdateQueue bool
-	// MaxUpdateHandlerRetry is the number of times the client will retry
-	// calling an update handler that returned an error. After exhausting
-	// retries the update is dropped. Defaults to 3.
-	MaxUpdateHandlerRetry int
-	// UpdateRecoveryEnabled restores updates that may have been lost during
-	// a reconnection by fetching missed events from the server. Defaults to true.
-	UpdateRecoveryEnabled bool
-
 	// ---- Production Hardening (003-production-hardening) ----
 	// All fields below are opt-in: zero-value = current behavior (Constitution
 	// Principle IV). Enable them for high-throughput production deployments.
-
-	// InboundQueueDepth enables the bounded inbound update dispatch queue.
-	// When > 0, received updates are dispatched concurrently by a worker pool
-	// instead of synchronously inline, with this many updates buffered at most.
-	// When 0 (default), dispatch stays synchronous (current behavior).
-	InboundQueueDepth int
-	// InboundQueueWorkers sets the number of concurrent dispatch workers. When
-	// 0 and InboundQueueDepth > 0, defaults to runtime.NumCPU(). Updates with
-	// the same routing key (chat/channel) are dispatched to the same worker to
-	// preserve ordering; updates across keys dispatch concurrently.
-	InboundQueueWorkers int
-	// InboundStallBudget is the maximum time the producer blocks when the
-	// inbound queue is full before applying the overflow policy (shed the
-	// lowest-priority update and trigger getDifference recovery). When 0 and
-	// InboundQueueDepth > 0, defaults to 500ms.
-	InboundStallBudget time.Duration
 
 	// MaxInFlightRPCs enables overload-controlled RPC admission. When > 0, RPCs
 	// are admitted through a semaphore: high-priority RPCs wait up to
@@ -489,13 +458,6 @@ type Config struct {
 	// connections use the raw transport (Abridged/Intermediate/Full).
 	// MTProxy connections are always obfuscated regardless of this flag.
 	AlwaysObfuscate bool
-
-	// MaxChannelDiffConcurrency limits how many concurrent
-	// updates.getChannelDifference requests may be in flight across all
-	// tracked channels. When 0 (default), there is no limit. A value of
-	// 3-5 protects accounts in many active channels from FLOOD_WAIT.
-	// Ported from TDLib MAX_CONCURRENT_GET_CHANNEL_DIFFERENCES.
-	MaxChannelDiffConcurrency int
 }
 
 // DeviceTDesktopWindows returns a DeviceConfig that mimics Telegram Desktop
@@ -546,22 +508,18 @@ var DefaultConfig = Config{
 		SystemLangCode: "en",
 		ClientPlatform: types.ClientPlatformAndroid,
 	},
-	SkipUpdates:           true,
-	TransportMode:         TransportModeAbridged,
-	SavePeers:             true,
-	WebSocketTLS:          true,
-	FetchReplies:          true,
-	FetchTopics:           true,
-	FetchStories:          true,
-	FetchStickers:         true,
-	ReconnectEnabled:      true,
-	ReconnectBaseDelay:    1 * time.Second,
-	ReconnectMaxDelay:     60 * time.Second,
-	HealthEnabled:         true,
-	HealthPingInterval:    60 * time.Second,
-	HealthPongTimeout:     30 * time.Second,
-	UpdateQueueSize:       1024,
-	DurableUpdateQueue:    true,
-	MaxUpdateHandlerRetry: 3,
-	UpdateRecoveryEnabled: true,
+	SkipUpdates:        true,
+	TransportMode:      TransportModeAbridged,
+	SavePeers:          true,
+	WebSocketTLS:       true,
+	FetchReplies:       true,
+	FetchTopics:        true,
+	FetchStories:       true,
+	FetchStickers:      true,
+	ReconnectEnabled:   true,
+	ReconnectBaseDelay: 1 * time.Second,
+	ReconnectMaxDelay:  60 * time.Second,
+	HealthEnabled:      true,
+	HealthPingInterval: 60 * time.Second,
+	HealthPongTimeout:  30 * time.Second,
 }

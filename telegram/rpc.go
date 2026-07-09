@@ -51,7 +51,6 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	if err != nil {
 		return nil, err
 	}
-	ci.client.applyAffected(ctx, input, result)
 	if rpcErr, ok := result.(*tg.RPCError); ok {
 		ci.client.Log.Warnf("RPC error code=%d msg=%s", rpcErr.ErrorCode, rpcErr.ErrorMessage)
 		parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
@@ -215,64 +214,4 @@ func (c *Client) RPC() *tg.RPCClient { return c.Raw() }
 func (c *Client) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error) {
 	jc := NewJSONClient(c.Raw())
 	return jc.InvokeJSON(ctx, functionName, payload, useSnakeCase)
-}
-
-// inputChannelID returns the raw channel ID of an InputChannel, else 0.
-func inputChannelID(c tg.InputChannelClass) int64 {
-	if ch, ok := c.(*tg.InputChannel); ok {
-		return ch.ChannelID
-	}
-	return 0
-}
-
-// inputPeerChannelID returns the channel ID when the peer is a channel, else 0.
-func inputPeerChannelID(p tg.InputPeerClass) int64 {
-	if ch, ok := p.(*tg.InputPeerChannel); ok {
-		return ch.ChannelID
-	}
-	return 0
-}
-
-// channelIDFromRequest returns the channel a pts-affecting request targets, or
-// 0 for the common sequence. Enumerates request types whose result carries an
-// affected pts increment.
-func channelIDFromRequest(input tg.TLObject) int64 {
-	switch r := input.(type) {
-	case *tg.ChannelsReadHistoryRequest:
-		return inputChannelID(r.Channel)
-	case *tg.ChannelsDeleteMessagesRequest:
-		return inputChannelID(r.Channel)
-	case *tg.ChannelsReadMessageContentsRequest:
-		return inputChannelID(r.Channel)
-	case *tg.ChannelsDeleteParticipantHistoryRequest:
-		return inputChannelID(r.Channel)
-	case *tg.MessagesReadHistoryRequest:
-		return inputPeerChannelID(r.Peer)
-	case *tg.MessagesReadMentionsRequest:
-		return inputPeerChannelID(r.Peer)
-	case *tg.MessagesReadReactionsRequest:
-		return inputPeerChannelID(r.Peer)
-	}
-	return 0
-}
-
-// applyAffected feeds the pts increment from affectedMessages/affectedHistory
-// RPC results into the update manager, keeping local pts in sync.
-func (c *Client) applyAffected(ctx context.Context, input, result tg.TLObject) {
-	var pts, ptsCount int32
-	switch r := result.(type) {
-	case *tg.MessagesAffectedMessages:
-		pts, ptsCount = r.PTS, r.PTSCount
-	case *tg.MessagesAffectedHistory:
-		pts, ptsCount = r.PTS, r.PTSCount
-	default:
-		return
-	}
-	c.mu.RLock()
-	um := c.updateManager
-	c.mu.RUnlock()
-	if um == nil {
-		return
-	}
-	um.ApplyAffected(ctx, channelIDFromRequest(input), int(pts), int(ptsCount))
 }

@@ -89,15 +89,15 @@ type Client struct {
 	dialer  transport.Dialer
 	Log     *Logger
 
-	sessions           map[sessionKey]*session.Session
-	sessionsMu         sync.Mutex
-	dispatcher         Dispatcher
-	handlerDispatcher  *HandlerDispatcher
-	plugins            map[string]Plugin
-	middlewares        []middlewareEntry
-	mwCache            []Middleware
-	invokerMiddlewares []InvokerMiddleware
-	invokerCache       *tg.RPCClient
+	sessions            map[sessionKey]*session.Session
+	sessionsMu          sync.Mutex
+	dispatcher          Dispatcher
+	handlerDispatcher   *HandlerDispatcher
+	plugins             map[string]Plugin
+	middlewares         []middlewareEntry
+	mwCache             []Middleware
+	invokerMiddlewares  []InvokerMiddleware
+	invokerCache        *tg.RPCClient
 	hooksMu             sync.RWMutex
 	updateReceivedHooks []UpdateReceivedHook
 	sessionLoadedHooks  []SessionLoadedHook
@@ -114,8 +114,7 @@ type Client struct {
 	stopCh   chan struct{}
 	stopOnce sync.Once
 
-	reconnectMgr  *reconnectManager
-	updateManager *updateManager
+	reconnectMgr *reconnectManager
 
 	autoConnectMu sync.Mutex
 
@@ -291,7 +290,6 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 			Log:               logger,
 		})
 	}
-
 
 	client.initDeviceStorage()
 	registerClient(client)
@@ -516,22 +514,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.HealthPongTimeout != 0 {
 		c.HealthPongTimeout = src.HealthPongTimeout
 	}
-	if src.UpdateQueueSize != 0 {
-		c.UpdateQueueSize = src.UpdateQueueSize
-	}
-	if src.DurableUpdateQueue {
-		c.DurableUpdateQueue = true
-	}
-	if src.MaxUpdateHandlerRetry != 0 {
-		c.MaxUpdateHandlerRetry = src.MaxUpdateHandlerRetry
-	}
-	c.UpdateRecoveryEnabled = src.UpdateRecoveryEnabled
 	c.Log = src.Log
 	if src.AlwaysObfuscate {
 		c.AlwaysObfuscate = true
-	}
-	if src.MaxChannelDiffConcurrency != 0 {
-		c.MaxChannelDiffConcurrency = src.MaxChannelDiffConcurrency
 	}
 }
 
@@ -1558,9 +1543,8 @@ func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
 	return nil
 }
 
-// postConnect runs post-connection setup: fetching update state, starting
-// postConnect runs initialization steps after the session is connected: fetching
-// updates state, plugins, and enabling update recovery.
+// postConnect runs initialization steps after the session is connected:
+// RSA key watchdog, outbound batching, update state fetch, and plugin start.
 func (c *Client) postConnect() {
 	// Start the RSA key rotation watchdog if configured.
 	if c.keyWatchdog != nil {
@@ -1606,33 +1590,8 @@ func (c *Client) postConnect() {
 		c.Log.Errorf("plugin start: %v", err)
 	}
 
-	if c.config().UpdateRecoveryEnabled && !c.config().NoUpdates {
-		umCfg := updateManagerConfig{
-			QueueSize:                 c.config().UpdateQueueSize,
-			DurableQueue:              c.config().DurableUpdateQueue,
-			MaxHandlerRetry:           c.config().MaxUpdateHandlerRetry,
-			MaxChannelDiffConcurrency: c.config().MaxChannelDiffConcurrency,
-		}
-		// Enable the inbound dispatch queue when InboundQueueDepth > 0.
-		if c.config().InboundQueueDepth > 0 {
-			umCfg.InboundQueue = NewInboundUpdateQueue(InboundQueueConfig{
-				MaxDepth:    c.config().InboundQueueDepth,
-				Workers:     c.config().InboundQueueWorkers,
-				StallBudget: c.config().InboundStallBudget,
-				Log:         c.Log,
-			})
-		}
-		mgr := newUpdateManager(c, c.storage, umCfg)
-		if err := mgr.Start(context.Background()); err != nil {
-			c.Log.Warnf("update recovery start: %v", err)
-		} else {
-			mgr.SetRPC(c.Raw())
-			c.mu.Lock()
-			c.updateManager = mgr
-			c.mu.Unlock()
-			c.Log.Info("update recovery enabled")
-		}
-	}
+	// Update recovery is handled by the updatesrecovery plugin (opt-in via
+	// client.Use). The core only receives updates and dispatches them.
 
 	// Notify connected hooks after all post-connect setup is done.
 	c.fireConnected()
@@ -1644,19 +1603,10 @@ func (c *Client) processRawUpdate(obj tg.TLObject) {
 		return
 	}
 
-	// Notify lifecycle hooks before routing. Plugins use this for state
+	// Notify lifecycle hooks before dispatch. Plugins use this for state
 	// tracking and gap detection. Hooks must be non-blocking.
 	c.fireUpdateReceived(updates)
 
-	c.mu.RLock()
-	um := c.updateManager
-	c.mu.RUnlock()
-	if um != nil {
-		if err := um.EnqueueLive(updates); err != nil {
-			c.Log.Warnf("enqueue live update: %v", err)
-		}
-		return
-	}
 	c.HandleUpdates(updates)
 }
 
@@ -1671,14 +1621,6 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 		shouldCloseStorage = closeStorage[0]
 	}
 
-	c.mu.Lock()
-	if c.updateManager != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		c.updateManager.Stop(ctx)
-		cancel()
-		c.updateManager = nil
-	}
-	c.mu.Unlock()
 	if c.reconnectMgr != nil {
 		c.reconnectMgr.Stop()
 	}
@@ -1721,17 +1663,6 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	c.state.setConnected(false)
 }
 
-// UpdateHealth returns a snapshot of the update manager's health metrics.
-func (c *Client) UpdateHealth() UpdateHealth {
-	c.mu.RLock()
-	um := c.updateManager
-	c.mu.RUnlock()
-	if um == nil {
-		return UpdateHealth{}
-	}
-	return um.Health()
-}
-
 // Disconnect closes all sessions (main and exported), releases storage, and marks the client
 // as disconnected. It is safe to call Disconnect on an already-disconnected client.
 // Returns ErrNotConnected if the client was never connected.
@@ -1748,7 +1679,7 @@ func (c *Client) Disconnect() error {
 
 func (c *Client) hasActiveResources() bool {
 	c.mu.RLock()
-	hasMain := c.session != nil || c.storage != nil || c.updateManager != nil
+	hasMain := c.session != nil || c.storage != nil
 	c.mu.RUnlock()
 	if hasMain {
 		return true

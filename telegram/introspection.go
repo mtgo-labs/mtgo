@@ -8,8 +8,6 @@ import (
 // observability (FR-020). All fields are populated from atomic reads with zero
 // hot-path allocation. Safe for concurrent use.
 type LoadSnapshot struct {
-	InboundQueueDepth int
-	InboundHighWater  int
 	OutboundHighDepth int
 	OutboundLowDepth  int
 	InFlightRPCs      int64
@@ -26,17 +24,9 @@ func (c *Client) LoadSnapshot() LoadSnapshot {
 	snap := LoadSnapshot{}
 
 	c.mu.RLock()
-	um := c.updateManager
 	sess := c.session
 	oc := c.overloadController
 	c.mu.RUnlock()
-
-	// Inbound queue depth (from update manager's inbound queue).
-	if um != nil && um.cfg.InboundQueue != nil {
-		is := um.cfg.InboundQueue.Snapshot()
-		snap.InboundQueueDepth = is.Depth
-		snap.InboundHighWater = is.HighWater
-	}
 
 	// Outbound batcher metrics (from session).
 	if sess != nil {

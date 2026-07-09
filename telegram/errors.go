@@ -44,6 +44,9 @@ var (
 	// ErrMigrationUnknown is returned when the server requests migration to an
 	// unknown data center that the client has no configuration for.
 	ErrMigrationUnknown = errors.New("client: dc migration to unknown dc")
+	// ErrUpdateHandlerFailed is returned when a registered update handler
+	// returns an error or panics during dispatch.
+	ErrUpdateHandlerFailed = errors.New("telegram: update handler failed")
 )
 
 // Client initialization and authentication errors.

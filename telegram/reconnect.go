@@ -309,15 +309,6 @@ func (c *Client) reconnectOnce() error {
 	c.state.SetDC(dcID)
 	c.state.ResetReconnectCount()
 
-	c.mu.RLock()
-	um := c.updateManager
-	c.mu.RUnlock()
-	if um != nil {
-		if err := um.OnReconnect(context.Background(), c.Raw()); err != nil {
-			c.Log.Warnf("recover updates after reconnect: %v", err)
-		}
-	}
-
 	// Notify reconnect hooks for plugin-driven gap recovery.
 	c.fireReconnect()
 

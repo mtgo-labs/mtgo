@@ -1284,14 +1284,6 @@ func TestAllMethodsGuardNotConnected(t *testing.T) {
 	}
 }
 
-func TestClientUpdateHealthNoManager(t *testing.T) {
-	c, _ := NewClient(1, "hash", nil)
-	h := c.UpdateHealth()
-	if h.Pts != 0 || h.Pending != 0 {
-		t.Fatalf("health = %+v", h)
-	}
-}
-
 func TestClientToUpdateParsesChatParticipantUpdate(t *testing.T) {
 	const (
 		chatID  = int64(12345)

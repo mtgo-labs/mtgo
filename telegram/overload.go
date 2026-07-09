@@ -45,7 +45,7 @@ const (
 )
 
 // ResourceCeilings are configurable limits enforced by OverloadController and
-// the InboundUpdateQueue/OutboundBatcher. All-zero = disabled (backward compat).
+// the OutboundBatcher. All-zero = disabled (backward compat).
 type ResourceCeilings struct {
 	MaxInFlightRPCs         int
 	MaxInboundDepth         int
