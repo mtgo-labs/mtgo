@@ -130,6 +130,12 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 	} else if opt.ReplyToMessageID != 0 {
 		flags.Set(0)
 		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
+	} else if opt.MessageThreadID != 0 {
+		flags.Set(0)
+		replyTo = &tg.InputReplyToMessage{
+			ReplyToMsgID: opt.MessageThreadID,
+			TopMsgID:     opt.MessageThreadID,
+		}
 	}
 	if opt.ReplyMarkup != nil {
 		flags.Set(2)
@@ -572,6 +578,12 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 	} else if opt.ReplyToMessageID != 0 {
 		flags.Set(0)
 		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
+	} else if opt.MessageThreadID != 0 {
+		flags.Set(0)
+		replyTo = &tg.InputReplyToMessage{
+			ReplyToMsgID: opt.MessageThreadID,
+			TopMsgID:     opt.MessageThreadID,
+		}
 	}
 	if opt.ReplyMarkup != nil {
 		flags |= (1 << 2)
