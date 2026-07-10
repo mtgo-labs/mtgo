@@ -438,6 +438,10 @@ type Session struct {
 	outboundBatcher  *OutboundBatcher
 	stateReqMu       sync.Mutex
 	stateReqs        map[int64]*pendingStateReq
+
+	// chainMu protects chains, used for G13 invokeAfterMsg ordering.
+	chainMu sync.Mutex
+	chains  map[int64]int64 // chainID → last sent msg_id
 }
 
 // SetOnPanic sets a callback invoked when a dispatchUpdate goroutine panics.
@@ -616,6 +620,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		saltMgr:               newSaltManager(time.Now),
 		writeBreakerThreshold: 10,
 		sm:                    newStateMachine(),
+		chains:                make(map[int64]int64),
 	}
 
 	if len(authKey) > 0 {
@@ -1078,12 +1083,14 @@ func checkRawRPCError(data []byte) error {
 // timeout. Returns the decoded response object or the last error encountered.
 func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	methodName := typeName(query)
+	chainID, hasChain := ChainIDFromContext(ctx) // G13: invokeAfterMsg chain
 
 	var lastErr error
 	var backoff time.Duration
 	maxAttempts := retries
 	totalWait := time.Duration(0) // accumulated FLOOD_WAIT sleep, bounded by maxFloodWaitBudget
 	badSaltRetries := 0
+	g12Retries := 0 // G12: bound additional error-recovery retries
 	for i := 0; i < maxAttempts; i++ {
 		if i > 0 {
 			time.Sleep(backoff)
@@ -1091,7 +1098,11 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
-		obj, err := s.Send(ctx, msgID, uint32(seqNo), query, timeout)
+		sendQuery := query
+		if hasChain {
+			sendQuery = s.wrapChain(chainID, query)
+		}
+		obj, err := s.Send(ctx, msgID, uint32(seqNo), sendQuery, timeout)
 		if err != nil {
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
@@ -1172,6 +1183,74 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				maxAttempts++
 				continue
 			}
+			// G13: MSG_WAIT_FAILED — the referenced msg in an invokeAfterMsg
+			// chain failed. Clear the chain dependency and resend unwrapped
+			// so the query is not permanently blocked.
+			if hasChain && tgerr.Is(parsed, tgerr.ErrMSGWaitFailed) {
+				s.ClearChain(chainID)
+				if s.log != nil {
+					s.log.Warnf("chain msg wait failed method=%s chain_id=%d, retrying unwrapped", methodName, chainID)
+				}
+				lastErr = fmt.Errorf("invoke %s: chain msg wait failed", methodName)
+				backoff = 100 * time.Millisecond
+				maxAttempts++
+				continue
+			}
+
+			// G12: CONNECTION_NOT_INITED (400) — the server lost track of the
+			// connection init state. Retry; the caller (client layer) wraps in
+			// initConnection which re-establishes server-side state.
+			if g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrConnectionNotInited) {
+				g12Retries++
+				if s.log != nil {
+					s.log.Warnf("connection not inited method=%s attempt=%d", methodName, i+1)
+				}
+				lastErr = fmt.Errorf("invoke %s: connection not inited", methodName)
+				backoff = 100 * time.Millisecond
+				maxAttempts++
+				continue
+			}
+
+			// G12: PERSISTENT_TIMESTAMP_OUTDATED (400) — transient server-side
+			// state issue. Brief delay then retry.
+			if g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrPersistentTimestampOutdated) {
+				g12Retries++
+				if s.log != nil {
+					s.log.Warnf("persistent timestamp outdated method=%s attempt=%d", methodName, i+1)
+				}
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				case <-s.done:
+					return nil, ErrSessionClosed
+				case <-time.After(1 * time.Second):
+				}
+				lastErr = fmt.Errorf("invoke %s: persistent timestamp outdated", methodName)
+				backoff = 0
+				maxAttempts++
+				continue
+			}
+
+			// G12: AUTH_KEY_PERM_EMPTY (401) — in PFS mode the temp key may
+			// have been invalidated. Re-bind and retry. Without PFS this error
+			// should not occur; surface it to the caller.
+			if g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrAuthKeyPermEmpty) {
+				g12Retries++
+				if pfs := s.PFS(); pfs != nil && pfs.IsEnabled() {
+					if s.log != nil {
+						s.log.Warnf("auth key perm empty method=%s, rebinding temp key", methodName)
+					}
+					if err := pfs.Bind(ctx, s.sessionID, s.Invoke); err != nil {
+						return nil, fmt.Errorf("invoke %s: auth key perm empty: rebind failed: %w", methodName, err)
+					}
+					lastErr = fmt.Errorf("invoke %s: auth key perm empty, temp key rebound", methodName)
+					backoff = 0
+					maxAttempts++
+					continue
+				}
+				// Not PFS — fall through to the 401 surface below.
+			}
+
 			if rpcErr.ErrorCode == 401 || rpcErr.ErrorCode == 400 || rpcErr.ErrorCode == 403 {
 				return nil, fmt.Errorf("invoke %s: %w", methodName, parsed)
 			}
@@ -1187,6 +1266,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			continue
 		}
 
+		if hasChain {
+			s.SetChain(msgID, chainID)
+		}
 		return obj, nil
 	}
 	if lastErr == nil {
@@ -1225,6 +1307,11 @@ func (s *Session) DropRPC(ctx context.Context, msgID int64) error {
 // the budget; a wait that would exceed it is surfaced as 429 so the Bot API
 // caller can honour retry_after instead of hanging.
 const maxFloodWaitBudget = 60 * time.Second
+
+// maxG12Retries bounds the number of G12 error-recovery retries (for
+// CONNECTION_NOT_INITED, PERSISTENT_TIMESTAMP_OUTDATED, AUTH_KEY_PERM_EMPTY)
+// before surfacing the error to the caller.
+const maxG12Retries = 2
 
 func parseFloodWait(message string) (time.Duration, bool) {
 	const prefix = "FLOOD_WAIT_"
@@ -1276,6 +1363,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
 	s.stateReqs = make(map[int64]*pendingStateReq)
+	s.chains = make(map[int64]int64)
 	s.consecWriteFailures.Store(0)
 	s.writeBreakerOpen.Store(false)
 	s.sm.transition(StateIdle, StateConnecting)
