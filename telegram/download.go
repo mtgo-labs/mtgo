@@ -23,6 +23,10 @@ import (
 
 const maxDownloadRecoveries = 10
 
+// maxFileRefRetries caps the number of automatic file-reference refresh
+// attempts during a single download to avoid infinite retry loops.
+const maxFileRefRetries = 3
+
 var errParallelDownloadUnsupported = errors.New("download: parallel download unsupported for response")
 
 // FileChunk represents a single chunk of data received during a streamed file download.
@@ -434,6 +438,7 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 
 	var totalWritten int64
 	offset := int64(0)
+	refRetries := 0
 
 	for {
 		select {
@@ -450,6 +455,15 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 
 		result, err := rpc.UploadGetFile(ctx, req)
 		if err != nil {
+			// G11: automatic file reference refresh on FILE_REFERENCE_EXPIRED.
+			if opts != nil && opts.FileRefresher != nil &&
+				tgerr.Is(err, tgerr.ErrFileReferenceExpired) && refRetries < maxFileRefRetries {
+				if newLoc, refErr := tryRefreshLocationFileRef(ctx, location, opts.FileRefresher); refErr == nil {
+					location = newLoc
+					refRetries++
+					continue
+				}
+			}
 			return totalWritten, nil, fmt.Errorf("download: get file at offset %d: %w", offset, err)
 		}
 
@@ -464,6 +478,14 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 				return totalWritten, nil, fmt.Errorf("download: write: %w", err)
 			}
 			totalWritten += int64(n)
+
+			// G10: verify SHA-256 hashes for this chunk if enabled.
+			if opts != nil && opts.VerifyHashes {
+				if hashErr := verifyDownloadChunkHash(ctx, rpc, location, offset, file.Bytes); hashErr != nil {
+					return totalWritten, nil, hashErr
+				}
+			}
+
 			offset += int64(n)
 
 			if n < int(chunkSize) {
@@ -718,6 +740,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 
 	totalWritten := offset
 	recoveries := 0
+	refRetries := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -731,6 +754,15 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 			Limit:    chunkSize,
 		})
 		if err != nil {
+			// G11: automatic file reference refresh on FILE_REFERENCE_EXPIRED.
+			if opts != nil && opts.FileRefresher != nil &&
+				tgerr.Is(err, tgerr.ErrFileReferenceExpired) && refRetries < maxFileRefRetries {
+				if newLoc, refErr := tryRefreshLocationFileRef(ctx, location, opts.FileRefresher); refErr == nil {
+					location = newLoc
+					refRetries++
+					continue
+				}
+			}
 			recoveredRPC, recovered, recoverErr := c.recoverDownloadRPC(ctx, dcID, err)
 			if recoverErr != nil {
 				return totalWritten, recoverErr
@@ -761,7 +793,15 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 		if err != nil {
 			return totalWritten, fmt.Errorf("download: write: %w", err)
 		}
+		chunkOffset := totalWritten
 		totalWritten += int64(n)
+
+		// G10: verify SHA-256 hashes for this chunk if enabled.
+		if opts != nil && opts.VerifyHashes {
+			if hashErr := verifyDownloadChunkHash(ctx, rpc, location, chunkOffset, file.Bytes); hashErr != nil {
+				return totalWritten, hashErr
+			}
+		}
 
 		if opts != nil && opts.Progress != nil {
 			opts.Progress(params.ProgressInfo{
@@ -871,6 +911,7 @@ func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location
 		}()
 		offset := int64(0)
 		var totalWritten int64
+		refRetries := 0
 
 		for {
 			select {
@@ -888,6 +929,15 @@ func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location
 
 			result, err := rpc.UploadGetFile(ctx, req)
 			if err != nil {
+				// G11: automatic file reference refresh on FILE_REFERENCE_EXPIRED.
+				if opts != nil && opts.FileRefresher != nil &&
+					tgerr.Is(err, tgerr.ErrFileReferenceExpired) && refRetries < maxFileRefRetries {
+					if newLoc, refErr := tryRefreshLocationFileRef(ctx, location, opts.FileRefresher); refErr == nil {
+						location = newLoc
+						refRetries++
+						continue
+					}
+				}
 				if migrate != nil {
 					migratedRPC, ok, migrateErr := migrate(totalWritten, err)
 					if migrateErr != nil {
@@ -911,6 +961,14 @@ func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location
 
 			if len(file.Bytes) == 0 {
 				return
+			}
+
+			// G10: verify SHA-256 hashes for this chunk if enabled.
+			if opts != nil && opts.VerifyHashes {
+				if hashErr := verifyDownloadChunkHash(ctx, rpc, location, offset, file.Bytes); hashErr != nil {
+					sendOrCancel(ctx, ch, FileChunk{Err: hashErr})
+					return
+				}
 			}
 
 			totalWritten += int64(len(file.Bytes))
@@ -1170,6 +1228,134 @@ func cdnVerifyHash(data []byte, hash *tg.FileHash, baseOffset int64) bool {
 	chunk := data[start:end]
 	computed := sha256.Sum256(chunk)
 	return bytes.Equal(computed[:], hash.Hash)
+}
+
+// fileHashResult wraps the []*FileHash vector returned by upload.getFileHashes.
+// The generated UploadGetFileHashes method uses ReadTLObject which returns an
+// empty Vector for bare vectors, so we provide a custom decoder.
+type fileHashResult struct {
+	items []*tg.FileHash
+}
+
+func (*fileHashResult) ConstructorID() uint32        { return tg.VectorTypeID }
+func (*fileHashResult) Encode(_ *bytes.Buffer) error { return nil }
+
+// decodeFileHashVector decodes a bare TL vector<fileHash> response from
+// upload.getFileHashes.
+func decodeFileHashVector(r *tg.Reader) (tg.TLObject, error) {
+	hdr, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	if hdr != tg.VectorTypeID {
+		return nil, fmt.Errorf("download: expected fileHash vector, got constructor 0x%x", hdr)
+	}
+	count, err := r.ReadUint32()
+	if err != nil {
+		return nil, err
+	}
+	if err := tg.CheckVectorCount(count); err != nil {
+		return nil, err
+	}
+	hashes := make([]*tg.FileHash, count)
+	for i := range hashes {
+		h, err := tg.DecodeFileHash(r)
+		if err != nil {
+			return nil, err
+		}
+		hashes[i] = h
+	}
+	return &fileHashResult{items: hashes}, nil
+}
+
+// verifyDownloadChunkHash calls upload.getFileHashes for the given offset and
+// verifies each returned hash against the chunk data. Hashes that extend
+// beyond the chunk boundary are skipped (they will be verified in a later
+// chunk or not at all if this is the last chunk). Returns nil if the server
+// returns no hashes or an error (verification is silently skipped), or an
+// error if any hash mismatches.
+func verifyDownloadChunkHash(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, offset int64, data []byte) error {
+	result, err := rpc.Invoke(ctx, &tg.UploadGetFileHashesRequest{
+		Location: location,
+		Offset:   offset,
+	}, decodeFileHashVector)
+	if err != nil {
+		return nil // server may not support — skip verification
+	}
+	fhr, ok := result.(*fileHashResult)
+	if !ok || len(fhr.items) == 0 {
+		return nil
+	}
+	for _, h := range fhr.items {
+		if h == nil || h.Offset < offset {
+			continue
+		}
+		start := h.Offset - offset
+		end := start + int64(h.Limit)
+		if end > int64(len(data)) {
+			continue // extends beyond this chunk
+		}
+		chunk := data[start:end]
+		computed := sha256.Sum256(chunk)
+		if !bytes.Equal(computed[:], h.Hash) {
+			return fmt.Errorf("download: hash verification failed at offset %d", h.Offset)
+		}
+	}
+	return nil
+}
+
+// locationDocID extracts the document or photo ID from an InputFileLocation,
+// used as the key for file reference refresh lookups.
+func locationDocID(location tg.InputFileLocationClass) int64 {
+	switch loc := location.(type) {
+	case *tg.InputDocumentFileLocation:
+		return loc.ID
+	case *tg.InputPhotoFileLocation:
+		return loc.ID
+	default:
+		return 0
+	}
+}
+
+// updateLocationFileRef returns a copy of location with its FileReference
+// replaced by fileRef. Returns an error for unsupported location types.
+func updateLocationFileRef(location tg.InputFileLocationClass, fileRef []byte) (tg.InputFileLocationClass, error) {
+	switch loc := location.(type) {
+	case *tg.InputDocumentFileLocation:
+		return &tg.InputDocumentFileLocation{
+			ID:            loc.ID,
+			AccessHash:    loc.AccessHash,
+			FileReference: fileRef,
+			ThumbSize:     loc.ThumbSize,
+		}, nil
+	case *tg.InputPhotoFileLocation:
+		return &tg.InputPhotoFileLocation{
+			ID:            loc.ID,
+			AccessHash:    loc.AccessHash,
+			FileReference: fileRef,
+			ThumbSize:     loc.ThumbSize,
+		}, nil
+	default:
+		return nil, fmt.Errorf("download: unsupported location type %T for file reference refresh", location)
+	}
+}
+
+// tryRefreshLocationFileRef attempts to refresh the file reference for the
+// given location using the provided refresher. Returns the updated location
+// on success, or an error if refresh fails.
+func tryRefreshLocationFileRef(ctx context.Context, location tg.InputFileLocationClass, refresher params.FileRefresher) (tg.InputFileLocationClass, error) {
+	docID := locationDocID(location)
+	if docID == 0 {
+		return nil, fmt.Errorf("download: cannot extract document ID from location %T", location)
+	}
+	newRef, err := refresher.RefreshFileReference(ctx, docID)
+	if err != nil {
+		return nil, fmt.Errorf("download: refresh file reference: %w", err)
+	}
+	if len(newRef) == 0 {
+		return nil, fmt.Errorf("download: refreshed file reference is empty")
+	}
+	return updateLocationFileRef(location, newRef)
 }
 
 func incrementIV(iv []byte) {

@@ -4,6 +4,7 @@
 package params
 
 import (
+	"context"
 	"fmt"
 
 	tl "github.com/mtgo-labs/mtgo/tg"
@@ -293,6 +294,28 @@ type Download struct {
 	// DCID specifies the data-center ID to download from. A value of 0
 	// lets the client automatically resolve the correct data center.
 	DCID int32
+
+	// VerifyHashes enables SHA-256 hash verification for each downloaded
+	// chunk. When enabled, the client calls upload.getFileHashes after
+	// receiving each chunk and verifies the data against server-provided
+	// hashes. If the server does not support file hashes or returns none,
+	// verification is silently skipped.
+	VerifyHashes bool
+
+	// FileRefresher is used to automatically refresh expired file references
+	// during download. When FILE_REFERENCE_EXPIRED is received, the refresher
+	// is called to fetch a new reference and the download retries. Nil
+	// disables automatic refresh.
+	FileRefresher FileRefresher
+}
+
+// FileRefresher refreshes expired file references by re-fetching the source
+// object (e.g., a message containing the document).
+type FileRefresher interface {
+	// RefreshFileReference returns a fresh file reference for the given
+	// document or photo ID. Returns an error if the refresh fails or the
+	// origin is unknown.
+	RefreshFileReference(ctx context.Context, id int64) ([]byte, error)
 }
 
 // GetGifts holds options for the payments.getSavedStarGifts API call.
