@@ -1588,8 +1588,10 @@ func (c *Client) postConnect() {
 			if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 401 {
 				c.Log.Debug("updates state fetch skipped: not authorized (", rpcErr.Type, ")")
 			} else {
-				c.cleanupSessions()
-				c.Log.Errorf("get state: %v", err)
+				// Non-fatal: log but don't tear down the connection.
+				// Transient errors (FLOOD_WAIT, timeout) should not destroy
+				// an otherwise healthy session.
+				c.Log.Warnf("get state: %v (continuing without update state)", err)
 			}
 		} else {
 			c.Log.Info("updates state fetched")
