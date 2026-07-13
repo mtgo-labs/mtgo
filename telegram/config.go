@@ -78,15 +78,18 @@ type DeviceConfig struct {
 	ClientPlatform types.ClientPlatform
 }
 
+// TransportMode selects the MTProto TCP framing mode for direct TCP connections.
+type TransportMode int
+
 const (
 	// TransportModeAbridged selects the compact MTProto abridged TCP transport.
-	TransportModeAbridged = "Abridged"
+	TransportModeAbridged TransportMode = iota
 	// TransportModeIntermediate selects the fixed 4-byte length-prefix TCP transport.
-	TransportModeIntermediate = "Intermediate"
+	TransportModeIntermediate
 	// TransportModePaddedIntermediate selects intermediate framing with 0-15 bytes of transport padding.
-	TransportModePaddedIntermediate = "PaddedIntermediate"
+	TransportModePaddedIntermediate
 	// TransportModeFull selects full TCP framing with sequence numbers and CRC32.
-	TransportModeFull = "Full"
+	TransportModeFull
 
 	defaultDispatchQueueSize = 256
 )
@@ -277,40 +280,53 @@ type Config struct {
 	// When set, its fields override the top-level AppVersion, DeviceModel,
 	// SystemVersion, LangCode, LangPack, SystemLangCode, TZOffset, and
 	// ClientPlatform fields for backwards compatibility.
+	//
+	// Migration: the deprecated top-level fields (AppVersion, DeviceModel,
+	// SystemVersion, LangCode, LangPack, SystemLangCode, TZOffset) are
+	// preserved for backwards compatibility and will be removed in v2.
+	// New code should use Device directly instead.
 	Device DeviceConfig
 	// AppVersion is the version string reported to Telegram. Used by
 	// Telegram's infrastructure for client identification.
-	// Deprecated: use Device.AppVersion instead.
+	//
+	// Deprecated: use Device.AppVersion instead. Will be removed in v2.
 	AppVersion string
 	// DeviceModel is the hardware model reported to Telegram (e.g.
 	// "Samsung Galaxy S24"). Affects session display in active sessions.
-	// Deprecated: use Device.DeviceModel instead.
+	//
+	// Deprecated: use Device.DeviceModel instead. Will be removed in v2.
 	DeviceModel string
 	// SystemVersion is the operating system version reported to Telegram
 	// (e.g. "Android 14").
-	// Deprecated: use Device.SystemVersion instead.
+	//
+	// Deprecated: use Device.SystemVersion instead. Will be removed in v2.
 	SystemVersion string
 	// LangCode is the two-letter ISO 639-1 language code for the client's
 	// UI language (e.g. "en", "ru").
-	// Deprecated: use Device.LangCode instead.
+	//
+	// Deprecated: use Device.LangCode instead. Will be removed in v2.
 	LangCode string
 	// LangPack names the translation pack to use (e.g. "tdesktop" for the
 	// desktop client pack). Affects server-side localisation of prompts.
-	// Deprecated: use Device.LangPack instead.
+	//
+	// Deprecated: use Device.LangPack instead. Will be removed in v2.
 	LangPack string
 	// SystemLangCode is the device-level language code reported to Telegram.
 	// Used for localisation of security notifications.
-	// Deprecated: use Device.SystemLangCode instead.
+	//
+	// Deprecated: use Device.SystemLangCode instead. Will be removed in v2.
 	SystemLangCode string
 	// TZOffset is the timezone offset in seconds from UTC. Telegram uses this
 	// to display timestamps in the correct local time.
-	// Deprecated: use Device.TZOffset instead.
+	//
+	// Deprecated: use Device.TZOffset instead. Will be removed in v2.
 	TZOffset int
 	// TransportMode selects the MTProto TCP framing mode for direct TCP
-	// connections. Valid values are Abridged, Intermediate,
-	// PaddedIntermediate, and Full. When empty, NewClient uses the default
-	// Abridged transport mode.
-	TransportMode string
+	// connections. When zero (TransportModeAbridged), NewClient uses the
+	// compact abridged transport. Other valid values are
+	// TransportModeIntermediate, TransportModePaddedIntermediate, and
+	// TransportModeFull.
+	TransportMode TransportMode
 	// SavePeers persists encountered peer identifiers to the session file so
 	// that they survive restarts without re-fetching.
 	SavePeers bool

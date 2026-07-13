@@ -566,14 +566,6 @@ var GuestMessage Filter = func(ctx *Context) bool {
 	return ctx.Message != nil && ctx.Message.IsFromPending
 }
 
-// Scheduled is a placeholder for scheduled messages. Always returns false
-// in the current implementation. Reserved for future use.
-var Scheduled Filter = func(ctx *Context) bool { return false }
-
-// FromScheduled is a placeholder for messages originally sent as scheduled
-// messages. Always returns false in the current implementation.
-var FromScheduled Filter = func(ctx *Context) bool { return false }
-
 // PaidMessage matches messages that require payment (Telegram Stars) to view.
 // Similar to PaidMedia but checked at the message level.
 //
@@ -914,14 +906,6 @@ var Direct Filter = func(ctx *Context) bool {
 	return ctx.Message != nil && ctx.Message.ChatID > 0 && !ctx.Message.Out
 }
 
-// Quote is a placeholder for quoted message matching. Always returns false
-// in the current implementation. Reserved for future use.
-var Quote Filter = func(ctx *Context) bool { return false }
-
-// Admin is a placeholder for admin user matching. Always returns false
-// in the current implementation. Reserved for future use.
-var Admin Filter = func(ctx *Context) bool { return false }
-
 // User returns a filter that matches updates from one of the specified user IDs.
 // It checks Message.FromID, CallbackQuery.UserID, and InlineQuery.UserID.
 //
@@ -1062,15 +1046,6 @@ func InlineQueryText(s string) Filter {
 	return func(ctx *Context) bool {
 		return ctx.InlineQuery != nil && ctx.InlineQuery.Query == s
 	}
-}
-
-// ChatActionFilter returns a placeholder for chat action updates.
-// Always returns false in the current implementation. Reserved for future use.
-//
-// Parameters:
-//   - chatID: chat ID to filter actions for (unused).
-func ChatActionFilter(chatID int64) Filter {
-	return func(ctx *Context) bool { return false }
 }
 
 // Create builds a custom filter from the provided function. The function

@@ -1,3 +1,28 @@
+// Download API
+//
+// Two download APIs coexist for backwards compatibility:
+//
+// New API (preferred):
+//
+//	Download(ctx, input, opts)    — download with any input type (uses any for location)
+//	DownloadBytes(ctx, input, opts) — download into []byte
+//	StreamMedia(ctx, input, opts)   — stream chunks via channel
+//
+// Old API (retained for compatibility):
+//
+//	DownloadFile(ctx, location, fileSize, opts)      — download into []byte
+//	DownloadToFile(ctx, location, filePath, size, opts) — download to disk
+//	DownloadMedia(ctx, media, opts)                    — download media with progress
+//	DownloadMediaToFile(ctx, media, filePath, opts)    — download media to disk
+//	StreamFile(ctx, location, fileSize, opts)          — stream chunks via channel
+//
+// Migration:
+//
+//	DownloadFile   → DownloadBytes
+//	StreamFile     → StreamMedia
+//	DownloadMedia  → Download (with progress callback)
+//
+// Chunk types: StreamChunk supersedes FileChunk. New code should use StreamChunk.
 package telegram
 
 import (
@@ -107,7 +132,7 @@ func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocation
 
 	if shouldParallelDownload(fileSize, (*memoryBuffer)(nil), opts, int(dcID), c.homeDC()) {
 		buf := memoryBuffer{data: make([]byte, int(fileSize))}
-		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadPoolSize(opts, fileSize, int(dcID), c.homeDC()))
+		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadWorkers(opts, fileSize, int(dcID), c.homeDC()))
 		if err != nil {
 			return nil, fmt.Errorf("download: dc rpc pool: %w", err)
 		}
@@ -191,7 +216,7 @@ func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocati
 	defer f.Close()
 
 	if shouldParallelDownload(fileSize, f, opts, int(dcID), c.homeDC()) {
-		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadPoolSize(opts, fileSize, int(dcID), c.homeDC()))
+		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadWorkers(opts, fileSize, int(dcID), c.homeDC()))
 		if err != nil {
 			os.Remove(filePath)
 			return fmt.Errorf("download: dc rpc pool: %w", err)
@@ -570,10 +595,6 @@ func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int
 	}
 	parts := int((fileSize + int64(downloadChunkSize) - 1) / int64(downloadChunkSize))
 	return min(defaultTransferWorkers, parts)
-}
-
-func downloadPoolSize(opts *params.Download, fileSize int64, dcID int, homeDC int) int {
-	return downloadWorkers(opts, fileSize, dcID, homeDC)
 }
 
 func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.WriterAt, opts *params.Download) (int64, error) {

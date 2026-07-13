@@ -1,5 +1,7 @@
 package telegram
 
+import "errors"
+
 // ErrorHandler processes error updates that occur during client operation. Use this
 // to capture and respond to runtime errors, such as network failures, API errors,
 // or unexpected conditions encountered while processing updates.
@@ -27,9 +29,9 @@ func NewErrorHandler(callback func(*Context), exceptions ...error) *ErrorHandler
 	return &ErrorHandler{baseHandler: baseHandler{}, callbackCtx: callback, errTypes: exceptions}
 }
 
-// Check reports whether the incoming update contains an Error. Returns true if an
-// error is present, regardless of the configured exception types (future filtering
-// may refine this behavior).
+// Check reports whether the incoming update contains an Error. When no exception
+// types are configured, any error matches. When exception types are set, the error
+// must match at least one via errors.Is.
 func (h *ErrorHandler) Check(update *Update) bool {
 	if update.Error == nil {
 		return false
@@ -37,7 +39,12 @@ func (h *ErrorHandler) Check(update *Update) bool {
 	if len(h.errTypes) == 0 {
 		return true
 	}
-	return true
+	for _, errType := range h.errTypes {
+		if errors.Is(update.Error, errType) {
+			return true
+		}
+	}
+	return false
 }
 
 // Handle invokes the error callback with the current context, which carries the

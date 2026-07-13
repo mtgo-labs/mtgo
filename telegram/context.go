@@ -151,11 +151,12 @@ type Context struct {
 	// processing. Handlers can inspect this to perform error logging or
 	// recovery before the update is discarded.
 	Error error
-
-	// Stopped indicates whether handler chain propagation has been halted.
-	// Set to true by StopPropagation; middleware should check this before
-	// continuing to the next handler.
-	Stopped bool
+	// stopPropagation indicates whether handler chain propagation has been
+	// halted. Set to true by the StopPropagation method; middleware should
+	// check this before continuing to the next handler. This is different
+	// from Update.Stopped, which signals that the client itself has been
+	// fully shut down and the update loop has exited.
+	stopPropagation bool
 
 	// Connected is set to true when the client has successfully connected to
 	// the Telegram server. Use it in connection-lifecycle handlers to
@@ -204,7 +205,7 @@ func (c *Client) NewContext(ctx context.Context) *Context {
 //	    }
 //	}
 func (c *Context) StopPropagation() {
-	c.Stopped = true
+	c.stopPropagation = true
 }
 
 // ResolvePeer looks up a user or chat by its numeric ID in the current

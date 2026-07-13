@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"go/format"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -58,9 +59,12 @@ func main() {
 		fmt.Fprintf(&b, "}\n\n")
 	}
 
-	if err := os.WriteFile(outputFile, []byte(b.String()), 0644); err != nil {
-		fmt.Fprintf(os.Stderr, "write error: %v\n", err)
-		os.Exit(1)
+	src, err := format.Source([]byte(b.String()))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "format error: %v\nwriting unformatted output\n", err)
+		src = []byte(b.String())
+	}
+	if err := os.WriteFile(outputFile, src, 0644); err != nil {
 	}
 
 	fmt.Printf("Generated %d error constants to %s\n", len(defs), outputFile)

@@ -1,5 +1,15 @@
 package telegram
 
+// LifecycleKind identifies which lifecycle event a LifecycleHandler responds to.
+type LifecycleKind int
+
+const (
+	LifecycleConnect LifecycleKind = iota
+	LifecycleDisconnect
+	LifecycleStart
+	LifecycleStop
+)
+
 // LifecycleHandler processes client lifecycle events such as connection, disconnection,
 // start, and stop. Use this to perform initialization or cleanup tasks at specific
 // points in the client's lifecycle, such as loading state on connect or persisting
@@ -8,23 +18,22 @@ type LifecycleHandler struct {
 	baseHandler
 	// callbackCtx is invoked with the handler Context when the lifecycle event occurs.
 	callbackCtx func(*Context)
-	// kind identifies which lifecycle event this handler responds to: "connect",
-	// "disconnect", "start", or "stop".
-	kind string
+	// kind identifies which lifecycle event this handler responds to.
+	kind LifecycleKind
 }
 
 // NewConnectHandler creates a handler that fires when the client successfully
 // establishes a connection to the Telegram servers. Use this for post-connection
 // initialization such as fetching initial state or sending queued messages.
 func NewConnectHandler(callback func(*Context)) *LifecycleHandler {
-	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: "connect"}
+	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: LifecycleConnect}
 }
 
 // NewDisconnectHandler creates a handler that fires when the client disconnects
 // from the Telegram servers. Use this for cleanup tasks such as flushing buffers
 // or releasing resources held during the connection.
 func NewDisconnectHandler(callback func(*Context)) *LifecycleHandler {
-	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: "disconnect"}
+	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: LifecycleDisconnect}
 }
 
 // NewStartHandler creates a handler that fires when the client starts up, before
@@ -37,13 +46,13 @@ func NewDisconnectHandler(callback func(*Context)) *LifecycleHandler {
 //	})
 //	client.AddHandler(h)
 func NewStartHandler(callback func(*Context)) *LifecycleHandler {
-	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: "start"}
+	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: LifecycleStart}
 }
 
 // NewStopHandler creates a handler that fires when the client is shutting down.
 // Use this for final cleanup and graceful shutdown procedures.
 func NewStopHandler(callback func(*Context)) *LifecycleHandler {
-	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: "stop"}
+	return &LifecycleHandler{baseHandler: baseHandler{}, callbackCtx: callback, kind: LifecycleStop}
 }
 
 // Check reports whether the incoming update matches the specific lifecycle event
@@ -51,13 +60,13 @@ func NewStopHandler(callback func(*Context)) *LifecycleHandler {
 // lifecycle flag (Connected, Disconnected, Started, or Stopped) is set.
 func (h *LifecycleHandler) Check(update *Update) bool {
 	switch h.kind {
-	case "connect":
+	case LifecycleConnect:
 		return update.Connected
-	case "disconnect":
+	case LifecycleDisconnect:
 		return update.Disconnected
-	case "start":
+	case LifecycleStart:
 		return update.Started
-	case "stop":
+	case LifecycleStop:
 		return update.Stopped
 	}
 	return false

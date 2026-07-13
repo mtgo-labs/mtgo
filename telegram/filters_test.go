@@ -76,25 +76,6 @@ func TestFilters_MessageBoolean(t *testing.T) {
 	}
 }
 
-func TestFilters_AlwaysFalse(t *testing.T) {
-	ctx := mkCtx(&types.Message{Text: "anything"})
-	for _, f := range []struct {
-		name   string
-		filter Filter
-	}{
-		{"Scheduled", Scheduled},
-		{"FromScheduled", FromScheduled},
-		{"Quote", Quote},
-		{"Admin", Admin},
-	} {
-		t.Run(f.name, func(t *testing.T) {
-			if got := f.filter(ctx); got != false {
-				t.Errorf("%s = %v, want false (placeholder filter)", f.name, got)
-			}
-		})
-	}
-}
-
 func TestFilters_Bot(t *testing.T) {
 	bot := &types.User{IsBot: true}
 	human := &types.User{IsBot: false}

@@ -3,6 +3,7 @@ package tgerr
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -67,12 +68,7 @@ func (e *Error) IsOneOf(tt ...string) bool {
 	if e == nil {
 		return false
 	}
-	for _, t := range tt {
-		if e.IsType(t) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(tt, e.IsType)
 }
 
 // IsCodeOneOf reports whether the error's Code matches any of the provided
@@ -81,12 +77,7 @@ func (e *Error) IsCodeOneOf(codes ...int) bool {
 	if e == nil {
 		return false
 	}
-	for _, code := range codes {
-		if e.IsCode(code) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(codes, e.IsCode)
 }
 
 func (e *Error) extractArgument() {

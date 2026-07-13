@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"runtime/debug"
 	"sort"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -81,7 +82,7 @@ func (c *Client) stopPlugins(ctx context.Context) {
 // modify, or short-circuit the update processing. Middleware is composed
 // in priority order: lower priority values run first (outermost).
 //
-// To stop propagation, set ctx.Stopped = true and return from Handle.
+// To stop propagation, set ctx.StopPropagation = true and return from Handle.
 type Middleware func(Handler) Handler
 
 // Chain composes multiple middleware into a single Middleware.
@@ -195,7 +196,9 @@ func (c *Client) dispatchUpdate(d *HandlerDispatcher, update *Update) {
 	mws := c.sortedMiddlewares()
 
 	if len(mws) == 0 {
-		d.DispatchSafe(c, update)
+		if err := d.DispatchSafe(c, update); err != nil {
+			c.Log.Errorf("handler panic recovered: %v", err)
+		}
 		return
 	}
 
@@ -205,6 +208,11 @@ func (c *Client) dispatchUpdate(d *HandlerDispatcher, update *Update) {
 	cctx := c.NewContext(context.Background())
 	cctx.Update = update
 	populateContext(cctx, update)
+	defer func() {
+		if r := recover(); r != nil {
+			c.Log.Errorf("middleware panic recovered: %v\n%s", r, debug.Stack())
+		}
+	}()
 	wrapped.Handle(cctx)
 }
 
@@ -219,5 +227,7 @@ func (h *dispatchAllHandler) Check(update *Update) bool {
 }
 
 func (h *dispatchAllHandler) Handle(ctx *Context) {
-	h.d.DispatchSafe(h.c, h.update)
+	if err := h.d.DispatchSafe(h.c, h.update); err != nil {
+		h.c.Log.Errorf("handler panic recovered: %v", err)
+	}
 }
