@@ -142,7 +142,7 @@ func TestPFSRenewalLoopDisabledExplicitNil(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 
 	// Explicitly set a disabled PFS manager.
-	mgr := NewTempKeyManager(2, false, make([]byte, 256), false, false, nil)
+	mgr := NewTempKeyManager(2, false, make([]byte, 256), false, nil)
 	s.SetPFS(mgr)
 
 	if mgr.IsEnabled() {

@@ -105,6 +105,7 @@ func TestRetrySessionErrRetriesAndSucceeds(t *testing.T) {
 		time.Sleep(30 * time.Millisecond)
 		c.state.SetConnecting(2)
 		c.state.SetConnected()
+		c.signalReconnect()
 	}()
 
 	err := c.retrySessionErr(context.Background(), func() error {
@@ -169,6 +170,7 @@ func TestRetrySessionErrExhaustsRetries(t *testing.T) {
 			}
 			c.state.SetConnecting(2)
 			c.state.SetConnected()
+			c.signalReconnect()
 		}
 	}()
 

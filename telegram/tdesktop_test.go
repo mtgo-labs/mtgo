@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mtgo-labs/mtgo/internal/transport"
@@ -25,7 +26,7 @@ func TestDeviceTDesktopWindows(t *testing.T) {
 
 func TestObfuscatedMarkerForMode(t *testing.T) {
 	tests := []struct {
-		mode   string
+		mode   TransportMode
 		want   byte
 		wantOK bool
 	}{
@@ -35,7 +36,7 @@ func TestObfuscatedMarkerForMode(t *testing.T) {
 		{TransportModeFull, 0, false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.mode, func(t *testing.T) {
+		t.Run(fmt.Sprint(tt.mode), func(t *testing.T) {
 			got, ok := obfuscatedMarkerForMode(tt.mode)
 			if ok != tt.wantOK {
 				t.Fatalf("ok = %v, want %v", ok, tt.wantOK)

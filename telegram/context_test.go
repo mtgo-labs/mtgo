@@ -15,8 +15,8 @@ func TestNewContext_SetsClient(t *testing.T) {
 	if ctx.Client != c {
 		t.Error("Client not set")
 	}
-	if ctx.Stopped {
-		t.Error("Stopped should be false")
+	if ctx.stopPropagation {
+		t.Error("stopPropagation should be false")
 	}
 }
 

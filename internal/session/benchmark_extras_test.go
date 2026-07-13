@@ -3,8 +3,6 @@ package session
 import (
 	"testing"
 	"time"
-
-	"github.com/mtgo-labs/mtgo/tg"
 )
 
 // --- Container tracker ---
@@ -75,17 +73,6 @@ func BenchmarkMsgFactoryAllocateSeqNo(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		mf.AllocateSeqNo(true)
-	}
-}
-
-// --- Flood wait queue ---
-
-func BenchmarkFloodWaitQueueDelay(b *testing.B) {
-	fq := &FloodWaitQueue{}
-	query := &tg.PingRequest{PingID: 42}
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		fq.Delay(query, int64(i), 30*time.Second)
 	}
 }
 

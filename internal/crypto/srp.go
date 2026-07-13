@@ -19,8 +19,9 @@ func sha256sum(data ...[]byte) []byte {
 }
 
 func xorBytes(a, b []byte) []byte {
-	out := make([]byte, len(a))
-	for i := range a {
+	n := min(len(a), len(b))
+	out := make([]byte, n)
+	for i := range n {
 		out[i] = a[i] ^ b[i]
 	}
 	return out

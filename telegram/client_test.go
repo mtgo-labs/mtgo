@@ -63,7 +63,7 @@ func TestNewClientDefaults(t *testing.T) {
 		t.Errorf("ClientPlatform = %q, want %q", c.cfg.Device.ClientPlatform, types.ClientPlatformAndroid)
 	}
 	if c.cfg.TransportMode != TransportModeAbridged {
-		t.Errorf("TransportMode = %q, want %q", c.cfg.TransportMode, TransportModeAbridged)
+		t.Errorf("TransportMode = %v, want %v", c.cfg.TransportMode, TransportModeAbridged)
 	}
 }
 
@@ -174,12 +174,12 @@ func TestNewClientWithOptions(t *testing.T) {
 		t.Errorf("TZOffset = %d", cfg.Device.TZOffset)
 	}
 	if cfg.TransportMode != TransportModeFull {
-		t.Errorf("TransportMode = %q", cfg.TransportMode)
+		t.Errorf("TransportMode = %v", cfg.TransportMode)
 	}
 }
 
 func TestNewClientRejectsInvalidTransportMode(t *testing.T) {
-	_, err := NewClient(111, "hash", &Config{TransportMode: "invalid"})
+	_, err := NewClient(111, "hash", &Config{TransportMode: TransportMode(99)})
 	if err == nil {
 		t.Fatal("expected invalid transport mode error")
 	}

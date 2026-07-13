@@ -108,7 +108,7 @@ func (t *TCPObfuscated) Connect() error {
 	copy(encIV[:], nonce[40:56])
 
 	var reversed [48]byte
-	for i := 0; i < 48; i++ {
+	for i := range 48 {
 		reversed[i] = nonce[55-i]
 	}
 	copy(decKey[:], reversed[0:32])
@@ -145,7 +145,7 @@ func (t *TCPObfuscated) connectReverse() error {
 	nonce := t.nonce
 
 	var reversed [48]byte
-	for i := 0; i < 48; i++ {
+	for i := range 48 {
 		reversed[i] = nonce[55-i]
 	}
 	var encKey, decKey [32]byte
@@ -199,44 +199,29 @@ func (t *TCPObfuscated) Send(buf *bytes.Buffer) error {
 	case *TCPIntermediate:
 		var header [4]byte
 		binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
-		encHeader := t.enc.Process(header[:])
-		encData := t.enc.Process(data)
-		if _, err := t.conn.Write(encHeader); err != nil {
-			return fmt.Errorf("tcp_obfuscated: send: %w", err)
-		}
-		if _, err := t.conn.Write(encData); err != nil {
-			return fmt.Errorf("tcp_obfuscated: send: %w", err)
-		}
+		return t.sendEncrypted(header[:], data)
 	case *TCPAbridged:
 		length := len(data) / 4
 		if length <= 126 {
-			h := [1]byte{byte(length)}
-			encHeader := t.enc.Process(h[:])
-			encData := t.enc.Process(data)
-			if _, err := t.conn.Write(encHeader); err != nil {
-				return fmt.Errorf("tcp_obfuscated: send: %w", err)
-			}
-			if _, err := t.conn.Write(encData); err != nil {
-				return fmt.Errorf("tcp_obfuscated: send: %w", err)
-			}
-		} else {
-			var header [4]byte
-			header[0] = 0x7f
-			header[1] = byte(length)
-			header[2] = byte(length >> 8)
-			header[3] = byte(length >> 16)
-			encHeader := t.enc.Process(header[:])
-			encData := t.enc.Process(data)
-			if _, err := t.conn.Write(encHeader); err != nil {
-				return fmt.Errorf("tcp_obfuscated: send: %w", err)
-			}
-			if _, err := t.conn.Write(encData); err != nil {
-				return fmt.Errorf("tcp_obfuscated: send: %w", err)
-			}
+			return t.sendEncrypted([]byte{byte(length)}, data)
 		}
+		return t.sendEncrypted([]byte{0x7f, byte(length), byte(length >> 8), byte(length >> 16)}, data)
 	default:
 		_ = inner
 		return ErrUnsupportedTransport
+	}
+}
+
+// sendEncrypted encrypts the header and data with the AES-CTR cipher and
+// writes both to the underlying connection.
+func (t *TCPObfuscated) sendEncrypted(header, data []byte) error {
+	encHeader := t.enc.Process(header)
+	encData := t.enc.Process(data)
+	if _, err := t.conn.Write(encHeader); err != nil {
+		return fmt.Errorf("tcp_obfuscated: send: %w", err)
+	}
+	if _, err := t.conn.Write(encData); err != nil {
+		return fmt.Errorf("tcp_obfuscated: send: %w", err)
 	}
 	return nil
 }

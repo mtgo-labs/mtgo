@@ -59,7 +59,7 @@ Key packages:
 
 | Path | Role | Editable? |
 |------|------|-----------|
-| `tg/` | Generated TL types (layer 225) | **No** — use codegen |
+| `tg/` | Generated TL types (layer 227) | **No** — use codegen |
 | `tgerr/` | Generated error types | **No** — use codegen |
 | `compiler/` | TL compiler and templates | Yes |
 | `internal/session/` | MTProto session, state machine, auth, pending RPCs | Yes |

@@ -60,7 +60,6 @@
 | `UpdateQueueSize` | `int` | 1024 | Update channel capacity |
 | `DurableUpdateQueue` | `bool` | true | Persist updates across reconnects |
 | `MaxUpdateHandlerRetry` | `int` | 3 | Handler error retries |
-| `UpdateRecoveryEnabled` | `bool` | false | Recover lost updates |
 | `Log` | `LogConfig` | | Logging configuration |
 
 ### DeviceConfig

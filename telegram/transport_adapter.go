@@ -23,7 +23,7 @@ func newSessionTransport(t transport.Transport, conn net.Conn) *sessionTransport
 	return &sessionTransport{transport: t, conn: conn}
 }
 
-func newTCPTransport(mode string, conn net.Conn) (tcpTransport, error) {
+func newTCPTransport(mode TransportMode, conn net.Conn) (tcpTransport, error) {
 	switch mode {
 	case TransportModeAbridged:
 		return transport.NewTCPAbridged(conn), nil
@@ -34,13 +34,13 @@ func newTCPTransport(mode string, conn net.Conn) (tcpTransport, error) {
 	case TransportModeFull:
 		return transport.NewTCPFull(conn), nil
 	default:
-		return nil, fmt.Errorf("telegram: unsupported transport mode %q", mode)
+		return nil, fmt.Errorf("telegram: unsupported transport mode %d", mode)
 	}
 }
 
 // obfuscatedMarkerForMode returns the obfuscated2 protocol tag byte for a
 // given transport mode, or false if the mode cannot be obfuscated.
-func obfuscatedMarkerForMode(mode string) (byte, bool) {
+func obfuscatedMarkerForMode(mode TransportMode) (byte, bool) {
 	switch mode {
 	case TransportModeAbridged:
 		return 0xEF, true
@@ -64,7 +64,7 @@ func (c *Client) createTransport(conn net.Conn) (tcpTransport, error) {
 	if c.config().AlwaysObfuscate {
 		marker, ok := obfuscatedMarkerForMode(mode)
 		if !ok {
-			return nil, fmt.Errorf("telegram: AlwaysObfuscate not supported for transport %q", mode)
+			return nil, fmt.Errorf("telegram: AlwaysObfuscate not supported for transport %v", mode)
 		}
 		return transport.NewTCPObfuscated(tp, marker), nil
 	}

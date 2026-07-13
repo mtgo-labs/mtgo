@@ -147,7 +147,7 @@ func (m *stopMiddleware) Handle(ctx *Context) {
 	m.mu.Lock()
 	*m.log = append(*m.log, "stop:before")
 	m.mu.Unlock()
-	ctx.Stopped = true
+	ctx.stopPropagation = true
 }
 
 func TestMiddlewareNoMiddleware(t *testing.T) {

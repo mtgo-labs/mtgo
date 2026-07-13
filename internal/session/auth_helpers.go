@@ -31,7 +31,7 @@ func sha1Hash(data []byte) []byte {
 func xorBytes(a, b []byte) []byte {
 	n := min(len(b), len(a))
 	out := make([]byte, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out[i] = a[i] ^ b[i]
 	}
 	return out

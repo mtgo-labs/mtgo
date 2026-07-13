@@ -46,9 +46,7 @@ func ReleaseAESBuf(buf []byte) {
 	if buf == nil {
 		return
 	}
-	for i := range buf {
-		buf[i] = 0
-	}
+	clear(buf)
 	igeBufPool.Put(&buf)
 }
 

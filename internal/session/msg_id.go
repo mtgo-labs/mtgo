@@ -41,17 +41,26 @@ func (g *MsgIDGenerator) UpdateServerTime(t time.Time) {
 // increasing. The lower bits encode a counter to ensure uniqueness within the
 // same second.
 func (g *MsgIDGenerator) Next() int64 {
-	now := time.Now().Unix()
 	for {
 		cur := g.serverTimeUnix.Load()
+		c := g.counter.Add(1)
+		perSec := int64(1 << 30) // ~1 billion messages/sec before needing a new timestamp
+
+		// Fast path: counter still has room in the current second.
+		// No syscall needed — the common case.
+		if c <= perSec {
+			return (cur << 32) | ((c - 1) << 2)
+		}
+
+		// Counter saturated — advance to next second.
+		now := time.Now().Unix()
 		if now > cur {
 			if g.serverTimeUnix.CompareAndSwap(cur, now) {
-				g.counter.Store(0)
+				g.counter.Store(1)
+				return (now << 32)
 			}
-			continue
 		}
-		c := g.counter.Add(1) - 1
-		base := cur << 32
-		return base | (c << 2)
+		// CAS failed (another goroutine advanced) or time didn't advance.
+		// Retry the outer loop.
 	}
 }

@@ -414,10 +414,10 @@ func TestCloseStopsEverything(t *testing.T) {
 }
 
 func TestTriggerReconnectDisabled(t *testing.T) {
-	client, _ := NewClient(12345, "hash", &Config{
-		InMemory:         true,
-		ReconnectEnabled: false,
-	})
+	client, _ := NewClient(12345, "hash", &Config{InMemory: true})
+	client.cfgMu.Lock()
+	client.cfg.ReconnectEnabled = false
+	client.cfgMu.Unlock()
 	client.state.SetConnecting(2)
 	client.state.SetConnected()
 	client.storage = NewMemoryStorage()
