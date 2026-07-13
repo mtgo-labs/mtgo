@@ -229,25 +229,37 @@ func isSessionDeadErr(err error) bool {
 }
 
 // waitForConnect blocks until the client reports a connected state, the context
-// is cancelled, or the client is closed. Returns nil when connected. The 50 ms
-// poll interval is negligible compared to the seconds-long reconnect cycle.
+// is cancelled, or the client is closed. Returns nil when connected.
+// Uses a channel-based signal (connChanged) to wake immediately on reconnect
+// instead of polling, matching gotd/td's pattern.
 func (c *Client) waitForConnect(ctx context.Context) error {
 	if c.state.IsConnected() {
 		return nil
 	}
-	ticker := time.NewTicker(50 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			switch {
-			case c.state.IsConnected():
-				return nil
-			case c.state.IsClosed():
-				return ErrClientClosed
-			}
+	if c.state.IsClosed() {
+		return ErrClientClosed
+	}
+
+	c.mu.RLock()
+	ch := c.connChanged
+	c.mu.RUnlock()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-ch:
+		// connChanged was closed — connection transition happened.
+		// Check whether we became connected or closed.
+		switch {
+		case c.state.IsConnected():
+			return nil
+		case c.state.IsClosed():
+			return ErrClientClosed
+		default:
+			// State is neither connected nor closed after signal.
+			// The reconnect may have failed; the caller will see the
+			// error from the session and retry via retrySessionErr.
+			return ErrNotConnected
 		}
 	}
 }

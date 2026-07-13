@@ -176,6 +176,16 @@ func (c *Client) triggerReconnect(err error) {
 	c.reconnectMgr.Start(context.Background())
 }
 
+// signalReconnect closes the current connChanged channel and replaces it with a
+// fresh one, waking every RPC caller blocked in waitForConnect. Must be called
+// after the session is live and state is Connected.
+func (c *Client) signalReconnect() {
+	c.mu.Lock()
+	close(c.connChanged)
+	c.connChanged = make(chan struct{})
+	c.mu.Unlock()
+}
+
 func (c *Client) reconnectOnce() error {
 	c.mu.Lock()
 	st := c.storage
@@ -206,7 +216,7 @@ func (c *Client) reconnectOnce() error {
 	if err != nil {
 		return fmt.Errorf("create session: %w", err)
 	}
-	configureSessionDispatch(sess, c.cfg, c.Log)
+	configureSessionDispatch(sess, c)
 
 	timeout := 15 * time.Second
 	var sessionTp *sessionTransport
@@ -311,6 +321,7 @@ func (c *Client) reconnectOnce() error {
 
 	// Notify reconnect hooks for plugin-driven gap recovery.
 	c.fireReconnect()
+	c.signalReconnect()
 
 	return nil
 }
@@ -367,6 +378,7 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 				Err:      ErrReconnectFailed,
 			})
 			rm.running.Store(false)
+			rm.client.signalReconnect()
 			return
 		}
 
@@ -407,6 +419,7 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 				Err:      fmt.Errorf("auth key invalid: %w", err),
 			})
 			rm.running.Store(false)
+			rm.client.signalReconnect()
 			return
 		}
 

@@ -111,8 +111,9 @@ type Client struct {
 	usernameCacheOrder []string
 	resolveCoalescer   resolveCoalescer
 
-	stopCh   chan struct{}
-	stopOnce sync.Once
+	stopCh      chan struct{}
+	connChanged chan struct{} // closed on reconnect, wakes waitForConnect waiters
+	stopOnce    sync.Once
 
 	reconnectMgr *reconnectManager
 
@@ -139,9 +140,6 @@ type Client struct {
 	// connPool caches warm connections to avoid redundant TCP handshakes.
 	// Ported from td/td/telegram/net/ConnectionCreator.cpp.
 	connPool *session.ConnectionPool
-	// sessionRouter routes queries to the appropriate session slot per DC.
-	// Ported from td/td/telegram/net/NetQueryDispatcher.h.
-	sessionRouter *session.SessionRouter
 	// dcAuthManager tracks exported authorization state for non-main DCs.
 	// Ported from td/td/telegram/net/DcAuthManager.h.
 	dcAuthManager *session.DcAuthManager
@@ -254,10 +252,10 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		dedup:             newDedupCache(),
 		resolveCoalescer:  resolveCoalescer{inFlight: make(map[string][]chan resolveResult)},
 		handlerDispatcher: NewHandlerDispatcher(),
+		connChanged:       make(chan struct{}),
 		dcSessions:        newDCSessions(),
 		dcOptionPool:      session.NewDCOptionPool(2, c.EndpointCoolDown),
 		connPool:          session.NewConnectionPool(c.ConnPoolTTL),
-		sessionRouter:     session.NewSessionRouter(5 * time.Minute),
 		Log:               logger,
 		rng:               rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())^0x9E3779B97F4A7C15)),
 	}
@@ -821,16 +819,22 @@ func (c *Client) Config() Config {
 	return c.cfg
 }
 
-func configureSessionDispatch(sess *session.Session, cfg Config, log *Logger) {
+func configureSessionDispatch(sess *session.Session, c *Client) {
 	if sess == nil {
 		return
 	}
-	if cfg.DispatchWorkers > 0 {
-		sess.SetDispatchConfig(cfg.DispatchWorkers, cfg.DispatchQueueSize)
+	if c.Log != nil {
+		sess.SetLogger(c.Log)
 	}
-	if log != nil {
-		sess.SetLogger(log)
-	}
+	// Wire the new_session_created callback: when the server tells us
+	// that the previous session was destroyed, fire reconnect hooks so
+	// that the updatesrecovery plugin can trigger getDifference and
+	// recover any updates lost during the gap.
+	sess.SetOnNewSession(func(firstMsgID, uniqueID, serverSalt int64) {
+		c.Log.Warnf("session: new_session_created (first_msg_id=%d, unique_id=%d, server_salt=%d) — triggering gap recovery",
+			firstMsgID, uniqueID, serverSalt)
+		go c.fireReconnect()
+	})
 }
 
 // SetDispatcher replaces the update dispatcher used to route incoming updates to handlers.
@@ -1146,7 +1150,7 @@ func (c *Client) importSessionString(st storage.Storage) error {
 // backend. If a test session is provided it is used directly.
 func (c *Client) initSession(st storage.Storage, testSession *session.Session) (*session.Session, error) {
 	if testSession != nil {
-		configureSessionDispatch(testSession, c.cfg, c.Log)
+		configureSessionDispatch(testSession, c)
 		return testSession, nil
 	}
 	dcID := c.initialDCID(st)
@@ -1165,7 +1169,7 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 	if err := st.SetDCID(dcID); err != nil {
 		return nil, fmt.Errorf("save dc_id: %w", err)
 	}
-	configureSessionDispatch(sess, c.cfg, c.Log)
+	configureSessionDispatch(sess, c)
 	return sess, nil
 }
 
@@ -1332,7 +1336,7 @@ func (c *Client) performPFS(sess *session.Session, st storage.Storage, dc sessio
 
 	c.Log.Debug("PFS: generating temporary auth key (24h expiry)")
 
-	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, true, st)
+	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, st)
 	if err := mgr.Generate(sessionTp); err != nil {
 		c.Log.Warnf("PFS: temp key generation failed, continuing with perm key: %v", err)
 		return nil // non-fatal
@@ -1426,6 +1430,7 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.state.SetConnected()
 	c.state.SetDC(c.initialDCID(c.storage))
 	c.mu.Unlock()
+	c.signalReconnect()
 	return nil
 }
 
@@ -1761,6 +1766,14 @@ func (c *Client) Close() {
 		c.keyWatchdog.Wait()
 	}
 	c.state.SetClosed()
+	c.mu.Lock()
+	select {
+	case <-c.connChanged:
+		// Already closed (double Close or terminal reconnect path).
+	default:
+		close(c.connChanged)
+	}
+	c.mu.Unlock()
 }
 
 func (c *Client) Health() HealthStatus {
@@ -1877,8 +1890,6 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		}
 	}
 
-	_ = session.RouteQuery(query) // routing decision logged for future use
-
 	c.mu.RLock()
 	oc := c.overloadController
 	c.mu.RUnlock()
@@ -1993,11 +2004,6 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 		return nil, err
 	}
 	return result, nil
-}
-
-// InvokeWithRawByte is deprecated. Use [Client.InvokeWithRawResult].
-func (c *Client) InvokeWithRawByte(ctx context.Context, query tg.TLObject) ([]byte, error) {
-	return c.InvokeWithRawResult(ctx, query)
 }
 
 // DropRPC cancels an in-flight RPC on the server side by sending
@@ -2800,11 +2806,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	if err != nil {
 		return nil, fmt.Errorf("create session for dc %d: %w", dcID, err)
 	}
-	c.mu.RLock()
-	cfg := c.cfg
-	log := c.Log
-	c.mu.RUnlock()
-	configureSessionDispatch(sess, cfg, log)
+	configureSessionDispatch(sess, c)
 
 	c.sessionsMu.Lock()
 	if existing, ok := c.sessions[key]; ok {
