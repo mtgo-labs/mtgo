@@ -350,7 +350,6 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 
 	c.mu.RLock()
 	cfg := c.cfg
-	log := c.Log
 	mainSess := c.session
 	homeDC := c.state.DC()
 	if mainSess != nil {
@@ -365,7 +364,7 @@ func (c *Client) createDCSession(ctx context.Context, dcID int) (*dcSessionEntry
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: create session DC %d: %w", dcID, err)
 	}
-	configureSessionDispatch(sess, cfg, log)
+	configureSessionDispatch(sess, c)
 	sess.SetUpdateHandler(func(obj tg.TLObject) {})
 
 	if mainSess != nil && dcID == homeDC {

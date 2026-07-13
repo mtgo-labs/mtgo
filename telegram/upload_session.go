@@ -258,7 +258,7 @@ func (c *Client) createUploadSession() (*sideSession, error) {
 		sessionTp.Close()
 		return nil, fmt.Errorf("upload session: create session: %w", err)
 	}
-	configureSessionDispatch(sess, cfg, log)
+	configureSessionDispatch(sess, c)
 	sess.SetUpdateHandler(func(obj tg.TLObject) {})
 
 	authKey := mainSess.AuthKey()

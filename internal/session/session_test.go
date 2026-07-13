@@ -374,6 +374,106 @@ func TestSessionSetDispatchConfigNoOp(t *testing.T) {
 	s.SetDispatchConfig(-1, -1)
 }
 
+func TestSetOnNewSession(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+
+	called := make(chan struct {
+		firstMsgID int64
+		uniqueID   int64
+		serverSalt int64
+	}, 1)
+
+	s.SetOnNewSession(func(firstMsgID, uniqueID, serverSalt int64) {
+		called <- struct {
+			firstMsgID int64
+			uniqueID   int64
+			serverSalt int64
+		}{firstMsgID, uniqueID, serverSalt}
+	})
+
+	// Simulate the raw new_session_created handler path.
+	// The body layout is: constructor(4) + first_msg_id(8) +
+	// unique_id(8) + server_salt(8) = 28 bytes.
+	body := make([]byte, 28)
+	binary.LittleEndian.PutUint32(body[0:4], tg.NewSessionCreatedTypeID)
+	binary.LittleEndian.PutUint64(body[4:12], 0x1122334455667788)
+	binary.LittleEndian.PutUint64(body[12:20], 0x5ABBCCDDEEFF0011)
+	binary.LittleEndian.PutUint64(body[20:28], 0x5EADBEEFCAFEBABE)
+
+	handled := s.handleRawPacket(makeServerMsgID(), body)
+	if !handled {
+		t.Fatal("handleRawPacket did not handle new_session_created")
+	}
+
+	select {
+	case result := <-called:
+		if result.firstMsgID != 0x1122334455667788 {
+			t.Errorf("firstMsgID = %x, want %x", result.firstMsgID, 0x1122334455667788)
+		}
+		if result.uniqueID != 0x5ABBCCDDEEFF0011 {
+			t.Errorf("uniqueID = %x, want %x", result.uniqueID, 0x5ABBCCDDEEFF0011)
+		}
+		if result.serverSalt != 0x5EADBEEFCAFEBABE {
+			t.Errorf("serverSalt = %x, want %x", result.serverSalt, 0x5EADBEEFCAFEBABE)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("callback was not called")
+	}
+}
+
+func TestSetOnNewSessionNoCallback(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+
+	// fireNewSession should not panic when no callback is set.
+	s.fireNewSession(1, 2, 3)
+}
+
+func TestSetOnNewSessionNilCallback(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+
+	s.SetOnNewSession(nil)
+	// fireNewSession should not panic when callback is nil.
+	s.fireNewSession(1, 2, 3)
+}
+
+func TestSetOnNewSessionDecodedPath(t *testing.T) {
+	// Verify the decoded TL-object path also fires.
+	s := newSessionWithAuthKey(t)
+
+	called := make(chan struct {
+		firstMsgID int64
+		uniqueID   int64
+		serverSalt int64
+	}, 1)
+
+	s.SetOnNewSession(func(firstMsgID, uniqueID, serverSalt int64) {
+		called <- struct {
+			firstMsgID int64
+			uniqueID   int64
+			serverSalt int64
+		}{firstMsgID, uniqueID, serverSalt}
+	})
+
+	// Simulate the decoded path via fireNewSession (which is what
+	// the decoded handler calls after StoreSimple).
+	s.fireNewSession(42, 99, 777)
+
+	select {
+	case result := <-called:
+		if result.firstMsgID != 42 {
+			t.Errorf("firstMsgID = %d, want 42", result.firstMsgID)
+		}
+		if result.uniqueID != 99 {
+			t.Errorf("uniqueID = %d, want 99", result.uniqueID)
+		}
+		if result.serverSalt != 777 {
+			t.Errorf("serverSalt = %d, want 777", result.serverSalt)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("callback was not called")
+	}
+}
+
 func TestSessionSendAndWait(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
@@ -1246,7 +1346,7 @@ func TestWriteCircuitBreakerTrips(t *testing.T) {
 	s.SetTransport(ft)
 	s.done = make(chan struct{})
 	s.sm.forceSetState(StateActive)
-	s.writeBreakerThreshold = 3
+	s.writeBreakerThreshold.Store(3)
 
 	writeErr := fmt.Errorf("write failed")
 	ft.SetFail(writeErr)
@@ -1276,7 +1376,7 @@ func TestWriteCircuitBreakerResetsOnSuccess(t *testing.T) {
 	s.SetTransport(ft)
 	s.done = make(chan struct{})
 	s.sm.forceSetState(StateActive)
-	s.writeBreakerThreshold = 3
+	s.writeBreakerThreshold.Store(3)
 
 	ft.SetFail(fmt.Errorf("write failed"))
 
@@ -1316,7 +1416,7 @@ func TestWriteCircuitBreakerDisabledWhenZero(t *testing.T) {
 	s.SetTransport(ft)
 	s.done = make(chan struct{})
 	s.sm.forceSetState(StateActive)
-	s.writeBreakerThreshold = 0
+	s.writeBreakerThreshold.Store(0)
 
 	ft.SetFail(fmt.Errorf("write failed"))
 
@@ -1626,8 +1726,8 @@ func TestRegisterBeforeWrite(t *testing.T) {
 func TestSetWriteBreakerThreshold(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	s.SetWriteBreakerThreshold(5)
-	if s.writeBreakerThreshold != 5 {
-		t.Fatalf("threshold=%d, want 5", s.writeBreakerThreshold)
+	if int(s.writeBreakerThreshold.Load()) != 5 {
+		t.Fatalf("threshold=%d, want 5", s.writeBreakerThreshold.Load())
 	}
 }
 
@@ -1825,7 +1925,7 @@ func TestWriteBreakerBlocksWritesButKeepsSessionAlive(t *testing.T) {
 	s.ackCh = make(chan int64, 1024)
 	s.pingCbs = make(map[int64]chan struct{})
 	s.sm.forceSetState(StateActive)
-	s.writeBreakerThreshold = 2
+	s.writeBreakerThreshold.Store(2)
 
 	parentCtx, parentCancel := context.WithCancel(context.Background())
 	defer parentCancel()
@@ -1872,7 +1972,7 @@ func TestResetWriteBreaker(t *testing.T) {
 	s.SetTransport(ft)
 	s.done = make(chan struct{})
 	s.sm.forceSetState(StateActive)
-	s.writeBreakerThreshold = 2
+	s.writeBreakerThreshold.Store(2)
 
 	// Open the breaker.
 	ft.SetFail(fmt.Errorf("write failed"))
@@ -2142,29 +2242,5 @@ func TestConnectionPoolPurge(t *testing.T) {
 	}
 	if pool.Count() != 0 {
 		t.Fatalf("Count after purge: %d, want 0", pool.Count())
-	}
-}
-
-func TestRouteQuery(t *testing.T) {
-	tests := []struct {
-		name  string
-		query tg.TLObject
-		want  SessionSlotType
-	}{
-		{"upload.saveFilePart", &tg.UploadSaveFilePartRequest{}, SlotUpload},
-		{"upload.saveBigFilePart", &tg.UploadSaveBigFilePartRequest{}, SlotUpload},
-		{"upload.getFile", &tg.UploadGetFileRequest{}, SlotDownload},
-		{"upload.getWebFile", &tg.UploadGetWebFileRequest{}, SlotDownload},
-		{"ping (main)", &tg.PingRequest{}, SlotMain},
-		{"sendMessage (main)", &tg.MessagesSendMessageRequest{}, SlotMain},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := RouteQuery(tt.query)
-			if got != tt.want {
-				t.Errorf("RouteQuery(%T) = %v, want %v", tt.query, got, tt.want)
-			}
-		})
 	}
 }

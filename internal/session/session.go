@@ -7,8 +7,6 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
-	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -24,64 +22,6 @@ type sessionLogger interface {
 	Debugf(format string, v ...any)
 	Warnf(format string, v ...any)
 	Errorf(format string, v ...any)
-}
-
-// FloodWaitQueue manages delayed queries waiting for FLOOD_WAIT.
-// Ported from td/td/telegram/net/NetQueryDelayer.h:18-36.
-type FloodWaitQueue struct {
-	entries []FloodWaitEntry
-	mu      sync.Mutex
-}
-
-// FloodWaitEntry is a delayed query.
-type FloodWaitEntry struct {
-	Query     tg.TLObject
-	MsgID     int64
-	WaitUntil time.Time
-	Attempts  int
-}
-
-func (q *FloodWaitQueue) Delay(query tg.TLObject, msgID int64, waitDuration time.Duration) {
-	if q == nil || query == nil {
-		return
-	}
-	q.mu.Lock()
-	q.entries = append(q.entries, FloodWaitEntry{
-		Query:     query,
-		MsgID:     msgID,
-		WaitUntil: time.Now().Add(waitDuration),
-		Attempts:  1,
-	})
-	q.mu.Unlock()
-}
-
-func (q *FloodWaitQueue) Ready() []FloodWaitEntry {
-	if q == nil {
-		return nil
-	}
-	now := time.Now()
-	q.mu.Lock()
-	defer q.mu.Unlock()
-	ready := make([]FloodWaitEntry, 0)
-	pending := q.entries[:0]
-	for _, entry := range q.entries {
-		if !entry.WaitUntil.After(now) {
-			ready = append(ready, entry)
-			continue
-		}
-		pending = append(pending, entry)
-	}
-	q.entries = pending
-	return ready
-}
-
-func (q *FloodWaitQueue) Cleanup() {
-	if q == nil {
-		return
-	}
-	q.mu.Lock()
-	q.entries = nil
-	q.mu.Unlock()
 }
 
 // authKeyLength is the required size in bytes of an MTProto authorization key.
@@ -140,201 +80,6 @@ func (s *Session) checkWrite() error {
 // the established auth key, server salt, and server time.
 type AuthFunc func(transport Transport) (*AuthResult, error)
 
-// SessionSlotType identifies the traffic class for a session slot.
-// Ported from td/td/telegram/net/NetQueryDispatcher.h:69-78 (Dc session types).
-type SessionSlotType int
-
-const (
-	// SlotMain handles API calls, updates, and non-media RPCs.
-	SlotMain SessionSlotType = iota
-	// SlotUpload handles upload.* methods.
-	SlotUpload
-	// SlotDownload handles messages.getDocument, messages.getWebPage.
-	SlotDownload
-)
-
-func (t SessionSlotType) String() string {
-	switch t {
-	case SlotMain:
-		return "main"
-	case SlotUpload:
-		return "upload"
-	case SlotDownload:
-		return "download"
-	default:
-		return "unknown"
-	}
-}
-
-// RouteQuery returns the slot type for a given TLObject.
-// Ported from td/td/telegram/net/SessionProxy.cpp (is_upload/is_download flags).
-func RouteQuery(query tg.TLObject) SessionSlotType {
-	switch query.(type) {
-	case *tg.UploadSaveFilePartRequest,
-		*tg.UploadSaveBigFilePartRequest:
-		return SlotUpload
-	case *tg.UploadGetFileRequest,
-		*tg.UploadGetWebFileRequest,
-		*tg.UploadGetCDNFileRequest:
-		return SlotDownload
-	}
-	return SlotMain
-}
-
-// SessionSlot manages an independent MTProto session for a traffic class within
-// a DC. Each slot has its own message ID sequence and sequence number but shares
-// the DC's permanent auth key.
-// Ported from td/td/telegram/net/SessionProxy.cpp (open_session/close_session).
-type SessionSlot struct {
-	dcID         int
-	slotType     SessionSlotType
-	session      *Session
-	active       atomic.Bool
-	lastActivity atomic.Int64 // unix timestamp
-	idleTimeout  time.Duration
-}
-
-// NewSessionSlot creates a new session slot for the given DC and traffic type.
-func NewSessionSlot(dcID int, slotType SessionSlotType, idleTimeout time.Duration) *SessionSlot {
-	return &SessionSlot{
-		dcID:        dcID,
-		slotType:    slotType,
-		idleTimeout: idleTimeout,
-	}
-}
-
-// Invoke sends an RPC through this slot's session and updates activity timestamp.
-func (ss *SessionSlot) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-	if ss.session == nil {
-		return nil, ErrSessionClosed
-	}
-	ss.lastActivity.Store(time.Now().Unix())
-	ss.active.Store(true)
-	defer ss.active.Store(false)
-	return ss.session.Invoke(ctx, query, retries, timeout)
-}
-
-// Start sets the underlying session and transport for this slot.
-func (ss *SessionSlot) Start(s *Session, tp Transport, timeout time.Duration) error {
-	ss.session = s
-	ss.lastActivity.Store(time.Now().Unix())
-	return s.Connect(tp, timeout)
-}
-
-// Stop closes the underlying session.
-func (ss *SessionSlot) Stop() {
-	if ss.session != nil {
-		ss.session.Stop()
-		ss.session = nil
-	}
-}
-
-// IsActive reports whether this slot has pending RPCs.
-func (ss *SessionSlot) IsActive() bool {
-	return ss.active.Load()
-}
-
-// LastActivity returns the last time this slot had RPC activity.
-func (ss *SessionSlot) LastActivity() time.Time {
-	return time.Unix(ss.lastActivity.Load(), 0)
-}
-
-// SlotType returns the traffic class of this slot.
-func (ss *SessionSlot) SlotType() SessionSlotType {
-	return ss.slotType
-}
-
-// SessionRouter manages SessionSlots per DC, routing queries to the appropriate
-// slot based on operation type.
-// Ported from td/td/telegram/net/NetQueryDispatcher.h:69-78 (Dc struct).
-type SessionRouter struct {
-	slots       map[int]map[SessionSlotType]*SessionSlot // dcID → slotType → slot
-	idleTimeout time.Duration
-	mu          sync.Mutex
-}
-
-// NewSessionRouter creates a new session router with the given idle timeout.
-func NewSessionRouter(idleTimeout time.Duration) *SessionRouter {
-	return &SessionRouter{
-		slots:       make(map[int]map[SessionSlotType]*SessionSlot),
-		idleTimeout: idleTimeout,
-	}
-}
-
-// Invoke routes a query to the appropriate session slot based on its type.
-// Creates the slot lazily on first use.
-func (r *SessionRouter) Invoke(ctx context.Context, dcID int, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-	slotType := RouteQuery(query)
-	slot := r.GetOrCreateSlot(dcID, slotType)
-	return slot.Invoke(ctx, query, retries, timeout)
-}
-
-// GetOrCreateSlot returns the slot for the given DC and type, creating it if needed.
-func (r *SessionRouter) GetOrCreateSlot(dcID int, slotType SessionSlotType) *SessionSlot {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, ok := r.slots[dcID]; !ok {
-		r.slots[dcID] = make(map[SessionSlotType]*SessionSlot)
-	}
-	if slot, ok := r.slots[dcID][slotType]; ok {
-		return slot
-	}
-	slot := NewSessionSlot(dcID, slotType, r.idleTimeout)
-	r.slots[dcID][slotType] = slot
-	return slot
-}
-
-// CloseIdleSlots closes upload/download slots that have been idle longer than
-// the configured timeout. Main slots are never closed by idle timeout.
-// Ported from td/td/telegram/net/Session.cpp:1513 (ACTIVITY_TIMEOUT).
-func (r *SessionRouter) CloseIdleSlots() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	now := time.Now()
-	closed := 0
-	for dcID, dcSlots := range r.slots {
-		for slotType, slot := range dcSlots {
-			if slotType == SlotMain {
-				continue // main slot never closed by idle timeout
-			}
-			if !slot.IsActive() && now.Sub(slot.LastActivity()) > slot.idleTimeout {
-				slot.Stop()
-				delete(dcSlots, slotType)
-				closed++
-			}
-		}
-		if len(dcSlots) == 0 {
-			delete(r.slots, dcID)
-		}
-	}
-	return closed
-}
-
-// StopAll stops all slots across all DCs.
-func (r *SessionRouter) StopAll() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, dcSlots := range r.slots {
-		for _, slot := range dcSlots {
-			slot.Stop()
-		}
-	}
-	r.slots = make(map[int]map[SessionSlotType]*SessionSlot)
-}
-
-// SlotCount returns the number of active slots across all DCs.
-func (r *SessionRouter) SlotCount() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	count := 0
-	for _, dcSlots := range r.slots {
-		count += len(dcSlots)
-	}
-	return count
-}
-
 // Session manages an encrypted MTProto session with a Telegram data center.
 // It handles message ID and sequence number generation, encrypted message
 // packing/unpacking, RPC invocation with retries, keep-alive pings, and
@@ -380,7 +125,7 @@ type Session struct {
 	// sm is the session connection state machine.
 	sm *stateMachine
 	// mu protects the mutable config fields below: authKey, authKeyID,
-	// transport, pingInterval, onUpdate, onPanic.
+	// transport, pingInterval, onUpdate, onPanic, onNewSession.
 	mu sync.RWMutex
 
 	// transport is the underlying network transport for sending/receiving data.
@@ -424,17 +169,21 @@ type Session struct {
 	updateSem chan struct{}
 	// onPanic is called (if non-nil) when a dispatch goroutine panics.
 	onPanic func(panicValue any)
+	// onNewSession is called when the server sends a new_session_created
+	// notification, indicating the previous session was destroyed. The
+	// callback fires in the receive goroutine; long work should be
+	// dispatched to a new goroutine.
+	onNewSession func(firstMsgID int64, uniqueID int64, serverSalt int64)
 	// log receives structured log output. When nil, logging is suppressed.
 	log sessionLogger
 
 	consecWriteFailures   atomic.Int32
-	writeBreakerThreshold int
+	writeBreakerThreshold atomic.Int32
 	writeBreakerOpen      atomic.Bool
 
 	// Production-hardening fields (end of struct to keep hot-path fields in
 	// the first 6 cache lines — only accessed when features are enabled).
 	containerTracker *ContainerTracker
-	floodWaits       *FloodWaitQueue
 	outboundBatcher  *OutboundBatcher
 	stateReqMu       sync.Mutex
 	stateReqs        map[int64]*pendingStateReq
@@ -449,6 +198,17 @@ func (s *Session) SetOnPanic(fn func(panicValue any)) {
 	s.mu.Lock()
 	s.onPanic = fn
 	s.mu.Unlock()
+}
+
+// SetOnNewSession registers a callback that fires when the server sends a
+// new_session_created notification. This indicates that a previous session
+// was destroyed and any updates received in between may have been lost.
+// The callback fires in the receive goroutine — dispatch long work to a
+// new goroutine to avoid blocking the receive loop.
+func (s *Session) SetOnNewSession(fn func(firstMsgID int64, uniqueID int64, serverSalt int64)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.onNewSession = fn
 }
 
 // EnableOutboundBatching creates and starts an OutboundBatcher on this session.
@@ -526,7 +286,7 @@ func (s *Session) SetLogger(l sessionLogger) {
 }
 
 func (s *Session) SetWriteBreakerThreshold(n int) {
-	s.writeBreakerThreshold = n
+	s.writeBreakerThreshold.Store(int32(n))
 }
 
 // ResetWriteBreaker clears the write circuit breaker, resetting the failure
@@ -541,12 +301,13 @@ func (s *Session) ResetWriteBreaker() {
 // breaker, which blocks new writes via ErrWriteCircuitOpen but does NOT kill the
 // session. Successful writes reset both counter and breaker flag.
 func (s *Session) trackWriteResult(err error) {
-	if s.writeBreakerThreshold <= 0 {
+	threshold := int(s.writeBreakerThreshold.Load())
+	if threshold <= 0 {
 		return
 	}
 	if err != nil {
 		newCount := s.consecWriteFailures.Add(1)
-		if int(newCount) >= s.writeBreakerThreshold && !s.writeBreakerOpen.Load() {
+		if int(newCount) >= threshold && !s.writeBreakerOpen.Load() {
 			s.writeBreakerOpen.Store(true)
 		}
 	} else {
@@ -611,17 +372,17 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		msgIDValidator: newMsgIDValidator(func() int64 {
 			return time.Now().Unix()
 		}),
-		pending:               NewPendingManager(),
-		containerTracker:      NewContainerTracker(),
-		floodWaits:            &FloodWaitQueue{},
-		pingInterval:          60 * time.Second,
-		pongTimeout:           30 * time.Second,
-		updateSem:             make(chan struct{}, 128),
-		saltMgr:               newSaltManager(time.Now),
-		writeBreakerThreshold: 10,
-		sm:                    newStateMachine(),
-		chains:                make(map[int64]int64),
+		pending:          NewPendingManager(),
+		containerTracker: NewContainerTracker(),
+		pingInterval:     60 * time.Second,
+		pongTimeout:      30 * time.Second,
+		updateSem:        make(chan struct{}, 128),
+		saltMgr:          newSaltManager(time.Now),
+		sm:               newStateMachine(),
+		chains:           make(map[int64]int64),
 	}
+
+	s.writeBreakerThreshold.Store(10)
 
 	if len(authKey) > 0 {
 		s.authKeyID = computeAuthKeyID(authKey)
@@ -800,6 +561,9 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		return nil, fmt.Errorf("session: send: %w", regErr)
 	}
 
+	// Store encrypted payload for msg_resend_req re-transmission.
+	handle.StorePayload(encrypted)
+
 	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
 		return nil, fmt.Errorf("session: send: %w", err)
@@ -887,6 +651,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		}
 	case *tg.NewSessionCreated:
 		s.saltMgr.StoreSimple(v.ServerSalt)
+		s.fireNewSession(v.FirstMsgID, v.UniqueID, v.ServerSalt)
 	case *tg.FutureSalts:
 		s.storeFutureSalts(v)
 	case *tg.MsgsAck:
@@ -1088,7 +853,6 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	var lastErr error
 	var backoff time.Duration
 	maxAttempts := retries
-	totalWait := time.Duration(0) // accumulated FLOOD_WAIT sleep, bounded by maxFloodWaitBudget
 	badSaltRetries := 0
 	g12Retries := 0 // G12: bound additional error-recovery retries
 	for i := 0; i < maxAttempts; i++ {
@@ -1148,41 +912,6 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return obj, nil
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-			if wait, ok := parseFloodWait(rpcErr.ErrorMessage); ok {
-				// Bound total flood-wait time; beyond the budget, surface a synthetic
-				// 429 (Too Many Requests: retry after N) like the reference
-				// NetQueryDelayer, instead of blocking the caller indefinitely.
-				if totalWait+wait > maxFloodWaitBudget {
-					seconds := int(wait.Seconds())
-					if seconds < 1 {
-						seconds = 1
-					}
-					return nil, fmt.Errorf("invoke %s: %w", methodName, tgerr.New(429, fmt.Sprintf("FLOOD_WAIT_%d", seconds)))
-				}
-				msgID := s.msgFactory.AllocateMsgID()
-				s.floodWaits.Delay(query, msgID, wait)
-				if s.log != nil {
-					s.log.Warnf("flood wait detected method=%s duration=%v", methodName, wait)
-					s.log.Warnf("flood wait delayed method=%s msg_id=%d duration=%v", methodName, msgID, wait)
-				}
-				select {
-				case <-ctx.Done():
-					return nil, ctx.Err()
-				case <-s.done:
-					if s.log != nil {
-						s.log.Warnf("flood wait rejected method=%s msg_id=%d err=%v", methodName, msgID, ErrSessionClosed)
-					}
-					return nil, ErrSessionClosed
-				case <-time.After(wait):
-				}
-				s.floodWaits.Ready()
-				if s.log != nil {
-					s.log.Warnf("flood wait retry method=%s msg_id=%d duration=%v", methodName, msgID, wait)
-				}
-				totalWait += wait
-				maxAttempts++
-				continue
-			}
 			// G13: MSG_WAIT_FAILED — the referenced msg in an invokeAfterMsg
 			// chain failed. Clear the chain dependency and resend unwrapped
 			// so the query is not permanently blocked.
@@ -1301,29 +1030,10 @@ func (s *Session) DropRPC(ctx context.Context, msgID int64) error {
 	return nil
 }
 
-// maxFloodWaitBudget bounds the total time Invoke blocks on FLOOD_WAIT sleeps
-// before surfacing a synthetic 429 (Too Many Requests: retry after N). Mirrors
-// TDLib NetQueryDelayer's total_timeout_limit_: short waits are retried within
-// the budget; a wait that would exceed it is surfaced as 429 so the Bot API
-// caller can honour retry_after instead of hanging.
-const maxFloodWaitBudget = 60 * time.Second
-
 // maxG12Retries bounds the number of G12 error-recovery retries (for
 // CONNECTION_NOT_INITED, PERSISTENT_TIMESTAMP_OUTDATED, AUTH_KEY_PERM_EMPTY)
 // before surfacing the error to the caller.
 const maxG12Retries = 2
-
-func parseFloodWait(message string) (time.Duration, bool) {
-	const prefix = "FLOOD_WAIT_"
-	if !strings.HasPrefix(message, prefix) {
-		return 0, false
-	}
-	seconds, err := strconv.Atoi(strings.TrimPrefix(message, prefix))
-	if err != nil || seconds < 0 {
-		return 0, false
-	}
-	return time.Duration(seconds) * time.Second, true
-}
 
 func typeName(v tg.TLObject) string {
 	if v == nil {
@@ -1495,9 +1205,7 @@ func (s *Session) ensureFreshSalt(ctx context.Context) int64 {
 
 	waitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	if s.saltMgr.WaitForValid(waitCtx) {
-		return s.saltMgr.Load()
-	}
+	_ = s.saltMgr.WaitForValid(waitCtx)
 	return s.saltMgr.Load()
 }
 
@@ -1527,9 +1235,47 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 	}
 	encrypted, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
 	if err != nil {
+		if s.log != nil {
+			s.log.Errorf("session: pack service message: %v", err)
+		}
 		return
 	}
 	_ = s.writeEncryptedDirect(encrypted, 10*time.Second)
+}
+
+// writeEncryptedImpl is the shared implementation for writeEncrypted and
+// writeEncryptedDirect. It snapshots transport state, acquires writeMux, sets
+// the write deadline, writes the encrypted payload, and releases the mutex.
+func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error {
+	if s.writeBreakerThreshold.Load() > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
+	s.mu.RLock()
+	tp := s.transport
+	s.mu.RUnlock()
+	if tp == nil {
+		return ErrTransportNotSet
+	}
+
+	s.writeMux.Lock()
+	defer s.writeMux.Unlock()
+
+	if s.writeBreakerThreshold.Load() > 0 && s.writeBreakerOpen.Load() {
+		return ErrWriteCircuitOpen
+	}
+
+	select {
+	case <-s.done:
+		return ErrSessionClosed
+	default:
+	}
+
+	tp.SetWriteDeadline(deadline)
+	err := tp.Send(encrypted)
+	tp.SetWriteDeadline(time.Time{})
+	s.trackWriteResult(err)
+	return err
 }
 
 // writeEncrypted snapshots transport state, acquires writeMux, sets the write
@@ -1537,76 +1283,17 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 // payload, and releases the mutex. Returns the transport error, if any.
 // Lock ordering: mu is always acquired BEFORE writeMux, never inside it.
 func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout time.Duration) error {
-	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
-		return ErrWriteCircuitOpen
-	}
-
 	deadline := time.Now().Add(timeout)
 	if dl, ok := ctx.Deadline(); ok && dl.Before(deadline) {
 		deadline = dl
 	}
-
-	s.mu.RLock()
-	tp := s.transport
-	s.mu.RUnlock()
-	if tp == nil {
-		return ErrTransportNotSet
-	}
-
-	s.writeMux.Lock()
-	defer s.writeMux.Unlock()
-
-	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
-		return ErrWriteCircuitOpen
-	}
-
-	select {
-	case <-s.done:
-		return ErrSessionClosed
-	default:
-	}
-
-	tp.SetWriteDeadline(deadline)
-	err := tp.Send(encrypted)
-	tp.SetWriteDeadline(time.Time{})
-	s.trackWriteResult(err)
-	return err
+	return s.writeEncryptedImpl(deadline, encrypted)
 }
 
 // writeEncryptedDirect is the context-less variant used by service messages
 // and RPCDropAnswer where there is no caller context to respect.
 func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) error {
-	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
-		return ErrWriteCircuitOpen
-	}
-
-	deadline := time.Now().Add(timeout)
-
-	s.mu.RLock()
-	tp := s.transport
-	s.mu.RUnlock()
-	if tp == nil {
-		return ErrTransportNotSet
-	}
-
-	s.writeMux.Lock()
-	defer s.writeMux.Unlock()
-
-	if s.writeBreakerThreshold > 0 && s.writeBreakerOpen.Load() {
-		return ErrWriteCircuitOpen
-	}
-
-	select {
-	case <-s.done:
-		return ErrSessionClosed
-	default:
-	}
-
-	tp.SetWriteDeadline(deadline)
-	err := tp.Send(encrypted)
-	tp.SetWriteDeadline(time.Time{})
-	s.trackWriteResult(err)
-	return err
+	return s.writeEncryptedImpl(time.Now().Add(timeout), encrypted)
 }
 
 // readLoop is an errgroup goroutine that reads from the transport and handles
@@ -1897,7 +1584,6 @@ func (s *Session) handleClose(ctx context.Context) error {
 	s.sm.transitionTo(StateDraining)
 	s.pending.RejectAll(ErrSessionClosed)
 	s.containerTracker.Cleanup()
-	s.floodWaits.Cleanup()
 	close(s.done)
 	s.mu.RLock()
 	tp := s.transport
@@ -2000,6 +1686,24 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 			s.pending.Reject(badMsgID, fmt.Errorf("session: time correction applied (code %d)", errorCode))
 			return true
 		}
+		if errorCode == 20 {
+			// Code 20: msg_id too old, server cannot determine whether it
+			// received the message. Log and drop — no resolution possible.
+			if s.log != nil {
+				s.log.Warnf("session: bad_msg code 20 (msg_id too old) for msg_id=%d", badMsgID)
+			}
+			return true
+		}
+		if errorCode == 64 {
+			// Code 64: invalid container. Mark all children as failed.
+			if s.log != nil {
+				s.log.Warnf("session: bad_msg code 64 (invalid container) for msg_id=%d", badMsgID)
+			}
+			for _, childID := range s.containerTracker.NackContainer(badMsgID) {
+				s.pending.Reject(childID, fmt.Errorf("session: bad_msg code 64: invalid container (container msg_id=%d)", badMsgID))
+			}
+			return true
+		}
 		s.pending.Resolve(badMsgID, &tg.BadMsgNotification{
 			BadMsgID:    badMsgID,
 			BadMsgSeqno: int32(binary.LittleEndian.Uint32(body[12:16])),
@@ -2022,7 +1726,13 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if len(body) < 28 {
 			return false
 		}
-		s.saltMgr.StoreSimple(int64(binary.LittleEndian.Uint64(body[20:28])))
+		serverSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
+		s.saltMgr.StoreSimple(serverSalt)
+		s.fireNewSession(
+			int64(binary.LittleEndian.Uint64(body[4:12])),
+			int64(binary.LittleEndian.Uint64(body[12:20])),
+			serverSalt,
+		)
 	case tg.FutureSaltsTypeID:
 		return s.handleRawFutureSalts(body)
 	case tg.MsgsAckTypeID:
@@ -2036,16 +1746,28 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 			s.addAck(int64(binary.LittleEndian.Uint64(body[4:12])))
 		}
 	case tg.MsgsStateReqTypeID:
-		s.handleRawMsgsStateReq(body[4:])
+		s.handleRawMsgsStateReq(msgID, body[4:])
 	case tg.MsgsStateInfoTypeID:
 		s.handleRawMsgsStateInfo(body[4:])
 	case tg.MsgResendReqTypeID:
 		s.handleRawMsgResendReq(body[4:])
 	case tg.MsgsAllInfoTypeID:
+		s.handleRawMsgsAllInfo(body[4:])
 	default:
 		return false
 	}
 	return true
+}
+
+// fireNewSession notifies the registered callback that the server sent a
+// new_session_created notification. Safe to call from any goroutine.
+func (s *Session) fireNewSession(firstMsgID, uniqueID, serverSalt int64) {
+	s.mu.RLock()
+	fn := s.onNewSession
+	s.mu.RUnlock()
+	if fn != nil {
+		fn(firstMsgID, uniqueID, serverSalt)
+	}
 }
 
 func (s *Session) handleRawMsgsAck(body []byte) {
@@ -2059,6 +1781,28 @@ func (s *Session) handleRawMsgsAck(body []byte) {
 		s.pending.MarkAcked(ackedID)
 		s.containerTracker.AckContainer(ackedID)
 		s.containerTracker.AckChild(ackedID)
+	}
+}
+
+// handleRawMsgsAllInfo parses the body of msgs_all_info (after constructor ID)
+// which is vector<long> msg_ids + string info. Unlike msgs_state_info, this
+// has no req_msg_id field.
+func (s *Session) handleRawMsgsAllInfo(body []byte) {
+	r := tg.NewReader(body)
+	defer tg.ReleaseReader(r)
+	msgIDs, err := r.ReadVectorLong()
+	if err != nil {
+		return
+	}
+	info, err := r.ReadString()
+	if err != nil {
+		return
+	}
+	for i, msgID := range msgIDs {
+		if i >= len(info) {
+			break
+		}
+		s.interpretStateByte(msgID, info[i])
 	}
 }
 
@@ -2198,7 +1942,7 @@ func (s *Session) handleRawFutureSalts(body []byte) bool {
 	return true
 }
 
-func (s *Session) handleRawMsgsStateReq(body []byte) {
+func (s *Session) handleRawMsgsStateReq(msgID int64, body []byte) {
 	if len(body) < 8 {
 		return
 	}
@@ -2216,7 +1960,7 @@ func (s *Session) handleRawMsgsStateReq(body []byte) {
 		}
 	}
 	s.sendServiceMessage(&tg.MsgsStateInfo{
-		ReqMsgID: 0,
+		ReqMsgID: msgID,
 		Info:     string(info),
 	})
 }
@@ -2231,6 +1975,12 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 		return
 	}
 	for _, id := range msgIDs {
+		// Try to re-send the original encrypted payload.
+		if payload := s.pending.GetPayload(id); payload != nil {
+			_ = s.writeEncryptedDirect(payload, 10*time.Second)
+			continue
+		}
+		// Payload not available — nack and ack as fallback.
 		s.containerTracker.NackContainer(id)
 		s.addAck(id)
 	}
@@ -2255,31 +2005,29 @@ func (s *Session) SetUpdateHandler(fn func(tg.TLObject)) {
 // TempKeyManager manages PFS temporary auth key lifecycle.
 // Ported from td/td/telegram/net/Session.cpp:1488-1498 (auth_loop TmpAuthKey).
 type TempKeyManager struct {
-	dcID       int
-	testMode   bool
-	permKey    []byte    // permanent auth key
-	tempKey    []byte    // current temp auth key
-	tempKeyID  int64     // SHA1-based temp key ID
-	expiresAt  time.Time // when the temp key expires
-	bound      bool      // whether auth.bindTempAuthKey succeeded
-	enabled    bool      // PFS mode flag
-	persistKey bool      // whether to persist temp key to storage
-	createdAt  time.Time // when this manager (and perm key) was initialized
-	needInit   bool      // caller must call initConnection after bind
-	storage    storage.Storage
-	mu         sync.Mutex
+	dcID      int
+	testMode  bool
+	permKey   []byte    // permanent auth key
+	tempKey   []byte    // current temp auth key
+	tempKeyID int64     // SHA1-based temp key ID
+	expiresAt time.Time // when the temp key expires
+	bound     bool      // whether auth.bindTempAuthKey succeeded
+	enabled   bool      // PFS mode flag
+	createdAt time.Time // when this manager (and perm key) was initialized
+	needInit  bool      // caller must call initConnection after bind
+	storage   storage.Storage
+	mu        sync.Mutex
 }
 
 // NewTempKeyManager creates a new temp key manager.
-func NewTempKeyManager(dcID int, testMode bool, permKey []byte, enabled bool, persistKey bool, st storage.Storage) *TempKeyManager {
+func NewTempKeyManager(dcID int, testMode bool, permKey []byte, enabled bool, st storage.Storage) *TempKeyManager {
 	return &TempKeyManager{
-		dcID:       dcID,
-		testMode:   testMode,
-		permKey:    permKey,
-		enabled:    enabled,
-		persistKey: persistKey,
-		createdAt:  time.Now(),
-		storage:    st,
+		dcID:      dcID,
+		testMode:  testMode,
+		permKey:   permKey,
+		enabled:   enabled,
+		createdAt: time.Now(),
+		storage:   st,
 	}
 }
 
@@ -2541,26 +2289,6 @@ func (m *TempKeyManager) Bind(ctx context.Context, sessionID int64, invoke func(
 	m.bound = true
 	m.needInit = true // caller must initConnection after bind per PFS spec
 	m.mu.Unlock()
-	return nil
-}
-
-// LoadFromStorage loads a persisted temp key from storage.
-func (m *TempKeyManager) LoadFromStorage() error {
-	if !m.persistKey || m.storage == nil {
-		return nil
-	}
-	// TODO: implement storage load for temp key
-	// Key: temp_auth_key_{dcID}
-	return nil
-}
-
-// SaveToStorage persists the current temp key to storage.
-func (m *TempKeyManager) SaveToStorage() error {
-	if !m.persistKey || m.storage == nil {
-		return nil
-	}
-	// TODO: implement storage save for temp key
-	// Key: temp_auth_key_{dcID}
 	return nil
 }
 

@@ -14,13 +14,14 @@ import (
 type CallHandle struct {
 	done      chan struct{} // closed exactly once on completion
 	once      sync.Once     // ensures single-shot close(done)
-	mu        sync.Mutex    // protects result, rawResult, err
+	mu        sync.Mutex    // protects result, rawResult, err, payload
 	result    tg.TLObject   // stored decoded TL result
 	rawResult []byte        // stored raw result bytes
 	err       error         // stored error
 	isRaw     bool          // true for SendRaw waiters
 	sentAt    int64         // unix-nano timestamp when the query was sent (for state checks)
 	acked     atomic.Bool   // true when the server acknowledged receipt
+	payload   []byte        // encrypted payload for re-send on msg_resend_req
 }
 
 // SentAt returns the time the query was sent.
@@ -44,6 +45,20 @@ func (h *CallHandle) Result() (tg.TLObject, []byte, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	return h.result, h.rawResult, h.err
+}
+
+// StorePayload stores the encrypted payload for later re-send on msg_resend_req.
+func (h *CallHandle) StorePayload(p []byte) {
+	h.mu.Lock()
+	h.payload = p
+	h.mu.Unlock()
+}
+
+// GetPayload returns the stored encrypted payload, or nil if none was stored.
+func (h *CallHandle) GetPayload() []byte {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.payload
 }
 
 // complete is the shared completion path. fn is called inside the mutex to
@@ -251,6 +266,17 @@ func (pm *PendingManager) MarkAcked(msgID int64) {
 	if ok {
 		h.acked.Store(true)
 	}
+}
+
+// GetPayload returns the stored encrypted payload for msgID, or nil if not found.
+func (pm *PendingManager) GetPayload(msgID int64) []byte {
+	pm.mu.Lock()
+	h, ok := pm.pending[msgID]
+	pm.mu.Unlock()
+	if !ok {
+		return nil
+	}
+	return h.GetPayload()
 }
 
 // OverduePending returns the message IDs of content-related pending queries
