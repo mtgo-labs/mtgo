@@ -66,3 +66,25 @@ func TestMsgIDGeneratorUpdateServerTime(t *testing.T) {
 		t.Errorf("msg_id=%d less than expected base after update=%d", id, expectedBase)
 	}
 }
+
+func TestMsgIDGeneratorUpdateServerTimeIgnoresOlder(t *testing.T) {
+	gen := NewMsgIDGenerator(time.Unix(1800000000, 0))
+	// An older time must be ignored to preserve monotonicity.
+	gen.UpdateServerTime(time.Unix(1700000000, 0))
+	id := gen.Next()
+	if id>>32 != 1800000000 {
+		t.Errorf("older time not ignored: msg_id base=%d, want 1800000000", id>>32)
+	}
+}
+
+func TestMsgIDGeneratorForceResetServerTimeBackward(t *testing.T) {
+	gen := NewMsgIDGenerator(time.Unix(1800000000, 0))
+	_ = gen.Next()
+	// Force-reset to an older time (code-17 correction); counter resets so the
+	// next id is allocated in the new (lower) epoch.
+	gen.ForceResetServerTime(time.Unix(1700000000, 0))
+	id := gen.Next()
+	if id>>32 != 1700000000 {
+		t.Errorf("force reset did not move clock backward: msg_id base=%d, want 1700000000", id>>32)
+	}
+}

@@ -37,6 +37,17 @@ func (g *MsgIDGenerator) UpdateServerTime(t time.Time) {
 	}
 }
 
+// ForceResetServerTime sets the internal clock to t unconditionally and resets
+// the counter, even when t is older than the current reference. This is used to
+// correct bad_msg_notification code 17 (msg_id too high), where the client's
+// clock has drifted ahead of the server and must move backward. UpdateServerTime
+// is forward-only and would no-op in that case. The server tolerates the
+// non-monotonic jump because it explicitly flagged the drift.
+func (g *MsgIDGenerator) ForceResetServerTime(t time.Time) {
+	g.serverTimeUnix.Store(t.Unix())
+	g.counter.Store(0)
+}
+
 // Next returns the next unique message ID, guaranteed to be monotonically
 // increasing. The lower bits encode a counter to ensure uniqueness within the
 // same second.

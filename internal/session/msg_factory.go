@@ -35,3 +35,9 @@ func (f *MsgFactory) AllocateSeqNo(contentRelated bool) int32 {
 func (f *MsgFactory) UpdateServerTime(t time.Time) {
 	f.msgIDGen.UpdateServerTime(t)
 }
+
+// ForceResetServerTime forwards a forced (possibly backward) server-time reset
+// to the underlying message ID generator. See MsgIDGenerator.ForceResetServerTime.
+func (f *MsgFactory) ForceResetServerTime(t time.Time) {
+	f.msgIDGen.ForceResetServerTime(t)
+}

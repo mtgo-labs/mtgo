@@ -62,11 +62,18 @@ func TestBadMsgNotificationCode16AdjustsTimeAndResolves(t *testing.T) {
 	}
 }
 
-func TestBadMsgNotificationCode17AdjustsTimeAndResolves(t *testing.T) {
+func TestBadMsgNotificationCode17ResetsClockBackwardAndResolves(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 
-	futureTime := time.Now().Add(2 * time.Hour)
-	badMsgID := futureTime.Unix() << 32
+	// Client clock has drifted 1h ahead of the server.
+	drifted := time.Now().Add(time.Hour)
+	s.msgFactory.UpdateServerTime(drifted)
+
+	// The server responds with code 17. Its notification msg_id carries the
+	// authoritative (lower) server time, well behind our drifted clock.
+	serverTime := drifted.Add(-2 * time.Hour)
+	notifMsgID := serverTime.Unix() << 32
+	badMsgID := drifted.Unix() << 32 // the too-high msg_id we sent
 
 	h, err := s.pending.Register(badMsgID, false)
 	if err != nil {
@@ -74,7 +81,7 @@ func TestBadMsgNotificationCode17AdjustsTimeAndResolves(t *testing.T) {
 	}
 
 	body := encodeBadMsgNotification(badMsgID, 0, 17)
-	if !s.handleRawPacket(badMsgID, body) {
+	if !s.handleRawPacket(notifMsgID, body) {
 		t.Fatal("handleRawPacket returned false, want true")
 	}
 
@@ -94,11 +101,12 @@ func TestBadMsgNotificationCode17AdjustsTimeAndResolves(t *testing.T) {
 		t.Fatalf("bad msg id: got %d, want %d", bad.BadMsgID, badMsgID)
 	}
 
-	// Verify server time was updated (forward, so UpdateServerTime advances).
-	newMsgID := s.msgFactory.AllocateMsgID()
-	serverTime := newMsgID >> 32
-	if serverTime < futureTime.Unix() {
-		t.Fatalf("server time not advanced: got %d, want >= %d", serverTime, futureTime.Unix())
+	// The clock must have moved BACKWARD to the server's time. Without the
+	// force-reset, UpdateServerTime no-ops and the clock stays drifted, so the
+	// retry would resend the same too-high msg_id until exhaustion.
+	got := s.msgFactory.AllocateMsgID() >> 32
+	if got > serverTime.Unix()+5 {
+		t.Fatalf("code 17 did not reset clock backward: got=%d, want~=%d", got, serverTime.Unix())
 	}
 }
 

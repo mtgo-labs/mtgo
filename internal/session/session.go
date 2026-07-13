@@ -1675,12 +1675,18 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 			// client/server clock drift. The server's current time is encoded
 			// in the upper 32 bits of the notification's msg_id (msgID parameter).
 			serverTime := msgID >> 32
-			s.msgFactory.UpdateServerTime(time.Unix(serverTime, 0))
+			if errorCode == 16 {
+				// Client clock is behind the server: advance forward.
+				s.msgFactory.UpdateServerTime(time.Unix(serverTime, 0))
+			} else {
+				// Code 17: client clock is ahead of the server. UpdateServerTime
+				// is forward-only and would no-op here, so the retry would resend
+				// the same too-high msg_id until retries exhaust. Force the clock
+				// backward to the server's authoritative time.
+				s.msgFactory.ForceResetServerTime(time.Unix(serverTime, 0))
+			}
 			if s.log != nil {
 				s.log.Warnf("session: time corrected (code=%d) server_time=%d", errorCode, serverTime)
-			}
-			if errorCode == 17 && s.log != nil {
-				s.log.Warnf("session: msg_id too high (code=17), reconnect recommended to reset session")
 			}
 			// Resolve with BadMsgNotification so Invoke's retry loop
 			// re-sends the query with the corrected time (via a fresh
