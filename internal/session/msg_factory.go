@@ -35,3 +35,9 @@ func (f *MsgFactory) AllocateSeqNo(contentRelated bool) int32 {
 func (f *MsgFactory) UpdateServerTime(t time.Time) {
 	f.msgIDGen.UpdateServerTime(t)
 }
+
+// AdvanceServerTime monotonically refines the server-time offset from an
+// inbound message timestamp. See MsgIDGenerator.AdvanceOffset.
+func (f *MsgFactory) AdvanceServerTime(t time.Time) {
+	f.msgIDGen.AdvanceOffset(t)
+}

@@ -1377,6 +1377,14 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 			continue
 		}
 
+		// Continuous server-time recalibration: the high 32 bits of every
+		// server-originated msg_id encode the server's unix time at send.
+		// Monotonically nudging the offset from each inbound message keeps it
+		// accurate for the session lifetime without waiting for a 16/17
+		// correction (tdlib's check_packet pattern). Cheap lock-free CAS; only
+		// ever moves the offset forward, so it cannot perturb msg_id ordering.
+		s.msgFactory.AdvanceServerTime(time.Unix(raw.MsgID>>32, 0))
+
 		s.addAck(raw.MsgID)
 
 		rawHandled := s.handleRawPacket(raw.MsgID, raw.BodyRaw)

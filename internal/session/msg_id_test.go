@@ -66,3 +66,32 @@ func TestMsgIDGeneratorUpdateServerTime(t *testing.T) {
 		t.Errorf("msg_id=%d less than expected base after update=%d", id, expectedBase)
 	}
 }
+
+// TestMsgIDGeneratorAdvanceOffsetMonotonic verifies the continuous-recalibration
+// path used by every inbound message: AdvanceOffset only ever moves the offset
+// forward, regardless of the server time it is handed.
+func TestMsgIDGeneratorAdvanceOffsetMonotonic(t *testing.T) {
+	gen := NewMsgIDGenerator(time.Now())
+	first := gen.Next()
+
+	// A much older server time must not reduce subsequent ids.
+	gen.AdvanceOffset(time.Now().Add(-2 * time.Hour))
+	afterOld := gen.Next()
+	if afterOld < first {
+		t.Errorf("AdvanceOffset(older) reduced id: %d -> %d", first, afterOld)
+	}
+
+	// A newer server time must advance the timestamp portion.
+	gen.AdvanceOffset(time.Now().Add(1 * time.Hour))
+	afterNew := gen.Next()
+	if afterNew>>32 <= afterOld>>32 {
+		t.Errorf("AdvanceOffset(newer) did not advance timestamp: %d -> %d", afterOld>>32, afterNew>>32)
+	}
+
+	// A subsequent older time must not undo the advance.
+	gen.AdvanceOffset(time.Now().Add(-1 * time.Hour))
+	afterOld2 := gen.Next()
+	if afterOld2 < afterNew {
+		t.Errorf("AdvanceOffset(older) reduced id after advance: %d -> %d", afterNew, afterOld2)
+	}
+}
