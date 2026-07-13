@@ -81,7 +81,7 @@ func (d *HandlerDispatcher) RemoveHandler(h Handler) {
 // Dispatch delivers update to every registered handler whose Check method
 // returns true, in ascending group order. It creates a fresh Context for each
 // handler via Client.NewContext and populates it with fields extracted from the
-// update. If any handler sets Context.Stopped, the loop terminates immediately
+// update. If any handler sets Context.StopPropagation, the loop terminates immediately
 // and no further handlers are invoked.
 //
 // When client.cfg.HandlerTimeout is positive, the per-handler context carries a
@@ -135,7 +135,7 @@ func (d *HandlerDispatcher) Dispatch(client *Client, update *Update) {
 			c.Update = update
 			populateContext(c, update)
 			he.handler.Handle(c)
-			if c.Stopped {
+			if c.stopPropagation {
 				return
 			}
 		}

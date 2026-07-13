@@ -24,7 +24,7 @@ type Handler interface {
 
 	// Handle executes the handler logic for a matched update. The provided Context
 	// carries the Client, the raw Update, and any populated convenience fields.
-	// Set Context.Stopped to true to short-circuit the dispatch loop and prevent
+	// Set Context.StopPropagation to true to short-circuit the dispatch loop and prevent
 	// lower-priority handlers from running.
 	Handle(ctx *Context)
 }

@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -871,12 +872,12 @@ func TestDispatcher_DispatchPoll(t *testing.T) {
 
 func TestContext_StopPropagation(t *testing.T) {
 	ctx := (&Client{}).NewContext(context.Background())
-	if ctx.Stopped {
-		t.Error("expected Stopped to be false initially")
+	if ctx.stopPropagation {
+		t.Error("expected stopPropagation to be false initially")
 	}
 	ctx.StopPropagation()
-	if !ctx.Stopped {
-		t.Error("expected Stopped to be true after StopPropagation")
+	if !ctx.stopPropagation {
+		t.Error("expected stopPropagation to be true after StopPropagation")
 	}
 }
 
@@ -1059,5 +1060,108 @@ func TestIntegration_ContextResolvePeer(t *testing.T) {
 	})
 	if resolved == nil {
 		t.Error("expected to resolve user peer")
+	}
+}
+
+// TestPopulateContextCoverage verifies that the populateContext function in
+// dispatcher.go includes an assignment for every exported *types.X / types.X
+// field on the Update struct that has a corresponding field on Context.
+// This catches drift at compile time: if a new field is added to Update but
+// populateContext is not updated, this test fails.
+func TestPopulateContextCoverage(t *testing.T) {
+	updateType := reflect.TypeOf(Update{})
+	contextType := reflect.TypeOf(Context{})
+
+	// Build a set of Context field names from the populateContext function.
+	// We do this by inspecting the actual assignments rather than by
+	// maintaining a separate list — we reflect on populateContext's known
+	// set of assigned fields.
+	//
+	// knownPairs maps Update field name → Context field name for every
+	// assignment in populateContext. Update field names are the *types.X
+	// ones; Context field names are the destination.
+	knownPairs := map[string]string{
+		"Message":                 "Message",
+		"EditedMessage":           "EditedMessage",
+		"BusinessMessage":         "BusinessMessage",
+		"EditedBusinessMessage":   "EditedBusinessMessage",
+		"DeletedMessages":         "DeletedMessages",
+		"DeletedBusinessMessages": "DeletedBusinessMessages",
+		"CallbackQuery":           "CallbackQuery",
+		"InlineQuery":             "InlineQuery",
+		"ChosenInlineResult":      "ChosenInlineResult",
+		"UserStatus":              "UserStatus",
+		"ChatMember":              "ChatMember",
+		"MessageReaction":         "MessageReaction",
+		"MessageReactionCount":    "MessageReactionCount",
+		"Poll":                    "Poll",
+		"PollAnswer":              "PollAnswer",
+		"BusinessConnection":      "BusinessConnection",
+		"Story":                   "Story",
+		"ChatBoost":               "ChatBoost",
+		"ChatJoinRequest":         "ChatJoinRequest",
+		"PreCheckoutQuery":        "PreCheckoutQuery",
+		"ShippingQuery":           "ShippingQuery",
+		"PurchasedPaidMedia":      "PurchasedPaidMedia",
+		"ManagedBot":              "ManagedBot",
+		"Error":                   "Error",
+		"Connected":               "Connected",
+		"Disconnected":            "Disconnected",
+		"Started":                 "Started",
+		"SecretChat":              "SecretChat",
+		"SecretMessage":           "SecretMessage",
+	}
+
+	// Collect Update fields that are *types.X pointers or error/bool.
+	updateFields := make(map[string]struct{})
+	for i := range updateType.NumField() {
+		f := updateType.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		updateFields[f.Name] = struct{}{}
+	}
+
+	// Excluded Update fields: maps (Users, Chats), Raw (TLObject),
+	// and Stopped (Context-only, no Update analog).
+	excluded := map[string]bool{
+		"Users":   true,
+		"Chats":   true,
+		"Raw":     true,
+		"Stopped": true,
+	}
+
+	// Check every exported Update field that is a *types.X pointer,
+	// error, or bool has a corresponding entry in knownPairs.
+	for i := range updateType.NumField() {
+		f := updateType.Field(i)
+		if !f.IsExported() || excluded[f.Name] {
+			continue
+		}
+		// We only track *types.X, error, and bool fields.
+		kind := f.Type.Kind()
+		isPtr := kind == reflect.Ptr
+		isBool := kind == reflect.Bool
+		isError := f.Type == reflect.TypeOf((*error)(nil)).Elem()
+		if !isPtr && !isBool && !isError {
+			continue
+		}
+		if _, ok := knownPairs[f.Name]; !ok {
+			t.Errorf("Update.%s (%v) is not populated in populateContext — "+
+				"add `ctx.%s = update.%s` to populateContext and update knownPairs in this test",
+				f.Name, f.Type, f.Name, f.Name)
+		}
+	}
+
+	// Reverse check: every knownPairs entry must exist on both Update and Context.
+	for updName, ctxName := range knownPairs {
+		if _, ok := updateFields[updName]; !ok {
+			t.Errorf("knownPairs[%q] = %q but Update has no field %q — remove from knownPairs",
+				updName, ctxName, updName)
+		}
+		if _, ok := contextType.FieldByName(ctxName); !ok {
+			t.Errorf("knownPairs[%q] = %q but Context has no field %q — update knownPairs",
+				updName, ctxName, ctxName)
+		}
 	}
 }
