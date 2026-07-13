@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"fmt"
+	"hash"
 	"sync"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -181,41 +182,55 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 //
 // See https://core.telegram.org/mtproto/description#encrypted-message.
 func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessage, []byte, error) {
+	// Declare variables before any goto to avoid jumping over declarations
+	// (required by Go spec for goto safety).
+	var earlyErr *tgerr.SecurityCheckMismatch
+	var decrypted []byte
+	var msgKey []byte
+	var keyArr, ivArr [32]byte
+	var err error
+	var message *tg.MTProtoMessage
+	var decErr error
+	var bodyLen int32
+	var paddingLen int
+	var msgKeyCheck [32]byte
+	var hc hash.Hash
+
 	if len(data) < 24 {
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "data too short"}
 	}
 
 	if subtle.ConstantTimeCompare(data[:8], authKeyID) != 1 {
-		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "b.read(8) == auth_key_id"}
+		earlyErr = &tgerr.SecurityCheckMismatch{Name: "b.read(8) == auth_key_id"}
+		goto verifyMsgKey
 	}
 
-	msgKey := data[8:24]
-	encrypted := data[24:]
+	msgKey = data[8:24]
+	keyArr, ivArr = KDF(authKey, msgKey, false)
 
-	keyArr, ivArr := KDF(authKey, msgKey, false)
-
-	if len(encrypted) == 0 || len(encrypted)%16 != 0 {
-		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "encrypted data not aligned to 16"}
+	if len(data[24:]) == 0 || len(data[24:])%16 != 0 {
+		earlyErr = &tgerr.SecurityCheckMismatch{Name: "encrypted data not aligned to 16"}
+		goto verifyMsgKey
 	}
 
-	decrypted, err := IGEDecrypt(encrypted, keyArr[:], ivArr[:])
+	decrypted, err = IGEDecrypt(data[24:], keyArr[:], ivArr[:])
 	if err != nil {
-		return nil, nil, err
+		earlyErr = &tgerr.SecurityCheckMismatch{Name: "invalid message"}
+		goto verifyMsgKey
 	}
 
 	if len(decrypted) < 16 {
-		ReleaseAESBuf(decrypted)
-		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}
+		earlyErr = &tgerr.SecurityCheckMismatch{Name: "decrypted data too short"}
+		goto verifyMsgKey
 	}
 
-	hc := sha256.New()
+	hc = sha256.New()
 	hc.Write(authKey[96:128])
 	hc.Write(decrypted)
-	var msgKeyCheck [32]byte
 	hc.Sum(msgKeyCheck[:0])
 	if subtle.ConstantTimeCompare(msgKey, msgKeyCheck[8:24]) != 1 {
 		ReleaseAESBuf(decrypted)
-		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key == sha256(auth_key[96:128] + data)[8:24]"}
+		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "msg_key check failed"}
 	}
 
 	if subtle.ConstantTimeCompare(decrypted[8:16], sessionID) != 1 {
@@ -228,9 +243,9 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "decrypted data too short for header"}
 	}
-	bodyLen := int32(decrypted[28]) | int32(decrypted[29])<<8 |
+	bodyLen = int32(decrypted[28]) | int32(decrypted[29])<<8 |
 		int32(decrypted[30])<<16 | int32(decrypted[31])<<24
-	paddingLen := len(decrypted) - 32 - int(bodyLen)
+	paddingLen = len(decrypted) - 32 - int(bodyLen)
 	if paddingLen < 12 || paddingLen > 1024 {
 		ReleaseAESBuf(decrypted)
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "12 <= len(padding) <= 1024"}
@@ -240,17 +255,39 @@ func Unpack(data []byte, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessa
 		return nil, nil, &tgerr.SecurityCheckMismatch{Name: "len(payload) % 4 == 0"}
 	}
 
-	message, err := func() (*tg.MTProtoMessage, error) {
+	message, decErr = func() (*tg.MTProtoMessage, error) {
 		r := tg.NewReader(decrypted[16:])
 		defer tg.ReleaseReader(r)
 		return tg.DecodeMTProtoMessage(r)
 	}()
-	if err != nil {
+	if decErr != nil {
 		ReleaseAESBuf(decrypted)
-		return nil, nil, fmt.Errorf("crypto/mtproto: decode message: %w", err)
+		return nil, nil, fmt.Errorf("crypto/mtproto: decode message: %w", decErr)
 	}
 
 	return message, decrypted, nil
+
+verifyMsgKey:
+	// Run msg_key computation + constant-time comparison before returning
+	// any error, so an attacker cannot use timing to distinguish which check
+	// failed. Per MTProto security guidelines: if an error is encountered
+	// before the msg_key check could be performed, the client MUST perform
+	// the msg_key check anyway before returning any result.
+	if len(data) >= 24 {
+		mk := data[8:24]
+		hc := sha256.New()
+		hc.Write(authKey[96:128])
+		if decrypted != nil {
+			hc.Write(decrypted)
+		}
+		var mkCheck [32]byte
+		hc.Sum(mkCheck[:0])
+		subtle.ConstantTimeCompare(mk, mkCheck[8:24])
+	}
+	if decrypted != nil {
+		ReleaseAESBuf(decrypted)
+	}
+	return nil, nil, earlyErr
 }
 
 // UnpackEnvelope decrypts and validates an incoming MTProto message but only
