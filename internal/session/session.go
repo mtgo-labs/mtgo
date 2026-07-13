@@ -1682,8 +1682,14 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 			if errorCode == 17 && s.log != nil {
 				s.log.Warnf("session: msg_id too high (code=17), reconnect recommended to reset session")
 			}
-			// Reject so the caller retries with the corrected time offset.
-			s.pending.Reject(badMsgID, fmt.Errorf("session: time correction applied (code %d)", errorCode))
+			// Resolve with BadMsgNotification so Invoke's retry loop
+			// re-sends the query with the corrected time (via a fresh
+			// msg_id from the updated MsgIDGenerator).
+			s.pending.Resolve(badMsgID, &tg.BadMsgNotification{
+				BadMsgID:    badMsgID,
+				BadMsgSeqno: int32(binary.LittleEndian.Uint32(body[12:16])),
+				ErrorCode:   errorCode,
+			})
 			return true
 		}
 		if errorCode == 20 {

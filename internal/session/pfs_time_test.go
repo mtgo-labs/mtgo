@@ -21,7 +21,7 @@ func encodeBadMsgNotification(badMsgID int64, seqno, errorCode int32) []byte {
 	return body
 }
 
-func TestBadMsgNotificationCode16AdjustsTimeAndRejects(t *testing.T) {
+func TestBadMsgNotificationCode16AdjustsTimeAndResolves(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 
 	// Use a server time well in the future so UpdateServerTime will advance.
@@ -39,9 +39,19 @@ func TestBadMsgNotificationCode16AdjustsTimeAndRejects(t *testing.T) {
 	}
 
 	<-h.Done()
-	_, _, herr := h.Result()
-	if herr == nil {
-		t.Fatal("expected error from Reject, got nil")
+	result, _, herr := h.Result()
+	if herr != nil {
+		t.Fatalf("expected nil error for code 16, got %v", herr)
+	}
+	bad, ok := result.(*tg.BadMsgNotification)
+	if !ok {
+		t.Fatalf("expected *tg.BadMsgNotification, got %T", result)
+	}
+	if bad.ErrorCode != 16 {
+		t.Fatalf("error code: got %d, want 16", bad.ErrorCode)
+	}
+	if bad.BadMsgID != badMsgID {
+		t.Fatalf("bad msg id: got %d, want %d", bad.BadMsgID, badMsgID)
 	}
 
 	// Verify server time was updated.
@@ -52,7 +62,7 @@ func TestBadMsgNotificationCode16AdjustsTimeAndRejects(t *testing.T) {
 	}
 }
 
-func TestBadMsgNotificationCode17AdjustsTimeAndRejects(t *testing.T) {
+func TestBadMsgNotificationCode17AdjustsTimeAndResolves(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 
 	futureTime := time.Now().Add(2 * time.Hour)
@@ -69,9 +79,19 @@ func TestBadMsgNotificationCode17AdjustsTimeAndRejects(t *testing.T) {
 	}
 
 	<-h.Done()
-	_, _, herr := h.Result()
-	if herr == nil {
-		t.Fatal("expected error from Reject, got nil")
+	result, _, herr := h.Result()
+	if herr != nil {
+		t.Fatalf("expected nil error for code 17, got %v", herr)
+	}
+	bad, ok := result.(*tg.BadMsgNotification)
+	if !ok {
+		t.Fatalf("expected *tg.BadMsgNotification, got %T", result)
+	}
+	if bad.ErrorCode != 17 {
+		t.Fatalf("error code: got %d, want 17", bad.ErrorCode)
+	}
+	if bad.BadMsgID != badMsgID {
+		t.Fatalf("bad msg id: got %d, want %d", bad.BadMsgID, badMsgID)
 	}
 
 	// Verify server time was updated (forward, so UpdateServerTime advances).
