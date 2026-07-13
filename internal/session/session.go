@@ -1673,8 +1673,8 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		if errorCode == 16 || errorCode == 17 {
 			// Codes 16 (msg_id too low) and 17 (msg_id too high) indicate
 			// client/server clock drift. The server's current time is encoded
-			// in the upper 32 bits of bad_msg_id.
-			serverTime := badMsgID >> 32
+			// in the upper 32 bits of the notification's msg_id (msgID parameter).
+			serverTime := msgID >> 32
 			s.msgFactory.UpdateServerTime(time.Unix(serverTime, 0))
 			if s.log != nil {
 				s.log.Warnf("session: time corrected (code=%d) server_time=%d", errorCode, serverTime)
