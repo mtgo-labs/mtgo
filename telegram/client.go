@@ -468,7 +468,7 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.ClientPlatform != "" {
 		c.Device.ClientPlatform = src.ClientPlatform
 	}
-	if src.TransportMode != "" {
+	if src.TransportMode != 0 {
 		c.TransportMode = src.TransportMode
 	}
 	if src.Storage != nil {
@@ -501,7 +501,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.LocalAddr != "" {
 		c.LocalAddr = src.LocalAddr
 	}
-	c.ReconnectEnabled = src.ReconnectEnabled
+	if src.ReconnectEnabled {
+		c.ReconnectEnabled = true
+	}
 	if src.ReconnectBaseDelay != 0 {
 		c.ReconnectBaseDelay = src.ReconnectBaseDelay
 	}
@@ -511,7 +513,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.ReconnectMaxAttempts != 0 {
 		c.ReconnectMaxAttempts = src.ReconnectMaxAttempts
 	}
-	c.HealthEnabled = src.HealthEnabled
+	if src.HealthEnabled {
+		c.HealthEnabled = true
+	}
 	if src.HealthPingInterval != 0 {
 		c.HealthPingInterval = src.HealthPingInterval
 	}
@@ -527,6 +531,36 @@ func (c *Config) mergeConfig(src *Config) {
 	}
 	if src.MaxRPCReconnectRetries != 0 {
 		c.MaxRPCReconnectRetries = src.MaxRPCReconnectRetries
+	}
+	if src.PFS {
+		c.PFS = true
+	}
+	if src.PeerCacheSize != 0 {
+		c.PeerCacheSize = src.PeerCacheSize
+	}
+	if src.ConnPoolTTL != 0 {
+		c.ConnPoolTTL = src.ConnPoolTTL
+	}
+	if src.EndpointCoolDown != 0 {
+		c.EndpointCoolDown = src.EndpointCoolDown
+	}
+	if src.MaxInFlightRPCs != 0 {
+		c.MaxInFlightRPCs = src.MaxInFlightRPCs
+	}
+	if src.AdmissionDeadline != 0 {
+		c.AdmissionDeadline = src.AdmissionDeadline
+	}
+	if src.OutboundBatchEnabled {
+		c.OutboundBatchEnabled = true
+	}
+	if src.OutboundMaxContainerBytes != 0 {
+		c.OutboundMaxContainerBytes = src.OutboundMaxContainerBytes
+	}
+	if src.OutboundCoalesceWindow != 0 {
+		c.OutboundCoalesceWindow = src.OutboundCoalesceWindow
+	}
+	if src.RSAKeyRotationInterval != 0 {
+		c.RSAKeyRotationInterval = src.RSAKeyRotationInterval
 	}
 }
 
