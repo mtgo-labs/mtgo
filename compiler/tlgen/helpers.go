@@ -796,13 +796,25 @@ func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToCons
 			fmt.Fprintf(&buf, "for _i%s := range %s {\n", idx, assign)
 			fmt.Fprintf(&buf, "\t_obj%s, _err%s := ReadTLObject(r)\n", idx, idx)
 			fmt.Fprintf(&buf, "\tif _err%s != nil {\n\t\treturn nil, _err%s\n\t}\n", idx, idx)
-			fmt.Fprintf(&buf, "\t%s[_i%s] = %s\n", assign, idx, typeAssertExpr("_obj"+idx, elemType))
+			if strings.HasPrefix(elemType, "[]") {
+				fmt.Fprintf(&buf, "\t%s[_i%s] = %s\n", assign, idx, typeAssertExpr("_obj"+idx, elemType))
+			} else {
+				fmt.Fprintf(&buf, "\t_c%s, _ok%s := _obj%s.(%s)\n", idx, idx, idx, elemType)
+				fmt.Fprintf(&buf, "\tif !_ok%s {\n", idx)
+				fmt.Fprintf(&buf, "\t\treturn nil, fmt.Errorf(\"decode: field %s: unexpected type %%T\", _obj%s)\n", arg.Name, idx)
+				fmt.Fprintf(&buf, "\t}\n")
+				fmt.Fprintf(&buf, "\t%s[_i%s] = _c%s\n", assign, idx, idx)
+			}
 			fmt.Fprintf(&buf, "}\n_ = _vhdr%s", idx)
 			return buf.String()
 		}
 	}
 
-	return fmt.Sprintf("_obj%s, _err%s := ReadTLObject(r)\nif _err%s != nil {\n\treturn nil, _err%s\n}\n%s = %s", fname, fname, fname, fname, assign, typeAssertExpr("_obj"+fname, goType))
+	if strings.HasPrefix(goType, "[]") {
+		return fmt.Sprintf("_obj%s, _err%s := ReadTLObject(r)\nif _err%s != nil {\n\treturn nil, _err%s\n}\n%s = %s", fname, fname, fname, fname, assign, typeAssertExpr("_obj"+fname, goType))
+	}
+	return fmt.Sprintf("_obj%s, _err%s := ReadTLObject(r)\nif _err%s != nil {\n\treturn nil, _err%s\n}\n_c%s, _ok%s := _obj%s.(%s)\nif !_ok%s {\n\treturn nil, fmt.Errorf(\"decode: field %s: unexpected type %%T\", _obj%s)\n}\n%s = _c%s",
+		fname, fname, fname, fname, fname, fname, fname, goType, fname, arg.Name, fname, assign, fname)
 }
 
 func typeAssertExpr(varName string, goType string) string {

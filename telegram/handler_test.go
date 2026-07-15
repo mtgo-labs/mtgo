@@ -1140,7 +1140,7 @@ func TestPopulateContextCoverage(t *testing.T) {
 		}
 		// We only track *types.X, error, and bool fields.
 		kind := f.Type.Kind()
-		isPtr := kind == reflect.Ptr
+		isPtr := kind == reflect.Pointer
 		isBool := kind == reflect.Bool
 		isError := f.Type == reflect.TypeOf((*error)(nil)).Elem()
 		if !isPtr && !isBool && !isError {

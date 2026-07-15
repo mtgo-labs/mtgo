@@ -122,7 +122,6 @@ func (c *Client) GetBoostsStatus(ctx context.Context, chatID int64) (*tg.Premium
 //	}
 func (c *Client) GetBoosts(ctx context.Context, opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
 	c.Log.Debug("GetBoosts")
-	_ = getOptDef(&GetBoostsOption{}, opts...)
 
 	rpc := c.Raw()
 	result, err := rpc.PremiumGetMyBoosts(ctx)

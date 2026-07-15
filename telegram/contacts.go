@@ -20,7 +20,7 @@ import (
 //	fmt.Println("Contact added")
 func (c *Client) AddContact(ctx context.Context, userID int64, firstName, lastName, phone string, share bool) error {
 	c.Log.Debugf("AddContact user_id=%d", userID)
-	user, err := resolveUserID(c, userID)
+	_, err := resolveUserID(c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -35,7 +35,6 @@ func (c *Client) AddContact(ctx context.Context, userID int64, firstName, lastNa
 			},
 		},
 	})
-	_ = user
 	return err
 }
 

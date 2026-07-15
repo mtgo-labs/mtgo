@@ -318,6 +318,10 @@ func ReadVectorObject(r *Reader) ([]TLObject, error) {
 	if err := checkVectorCount(count); err != nil {
 		return nil, err
 	}
+	// Each element is at least 4 bytes (constructor ID).
+	if int(count)*4 > r.Len() {
+		return nil, io.ErrUnexpectedEOF
+	}
 	items := make([]TLObject, count)
 	for i := range items {
 		obj, err := ReadTLObject(r)

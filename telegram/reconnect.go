@@ -280,9 +280,7 @@ func (c *Client) reconnectOnce() error {
 		c.Log.Errorf("session dispatch panic: %v", r)
 	})
 
-	c.mu.Lock()
-	c.apiInit = false
-	c.mu.Unlock()
+	c.apiInit.Store(false)
 
 	// Configure session ping intervals from client config before starting.
 	if c.config().HealthPingInterval > 0 {
@@ -306,7 +304,7 @@ func (c *Client) reconnectOnce() error {
 	go func() {
 		defer c.sessionWg.Done()
 		<-sess.SessionDone()
-		if c.state.IsConnected() {
+		if c.state.IsConnected() && !c.state.IsClosed() {
 			c.triggerReconnect(fmt.Errorf("session exited"))
 		}
 	}()

@@ -1046,11 +1046,9 @@ func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64)
 	if !ok {
 		return nil, fmt.Errorf("unexpected create chat result type %T", result.Updates)
 	}
-	pm := types.NewPeerMapFromClasses(upd.Users, upd.Chats)
 	for _, chat := range upd.Chats {
 		return types.ParseChatFromChat(chat), nil
 	}
-	_ = pm
 	return nil, ErrGroupNoInfo
 }
 

@@ -171,7 +171,7 @@ type Client struct {
 	rngMu sync.Mutex
 
 	// Booleans grouped at end to minimize padding on 64-bit.
-	apiInit     bool
+	apiInit     atomic.Bool
 	mwSorted    bool
 	migratingDC atomic.Bool
 }
@@ -1302,7 +1302,7 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 		c.Log.Warnf("save test mode: %v", err)
 	}
 	c.Log.Debug("DH exchange complete; auth_key=", len(result.AuthKey), " bytes")
-	syncStorage(st)
+	c.syncStorage(st)
 	return nil
 }
 
@@ -1400,9 +1400,7 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 		c.Log.Errorf("session dispatch panic: %v", r)
 	})
 
-	c.mu.Lock()
-	c.apiInit = false
-	c.mu.Unlock()
+	c.apiInit.Store(false)
 
 	if c.config().HealthPingInterval > 0 {
 		sess.SetPingInterval(c.config().HealthPingInterval)
@@ -1695,8 +1693,9 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	sess := c.session
 	c.session = nil
 	c.me = nil
-	c.apiInit = false
 	c.mu.Unlock()
+
+	c.apiInit.Store(false)
 
 	if sess != nil {
 		sess.CloseOutboundBatching()
@@ -1758,6 +1757,8 @@ func (c *Client) hasActiveResources() bool {
 func (c *Client) Close() {
 	c.stopPlugins(context.Background())
 	c.cleanupSessions()
+	// Purge expired connection pool entries (#42).
+	c.connPool.Purge()
 	// Stop the RSA key rotation watchdog (no goroutine leak — Principle V).
 	if c.keyWatchdogCancel != nil {
 		c.keyWatchdogCancel()
@@ -2801,7 +2802,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 		if st == nil {
 			st = NewMemoryStorage()
 		}
-		sess, err = session.NewSession(dc, st, c.config().DeviceModel, c.config().AppVersion, c.config().SystemLangCode, c.config().LangCode)
+		sess, err = session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("create session for dc %d: %w", dcID, err)
@@ -2863,21 +2864,33 @@ func (c *Client) saveMeToStorage(user *types.User) {
 	if st == nil {
 		return
 	}
-	_ = st.SetUserID(user.ID)
-	_ = st.SetIsBot(user.IsBot)
-	_ = st.SetFirstName(user.FirstName)
-	_ = st.SetLastName(user.LastName)
-	_ = st.SetUsername(user.Username)
-	syncStorage(st)
+	if err := st.SetUserID(user.ID); err != nil {
+		c.Log.Warnf("failed to persist user ID: %v", err)
+	}
+	if err := st.SetIsBot(user.IsBot); err != nil {
+		c.Log.Warnf("failed to persist bot flag: %v", err)
+	}
+	if err := st.SetFirstName(user.FirstName); err != nil {
+		c.Log.Warnf("failed to persist first name: %v", err)
+	}
+	if err := st.SetLastName(user.LastName); err != nil {
+		c.Log.Warnf("failed to persist last name: %v", err)
+	}
+	if err := st.SetUsername(user.Username); err != nil {
+		c.Log.Warnf("failed to persist username: %v", err)
+	}
+	c.syncStorage(st)
 }
 
 // syncStorage flushes pending session changes to durable storage. It is a
 // no-op for storage backends that do not implement a Sync method (e.g.
 // in-memory storage).
-func syncStorage(st storage.Storage) {
+func (c *Client) syncStorage(st storage.Storage) {
 	type syncer interface{ Sync() error }
 	if s, ok := st.(syncer); ok {
-		_ = s.Sync()
+		if err := s.Sync(); err != nil {
+			c.Log.Warnf("failed to sync storage: %v", err)
+		}
 	}
 }
 

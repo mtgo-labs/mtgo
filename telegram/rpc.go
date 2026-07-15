@@ -38,9 +38,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	if retries < 1 {
 		retries = 1
 	}
-	ci.client.mu.RLock()
-	apiInit := ci.client.apiInit
-	ci.client.mu.RUnlock()
+	apiInit := ci.client.apiInit.Load()
 
 	query := input
 	if !apiInit && needsInitConnection(input) {
@@ -62,25 +60,38 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 			}
 			return ci.client.handleMigrationError(ctx, parsed, input)
 		}
-		return nil, parsed
+		// Auto-retry FLOOD_WAIT below SleepThreshold.
+		if wait, fwOk := tgerr.AsFloodWait(parsed); fwOk && cfg.SleepThreshold > 0 && wait <= cfg.SleepThreshold {
+			ci.client.Log.Debugf("RPC flood-wait %s: auto-retry within threshold %s", wait, cfg.SleepThreshold)
+			select {
+			case <-time.After(wait):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+			result, err = ci.client.Invoke(ctx, query, retries, timeout)
+			if err != nil {
+				return nil, err
+			}
+			if rpcErr2, ok := result.(*tg.RPCError); ok {
+				return nil, tgerr.New(int(rpcErr2.ErrorCode), rpcErr2.ErrorMessage)
+			}
+		} else {
+			return nil, parsed
+		}
 	}
 	if result == nil {
 		ci.client.Log.Warnf("RPC nil result method=%T", input)
 		return nil, fmt.Errorf("telegram: nil RPC result for %T", input)
 	}
 	if !apiInit && needsInitConnection(input) {
-		ci.client.mu.Lock()
-		ci.client.apiInit = true
-		ci.client.mu.Unlock()
+		ci.client.apiInit.Store(true)
 	}
 	return result, nil
 }
 
 func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
-	ci.client.mu.RLock()
-	apiInit := ci.client.apiInit
-	cfg := ci.client.cfg
-	ci.client.mu.RUnlock()
+	apiInit := ci.client.apiInit.Load()
+	cfg := ci.client.config()
 
 	query := input
 	if !apiInit && needsInitConnection(input) {
@@ -89,19 +100,29 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 
 	data, err := ci.client.InvokeWithRawResult(ctx, query)
 	if err != nil {
-		if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 303 {
-			if shouldReturnMigrationToCaller(input, rpcErr) {
-				return nil, rpcErr
+		// Auto-retry FLOOD_WAIT below SleepThreshold.
+		if wait, fwOk := tgerr.AsFloodWait(err); fwOk && cfg.SleepThreshold > 0 && wait <= cfg.SleepThreshold {
+			ci.client.Log.Debugf("RPC flood-wait %s: auto-retry within threshold %s", wait, cfg.SleepThreshold)
+			select {
+			case <-time.After(wait):
+			case <-ctx.Done():
+				return nil, ctx.Err()
 			}
-			_, migErr := ci.client.handleMigrationError(ctx, rpcErr, input)
-			return nil, migErr
+			data, err = ci.client.InvokeWithRawResult(ctx, query)
 		}
-		return nil, err
+		if err != nil {
+			if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 303 {
+				if shouldReturnMigrationToCaller(input, rpcErr) {
+					return nil, rpcErr
+				}
+				_, migErr := ci.client.handleMigrationError(ctx, rpcErr, input)
+				return nil, migErr
+			}
+			return nil, err
+		}
 	}
 	if !apiInit && needsInitConnection(input) {
-		ci.client.mu.Lock()
-		ci.client.apiInit = true
-		ci.client.mu.Unlock()
+		ci.client.apiInit.Store(true)
 	}
 	return data, nil
 }

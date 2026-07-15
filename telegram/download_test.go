@@ -368,9 +368,11 @@ func TestIsRecoverableDownloadError(t *testing.T) {
 		{"unrelated", errors.New("io: unexpected EOF"), false},
 		{"not connected", ErrNotConnected, true},
 		{"bare session closed", errors.New("send: session: closed"), true},
-		{"wrapped session closed",
+		{
+			"wrapped session closed",
 			errors.New("download: get file at offset 0: invoke *tg.UploadGetFileRequest(cid=be5335be): retries exhausted (2): invoke *tg.UploadGetFileRequest(cid=be5335be): send: session: closed"),
-			true},
+			true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

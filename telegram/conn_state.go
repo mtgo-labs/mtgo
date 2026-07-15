@@ -107,19 +107,25 @@ func (cs *connStateManager) State() ConnState {
 
 func (cs *connStateManager) Health() HealthStatus {
 	cs.mu.RLock()
+	state := cs.state
+	dc := cs.currentDC
+	reconnectCount := cs.reconnectCount
+	lastErr := cs.lastErr
+	connectedSince := cs.connectedSince
+	cs.mu.RUnlock()
+
 	cs.tsMu.Lock()
 	defer cs.tsMu.Unlock()
-	defer cs.mu.RUnlock()
 	return HealthStatus{
-		State:          cs.state,
-		CurrentDC:      cs.currentDC,
+		State:          state,
+		CurrentDC:      dc,
 		LastReadTime:   cs.lastRead,
 		LastWriteTime:  cs.lastWrite,
 		LastPingTime:   cs.lastPing,
 		LastPongTime:   cs.lastPong,
-		ReconnectCount: cs.reconnectCount,
-		LastError:      cs.lastErr,
-		ConnectedSince: cs.connectedSince,
+		ReconnectCount: reconnectCount,
+		LastError:      lastErr,
+		ConnectedSince: connectedSince,
 	}
 }
 

@@ -8,11 +8,6 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func assertPeerInput[T PeerInput](t *testing.T, v T) {
-	_ = v
-	_ = t
-}
-
 func TestInputPeerToID(t *testing.T) {
 	tests := []struct {
 		name string

@@ -52,7 +52,7 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 			return nil, fmt.Errorf("telegram: invalid DH generator: %d", g)
 		}
 	case *tg.MessagesDHConfigNotModified:
-		dhPrime = crypto.CurrentDHPrime
+		dhPrime = crypto.GetDHPrime()
 		g = 2
 		dhVersion = 0
 	default:
@@ -477,7 +477,7 @@ func (h *encryptionUpdateHandler) handleEncryptionUpdate(c *Client, ctx *Context
 
 	switch chat := upd.Chat.(type) {
 	case *tg.EncryptedChatRequested:
-		dhPrime := crypto.CurrentDHPrime
+		dhPrime := crypto.GetDHPrime()
 		g := int32(2)
 		dhVersion := int32(0)
 

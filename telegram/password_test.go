@@ -43,7 +43,7 @@ func TestComputeCheckPasswordSRPDoesNotExtendSalt1(t *testing.T) {
 	tail := append([]byte(nil), backing[16:]...)
 
 	// A valid in-range server B = g^k mod p.
-	validB := new(big.Int).Exp(big.NewInt(3), big.NewInt(12345), mtcrypto.CurrentDHPrime)
+	validB := new(big.Int).Exp(big.NewInt(3), big.NewInt(12345), mtcrypto.GetDHPrime())
 	srpB := make([]byte, 256)
 	bBytes := validB.Bytes()
 	copy(srpB[256-len(bBytes):], bBytes)
@@ -53,7 +53,7 @@ func TestComputeCheckPasswordSRPDoesNotExtendSalt1(t *testing.T) {
 			Salt1: salt1,
 			Salt2: []byte("server-salt-2"),
 			G:     3,
-			P:     mtcrypto.CurrentDHPrime.Bytes(),
+			P:     mtcrypto.GetDHPrime().Bytes(),
 		},
 		SRPB:  srpB,
 		SRPID: 1,

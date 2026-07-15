@@ -20,18 +20,8 @@ func (f InvokerFunc) RPCInvokeRaw(ctx context.Context, input TLObject) ([]byte, 
 	return nil, fmt.Errorf("tg: InvokerFunc does not implement RPCInvokeRaw")
 }
 
-// Client wraps an Invoker and provides a high-level RPC interface.
-type Client struct {
-	rpc Invoker
-}
-
 // RPC returns the underlying Invoker used by the client.
 func (c *RPCClient) RPC() Invoker { return c.rpc }
-
-// NewClient creates a new Client backed by the given Invoker.
-func NewClient(invoker Invoker) *Client {
-	return &Client{rpc: invoker}
-}
 
 // Invoke performs an RPC call by delegating to the underlying Invoker.
 func (c *RPCClient) Invoke(ctx context.Context, input TLObject, decode func(*Reader) (TLObject, error)) (TLObject, error) {

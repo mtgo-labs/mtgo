@@ -78,6 +78,6 @@ func inputPeerToID(peer tg.InputPeerClass) int64 {
 	case *tg.InputPeerChannel:
 		return channelPrefix - p.ChannelID
 	default:
-		return 0
+		return -1
 	}
 }

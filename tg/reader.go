@@ -96,11 +96,25 @@ func (r *Reader) ReadBool() (bool, error) {
 	return id == BoolTrueID, nil
 }
 
+// ReadRawBytes returns n bytes as a slice into the internal buffer — caller
+// MUST copy if the data needs to outlive the Reader (e.g. after ReleaseReader).
 func (r *Reader) ReadRawBytes(n int) ([]byte, error) {
 	if r.off+n > len(r.b) {
 		return nil, io.ErrUnexpectedEOF
 	}
 	v := r.b[r.off : r.off+n]
+	r.off += n
+	return v, nil
+}
+
+// ReadRawBytesCopy allocates a new slice for callers that need ownership of
+// the returned bytes past the Reader's lifetime.
+func (r *Reader) ReadRawBytesCopy(n int) ([]byte, error) {
+	if r.off+n > len(r.b) {
+		return nil, io.ErrUnexpectedEOF
+	}
+	v := make([]byte, n)
+	copy(v, r.b[r.off:r.off+n])
 	r.off += n
 	return v, nil
 }

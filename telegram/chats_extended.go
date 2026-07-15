@@ -80,7 +80,7 @@ func (c *Client) TransferChatOwnership(ctx context.Context, chatID int64, userID
 		return fmt.Errorf("resolve user: %w", err)
 	}
 
-	srp, err := c.computeSRP(ctx, password)
+	_, err = c.computeSRP(ctx, password)
 	if err != nil {
 		return fmt.Errorf("compute SRP: %w", err)
 	}
@@ -94,7 +94,6 @@ func (c *Client) TransferChatOwnership(ctx context.Context, chatID int64, userID
 	if err != nil {
 		return err
 	}
-	_ = srp
 	return nil
 }
 

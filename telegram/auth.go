@@ -227,10 +227,18 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 	// auth key, and so the on-disk key/user identity cannot be exfiltrated after
 	// an explicit logout on a persistent storage backend.
 	if c.storage != nil {
-		_ = c.storage.SetAuthKey(nil)
-		_ = c.storage.SetUserID(0)
-		_ = c.storage.SetAPIHash("")
-		_ = c.storage.SetIsBot(false)
+		if err := c.storage.SetAuthKey(nil); err != nil {
+			c.Log.Warnf("failed to clear auth key: %v", err)
+		}
+		if err := c.storage.SetUserID(0); err != nil {
+			c.Log.Warnf("failed to clear user ID: %v", err)
+		}
+		if err := c.storage.SetAPIHash(""); err != nil {
+			c.Log.Warnf("failed to clear API hash: %v", err)
+		}
+		if err := c.storage.SetIsBot(false); err != nil {
+			c.Log.Warnf("failed to clear bot flag: %v", err)
+		}
 	}
 	_ = c.Disconnect()
 	return true, nil

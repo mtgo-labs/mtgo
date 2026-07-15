@@ -90,7 +90,7 @@ func DecodeMTProtoMessageRaw(r *Reader) (*MTProtoMessageRaw, error) {
 	if length > 1<<20 {
 		return nil, fmt.Errorf("%w: %d bytes", errMessageBodyTooLarge, length)
 	}
-	bodyData, err := r.ReadRawBytes(int(length))
+	bodyData, err := r.ReadRawBytesCopy(int(length))
 	if err != nil {
 		return nil, err
 	}

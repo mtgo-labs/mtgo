@@ -61,7 +61,34 @@ func (d *dedupCache) cleanupLocked(now time.Time) {
 //   - Account qts (no channelID): key = int64(qts)|1<<62   [> 2^62]
 //   - Channel pts:                key = ch<<32 | int64(pts) [2^32 .. ~2^62]
 //
-// Returns 0 when the update carries no pts/qts signature (always dispatch).
+// dedupFields caches struct field indices per type to avoid repeated
+// FieldByName lookups on the update dispatch hot path (#29).
+type dedupFieldCache struct {
+	ptsIndex     []int // nil if no PTS field
+	channelIndex []int // nil if no ChannelID field
+	qtsIndex     []int // nil if no Qts field
+}
+
+var dedupTypeCache sync.Map // reflect.Type → dedupFieldCache
+
+func getDedupFields(t reflect.Type) dedupFieldCache {
+	if cached, ok := dedupTypeCache.Load(t); ok {
+		return cached.(dedupFieldCache)
+	}
+	fields := dedupFieldCache{}
+	if f, ok := t.FieldByName("PTS"); ok && f.Type.Kind() == reflect.Int32 {
+		fields.ptsIndex = f.Index
+	}
+	if f, ok := t.FieldByName("ChannelID"); ok && f.Type.Kind() == reflect.Int64 {
+		fields.channelIndex = f.Index
+	}
+	if f, ok := t.FieldByName("Qts"); ok && f.Type.Kind() == reflect.Int32 {
+		fields.qtsIndex = f.Index
+	}
+	dedupTypeCache.Store(t, fields)
+	return fields
+}
+
 func updateDedupKey(upd tg.UpdateClass) int64 {
 	if upd == nil {
 		return 0
@@ -76,33 +103,27 @@ func updateDedupKey(upd tg.UpdateClass) int64 {
 	if v.Kind() != reflect.Struct {
 		return 0
 	}
-	pts := dedupReadInt32(v, "PTS")
-	channelID := dedupReadInt64(v, "ChannelID")
+	fc := getDedupFields(v.Type())
+	var pts int32
+	if fc.ptsIndex != nil {
+		pts = int32(v.FieldByIndex(fc.ptsIndex).Int())
+	}
+	var channelID int64
+	if fc.channelIndex != nil {
+		channelID = v.FieldByIndex(fc.channelIndex).Int()
+	}
 	if pts > 0 {
 		if channelID > 0 {
 			return channelID<<32 | int64(uint32(pts))
 		}
 		return int64(pts)
 	}
-	qts := dedupReadInt32(v, "Qts")
+	var qts int32
+	if fc.qtsIndex != nil {
+		qts = int32(v.FieldByIndex(fc.qtsIndex).Int())
+	}
 	if qts > 0 {
 		return int64(1)<<62 | int64(qts)
 	}
 	return 0
-}
-
-func dedupReadInt32(v reflect.Value, name string) int32 {
-	f := v.FieldByName(name)
-	if !f.IsValid() || f.Kind() != reflect.Int32 {
-		return 0
-	}
-	return int32(f.Int())
-}
-
-func dedupReadInt64(v reflect.Value, name string) int64 {
-	f := v.FieldByName(name)
-	if !f.IsValid() || f.Kind() != reflect.Int64 {
-		return 0
-	}
-	return f.Int()
 }
