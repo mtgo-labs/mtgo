@@ -1906,6 +1906,16 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		defer release()
 	}
 
+	// Wrap with InvokeWithLayer so server returns layer-correct constructor IDs.
+	apiInit := c.apiInit.Load()
+	if needsInitConnection(query) {
+		if !apiInit {
+			query = wrapInitConnection(c.config(), query)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
+		}
+	}
+
 	var result tg.TLObject
 	err := c.retrySessionErr(ctx, func() error {
 		c.mu.RLock()
@@ -1925,6 +1935,9 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		}
 		return nil, fmt.Errorf("client: invoke: %w", err)
 	}
+	if !apiInit && needsInitConnection(query) {
+		c.apiInit.Store(true)
+	}
 	return result, nil
 }
 
@@ -1943,6 +1956,15 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 		}
 	}
 
+	apiInit := c.apiInit.Load()
+	if needsInitConnection(query) {
+		if !apiInit {
+			query = wrapInitConnection(c.config(), query)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
+		}
+	}
+
 	var result tg.TLObject
 	err := c.retrySessionErr(ctx, func() error {
 		c.mu.RLock()
@@ -1957,6 +1979,9 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 	})
 	if err != nil {
 		return nil, err
+	}
+	if !apiInit && needsInitConnection(query) {
+		c.apiInit.Store(true)
 	}
 	return result, nil
 }
@@ -1989,6 +2014,15 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	}
 	retries := max(c.config().Retries, 1)
 
+	apiInit := c.apiInit.Load()
+	if needsInitConnection(query) {
+		if !apiInit {
+			query = wrapInitConnection(c.config(), query)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
+		}
+	}
+
 	var result []byte
 	err := c.retrySessionErr(ctx, func() error {
 		c.mu.RLock()
@@ -2003,6 +2037,9 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	})
 	if err != nil {
 		return nil, err
+	}
+	if !apiInit && needsInitConnection(query) {
+		c.apiInit.Store(true)
 	}
 	return result, nil
 }
