@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // UserFullClass is the interface for TL type UserFull.
@@ -427,39 +428,63 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 	if _errSettings != nil {
 		return nil, _errSettings
 	}
-	v.Settings = _objSettings.(PeerSettingsClass)
+	_cSettings, _okSettings := _objSettings.(PeerSettingsClass)
+	if !_okSettings {
+		return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+	}
+	v.Settings = _cSettings
 	if v.Flags.Has(21) {
 		_objPersonalPhoto, _errPersonalPhoto := ReadTLObject(r)
 		if _errPersonalPhoto != nil {
 			return nil, _errPersonalPhoto
 		}
-		v.PersonalPhoto = _objPersonalPhoto.(PhotoClass)
+		_cPersonalPhoto, _okPersonalPhoto := _objPersonalPhoto.(PhotoClass)
+		if !_okPersonalPhoto {
+			return nil, fmt.Errorf("decode: field personal_photo: unexpected type %T", _objPersonalPhoto)
+		}
+		v.PersonalPhoto = _cPersonalPhoto
 	}
 	if v.Flags.Has(2) {
 		_objProfilePhoto, _errProfilePhoto := ReadTLObject(r)
 		if _errProfilePhoto != nil {
 			return nil, _errProfilePhoto
 		}
-		v.ProfilePhoto = _objProfilePhoto.(PhotoClass)
+		_cProfilePhoto, _okProfilePhoto := _objProfilePhoto.(PhotoClass)
+		if !_okProfilePhoto {
+			return nil, fmt.Errorf("decode: field profile_photo: unexpected type %T", _objProfilePhoto)
+		}
+		v.ProfilePhoto = _cProfilePhoto
 	}
 	if v.Flags.Has(22) {
 		_objFallbackPhoto, _errFallbackPhoto := ReadTLObject(r)
 		if _errFallbackPhoto != nil {
 			return nil, _errFallbackPhoto
 		}
-		v.FallbackPhoto = _objFallbackPhoto.(PhotoClass)
+		_cFallbackPhoto, _okFallbackPhoto := _objFallbackPhoto.(PhotoClass)
+		if !_okFallbackPhoto {
+			return nil, fmt.Errorf("decode: field fallback_photo: unexpected type %T", _objFallbackPhoto)
+		}
+		v.FallbackPhoto = _cFallbackPhoto
 	}
 	_objNotifySettings, _errNotifySettings := ReadTLObject(r)
 	if _errNotifySettings != nil {
 		return nil, _errNotifySettings
 	}
-	v.NotifySettings = _objNotifySettings.(*PeerNotifySettings)
+	_cNotifySettings, _okNotifySettings := _objNotifySettings.(*PeerNotifySettings)
+	if !_okNotifySettings {
+		return nil, fmt.Errorf("decode: field notify_settings: unexpected type %T", _objNotifySettings)
+	}
+	v.NotifySettings = _cNotifySettings
 	if v.Flags.Has(3) {
 		_objBotInfo, _errBotInfo := ReadTLObject(r)
 		if _errBotInfo != nil {
 			return nil, _errBotInfo
 		}
-		v.BotInfo = _objBotInfo.(BotInfoClass)
+		_cBotInfo, _okBotInfo := _objBotInfo.(BotInfoClass)
+		if !_okBotInfo {
+			return nil, fmt.Errorf("decode: field bot_info: unexpected type %T", _objBotInfo)
+		}
+		v.BotInfo = _cBotInfo
 	}
 	if v.Flags.Has(6) {
 		_rPinnedMsgID, _ePinnedMsgID := r.ReadInt32()
@@ -492,7 +517,11 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 		if _errTheme != nil {
 			return nil, _errTheme
 		}
-		v.Theme = _objTheme.(ChatThemeClass)
+		_cTheme, _okTheme := _objTheme.(ChatThemeClass)
+		if !_okTheme {
+			return nil, fmt.Errorf("decode: field theme: unexpected type %T", _objTheme)
+		}
+		v.Theme = _cTheme
 	}
 	if v.Flags.Has(16) {
 		_rPrivateForwardName, _ePrivateForwardName := r.ReadString()
@@ -506,70 +535,110 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 		if _errBotGroupAdminRights != nil {
 			return nil, _errBotGroupAdminRights
 		}
-		v.BotGroupAdminRights = _objBotGroupAdminRights.(*ChatAdminRights)
+		_cBotGroupAdminRights, _okBotGroupAdminRights := _objBotGroupAdminRights.(*ChatAdminRights)
+		if !_okBotGroupAdminRights {
+			return nil, fmt.Errorf("decode: field bot_group_admin_rights: unexpected type %T", _objBotGroupAdminRights)
+		}
+		v.BotGroupAdminRights = _cBotGroupAdminRights
 	}
 	if v.Flags.Has(18) {
 		_objBotBroadcastAdminRights, _errBotBroadcastAdminRights := ReadTLObject(r)
 		if _errBotBroadcastAdminRights != nil {
 			return nil, _errBotBroadcastAdminRights
 		}
-		v.BotBroadcastAdminRights = _objBotBroadcastAdminRights.(*ChatAdminRights)
+		_cBotBroadcastAdminRights, _okBotBroadcastAdminRights := _objBotBroadcastAdminRights.(*ChatAdminRights)
+		if !_okBotBroadcastAdminRights {
+			return nil, fmt.Errorf("decode: field bot_broadcast_admin_rights: unexpected type %T", _objBotBroadcastAdminRights)
+		}
+		v.BotBroadcastAdminRights = _cBotBroadcastAdminRights
 	}
 	if v.Flags.Has(24) {
 		_objWallpaper, _errWallpaper := ReadTLObject(r)
 		if _errWallpaper != nil {
 			return nil, _errWallpaper
 		}
-		v.Wallpaper = _objWallpaper.(WallPaperClass)
+		_cWallpaper, _okWallpaper := _objWallpaper.(WallPaperClass)
+		if !_okWallpaper {
+			return nil, fmt.Errorf("decode: field wallpaper: unexpected type %T", _objWallpaper)
+		}
+		v.Wallpaper = _cWallpaper
 	}
 	if v.Flags.Has(25) {
 		_objStories, _errStories := ReadTLObject(r)
 		if _errStories != nil {
 			return nil, _errStories
 		}
-		v.Stories = _objStories.(PeerStoriesClass)
+		_cStories, _okStories := _objStories.(PeerStoriesClass)
+		if !_okStories {
+			return nil, fmt.Errorf("decode: field stories: unexpected type %T", _objStories)
+		}
+		v.Stories = _cStories
 	}
 	if v.Flags2.Has(0) {
 		_objBusinessWorkHours, _errBusinessWorkHours := ReadTLObject(r)
 		if _errBusinessWorkHours != nil {
 			return nil, _errBusinessWorkHours
 		}
-		v.BusinessWorkHours = _objBusinessWorkHours.(*BusinessWorkHours)
+		_cBusinessWorkHours, _okBusinessWorkHours := _objBusinessWorkHours.(*BusinessWorkHours)
+		if !_okBusinessWorkHours {
+			return nil, fmt.Errorf("decode: field business_work_hours: unexpected type %T", _objBusinessWorkHours)
+		}
+		v.BusinessWorkHours = _cBusinessWorkHours
 	}
 	if v.Flags2.Has(1) {
 		_objBusinessLocation, _errBusinessLocation := ReadTLObject(r)
 		if _errBusinessLocation != nil {
 			return nil, _errBusinessLocation
 		}
-		v.BusinessLocation = _objBusinessLocation.(*BusinessLocation)
+		_cBusinessLocation, _okBusinessLocation := _objBusinessLocation.(*BusinessLocation)
+		if !_okBusinessLocation {
+			return nil, fmt.Errorf("decode: field business_location: unexpected type %T", _objBusinessLocation)
+		}
+		v.BusinessLocation = _cBusinessLocation
 	}
 	if v.Flags2.Has(2) {
 		_objBusinessGreetingMessage, _errBusinessGreetingMessage := ReadTLObject(r)
 		if _errBusinessGreetingMessage != nil {
 			return nil, _errBusinessGreetingMessage
 		}
-		v.BusinessGreetingMessage = _objBusinessGreetingMessage.(*BusinessGreetingMessage)
+		_cBusinessGreetingMessage, _okBusinessGreetingMessage := _objBusinessGreetingMessage.(*BusinessGreetingMessage)
+		if !_okBusinessGreetingMessage {
+			return nil, fmt.Errorf("decode: field business_greeting_message: unexpected type %T", _objBusinessGreetingMessage)
+		}
+		v.BusinessGreetingMessage = _cBusinessGreetingMessage
 	}
 	if v.Flags2.Has(3) {
 		_objBusinessAwayMessage, _errBusinessAwayMessage := ReadTLObject(r)
 		if _errBusinessAwayMessage != nil {
 			return nil, _errBusinessAwayMessage
 		}
-		v.BusinessAwayMessage = _objBusinessAwayMessage.(*BusinessAwayMessage)
+		_cBusinessAwayMessage, _okBusinessAwayMessage := _objBusinessAwayMessage.(*BusinessAwayMessage)
+		if !_okBusinessAwayMessage {
+			return nil, fmt.Errorf("decode: field business_away_message: unexpected type %T", _objBusinessAwayMessage)
+		}
+		v.BusinessAwayMessage = _cBusinessAwayMessage
 	}
 	if v.Flags2.Has(4) {
 		_objBusinessIntro, _errBusinessIntro := ReadTLObject(r)
 		if _errBusinessIntro != nil {
 			return nil, _errBusinessIntro
 		}
-		v.BusinessIntro = _objBusinessIntro.(*BusinessIntro)
+		_cBusinessIntro, _okBusinessIntro := _objBusinessIntro.(*BusinessIntro)
+		if !_okBusinessIntro {
+			return nil, fmt.Errorf("decode: field business_intro: unexpected type %T", _objBusinessIntro)
+		}
+		v.BusinessIntro = _cBusinessIntro
 	}
 	if v.Flags2.Has(5) {
 		_objBirthday, _errBirthday := ReadTLObject(r)
 		if _errBirthday != nil {
 			return nil, _errBirthday
 		}
-		v.Birthday = _objBirthday.(*Birthday)
+		_cBirthday, _okBirthday := _objBirthday.(*Birthday)
+		if !_okBirthday {
+			return nil, fmt.Errorf("decode: field birthday: unexpected type %T", _objBirthday)
+		}
+		v.Birthday = _cBirthday
 	}
 	if v.Flags2.Has(6) {
 		_rPersonalChannelID, _ePersonalChannelID := r.ReadInt64()
@@ -597,14 +666,22 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 		if _errStarrefProgram != nil {
 			return nil, _errStarrefProgram
 		}
-		v.StarrefProgram = _objStarrefProgram.(*StarRefProgram)
+		_cStarrefProgram, _okStarrefProgram := _objStarrefProgram.(*StarRefProgram)
+		if !_okStarrefProgram {
+			return nil, fmt.Errorf("decode: field starref_program: unexpected type %T", _objStarrefProgram)
+		}
+		v.StarrefProgram = _cStarrefProgram
 	}
 	if v.Flags2.Has(12) {
 		_objBotVerification, _errBotVerification := ReadTLObject(r)
 		if _errBotVerification != nil {
 			return nil, _errBotVerification
 		}
-		v.BotVerification = _objBotVerification.(*BotVerification)
+		_cBotVerification, _okBotVerification := _objBotVerification.(*BotVerification)
+		if !_okBotVerification {
+			return nil, fmt.Errorf("decode: field bot_verification: unexpected type %T", _objBotVerification)
+		}
+		v.BotVerification = _cBotVerification
 	}
 	if v.Flags2.Has(14) {
 		_rSendPaidMessagesStars, _eSendPaidMessagesStars := r.ReadInt64()
@@ -618,21 +695,33 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 		if _errDisallowedGifts != nil {
 			return nil, _errDisallowedGifts
 		}
-		v.DisallowedGifts = _objDisallowedGifts.(*DisallowedGiftsSettings)
+		_cDisallowedGifts, _okDisallowedGifts := _objDisallowedGifts.(*DisallowedGiftsSettings)
+		if !_okDisallowedGifts {
+			return nil, fmt.Errorf("decode: field disallowed_gifts: unexpected type %T", _objDisallowedGifts)
+		}
+		v.DisallowedGifts = _cDisallowedGifts
 	}
 	if v.Flags2.Has(17) {
 		_objStarsRating, _errStarsRating := ReadTLObject(r)
 		if _errStarsRating != nil {
 			return nil, _errStarsRating
 		}
-		v.StarsRating = _objStarsRating.(*StarsRating)
+		_cStarsRating, _okStarsRating := _objStarsRating.(*StarsRating)
+		if !_okStarsRating {
+			return nil, fmt.Errorf("decode: field stars_rating: unexpected type %T", _objStarsRating)
+		}
+		v.StarsRating = _cStarsRating
 	}
 	if v.Flags2.Has(18) {
 		_objStarsMyPendingRating, _errStarsMyPendingRating := ReadTLObject(r)
 		if _errStarsMyPendingRating != nil {
 			return nil, _errStarsMyPendingRating
 		}
-		v.StarsMyPendingRating = _objStarsMyPendingRating.(*StarsRating)
+		_cStarsMyPendingRating, _okStarsMyPendingRating := _objStarsMyPendingRating.(*StarsRating)
+		if !_okStarsMyPendingRating {
+			return nil, fmt.Errorf("decode: field stars_my_pending_rating: unexpected type %T", _objStarsMyPendingRating)
+		}
+		v.StarsMyPendingRating = _cStarsMyPendingRating
 	}
 	if v.Flags2.Has(18) {
 		_rStarsMyPendingRatingDate, _eStarsMyPendingRatingDate := r.ReadInt32()
@@ -646,21 +735,33 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 		if _errMainTab != nil {
 			return nil, _errMainTab
 		}
-		v.MainTab = _objMainTab.(ProfileTabClass)
+		_cMainTab, _okMainTab := _objMainTab.(ProfileTabClass)
+		if !_okMainTab {
+			return nil, fmt.Errorf("decode: field main_tab: unexpected type %T", _objMainTab)
+		}
+		v.MainTab = _cMainTab
 	}
 	if v.Flags2.Has(21) {
 		_objSavedMusic, _errSavedMusic := ReadTLObject(r)
 		if _errSavedMusic != nil {
 			return nil, _errSavedMusic
 		}
-		v.SavedMusic = _objSavedMusic.(DocumentClass)
+		_cSavedMusic, _okSavedMusic := _objSavedMusic.(DocumentClass)
+		if !_okSavedMusic {
+			return nil, fmt.Errorf("decode: field saved_music: unexpected type %T", _objSavedMusic)
+		}
+		v.SavedMusic = _cSavedMusic
 	}
 	if v.Flags2.Has(22) {
 		_objNote, _errNote := ReadTLObject(r)
 		if _errNote != nil {
 			return nil, _errNote
 		}
-		v.Note = _objNote.(*TextWithEntities)
+		_cNote, _okNote := _objNote.(*TextWithEntities)
+		if !_okNote {
+			return nil, fmt.Errorf("decode: field note: unexpected type %T", _objNote)
+		}
+		v.Note = _cNote
 	}
 	if v.Flags2.Has(25) {
 		_rBotManagerID, _eBotManagerID := r.ReadInt64()
@@ -716,7 +817,11 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 	if _errFullUser != nil {
 		return nil, _errFullUser
 	}
-	v.FullUser = _objFullUser.(UserFullClass)
+	_cFullUser, _okFullUser := _objFullUser.(UserFullClass)
+	if !_okFullUser {
+		return nil, fmt.Errorf("decode: field full_user: unexpected type %T", _objFullUser)
+	}
+	v.FullUser = _cFullUser
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
@@ -734,7 +839,11 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -754,7 +863,11 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -829,7 +942,11 @@ func DecodeUsersUsers(r *Reader) (*UsersUsers, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -891,7 +1008,11 @@ func DecodeUsersUsersSlice(r *Reader) (*UsersUsersSlice, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1009,7 +1130,11 @@ func DecodeUsersSavedMusic(r *Reader) (*UsersSavedMusic, error) {
 		if _errDocuments != nil {
 			return nil, _errDocuments
 		}
-		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
+		_cDocuments, _okDocuments := _objDocuments.(DocumentClass)
+		if !_okDocuments {
+			return nil, fmt.Errorf("decode: field documents: unexpected type %T", _objDocuments)
+		}
+		v.Documents[_iDocuments] = _cDocuments
 	}
 	_ = _vhdrDocuments
 	return v, nil

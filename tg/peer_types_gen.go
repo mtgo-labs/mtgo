@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // InputPeerClass is the interface for TL type InputPeer.
@@ -266,7 +267,11 @@ func DecodeInputPeerUserFromMessage(r *Reader) (*InputPeerUserFromMessage, error
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rMsgID, _eMsgID := r.ReadInt32()
 	if _eMsgID != nil {
 		return nil, _eMsgID
@@ -316,7 +321,11 @@ func DecodeInputPeerChannelFromMessage(r *Reader) (*InputPeerChannelFromMessage,
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rMsgID, _eMsgID := r.ReadInt32()
 	if _eMsgID != nil {
 		return nil, _eMsgID
@@ -499,7 +508,11 @@ func DecodeInputUserFromMessage(r *Reader) (*InputUserFromMessage, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rMsgID, _eMsgID := r.ReadInt32()
 	if _eMsgID != nil {
 		return nil, _eMsgID
@@ -594,7 +607,11 @@ func DecodeInputPhoneContact(r *Reader) (*InputPhoneContact, error) {
 		if _errNote != nil {
 			return nil, _errNote
 		}
-		v.Note = _objNote.(*TextWithEntities)
+		_cNote, _okNote := _objNote.(*TextWithEntities)
+		if !_okNote {
+			return nil, fmt.Errorf("decode: field note: unexpected type %T", _objNote)
+		}
+		v.Note = _cNote
 	}
 	return v, nil
 }
@@ -725,14 +742,22 @@ func DecodeInputChatUploadedPhoto(r *Reader) (*InputChatUploadedPhoto, error) {
 		if _errFile != nil {
 			return nil, _errFile
 		}
-		v.File = _objFile.(InputFileClass)
+		_cFile, _okFile := _objFile.(InputFileClass)
+		if !_okFile {
+			return nil, fmt.Errorf("decode: field file: unexpected type %T", _objFile)
+		}
+		v.File = _cFile
 	}
 	if v.Flags.Has(1) {
 		_objVideo, _errVideo := ReadTLObject(r)
 		if _errVideo != nil {
 			return nil, _errVideo
 		}
-		v.Video = _objVideo.(InputFileClass)
+		_cVideo, _okVideo := _objVideo.(InputFileClass)
+		if !_okVideo {
+			return nil, fmt.Errorf("decode: field video: unexpected type %T", _objVideo)
+		}
+		v.Video = _cVideo
 	}
 	if v.Flags.Has(2) {
 		_rVideoStartTs, _eVideoStartTs := r.ReadFloat64()
@@ -746,7 +771,11 @@ func DecodeInputChatUploadedPhoto(r *Reader) (*InputChatUploadedPhoto, error) {
 		if _errVideoEmojiMarkup != nil {
 			return nil, _errVideoEmojiMarkup
 		}
-		v.VideoEmojiMarkup = _objVideoEmojiMarkup.(VideoSizeClass)
+		_cVideoEmojiMarkup, _okVideoEmojiMarkup := _objVideoEmojiMarkup.(VideoSizeClass)
+		if !_okVideoEmojiMarkup {
+			return nil, fmt.Errorf("decode: field video_emoji_markup: unexpected type %T", _objVideoEmojiMarkup)
+		}
+		v.VideoEmojiMarkup = _cVideoEmojiMarkup
 	}
 	return v, nil
 }
@@ -783,7 +812,11 @@ func DecodeInputChatPhoto(r *Reader) (*InputChatPhoto, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(InputPhotoClass)
+	_cID, _okID := _objID.(InputPhotoClass)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	return v, nil
 }
 
@@ -939,7 +972,7 @@ type UserClass interface {
 const UserEmptyTypeID = 0xd3bc4b7a
 
 // UserTypeID is the constructor ID for TL type user.
-const UserTypeID = 0x31774388
+const UserTypeID = 0xb1b8cc83
 
 // isUser marks UserEmpty as implementing the UserClass interface.
 func (*UserEmpty) isUser() {}
@@ -983,7 +1016,7 @@ func init() {
 	}
 }
 
-// User represents the TL constructor user (0x31774388).
+// User represents the TL constructor user (0xb1b8cc83).
 //
 // See https://core.telegram.org/constructor/user for reference.
 type User struct {
@@ -1039,6 +1072,7 @@ type User struct {
 	BotActiveUsers          int32                 `json:"bot_active_users,omitempty"`
 	BotVerificationIcon     int64                 `json:"bot_verification_icon,omitempty"`
 	SendPaidMessagesStars   int64                 `json:"send_paid_messages_stars,omitempty"`
+	LinkedCommunityID       int64                 `json:"linked_community_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -1190,9 +1224,12 @@ func (v *User) SetFlags() {
 	if v.SendPaidMessagesStars != 0 {
 		v.Flags2.Set(15)
 	}
+	if v.LinkedCommunityID != 0 {
+		v.Flags2.Set(21)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x31774388.
+// ConstructorID returns the TL constructor identifier 0xb1b8cc83.
 func (v *User) ConstructorID() uint32 {
 	return UserTypeID
 }
@@ -1268,6 +1305,9 @@ func (v *User) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags2.Has(15) {
 		WriteLong(b, v.SendPaidMessagesStars)
+	}
+	if v.Flags2.Has(21) {
+		WriteLong(b, v.LinkedCommunityID)
 	}
 	return nil
 }
@@ -1360,14 +1400,22 @@ func DecodeUser(r *Reader) (*User, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(UserProfilePhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(UserProfilePhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	if v.Flags.Has(6) {
 		_objStatus, _errStatus := ReadTLObject(r)
 		if _errStatus != nil {
 			return nil, _errStatus
 		}
-		v.Status = _objStatus.(UserStatusClass)
+		_cStatus, _okStatus := _objStatus.(UserStatusClass)
+		if !_okStatus {
+			return nil, fmt.Errorf("decode: field status: unexpected type %T", _objStatus)
+		}
+		v.Status = _cStatus
 	}
 	if v.Flags.Has(14) {
 		_rBotInfoVersion, _eBotInfoVersion := r.ReadInt32()
@@ -1394,7 +1442,11 @@ func DecodeUser(r *Reader) (*User, error) {
 			if _errRestrictionReason != nil {
 				return nil, _errRestrictionReason
 			}
-			v.RestrictionReason[_iRestrictionReason] = _objRestrictionReason.(*RestrictionReason)
+			_cRestrictionReason, _okRestrictionReason := _objRestrictionReason.(*RestrictionReason)
+			if !_okRestrictionReason {
+				return nil, fmt.Errorf("decode: field restriction_reason: unexpected type %T", _objRestrictionReason)
+			}
+			v.RestrictionReason[_iRestrictionReason] = _cRestrictionReason
 		}
 		_ = _vhdrRestrictionReason
 	}
@@ -1417,7 +1469,11 @@ func DecodeUser(r *Reader) (*User, error) {
 		if _errEmojiStatus != nil {
 			return nil, _errEmojiStatus
 		}
-		v.EmojiStatus = _objEmojiStatus.(EmojiStatusClass)
+		_cEmojiStatus, _okEmojiStatus := _objEmojiStatus.(EmojiStatusClass)
+		if !_okEmojiStatus {
+			return nil, fmt.Errorf("decode: field emoji_status: unexpected type %T", _objEmojiStatus)
+		}
+		v.EmojiStatus = _cEmojiStatus
 	}
 	if v.Flags2.Has(0) {
 		_vhdrUsernames, _ehdrUsernames := r.ReadUint32()
@@ -1437,7 +1493,11 @@ func DecodeUser(r *Reader) (*User, error) {
 			if _errUsernames != nil {
 				return nil, _errUsernames
 			}
-			v.Usernames[_iUsernames] = _objUsernames.(*Username)
+			_cUsernames, _okUsernames := _objUsernames.(*Username)
+			if !_okUsernames {
+				return nil, fmt.Errorf("decode: field usernames: unexpected type %T", _objUsernames)
+			}
+			v.Usernames[_iUsernames] = _cUsernames
 		}
 		_ = _vhdrUsernames
 	}
@@ -1446,21 +1506,33 @@ func DecodeUser(r *Reader) (*User, error) {
 		if _errStoriesMaxID != nil {
 			return nil, _errStoriesMaxID
 		}
-		v.StoriesMaxID = _objStoriesMaxID.(*RecentStory)
+		_cStoriesMaxID, _okStoriesMaxID := _objStoriesMaxID.(*RecentStory)
+		if !_okStoriesMaxID {
+			return nil, fmt.Errorf("decode: field stories_max_id: unexpected type %T", _objStoriesMaxID)
+		}
+		v.StoriesMaxID = _cStoriesMaxID
 	}
 	if v.Flags2.Has(8) {
 		_objColor, _errColor := ReadTLObject(r)
 		if _errColor != nil {
 			return nil, _errColor
 		}
-		v.Color = _objColor.(PeerColorClass)
+		_cColor, _okColor := _objColor.(PeerColorClass)
+		if !_okColor {
+			return nil, fmt.Errorf("decode: field color: unexpected type %T", _objColor)
+		}
+		v.Color = _cColor
 	}
 	if v.Flags2.Has(9) {
 		_objProfileColor, _errProfileColor := ReadTLObject(r)
 		if _errProfileColor != nil {
 			return nil, _errProfileColor
 		}
-		v.ProfileColor = _objProfileColor.(PeerColorClass)
+		_cProfileColor, _okProfileColor := _objProfileColor.(PeerColorClass)
+		if !_okProfileColor {
+			return nil, fmt.Errorf("decode: field profile_color: unexpected type %T", _objProfileColor)
+		}
+		v.ProfileColor = _cProfileColor
 	}
 	if v.Flags2.Has(12) {
 		_rBotActiveUsers, _eBotActiveUsers := r.ReadInt32()
@@ -1482,6 +1554,13 @@ func DecodeUser(r *Reader) (*User, error) {
 			return nil, _eSendPaidMessagesStars
 		}
 		v.SendPaidMessagesStars = _rSendPaidMessagesStars
+	}
+	if v.Flags2.Has(21) {
+		_rLinkedCommunityID, _eLinkedCommunityID := r.ReadInt64()
+		if _eLinkedCommunityID != nil {
+			return nil, _eLinkedCommunityID
+		}
+		v.LinkedCommunityID = _rLinkedCommunityID
 	}
 	return v, nil
 }
@@ -1921,10 +2000,16 @@ const ChatTypeID = 0x41cbf256
 const ChatForbiddenTypeID = 0x6592a1a7
 
 // ChannelTypeID is the constructor ID for TL type channel.
-const ChannelTypeID = 0x1c32b11c
+const ChannelTypeID = 0xd49f34c6
 
 // ChannelForbiddenTypeID is the constructor ID for TL type channelForbidden.
 const ChannelForbiddenTypeID = 0x17d493d5
+
+// CommunityForbiddenTypeID is the constructor ID for TL type communityForbidden.
+const CommunityForbiddenTypeID = 0xfd3cdab8
+
+// CommunityTypeID is the constructor ID for TL type community.
+const CommunityTypeID = 0x65efe954
 
 // isChat marks ChatEmpty as implementing the ChatClass interface.
 func (*ChatEmpty) isChat() {}
@@ -1940,6 +2025,12 @@ func (*Channel) isChat() {}
 
 // isChat marks ChannelForbidden as implementing the ChatClass interface.
 func (*ChannelForbidden) isChat() {}
+
+// isChat marks CommunityForbidden as implementing the ChatClass interface.
+func (*CommunityForbidden) isChat() {}
+
+// isChat marks Community as implementing the ChatClass interface.
+func (*Community) isChat() {}
 
 // ChatEmpty represents the TL constructor chatEmpty (0x29562865).
 //
@@ -2086,7 +2177,11 @@ func DecodeChat(r *Reader) (*Chat, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(ChatPhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(ChatPhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
 	if _eParticipantsCount != nil {
 		return nil, _eParticipantsCount
@@ -2107,21 +2202,33 @@ func DecodeChat(r *Reader) (*Chat, error) {
 		if _errMigratedTo != nil {
 			return nil, _errMigratedTo
 		}
-		v.MigratedTo = _objMigratedTo.(InputChannelClass)
+		_cMigratedTo, _okMigratedTo := _objMigratedTo.(InputChannelClass)
+		if !_okMigratedTo {
+			return nil, fmt.Errorf("decode: field migrated_to: unexpected type %T", _objMigratedTo)
+		}
+		v.MigratedTo = _cMigratedTo
 	}
 	if v.Flags.Has(14) {
 		_objAdminRights, _errAdminRights := ReadTLObject(r)
 		if _errAdminRights != nil {
 			return nil, _errAdminRights
 		}
-		v.AdminRights = _objAdminRights.(*ChatAdminRights)
+		_cAdminRights, _okAdminRights := _objAdminRights.(*ChatAdminRights)
+		if !_okAdminRights {
+			return nil, fmt.Errorf("decode: field admin_rights: unexpected type %T", _objAdminRights)
+		}
+		v.AdminRights = _cAdminRights
 	}
 	if v.Flags.Has(18) {
 		_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
 		if _errDefaultBannedRights != nil {
 			return nil, _errDefaultBannedRights
 		}
-		v.DefaultBannedRights = _objDefaultBannedRights.(*ChatBannedRights)
+		_cDefaultBannedRights, _okDefaultBannedRights := _objDefaultBannedRights.(*ChatBannedRights)
+		if !_okDefaultBannedRights {
+			return nil, fmt.Errorf("decode: field default_banned_rights: unexpected type %T", _objDefaultBannedRights)
+		}
+		v.DefaultBannedRights = _cDefaultBannedRights
 	}
 	return v, nil
 }
@@ -2175,7 +2282,7 @@ func init() {
 	}
 }
 
-// Channel represents the TL constructor channel (0x1c32b11c).
+// Channel represents the TL constructor channel (0xd49f34c6).
 //
 // See https://core.telegram.org/constructor/channel for reference.
 type Channel struct {
@@ -2230,6 +2337,7 @@ type Channel struct {
 	BotVerificationIcon      int64                `json:"bot_verification_icon,omitempty"`
 	SendPaidMessagesStars    int64                `json:"send_paid_messages_stars,omitempty"`
 	LinkedMonoforumID        int64                `json:"linked_monoforum_id,omitempty"`
+	LinkedCommunityID        int64                `json:"linked_community_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -2369,9 +2477,12 @@ func (v *Channel) SetFlags() {
 	if v.LinkedMonoforumID != 0 {
 		v.Flags2.Set(18)
 	}
+	if v.LinkedCommunityID != 0 {
+		v.Flags2.Set(20)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x1c32b11c.
+// ConstructorID returns the TL constructor identifier 0xd49f34c6.
 func (v *Channel) ConstructorID() uint32 {
 	return ChannelTypeID
 }
@@ -2445,6 +2556,9 @@ func (v *Channel) Encode(b *bytes.Buffer) error {
 	if v.Flags2.Has(18) {
 		WriteLong(b, v.LinkedMonoforumID)
 	}
+	if v.Flags2.Has(20) {
+		WriteLong(b, v.LinkedCommunityID)
+	}
 	return nil
 }
 
@@ -2517,7 +2631,11 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(ChatPhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(ChatPhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -2541,7 +2659,11 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			if _errRestrictionReason != nil {
 				return nil, _errRestrictionReason
 			}
-			v.RestrictionReason[_iRestrictionReason] = _objRestrictionReason.(*RestrictionReason)
+			_cRestrictionReason, _okRestrictionReason := _objRestrictionReason.(*RestrictionReason)
+			if !_okRestrictionReason {
+				return nil, fmt.Errorf("decode: field restriction_reason: unexpected type %T", _objRestrictionReason)
+			}
+			v.RestrictionReason[_iRestrictionReason] = _cRestrictionReason
 		}
 		_ = _vhdrRestrictionReason
 	}
@@ -2550,21 +2672,33 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 		if _errAdminRights != nil {
 			return nil, _errAdminRights
 		}
-		v.AdminRights = _objAdminRights.(*ChatAdminRights)
+		_cAdminRights, _okAdminRights := _objAdminRights.(*ChatAdminRights)
+		if !_okAdminRights {
+			return nil, fmt.Errorf("decode: field admin_rights: unexpected type %T", _objAdminRights)
+		}
+		v.AdminRights = _cAdminRights
 	}
 	if v.Flags.Has(15) {
 		_objBannedRights, _errBannedRights := ReadTLObject(r)
 		if _errBannedRights != nil {
 			return nil, _errBannedRights
 		}
-		v.BannedRights = _objBannedRights.(*ChatBannedRights)
+		_cBannedRights, _okBannedRights := _objBannedRights.(*ChatBannedRights)
+		if !_okBannedRights {
+			return nil, fmt.Errorf("decode: field banned_rights: unexpected type %T", _objBannedRights)
+		}
+		v.BannedRights = _cBannedRights
 	}
 	if v.Flags.Has(18) {
 		_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
 		if _errDefaultBannedRights != nil {
 			return nil, _errDefaultBannedRights
 		}
-		v.DefaultBannedRights = _objDefaultBannedRights.(*ChatBannedRights)
+		_cDefaultBannedRights, _okDefaultBannedRights := _objDefaultBannedRights.(*ChatBannedRights)
+		if !_okDefaultBannedRights {
+			return nil, fmt.Errorf("decode: field default_banned_rights: unexpected type %T", _objDefaultBannedRights)
+		}
+		v.DefaultBannedRights = _cDefaultBannedRights
 	}
 	if v.Flags.Has(17) {
 		_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
@@ -2591,7 +2725,11 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			if _errUsernames != nil {
 				return nil, _errUsernames
 			}
-			v.Usernames[_iUsernames] = _objUsernames.(*Username)
+			_cUsernames, _okUsernames := _objUsernames.(*Username)
+			if !_okUsernames {
+				return nil, fmt.Errorf("decode: field usernames: unexpected type %T", _objUsernames)
+			}
+			v.Usernames[_iUsernames] = _cUsernames
 		}
 		_ = _vhdrUsernames
 	}
@@ -2600,28 +2738,44 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 		if _errStoriesMaxID != nil {
 			return nil, _errStoriesMaxID
 		}
-		v.StoriesMaxID = _objStoriesMaxID.(*RecentStory)
+		_cStoriesMaxID, _okStoriesMaxID := _objStoriesMaxID.(*RecentStory)
+		if !_okStoriesMaxID {
+			return nil, fmt.Errorf("decode: field stories_max_id: unexpected type %T", _objStoriesMaxID)
+		}
+		v.StoriesMaxID = _cStoriesMaxID
 	}
 	if v.Flags2.Has(7) {
 		_objColor, _errColor := ReadTLObject(r)
 		if _errColor != nil {
 			return nil, _errColor
 		}
-		v.Color = _objColor.(PeerColorClass)
+		_cColor, _okColor := _objColor.(PeerColorClass)
+		if !_okColor {
+			return nil, fmt.Errorf("decode: field color: unexpected type %T", _objColor)
+		}
+		v.Color = _cColor
 	}
 	if v.Flags2.Has(8) {
 		_objProfileColor, _errProfileColor := ReadTLObject(r)
 		if _errProfileColor != nil {
 			return nil, _errProfileColor
 		}
-		v.ProfileColor = _objProfileColor.(PeerColorClass)
+		_cProfileColor, _okProfileColor := _objProfileColor.(PeerColorClass)
+		if !_okProfileColor {
+			return nil, fmt.Errorf("decode: field profile_color: unexpected type %T", _objProfileColor)
+		}
+		v.ProfileColor = _cProfileColor
 	}
 	if v.Flags2.Has(9) {
 		_objEmojiStatus, _errEmojiStatus := ReadTLObject(r)
 		if _errEmojiStatus != nil {
 			return nil, _errEmojiStatus
 		}
-		v.EmojiStatus = _objEmojiStatus.(EmojiStatusClass)
+		_cEmojiStatus, _okEmojiStatus := _objEmojiStatus.(EmojiStatusClass)
+		if !_okEmojiStatus {
+			return nil, fmt.Errorf("decode: field emoji_status: unexpected type %T", _objEmojiStatus)
+		}
+		v.EmojiStatus = _cEmojiStatus
 	}
 	if v.Flags2.Has(10) {
 		_rLevel, _eLevel := r.ReadInt32()
@@ -2657,6 +2811,13 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			return nil, _eLinkedMonoforumID
 		}
 		v.LinkedMonoforumID = _rLinkedMonoforumID
+	}
+	if v.Flags2.Has(20) {
+		_rLinkedCommunityID, _eLinkedCommunityID := r.ReadInt64()
+		if _eLinkedCommunityID != nil {
+			return nil, _eLinkedCommunityID
+		}
+		v.LinkedCommunityID = _rLinkedCommunityID
 	}
 	return v, nil
 }
@@ -2755,6 +2916,225 @@ func DecodeChannelForbidden(r *Reader) (*ChannelForbidden, error) {
 func init() {
 	Registry[ChannelForbiddenTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeChannelForbidden(r)
+	}
+}
+
+// CommunityForbidden represents the TL constructor communityForbidden (0xfd3cdab8).
+//
+// See https://core.telegram.org/constructor/communityForbidden for reference.
+type CommunityForbidden struct {
+	Flags      Fields `json:"-"`
+	ID         int64  `json:"id,omitempty"`
+	AccessHash int64  `json:"access_hash,omitempty"`
+	Title      string `json:"title,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *CommunityForbidden) SetFlags() {
+	if v.AccessHash != 0 {
+		v.Flags.Set(13)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xfd3cdab8.
+func (v *CommunityForbidden) ConstructorID() uint32 {
+	return CommunityForbiddenTypeID
+}
+
+// Encode serializes CommunityForbidden to a bytes.Buffer using the TL binary protocol.
+func (v *CommunityForbidden) Encode(b *bytes.Buffer) error {
+	WriteInt(b, CommunityForbiddenTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.ID)
+	if v.Flags.Has(13) {
+		WriteLong(b, v.AccessHash)
+	}
+	WriteString(b, v.Title)
+	return nil
+}
+
+// DecodeCommunityForbidden deserializes a CommunityForbidden from a reader using the TL binary protocol.
+func DecodeCommunityForbidden(r *Reader) (*CommunityForbidden, error) {
+	v := &CommunityForbidden{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	if v.Flags.Has(13) {
+		_rAccessHash, _eAccessHash := r.ReadInt64()
+		if _eAccessHash != nil {
+			return nil, _eAccessHash
+		}
+		v.AccessHash = _rAccessHash
+	}
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	return v, nil
+}
+
+func init() {
+	Registry[CommunityForbiddenTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeCommunityForbidden(r)
+	}
+}
+
+// Community represents the TL constructor community (0x65efe954).
+//
+// See https://core.telegram.org/constructor/community for reference.
+type Community struct {
+	Flags               Fields            `json:"-"`
+	Creator             bool              `json:"creator,omitempty"`
+	Left                bool              `json:"left,omitempty"`
+	Min                 bool              `json:"min,omitempty"`
+	Flags2              Fields            `json:"-"`
+	CollapsedInDialogs  bool              `json:"collapsed_in_dialogs,omitempty"`
+	ID                  int64             `json:"id,omitempty"`
+	AccessHash          int64             `json:"access_hash,omitempty"`
+	Title               string            `json:"title,omitempty"`
+	Photo               ChatPhotoClass    `json:"photo,omitempty"`
+	Date                int32             `json:"date,omitempty"`
+	AdminRights         *ChatAdminRights  `json:"admin_rights,omitempty"`
+	DefaultBannedRights *ChatBannedRights `json:"default_banned_rights,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *Community) SetFlags() {
+	if v.Creator {
+		v.Flags.Set(0)
+	}
+	if v.Left {
+		v.Flags.Set(2)
+	}
+	if v.Min {
+		v.Flags.Set(12)
+	}
+	if v.CollapsedInDialogs {
+		v.Flags2.Set(20)
+	}
+	if v.AccessHash != 0 {
+		v.Flags.Set(13)
+	}
+	if v.AdminRights != nil {
+		v.Flags.Set(14)
+	}
+	if v.DefaultBannedRights != nil {
+		v.Flags.Set(18)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x65efe954.
+func (v *Community) ConstructorID() uint32 {
+	return CommunityTypeID
+}
+
+// Encode serializes Community to a bytes.Buffer using the TL binary protocol.
+func (v *Community) Encode(b *bytes.Buffer) error {
+	WriteInt(b, CommunityTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Flags2))
+	WriteLong(b, v.ID)
+	if v.Flags.Has(13) {
+		WriteLong(b, v.AccessHash)
+	}
+	WriteString(b, v.Title)
+	EncodeTLObject(b, v.Photo)
+	WriteInt(b, uint32(v.Date))
+	if v.Flags.Has(14) {
+		EncodeTLObject(b, v.AdminRights)
+	}
+	if v.Flags.Has(18) {
+		EncodeTLObject(b, v.DefaultBannedRights)
+	}
+	return nil
+}
+
+// DecodeCommunity deserializes a Community from a reader using the TL binary protocol.
+func DecodeCommunity(r *Reader) (*Community, error) {
+	v := &Community{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Creator = v.Flags.Has(0)
+	v.Left = v.Flags.Has(2)
+	v.Min = v.Flags.Has(12)
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags2 = Fields(_f)
+	}
+	v.CollapsedInDialogs = v.Flags2.Has(20)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	if v.Flags.Has(13) {
+		_rAccessHash, _eAccessHash := r.ReadInt64()
+		if _eAccessHash != nil {
+			return nil, _eAccessHash
+		}
+		v.AccessHash = _rAccessHash
+	}
+	_rTitle, _eTitle := r.ReadString()
+	if _eTitle != nil {
+		return nil, _eTitle
+	}
+	v.Title = _rTitle
+	_objPhoto, _errPhoto := ReadTLObject(r)
+	if _errPhoto != nil {
+		return nil, _errPhoto
+	}
+	_cPhoto, _okPhoto := _objPhoto.(ChatPhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	if v.Flags.Has(14) {
+		_objAdminRights, _errAdminRights := ReadTLObject(r)
+		if _errAdminRights != nil {
+			return nil, _errAdminRights
+		}
+		_cAdminRights, _okAdminRights := _objAdminRights.(*ChatAdminRights)
+		if !_okAdminRights {
+			return nil, fmt.Errorf("decode: field admin_rights: unexpected type %T", _objAdminRights)
+		}
+		v.AdminRights = _cAdminRights
+	}
+	if v.Flags.Has(18) {
+		_objDefaultBannedRights, _errDefaultBannedRights := ReadTLObject(r)
+		if _errDefaultBannedRights != nil {
+			return nil, _errDefaultBannedRights
+		}
+		_cDefaultBannedRights, _okDefaultBannedRights := _objDefaultBannedRights.(*ChatBannedRights)
+		if !_okDefaultBannedRights {
+			return nil, fmt.Errorf("decode: field default_banned_rights: unexpected type %T", _objDefaultBannedRights)
+		}
+		v.DefaultBannedRights = _cDefaultBannedRights
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[CommunityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeCommunity(r)
 	}
 }
 
@@ -3069,7 +3449,11 @@ func DecodeChatParticipantsForbidden(r *Reader) (*ChatParticipantsForbidden, err
 		if _errSelfParticipant != nil {
 			return nil, _errSelfParticipant
 		}
-		v.SelfParticipant = _objSelfParticipant.(ChatParticipantClass)
+		_cSelfParticipant, _okSelfParticipant := _objSelfParticipant.(ChatParticipantClass)
+		if !_okSelfParticipant {
+			return nil, fmt.Errorf("decode: field self_participant: unexpected type %T", _objSelfParticipant)
+		}
+		v.SelfParticipant = _cSelfParticipant
 	}
 	return v, nil
 }
@@ -3132,7 +3516,11 @@ func DecodeChatParticipants(r *Reader) (*ChatParticipants, error) {
 		if _errParticipants != nil {
 			return nil, _errParticipants
 		}
-		v.Participants[_iParticipants] = _objParticipants.(ChatParticipantClass)
+		_cParticipants, _okParticipants := _objParticipants.(ChatParticipantClass)
+		if !_okParticipants {
+			return nil, fmt.Errorf("decode: field participants: unexpected type %T", _objParticipants)
+		}
+		v.Participants[_iParticipants] = _cParticipants
 	}
 	_ = _vhdrParticipants
 	_rVersion, _eVersion := r.ReadInt32()
@@ -3295,6 +3683,9 @@ const InputNotifyBroadcastsTypeID = 0xb1db7c7e
 // InputNotifyForumTopicTypeID is the constructor ID for TL type inputNotifyForumTopic.
 const InputNotifyForumTopicTypeID = 0x5c467992
 
+// InputNotifyCommunityTypeID is the constructor ID for TL type inputNotifyCommunity.
+const InputNotifyCommunityTypeID = 0x27bb1adc
+
 // isInputNotifyPeer marks InputNotifyPeer as implementing the InputNotifyPeerClass interface.
 func (*InputNotifyPeer) isInputNotifyPeer() {}
 
@@ -3309,6 +3700,9 @@ func (*InputNotifyBroadcasts) isInputNotifyPeer() {}
 
 // isInputNotifyPeer marks InputNotifyForumTopic as implementing the InputNotifyPeerClass interface.
 func (*InputNotifyForumTopic) isInputNotifyPeer() {}
+
+// isInputNotifyPeer marks InputNotifyCommunity as implementing the InputNotifyPeerClass interface.
+func (*InputNotifyCommunity) isInputNotifyPeer() {}
 
 // InputNotifyPeer represents the TL constructor inputNotifyPeer (0xb8bc5b0c).
 //
@@ -3336,7 +3730,11 @@ func DecodeInputNotifyPeer(r *Reader) (*InputNotifyPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -3461,7 +3859,11 @@ func DecodeInputNotifyForumTopic(r *Reader) (*InputNotifyForumTopic, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rTopMsgID, _eTopMsgID := r.ReadInt32()
 	if _eTopMsgID != nil {
 		return nil, _eTopMsgID
@@ -3473,6 +3875,46 @@ func DecodeInputNotifyForumTopic(r *Reader) (*InputNotifyForumTopic, error) {
 func init() {
 	Registry[InputNotifyForumTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputNotifyForumTopic(r)
+	}
+}
+
+// InputNotifyCommunity represents the TL constructor inputNotifyCommunity (0x27bb1adc).
+//
+// See https://core.telegram.org/constructor/inputNotifyCommunity for reference.
+type InputNotifyCommunity struct {
+	Community InputChannelClass `json:"community,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x27bb1adc.
+func (v *InputNotifyCommunity) ConstructorID() uint32 {
+	return InputNotifyCommunityTypeID
+}
+
+// Encode serializes InputNotifyCommunity to a bytes.Buffer using the TL binary protocol.
+func (v *InputNotifyCommunity) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputNotifyCommunityTypeID)
+	EncodeTLObject(b, v.Community)
+	return nil
+}
+
+// DecodeInputNotifyCommunity deserializes a InputNotifyCommunity from a reader using the TL binary protocol.
+func DecodeInputNotifyCommunity(r *Reader) (*InputNotifyCommunity, error) {
+	v := &InputNotifyCommunity{}
+	_objCommunity, _errCommunity := ReadTLObject(r)
+	if _errCommunity != nil {
+		return nil, _errCommunity
+	}
+	_cCommunity, _okCommunity := _objCommunity.(InputChannelClass)
+	if !_okCommunity {
+		return nil, fmt.Errorf("decode: field community: unexpected type %T", _objCommunity)
+	}
+	v.Community = _cCommunity
+	return v, nil
+}
+
+func init() {
+	Registry[InputNotifyCommunityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputNotifyCommunity(r)
 	}
 }
 
@@ -3658,7 +4100,11 @@ func DecodeInputPeerNotifySettings(r *Reader) (*InputPeerNotifySettings, error) 
 		if _errSound != nil {
 			return nil, _errSound
 		}
-		v.Sound = _objSound.(NotificationSoundClass)
+		_cSound, _okSound := _objSound.(NotificationSoundClass)
+		if !_okSound {
+			return nil, fmt.Errorf("decode: field sound: unexpected type %T", _objSound)
+		}
+		v.Sound = _cSound
 	}
 	if v.Flags.Has(6) {
 		_rStoriesMuted, _eStoriesMuted := r.ReadBool()
@@ -3679,7 +4125,11 @@ func DecodeInputPeerNotifySettings(r *Reader) (*InputPeerNotifySettings, error) 
 		if _errStoriesSound != nil {
 			return nil, _errStoriesSound
 		}
-		v.StoriesSound = _objStoriesSound.(NotificationSoundClass)
+		_cStoriesSound, _okStoriesSound := _objStoriesSound.(NotificationSoundClass)
+		if !_okStoriesSound {
+			return nil, fmt.Errorf("decode: field stories_sound: unexpected type %T", _objStoriesSound)
+		}
+		v.StoriesSound = _cStoriesSound
 	}
 	return v, nil
 }
@@ -3900,21 +4350,33 @@ func DecodePeerNotifySettings(r *Reader) (*PeerNotifySettings, error) {
 		if _errIosSound != nil {
 			return nil, _errIosSound
 		}
-		v.IosSound = _objIosSound.(NotificationSoundClass)
+		_cIosSound, _okIosSound := _objIosSound.(NotificationSoundClass)
+		if !_okIosSound {
+			return nil, fmt.Errorf("decode: field ios_sound: unexpected type %T", _objIosSound)
+		}
+		v.IosSound = _cIosSound
 	}
 	if v.Flags.Has(4) {
 		_objAndroidSound, _errAndroidSound := ReadTLObject(r)
 		if _errAndroidSound != nil {
 			return nil, _errAndroidSound
 		}
-		v.AndroidSound = _objAndroidSound.(NotificationSoundClass)
+		_cAndroidSound, _okAndroidSound := _objAndroidSound.(NotificationSoundClass)
+		if !_okAndroidSound {
+			return nil, fmt.Errorf("decode: field android_sound: unexpected type %T", _objAndroidSound)
+		}
+		v.AndroidSound = _cAndroidSound
 	}
 	if v.Flags.Has(5) {
 		_objOtherSound, _errOtherSound := ReadTLObject(r)
 		if _errOtherSound != nil {
 			return nil, _errOtherSound
 		}
-		v.OtherSound = _objOtherSound.(NotificationSoundClass)
+		_cOtherSound, _okOtherSound := _objOtherSound.(NotificationSoundClass)
+		if !_okOtherSound {
+			return nil, fmt.Errorf("decode: field other_sound: unexpected type %T", _objOtherSound)
+		}
+		v.OtherSound = _cOtherSound
 	}
 	if v.Flags.Has(6) {
 		_rStoriesMuted, _eStoriesMuted := r.ReadBool()
@@ -3935,21 +4397,33 @@ func DecodePeerNotifySettings(r *Reader) (*PeerNotifySettings, error) {
 		if _errStoriesIosSound != nil {
 			return nil, _errStoriesIosSound
 		}
-		v.StoriesIosSound = _objStoriesIosSound.(NotificationSoundClass)
+		_cStoriesIosSound, _okStoriesIosSound := _objStoriesIosSound.(NotificationSoundClass)
+		if !_okStoriesIosSound {
+			return nil, fmt.Errorf("decode: field stories_ios_sound: unexpected type %T", _objStoriesIosSound)
+		}
+		v.StoriesIosSound = _cStoriesIosSound
 	}
 	if v.Flags.Has(9) {
 		_objStoriesAndroidSound, _errStoriesAndroidSound := ReadTLObject(r)
 		if _errStoriesAndroidSound != nil {
 			return nil, _errStoriesAndroidSound
 		}
-		v.StoriesAndroidSound = _objStoriesAndroidSound.(NotificationSoundClass)
+		_cStoriesAndroidSound, _okStoriesAndroidSound := _objStoriesAndroidSound.(NotificationSoundClass)
+		if !_okStoriesAndroidSound {
+			return nil, fmt.Errorf("decode: field stories_android_sound: unexpected type %T", _objStoriesAndroidSound)
+		}
+		v.StoriesAndroidSound = _cStoriesAndroidSound
 	}
 	if v.Flags.Has(10) {
 		_objStoriesOtherSound, _errStoriesOtherSound := ReadTLObject(r)
 		if _errStoriesOtherSound != nil {
 			return nil, _errStoriesOtherSound
 		}
-		v.StoriesOtherSound = _objStoriesOtherSound.(NotificationSoundClass)
+		_cStoriesOtherSound, _okStoriesOtherSound := _objStoriesOtherSound.(NotificationSoundClass)
+		if !_okStoriesOtherSound {
+			return nil, fmt.Errorf("decode: field stories_other_sound: unexpected type %T", _objStoriesOtherSound)
+		}
+		v.StoriesOtherSound = _cStoriesOtherSound
 	}
 	return v, nil
 }
@@ -4088,7 +4562,11 @@ func DecodeContactStatus(r *Reader) (*ContactStatus, error) {
 	if _errStatus != nil {
 		return nil, _errStatus
 	}
-	v.Status = _objStatus.(UserStatusClass)
+	_cStatus, _okStatus := _objStatus.(UserStatusClass)
+	if !_okStatus {
+		return nil, fmt.Errorf("decode: field status: unexpected type %T", _objStatus)
+	}
+	v.Status = _cStatus
 	return v, nil
 }
 
@@ -4533,6 +5011,9 @@ const NotifyBroadcastsTypeID = 0xd612e8ef
 // NotifyForumTopicTypeID is the constructor ID for TL type notifyForumTopic.
 const NotifyForumTopicTypeID = 0x226e6308
 
+// NotifyCommunityTypeID is the constructor ID for TL type notifyCommunity.
+const NotifyCommunityTypeID = 0xbe376999
+
 // isNotifyPeer marks NotifyPeer as implementing the NotifyPeerClass interface.
 func (*NotifyPeer) isNotifyPeer() {}
 
@@ -4547,6 +5028,9 @@ func (*NotifyBroadcasts) isNotifyPeer() {}
 
 // isNotifyPeer marks NotifyForumTopic as implementing the NotifyPeerClass interface.
 func (*NotifyForumTopic) isNotifyPeer() {}
+
+// isNotifyPeer marks NotifyCommunity as implementing the NotifyPeerClass interface.
+func (*NotifyCommunity) isNotifyPeer() {}
 
 // NotifyPeer represents the TL constructor notifyPeer (0x9fd40bd8).
 //
@@ -4574,7 +5058,11 @@ func DecodeNotifyPeer(r *Reader) (*NotifyPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -4699,7 +5187,11 @@ func DecodeNotifyForumTopic(r *Reader) (*NotifyForumTopic, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rTopMsgID, _eTopMsgID := r.ReadInt32()
 	if _eTopMsgID != nil {
 		return nil, _eTopMsgID
@@ -4711,6 +5203,42 @@ func DecodeNotifyForumTopic(r *Reader) (*NotifyForumTopic, error) {
 func init() {
 	Registry[NotifyForumTopicTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeNotifyForumTopic(r)
+	}
+}
+
+// NotifyCommunity represents the TL constructor notifyCommunity (0xbe376999).
+//
+// See https://core.telegram.org/constructor/notifyCommunity for reference.
+type NotifyCommunity struct {
+	CommunityID int64 `json:"community_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xbe376999.
+func (v *NotifyCommunity) ConstructorID() uint32 {
+	return NotifyCommunityTypeID
+}
+
+// Encode serializes NotifyCommunity to a bytes.Buffer using the TL binary protocol.
+func (v *NotifyCommunity) Encode(b *bytes.Buffer) error {
+	WriteInt(b, NotifyCommunityTypeID)
+	WriteLong(b, v.CommunityID)
+	return nil
+}
+
+// DecodeNotifyCommunity deserializes a NotifyCommunity from a reader using the TL binary protocol.
+func DecodeNotifyCommunity(r *Reader) (*NotifyCommunity, error) {
+	v := &NotifyCommunity{}
+	_rCommunityID, _eCommunityID := r.ReadInt64()
+	if _eCommunityID != nil {
+		return nil, _eCommunityID
+	}
+	v.CommunityID = _rCommunityID
+	return v, nil
+}
+
+func init() {
+	Registry[NotifyCommunityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeNotifyCommunity(r)
 	}
 }
 
@@ -4766,7 +5294,11 @@ func DecodeChatInviteAlready(r *Reader) (*ChatInviteAlready, error) {
 	if _errChat != nil {
 		return nil, _errChat
 	}
-	v.Chat = _objChat.(ChatClass)
+	_cChat, _okChat := _objChat.(ChatClass)
+	if !_okChat {
+		return nil, fmt.Errorf("decode: field chat: unexpected type %T", _objChat)
+	}
+	v.Chat = _cChat
 	return v, nil
 }
 
@@ -4916,7 +5448,11 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(PhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	_rParticipantsCount, _eParticipantsCount := r.ReadInt32()
 	if _eParticipantsCount != nil {
 		return nil, _eParticipantsCount
@@ -4940,7 +5476,11 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 			if _errParticipants != nil {
 				return nil, _errParticipants
 			}
-			v.Participants[_iParticipants] = _objParticipants.(UserClass)
+			_cParticipants, _okParticipants := _objParticipants.(UserClass)
+			if !_okParticipants {
+				return nil, fmt.Errorf("decode: field participants: unexpected type %T", _objParticipants)
+			}
+			v.Participants[_iParticipants] = _cParticipants
 		}
 		_ = _vhdrParticipants
 	}
@@ -4954,7 +5494,11 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 		if _errSubscriptionPricing != nil {
 			return nil, _errSubscriptionPricing
 		}
-		v.SubscriptionPricing = _objSubscriptionPricing.(*StarsSubscriptionPricing)
+		_cSubscriptionPricing, _okSubscriptionPricing := _objSubscriptionPricing.(*StarsSubscriptionPricing)
+		if !_okSubscriptionPricing {
+			return nil, fmt.Errorf("decode: field subscription_pricing: unexpected type %T", _objSubscriptionPricing)
+		}
+		v.SubscriptionPricing = _cSubscriptionPricing
 	}
 	if v.Flags.Has(12) {
 		_rSubscriptionFormID, _eSubscriptionFormID := r.ReadInt64()
@@ -4968,7 +5512,11 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 		if _errBotVerification != nil {
 			return nil, _errBotVerification
 		}
-		v.BotVerification = _objBotVerification.(*BotVerification)
+		_cBotVerification, _okBotVerification := _objBotVerification.(*BotVerification)
+		if !_okBotVerification {
+			return nil, fmt.Errorf("decode: field bot_verification: unexpected type %T", _objBotVerification)
+		}
+		v.BotVerification = _cBotVerification
 	}
 	return v, nil
 }
@@ -5007,7 +5555,11 @@ func DecodeChatInvitePeek(r *Reader) (*ChatInvitePeek, error) {
 	if _errChat != nil {
 		return nil, _errChat
 	}
-	v.Chat = _objChat.(ChatClass)
+	_cChat, _okChat := _objChat.(ChatClass)
+	if !_okChat {
+		return nil, fmt.Errorf("decode: field chat: unexpected type %T", _objChat)
+	}
+	v.Chat = _cChat
 	_rExpires, _eExpires := r.ReadInt32()
 	if _eExpires != nil {
 		return nil, _eExpires
@@ -5150,7 +5702,11 @@ func DecodeInputChannelFromMessage(r *Reader) (*InputChannelFromMessage, error) 
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rMsgID, _eMsgID := r.ReadInt32()
 	if _eMsgID != nil {
 		return nil, _eMsgID
@@ -5557,7 +6113,11 @@ func DecodeTopPeer(r *Reader) (*TopPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rRating, _eRating := r.ReadFloat64()
 	if _eRating != nil {
 		return nil, _eRating
@@ -5967,7 +6527,11 @@ func DecodeTopPeerCategoryPeers(r *Reader) (*TopPeerCategoryPeers, error) {
 	if _errCategory != nil {
 		return nil, _errCategory
 	}
-	v.Category = _objCategory.(TopPeerCategoryClass)
+	_cCategory, _okCategory := _objCategory.(TopPeerCategoryClass)
+	if !_okCategory {
+		return nil, fmt.Errorf("decode: field category: unexpected type %T", _objCategory)
+	}
+	v.Category = _cCategory
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -5990,7 +6554,11 @@ func DecodeTopPeerCategoryPeers(r *Reader) (*TopPeerCategoryPeers, error) {
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(*TopPeer)
+		_cPeers, _okPeers := _objPeers.(*TopPeer)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	return v, nil
@@ -6479,12 +7047,20 @@ func DecodeChannelAdminLogEventActionChangePhoto(r *Reader) (*ChannelAdminLogEve
 	if _errPrevPhoto != nil {
 		return nil, _errPrevPhoto
 	}
-	v.PrevPhoto = _objPrevPhoto.(PhotoClass)
+	_cPrevPhoto, _okPrevPhoto := _objPrevPhoto.(PhotoClass)
+	if !_okPrevPhoto {
+		return nil, fmt.Errorf("decode: field prev_photo: unexpected type %T", _objPrevPhoto)
+	}
+	v.PrevPhoto = _cPrevPhoto
 	_objNewPhoto, _errNewPhoto := ReadTLObject(r)
 	if _errNewPhoto != nil {
 		return nil, _errNewPhoto
 	}
-	v.NewPhoto = _objNewPhoto.(PhotoClass)
+	_cNewPhoto, _okNewPhoto := _objNewPhoto.(PhotoClass)
+	if !_okNewPhoto {
+		return nil, fmt.Errorf("decode: field new_photo: unexpected type %T", _objNewPhoto)
+	}
+	v.NewPhoto = _cNewPhoto
 	return v, nil
 }
 
@@ -6592,7 +7168,11 @@ func DecodeChannelAdminLogEventActionUpdatePinned(r *Reader) (*ChannelAdminLogEv
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(MessageClass)
+	_cMessage, _okMessage := _objMessage.(MessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 
@@ -6630,12 +7210,20 @@ func DecodeChannelAdminLogEventActionEditMessage(r *Reader) (*ChannelAdminLogEve
 	if _errPrevMessage != nil {
 		return nil, _errPrevMessage
 	}
-	v.PrevMessage = _objPrevMessage.(MessageClass)
+	_cPrevMessage, _okPrevMessage := _objPrevMessage.(MessageClass)
+	if !_okPrevMessage {
+		return nil, fmt.Errorf("decode: field prev_message: unexpected type %T", _objPrevMessage)
+	}
+	v.PrevMessage = _cPrevMessage
 	_objNewMessage, _errNewMessage := ReadTLObject(r)
 	if _errNewMessage != nil {
 		return nil, _errNewMessage
 	}
-	v.NewMessage = _objNewMessage.(MessageClass)
+	_cNewMessage, _okNewMessage := _objNewMessage.(MessageClass)
+	if !_okNewMessage {
+		return nil, fmt.Errorf("decode: field new_message: unexpected type %T", _objNewMessage)
+	}
+	v.NewMessage = _cNewMessage
 	return v, nil
 }
 
@@ -6671,7 +7259,11 @@ func DecodeChannelAdminLogEventActionDeleteMessage(r *Reader) (*ChannelAdminLogE
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(MessageClass)
+	_cMessage, _okMessage := _objMessage.(MessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 
@@ -6765,7 +7357,11 @@ func DecodeChannelAdminLogEventActionParticipantInvite(r *Reader) (*ChannelAdmin
 	if _errParticipant != nil {
 		return nil, _errParticipant
 	}
-	v.Participant = _objParticipant.(ChannelParticipantClass)
+	_cParticipant, _okParticipant := _objParticipant.(ChannelParticipantClass)
+	if !_okParticipant {
+		return nil, fmt.Errorf("decode: field participant: unexpected type %T", _objParticipant)
+	}
+	v.Participant = _cParticipant
 	return v, nil
 }
 
@@ -6803,12 +7399,20 @@ func DecodeChannelAdminLogEventActionParticipantToggleBan(r *Reader) (*ChannelAd
 	if _errPrevParticipant != nil {
 		return nil, _errPrevParticipant
 	}
-	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
+	_cPrevParticipant, _okPrevParticipant := _objPrevParticipant.(ChannelParticipantClass)
+	if !_okPrevParticipant {
+		return nil, fmt.Errorf("decode: field prev_participant: unexpected type %T", _objPrevParticipant)
+	}
+	v.PrevParticipant = _cPrevParticipant
 	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
 	if _errNewParticipant != nil {
 		return nil, _errNewParticipant
 	}
-	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
+	_cNewParticipant, _okNewParticipant := _objNewParticipant.(ChannelParticipantClass)
+	if !_okNewParticipant {
+		return nil, fmt.Errorf("decode: field new_participant: unexpected type %T", _objNewParticipant)
+	}
+	v.NewParticipant = _cNewParticipant
 	return v, nil
 }
 
@@ -6846,12 +7450,20 @@ func DecodeChannelAdminLogEventActionParticipantToggleAdmin(r *Reader) (*Channel
 	if _errPrevParticipant != nil {
 		return nil, _errPrevParticipant
 	}
-	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
+	_cPrevParticipant, _okPrevParticipant := _objPrevParticipant.(ChannelParticipantClass)
+	if !_okPrevParticipant {
+		return nil, fmt.Errorf("decode: field prev_participant: unexpected type %T", _objPrevParticipant)
+	}
+	v.PrevParticipant = _cPrevParticipant
 	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
 	if _errNewParticipant != nil {
 		return nil, _errNewParticipant
 	}
-	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
+	_cNewParticipant, _okNewParticipant := _objNewParticipant.(ChannelParticipantClass)
+	if !_okNewParticipant {
+		return nil, fmt.Errorf("decode: field new_participant: unexpected type %T", _objNewParticipant)
+	}
+	v.NewParticipant = _cNewParticipant
 	return v, nil
 }
 
@@ -6889,12 +7501,20 @@ func DecodeChannelAdminLogEventActionChangeStickerSet(r *Reader) (*ChannelAdminL
 	if _errPrevStickerset != nil {
 		return nil, _errPrevStickerset
 	}
-	v.PrevStickerset = _objPrevStickerset.(InputStickerSetClass)
+	_cPrevStickerset, _okPrevStickerset := _objPrevStickerset.(InputStickerSetClass)
+	if !_okPrevStickerset {
+		return nil, fmt.Errorf("decode: field prev_stickerset: unexpected type %T", _objPrevStickerset)
+	}
+	v.PrevStickerset = _cPrevStickerset
 	_objNewStickerset, _errNewStickerset := ReadTLObject(r)
 	if _errNewStickerset != nil {
 		return nil, _errNewStickerset
 	}
-	v.NewStickerset = _objNewStickerset.(InputStickerSetClass)
+	_cNewStickerset, _okNewStickerset := _objNewStickerset.(InputStickerSetClass)
+	if !_okNewStickerset {
+		return nil, fmt.Errorf("decode: field new_stickerset: unexpected type %T", _objNewStickerset)
+	}
+	v.NewStickerset = _cNewStickerset
 	return v, nil
 }
 
@@ -6968,12 +7588,20 @@ func DecodeChannelAdminLogEventActionDefaultBannedRights(r *Reader) (*ChannelAdm
 	if _errPrevBannedRights != nil {
 		return nil, _errPrevBannedRights
 	}
-	v.PrevBannedRights = _objPrevBannedRights.(*ChatBannedRights)
+	_cPrevBannedRights, _okPrevBannedRights := _objPrevBannedRights.(*ChatBannedRights)
+	if !_okPrevBannedRights {
+		return nil, fmt.Errorf("decode: field prev_banned_rights: unexpected type %T", _objPrevBannedRights)
+	}
+	v.PrevBannedRights = _cPrevBannedRights
 	_objNewBannedRights, _errNewBannedRights := ReadTLObject(r)
 	if _errNewBannedRights != nil {
 		return nil, _errNewBannedRights
 	}
-	v.NewBannedRights = _objNewBannedRights.(*ChatBannedRights)
+	_cNewBannedRights, _okNewBannedRights := _objNewBannedRights.(*ChatBannedRights)
+	if !_okNewBannedRights {
+		return nil, fmt.Errorf("decode: field new_banned_rights: unexpected type %T", _objNewBannedRights)
+	}
+	v.NewBannedRights = _cNewBannedRights
 	return v, nil
 }
 
@@ -7009,7 +7637,11 @@ func DecodeChannelAdminLogEventActionStopPoll(r *Reader) (*ChannelAdminLogEventA
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(MessageClass)
+	_cMessage, _okMessage := _objMessage.(MessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 
@@ -7090,12 +7722,20 @@ func DecodeChannelAdminLogEventActionChangeLocation(r *Reader) (*ChannelAdminLog
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(ChannelLocationClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(ChannelLocationClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(ChannelLocationClass)
+	_cNewValue, _okNewValue := _objNewValue.(ChannelLocationClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -7174,7 +7814,11 @@ func DecodeChannelAdminLogEventActionStartGroupCall(r *Reader) (*ChannelAdminLog
 	if _errCall != nil {
 		return nil, _errCall
 	}
-	v.Call = _objCall.(InputGroupCallClass)
+	_cCall, _okCall := _objCall.(InputGroupCallClass)
+	if !_okCall {
+		return nil, fmt.Errorf("decode: field call: unexpected type %T", _objCall)
+	}
+	v.Call = _cCall
 	return v, nil
 }
 
@@ -7210,7 +7854,11 @@ func DecodeChannelAdminLogEventActionDiscardGroupCall(r *Reader) (*ChannelAdminL
 	if _errCall != nil {
 		return nil, _errCall
 	}
-	v.Call = _objCall.(InputGroupCallClass)
+	_cCall, _okCall := _objCall.(InputGroupCallClass)
+	if !_okCall {
+		return nil, fmt.Errorf("decode: field call: unexpected type %T", _objCall)
+	}
+	v.Call = _cCall
 	return v, nil
 }
 
@@ -7246,7 +7894,11 @@ func DecodeChannelAdminLogEventActionParticipantMute(r *Reader) (*ChannelAdminLo
 	if _errParticipant != nil {
 		return nil, _errParticipant
 	}
-	v.Participant = _objParticipant.(*GroupCallParticipant)
+	_cParticipant, _okParticipant := _objParticipant.(*GroupCallParticipant)
+	if !_okParticipant {
+		return nil, fmt.Errorf("decode: field participant: unexpected type %T", _objParticipant)
+	}
+	v.Participant = _cParticipant
 	return v, nil
 }
 
@@ -7282,7 +7934,11 @@ func DecodeChannelAdminLogEventActionParticipantUnmute(r *Reader) (*ChannelAdmin
 	if _errParticipant != nil {
 		return nil, _errParticipant
 	}
-	v.Participant = _objParticipant.(*GroupCallParticipant)
+	_cParticipant, _okParticipant := _objParticipant.(*GroupCallParticipant)
+	if !_okParticipant {
+		return nil, fmt.Errorf("decode: field participant: unexpected type %T", _objParticipant)
+	}
+	v.Participant = _cParticipant
 	return v, nil
 }
 
@@ -7371,7 +8027,11 @@ func DecodeChannelAdminLogEventActionParticipantJoinByInvite(r *Reader) (*Channe
 	if _errInvite != nil {
 		return nil, _errInvite
 	}
-	v.Invite = _objInvite.(ExportedChatInviteClass)
+	_cInvite, _okInvite := _objInvite.(ExportedChatInviteClass)
+	if !_okInvite {
+		return nil, fmt.Errorf("decode: field invite: unexpected type %T", _objInvite)
+	}
+	v.Invite = _cInvite
 	return v, nil
 }
 
@@ -7407,7 +8067,11 @@ func DecodeChannelAdminLogEventActionExportedInviteDelete(r *Reader) (*ChannelAd
 	if _errInvite != nil {
 		return nil, _errInvite
 	}
-	v.Invite = _objInvite.(ExportedChatInviteClass)
+	_cInvite, _okInvite := _objInvite.(ExportedChatInviteClass)
+	if !_okInvite {
+		return nil, fmt.Errorf("decode: field invite: unexpected type %T", _objInvite)
+	}
+	v.Invite = _cInvite
 	return v, nil
 }
 
@@ -7443,7 +8107,11 @@ func DecodeChannelAdminLogEventActionExportedInviteRevoke(r *Reader) (*ChannelAd
 	if _errInvite != nil {
 		return nil, _errInvite
 	}
-	v.Invite = _objInvite.(ExportedChatInviteClass)
+	_cInvite, _okInvite := _objInvite.(ExportedChatInviteClass)
+	if !_okInvite {
+		return nil, fmt.Errorf("decode: field invite: unexpected type %T", _objInvite)
+	}
+	v.Invite = _cInvite
 	return v, nil
 }
 
@@ -7481,12 +8149,20 @@ func DecodeChannelAdminLogEventActionExportedInviteEdit(r *Reader) (*ChannelAdmi
 	if _errPrevInvite != nil {
 		return nil, _errPrevInvite
 	}
-	v.PrevInvite = _objPrevInvite.(ExportedChatInviteClass)
+	_cPrevInvite, _okPrevInvite := _objPrevInvite.(ExportedChatInviteClass)
+	if !_okPrevInvite {
+		return nil, fmt.Errorf("decode: field prev_invite: unexpected type %T", _objPrevInvite)
+	}
+	v.PrevInvite = _cPrevInvite
 	_objNewInvite, _errNewInvite := ReadTLObject(r)
 	if _errNewInvite != nil {
 		return nil, _errNewInvite
 	}
-	v.NewInvite = _objNewInvite.(ExportedChatInviteClass)
+	_cNewInvite, _okNewInvite := _objNewInvite.(ExportedChatInviteClass)
+	if !_okNewInvite {
+		return nil, fmt.Errorf("decode: field new_invite: unexpected type %T", _objNewInvite)
+	}
+	v.NewInvite = _cNewInvite
 	return v, nil
 }
 
@@ -7522,7 +8198,11 @@ func DecodeChannelAdminLogEventActionParticipantVolume(r *Reader) (*ChannelAdmin
 	if _errParticipant != nil {
 		return nil, _errParticipant
 	}
-	v.Participant = _objParticipant.(*GroupCallParticipant)
+	_cParticipant, _okParticipant := _objParticipant.(*GroupCallParticipant)
+	if !_okParticipant {
+		return nil, fmt.Errorf("decode: field participant: unexpected type %T", _objParticipant)
+	}
+	v.Participant = _cParticipant
 	return v, nil
 }
 
@@ -7603,7 +8283,11 @@ func DecodeChannelAdminLogEventActionParticipantJoinByRequest(r *Reader) (*Chann
 	if _errInvite != nil {
 		return nil, _errInvite
 	}
-	v.Invite = _objInvite.(ExportedChatInviteClass)
+	_cInvite, _okInvite := _objInvite.(ExportedChatInviteClass)
+	if !_okInvite {
+		return nil, fmt.Errorf("decode: field invite: unexpected type %T", _objInvite)
+	}
+	v.Invite = _cInvite
 	_rApprovedBy, _eApprovedBy := r.ReadInt64()
 	if _eApprovedBy != nil {
 		return nil, _eApprovedBy
@@ -7680,7 +8364,11 @@ func DecodeChannelAdminLogEventActionSendMessage(r *Reader) (*ChannelAdminLogEve
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(MessageClass)
+	_cMessage, _okMessage := _objMessage.(MessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 
@@ -7718,12 +8406,20 @@ func DecodeChannelAdminLogEventActionChangeAvailableReactions(r *Reader) (*Chann
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(ChatReactionsClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(ChatReactionsClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(ChatReactionsClass)
+	_cNewValue, _okNewValue := _objNewValue.(ChatReactionsClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -7838,7 +8534,11 @@ func DecodeChannelAdminLogEventActionCreateTopic(r *Reader) (*ChannelAdminLogEve
 	if _errTopic != nil {
 		return nil, _errTopic
 	}
-	v.Topic = _objTopic.(ForumTopicClass)
+	_cTopic, _okTopic := _objTopic.(ForumTopicClass)
+	if !_okTopic {
+		return nil, fmt.Errorf("decode: field topic: unexpected type %T", _objTopic)
+	}
+	v.Topic = _cTopic
 	return v, nil
 }
 
@@ -7876,12 +8576,20 @@ func DecodeChannelAdminLogEventActionEditTopic(r *Reader) (*ChannelAdminLogEvent
 	if _errPrevTopic != nil {
 		return nil, _errPrevTopic
 	}
-	v.PrevTopic = _objPrevTopic.(ForumTopicClass)
+	_cPrevTopic, _okPrevTopic := _objPrevTopic.(ForumTopicClass)
+	if !_okPrevTopic {
+		return nil, fmt.Errorf("decode: field prev_topic: unexpected type %T", _objPrevTopic)
+	}
+	v.PrevTopic = _cPrevTopic
 	_objNewTopic, _errNewTopic := ReadTLObject(r)
 	if _errNewTopic != nil {
 		return nil, _errNewTopic
 	}
-	v.NewTopic = _objNewTopic.(ForumTopicClass)
+	_cNewTopic, _okNewTopic := _objNewTopic.(ForumTopicClass)
+	if !_okNewTopic {
+		return nil, fmt.Errorf("decode: field new_topic: unexpected type %T", _objNewTopic)
+	}
+	v.NewTopic = _cNewTopic
 	return v, nil
 }
 
@@ -7917,7 +8625,11 @@ func DecodeChannelAdminLogEventActionDeleteTopic(r *Reader) (*ChannelAdminLogEve
 	if _errTopic != nil {
 		return nil, _errTopic
 	}
-	v.Topic = _objTopic.(ForumTopicClass)
+	_cTopic, _okTopic := _objTopic.(ForumTopicClass)
+	if !_okTopic {
+		return nil, fmt.Errorf("decode: field topic: unexpected type %T", _objTopic)
+	}
+	v.Topic = _cTopic
 	return v, nil
 }
 
@@ -7978,14 +8690,22 @@ func DecodeChannelAdminLogEventActionPinTopic(r *Reader) (*ChannelAdminLogEventA
 		if _errPrevTopic != nil {
 			return nil, _errPrevTopic
 		}
-		v.PrevTopic = _objPrevTopic.(ForumTopicClass)
+		_cPrevTopic, _okPrevTopic := _objPrevTopic.(ForumTopicClass)
+		if !_okPrevTopic {
+			return nil, fmt.Errorf("decode: field prev_topic: unexpected type %T", _objPrevTopic)
+		}
+		v.PrevTopic = _cPrevTopic
 	}
 	if v.Flags.Has(1) {
 		_objNewTopic, _errNewTopic := ReadTLObject(r)
 		if _errNewTopic != nil {
 			return nil, _errNewTopic
 		}
-		v.NewTopic = _objNewTopic.(ForumTopicClass)
+		_cNewTopic, _okNewTopic := _objNewTopic.(ForumTopicClass)
+		if !_okNewTopic {
+			return nil, fmt.Errorf("decode: field new_topic: unexpected type %T", _objNewTopic)
+		}
+		v.NewTopic = _cNewTopic
 	}
 	return v, nil
 }
@@ -8060,12 +8780,20 @@ func DecodeChannelAdminLogEventActionChangePeerColor(r *Reader) (*ChannelAdminLo
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(PeerColorClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(PeerColorClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(PeerColorClass)
+	_cNewValue, _okNewValue := _objNewValue.(PeerColorClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -8103,12 +8831,20 @@ func DecodeChannelAdminLogEventActionChangeProfilePeerColor(r *Reader) (*Channel
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(PeerColorClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(PeerColorClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(PeerColorClass)
+	_cNewValue, _okNewValue := _objNewValue.(PeerColorClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -8146,12 +8882,20 @@ func DecodeChannelAdminLogEventActionChangeWallpaper(r *Reader) (*ChannelAdminLo
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(WallPaperClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(WallPaperClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(WallPaperClass)
+	_cNewValue, _okNewValue := _objNewValue.(WallPaperClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -8189,12 +8933,20 @@ func DecodeChannelAdminLogEventActionChangeEmojiStatus(r *Reader) (*ChannelAdmin
 	if _errPrevValue != nil {
 		return nil, _errPrevValue
 	}
-	v.PrevValue = _objPrevValue.(EmojiStatusClass)
+	_cPrevValue, _okPrevValue := _objPrevValue.(EmojiStatusClass)
+	if !_okPrevValue {
+		return nil, fmt.Errorf("decode: field prev_value: unexpected type %T", _objPrevValue)
+	}
+	v.PrevValue = _cPrevValue
 	_objNewValue, _errNewValue := ReadTLObject(r)
 	if _errNewValue != nil {
 		return nil, _errNewValue
 	}
-	v.NewValue = _objNewValue.(EmojiStatusClass)
+	_cNewValue, _okNewValue := _objNewValue.(EmojiStatusClass)
+	if !_okNewValue {
+		return nil, fmt.Errorf("decode: field new_value: unexpected type %T", _objNewValue)
+	}
+	v.NewValue = _cNewValue
 	return v, nil
 }
 
@@ -8232,12 +8984,20 @@ func DecodeChannelAdminLogEventActionChangeEmojiStickerSet(r *Reader) (*ChannelA
 	if _errPrevStickerset != nil {
 		return nil, _errPrevStickerset
 	}
-	v.PrevStickerset = _objPrevStickerset.(InputStickerSetClass)
+	_cPrevStickerset, _okPrevStickerset := _objPrevStickerset.(InputStickerSetClass)
+	if !_okPrevStickerset {
+		return nil, fmt.Errorf("decode: field prev_stickerset: unexpected type %T", _objPrevStickerset)
+	}
+	v.PrevStickerset = _cPrevStickerset
 	_objNewStickerset, _errNewStickerset := ReadTLObject(r)
 	if _errNewStickerset != nil {
 		return nil, _errNewStickerset
 	}
-	v.NewStickerset = _objNewStickerset.(InputStickerSetClass)
+	_cNewStickerset, _okNewStickerset := _objNewStickerset.(InputStickerSetClass)
+	if !_okNewStickerset {
+		return nil, fmt.Errorf("decode: field new_stickerset: unexpected type %T", _objNewStickerset)
+	}
+	v.NewStickerset = _cNewStickerset
 	return v, nil
 }
 
@@ -8311,12 +9071,20 @@ func DecodeChannelAdminLogEventActionParticipantSubExtend(r *Reader) (*ChannelAd
 	if _errPrevParticipant != nil {
 		return nil, _errPrevParticipant
 	}
-	v.PrevParticipant = _objPrevParticipant.(ChannelParticipantClass)
+	_cPrevParticipant, _okPrevParticipant := _objPrevParticipant.(ChannelParticipantClass)
+	if !_okPrevParticipant {
+		return nil, fmt.Errorf("decode: field prev_participant: unexpected type %T", _objPrevParticipant)
+	}
+	v.PrevParticipant = _cPrevParticipant
 	_objNewParticipant, _errNewParticipant := ReadTLObject(r)
 	if _errNewParticipant != nil {
 		return nil, _errNewParticipant
 	}
-	v.NewParticipant = _objNewParticipant.(ChannelParticipantClass)
+	_cNewParticipant, _okNewParticipant := _objNewParticipant.(ChannelParticipantClass)
+	if !_okNewParticipant {
+		return nil, fmt.Errorf("decode: field new_participant: unexpected type %T", _objNewParticipant)
+	}
+	v.NewParticipant = _cNewParticipant
 	return v, nil
 }
 
@@ -8462,7 +9230,11 @@ func DecodeChannelAdminLogEvent(r *Reader) (*ChannelAdminLogEvent, error) {
 	if _errAction != nil {
 		return nil, _errAction
 	}
-	v.Action = _objAction.(ChannelAdminLogEventActionClass)
+	_cAction, _okAction := _objAction.(ChannelAdminLogEventActionClass)
+	if !_okAction {
+		return nil, fmt.Errorf("decode: field action: unexpected type %T", _objAction)
+	}
+	v.Action = _cAction
 	return v, nil
 }
 
@@ -8786,6 +9558,7 @@ type ChatAdminRights struct {
 	DeleteStories        bool   `json:"delete_stories,omitempty"`
 	ManageDirectMessages bool   `json:"manage_direct_messages,omitempty"`
 	ManageRanks          bool   `json:"manage_ranks,omitempty"`
+	ManageLinkedPeers    bool   `json:"manage_linked_peers,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -8841,6 +9614,9 @@ func (v *ChatAdminRights) SetFlags() {
 	if v.ManageRanks {
 		v.Flags.Set(18)
 	}
+	if v.ManageLinkedPeers {
+		v.Flags.Set(19)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x5fb224d5.
@@ -8881,6 +9657,7 @@ func DecodeChatAdminRights(r *Reader) (*ChatAdminRights, error) {
 	v.DeleteStories = v.Flags.Has(16)
 	v.ManageDirectMessages = v.Flags.Has(17)
 	v.ManageRanks = v.Flags.Has(18)
+	v.ManageLinkedPeers = v.Flags.Has(19)
 	return v, nil
 }
 
@@ -8897,30 +9674,31 @@ const ChatBannedRightsTypeID = 0x9f120418
 //
 // See https://core.telegram.org/constructor/chatBannedRights for reference.
 type ChatBannedRights struct {
-	Flags           Fields `json:"-"`
-	ViewMessages    bool   `json:"view_messages,omitempty"`
-	SendMessages    bool   `json:"send_messages,omitempty"`
-	SendMedia       bool   `json:"send_media,omitempty"`
-	SendStickers    bool   `json:"send_stickers,omitempty"`
-	SendGifs        bool   `json:"send_gifs,omitempty"`
-	SendGames       bool   `json:"send_games,omitempty"`
-	SendInline      bool   `json:"send_inline,omitempty"`
-	EmbedLinks      bool   `json:"embed_links,omitempty"`
-	SendPolls       bool   `json:"send_polls,omitempty"`
-	ChangeInfo      bool   `json:"change_info,omitempty"`
-	InviteUsers     bool   `json:"invite_users,omitempty"`
-	PinMessages     bool   `json:"pin_messages,omitempty"`
-	ManageTopics    bool   `json:"manage_topics,omitempty"`
-	SendPhotos      bool   `json:"send_photos,omitempty"`
-	SendVideos      bool   `json:"send_videos,omitempty"`
-	SendRoundvideos bool   `json:"send_roundvideos,omitempty"`
-	SendAudios      bool   `json:"send_audios,omitempty"`
-	SendVoices      bool   `json:"send_voices,omitempty"`
-	SendDocs        bool   `json:"send_docs,omitempty"`
-	SendPlain       bool   `json:"send_plain,omitempty"`
-	EditRank        bool   `json:"edit_rank,omitempty"`
-	SendReactions   bool   `json:"send_reactions,omitempty"`
-	UntilDate       int32  `json:"until_date,omitempty"`
+	Flags             Fields `json:"-"`
+	ViewMessages      bool   `json:"view_messages,omitempty"`
+	SendMessages      bool   `json:"send_messages,omitempty"`
+	SendMedia         bool   `json:"send_media,omitempty"`
+	SendStickers      bool   `json:"send_stickers,omitempty"`
+	SendGifs          bool   `json:"send_gifs,omitempty"`
+	SendGames         bool   `json:"send_games,omitempty"`
+	SendInline        bool   `json:"send_inline,omitempty"`
+	EmbedLinks        bool   `json:"embed_links,omitempty"`
+	SendPolls         bool   `json:"send_polls,omitempty"`
+	ChangeInfo        bool   `json:"change_info,omitempty"`
+	InviteUsers       bool   `json:"invite_users,omitempty"`
+	PinMessages       bool   `json:"pin_messages,omitempty"`
+	ManageTopics      bool   `json:"manage_topics,omitempty"`
+	SendPhotos        bool   `json:"send_photos,omitempty"`
+	SendVideos        bool   `json:"send_videos,omitempty"`
+	SendRoundvideos   bool   `json:"send_roundvideos,omitempty"`
+	SendAudios        bool   `json:"send_audios,omitempty"`
+	SendVoices        bool   `json:"send_voices,omitempty"`
+	SendDocs          bool   `json:"send_docs,omitempty"`
+	SendPlain         bool   `json:"send_plain,omitempty"`
+	EditRank          bool   `json:"edit_rank,omitempty"`
+	SendReactions     bool   `json:"send_reactions,omitempty"`
+	ManageLinkedPeers bool   `json:"manage_linked_peers,omitempty"`
+	UntilDate         int32  `json:"until_date,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -8991,6 +9769,9 @@ func (v *ChatBannedRights) SetFlags() {
 	if v.SendReactions {
 		v.Flags.Set(27)
 	}
+	if v.ManageLinkedPeers {
+		v.Flags.Set(28)
+	}
 }
 
 // ConstructorID returns the TL constructor identifier 0x9f120418.
@@ -9037,6 +9818,7 @@ func DecodeChatBannedRights(r *Reader) (*ChatBannedRights, error) {
 	v.SendPlain = v.Flags.Has(25)
 	v.EditRank = v.Flags.Has(26)
 	v.SendReactions = v.Flags.Has(27)
+	v.ManageLinkedPeers = v.Flags.Has(28)
 	_rUntilDate, _eUntilDate := r.ReadInt32()
 	if _eUntilDate != nil {
 		return nil, _eUntilDate
@@ -9082,7 +9864,11 @@ func DecodeInputFolderPeer(r *Reader) (*InputFolderPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rFolderID, _eFolderID := r.ReadInt32()
 	if _eFolderID != nil {
 		return nil, _eFolderID
@@ -9128,7 +9914,11 @@ func DecodeFolderPeer(r *Reader) (*FolderPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rFolderID, _eFolderID := r.ReadInt32()
 	if _eFolderID != nil {
 		return nil, _eFolderID
@@ -9220,7 +10010,11 @@ func DecodeChannelLocation(r *Reader) (*ChannelLocation, error) {
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
 	}
-	v.GeoPoint = _objGeoPoint.(GeoPointClass)
+	_cGeoPoint, _okGeoPoint := _objGeoPoint.(GeoPointClass)
+	if !_okGeoPoint {
+		return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+	}
+	v.GeoPoint = _cGeoPoint
 	_rAddress, _eAddress := r.ReadString()
 	if _eAddress != nil {
 		return nil, _eAddress
@@ -9285,7 +10079,11 @@ func DecodePeerLocated(r *Reader) (*PeerLocated, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rExpires, _eExpires := r.ReadInt32()
 	if _eExpires != nil {
 		return nil, _eExpires
@@ -9478,7 +10276,11 @@ func DecodePeerBlocked(r *Reader) (*PeerBlocked, error) {
 	if _errPeerID != nil {
 		return nil, _errPeerID
 	}
-	v.PeerID = _objPeerID.(PeerClass)
+	_cPeerID, _okPeerID := _objPeerID.(PeerClass)
+	if !_okPeerID {
+		return nil, fmt.Errorf("decode: field peer_id: unexpected type %T", _objPeerID)
+	}
+	v.PeerID = _cPeerID
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -9637,7 +10439,11 @@ func DecodeGroupCallParticipant(r *Reader) (*GroupCallParticipant, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -9681,14 +10487,22 @@ func DecodeGroupCallParticipant(r *Reader) (*GroupCallParticipant, error) {
 		if _errVideo != nil {
 			return nil, _errVideo
 		}
-		v.Video = _objVideo.(*GroupCallParticipantVideo)
+		_cVideo, _okVideo := _objVideo.(*GroupCallParticipantVideo)
+		if !_okVideo {
+			return nil, fmt.Errorf("decode: field video: unexpected type %T", _objVideo)
+		}
+		v.Video = _cVideo
 	}
 	if v.Flags.Has(14) {
 		_objPresentation, _errPresentation := ReadTLObject(r)
 		if _errPresentation != nil {
 			return nil, _errPresentation
 		}
-		v.Presentation = _objPresentation.(*GroupCallParticipantVideo)
+		_cPresentation, _okPresentation := _objPresentation.(*GroupCallParticipantVideo)
+		if !_okPresentation {
+			return nil, fmt.Errorf("decode: field presentation: unexpected type %T", _objPresentation)
+		}
+		v.Presentation = _cPresentation
 	}
 	if v.Flags.Has(16) {
 		_rPaidStarsTotal, _ePaidStarsTotal := r.ReadInt64()
@@ -10196,7 +11010,11 @@ func DecodeGroupCallParticipantVideo(r *Reader) (*GroupCallParticipantVideo, err
 		if _errSourceGroups != nil {
 			return nil, _errSourceGroups
 		}
-		v.SourceGroups[_iSourceGroups] = _objSourceGroups.(*GroupCallParticipantVideoSourceGroup)
+		_cSourceGroups, _okSourceGroups := _objSourceGroups.(*GroupCallParticipantVideoSourceGroup)
+		if !_okSourceGroups {
+			return nil, fmt.Errorf("decode: field source_groups: unexpected type %T", _objSourceGroups)
+		}
+		v.SourceGroups[_iSourceGroups] = _cSourceGroups
 	}
 	_ = _vhdrSourceGroups
 	if v.Flags.Has(1) {
@@ -10303,7 +11121,11 @@ func DecodeChatThemeUniqueGift(r *Reader) (*ChatThemeUniqueGift, error) {
 	if _errGift != nil {
 		return nil, _errGift
 	}
-	v.Gift = _objGift.(StarGiftClass)
+	_cGift, _okGift := _objGift.(StarGiftClass)
+	if !_okGift {
+		return nil, fmt.Errorf("decode: field gift: unexpected type %T", _objGift)
+	}
+	v.Gift = _cGift
 	_vhdrThemeSettings, _ehdrThemeSettings := r.ReadUint32()
 	if _ehdrThemeSettings != nil {
 		return nil, _ehdrThemeSettings
@@ -10321,7 +11143,11 @@ func DecodeChatThemeUniqueGift(r *Reader) (*ChatThemeUniqueGift, error) {
 		if _errThemeSettings != nil {
 			return nil, _errThemeSettings
 		}
-		v.ThemeSettings[_iThemeSettings] = _objThemeSettings.(*ThemeSettings)
+		_cThemeSettings, _okThemeSettings := _objThemeSettings.(*ThemeSettings)
+		if !_okThemeSettings {
+			return nil, fmt.Errorf("decode: field theme_settings: unexpected type %T", _objThemeSettings)
+		}
+		v.ThemeSettings[_iThemeSettings] = _cThemeSettings
 	}
 	_ = _vhdrThemeSettings
 	return v, nil
@@ -10615,7 +11441,11 @@ func DecodeSendAsPeer(r *Reader) (*SendAsPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -10994,14 +11824,22 @@ func DecodeRequestPeerTypeChat(r *Reader) (*RequestPeerTypeChat, error) {
 		if _errUserAdminRights != nil {
 			return nil, _errUserAdminRights
 		}
-		v.UserAdminRights = _objUserAdminRights.(*ChatAdminRights)
+		_cUserAdminRights, _okUserAdminRights := _objUserAdminRights.(*ChatAdminRights)
+		if !_okUserAdminRights {
+			return nil, fmt.Errorf("decode: field user_admin_rights: unexpected type %T", _objUserAdminRights)
+		}
+		v.UserAdminRights = _cUserAdminRights
 	}
 	if v.Flags.Has(2) {
 		_objBotAdminRights, _errBotAdminRights := ReadTLObject(r)
 		if _errBotAdminRights != nil {
 			return nil, _errBotAdminRights
 		}
-		v.BotAdminRights = _objBotAdminRights.(*ChatAdminRights)
+		_cBotAdminRights, _okBotAdminRights := _objBotAdminRights.(*ChatAdminRights)
+		if !_okBotAdminRights {
+			return nil, fmt.Errorf("decode: field bot_admin_rights: unexpected type %T", _objBotAdminRights)
+		}
+		v.BotAdminRights = _cBotAdminRights
 	}
 	return v, nil
 }
@@ -11100,14 +11938,22 @@ func DecodeRequestPeerTypeBroadcast(r *Reader) (*RequestPeerTypeBroadcast, error
 		if _errUserAdminRights != nil {
 			return nil, _errUserAdminRights
 		}
-		v.UserAdminRights = _objUserAdminRights.(*ChatAdminRights)
+		_cUserAdminRights, _okUserAdminRights := _objUserAdminRights.(*ChatAdminRights)
+		if !_okUserAdminRights {
+			return nil, fmt.Errorf("decode: field user_admin_rights: unexpected type %T", _objUserAdminRights)
+		}
+		v.UserAdminRights = _cUserAdminRights
 	}
 	if v.Flags.Has(2) {
 		_objBotAdminRights, _errBotAdminRights := ReadTLObject(r)
 		if _errBotAdminRights != nil {
 			return nil, _errBotAdminRights
 		}
-		v.BotAdminRights = _objBotAdminRights.(*ChatAdminRights)
+		_cBotAdminRights, _okBotAdminRights := _objBotAdminRights.(*ChatAdminRights)
+		if !_okBotAdminRights {
+			return nil, fmt.Errorf("decode: field bot_admin_rights: unexpected type %T", _objBotAdminRights)
+		}
+		v.BotAdminRights = _cBotAdminRights
 	}
 	return v, nil
 }
@@ -11548,7 +12394,11 @@ func DecodeContactBirthday(r *Reader) (*ContactBirthday, error) {
 	if _errBirthday != nil {
 		return nil, _errBirthday
 	}
-	v.Birthday = _objBirthday.(*Birthday)
+	_cBirthday, _okBirthday := _objBirthday.(*Birthday)
+	if !_okBirthday {
+		return nil, fmt.Errorf("decode: field birthday: unexpected type %T", _objBirthday)
+	}
+	v.Birthday = _cBirthday
 	return v, nil
 }
 
@@ -11697,7 +12547,11 @@ func DecodeInputBusinessChatLink(r *Reader) (*InputBusinessChatLink, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
 		_ = _vhdrEntities
 	}
@@ -11804,7 +12658,11 @@ func DecodeBusinessChatLink(r *Reader) (*BusinessChatLink, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
 		_ = _vhdrEntities
 	}
@@ -11948,7 +12806,11 @@ func DecodeRequestedPeerUser(r *Reader) (*RequestedPeerUser, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(PhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	return v, nil
 }
@@ -12024,7 +12886,11 @@ func DecodeRequestedPeerChat(r *Reader) (*RequestedPeerChat, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(PhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	return v, nil
 }
@@ -12114,7 +12980,11 @@ func DecodeRequestedPeerChannel(r *Reader) (*RequestedPeerChannel, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(PhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	return v, nil
 }
@@ -12352,7 +13222,11 @@ func DecodeStarsTransactionPeer(r *Reader) (*StarsTransactionPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -12763,7 +13637,11 @@ func DecodeStarGiftAuctionUserState(r *Reader) (*StarGiftAuctionUserState, error
 		if _errBidPeer != nil {
 			return nil, _errBidPeer
 		}
-		v.BidPeer = _objBidPeer.(PeerClass)
+		_cBidPeer, _okBidPeer := _objBidPeer.(PeerClass)
+		if !_okBidPeer {
+			return nil, fmt.Errorf("decode: field bid_peer: unexpected type %T", _objBidPeer)
+		}
+		v.BidPeer = _cBidPeer
 	}
 	_rAcquiredCount, _eAcquiredCount := r.ReadInt32()
 	if _eAcquiredCount != nil {
@@ -12931,5 +13809,171 @@ func DecodeJoinChatBotResultWebView(r *Reader) (*JoinChatBotResultWebView, error
 func init() {
 	Registry[JoinChatBotResultWebViewTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeJoinChatBotResultWebView(r)
+	}
+}
+
+// CommunityPeerTypeID is the constructor ID for TL type communityPeer.
+const CommunityPeerTypeID = 0x76141ebd
+
+// CommunityPeer represents the TL constructor communityPeer (0x76141ebd).
+//
+// See https://core.telegram.org/constructor/communityPeer for reference.
+type CommunityPeer struct {
+	Flags          Fields    `json:"-"`
+	CanViewHistory bool      `json:"can_view_history,omitempty"`
+	Visible        bool      `json:"visible,omitempty"`
+	Peer           PeerClass `json:"peer,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *CommunityPeer) SetFlags() {
+	if v.CanViewHistory {
+		v.Flags.Set(2)
+	}
+	if v.Visible {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x76141ebd.
+func (v *CommunityPeer) ConstructorID() uint32 {
+	return CommunityPeerTypeID
+}
+
+// Encode serializes CommunityPeer to a bytes.Buffer using the TL binary protocol.
+func (v *CommunityPeer) Encode(b *bytes.Buffer) error {
+	WriteInt(b, CommunityPeerTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteBool(b, v.Visible)
+	}
+	EncodeTLObject(b, v.Peer)
+	return nil
+}
+
+// SetVisible sets value of Visible conditional field.
+func (v *CommunityPeer) SetVisible(value bool) {
+	v.Flags.Set(0)
+	v.Visible = value
+}
+
+// GetVisible returns value of Visible conditional field and a boolean
+// that is true if the field was set.
+func (v *CommunityPeer) GetVisible() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(0) {
+		return value, false
+	}
+	return v.Visible, true
+}
+
+// DecodeCommunityPeer deserializes a CommunityPeer from a reader using the TL binary protocol.
+func DecodeCommunityPeer(r *Reader) (*CommunityPeer, error) {
+	v := &CommunityPeer{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.CanViewHistory = v.Flags.Has(2)
+	if v.Flags.Has(0) {
+		_rVisible, _eVisible := r.ReadBool()
+		if _eVisible != nil {
+			return nil, _eVisible
+		}
+		v.Visible = _rVisible
+	}
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	return v, nil
+}
+
+func init() {
+	Registry[CommunityPeerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeCommunityPeer(r)
+	}
+}
+
+// CommunityPeerRequestTypeID is the constructor ID for TL type communityPeerRequest.
+const CommunityPeerRequestTypeID = 0x7beafa85
+
+// CommunityPeerRequest represents the TL constructor communityPeerRequest (0x7beafa85).
+//
+// See https://core.telegram.org/constructor/communityPeerRequest for reference.
+type CommunityPeerRequest struct {
+	Flags       Fields    `json:"-"`
+	Visible     bool      `json:"visible,omitempty"`
+	Peer        PeerClass `json:"peer,omitempty"`
+	RequestedBy int64     `json:"requested_by,omitempty"`
+	Date        int32     `json:"date,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *CommunityPeerRequest) SetFlags() {
+	if v.Visible {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x7beafa85.
+func (v *CommunityPeerRequest) ConstructorID() uint32 {
+	return CommunityPeerRequestTypeID
+}
+
+// Encode serializes CommunityPeerRequest to a bytes.Buffer using the TL binary protocol.
+func (v *CommunityPeerRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, CommunityPeerRequestTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	EncodeTLObject(b, v.Peer)
+	WriteLong(b, v.RequestedBy)
+	WriteInt(b, uint32(v.Date))
+	return nil
+}
+
+// DecodeCommunityPeerRequest deserializes a CommunityPeerRequest from a reader using the TL binary protocol.
+func DecodeCommunityPeerRequest(r *Reader) (*CommunityPeerRequest, error) {
+	v := &CommunityPeerRequest{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Visible = v.Flags.Has(0)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	_rRequestedBy, _eRequestedBy := r.ReadInt64()
+	if _eRequestedBy != nil {
+		return nil, _eRequestedBy
+	}
+	v.RequestedBy = _rRequestedBy
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	return v, nil
+}
+
+func init() {
+	Registry[CommunityPeerRequestTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeCommunityPeerRequest(r)
 	}
 }

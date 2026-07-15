@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // StatsBroadcastStatsTypeID is the constructor ID for TL type stats.broadcastStats.
@@ -81,107 +82,191 @@ func DecodeStatsBroadcastStats(r *Reader) (*StatsBroadcastStats, error) {
 	if _errPeriod != nil {
 		return nil, _errPeriod
 	}
-	v.Period = _objPeriod.(*StatsDateRangeDays)
+	_cPeriod, _okPeriod := _objPeriod.(*StatsDateRangeDays)
+	if !_okPeriod {
+		return nil, fmt.Errorf("decode: field period: unexpected type %T", _objPeriod)
+	}
+	v.Period = _cPeriod
 	_objFollowers, _errFollowers := ReadTLObject(r)
 	if _errFollowers != nil {
 		return nil, _errFollowers
 	}
-	v.Followers = _objFollowers.(*StatsAbsValueAndPrev)
+	_cFollowers, _okFollowers := _objFollowers.(*StatsAbsValueAndPrev)
+	if !_okFollowers {
+		return nil, fmt.Errorf("decode: field followers: unexpected type %T", _objFollowers)
+	}
+	v.Followers = _cFollowers
 	_objViewsPerPost, _errViewsPerPost := ReadTLObject(r)
 	if _errViewsPerPost != nil {
 		return nil, _errViewsPerPost
 	}
-	v.ViewsPerPost = _objViewsPerPost.(*StatsAbsValueAndPrev)
+	_cViewsPerPost, _okViewsPerPost := _objViewsPerPost.(*StatsAbsValueAndPrev)
+	if !_okViewsPerPost {
+		return nil, fmt.Errorf("decode: field views_per_post: unexpected type %T", _objViewsPerPost)
+	}
+	v.ViewsPerPost = _cViewsPerPost
 	_objSharesPerPost, _errSharesPerPost := ReadTLObject(r)
 	if _errSharesPerPost != nil {
 		return nil, _errSharesPerPost
 	}
-	v.SharesPerPost = _objSharesPerPost.(*StatsAbsValueAndPrev)
+	_cSharesPerPost, _okSharesPerPost := _objSharesPerPost.(*StatsAbsValueAndPrev)
+	if !_okSharesPerPost {
+		return nil, fmt.Errorf("decode: field shares_per_post: unexpected type %T", _objSharesPerPost)
+	}
+	v.SharesPerPost = _cSharesPerPost
 	_objReactionsPerPost, _errReactionsPerPost := ReadTLObject(r)
 	if _errReactionsPerPost != nil {
 		return nil, _errReactionsPerPost
 	}
-	v.ReactionsPerPost = _objReactionsPerPost.(*StatsAbsValueAndPrev)
+	_cReactionsPerPost, _okReactionsPerPost := _objReactionsPerPost.(*StatsAbsValueAndPrev)
+	if !_okReactionsPerPost {
+		return nil, fmt.Errorf("decode: field reactions_per_post: unexpected type %T", _objReactionsPerPost)
+	}
+	v.ReactionsPerPost = _cReactionsPerPost
 	_objViewsPerStory, _errViewsPerStory := ReadTLObject(r)
 	if _errViewsPerStory != nil {
 		return nil, _errViewsPerStory
 	}
-	v.ViewsPerStory = _objViewsPerStory.(*StatsAbsValueAndPrev)
+	_cViewsPerStory, _okViewsPerStory := _objViewsPerStory.(*StatsAbsValueAndPrev)
+	if !_okViewsPerStory {
+		return nil, fmt.Errorf("decode: field views_per_story: unexpected type %T", _objViewsPerStory)
+	}
+	v.ViewsPerStory = _cViewsPerStory
 	_objSharesPerStory, _errSharesPerStory := ReadTLObject(r)
 	if _errSharesPerStory != nil {
 		return nil, _errSharesPerStory
 	}
-	v.SharesPerStory = _objSharesPerStory.(*StatsAbsValueAndPrev)
+	_cSharesPerStory, _okSharesPerStory := _objSharesPerStory.(*StatsAbsValueAndPrev)
+	if !_okSharesPerStory {
+		return nil, fmt.Errorf("decode: field shares_per_story: unexpected type %T", _objSharesPerStory)
+	}
+	v.SharesPerStory = _cSharesPerStory
 	_objReactionsPerStory, _errReactionsPerStory := ReadTLObject(r)
 	if _errReactionsPerStory != nil {
 		return nil, _errReactionsPerStory
 	}
-	v.ReactionsPerStory = _objReactionsPerStory.(*StatsAbsValueAndPrev)
+	_cReactionsPerStory, _okReactionsPerStory := _objReactionsPerStory.(*StatsAbsValueAndPrev)
+	if !_okReactionsPerStory {
+		return nil, fmt.Errorf("decode: field reactions_per_story: unexpected type %T", _objReactionsPerStory)
+	}
+	v.ReactionsPerStory = _cReactionsPerStory
 	_objEnabledNotifications, _errEnabledNotifications := ReadTLObject(r)
 	if _errEnabledNotifications != nil {
 		return nil, _errEnabledNotifications
 	}
-	v.EnabledNotifications = _objEnabledNotifications.(*StatsPercentValue)
+	_cEnabledNotifications, _okEnabledNotifications := _objEnabledNotifications.(*StatsPercentValue)
+	if !_okEnabledNotifications {
+		return nil, fmt.Errorf("decode: field enabled_notifications: unexpected type %T", _objEnabledNotifications)
+	}
+	v.EnabledNotifications = _cEnabledNotifications
 	_objGrowthGraph, _errGrowthGraph := ReadTLObject(r)
 	if _errGrowthGraph != nil {
 		return nil, _errGrowthGraph
 	}
-	v.GrowthGraph = _objGrowthGraph.(StatsGraphClass)
+	_cGrowthGraph, _okGrowthGraph := _objGrowthGraph.(StatsGraphClass)
+	if !_okGrowthGraph {
+		return nil, fmt.Errorf("decode: field growth_graph: unexpected type %T", _objGrowthGraph)
+	}
+	v.GrowthGraph = _cGrowthGraph
 	_objFollowersGraph, _errFollowersGraph := ReadTLObject(r)
 	if _errFollowersGraph != nil {
 		return nil, _errFollowersGraph
 	}
-	v.FollowersGraph = _objFollowersGraph.(StatsGraphClass)
+	_cFollowersGraph, _okFollowersGraph := _objFollowersGraph.(StatsGraphClass)
+	if !_okFollowersGraph {
+		return nil, fmt.Errorf("decode: field followers_graph: unexpected type %T", _objFollowersGraph)
+	}
+	v.FollowersGraph = _cFollowersGraph
 	_objMuteGraph, _errMuteGraph := ReadTLObject(r)
 	if _errMuteGraph != nil {
 		return nil, _errMuteGraph
 	}
-	v.MuteGraph = _objMuteGraph.(StatsGraphClass)
+	_cMuteGraph, _okMuteGraph := _objMuteGraph.(StatsGraphClass)
+	if !_okMuteGraph {
+		return nil, fmt.Errorf("decode: field mute_graph: unexpected type %T", _objMuteGraph)
+	}
+	v.MuteGraph = _cMuteGraph
 	_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
 	if _errTopHoursGraph != nil {
 		return nil, _errTopHoursGraph
 	}
-	v.TopHoursGraph = _objTopHoursGraph.(StatsGraphClass)
+	_cTopHoursGraph, _okTopHoursGraph := _objTopHoursGraph.(StatsGraphClass)
+	if !_okTopHoursGraph {
+		return nil, fmt.Errorf("decode: field top_hours_graph: unexpected type %T", _objTopHoursGraph)
+	}
+	v.TopHoursGraph = _cTopHoursGraph
 	_objInteractionsGraph, _errInteractionsGraph := ReadTLObject(r)
 	if _errInteractionsGraph != nil {
 		return nil, _errInteractionsGraph
 	}
-	v.InteractionsGraph = _objInteractionsGraph.(StatsGraphClass)
+	_cInteractionsGraph, _okInteractionsGraph := _objInteractionsGraph.(StatsGraphClass)
+	if !_okInteractionsGraph {
+		return nil, fmt.Errorf("decode: field interactions_graph: unexpected type %T", _objInteractionsGraph)
+	}
+	v.InteractionsGraph = _cInteractionsGraph
 	_objIvInteractionsGraph, _errIvInteractionsGraph := ReadTLObject(r)
 	if _errIvInteractionsGraph != nil {
 		return nil, _errIvInteractionsGraph
 	}
-	v.IvInteractionsGraph = _objIvInteractionsGraph.(StatsGraphClass)
+	_cIvInteractionsGraph, _okIvInteractionsGraph := _objIvInteractionsGraph.(StatsGraphClass)
+	if !_okIvInteractionsGraph {
+		return nil, fmt.Errorf("decode: field iv_interactions_graph: unexpected type %T", _objIvInteractionsGraph)
+	}
+	v.IvInteractionsGraph = _cIvInteractionsGraph
 	_objViewsBySourceGraph, _errViewsBySourceGraph := ReadTLObject(r)
 	if _errViewsBySourceGraph != nil {
 		return nil, _errViewsBySourceGraph
 	}
-	v.ViewsBySourceGraph = _objViewsBySourceGraph.(StatsGraphClass)
+	_cViewsBySourceGraph, _okViewsBySourceGraph := _objViewsBySourceGraph.(StatsGraphClass)
+	if !_okViewsBySourceGraph {
+		return nil, fmt.Errorf("decode: field views_by_source_graph: unexpected type %T", _objViewsBySourceGraph)
+	}
+	v.ViewsBySourceGraph = _cViewsBySourceGraph
 	_objNewFollowersBySourceGraph, _errNewFollowersBySourceGraph := ReadTLObject(r)
 	if _errNewFollowersBySourceGraph != nil {
 		return nil, _errNewFollowersBySourceGraph
 	}
-	v.NewFollowersBySourceGraph = _objNewFollowersBySourceGraph.(StatsGraphClass)
+	_cNewFollowersBySourceGraph, _okNewFollowersBySourceGraph := _objNewFollowersBySourceGraph.(StatsGraphClass)
+	if !_okNewFollowersBySourceGraph {
+		return nil, fmt.Errorf("decode: field new_followers_by_source_graph: unexpected type %T", _objNewFollowersBySourceGraph)
+	}
+	v.NewFollowersBySourceGraph = _cNewFollowersBySourceGraph
 	_objLanguagesGraph, _errLanguagesGraph := ReadTLObject(r)
 	if _errLanguagesGraph != nil {
 		return nil, _errLanguagesGraph
 	}
-	v.LanguagesGraph = _objLanguagesGraph.(StatsGraphClass)
+	_cLanguagesGraph, _okLanguagesGraph := _objLanguagesGraph.(StatsGraphClass)
+	if !_okLanguagesGraph {
+		return nil, fmt.Errorf("decode: field languages_graph: unexpected type %T", _objLanguagesGraph)
+	}
+	v.LanguagesGraph = _cLanguagesGraph
 	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
 	if _errReactionsByEmotionGraph != nil {
 		return nil, _errReactionsByEmotionGraph
 	}
-	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
+	_cReactionsByEmotionGraph, _okReactionsByEmotionGraph := _objReactionsByEmotionGraph.(StatsGraphClass)
+	if !_okReactionsByEmotionGraph {
+		return nil, fmt.Errorf("decode: field reactions_by_emotion_graph: unexpected type %T", _objReactionsByEmotionGraph)
+	}
+	v.ReactionsByEmotionGraph = _cReactionsByEmotionGraph
 	_objStoryInteractionsGraph, _errStoryInteractionsGraph := ReadTLObject(r)
 	if _errStoryInteractionsGraph != nil {
 		return nil, _errStoryInteractionsGraph
 	}
-	v.StoryInteractionsGraph = _objStoryInteractionsGraph.(StatsGraphClass)
+	_cStoryInteractionsGraph, _okStoryInteractionsGraph := _objStoryInteractionsGraph.(StatsGraphClass)
+	if !_okStoryInteractionsGraph {
+		return nil, fmt.Errorf("decode: field story_interactions_graph: unexpected type %T", _objStoryInteractionsGraph)
+	}
+	v.StoryInteractionsGraph = _cStoryInteractionsGraph
 	_objStoryReactionsByEmotionGraph, _errStoryReactionsByEmotionGraph := ReadTLObject(r)
 	if _errStoryReactionsByEmotionGraph != nil {
 		return nil, _errStoryReactionsByEmotionGraph
 	}
-	v.StoryReactionsByEmotionGraph = _objStoryReactionsByEmotionGraph.(StatsGraphClass)
+	_cStoryReactionsByEmotionGraph, _okStoryReactionsByEmotionGraph := _objStoryReactionsByEmotionGraph.(StatsGraphClass)
+	if !_okStoryReactionsByEmotionGraph {
+		return nil, fmt.Errorf("decode: field story_reactions_by_emotion_graph: unexpected type %T", _objStoryReactionsByEmotionGraph)
+	}
+	v.StoryReactionsByEmotionGraph = _cStoryReactionsByEmotionGraph
 	_vhdrRecentPostsInteractions, _ehdrRecentPostsInteractions := r.ReadUint32()
 	if _ehdrRecentPostsInteractions != nil {
 		return nil, _ehdrRecentPostsInteractions
@@ -199,7 +284,11 @@ func DecodeStatsBroadcastStats(r *Reader) (*StatsBroadcastStats, error) {
 		if _errRecentPostsInteractions != nil {
 			return nil, _errRecentPostsInteractions
 		}
-		v.RecentPostsInteractions[_iRecentPostsInteractions] = _objRecentPostsInteractions.(PostInteractionCountersClass)
+		_cRecentPostsInteractions, _okRecentPostsInteractions := _objRecentPostsInteractions.(PostInteractionCountersClass)
+		if !_okRecentPostsInteractions {
+			return nil, fmt.Errorf("decode: field recent_posts_interactions: unexpected type %T", _objRecentPostsInteractions)
+		}
+		v.RecentPostsInteractions[_iRecentPostsInteractions] = _cRecentPostsInteractions
 	}
 	_ = _vhdrRecentPostsInteractions
 	return v, nil
@@ -288,67 +377,119 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 	if _errPeriod != nil {
 		return nil, _errPeriod
 	}
-	v.Period = _objPeriod.(*StatsDateRangeDays)
+	_cPeriod, _okPeriod := _objPeriod.(*StatsDateRangeDays)
+	if !_okPeriod {
+		return nil, fmt.Errorf("decode: field period: unexpected type %T", _objPeriod)
+	}
+	v.Period = _cPeriod
 	_objMembers, _errMembers := ReadTLObject(r)
 	if _errMembers != nil {
 		return nil, _errMembers
 	}
-	v.Members = _objMembers.(*StatsAbsValueAndPrev)
+	_cMembers, _okMembers := _objMembers.(*StatsAbsValueAndPrev)
+	if !_okMembers {
+		return nil, fmt.Errorf("decode: field members: unexpected type %T", _objMembers)
+	}
+	v.Members = _cMembers
 	_objMessages, _errMessages := ReadTLObject(r)
 	if _errMessages != nil {
 		return nil, _errMessages
 	}
-	v.Messages = _objMessages.(*StatsAbsValueAndPrev)
+	_cMessages, _okMessages := _objMessages.(*StatsAbsValueAndPrev)
+	if !_okMessages {
+		return nil, fmt.Errorf("decode: field messages: unexpected type %T", _objMessages)
+	}
+	v.Messages = _cMessages
 	_objViewers, _errViewers := ReadTLObject(r)
 	if _errViewers != nil {
 		return nil, _errViewers
 	}
-	v.Viewers = _objViewers.(*StatsAbsValueAndPrev)
+	_cViewers, _okViewers := _objViewers.(*StatsAbsValueAndPrev)
+	if !_okViewers {
+		return nil, fmt.Errorf("decode: field viewers: unexpected type %T", _objViewers)
+	}
+	v.Viewers = _cViewers
 	_objPosters, _errPosters := ReadTLObject(r)
 	if _errPosters != nil {
 		return nil, _errPosters
 	}
-	v.Posters = _objPosters.(*StatsAbsValueAndPrev)
+	_cPosters, _okPosters := _objPosters.(*StatsAbsValueAndPrev)
+	if !_okPosters {
+		return nil, fmt.Errorf("decode: field posters: unexpected type %T", _objPosters)
+	}
+	v.Posters = _cPosters
 	_objGrowthGraph, _errGrowthGraph := ReadTLObject(r)
 	if _errGrowthGraph != nil {
 		return nil, _errGrowthGraph
 	}
-	v.GrowthGraph = _objGrowthGraph.(StatsGraphClass)
+	_cGrowthGraph, _okGrowthGraph := _objGrowthGraph.(StatsGraphClass)
+	if !_okGrowthGraph {
+		return nil, fmt.Errorf("decode: field growth_graph: unexpected type %T", _objGrowthGraph)
+	}
+	v.GrowthGraph = _cGrowthGraph
 	_objMembersGraph, _errMembersGraph := ReadTLObject(r)
 	if _errMembersGraph != nil {
 		return nil, _errMembersGraph
 	}
-	v.MembersGraph = _objMembersGraph.(StatsGraphClass)
+	_cMembersGraph, _okMembersGraph := _objMembersGraph.(StatsGraphClass)
+	if !_okMembersGraph {
+		return nil, fmt.Errorf("decode: field members_graph: unexpected type %T", _objMembersGraph)
+	}
+	v.MembersGraph = _cMembersGraph
 	_objNewMembersBySourceGraph, _errNewMembersBySourceGraph := ReadTLObject(r)
 	if _errNewMembersBySourceGraph != nil {
 		return nil, _errNewMembersBySourceGraph
 	}
-	v.NewMembersBySourceGraph = _objNewMembersBySourceGraph.(StatsGraphClass)
+	_cNewMembersBySourceGraph, _okNewMembersBySourceGraph := _objNewMembersBySourceGraph.(StatsGraphClass)
+	if !_okNewMembersBySourceGraph {
+		return nil, fmt.Errorf("decode: field new_members_by_source_graph: unexpected type %T", _objNewMembersBySourceGraph)
+	}
+	v.NewMembersBySourceGraph = _cNewMembersBySourceGraph
 	_objLanguagesGraph, _errLanguagesGraph := ReadTLObject(r)
 	if _errLanguagesGraph != nil {
 		return nil, _errLanguagesGraph
 	}
-	v.LanguagesGraph = _objLanguagesGraph.(StatsGraphClass)
+	_cLanguagesGraph, _okLanguagesGraph := _objLanguagesGraph.(StatsGraphClass)
+	if !_okLanguagesGraph {
+		return nil, fmt.Errorf("decode: field languages_graph: unexpected type %T", _objLanguagesGraph)
+	}
+	v.LanguagesGraph = _cLanguagesGraph
 	_objMessagesGraph, _errMessagesGraph := ReadTLObject(r)
 	if _errMessagesGraph != nil {
 		return nil, _errMessagesGraph
 	}
-	v.MessagesGraph = _objMessagesGraph.(StatsGraphClass)
+	_cMessagesGraph, _okMessagesGraph := _objMessagesGraph.(StatsGraphClass)
+	if !_okMessagesGraph {
+		return nil, fmt.Errorf("decode: field messages_graph: unexpected type %T", _objMessagesGraph)
+	}
+	v.MessagesGraph = _cMessagesGraph
 	_objActionsGraph, _errActionsGraph := ReadTLObject(r)
 	if _errActionsGraph != nil {
 		return nil, _errActionsGraph
 	}
-	v.ActionsGraph = _objActionsGraph.(StatsGraphClass)
+	_cActionsGraph, _okActionsGraph := _objActionsGraph.(StatsGraphClass)
+	if !_okActionsGraph {
+		return nil, fmt.Errorf("decode: field actions_graph: unexpected type %T", _objActionsGraph)
+	}
+	v.ActionsGraph = _cActionsGraph
 	_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
 	if _errTopHoursGraph != nil {
 		return nil, _errTopHoursGraph
 	}
-	v.TopHoursGraph = _objTopHoursGraph.(StatsGraphClass)
+	_cTopHoursGraph, _okTopHoursGraph := _objTopHoursGraph.(StatsGraphClass)
+	if !_okTopHoursGraph {
+		return nil, fmt.Errorf("decode: field top_hours_graph: unexpected type %T", _objTopHoursGraph)
+	}
+	v.TopHoursGraph = _cTopHoursGraph
 	_objWeekdaysGraph, _errWeekdaysGraph := ReadTLObject(r)
 	if _errWeekdaysGraph != nil {
 		return nil, _errWeekdaysGraph
 	}
-	v.WeekdaysGraph = _objWeekdaysGraph.(StatsGraphClass)
+	_cWeekdaysGraph, _okWeekdaysGraph := _objWeekdaysGraph.(StatsGraphClass)
+	if !_okWeekdaysGraph {
+		return nil, fmt.Errorf("decode: field weekdays_graph: unexpected type %T", _objWeekdaysGraph)
+	}
+	v.WeekdaysGraph = _cWeekdaysGraph
 	_vhdrTopPosters, _ehdrTopPosters := r.ReadUint32()
 	if _ehdrTopPosters != nil {
 		return nil, _ehdrTopPosters
@@ -366,7 +507,11 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		if _errTopPosters != nil {
 			return nil, _errTopPosters
 		}
-		v.TopPosters[_iTopPosters] = _objTopPosters.(*StatsGroupTopPoster)
+		_cTopPosters, _okTopPosters := _objTopPosters.(*StatsGroupTopPoster)
+		if !_okTopPosters {
+			return nil, fmt.Errorf("decode: field top_posters: unexpected type %T", _objTopPosters)
+		}
+		v.TopPosters[_iTopPosters] = _cTopPosters
 	}
 	_ = _vhdrTopPosters
 	_vhdrTopAdmins, _ehdrTopAdmins := r.ReadUint32()
@@ -386,7 +531,11 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		if _errTopAdmins != nil {
 			return nil, _errTopAdmins
 		}
-		v.TopAdmins[_iTopAdmins] = _objTopAdmins.(*StatsGroupTopAdmin)
+		_cTopAdmins, _okTopAdmins := _objTopAdmins.(*StatsGroupTopAdmin)
+		if !_okTopAdmins {
+			return nil, fmt.Errorf("decode: field top_admins: unexpected type %T", _objTopAdmins)
+		}
+		v.TopAdmins[_iTopAdmins] = _cTopAdmins
 	}
 	_ = _vhdrTopAdmins
 	_vhdrTopInviters, _ehdrTopInviters := r.ReadUint32()
@@ -406,7 +555,11 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		if _errTopInviters != nil {
 			return nil, _errTopInviters
 		}
-		v.TopInviters[_iTopInviters] = _objTopInviters.(*StatsGroupTopInviter)
+		_cTopInviters, _okTopInviters := _objTopInviters.(*StatsGroupTopInviter)
+		if !_okTopInviters {
+			return nil, fmt.Errorf("decode: field top_inviters: unexpected type %T", _objTopInviters)
+		}
+		v.TopInviters[_iTopInviters] = _cTopInviters
 	}
 	_ = _vhdrTopInviters
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -426,7 +579,11 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -469,12 +626,20 @@ func DecodeStatsMessageStats(r *Reader) (*StatsMessageStats, error) {
 	if _errViewsGraph != nil {
 		return nil, _errViewsGraph
 	}
-	v.ViewsGraph = _objViewsGraph.(StatsGraphClass)
+	_cViewsGraph, _okViewsGraph := _objViewsGraph.(StatsGraphClass)
+	if !_okViewsGraph {
+		return nil, fmt.Errorf("decode: field views_graph: unexpected type %T", _objViewsGraph)
+	}
+	v.ViewsGraph = _cViewsGraph
 	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
 	if _errReactionsByEmotionGraph != nil {
 		return nil, _errReactionsByEmotionGraph
 	}
-	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
+	_cReactionsByEmotionGraph, _okReactionsByEmotionGraph := _objReactionsByEmotionGraph.(StatsGraphClass)
+	if !_okReactionsByEmotionGraph {
+		return nil, fmt.Errorf("decode: field reactions_by_emotion_graph: unexpected type %T", _objReactionsByEmotionGraph)
+	}
+	v.ReactionsByEmotionGraph = _cReactionsByEmotionGraph
 	return v, nil
 }
 
@@ -515,12 +680,20 @@ func DecodeStatsStoryStats(r *Reader) (*StatsStoryStats, error) {
 	if _errViewsGraph != nil {
 		return nil, _errViewsGraph
 	}
-	v.ViewsGraph = _objViewsGraph.(StatsGraphClass)
+	_cViewsGraph, _okViewsGraph := _objViewsGraph.(StatsGraphClass)
+	if !_okViewsGraph {
+		return nil, fmt.Errorf("decode: field views_graph: unexpected type %T", _objViewsGraph)
+	}
+	v.ViewsGraph = _cViewsGraph
 	_objReactionsByEmotionGraph, _errReactionsByEmotionGraph := ReadTLObject(r)
 	if _errReactionsByEmotionGraph != nil {
 		return nil, _errReactionsByEmotionGraph
 	}
-	v.ReactionsByEmotionGraph = _objReactionsByEmotionGraph.(StatsGraphClass)
+	_cReactionsByEmotionGraph, _okReactionsByEmotionGraph := _objReactionsByEmotionGraph.(StatsGraphClass)
+	if !_okReactionsByEmotionGraph {
+		return nil, fmt.Errorf("decode: field reactions_by_emotion_graph: unexpected type %T", _objReactionsByEmotionGraph)
+	}
+	v.ReactionsByEmotionGraph = _cReactionsByEmotionGraph
 	return v, nil
 }
 
@@ -614,7 +787,11 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		if _errForwards != nil {
 			return nil, _errForwards
 		}
-		v.Forwards[_iForwards] = _objForwards.(PublicForwardClass)
+		_cForwards, _okForwards := _objForwards.(PublicForwardClass)
+		if !_okForwards {
+			return nil, fmt.Errorf("decode: field forwards: unexpected type %T", _objForwards)
+		}
+		v.Forwards[_iForwards] = _cForwards
 	}
 	_ = _vhdrForwards
 	if v.Flags.Has(0) {
@@ -641,7 +818,11 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -661,7 +842,11 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -702,7 +887,11 @@ func DecodeStatsPollStats(r *Reader) (*StatsPollStats, error) {
 	if _errVotesGraph != nil {
 		return nil, _errVotesGraph
 	}
-	v.VotesGraph = _objVotesGraph.(StatsGraphClass)
+	_cVotesGraph, _okVotesGraph := _objVotesGraph.(StatsGraphClass)
+	if !_okVotesGraph {
+		return nil, fmt.Errorf("decode: field votes_graph: unexpected type %T", _objVotesGraph)
+	}
+	v.VotesGraph = _cVotesGraph
 	return v, nil
 }
 

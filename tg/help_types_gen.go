@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // AppUpdateClass is the interface for TL type AppUpdate.
@@ -128,7 +129,11 @@ func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 		if _errEntities != nil {
 			return nil, _errEntities
 		}
-		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+		_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+		if !_okEntities {
+			return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+		}
+		v.Entities[_iEntities] = _cEntities
 	}
 	_ = _vhdrEntities
 	if v.Flags.Has(1) {
@@ -136,7 +141,11 @@ func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 		if _errDocument != nil {
 			return nil, _errDocument
 		}
-		v.Document = _objDocument.(DocumentClass)
+		_cDocument, _okDocument := _objDocument.(DocumentClass)
+		if !_okDocument {
+			return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+		}
+		v.Document = _cDocument
 	}
 	if v.Flags.Has(2) {
 		_rURL, _eURL := r.ReadString()
@@ -150,7 +159,11 @@ func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 		if _errSticker != nil {
 			return nil, _errSticker
 		}
-		v.Sticker = _objSticker.(DocumentClass)
+		_cSticker, _okSticker := _objSticker.(DocumentClass)
+		if !_okSticker {
+			return nil, fmt.Errorf("decode: field sticker: unexpected type %T", _objSticker)
+		}
+		v.Sticker = _cSticker
 	}
 	return v, nil
 }
@@ -265,7 +278,11 @@ func DecodeHelpSupport(r *Reader) (*HelpSupport, error) {
 	if _errUser != nil {
 		return nil, _errUser
 	}
-	v.User = _objUser.(UserClass)
+	_cUser, _okUser := _objUser.(UserClass)
+	if !_okUser {
+		return nil, fmt.Errorf("decode: field user: unexpected type %T", _objUser)
+	}
+	v.User = _cUser
 	return v, nil
 }
 
@@ -336,7 +353,11 @@ func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(*DataJSON)
+	_cID, _okID := _objID.(*DataJSON)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
 		return nil, _eText
@@ -359,7 +380,11 @@ func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 		if _errEntities != nil {
 			return nil, _errEntities
 		}
-		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+		_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+		if !_okEntities {
+			return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+		}
+		v.Entities[_iEntities] = _cEntities
 	}
 	_ = _vhdrEntities
 	if v.Flags.Has(1) {
@@ -436,7 +461,11 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		if _errUrls != nil {
 			return nil, _errUrls
 		}
-		v.Urls[_iUrls] = _objUrls.(RecentMeURLClass)
+		_cUrls, _okUrls := _objUrls.(RecentMeURLClass)
+		if !_okUrls {
+			return nil, fmt.Errorf("decode: field urls: unexpected type %T", _objUrls)
+		}
+		v.Urls[_iUrls] = _cUrls
 	}
 	_ = _vhdrUrls
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -456,7 +485,11 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -476,7 +509,11 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -577,7 +614,11 @@ func DecodeHelpTermsOfServiceUpdate(r *Reader) (*HelpTermsOfServiceUpdate, error
 	if _errTermsOfService != nil {
 		return nil, _errTermsOfService
 	}
-	v.TermsOfService = _objTermsOfService.(*HelpTermsOfService)
+	_cTermsOfService, _okTermsOfService := _objTermsOfService.(*HelpTermsOfService)
+	if !_okTermsOfService {
+		return nil, fmt.Errorf("decode: field terms_of_service: unexpected type %T", _objTermsOfService)
+	}
+	v.TermsOfService = _cTermsOfService
 	return v, nil
 }
 
@@ -709,7 +750,11 @@ func DecodeHelpDeepLinkInfo(r *Reader) (*HelpDeepLinkInfo, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
 		_ = _vhdrEntities
 	}
@@ -804,7 +849,11 @@ func DecodeHelpPassportConfig(r *Reader) (*HelpPassportConfig, error) {
 	if _errCountriesLangs != nil {
 		return nil, _errCountriesLangs
 	}
-	v.CountriesLangs = _objCountriesLangs.(*DataJSON)
+	_cCountriesLangs, _okCountriesLangs := _objCountriesLangs.(*DataJSON)
+	if !_okCountriesLangs {
+		return nil, fmt.Errorf("decode: field countries_langs: unexpected type %T", _objCountriesLangs)
+	}
+	v.CountriesLangs = _cCountriesLangs
 	return v, nil
 }
 
@@ -956,7 +1005,11 @@ func DecodeHelpUserInfo(r *Reader) (*HelpUserInfo, error) {
 		if _errEntities != nil {
 			return nil, _errEntities
 		}
-		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+		_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+		if !_okEntities {
+			return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+		}
+		v.Entities[_iEntities] = _cEntities
 	}
 	_ = _vhdrEntities
 	_rAuthor, _eAuthor := r.ReadString()
@@ -1127,7 +1180,11 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		if _errPeer != nil {
 			return nil, _errPeer
 		}
-		v.Peer = _objPeer.(PeerClass)
+		_cPeer, _okPeer := _objPeer.(PeerClass)
+		if !_okPeer {
+			return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+		}
+		v.Peer = _cPeer
 	}
 	if v.Flags.Has(1) {
 		_rPsaType, _ePsaType := r.ReadString()
@@ -1158,7 +1215,11 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		if _errCustomPendingSuggestion != nil {
 			return nil, _errCustomPendingSuggestion
 		}
-		v.CustomPendingSuggestion = _objCustomPendingSuggestion.(*PendingSuggestion)
+		_cCustomPendingSuggestion, _okCustomPendingSuggestion := _objCustomPendingSuggestion.(*PendingSuggestion)
+		if !_okCustomPendingSuggestion {
+			return nil, fmt.Errorf("decode: field custom_pending_suggestion: unexpected type %T", _objCustomPendingSuggestion)
+		}
+		v.CustomPendingSuggestion = _cCustomPendingSuggestion
 	}
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
@@ -1177,7 +1238,11 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -1197,7 +1262,11 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1379,7 +1448,11 @@ func DecodeHelpCountry(r *Reader) (*HelpCountry, error) {
 		if _errCountryCodes != nil {
 			return nil, _errCountryCodes
 		}
-		v.CountryCodes[_iCountryCodes] = _objCountryCodes.(*HelpCountryCode)
+		_cCountryCodes, _okCountryCodes := _objCountryCodes.(*HelpCountryCode)
+		if !_okCountryCodes {
+			return nil, fmt.Errorf("decode: field country_codes: unexpected type %T", _objCountryCodes)
+		}
+		v.CountryCodes[_iCountryCodes] = _cCountryCodes
 	}
 	_ = _vhdrCountryCodes
 	return v, nil
@@ -1485,7 +1558,11 @@ func DecodeHelpCountriesList(r *Reader) (*HelpCountriesList, error) {
 		if _errCountries != nil {
 			return nil, _errCountries
 		}
-		v.Countries[_iCountries] = _objCountries.(*HelpCountry)
+		_cCountries, _okCountries := _objCountries.(*HelpCountry)
+		if !_okCountries {
+			return nil, fmt.Errorf("decode: field countries: unexpected type %T", _objCountries)
+		}
+		v.Countries[_iCountries] = _cCountries
 	}
 	_ = _vhdrCountries
 	_rHash, _eHash := r.ReadInt32()
@@ -1575,7 +1652,11 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		if _errStatusEntities != nil {
 			return nil, _errStatusEntities
 		}
-		v.StatusEntities[_iStatusEntities] = _objStatusEntities.(MessageEntityClass)
+		_cStatusEntities, _okStatusEntities := _objStatusEntities.(MessageEntityClass)
+		if !_okStatusEntities {
+			return nil, fmt.Errorf("decode: field status_entities: unexpected type %T", _objStatusEntities)
+		}
+		v.StatusEntities[_iStatusEntities] = _cStatusEntities
 	}
 	_ = _vhdrStatusEntities
 	_vvVideoSections, _veVideoSections := r.ReadVectorString()
@@ -1600,7 +1681,11 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		if _errVideos != nil {
 			return nil, _errVideos
 		}
-		v.Videos[_iVideos] = _objVideos.(DocumentClass)
+		_cVideos, _okVideos := _objVideos.(DocumentClass)
+		if !_okVideos {
+			return nil, fmt.Errorf("decode: field videos: unexpected type %T", _objVideos)
+		}
+		v.Videos[_iVideos] = _cVideos
 	}
 	_ = _vhdrVideos
 	_vhdrPeriodOptions, _ehdrPeriodOptions := r.ReadUint32()
@@ -1620,7 +1705,11 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		if _errPeriodOptions != nil {
 			return nil, _errPeriodOptions
 		}
-		v.PeriodOptions[_iPeriodOptions] = _objPeriodOptions.(*PremiumSubscriptionOption)
+		_cPeriodOptions, _okPeriodOptions := _objPeriodOptions.(*PremiumSubscriptionOption)
+		if !_okPeriodOptions {
+			return nil, fmt.Errorf("decode: field period_options: unexpected type %T", _objPeriodOptions)
+		}
+		v.PeriodOptions[_iPeriodOptions] = _cPeriodOptions
 	}
 	_ = _vhdrPeriodOptions
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -1640,7 +1729,11 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1734,7 +1827,11 @@ func DecodeHelpAppConfig(r *Reader) (*HelpAppConfig, error) {
 	if _errConfig != nil {
 		return nil, _errConfig
 	}
-	v.Config = _objConfig.(JSONValueClass)
+	_cConfig, _okConfig := _objConfig.(JSONValueClass)
+	if !_okConfig {
+		return nil, fmt.Errorf("decode: field config: unexpected type %T", _objConfig)
+	}
+	v.Config = _cConfig
 	return v, nil
 }
 
@@ -1930,14 +2027,22 @@ func DecodeHelpPeerColorOption(r *Reader) (*HelpPeerColorOption, error) {
 		if _errColors != nil {
 			return nil, _errColors
 		}
-		v.Colors = _objColors.(PeerColorSetClass)
+		_cColors, _okColors := _objColors.(PeerColorSetClass)
+		if !_okColors {
+			return nil, fmt.Errorf("decode: field colors: unexpected type %T", _objColors)
+		}
+		v.Colors = _cColors
 	}
 	if v.Flags.Has(2) {
 		_objDarkColors, _errDarkColors := ReadTLObject(r)
 		if _errDarkColors != nil {
 			return nil, _errDarkColors
 		}
-		v.DarkColors = _objDarkColors.(PeerColorSetClass)
+		_cDarkColors, _okDarkColors := _objDarkColors.(PeerColorSetClass)
+		if !_okDarkColors {
+			return nil, fmt.Errorf("decode: field dark_colors: unexpected type %T", _objDarkColors)
+		}
+		v.DarkColors = _cDarkColors
 	}
 	if v.Flags.Has(3) {
 		_rChannelMinLevel, _eChannelMinLevel := r.ReadInt32()
@@ -2061,7 +2166,11 @@ func DecodeHelpPeerColors(r *Reader) (*HelpPeerColors, error) {
 		if _errColors != nil {
 			return nil, _errColors
 		}
-		v.Colors[_iColors] = _objColors.(*HelpPeerColorOption)
+		_cColors, _okColors := _objColors.(*HelpPeerColorOption)
+		if !_okColors {
+			return nil, fmt.Errorf("decode: field colors: unexpected type %T", _objColors)
+		}
+		v.Colors[_iColors] = _cColors
 	}
 	_ = _vhdrColors
 	return v, nil
@@ -2167,7 +2276,11 @@ func DecodeHelpTimezonesList(r *Reader) (*HelpTimezonesList, error) {
 		if _errTimezones != nil {
 			return nil, _errTimezones
 		}
-		v.Timezones[_iTimezones] = _objTimezones.(*Timezone)
+		_cTimezones, _okTimezones := _objTimezones.(*Timezone)
+		if !_okTimezones {
+			return nil, fmt.Errorf("decode: field timezones: unexpected type %T", _objTimezones)
+		}
+		v.Timezones[_iTimezones] = _cTimezones
 	}
 	_ = _vhdrTimezones
 	_rHash, _eHash := r.ReadInt32()

@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // SentCodeClass is the interface for TL type SentCode.
@@ -86,7 +87,11 @@ func DecodeAuthSentCode(r *Reader) (*AuthSentCode, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SentCodeTypeClass)
+	_cType, _okType := _objType.(SentCodeTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rPhoneCodeHash, _ePhoneCodeHash := r.ReadString()
 	if _ePhoneCodeHash != nil {
 		return nil, _ePhoneCodeHash
@@ -97,7 +102,11 @@ func DecodeAuthSentCode(r *Reader) (*AuthSentCode, error) {
 		if _errNextType != nil {
 			return nil, _errNextType
 		}
-		v.NextType = _objNextType.(CodeTypeClass)
+		_cNextType, _okNextType := _objNextType.(CodeTypeClass)
+		if !_okNextType {
+			return nil, fmt.Errorf("decode: field next_type: unexpected type %T", _objNextType)
+		}
+		v.NextType = _cNextType
 	}
 	if v.Flags.Has(2) {
 		_rTimeout, _eTimeout := r.ReadInt32()
@@ -141,7 +150,11 @@ func DecodeAuthSentCodeSuccess(r *Reader) (*AuthSentCodeSuccess, error) {
 	if _errAuthorization != nil {
 		return nil, _errAuthorization
 	}
-	v.Authorization = _objAuthorization.(AuthorizationClass)
+	_cAuthorization, _okAuthorization := _objAuthorization.(AuthorizationClass)
+	if !_okAuthorization {
+		return nil, fmt.Errorf("decode: field authorization: unexpected type %T", _objAuthorization)
+	}
+	v.Authorization = _cAuthorization
 	return v, nil
 }
 
@@ -340,7 +353,11 @@ func DecodeAuthAuthorization(r *Reader) (*AuthAuthorization, error) {
 	if _errUser != nil {
 		return nil, _errUser
 	}
-	v.User = _objUser.(UserClass)
+	_cUser, _okUser := _objUser.(UserClass)
+	if !_okUser {
+		return nil, fmt.Errorf("decode: field user: unexpected type %T", _objUser)
+	}
+	v.User = _cUser
 	return v, nil
 }
 
@@ -394,7 +411,11 @@ func DecodeAuthAuthorizationSignUpRequired(r *Reader) (*AuthAuthorizationSignUpR
 		if _errTermsOfService != nil {
 			return nil, _errTermsOfService
 		}
-		v.TermsOfService = _objTermsOfService.(*HelpTermsOfService)
+		_cTermsOfService, _okTermsOfService := _objTermsOfService.(*HelpTermsOfService)
+		if !_okTermsOfService {
+			return nil, fmt.Errorf("decode: field terms_of_service: unexpected type %T", _objTermsOfService)
+		}
+		v.TermsOfService = _cTermsOfService
 	}
 	return v, nil
 }
@@ -2066,7 +2087,11 @@ func DecodeURLAuthResultRequest(r *Reader) (*URLAuthResultRequest, error) {
 	if _errBot != nil {
 		return nil, _errBot
 	}
-	v.Bot = _objBot.(UserClass)
+	_cBot, _okBot := _objBot.(UserClass)
+	if !_okBot {
+		return nil, fmt.Errorf("decode: field bot: unexpected type %T", _objBot)
+	}
+	v.Bot = _cBot
 	_rDomain, _eDomain := r.ReadString()
 	if _eDomain != nil {
 		return nil, _eDomain
@@ -2352,7 +2377,11 @@ func DecodeAuthLoginTokenSuccess(r *Reader) (*AuthLoginTokenSuccess, error) {
 	if _errAuthorization != nil {
 		return nil, _errAuthorization
 	}
-	v.Authorization = _objAuthorization.(AuthorizationClass)
+	_cAuthorization, _okAuthorization := _objAuthorization.(AuthorizationClass)
+	if !_okAuthorization {
+		return nil, fmt.Errorf("decode: field authorization: unexpected type %T", _objAuthorization)
+	}
+	v.Authorization = _cAuthorization
 	return v, nil
 }
 
@@ -2542,7 +2571,11 @@ func DecodeAuthPasskeyLoginOptions(r *Reader) (*AuthPasskeyLoginOptions, error) 
 	if _errOptions != nil {
 		return nil, _errOptions
 	}
-	v.Options = _objOptions.(*DataJSON)
+	_cOptions, _okOptions := _objOptions.(*DataJSON)
+	if !_okOptions {
+		return nil, fmt.Errorf("decode: field options: unexpected type %T", _objOptions)
+	}
+	v.Options = _cOptions
 	return v, nil
 }
 
@@ -2600,7 +2633,11 @@ func DecodeInputPasskeyResponseRegister(r *Reader) (*InputPasskeyResponseRegiste
 	if _errClientData != nil {
 		return nil, _errClientData
 	}
-	v.ClientData = _objClientData.(*DataJSON)
+	_cClientData, _okClientData := _objClientData.(*DataJSON)
+	if !_okClientData {
+		return nil, fmt.Errorf("decode: field client_data: unexpected type %T", _objClientData)
+	}
+	v.ClientData = _cClientData
 	_rAttestationData, _eAttestationData := r.ReadBytes()
 	if _eAttestationData != nil {
 		return nil, _eAttestationData
@@ -2647,7 +2684,11 @@ func DecodeInputPasskeyResponseLogin(r *Reader) (*InputPasskeyResponseLogin, err
 	if _errClientData != nil {
 		return nil, _errClientData
 	}
-	v.ClientData = _objClientData.(*DataJSON)
+	_cClientData, _okClientData := _objClientData.(*DataJSON)
+	if !_okClientData {
+		return nil, fmt.Errorf("decode: field client_data: unexpected type %T", _objClientData)
+	}
+	v.ClientData = _cClientData
 	_rAuthenticatorData, _eAuthenticatorData := r.ReadBytes()
 	if _eAuthenticatorData != nil {
 		return nil, _eAuthenticatorData
@@ -2732,7 +2773,11 @@ func DecodeInputPasskeyCredentialPublicKey(r *Reader) (*InputPasskeyCredentialPu
 	if _errResponse != nil {
 		return nil, _errResponse
 	}
-	v.Response = _objResponse.(InputPasskeyResponseClass)
+	_cResponse, _okResponse := _objResponse.(InputPasskeyResponseClass)
+	if !_okResponse {
+		return nil, fmt.Errorf("decode: field response: unexpected type %T", _objResponse)
+	}
+	v.Response = _cResponse
 	return v, nil
 }
 

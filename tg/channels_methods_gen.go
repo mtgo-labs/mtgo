@@ -985,10 +985,11 @@ const ChannelsGetAdminedPublicChannelsTypeID = 0xf8b036af
 //
 // See https://core.telegram.org/method/channels/getAdminedPublicChannels for reference.
 type ChannelsGetAdminedPublicChannelsRequest struct {
-	Flags       Fields `json:"-"`
-	ByLocation  bool   `json:"by_location,omitempty"`
-	CheckLimit  bool   `json:"check_limit,omitempty"`
-	ForPersonal bool   `json:"for_personal,omitempty"`
+	Flags            Fields `json:"-"`
+	ByLocation       bool   `json:"by_location,omitempty"`
+	CheckLimit       bool   `json:"check_limit,omitempty"`
+	ForPersonal      bool   `json:"for_personal,omitempty"`
+	ForCommunityPeer bool   `json:"for_community_peer,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -1001,6 +1002,9 @@ func (v *ChannelsGetAdminedPublicChannelsRequest) SetFlags() {
 	}
 	if v.ForPersonal {
 		v.Flags.Set(2)
+	}
+	if v.ForCommunityPeer {
+		v.Flags.Set(3)
 	}
 }
 

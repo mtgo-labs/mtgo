@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // PhoneCallDiscardReasonClass is the interface for TL type PhoneCallDiscardReason.
@@ -413,7 +414,11 @@ func DecodePhoneCallWaiting(r *Reader) (*PhoneCallWaiting, error) {
 	if _errProtocol != nil {
 		return nil, _errProtocol
 	}
-	v.Protocol = _objProtocol.(*PhoneCallProtocol)
+	_cProtocol, _okProtocol := _objProtocol.(*PhoneCallProtocol)
+	if !_okProtocol {
+		return nil, fmt.Errorf("decode: field protocol: unexpected type %T", _objProtocol)
+	}
+	v.Protocol = _cProtocol
 	if v.Flags.Has(0) {
 		_rReceiveDate, _eReceiveDate := r.ReadInt32()
 		if _eReceiveDate != nil {
@@ -515,7 +520,11 @@ func DecodePhoneCallRequested(r *Reader) (*PhoneCallRequested, error) {
 	if _errProtocol != nil {
 		return nil, _errProtocol
 	}
-	v.Protocol = _objProtocol.(*PhoneCallProtocol)
+	_cProtocol, _okProtocol := _objProtocol.(*PhoneCallProtocol)
+	if !_okProtocol {
+		return nil, fmt.Errorf("decode: field protocol: unexpected type %T", _objProtocol)
+	}
+	v.Protocol = _cProtocol
 	return v, nil
 }
 
@@ -610,7 +619,11 @@ func DecodePhoneCallAccepted(r *Reader) (*PhoneCallAccepted, error) {
 	if _errProtocol != nil {
 		return nil, _errProtocol
 	}
-	v.Protocol = _objProtocol.(*PhoneCallProtocol)
+	_cProtocol, _okProtocol := _objProtocol.(*PhoneCallProtocol)
+	if !_okProtocol {
+		return nil, fmt.Errorf("decode: field protocol: unexpected type %T", _objProtocol)
+	}
+	v.Protocol = _cProtocol
 	return v, nil
 }
 
@@ -737,7 +750,11 @@ func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 	if _errProtocol != nil {
 		return nil, _errProtocol
 	}
-	v.Protocol = _objProtocol.(*PhoneCallProtocol)
+	_cProtocol, _okProtocol := _objProtocol.(*PhoneCallProtocol)
+	if !_okProtocol {
+		return nil, fmt.Errorf("decode: field protocol: unexpected type %T", _objProtocol)
+	}
+	v.Protocol = _cProtocol
 	_vhdrConnections, _ehdrConnections := r.ReadUint32()
 	if _ehdrConnections != nil {
 		return nil, _ehdrConnections
@@ -755,7 +772,11 @@ func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 		if _errConnections != nil {
 			return nil, _errConnections
 		}
-		v.Connections[_iConnections] = _objConnections.(PhoneConnectionClass)
+		_cConnections, _okConnections := _objConnections.(PhoneConnectionClass)
+		if !_okConnections {
+			return nil, fmt.Errorf("decode: field connections: unexpected type %T", _objConnections)
+		}
+		v.Connections[_iConnections] = _cConnections
 	}
 	_ = _vhdrConnections
 	_rStartDate, _eStartDate := r.ReadInt32()
@@ -768,7 +789,11 @@ func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 		if _errCustomParameters != nil {
 			return nil, _errCustomParameters
 		}
-		v.CustomParameters = _objCustomParameters.(*DataJSON)
+		_cCustomParameters, _okCustomParameters := _objCustomParameters.(*DataJSON)
+		if !_okCustomParameters {
+			return nil, fmt.Errorf("decode: field custom_parameters: unexpected type %T", _objCustomParameters)
+		}
+		v.CustomParameters = _cCustomParameters
 	}
 	return v, nil
 }
@@ -852,7 +877,11 @@ func DecodePhoneCallDiscarded(r *Reader) (*PhoneCallDiscarded, error) {
 		if _errReason != nil {
 			return nil, _errReason
 		}
-		v.Reason = _objReason.(PhoneCallDiscardReasonClass)
+		_cReason, _okReason := _objReason.(PhoneCallDiscardReasonClass)
+		if !_okReason {
+			return nil, fmt.Errorf("decode: field reason: unexpected type %T", _objReason)
+		}
+		v.Reason = _cReason
 	}
 	if v.Flags.Has(1) {
 		_rDuration, _eDuration := r.ReadInt32()
@@ -902,7 +931,11 @@ func DecodePhonePhoneCall(r *Reader) (*PhonePhoneCall, error) {
 	if _errPhoneCall != nil {
 		return nil, _errPhoneCall
 	}
-	v.PhoneCall = _objPhoneCall.(PhoneCallClass)
+	_cPhoneCall, _okPhoneCall := _objPhoneCall.(PhoneCallClass)
+	if !_okPhoneCall {
+		return nil, fmt.Errorf("decode: field phone_call: unexpected type %T", _objPhoneCall)
+	}
+	v.PhoneCall = _cPhoneCall
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
@@ -920,7 +953,11 @@ func DecodePhonePhoneCall(r *Reader) (*PhonePhoneCall, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1519,7 +1556,11 @@ func DecodeGroupCall(r *Reader) (*GroupCall, error) {
 		if _errDefaultSendAs != nil {
 			return nil, _errDefaultSendAs
 		}
-		v.DefaultSendAs = _objDefaultSendAs.(PeerClass)
+		_cDefaultSendAs, _okDefaultSendAs := _objDefaultSendAs.(PeerClass)
+		if !_okDefaultSendAs {
+			return nil, fmt.Errorf("decode: field default_send_as: unexpected type %T", _objDefaultSendAs)
+		}
+		v.DefaultSendAs = _cDefaultSendAs
 	}
 	return v, nil
 }
@@ -1576,7 +1617,11 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 	if _errCall != nil {
 		return nil, _errCall
 	}
-	v.Call = _objCall.(GroupCallClass)
+	_cCall, _okCall := _objCall.(GroupCallClass)
+	if !_okCall {
+		return nil, fmt.Errorf("decode: field call: unexpected type %T", _objCall)
+	}
+	v.Call = _cCall
 	_vhdrParticipants, _ehdrParticipants := r.ReadUint32()
 	if _ehdrParticipants != nil {
 		return nil, _ehdrParticipants
@@ -1594,7 +1639,11 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		if _errParticipants != nil {
 			return nil, _errParticipants
 		}
-		v.Participants[_iParticipants] = _objParticipants.(*GroupCallParticipant)
+		_cParticipants, _okParticipants := _objParticipants.(*GroupCallParticipant)
+		if !_okParticipants {
+			return nil, fmt.Errorf("decode: field participants: unexpected type %T", _objParticipants)
+		}
+		v.Participants[_iParticipants] = _cParticipants
 	}
 	_ = _vhdrParticipants
 	_rParticipantsNextOffset, _eParticipantsNextOffset := r.ReadString()
@@ -1619,7 +1668,11 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -1639,7 +1692,11 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1861,7 +1918,11 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		if _errParticipants != nil {
 			return nil, _errParticipants
 		}
-		v.Participants[_iParticipants] = _objParticipants.(*GroupCallParticipant)
+		_cParticipants, _okParticipants := _objParticipants.(*GroupCallParticipant)
+		if !_okParticipants {
+			return nil, fmt.Errorf("decode: field participants: unexpected type %T", _objParticipants)
+		}
+		v.Participants[_iParticipants] = _cParticipants
 	}
 	_ = _vhdrParticipants
 	_rNextOffset, _eNextOffset := r.ReadString()
@@ -1886,7 +1947,11 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -1906,7 +1971,11 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	_rVersion, _eVersion := r.ReadInt32()
@@ -1981,7 +2050,11 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(PeerClass)
+		_cPeers, _okPeers := _objPeers.(PeerClass)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -2001,7 +2074,11 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -2021,7 +2098,11 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -2118,7 +2199,11 @@ func DecodePhoneGroupCallStreamChannels(r *Reader) (*PhoneGroupCallStreamChannel
 		if _errChannels != nil {
 			return nil, _errChannels
 		}
-		v.Channels[_iChannels] = _objChannels.(*GroupCallStreamChannel)
+		_cChannels, _okChannels := _objChannels.(*GroupCallStreamChannel)
+		if !_okChannels {
+			return nil, fmt.Errorf("decode: field channels: unexpected type %T", _objChannels)
+		}
+		v.Channels[_iChannels] = _cChannels
 	}
 	_ = _vhdrChannels
 	return v, nil
@@ -2235,7 +2320,11 @@ func DecodeGroupCallDonor(r *Reader) (*GroupCallDonor, error) {
 		if _errPeerID != nil {
 			return nil, _errPeerID
 		}
-		v.PeerID = _objPeerID.(PeerClass)
+		_cPeerID, _okPeerID := _objPeerID.(PeerClass)
+		if !_okPeerID {
+			return nil, fmt.Errorf("decode: field peer_id: unexpected type %T", _objPeerID)
+		}
+		v.PeerID = _cPeerID
 	}
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
@@ -2316,7 +2405,11 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		if _errTopDonors != nil {
 			return nil, _errTopDonors
 		}
-		v.TopDonors[_iTopDonors] = _objTopDonors.(*GroupCallDonor)
+		_cTopDonors, _okTopDonors := _objTopDonors.(*GroupCallDonor)
+		if !_okTopDonors {
+			return nil, fmt.Errorf("decode: field top_donors: unexpected type %T", _objTopDonors)
+		}
+		v.TopDonors[_iTopDonors] = _cTopDonors
 	}
 	_ = _vhdrTopDonors
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -2336,7 +2429,11 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -2356,7 +2453,11 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil

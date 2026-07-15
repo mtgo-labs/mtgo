@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // FolderTypeID is the constructor ID for TL type folder.
@@ -82,7 +83,11 @@ func DecodeFolder(r *Reader) (*Folder, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(ChatPhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(ChatPhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	return v, nil
 }
@@ -182,7 +187,11 @@ func DecodeExportedChatlistInvite(r *Reader) (*ExportedChatlistInvite, error) {
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(PeerClass)
+		_cPeers, _okPeers := _objPeers.(PeerClass)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	return v, nil
@@ -222,12 +231,20 @@ func DecodeChatlistsExportedChatlistInvite(r *Reader) (*ChatlistsExportedChatlis
 	if _errFilter != nil {
 		return nil, _errFilter
 	}
-	v.Filter = _objFilter.(DialogFilterClass)
+	_cFilter, _okFilter := _objFilter.(DialogFilterClass)
+	if !_okFilter {
+		return nil, fmt.Errorf("decode: field filter: unexpected type %T", _objFilter)
+	}
+	v.Filter = _cFilter
 	_objInvite, _errInvite := ReadTLObject(r)
 	if _errInvite != nil {
 		return nil, _errInvite
 	}
-	v.Invite = _objInvite.(ExportedChatlistInviteClass)
+	_cInvite, _okInvite := _objInvite.(ExportedChatlistInviteClass)
+	if !_okInvite {
+		return nil, fmt.Errorf("decode: field invite: unexpected type %T", _objInvite)
+	}
+	v.Invite = _cInvite
 	return v, nil
 }
 
@@ -295,7 +312,11 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		if _errInvites != nil {
 			return nil, _errInvites
 		}
-		v.Invites[_iInvites] = _objInvites.(ExportedChatlistInviteClass)
+		_cInvites, _okInvites := _objInvites.(ExportedChatlistInviteClass)
+		if !_okInvites {
+			return nil, fmt.Errorf("decode: field invites: unexpected type %T", _objInvites)
+		}
+		v.Invites[_iInvites] = _cInvites
 	}
 	_ = _vhdrInvites
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -315,7 +336,11 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -335,7 +360,11 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -435,7 +464,11 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		if _errMissingPeers != nil {
 			return nil, _errMissingPeers
 		}
-		v.MissingPeers[_iMissingPeers] = _objMissingPeers.(PeerClass)
+		_cMissingPeers, _okMissingPeers := _objMissingPeers.(PeerClass)
+		if !_okMissingPeers {
+			return nil, fmt.Errorf("decode: field missing_peers: unexpected type %T", _objMissingPeers)
+		}
+		v.MissingPeers[_iMissingPeers] = _cMissingPeers
 	}
 	_ = _vhdrMissingPeers
 	_vhdrAlreadyPeers, _ehdrAlreadyPeers := r.ReadUint32()
@@ -455,7 +488,11 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		if _errAlreadyPeers != nil {
 			return nil, _errAlreadyPeers
 		}
-		v.AlreadyPeers[_iAlreadyPeers] = _objAlreadyPeers.(PeerClass)
+		_cAlreadyPeers, _okAlreadyPeers := _objAlreadyPeers.(PeerClass)
+		if !_okAlreadyPeers {
+			return nil, fmt.Errorf("decode: field already_peers: unexpected type %T", _objAlreadyPeers)
+		}
+		v.AlreadyPeers[_iAlreadyPeers] = _cAlreadyPeers
 	}
 	_ = _vhdrAlreadyPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -475,7 +512,11 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -495,7 +536,11 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -575,7 +620,11 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 	if _errTitle != nil {
 		return nil, _errTitle
 	}
-	v.Title = _objTitle.(*TextWithEntities)
+	_cTitle, _okTitle := _objTitle.(*TextWithEntities)
+	if !_okTitle {
+		return nil, fmt.Errorf("decode: field title: unexpected type %T", _objTitle)
+	}
+	v.Title = _cTitle
 	if v.Flags.Has(0) {
 		_rEmoticon, _eEmoticon := r.ReadString()
 		if _eEmoticon != nil {
@@ -600,7 +649,11 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(PeerClass)
+		_cPeers, _okPeers := _objPeers.(PeerClass)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -620,7 +673,11 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -640,7 +697,11 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -710,7 +771,11 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		if _errMissingPeers != nil {
 			return nil, _errMissingPeers
 		}
-		v.MissingPeers[_iMissingPeers] = _objMissingPeers.(PeerClass)
+		_cMissingPeers, _okMissingPeers := _objMissingPeers.(PeerClass)
+		if !_okMissingPeers {
+			return nil, fmt.Errorf("decode: field missing_peers: unexpected type %T", _objMissingPeers)
+		}
+		v.MissingPeers[_iMissingPeers] = _cMissingPeers
 	}
 	_ = _vhdrMissingPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -730,7 +795,11 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -750,7 +819,11 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil

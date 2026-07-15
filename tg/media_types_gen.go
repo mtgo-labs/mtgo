@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // InputPhotoClass is the interface for TL type InputPhoto.
@@ -719,7 +720,11 @@ func DecodeDocument(r *Reader) (*Document, error) {
 			if _errThumbs != nil {
 				return nil, _errThumbs
 			}
-			v.Thumbs[_iThumbs] = _objThumbs.(PhotoSizeClass)
+			_cThumbs, _okThumbs := _objThumbs.(PhotoSizeClass)
+			if !_okThumbs {
+				return nil, fmt.Errorf("decode: field thumbs: unexpected type %T", _objThumbs)
+			}
+			v.Thumbs[_iThumbs] = _cThumbs
 		}
 		_ = _vhdrThumbs
 	}
@@ -741,7 +746,11 @@ func DecodeDocument(r *Reader) (*Document, error) {
 			if _errVideoThumbs != nil {
 				return nil, _errVideoThumbs
 			}
-			v.VideoThumbs[_iVideoThumbs] = _objVideoThumbs.(VideoSizeClass)
+			_cVideoThumbs, _okVideoThumbs := _objVideoThumbs.(VideoSizeClass)
+			if !_okVideoThumbs {
+				return nil, fmt.Errorf("decode: field video_thumbs: unexpected type %T", _objVideoThumbs)
+			}
+			v.VideoThumbs[_iVideoThumbs] = _cVideoThumbs
 		}
 		_ = _vhdrVideoThumbs
 	}
@@ -767,7 +776,11 @@ func DecodeDocument(r *Reader) (*Document, error) {
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
 	_ = _vhdrAttributes
 	return v, nil
@@ -964,13 +977,21 @@ func DecodeDocumentAttributeSticker(r *Reader) (*DocumentAttributeSticker, error
 	if _errStickerset != nil {
 		return nil, _errStickerset
 	}
-	v.Stickerset = _objStickerset.(InputStickerSetClass)
+	_cStickerset, _okStickerset := _objStickerset.(InputStickerSetClass)
+	if !_okStickerset {
+		return nil, fmt.Errorf("decode: field stickerset: unexpected type %T", _objStickerset)
+	}
+	v.Stickerset = _cStickerset
 	if v.Flags.Has(0) {
 		_objMaskCoords, _errMaskCoords := ReadTLObject(r)
 		if _errMaskCoords != nil {
 			return nil, _errMaskCoords
 		}
-		v.MaskCoords = _objMaskCoords.(*MaskCoords)
+		_cMaskCoords, _okMaskCoords := _objMaskCoords.(*MaskCoords)
+		if !_okMaskCoords {
+			return nil, fmt.Errorf("decode: field mask_coords: unexpected type %T", _objMaskCoords)
+		}
+		v.MaskCoords = _cMaskCoords
 	}
 	return v, nil
 }
@@ -1315,7 +1336,11 @@ func DecodeDocumentAttributeCustomEmoji(r *Reader) (*DocumentAttributeCustomEmoj
 	if _errStickerset != nil {
 		return nil, _errStickerset
 	}
-	v.Stickerset = _objStickerset.(InputStickerSetClass)
+	_cStickerset, _okStickerset := _objStickerset.(InputStickerSetClass)
+	if !_okStickerset {
+		return nil, fmt.Errorf("decode: field stickerset: unexpected type %T", _objStickerset)
+	}
+	v.Stickerset = _cStickerset
 	return v, nil
 }
 
@@ -1476,7 +1501,11 @@ func DecodeWebDocument(r *Reader) (*WebDocument, error) {
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
 	_ = _vhdrAttributes
 	return v, nil
@@ -1552,7 +1581,11 @@ func DecodeWebDocumentNoProxy(r *Reader) (*WebDocumentNoProxy, error) {
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
 	_ = _vhdrAttributes
 	return v, nil
@@ -1631,7 +1664,11 @@ func DecodeInputWebDocument(r *Reader) (*InputWebDocument, error) {
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
 	_ = _vhdrAttributes
 	return v, nil
@@ -1761,7 +1798,11 @@ func DecodeWebPageAttributeTheme(r *Reader) (*WebPageAttributeTheme, error) {
 			if _errDocuments != nil {
 				return nil, _errDocuments
 			}
-			v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
+			_cDocuments, _okDocuments := _objDocuments.(DocumentClass)
+			if !_okDocuments {
+				return nil, fmt.Errorf("decode: field documents: unexpected type %T", _objDocuments)
+			}
+			v.Documents[_iDocuments] = _cDocuments
 		}
 		_ = _vhdrDocuments
 	}
@@ -1770,7 +1811,11 @@ func DecodeWebPageAttributeTheme(r *Reader) (*WebPageAttributeTheme, error) {
 		if _errSettings != nil {
 			return nil, _errSettings
 		}
-		v.Settings = _objSettings.(*ThemeSettings)
+		_cSettings, _okSettings := _objSettings.(*ThemeSettings)
+		if !_okSettings {
+			return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+		}
+		v.Settings = _cSettings
 	}
 	return v, nil
 }
@@ -1828,7 +1873,11 @@ func DecodeWebPageAttributeStory(r *Reader) (*WebPageAttributeStory, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
 		return nil, _eID
@@ -1839,7 +1888,11 @@ func DecodeWebPageAttributeStory(r *Reader) (*WebPageAttributeStory, error) {
 		if _errStory != nil {
 			return nil, _errStory
 		}
-		v.Story = _objStory.(StoryItemClass)
+		_cStory, _okStory := _objStory.(StoryItemClass)
+		if !_okStory {
+			return nil, fmt.Errorf("decode: field story: unexpected type %T", _objStory)
+		}
+		v.Story = _cStory
 	}
 	return v, nil
 }
@@ -1915,7 +1968,11 @@ func DecodeWebPageAttributeStickerSet(r *Reader) (*WebPageAttributeStickerSet, e
 		if _errStickers != nil {
 			return nil, _errStickers
 		}
-		v.Stickers[_iStickers] = _objStickers.(DocumentClass)
+		_cStickers, _okStickers := _objStickers.(DocumentClass)
+		if !_okStickers {
+			return nil, fmt.Errorf("decode: field stickers: unexpected type %T", _objStickers)
+		}
+		v.Stickers[_iStickers] = _cStickers
 	}
 	_ = _vhdrStickers
 	return v, nil
@@ -1953,7 +2010,11 @@ func DecodeWebPageAttributeUniqueStarGift(r *Reader) (*WebPageAttributeUniqueSta
 	if _errGift != nil {
 		return nil, _errGift
 	}
-	v.Gift = _objGift.(StarGiftClass)
+	_cGift, _okGift := _objGift.(StarGiftClass)
+	if !_okGift {
+		return nil, fmt.Errorf("decode: field gift: unexpected type %T", _objGift)
+	}
+	v.Gift = _cGift
 	return v, nil
 }
 
@@ -2006,7 +2067,11 @@ func DecodeWebPageAttributeStarGiftCollection(r *Reader) (*WebPageAttributeStarG
 		if _errIcons != nil {
 			return nil, _errIcons
 		}
-		v.Icons[_iIcons] = _objIcons.(DocumentClass)
+		_cIcons, _okIcons := _objIcons.(DocumentClass)
+		if !_okIcons {
+			return nil, fmt.Errorf("decode: field icons: unexpected type %T", _objIcons)
+		}
+		v.Icons[_iIcons] = _cIcons
 	}
 	_ = _vhdrIcons
 	return v, nil
@@ -2046,7 +2111,11 @@ func DecodeWebPageAttributeStarGiftAuction(r *Reader) (*WebPageAttributeStarGift
 	if _errGift != nil {
 		return nil, _errGift
 	}
-	v.Gift = _objGift.(StarGiftClass)
+	_cGift, _okGift := _objGift.(StarGiftClass)
+	if !_okGift {
+		return nil, fmt.Errorf("decode: field gift: unexpected type %T", _objGift)
+	}
+	v.Gift = _cGift
 	_rEndDate, _eEndDate := r.ReadInt32()
 	if _eEndDate != nil {
 		return nil, _eEndDate
@@ -2279,7 +2348,11 @@ func DecodeVideoSizeStickerMarkup(r *Reader) (*VideoSizeStickerMarkup, error) {
 	if _errStickerset != nil {
 		return nil, _errStickerset
 	}
-	v.Stickerset = _objStickerset.(InputStickerSetClass)
+	_cStickerset, _okStickerset := _objStickerset.(InputStickerSetClass)
+	if !_okStickerset {
+		return nil, fmt.Errorf("decode: field stickerset: unexpected type %T", _objStickerset)
+	}
+	v.Stickerset = _cStickerset
 	_rStickerID, _eStickerID := r.ReadInt64()
 	if _eStickerID != nil {
 		return nil, _eStickerID

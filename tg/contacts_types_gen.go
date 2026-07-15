@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // ContactsClass is the interface for TL type Contacts.
@@ -106,7 +107,11 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 		if _errContacts != nil {
 			return nil, _errContacts
 		}
-		v.Contacts[_iContacts] = _objContacts.(*Contact)
+		_cContacts, _okContacts := _objContacts.(*Contact)
+		if !_okContacts {
+			return nil, fmt.Errorf("decode: field contacts: unexpected type %T", _objContacts)
+		}
+		v.Contacts[_iContacts] = _cContacts
 	}
 	_ = _vhdrContacts
 	_rSavedCount, _eSavedCount := r.ReadInt32()
@@ -131,7 +136,11 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -203,7 +212,11 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		if _errImported != nil {
 			return nil, _errImported
 		}
-		v.Imported[_iImported] = _objImported.(*ImportedContact)
+		_cImported, _okImported := _objImported.(*ImportedContact)
+		if !_okImported {
+			return nil, fmt.Errorf("decode: field imported: unexpected type %T", _objImported)
+		}
+		v.Imported[_iImported] = _cImported
 	}
 	_ = _vhdrImported
 	_vhdrPopularInvites, _ehdrPopularInvites := r.ReadUint32()
@@ -223,7 +236,11 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		if _errPopularInvites != nil {
 			return nil, _errPopularInvites
 		}
-		v.PopularInvites[_iPopularInvites] = _objPopularInvites.(*PopularContact)
+		_cPopularInvites, _okPopularInvites := _objPopularInvites.(*PopularContact)
+		if !_okPopularInvites {
+			return nil, fmt.Errorf("decode: field popular_invites: unexpected type %T", _objPopularInvites)
+		}
+		v.PopularInvites[_iPopularInvites] = _cPopularInvites
 	}
 	_ = _vhdrPopularInvites
 	_vvRetryContacts, _veRetryContacts := r.ReadVectorLong()
@@ -248,7 +265,11 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -335,7 +356,11 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		if _errBlocked != nil {
 			return nil, _errBlocked
 		}
-		v.Blocked[_iBlocked] = _objBlocked.(*PeerBlocked)
+		_cBlocked, _okBlocked := _objBlocked.(*PeerBlocked)
+		if !_okBlocked {
+			return nil, fmt.Errorf("decode: field blocked: unexpected type %T", _objBlocked)
+		}
+		v.Blocked[_iBlocked] = _cBlocked
 	}
 	_ = _vhdrBlocked
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -355,7 +380,11 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -375,7 +404,11 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -449,7 +482,11 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		if _errBlocked != nil {
 			return nil, _errBlocked
 		}
-		v.Blocked[_iBlocked] = _objBlocked.(*PeerBlocked)
+		_cBlocked, _okBlocked := _objBlocked.(*PeerBlocked)
+		if !_okBlocked {
+			return nil, fmt.Errorf("decode: field blocked: unexpected type %T", _objBlocked)
+		}
+		v.Blocked[_iBlocked] = _cBlocked
 	}
 	_ = _vhdrBlocked
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -469,7 +506,11 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -489,7 +530,11 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -565,7 +610,11 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		if _errMyResults != nil {
 			return nil, _errMyResults
 		}
-		v.MyResults[_iMyResults] = _objMyResults.(PeerClass)
+		_cMyResults, _okMyResults := _objMyResults.(PeerClass)
+		if !_okMyResults {
+			return nil, fmt.Errorf("decode: field my_results: unexpected type %T", _objMyResults)
+		}
+		v.MyResults[_iMyResults] = _cMyResults
 	}
 	_ = _vhdrMyResults
 	_vhdrResults, _ehdrResults := r.ReadUint32()
@@ -585,7 +634,11 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		if _errResults != nil {
 			return nil, _errResults
 		}
-		v.Results[_iResults] = _objResults.(PeerClass)
+		_cResults, _okResults := _objResults.(PeerClass)
+		if !_okResults {
+			return nil, fmt.Errorf("decode: field results: unexpected type %T", _objResults)
+		}
+		v.Results[_iResults] = _cResults
 	}
 	_ = _vhdrResults
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -605,7 +658,11 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -625,7 +682,11 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -678,7 +739,11 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
@@ -696,7 +761,11 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -716,7 +785,11 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -838,7 +911,11 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		if _errCategories != nil {
 			return nil, _errCategories
 		}
-		v.Categories[_iCategories] = _objCategories.(*TopPeerCategoryPeers)
+		_cCategories, _okCategories := _objCategories.(*TopPeerCategoryPeers)
+		if !_okCategories {
+			return nil, fmt.Errorf("decode: field categories: unexpected type %T", _objCategories)
+		}
+		v.Categories[_iCategories] = _cCategories
 	}
 	_ = _vhdrCategories
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -858,7 +935,11 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -878,7 +959,11 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -971,7 +1056,11 @@ func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error
 		if _errContacts != nil {
 			return nil, _errContacts
 		}
-		v.Contacts[_iContacts] = _objContacts.(*ContactBirthday)
+		_cContacts, _okContacts := _objContacts.(*ContactBirthday)
+		if !_okContacts {
+			return nil, fmt.Errorf("decode: field contacts: unexpected type %T", _objContacts)
+		}
+		v.Contacts[_iContacts] = _cContacts
 	}
 	_ = _vhdrContacts
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -991,7 +1080,11 @@ func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1107,7 +1200,11 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(*SponsoredPeer)
+		_cPeers, _okPeers := _objPeers.(*SponsoredPeer)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -1127,7 +1224,11 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -1147,7 +1248,11 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil

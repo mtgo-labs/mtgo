@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // ChannelParticipantClass is the interface for TL type ChannelParticipant.
@@ -286,7 +287,11 @@ func DecodeChannelParticipantCreator(r *Reader) (*ChannelParticipantCreator, err
 	if _errAdminRights != nil {
 		return nil, _errAdminRights
 	}
-	v.AdminRights = _objAdminRights.(*ChatAdminRights)
+	_cAdminRights, _okAdminRights := _objAdminRights.(*ChatAdminRights)
+	if !_okAdminRights {
+		return nil, fmt.Errorf("decode: field admin_rights: unexpected type %T", _objAdminRights)
+	}
+	v.AdminRights = _cAdminRights
 	if v.Flags.Has(0) {
 		_rRank, _eRank := r.ReadString()
 		if _eRank != nil {
@@ -393,7 +398,11 @@ func DecodeChannelParticipantAdmin(r *Reader) (*ChannelParticipantAdmin, error) 
 	if _errAdminRights != nil {
 		return nil, _errAdminRights
 	}
-	v.AdminRights = _objAdminRights.(*ChatAdminRights)
+	_cAdminRights, _okAdminRights := _objAdminRights.(*ChatAdminRights)
+	if !_okAdminRights {
+		return nil, fmt.Errorf("decode: field admin_rights: unexpected type %T", _objAdminRights)
+	}
+	v.AdminRights = _cAdminRights
 	if v.Flags.Has(2) {
 		_rRank, _eRank := r.ReadString()
 		if _eRank != nil {
@@ -466,7 +475,11 @@ func DecodeChannelParticipantBanned(r *Reader) (*ChannelParticipantBanned, error
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rKickedBy, _eKickedBy := r.ReadInt64()
 	if _eKickedBy != nil {
 		return nil, _eKickedBy
@@ -481,7 +494,11 @@ func DecodeChannelParticipantBanned(r *Reader) (*ChannelParticipantBanned, error
 	if _errBannedRights != nil {
 		return nil, _errBannedRights
 	}
-	v.BannedRights = _objBannedRights.(*ChatBannedRights)
+	_cBannedRights, _okBannedRights := _objBannedRights.(*ChatBannedRights)
+	if !_okBannedRights {
+		return nil, fmt.Errorf("decode: field banned_rights: unexpected type %T", _objBannedRights)
+	}
+	v.BannedRights = _cBannedRights
 	if v.Flags.Has(2) {
 		_rRank, _eRank := r.ReadString()
 		if _eRank != nil {
@@ -524,7 +541,11 @@ func DecodeChannelParticipantLeft(r *Reader) (*ChannelParticipantLeft, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -572,7 +593,11 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 	if _errParticipant != nil {
 		return nil, _errParticipant
 	}
-	v.Participant = _objParticipant.(ChannelParticipantClass)
+	_cParticipant, _okParticipant := _objParticipant.(ChannelParticipantClass)
+	if !_okParticipant {
+		return nil, fmt.Errorf("decode: field participant: unexpected type %T", _objParticipant)
+	}
+	v.Participant = _cParticipant
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
@@ -590,7 +615,11 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -610,7 +639,11 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -704,7 +737,11 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		if _errParticipants != nil {
 			return nil, _errParticipants
 		}
-		v.Participants[_iParticipants] = _objParticipants.(ChannelParticipantClass)
+		_cParticipants, _okParticipants := _objParticipants.(ChannelParticipantClass)
+		if !_okParticipants {
+			return nil, fmt.Errorf("decode: field participants: unexpected type %T", _objParticipants)
+		}
+		v.Participants[_iParticipants] = _cParticipants
 	}
 	_ = _vhdrParticipants
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -724,7 +761,11 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -744,7 +785,11 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -843,7 +888,11 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		if _errEvents != nil {
 			return nil, _errEvents
 		}
-		v.Events[_iEvents] = _objEvents.(*ChannelAdminLogEvent)
+		_cEvents, _okEvents := _objEvents.(*ChannelAdminLogEvent)
+		if !_okEvents {
+			return nil, fmt.Errorf("decode: field events: unexpected type %T", _objEvents)
+		}
+		v.Events[_iEvents] = _cEvents
 	}
 	_ = _vhdrEvents
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -863,7 +912,11 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -883,7 +936,11 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -953,7 +1010,11 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		if _errPeers != nil {
 			return nil, _errPeers
 		}
-		v.Peers[_iPeers] = _objPeers.(*SendAsPeer)
+		_cPeers, _okPeers := _objPeers.(*SendAsPeer)
+		if !_okPeers {
+			return nil, fmt.Errorf("decode: field peers: unexpected type %T", _objPeers)
+		}
+		v.Peers[_iPeers] = _cPeers
 	}
 	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -973,7 +1034,11 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -993,7 +1058,11 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1081,7 +1150,11 @@ func DecodeChannelsSponsoredMessageReportResultChooseOption(r *Reader) (*Channel
 		if _errOptions != nil {
 			return nil, _errOptions
 		}
-		v.Options[_iOptions] = _objOptions.(*SponsoredMessageReportOption)
+		_cOptions, _okOptions := _objOptions.(*SponsoredMessageReportOption)
+		if !_okOptions {
+			return nil, fmt.Errorf("decode: field options: unexpected type %T", _objOptions)
+		}
+		v.Options[_iOptions] = _cOptions
 	}
 	_ = _vhdrOptions
 	return v, nil

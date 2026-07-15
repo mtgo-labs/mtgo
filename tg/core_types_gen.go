@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // BoolClass is the interface for TL type Bool.
@@ -385,7 +386,11 @@ func DecodeInputFileStoryDocument(r *Reader) (*InputFileStoryDocument, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(InputDocumentClass)
+	_cID, _okID := _objID.(InputDocumentClass)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	return v, nil
 }
 
@@ -625,7 +630,11 @@ func DecodeInputMediaUploadedPhoto(r *Reader) (*InputMediaUploadedPhoto, error) 
 	if _errFile != nil {
 		return nil, _errFile
 	}
-	v.File = _objFile.(InputFileClass)
+	_cFile, _okFile := _objFile.(InputFileClass)
+	if !_okFile {
+		return nil, fmt.Errorf("decode: field file: unexpected type %T", _objFile)
+	}
+	v.File = _cFile
 	if v.Flags.Has(0) {
 		_vhdrStickers, _ehdrStickers := r.ReadUint32()
 		if _ehdrStickers != nil {
@@ -644,7 +653,11 @@ func DecodeInputMediaUploadedPhoto(r *Reader) (*InputMediaUploadedPhoto, error) 
 			if _errStickers != nil {
 				return nil, _errStickers
 			}
-			v.Stickers[_iStickers] = _objStickers.(InputDocumentClass)
+			_cStickers, _okStickers := _objStickers.(InputDocumentClass)
+			if !_okStickers {
+				return nil, fmt.Errorf("decode: field stickers: unexpected type %T", _objStickers)
+			}
+			v.Stickers[_iStickers] = _cStickers
 		}
 		_ = _vhdrStickers
 	}
@@ -660,7 +673,11 @@ func DecodeInputMediaUploadedPhoto(r *Reader) (*InputMediaUploadedPhoto, error) 
 		if _errVideo != nil {
 			return nil, _errVideo
 		}
-		v.Video = _objVideo.(InputDocumentClass)
+		_cVideo, _okVideo := _objVideo.(InputDocumentClass)
+		if !_okVideo {
+			return nil, fmt.Errorf("decode: field video: unexpected type %T", _objVideo)
+		}
+		v.Video = _cVideo
 	}
 	return v, nil
 }
@@ -733,7 +750,11 @@ func DecodeInputMediaPhoto(r *Reader) (*InputMediaPhoto, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(InputPhotoClass)
+	_cID, _okID := _objID.(InputPhotoClass)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	if v.Flags.Has(0) {
 		_rTTLSeconds, _eTTLSeconds := r.ReadInt32()
 		if _eTTLSeconds != nil {
@@ -746,7 +767,11 @@ func DecodeInputMediaPhoto(r *Reader) (*InputMediaPhoto, error) {
 		if _errVideo != nil {
 			return nil, _errVideo
 		}
-		v.Video = _objVideo.(InputDocumentClass)
+		_cVideo, _okVideo := _objVideo.(InputDocumentClass)
+		if !_okVideo {
+			return nil, fmt.Errorf("decode: field video: unexpected type %T", _objVideo)
+		}
+		v.Video = _cVideo
 	}
 	return v, nil
 }
@@ -783,7 +808,11 @@ func DecodeInputMediaGeoPoint(r *Reader) (*InputMediaGeoPoint, error) {
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
 	}
-	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
+	_cGeoPoint, _okGeoPoint := _objGeoPoint.(InputGeoPointClass)
+	if !_okGeoPoint {
+		return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+	}
+	v.GeoPoint = _cGeoPoint
 	return v, nil
 }
 
@@ -950,13 +979,21 @@ func DecodeInputMediaUploadedDocument(r *Reader) (*InputMediaUploadedDocument, e
 	if _errFile != nil {
 		return nil, _errFile
 	}
-	v.File = _objFile.(InputFileClass)
+	_cFile, _okFile := _objFile.(InputFileClass)
+	if !_okFile {
+		return nil, fmt.Errorf("decode: field file: unexpected type %T", _objFile)
+	}
+	v.File = _cFile
 	if v.Flags.Has(2) {
 		_objThumb, _errThumb := ReadTLObject(r)
 		if _errThumb != nil {
 			return nil, _errThumb
 		}
-		v.Thumb = _objThumb.(InputFileClass)
+		_cThumb, _okThumb := _objThumb.(InputFileClass)
+		if !_okThumb {
+			return nil, fmt.Errorf("decode: field thumb: unexpected type %T", _objThumb)
+		}
+		v.Thumb = _cThumb
 	}
 	_rMimeType, _eMimeType := r.ReadString()
 	if _eMimeType != nil {
@@ -980,7 +1017,11 @@ func DecodeInputMediaUploadedDocument(r *Reader) (*InputMediaUploadedDocument, e
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
 	_ = _vhdrAttributes
 	if v.Flags.Has(0) {
@@ -1001,7 +1042,11 @@ func DecodeInputMediaUploadedDocument(r *Reader) (*InputMediaUploadedDocument, e
 			if _errStickers != nil {
 				return nil, _errStickers
 			}
-			v.Stickers[_iStickers] = _objStickers.(InputDocumentClass)
+			_cStickers, _okStickers := _objStickers.(InputDocumentClass)
+			if !_okStickers {
+				return nil, fmt.Errorf("decode: field stickers: unexpected type %T", _objStickers)
+			}
+			v.Stickers[_iStickers] = _cStickers
 		}
 		_ = _vhdrStickers
 	}
@@ -1010,7 +1055,11 @@ func DecodeInputMediaUploadedDocument(r *Reader) (*InputMediaUploadedDocument, e
 		if _errVideoCover != nil {
 			return nil, _errVideoCover
 		}
-		v.VideoCover = _objVideoCover.(InputPhotoClass)
+		_cVideoCover, _okVideoCover := _objVideoCover.(InputPhotoClass)
+		if !_okVideoCover {
+			return nil, fmt.Errorf("decode: field video_cover: unexpected type %T", _objVideoCover)
+		}
+		v.VideoCover = _cVideoCover
 	}
 	if v.Flags.Has(7) {
 		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
@@ -1106,13 +1155,21 @@ func DecodeInputMediaDocument(r *Reader) (*InputMediaDocument, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(InputDocumentClass)
+	_cID, _okID := _objID.(InputDocumentClass)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	if v.Flags.Has(3) {
 		_objVideoCover, _errVideoCover := ReadTLObject(r)
 		if _errVideoCover != nil {
 			return nil, _errVideoCover
 		}
-		v.VideoCover = _objVideoCover.(InputPhotoClass)
+		_cVideoCover, _okVideoCover := _objVideoCover.(InputPhotoClass)
+		if !_okVideoCover {
+			return nil, fmt.Errorf("decode: field video_cover: unexpected type %T", _objVideoCover)
+		}
+		v.VideoCover = _cVideoCover
 	}
 	if v.Flags.Has(4) {
 		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
@@ -1180,7 +1237,11 @@ func DecodeInputMediaVenue(r *Reader) (*InputMediaVenue, error) {
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
 	}
-	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
+	_cGeoPoint, _okGeoPoint := _objGeoPoint.(InputGeoPointClass)
+	if !_okGeoPoint {
+		return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+	}
+	v.GeoPoint = _cGeoPoint
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -1359,7 +1420,11 @@ func DecodeInputMediaDocumentExternal(r *Reader) (*InputMediaDocumentExternal, e
 		if _errVideoCover != nil {
 			return nil, _errVideoCover
 		}
-		v.VideoCover = _objVideoCover.(InputPhotoClass)
+		_cVideoCover, _okVideoCover := _objVideoCover.(InputPhotoClass)
+		if !_okVideoCover {
+			return nil, fmt.Errorf("decode: field video_cover: unexpected type %T", _objVideoCover)
+		}
+		v.VideoCover = _cVideoCover
 	}
 	if v.Flags.Has(3) {
 		_rVideoTimestamp, _eVideoTimestamp := r.ReadInt32()
@@ -1403,7 +1468,11 @@ func DecodeInputMediaGame(r *Reader) (*InputMediaGame, error) {
 	if _errID != nil {
 		return nil, _errID
 	}
-	v.ID = _objID.(InputGameClass)
+	_cID, _okID := _objID.(InputGameClass)
+	if !_okID {
+		return nil, fmt.Errorf("decode: field id: unexpected type %T", _objID)
+	}
+	v.ID = _cID
 	return v, nil
 }
 
@@ -1498,13 +1567,21 @@ func DecodeInputMediaInvoice(r *Reader) (*InputMediaInvoice, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(*InputWebDocument)
+		_cPhoto, _okPhoto := _objPhoto.(*InputWebDocument)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	_objInvoice, _errInvoice := ReadTLObject(r)
 	if _errInvoice != nil {
 		return nil, _errInvoice
 	}
-	v.Invoice = _objInvoice.(*Invoice)
+	_cInvoice, _okInvoice := _objInvoice.(*Invoice)
+	if !_okInvoice {
+		return nil, fmt.Errorf("decode: field invoice: unexpected type %T", _objInvoice)
+	}
+	v.Invoice = _cInvoice
 	_rPayload, _ePayload := r.ReadBytes()
 	if _ePayload != nil {
 		return nil, _ePayload
@@ -1521,7 +1598,11 @@ func DecodeInputMediaInvoice(r *Reader) (*InputMediaInvoice, error) {
 	if _errProviderData != nil {
 		return nil, _errProviderData
 	}
-	v.ProviderData = _objProviderData.(*DataJSON)
+	_cProviderData, _okProviderData := _objProviderData.(*DataJSON)
+	if !_okProviderData {
+		return nil, fmt.Errorf("decode: field provider_data: unexpected type %T", _objProviderData)
+	}
+	v.ProviderData = _cProviderData
 	if v.Flags.Has(1) {
 		_rStartParam, _eStartParam := r.ReadString()
 		if _eStartParam != nil {
@@ -1534,7 +1615,11 @@ func DecodeInputMediaInvoice(r *Reader) (*InputMediaInvoice, error) {
 		if _errExtendedMedia != nil {
 			return nil, _errExtendedMedia
 		}
-		v.ExtendedMedia = _objExtendedMedia.(InputMediaClass)
+		_cExtendedMedia, _okExtendedMedia := _objExtendedMedia.(InputMediaClass)
+		if !_okExtendedMedia {
+			return nil, fmt.Errorf("decode: field extended_media: unexpected type %T", _objExtendedMedia)
+		}
+		v.ExtendedMedia = _cExtendedMedia
 	}
 	return v, nil
 }
@@ -1609,7 +1694,11 @@ func DecodeInputMediaGeoLive(r *Reader) (*InputMediaGeoLive, error) {
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
 	}
-	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
+	_cGeoPoint, _okGeoPoint := _objGeoPoint.(InputGeoPointClass)
+	if !_okGeoPoint {
+		return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+	}
+	v.GeoPoint = _cGeoPoint
 	if v.Flags.Has(2) {
 		_rHeading, _eHeading := r.ReadInt32()
 		if _eHeading != nil {
@@ -1717,7 +1806,11 @@ func DecodeInputMediaPoll(r *Reader) (*InputMediaPoll, error) {
 	if _errPoll != nil {
 		return nil, _errPoll
 	}
-	v.Poll = _objPoll.(*Poll)
+	_cPoll, _okPoll := _objPoll.(*Poll)
+	if !_okPoll {
+		return nil, fmt.Errorf("decode: field poll: unexpected type %T", _objPoll)
+	}
+	v.Poll = _cPoll
 	if v.Flags.Has(0) {
 		_vvCorrectAnswers, _veCorrectAnswers := r.ReadVectorInt()
 		if _veCorrectAnswers != nil {
@@ -1730,7 +1823,11 @@ func DecodeInputMediaPoll(r *Reader) (*InputMediaPoll, error) {
 		if _errAttachedMedia != nil {
 			return nil, _errAttachedMedia
 		}
-		v.AttachedMedia = _objAttachedMedia.(InputMediaClass)
+		_cAttachedMedia, _okAttachedMedia := _objAttachedMedia.(InputMediaClass)
+		if !_okAttachedMedia {
+			return nil, fmt.Errorf("decode: field attached_media: unexpected type %T", _objAttachedMedia)
+		}
+		v.AttachedMedia = _cAttachedMedia
 	}
 	if v.Flags.Has(1) {
 		_rSolution, _eSolution := r.ReadString()
@@ -1757,7 +1854,11 @@ func DecodeInputMediaPoll(r *Reader) (*InputMediaPoll, error) {
 			if _errSolutionEntities != nil {
 				return nil, _errSolutionEntities
 			}
-			v.SolutionEntities[_iSolutionEntities] = _objSolutionEntities.(MessageEntityClass)
+			_cSolutionEntities, _okSolutionEntities := _objSolutionEntities.(MessageEntityClass)
+			if !_okSolutionEntities {
+				return nil, fmt.Errorf("decode: field solution_entities: unexpected type %T", _objSolutionEntities)
+			}
+			v.SolutionEntities[_iSolutionEntities] = _cSolutionEntities
 		}
 		_ = _vhdrSolutionEntities
 	}
@@ -1766,7 +1867,11 @@ func DecodeInputMediaPoll(r *Reader) (*InputMediaPoll, error) {
 		if _errSolutionMedia != nil {
 			return nil, _errSolutionMedia
 		}
-		v.SolutionMedia = _objSolutionMedia.(InputMediaClass)
+		_cSolutionMedia, _okSolutionMedia := _objSolutionMedia.(InputMediaClass)
+		if !_okSolutionMedia {
+			return nil, fmt.Errorf("decode: field solution_media: unexpected type %T", _objSolutionMedia)
+		}
+		v.SolutionMedia = _cSolutionMedia
 	}
 	return v, nil
 }
@@ -1841,7 +1946,11 @@ func DecodeInputMediaStory(r *Reader) (*InputMediaStory, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
 		return nil, _eID
@@ -1988,7 +2097,11 @@ func DecodeInputMediaPaidMedia(r *Reader) (*InputMediaPaidMedia, error) {
 		if _errExtendedMedia != nil {
 			return nil, _errExtendedMedia
 		}
-		v.ExtendedMedia[_iExtendedMedia] = _objExtendedMedia.(InputMediaClass)
+		_cExtendedMedia, _okExtendedMedia := _objExtendedMedia.(InputMediaClass)
+		if !_okExtendedMedia {
+			return nil, fmt.Errorf("decode: field extended_media: unexpected type %T", _objExtendedMedia)
+		}
+		v.ExtendedMedia[_iExtendedMedia] = _cExtendedMedia
 	}
 	_ = _vhdrExtendedMedia
 	if v.Flags.Has(0) {
@@ -2033,7 +2146,11 @@ func DecodeInputMediaTodo(r *Reader) (*InputMediaTodo, error) {
 	if _errTodo != nil {
 		return nil, _errTodo
 	}
-	v.Todo = _objTodo.(*TodoList)
+	_cTodo, _okTodo := _objTodo.(*TodoList)
+	if !_okTodo {
+		return nil, fmt.Errorf("decode: field todo: unexpected type %T", _objTodo)
+	}
+	v.Todo = _cTodo
 	return v, nil
 }
 
@@ -2845,7 +2962,11 @@ func DecodeConfig(r *Reader) (*Config, error) {
 		if _errDCOptions != nil {
 			return nil, _errDCOptions
 		}
-		v.DCOptions[_iDCOptions] = _objDCOptions.(*DCOption)
+		_cDCOptions, _okDCOptions := _objDCOptions.(*DCOption)
+		if !_okDCOptions {
+			return nil, fmt.Errorf("decode: field dc_options: unexpected type %T", _objDCOptions)
+		}
+		v.DCOptions[_iDCOptions] = _cDCOptions
 	}
 	_ = _vhdrDCOptions
 	_rDCTxtDomainName, _eDCTxtDomainName := r.ReadString()
@@ -3046,7 +3167,11 @@ func DecodeConfig(r *Reader) (*Config, error) {
 		if _errReactionsDefault != nil {
 			return nil, _errReactionsDefault
 		}
-		v.ReactionsDefault = _objReactionsDefault.(ReactionClass)
+		_cReactionsDefault, _okReactionsDefault := _objReactionsDefault.(ReactionClass)
+		if !_okReactionsDefault {
+			return nil, fmt.Errorf("decode: field reactions_default: unexpected type %T", _objReactionsDefault)
+		}
+		v.ReactionsDefault = _cReactionsDefault
 	}
 	if v.Flags.Has(16) {
 		_rAutologinToken, _eAutologinToken := r.ReadString()
@@ -3342,7 +3467,11 @@ func DecodeReplyKeyboardMarkup(r *Reader) (*ReplyKeyboardMarkup, error) {
 		if _errRows != nil {
 			return nil, _errRows
 		}
-		v.Rows[_iRows] = _objRows.(*KeyboardButtonRow)
+		_cRows, _okRows := _objRows.(*KeyboardButtonRow)
+		if !_okRows {
+			return nil, fmt.Errorf("decode: field rows: unexpected type %T", _objRows)
+		}
+		v.Rows[_iRows] = _cRows
 	}
 	_ = _vhdrRows
 	if v.Flags.Has(3) {
@@ -3404,7 +3533,11 @@ func DecodeReplyInlineMarkup(r *Reader) (*ReplyInlineMarkup, error) {
 		if _errRows != nil {
 			return nil, _errRows
 		}
-		v.Rows[_iRows] = _objRows.(*KeyboardButtonRow)
+		_cRows, _okRows := _objRows.(*KeyboardButtonRow)
+		if !_okRows {
+			return nil, fmt.Errorf("decode: field rows: unexpected type %T", _objRows)
+		}
+		v.Rows[_iRows] = _cRows
 	}
 	_ = _vhdrRows
 	return v, nil
@@ -3720,7 +3853,11 @@ func DecodeCDNConfig(r *Reader) (*CDNConfig, error) {
 		if _errPublicKeys != nil {
 			return nil, _errPublicKeys
 		}
-		v.PublicKeys[_iPublicKeys] = _objPublicKeys.(*CDNPublicKey)
+		_cPublicKeys, _okPublicKeys := _objPublicKeys.(*CDNPublicKey)
+		if !_okPublicKeys {
+			return nil, fmt.Errorf("decode: field public_keys: unexpected type %T", _objPublicKeys)
+		}
+		v.PublicKeys[_iPublicKeys] = _cPublicKeys
 	}
 	_ = _vhdrPublicKeys
 	return v, nil
@@ -4277,7 +4414,11 @@ func DecodeRecentMeURLChatInvite(r *Reader) (*RecentMeURLChatInvite, error) {
 	if _errChatInvite != nil {
 		return nil, _errChatInvite
 	}
-	v.ChatInvite = _objChatInvite.(ChatInviteClass)
+	_cChatInvite, _okChatInvite := _objChatInvite.(ChatInviteClass)
+	if !_okChatInvite {
+		return nil, fmt.Errorf("decode: field chat_invite: unexpected type %T", _objChatInvite)
+	}
+	v.ChatInvite = _cChatInvite
 	return v, nil
 }
 
@@ -4320,7 +4461,11 @@ func DecodeRecentMeURLStickerSet(r *Reader) (*RecentMeURLStickerSet, error) {
 	if _errSet != nil {
 		return nil, _errSet
 	}
-	v.Set = _objSet.(StickerSetCoveredClass)
+	_cSet, _okSet := _objSet.(StickerSetCoveredClass)
+	if !_okSet {
+		return nil, fmt.Errorf("decode: field set: unexpected type %T", _objSet)
+	}
+	v.Set = _cSet
 	return v, nil
 }
 
@@ -4386,7 +4531,11 @@ func DecodeInputSingleMedia(r *Reader) (*InputSingleMedia, error) {
 	if _errMedia != nil {
 		return nil, _errMedia
 	}
-	v.Media = _objMedia.(InputMediaClass)
+	_cMedia, _okMedia := _objMedia.(InputMediaClass)
+	if !_okMedia {
+		return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+	}
+	v.Media = _cMedia
 	_rRandomID, _eRandomID := r.ReadInt64()
 	if _eRandomID != nil {
 		return nil, _eRandomID
@@ -4415,7 +4564,11 @@ func DecodeInputSingleMedia(r *Reader) (*InputSingleMedia, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
 		_ = _vhdrEntities
 	}
@@ -5489,34 +5642,54 @@ func DecodeSecureValue(r *Reader) (*SecureValue, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	if v.Flags.Has(0) {
 		_objData, _errData := ReadTLObject(r)
 		if _errData != nil {
 			return nil, _errData
 		}
-		v.Data = _objData.(*SecureData)
+		_cData, _okData := _objData.(*SecureData)
+		if !_okData {
+			return nil, fmt.Errorf("decode: field data: unexpected type %T", _objData)
+		}
+		v.Data = _cData
 	}
 	if v.Flags.Has(1) {
 		_objFrontSide, _errFrontSide := ReadTLObject(r)
 		if _errFrontSide != nil {
 			return nil, _errFrontSide
 		}
-		v.FrontSide = _objFrontSide.(SecureFileClass)
+		_cFrontSide, _okFrontSide := _objFrontSide.(SecureFileClass)
+		if !_okFrontSide {
+			return nil, fmt.Errorf("decode: field front_side: unexpected type %T", _objFrontSide)
+		}
+		v.FrontSide = _cFrontSide
 	}
 	if v.Flags.Has(2) {
 		_objReverseSide, _errReverseSide := ReadTLObject(r)
 		if _errReverseSide != nil {
 			return nil, _errReverseSide
 		}
-		v.ReverseSide = _objReverseSide.(SecureFileClass)
+		_cReverseSide, _okReverseSide := _objReverseSide.(SecureFileClass)
+		if !_okReverseSide {
+			return nil, fmt.Errorf("decode: field reverse_side: unexpected type %T", _objReverseSide)
+		}
+		v.ReverseSide = _cReverseSide
 	}
 	if v.Flags.Has(3) {
 		_objSelfie, _errSelfie := ReadTLObject(r)
 		if _errSelfie != nil {
 			return nil, _errSelfie
 		}
-		v.Selfie = _objSelfie.(SecureFileClass)
+		_cSelfie, _okSelfie := _objSelfie.(SecureFileClass)
+		if !_okSelfie {
+			return nil, fmt.Errorf("decode: field selfie: unexpected type %T", _objSelfie)
+		}
+		v.Selfie = _cSelfie
 	}
 	if v.Flags.Has(6) {
 		_vhdrTranslation, _ehdrTranslation := r.ReadUint32()
@@ -5536,7 +5709,11 @@ func DecodeSecureValue(r *Reader) (*SecureValue, error) {
 			if _errTranslation != nil {
 				return nil, _errTranslation
 			}
-			v.Translation[_iTranslation] = _objTranslation.(SecureFileClass)
+			_cTranslation, _okTranslation := _objTranslation.(SecureFileClass)
+			if !_okTranslation {
+				return nil, fmt.Errorf("decode: field translation: unexpected type %T", _objTranslation)
+			}
+			v.Translation[_iTranslation] = _cTranslation
 		}
 		_ = _vhdrTranslation
 	}
@@ -5558,7 +5735,11 @@ func DecodeSecureValue(r *Reader) (*SecureValue, error) {
 			if _errFiles != nil {
 				return nil, _errFiles
 			}
-			v.Files[_iFiles] = _objFiles.(SecureFileClass)
+			_cFiles, _okFiles := _objFiles.(SecureFileClass)
+			if !_okFiles {
+				return nil, fmt.Errorf("decode: field files: unexpected type %T", _objFiles)
+			}
+			v.Files[_iFiles] = _cFiles
 		}
 		_ = _vhdrFiles
 	}
@@ -5567,7 +5748,11 @@ func DecodeSecureValue(r *Reader) (*SecureValue, error) {
 		if _errPlainData != nil {
 			return nil, _errPlainData
 		}
-		v.PlainData = _objPlainData.(SecurePlainDataClass)
+		_cPlainData, _okPlainData := _objPlainData.(SecurePlainDataClass)
+		if !_okPlainData {
+			return nil, fmt.Errorf("decode: field plain_data: unexpected type %T", _objPlainData)
+		}
+		v.PlainData = _cPlainData
 	}
 	_rHash, _eHash := r.ReadBytes()
 	if _eHash != nil {
@@ -5681,34 +5866,54 @@ func DecodeInputSecureValue(r *Reader) (*InputSecureValue, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	if v.Flags.Has(0) {
 		_objData, _errData := ReadTLObject(r)
 		if _errData != nil {
 			return nil, _errData
 		}
-		v.Data = _objData.(*SecureData)
+		_cData, _okData := _objData.(*SecureData)
+		if !_okData {
+			return nil, fmt.Errorf("decode: field data: unexpected type %T", _objData)
+		}
+		v.Data = _cData
 	}
 	if v.Flags.Has(1) {
 		_objFrontSide, _errFrontSide := ReadTLObject(r)
 		if _errFrontSide != nil {
 			return nil, _errFrontSide
 		}
-		v.FrontSide = _objFrontSide.(InputSecureFileClass)
+		_cFrontSide, _okFrontSide := _objFrontSide.(InputSecureFileClass)
+		if !_okFrontSide {
+			return nil, fmt.Errorf("decode: field front_side: unexpected type %T", _objFrontSide)
+		}
+		v.FrontSide = _cFrontSide
 	}
 	if v.Flags.Has(2) {
 		_objReverseSide, _errReverseSide := ReadTLObject(r)
 		if _errReverseSide != nil {
 			return nil, _errReverseSide
 		}
-		v.ReverseSide = _objReverseSide.(InputSecureFileClass)
+		_cReverseSide, _okReverseSide := _objReverseSide.(InputSecureFileClass)
+		if !_okReverseSide {
+			return nil, fmt.Errorf("decode: field reverse_side: unexpected type %T", _objReverseSide)
+		}
+		v.ReverseSide = _cReverseSide
 	}
 	if v.Flags.Has(3) {
 		_objSelfie, _errSelfie := ReadTLObject(r)
 		if _errSelfie != nil {
 			return nil, _errSelfie
 		}
-		v.Selfie = _objSelfie.(InputSecureFileClass)
+		_cSelfie, _okSelfie := _objSelfie.(InputSecureFileClass)
+		if !_okSelfie {
+			return nil, fmt.Errorf("decode: field selfie: unexpected type %T", _objSelfie)
+		}
+		v.Selfie = _cSelfie
 	}
 	if v.Flags.Has(6) {
 		_vhdrTranslation, _ehdrTranslation := r.ReadUint32()
@@ -5728,7 +5933,11 @@ func DecodeInputSecureValue(r *Reader) (*InputSecureValue, error) {
 			if _errTranslation != nil {
 				return nil, _errTranslation
 			}
-			v.Translation[_iTranslation] = _objTranslation.(InputSecureFileClass)
+			_cTranslation, _okTranslation := _objTranslation.(InputSecureFileClass)
+			if !_okTranslation {
+				return nil, fmt.Errorf("decode: field translation: unexpected type %T", _objTranslation)
+			}
+			v.Translation[_iTranslation] = _cTranslation
 		}
 		_ = _vhdrTranslation
 	}
@@ -5750,7 +5959,11 @@ func DecodeInputSecureValue(r *Reader) (*InputSecureValue, error) {
 			if _errFiles != nil {
 				return nil, _errFiles
 			}
-			v.Files[_iFiles] = _objFiles.(InputSecureFileClass)
+			_cFiles, _okFiles := _objFiles.(InputSecureFileClass)
+			if !_okFiles {
+				return nil, fmt.Errorf("decode: field files: unexpected type %T", _objFiles)
+			}
+			v.Files[_iFiles] = _cFiles
 		}
 		_ = _vhdrFiles
 	}
@@ -5759,7 +5972,11 @@ func DecodeInputSecureValue(r *Reader) (*InputSecureValue, error) {
 		if _errPlainData != nil {
 			return nil, _errPlainData
 		}
-		v.PlainData = _objPlainData.(SecurePlainDataClass)
+		_cPlainData, _okPlainData := _objPlainData.(SecurePlainDataClass)
+		if !_okPlainData {
+			return nil, fmt.Errorf("decode: field plain_data: unexpected type %T", _objPlainData)
+		}
+		v.PlainData = _cPlainData
 	}
 	return v, nil
 }
@@ -5801,7 +6018,11 @@ func DecodeSecureValueHash(r *Reader) (*SecureValueHash, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rHash, _eHash := r.ReadBytes()
 	if _eHash != nil {
 		return nil, _eHash
@@ -5910,7 +6131,11 @@ func DecodeSecureValueErrorData(r *Reader) (*SecureValueErrorData, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rDataHash, _eDataHash := r.ReadBytes()
 	if _eDataHash != nil {
 		return nil, _eDataHash
@@ -5965,7 +6190,11 @@ func DecodeSecureValueErrorFrontSide(r *Reader) (*SecureValueErrorFrontSide, err
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rFileHash, _eFileHash := r.ReadBytes()
 	if _eFileHash != nil {
 		return nil, _eFileHash
@@ -6015,7 +6244,11 @@ func DecodeSecureValueErrorReverseSide(r *Reader) (*SecureValueErrorReverseSide,
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rFileHash, _eFileHash := r.ReadBytes()
 	if _eFileHash != nil {
 		return nil, _eFileHash
@@ -6065,7 +6298,11 @@ func DecodeSecureValueErrorSelfie(r *Reader) (*SecureValueErrorSelfie, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rFileHash, _eFileHash := r.ReadBytes()
 	if _eFileHash != nil {
 		return nil, _eFileHash
@@ -6115,7 +6352,11 @@ func DecodeSecureValueErrorFile(r *Reader) (*SecureValueErrorFile, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rFileHash, _eFileHash := r.ReadBytes()
 	if _eFileHash != nil {
 		return nil, _eFileHash
@@ -6165,7 +6406,11 @@ func DecodeSecureValueErrorFiles(r *Reader) (*SecureValueErrorFiles, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_vvFileHash, _veFileHash := r.ReadVectorBytes()
 	if _veFileHash != nil {
 		return nil, _veFileHash
@@ -6215,7 +6460,11 @@ func DecodeSecureValueError(r *Reader) (*SecureValueError, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rHash, _eHash := r.ReadBytes()
 	if _eHash != nil {
 		return nil, _eHash
@@ -6265,7 +6514,11 @@ func DecodeSecureValueErrorTranslationFile(r *Reader) (*SecureValueErrorTranslat
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rFileHash, _eFileHash := r.ReadBytes()
 	if _eFileHash != nil {
 		return nil, _eFileHash
@@ -6315,7 +6568,11 @@ func DecodeSecureValueErrorTranslationFiles(r *Reader) (*SecureValueErrorTransla
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_vvFileHash, _veFileHash := r.ReadVectorBytes()
 	if _veFileHash != nil {
 		return nil, _veFileHash
@@ -6368,7 +6625,11 @@ func DecodeSecureSecretSettings(r *Reader) (*SecureSecretSettings, error) {
 	if _errSecureAlgo != nil {
 		return nil, _errSecureAlgo
 	}
-	v.SecureAlgo = _objSecureAlgo.(SecurePasswordKdfAlgoClass)
+	_cSecureAlgo, _okSecureAlgo := _objSecureAlgo.(SecurePasswordKdfAlgoClass)
+	if !_okSecureAlgo {
+		return nil, fmt.Errorf("decode: field secure_algo: unexpected type %T", _objSecureAlgo)
+	}
+	v.SecureAlgo = _cSecureAlgo
 	_rSecureSecret, _eSecureSecret := r.ReadBytes()
 	if _eSecureSecret != nil {
 		return nil, _eSecureSecret
@@ -6461,7 +6722,11 @@ func DecodeSecureRequiredType(r *Reader) (*SecureRequiredType, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(SecureValueTypeClass)
+	_cType, _okType := _objType.(SecureValueTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	return v, nil
 }
 
@@ -6514,7 +6779,11 @@ func DecodeSecureRequiredTypeOneOf(r *Reader) (*SecureRequiredTypeOneOf, error) 
 		if _errTypes != nil {
 			return nil, _errTypes
 		}
-		v.Types[_iTypes] = _objTypes.(SecureRequiredTypeClass)
+		_cTypes, _okTypes := _objTypes.(SecureRequiredTypeClass)
+		if !_okTypes {
+			return nil, fmt.Errorf("decode: field types: unexpected type %T", _objTypes)
+		}
+		v.Types[_iTypes] = _cTypes
 	}
 	_ = _vhdrTypes
 	return v, nil
@@ -6576,7 +6845,11 @@ func DecodeInputAppEvent(r *Reader) (*InputAppEvent, error) {
 	if _errData != nil {
 		return nil, _errData
 	}
-	v.Data = _objData.(JSONValueClass)
+	_cData, _okData := _objData.(JSONValueClass)
+	if !_okData {
+		return nil, fmt.Errorf("decode: field data: unexpected type %T", _objData)
+	}
+	v.Data = _cData
 	return v, nil
 }
 
@@ -6622,7 +6895,11 @@ func DecodeJSONObjectValue(r *Reader) (*JSONObjectValue, error) {
 	if _errValue != nil {
 		return nil, _errValue
 	}
-	v.Value = _objValue.(JSONValueClass)
+	_cValue, _okValue := _objValue.(JSONValueClass)
+	if !_okValue {
+		return nil, fmt.Errorf("decode: field value: unexpected type %T", _objValue)
+	}
+	v.Value = _cValue
 	return v, nil
 }
 
@@ -6856,7 +7133,11 @@ func DecodeJSONArray(r *Reader) (*JSONArray, error) {
 		if _errValue != nil {
 			return nil, _errValue
 		}
-		v.Value[_iValue] = _objValue.(JSONValueClass)
+		_cValue, _okValue := _objValue.(JSONValueClass)
+		if !_okValue {
+			return nil, fmt.Errorf("decode: field value: unexpected type %T", _objValue)
+		}
+		v.Value[_iValue] = _cValue
 	}
 	_ = _vhdrValue
 	return v, nil
@@ -6911,7 +7192,11 @@ func DecodeJSONObject(r *Reader) (*JSONObject, error) {
 		if _errValue != nil {
 			return nil, _errValue
 		}
-		v.Value[_iValue] = _objValue.(*JSONObjectValue)
+		_cValue, _okValue := _objValue.(*JSONObjectValue)
+		if !_okValue {
+			return nil, fmt.Errorf("decode: field value: unexpected type %T", _objValue)
+		}
+		v.Value[_iValue] = _cValue
 	}
 	_ = _vhdrValue
 	return v, nil
@@ -7363,7 +7648,11 @@ func DecodeTheme(r *Reader) (*Theme, error) {
 		if _errDocument != nil {
 			return nil, _errDocument
 		}
-		v.Document = _objDocument.(DocumentClass)
+		_cDocument, _okDocument := _objDocument.(DocumentClass)
+		if !_okDocument {
+			return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+		}
+		v.Document = _cDocument
 	}
 	if v.Flags.Has(3) {
 		_vhdrSettings, _ehdrSettings := r.ReadUint32()
@@ -7383,7 +7672,11 @@ func DecodeTheme(r *Reader) (*Theme, error) {
 			if _errSettings != nil {
 				return nil, _errSettings
 			}
-			v.Settings[_iSettings] = _objSettings.(*ThemeSettings)
+			_cSettings, _okSettings := _objSettings.(*ThemeSettings)
+			if !_okSettings {
+				return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+			}
+			v.Settings[_iSettings] = _cSettings
 		}
 		_ = _vhdrSettings
 	}
@@ -7669,7 +7962,11 @@ func DecodeInputThemeSettings(r *Reader) (*InputThemeSettings, error) {
 	if _errBaseTheme != nil {
 		return nil, _errBaseTheme
 	}
-	v.BaseTheme = _objBaseTheme.(BaseThemeClass)
+	_cBaseTheme, _okBaseTheme := _objBaseTheme.(BaseThemeClass)
+	if !_okBaseTheme {
+		return nil, fmt.Errorf("decode: field base_theme: unexpected type %T", _objBaseTheme)
+	}
+	v.BaseTheme = _cBaseTheme
 	_rAccentColor, _eAccentColor := r.ReadInt32()
 	if _eAccentColor != nil {
 		return nil, _eAccentColor
@@ -7694,14 +7991,22 @@ func DecodeInputThemeSettings(r *Reader) (*InputThemeSettings, error) {
 		if _errWallpaper != nil {
 			return nil, _errWallpaper
 		}
-		v.Wallpaper = _objWallpaper.(InputWallPaperClass)
+		_cWallpaper, _okWallpaper := _objWallpaper.(InputWallPaperClass)
+		if !_okWallpaper {
+			return nil, fmt.Errorf("decode: field wallpaper: unexpected type %T", _objWallpaper)
+		}
+		v.Wallpaper = _cWallpaper
 	}
 	if v.Flags.Has(1) {
 		_objWallpaperSettings, _errWallpaperSettings := ReadTLObject(r)
 		if _errWallpaperSettings != nil {
 			return nil, _errWallpaperSettings
 		}
-		v.WallpaperSettings = _objWallpaperSettings.(*WallPaperSettings)
+		_cWallpaperSettings, _okWallpaperSettings := _objWallpaperSettings.(*WallPaperSettings)
+		if !_okWallpaperSettings {
+			return nil, fmt.Errorf("decode: field wallpaper_settings: unexpected type %T", _objWallpaperSettings)
+		}
+		v.WallpaperSettings = _cWallpaperSettings
 	}
 	return v, nil
 }
@@ -7781,7 +8086,11 @@ func DecodeThemeSettings(r *Reader) (*ThemeSettings, error) {
 	if _errBaseTheme != nil {
 		return nil, _errBaseTheme
 	}
-	v.BaseTheme = _objBaseTheme.(BaseThemeClass)
+	_cBaseTheme, _okBaseTheme := _objBaseTheme.(BaseThemeClass)
+	if !_okBaseTheme {
+		return nil, fmt.Errorf("decode: field base_theme: unexpected type %T", _objBaseTheme)
+	}
+	v.BaseTheme = _cBaseTheme
 	_rAccentColor, _eAccentColor := r.ReadInt32()
 	if _eAccentColor != nil {
 		return nil, _eAccentColor
@@ -7806,7 +8115,11 @@ func DecodeThemeSettings(r *Reader) (*ThemeSettings, error) {
 		if _errWallpaper != nil {
 			return nil, _errWallpaper
 		}
-		v.Wallpaper = _objWallpaper.(WallPaperClass)
+		_cWallpaper, _okWallpaper := _objWallpaper.(WallPaperClass)
+		if !_okWallpaper {
+			return nil, fmt.Errorf("decode: field wallpaper: unexpected type %T", _objWallpaper)
+		}
+		v.Wallpaper = _cWallpaper
 	}
 	return v, nil
 }
@@ -8098,7 +8411,11 @@ func DecodeStatsGraph(r *Reader) (*StatsGraph, error) {
 	if _errJSON != nil {
 		return nil, _errJSON
 	}
-	v.JSON = _objJSON.(*DataJSON)
+	_cJSON, _okJSON := _objJSON.(*DataJSON)
+	if !_okJSON {
+		return nil, fmt.Errorf("decode: field json: unexpected type %T", _objJSON)
+	}
+	v.JSON = _cJSON
 	if v.Flags.Has(0) {
 		_rZoomToken, _eZoomToken := r.ReadString()
 		if _eZoomToken != nil {
@@ -8764,7 +9081,11 @@ func DecodeTextWithEntities(r *Reader) (*TextWithEntities, error) {
 		if _errEntities != nil {
 			return nil, _errEntities
 		}
-		v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+		_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+		if !_okEntities {
+			return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+		}
+		v.Entities[_iEntities] = _cEntities
 	}
 	_ = _vhdrEntities
 	return v, nil
@@ -8793,6 +9114,9 @@ const InputReplyToStoryTypeID = 0x5881323a
 // InputReplyToMonoForumTypeID is the constructor ID for TL type inputReplyToMonoForum.
 const InputReplyToMonoForumTypeID = 0x69d66c45
 
+// InputReplyToEphemeralMessageTypeID is the constructor ID for TL type inputReplyToEphemeralMessage.
+const InputReplyToEphemeralMessageTypeID = 0x4119b95e
+
 // isInputReplyTo marks InputReplyToMessage as implementing the InputReplyToClass interface.
 func (*InputReplyToMessage) isInputReplyTo() {}
 
@@ -8801,6 +9125,9 @@ func (*InputReplyToStory) isInputReplyTo() {}
 
 // isInputReplyTo marks InputReplyToMonoForum as implementing the InputReplyToClass interface.
 func (*InputReplyToMonoForum) isInputReplyTo() {}
+
+// isInputReplyTo marks InputReplyToEphemeralMessage as implementing the InputReplyToClass interface.
+func (*InputReplyToEphemeralMessage) isInputReplyTo() {}
 
 // InputReplyToMessage represents the TL constructor inputReplyToMessage (0x3bd4b7c2).
 //
@@ -8913,7 +9240,11 @@ func DecodeInputReplyToMessage(r *Reader) (*InputReplyToMessage, error) {
 		if _errReplyToPeerID != nil {
 			return nil, _errReplyToPeerID
 		}
-		v.ReplyToPeerID = _objReplyToPeerID.(InputPeerClass)
+		_cReplyToPeerID, _okReplyToPeerID := _objReplyToPeerID.(InputPeerClass)
+		if !_okReplyToPeerID {
+			return nil, fmt.Errorf("decode: field reply_to_peer_id: unexpected type %T", _objReplyToPeerID)
+		}
+		v.ReplyToPeerID = _cReplyToPeerID
 	}
 	if v.Flags.Has(2) {
 		_rQuoteText, _eQuoteText := r.ReadString()
@@ -8940,7 +9271,11 @@ func DecodeInputReplyToMessage(r *Reader) (*InputReplyToMessage, error) {
 			if _errQuoteEntities != nil {
 				return nil, _errQuoteEntities
 			}
-			v.QuoteEntities[_iQuoteEntities] = _objQuoteEntities.(MessageEntityClass)
+			_cQuoteEntities, _okQuoteEntities := _objQuoteEntities.(MessageEntityClass)
+			if !_okQuoteEntities {
+				return nil, fmt.Errorf("decode: field quote_entities: unexpected type %T", _objQuoteEntities)
+			}
+			v.QuoteEntities[_iQuoteEntities] = _cQuoteEntities
 		}
 		_ = _vhdrQuoteEntities
 	}
@@ -8956,7 +9291,11 @@ func DecodeInputReplyToMessage(r *Reader) (*InputReplyToMessage, error) {
 		if _errMonoforumPeerID != nil {
 			return nil, _errMonoforumPeerID
 		}
-		v.MonoforumPeerID = _objMonoforumPeerID.(InputPeerClass)
+		_cMonoforumPeerID, _okMonoforumPeerID := _objMonoforumPeerID.(InputPeerClass)
+		if !_okMonoforumPeerID {
+			return nil, fmt.Errorf("decode: field monoforum_peer_id: unexpected type %T", _objMonoforumPeerID)
+		}
+		v.MonoforumPeerID = _cMonoforumPeerID
 	}
 	if v.Flags.Has(6) {
 		_rTodoItemID, _eTodoItemID := r.ReadInt32()
@@ -9009,7 +9348,11 @@ func DecodeInputReplyToStory(r *Reader) (*InputReplyToStory, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rStoryID, _eStoryID := r.ReadInt32()
 	if _eStoryID != nil {
 		return nil, _eStoryID
@@ -9050,13 +9393,53 @@ func DecodeInputReplyToMonoForum(r *Reader) (*InputReplyToMonoForum, error) {
 	if _errMonoforumPeerID != nil {
 		return nil, _errMonoforumPeerID
 	}
-	v.MonoforumPeerID = _objMonoforumPeerID.(InputPeerClass)
+	_cMonoforumPeerID, _okMonoforumPeerID := _objMonoforumPeerID.(InputPeerClass)
+	if !_okMonoforumPeerID {
+		return nil, fmt.Errorf("decode: field monoforum_peer_id: unexpected type %T", _objMonoforumPeerID)
+	}
+	v.MonoforumPeerID = _cMonoforumPeerID
 	return v, nil
 }
 
 func init() {
 	Registry[InputReplyToMonoForumTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputReplyToMonoForum(r)
+	}
+}
+
+// InputReplyToEphemeralMessage represents the TL constructor inputReplyToEphemeralMessage (0x4119b95e).
+//
+// See https://core.telegram.org/constructor/inputReplyToEphemeralMessage for reference.
+type InputReplyToEphemeralMessage struct {
+	ID int32 `json:"id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x4119b95e.
+func (v *InputReplyToEphemeralMessage) ConstructorID() uint32 {
+	return InputReplyToEphemeralMessageTypeID
+}
+
+// Encode serializes InputReplyToEphemeralMessage to a bytes.Buffer using the TL binary protocol.
+func (v *InputReplyToEphemeralMessage) Encode(b *bytes.Buffer) error {
+	WriteInt(b, InputReplyToEphemeralMessageTypeID)
+	WriteInt(b, uint32(v.ID))
+	return nil
+}
+
+// DecodeInputReplyToEphemeralMessage deserializes a InputReplyToEphemeralMessage from a reader using the TL binary protocol.
+func DecodeInputReplyToEphemeralMessage(r *Reader) (*InputReplyToEphemeralMessage, error) {
+	v := &InputReplyToEphemeralMessage{}
+	_rID, _eID := r.ReadInt32()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	return v, nil
+}
+
+func init() {
+	Registry[InputReplyToEphemeralMessageTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputReplyToEphemeralMessage(r)
 	}
 }
 
@@ -9253,12 +9636,20 @@ func DecodeMediaAreaVenue(r *Reader) (*MediaAreaVenue, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_objGeo, _errGeo := ReadTLObject(r)
 	if _errGeo != nil {
 		return nil, _errGeo
 	}
-	v.Geo = _objGeo.(GeoPointClass)
+	_cGeo, _okGeo := _objGeo.(GeoPointClass)
+	if !_okGeo {
+		return nil, fmt.Errorf("decode: field geo: unexpected type %T", _objGeo)
+	}
+	v.Geo = _cGeo
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -9323,7 +9714,11 @@ func DecodeInputMediaAreaVenue(r *Reader) (*InputMediaAreaVenue, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_rQueryID, _eQueryID := r.ReadInt64()
 	if _eQueryID != nil {
 		return nil, _eQueryID
@@ -9390,18 +9785,30 @@ func DecodeMediaAreaGeoPoint(r *Reader) (*MediaAreaGeoPoint, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_objGeo, _errGeo := ReadTLObject(r)
 	if _errGeo != nil {
 		return nil, _errGeo
 	}
-	v.Geo = _objGeo.(GeoPointClass)
+	_cGeo, _okGeo := _objGeo.(GeoPointClass)
+	if !_okGeo {
+		return nil, fmt.Errorf("decode: field geo: unexpected type %T", _objGeo)
+	}
+	v.Geo = _cGeo
 	if v.Flags.Has(0) {
 		_objAddress, _errAddress := ReadTLObject(r)
 		if _errAddress != nil {
 			return nil, _errAddress
 		}
-		v.Address = _objAddress.(*GeoPointAddress)
+		_cAddress, _okAddress := _objAddress.(*GeoPointAddress)
+		if !_okAddress {
+			return nil, fmt.Errorf("decode: field address: unexpected type %T", _objAddress)
+		}
+		v.Address = _cAddress
 	}
 	return v, nil
 }
@@ -9462,12 +9869,20 @@ func DecodeMediaAreaSuggestedReaction(r *Reader) (*MediaAreaSuggestedReaction, e
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_objReaction, _errReaction := ReadTLObject(r)
 	if _errReaction != nil {
 		return nil, _errReaction
 	}
-	v.Reaction = _objReaction.(ReactionClass)
+	_cReaction, _okReaction := _objReaction.(ReactionClass)
+	if !_okReaction {
+		return nil, fmt.Errorf("decode: field reaction: unexpected type %T", _objReaction)
+	}
+	v.Reaction = _cReaction
 	return v, nil
 }
 
@@ -9507,7 +9922,11 @@ func DecodeMediaAreaChannelPost(r *Reader) (*MediaAreaChannelPost, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_rChannelID, _eChannelID := r.ReadInt64()
 	if _eChannelID != nil {
 		return nil, _eChannelID
@@ -9557,12 +9976,20 @@ func DecodeInputMediaAreaChannelPost(r *Reader) (*InputMediaAreaChannelPost, err
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_objChannel, _errChannel := ReadTLObject(r)
 	if _errChannel != nil {
 		return nil, _errChannel
 	}
-	v.Channel = _objChannel.(InputChannelClass)
+	_cChannel, _okChannel := _objChannel.(InputChannelClass)
+	if !_okChannel {
+		return nil, fmt.Errorf("decode: field channel: unexpected type %T", _objChannel)
+	}
+	v.Channel = _cChannel
 	_rMsgID, _eMsgID := r.ReadInt32()
 	if _eMsgID != nil {
 		return nil, _eMsgID
@@ -9605,7 +10032,11 @@ func DecodeMediaAreaURL(r *Reader) (*MediaAreaURL, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
 		return nil, _eURL
@@ -9652,7 +10083,11 @@ func DecodeMediaAreaWeather(r *Reader) (*MediaAreaWeather, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_rEmoji, _eEmoji := r.ReadString()
 	if _eEmoji != nil {
 		return nil, _eEmoji
@@ -9705,7 +10140,11 @@ func DecodeMediaAreaStarGift(r *Reader) (*MediaAreaStarGift, error) {
 	if _errCoordinates != nil {
 		return nil, _errCoordinates
 	}
-	v.Coordinates = _objCoordinates.(*MediaAreaCoordinates)
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
 	_rSlug, _eSlug := r.ReadString()
 	if _eSlug != nil {
 		return nil, _eSlug
@@ -9900,7 +10339,11 @@ func DecodePublicForwardMessage(r *Reader) (*PublicForwardMessage, error) {
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(MessageClass)
+	_cMessage, _okMessage := _objMessage.(MessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 
@@ -9938,12 +10381,20 @@ func DecodePublicForwardStory(r *Reader) (*PublicForwardStory, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_objStory, _errStory := ReadTLObject(r)
 	if _errStory != nil {
 		return nil, _errStory
 	}
-	v.Story = _objStory.(StoryItemClass)
+	_cStory, _okStory := _objStory.(StoryItemClass)
+	if !_okStory {
+		return nil, fmt.Errorf("decode: field story: unexpected type %T", _objStory)
+	}
+	v.Story = _cStory
 	return v, nil
 }
 
@@ -10303,7 +10754,11 @@ func DecodeFactCheck(r *Reader) (*FactCheck, error) {
 		if _errText != nil {
 			return nil, _errText
 		}
-		v.Text = _objText.(*TextWithEntities)
+		_cText, _okText := _objText.(*TextWithEntities)
+		if !_okText {
+			return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+		}
+		v.Text = _cText
 	}
 	_rHash, _eHash := r.ReadInt64()
 	if _eHash != nil {
@@ -10395,7 +10850,11 @@ func DecodeReportResultChooseOption(r *Reader) (*ReportResultChooseOption, error
 		if _errOptions != nil {
 			return nil, _errOptions
 		}
-		v.Options[_iOptions] = _objOptions.(*MessageReportOption)
+		_cOptions, _okOptions := _objOptions.(*MessageReportOption)
+		if !_okOptions {
+			return nil, fmt.Errorf("decode: field options: unexpected type %T", _objOptions)
+		}
+		v.Options[_iOptions] = _cOptions
 	}
 	_ = _vhdrOptions
 	return v, nil
@@ -10598,12 +11057,20 @@ func DecodePendingSuggestion(r *Reader) (*PendingSuggestion, error) {
 	if _errTitle != nil {
 		return nil, _errTitle
 	}
-	v.Title = _objTitle.(*TextWithEntities)
+	_cTitle, _okTitle := _objTitle.(*TextWithEntities)
+	if !_okTitle {
+		return nil, fmt.Errorf("decode: field title: unexpected type %T", _objTitle)
+	}
+	v.Title = _cTitle
 	_objDescription, _errDescription := ReadTLObject(r)
 	if _errDescription != nil {
 		return nil, _errDescription
 	}
-	v.Description = _objDescription.(*TextWithEntities)
+	_cDescription, _okDescription := _objDescription.(*TextWithEntities)
+	if !_okDescription {
+		return nil, fmt.Errorf("decode: field description: unexpected type %T", _objDescription)
+	}
+	v.Description = _cDescription
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
 		return nil, _eURL
@@ -10682,7 +11149,11 @@ func DecodeSuggestedPost(r *Reader) (*SuggestedPost, error) {
 		if _errPrice != nil {
 			return nil, _errPrice
 		}
-		v.Price = _objPrice.(StarsAmountClass)
+		_cPrice, _okPrice := _objPrice.(StarsAmountClass)
+		if !_okPrice {
+			return nil, fmt.Errorf("decode: field price: unexpected type %T", _objPrice)
+		}
+		v.Price = _cPrice
 	}
 	if v.Flags.Has(0) {
 		_rScheduleDate, _eScheduleDate := r.ReadInt32()
@@ -11257,7 +11728,11 @@ func DecodeInputRichFilePhoto(r *Reader) (*InputRichFilePhoto, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(InputPhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(InputPhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	return v, nil
 }
 
@@ -11300,7 +11775,11 @@ func DecodeInputRichFileDocument(r *Reader) (*InputRichFileDocument, error) {
 	if _errDocument != nil {
 		return nil, _errDocument
 	}
-	v.Document = _objDocument.(InputDocumentClass)
+	_cDocument, _okDocument := _objDocument.(InputDocumentClass)
+	if !_okDocument {
+		return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+	}
+	v.Document = _cDocument
 	return v, nil
 }
 
@@ -12643,7 +13122,11 @@ func DecodeRPCResult(r *Reader) (*RPCResult, error) {
 	if _errResult != nil {
 		return nil, _errResult
 	}
-	v.Result = _objResult.(TLObject)
+	_cResult, _okResult := _objResult.(TLObject)
+	if !_okResult {
+		return nil, fmt.Errorf("decode: field result: unexpected type %T", _objResult)
+	}
+	v.Result = _cResult
 	return v, nil
 }
 

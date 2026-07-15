@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // PhotoClass is the interface for TL type Photo.
@@ -169,7 +170,11 @@ func DecodePhoto(r *Reader) (*Photo, error) {
 		if _errSizes != nil {
 			return nil, _errSizes
 		}
-		v.Sizes[_iSizes] = _objSizes.(PhotoSizeClass)
+		_cSizes, _okSizes := _objSizes.(PhotoSizeClass)
+		if !_okSizes {
+			return nil, fmt.Errorf("decode: field sizes: unexpected type %T", _objSizes)
+		}
+		v.Sizes[_iSizes] = _cSizes
 	}
 	_ = _vhdrSizes
 	if v.Flags.Has(1) {
@@ -190,7 +195,11 @@ func DecodePhoto(r *Reader) (*Photo, error) {
 			if _errVideoSizes != nil {
 				return nil, _errVideoSizes
 			}
-			v.VideoSizes[_iVideoSizes] = _objVideoSizes.(VideoSizeClass)
+			_cVideoSizes, _okVideoSizes := _objVideoSizes.(VideoSizeClass)
+			if !_okVideoSizes {
+				return nil, fmt.Errorf("decode: field video_sizes: unexpected type %T", _objVideoSizes)
+			}
+			v.VideoSizes[_iVideoSizes] = _cVideoSizes
 		}
 		_ = _vhdrVideoSizes
 	}
@@ -240,7 +249,11 @@ func DecodePhotosPhoto(r *Reader) (*PhotosPhoto, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(PhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
@@ -258,7 +271,11 @@ func DecodePhotosPhoto(r *Reader) (*PhotosPhoto, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -339,7 +356,11 @@ func DecodePhotosPhotos(r *Reader) (*PhotosPhotos, error) {
 		if _errPhotos != nil {
 			return nil, _errPhotos
 		}
-		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
+		_cPhotos, _okPhotos := _objPhotos.(PhotoClass)
+		if !_okPhotos {
+			return nil, fmt.Errorf("decode: field photos: unexpected type %T", _objPhotos)
+		}
+		v.Photos[_iPhotos] = _cPhotos
 	}
 	_ = _vhdrPhotos
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -359,7 +380,11 @@ func DecodePhotosPhotos(r *Reader) (*PhotosPhotos, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -427,7 +452,11 @@ func DecodePhotosPhotosSlice(r *Reader) (*PhotosPhotosSlice, error) {
 		if _errPhotos != nil {
 			return nil, _errPhotos
 		}
-		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
+		_cPhotos, _okPhotos := _objPhotos.(PhotoClass)
+		if !_okPhotos {
+			return nil, fmt.Errorf("decode: field photos: unexpected type %T", _objPhotos)
+		}
+		v.Photos[_iPhotos] = _cPhotos
 	}
 	_ = _vhdrPhotos
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -447,7 +476,11 @@ func DecodePhotosPhotosSlice(r *Reader) (*PhotosPhotosSlice, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil

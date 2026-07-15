@@ -147,6 +147,7 @@ var ConstructorMapCore = map[uint32]func() TLObject{
 	0x3bd4b7c2: func() TLObject { return &InputReplyToMessage{} },
 	0x5881323a: func() TLObject { return &InputReplyToStory{} },
 	0x69d66c45: func() TLObject { return &InputReplyToMonoForum{} },
+	0x4119b95e: func() TLObject { return &InputReplyToEphemeralMessage{} },
 	0xcfc9e002: func() TLObject { return &MediaAreaCoordinates{} },
 	0xbe82db9c: func() TLObject { return &MediaAreaVenue{} },
 	0xb282217f: func() TLObject { return &InputMediaAreaVenue{} },

@@ -2663,9 +2663,9 @@ func (c *RPCClient) MessagesMigrateChat(ctx context.Context, req *MessagesMigrat
 }
 
 // MessagesSearchGlobalTypeID is the constructor ID for the RPC function messages.searchGlobal.
-const MessagesSearchGlobalTypeID = 0x4bc6589a
+const MessagesSearchGlobalTypeID = 0x6126a43c
 
-// MessagesSearchGlobalRequest represents TL type `messages.searchGlobal#4bc6589a`.
+// MessagesSearchGlobalRequest represents TL type `messages.searchGlobal#6126a43c`.
 //
 // See https://core.telegram.org/method/messages/searchGlobal for reference.
 type MessagesSearchGlobalRequest struct {
@@ -2674,6 +2674,7 @@ type MessagesSearchGlobalRequest struct {
 	GroupsOnly     bool                `json:"groups_only,omitempty"`
 	UsersOnly      bool                `json:"users_only,omitempty"`
 	FolderID       int32               `json:"folder_id,omitempty"`
+	Community      InputChannelClass   `json:"community,omitempty"`
 	Q              string              `json:"q,omitempty"`
 	Filter         MessagesFilterClass `json:"filter,omitempty"`
 	MinDate        int32               `json:"min_date,omitempty"`
@@ -2698,9 +2699,12 @@ func (v *MessagesSearchGlobalRequest) SetFlags() {
 	if v.FolderID != 0 {
 		v.Flags.Set(0)
 	}
+	if v.Community != nil {
+		v.Flags.Set(4)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x4bc6589a.
+// ConstructorID returns the TL constructor identifier 0x6126a43c.
 func (v *MessagesSearchGlobalRequest) ConstructorID() uint32 {
 	return MessagesSearchGlobalTypeID
 }
@@ -2712,6 +2716,9 @@ func (v *MessagesSearchGlobalRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.FolderID))
+	}
+	if v.Flags.Has(4) {
+		EncodeTLObject(b, v.Community)
 	}
 	WriteString(b, v.Q)
 	EncodeTLObject(b, v.Filter)
@@ -13766,6 +13773,221 @@ func (c *RPCClient) MessagesGetRichMessage(ctx context.Context, req *MessagesGet
 		return nil, err
 	}
 	if _c, _ok := result.(MessagesClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesTranslateRichMessageTypeID is the constructor ID for the RPC function messages.translateRichMessage.
+const MessagesTranslateRichMessageTypeID = 0x1a542004
+
+// MessagesTranslateRichMessageRequest represents TL type `messages.translateRichMessage#1a542004`.
+//
+// See https://core.telegram.org/method/messages/translateRichMessage for reference.
+type MessagesTranslateRichMessageRequest struct {
+	Flags  Fields                  `json:"-"`
+	Peer   InputPeerClass          `json:"peer,omitempty"`
+	ID     []int32                 `json:"id,omitempty"`
+	Text   []InputRichMessageClass `json:"text,omitempty"`
+	ToLang string                  `json:"to_lang,omitempty"`
+	Tone   string                  `json:"tone,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesTranslateRichMessageRequest) SetFlags() {
+	if v.Peer != nil {
+		v.Flags.Set(0)
+	}
+	if v.ID != nil {
+		v.Flags.Set(0)
+	}
+	if v.Text != nil {
+		v.Flags.Set(1)
+	}
+	if v.Tone != "" {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x1a542004.
+func (v *MessagesTranslateRichMessageRequest) ConstructorID() uint32 {
+	return MessagesTranslateRichMessageTypeID
+}
+
+// Encode serializes MessagesTranslateRichMessageRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesTranslateRichMessageRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesTranslateRichMessageTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		EncodeTLObject(b, v.Peer)
+	}
+	if v.Flags.Has(0) {
+		WriteVectorInt(b, v.ID)
+	}
+	if v.Flags.Has(1) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Text)))
+		for _, _item := range v.Text {
+			EncodeTLObject(b, _item)
+		}
+	}
+	WriteString(b, v.ToLang)
+	if v.Flags.Has(2) {
+		WriteString(b, v.Tone)
+	}
+	return nil
+}
+
+// MessagesTranslateRichMessage invokes the messages.translateRichMessage RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesTranslateRichMessage(ctx context.Context, req *MessagesTranslateRichMessageRequest) (*MessagesTranslatedRichMessage, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*MessagesTranslatedRichMessage); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesComposeRichMessageWithAiTypeID is the constructor ID for the RPC function messages.composeRichMessageWithAI.
+const MessagesComposeRichMessageWithAiTypeID = 0x8d7ae6af
+
+// MessagesComposeRichMessageWithAiRequest represents TL type `messages.composeRichMessageWithAI#8d7ae6af`.
+//
+// See https://core.telegram.org/method/messages/composeRichMessageWithAI for reference.
+type MessagesComposeRichMessageWithAiRequest struct {
+	Flags           Fields                  `json:"-"`
+	Proofread       bool                    `json:"proofread,omitempty"`
+	Emojify         bool                    `json:"emojify,omitempty"`
+	Text            InputRichMessageClass   `json:"text,omitempty"`
+	TranslateToLang string                  `json:"translate_to_lang,omitempty"`
+	Tone            InputAiComposeToneClass `json:"tone,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesComposeRichMessageWithAiRequest) SetFlags() {
+	if v.Proofread {
+		v.Flags.Set(0)
+	}
+	if v.Emojify {
+		v.Flags.Set(3)
+	}
+	if v.Text != nil {
+		v.Flags.Set(4)
+	}
+	if v.TranslateToLang != "" {
+		v.Flags.Set(1)
+	}
+	if v.Tone != nil {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x8d7ae6af.
+func (v *MessagesComposeRichMessageWithAiRequest) ConstructorID() uint32 {
+	return MessagesComposeRichMessageWithAiTypeID
+}
+
+// Encode serializes MessagesComposeRichMessageWithAiRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesComposeRichMessageWithAiRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesComposeRichMessageWithAiTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(4) {
+		EncodeTLObject(b, v.Text)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.TranslateToLang)
+	}
+	if v.Flags.Has(2) {
+		EncodeTLObject(b, v.Tone)
+	}
+	return nil
+}
+
+// MessagesComposeRichMessageWithAi invokes the messages.composeRichMessageWithAI RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesComposeRichMessageWithAi(ctx context.Context, req *MessagesComposeRichMessageWithAiRequest) (*MessagesComposedRichMessageWithAi, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*MessagesComposedRichMessageWithAi); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesRequestChatJoinWebViewTypeID is the constructor ID for the RPC function messages.requestChatJoinWebView.
+const MessagesRequestChatJoinWebViewTypeID = 0xba9ee679
+
+// MessagesRequestChatJoinWebViewRequest represents TL type `messages.requestChatJoinWebView#ba9ee679`.
+//
+// See https://core.telegram.org/method/messages/requestChatJoinWebView for reference.
+type MessagesRequestChatJoinWebViewRequest struct {
+	Flags       Fields    `json:"-"`
+	QueryID     int64     `json:"query_id,omitempty"`
+	ThemeParams *DataJSON `json:"theme_params,omitempty"`
+	Platform    string    `json:"platform,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesRequestChatJoinWebViewRequest) SetFlags() {
+	if v.ThemeParams != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xba9ee679.
+func (v *MessagesRequestChatJoinWebViewRequest) ConstructorID() uint32 {
+	return MessagesRequestChatJoinWebViewTypeID
+}
+
+// Encode serializes MessagesRequestChatJoinWebViewRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesRequestChatJoinWebViewRequest) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessagesRequestChatJoinWebViewTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.QueryID)
+	if v.Flags.Has(0) {
+		EncodeTLObject(b, v.ThemeParams)
+	}
+	WriteString(b, v.Platform)
+	return nil
+}
+
+// MessagesRequestChatJoinWebView invokes the messages.requestChatJoinWebView RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesRequestChatJoinWebView(ctx context.Context, req *MessagesRequestChatJoinWebViewRequest) (*WebViewResultURL, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*WebViewResultURL); _ok {
 		return _c, nil
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)

@@ -4,20 +4,30 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // BotCommandTypeID is the constructor ID for TL type botCommand.
-const BotCommandTypeID = 0xc27ac8c7
+const BotCommandTypeID = 0x9852d6d2
 
-// BotCommand represents the TL constructor botCommand (0xc27ac8c7).
+// BotCommand represents the TL constructor botCommand (0x9852d6d2).
 //
 // See https://core.telegram.org/constructor/botCommand for reference.
 type BotCommand struct {
+	Flags       Fields `json:"-"`
+	Ephemeral   bool   `json:"ephemeral,omitempty"`
 	Command     string `json:"command,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0xc27ac8c7.
+// SetFlags computes flags from non-zero optional fields.
+func (v *BotCommand) SetFlags() {
+	if v.Ephemeral {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x9852d6d2.
 func (v *BotCommand) ConstructorID() uint32 {
 	return BotCommandTypeID
 }
@@ -25,6 +35,8 @@ func (v *BotCommand) ConstructorID() uint32 {
 // Encode serializes BotCommand to a bytes.Buffer using the TL binary protocol.
 func (v *BotCommand) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotCommandTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Command)
 	WriteString(b, v.Description)
 	return nil
@@ -33,6 +45,12 @@ func (v *BotCommand) Encode(b *bytes.Buffer) error {
 // DecodeBotCommand deserializes a BotCommand from a reader using the TL binary protocol.
 func DecodeBotCommand(r *Reader) (*BotCommand, error) {
 	v := &BotCommand{}
+	{
+		var _f uint32
+		_f, _ = r.ReadUint32()
+		v.Flags = Fields(_f)
+	}
+	v.Ephemeral = v.Flags.Has(0)
 	_rCommand, _eCommand := r.ReadString()
 	if _eCommand != nil {
 		return nil, _eCommand
@@ -195,14 +213,22 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 		if _errDescriptionPhoto != nil {
 			return nil, _errDescriptionPhoto
 		}
-		v.DescriptionPhoto = _objDescriptionPhoto.(PhotoClass)
+		_cDescriptionPhoto, _okDescriptionPhoto := _objDescriptionPhoto.(PhotoClass)
+		if !_okDescriptionPhoto {
+			return nil, fmt.Errorf("decode: field description_photo: unexpected type %T", _objDescriptionPhoto)
+		}
+		v.DescriptionPhoto = _cDescriptionPhoto
 	}
 	if v.Flags.Has(5) {
 		_objDescriptionDocument, _errDescriptionDocument := ReadTLObject(r)
 		if _errDescriptionDocument != nil {
 			return nil, _errDescriptionDocument
 		}
-		v.DescriptionDocument = _objDescriptionDocument.(DocumentClass)
+		_cDescriptionDocument, _okDescriptionDocument := _objDescriptionDocument.(DocumentClass)
+		if !_okDescriptionDocument {
+			return nil, fmt.Errorf("decode: field description_document: unexpected type %T", _objDescriptionDocument)
+		}
+		v.DescriptionDocument = _cDescriptionDocument
 	}
 	if v.Flags.Has(2) {
 		_vhdrCommands, _ehdrCommands := r.ReadUint32()
@@ -222,7 +248,11 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 			if _errCommands != nil {
 				return nil, _errCommands
 			}
-			v.Commands[_iCommands] = _objCommands.(*BotCommand)
+			_cCommands, _okCommands := _objCommands.(*BotCommand)
+			if !_okCommands {
+				return nil, fmt.Errorf("decode: field commands: unexpected type %T", _objCommands)
+			}
+			v.Commands[_iCommands] = _cCommands
 		}
 		_ = _vhdrCommands
 	}
@@ -231,7 +261,11 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 		if _errMenuButton != nil {
 			return nil, _errMenuButton
 		}
-		v.MenuButton = _objMenuButton.(BotMenuButtonClass)
+		_cMenuButton, _okMenuButton := _objMenuButton.(BotMenuButtonClass)
+		if !_okMenuButton {
+			return nil, fmt.Errorf("decode: field menu_button: unexpected type %T", _objMenuButton)
+		}
+		v.MenuButton = _cMenuButton
 	}
 	if v.Flags.Has(7) {
 		_rPrivacyPolicyURL, _ePrivacyPolicyURL := r.ReadString()
@@ -245,14 +279,22 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 		if _errAppSettings != nil {
 			return nil, _errAppSettings
 		}
-		v.AppSettings = _objAppSettings.(*BotAppSettings)
+		_cAppSettings, _okAppSettings := _objAppSettings.(*BotAppSettings)
+		if !_okAppSettings {
+			return nil, fmt.Errorf("decode: field app_settings: unexpected type %T", _objAppSettings)
+		}
+		v.AppSettings = _cAppSettings
 	}
 	if v.Flags.Has(9) {
 		_objVerifierSettings, _errVerifierSettings := ReadTLObject(r)
 		if _errVerifierSettings != nil {
 			return nil, _errVerifierSettings
 		}
-		v.VerifierSettings = _objVerifierSettings.(*BotVerifierSettings)
+		_cVerifierSettings, _okVerifierSettings := _objVerifierSettings.(*BotVerifierSettings)
+		if !_okVerifierSettings {
+			return nil, fmt.Errorf("decode: field verifier_settings: unexpected type %T", _objVerifierSettings)
+		}
+		v.VerifierSettings = _cVerifierSettings
 	}
 	return v, nil
 }
@@ -475,7 +517,11 @@ func DecodeKeyboardButton(r *Reader) (*KeyboardButton, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -539,7 +585,11 @@ func DecodeKeyboardButtonURL(r *Reader) (*KeyboardButtonURL, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -613,7 +663,11 @@ func DecodeKeyboardButtonCallback(r *Reader) (*KeyboardButtonCallback, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -680,7 +734,11 @@ func DecodeKeyboardButtonRequestPhone(r *Reader) (*KeyboardButtonRequestPhone, e
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -742,7 +800,11 @@ func DecodeKeyboardButtonRequestGeoLocation(r *Reader) (*KeyboardButtonRequestGe
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -822,7 +884,11 @@ func DecodeKeyboardButtonSwitchInline(r *Reader) (*KeyboardButtonSwitchInline, e
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -852,7 +918,11 @@ func DecodeKeyboardButtonSwitchInline(r *Reader) (*KeyboardButtonSwitchInline, e
 			if _errPeerTypes != nil {
 				return nil, _errPeerTypes
 			}
-			v.PeerTypes[_iPeerTypes] = _objPeerTypes.(InlineQueryPeerTypeClass)
+			_cPeerTypes, _okPeerTypes := _objPeerTypes.(InlineQueryPeerTypeClass)
+			if !_okPeerTypes {
+				return nil, fmt.Errorf("decode: field peer_types: unexpected type %T", _objPeerTypes)
+			}
+			v.PeerTypes[_iPeerTypes] = _cPeerTypes
 		}
 		_ = _vhdrPeerTypes
 	}
@@ -911,7 +981,11 @@ func DecodeKeyboardButtonGame(r *Reader) (*KeyboardButtonGame, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -973,7 +1047,11 @@ func DecodeKeyboardButtonBuy(r *Reader) (*KeyboardButtonBuy, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1046,7 +1124,11 @@ func DecodeKeyboardButtonURLAuth(r *Reader) (*KeyboardButtonURLAuth, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1141,7 +1223,11 @@ func DecodeInputKeyboardButtonURLAuth(r *Reader) (*InputKeyboardButtonURLAuth, e
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1164,7 +1250,11 @@ func DecodeInputKeyboardButtonURLAuth(r *Reader) (*InputKeyboardButtonURLAuth, e
 	if _errBot != nil {
 		return nil, _errBot
 	}
-	v.Bot = _objBot.(InputUserClass)
+	_cBot, _okBot := _objBot.(InputUserClass)
+	if !_okBot {
+		return nil, fmt.Errorf("decode: field bot: unexpected type %T", _objBot)
+	}
+	v.Bot = _cBot
 	return v, nil
 }
 
@@ -1245,7 +1335,11 @@ func DecodeKeyboardButtonRequestPoll(r *Reader) (*KeyboardButtonRequestPoll, err
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	if v.Flags.Has(0) {
 		_rQuiz, _eQuiz := r.ReadBool()
@@ -1316,7 +1410,11 @@ func DecodeInputKeyboardButtonUserProfile(r *Reader) (*InputKeyboardButtonUserPr
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1327,7 +1425,11 @@ func DecodeInputKeyboardButtonUserProfile(r *Reader) (*InputKeyboardButtonUserPr
 	if _errUserID != nil {
 		return nil, _errUserID
 	}
-	v.UserID = _objUserID.(InputUserClass)
+	_cUserID, _okUserID := _objUserID.(InputUserClass)
+	if !_okUserID {
+		return nil, fmt.Errorf("decode: field user_id: unexpected type %T", _objUserID)
+	}
+	v.UserID = _cUserID
 	return v, nil
 }
 
@@ -1385,7 +1487,11 @@ func DecodeKeyboardButtonUserProfile(r *Reader) (*KeyboardButtonUserProfile, err
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1454,7 +1560,11 @@ func DecodeKeyboardButtonWebView(r *Reader) (*KeyboardButtonWebView, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1523,7 +1633,11 @@ func DecodeKeyboardButtonSimpleWebView(r *Reader) (*KeyboardButtonSimpleWebView,
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1596,7 +1710,11 @@ func DecodeKeyboardButtonRequestPeer(r *Reader) (*KeyboardButtonRequestPeer, err
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1612,7 +1730,11 @@ func DecodeKeyboardButtonRequestPeer(r *Reader) (*KeyboardButtonRequestPeer, err
 	if _errPeerType != nil {
 		return nil, _errPeerType
 	}
-	v.PeerType = _objPeerType.(RequestPeerTypeClass)
+	_cPeerType, _okPeerType := _objPeerType.(RequestPeerTypeClass)
+	if !_okPeerType {
+		return nil, fmt.Errorf("decode: field peer_type: unexpected type %T", _objPeerType)
+	}
+	v.PeerType = _cPeerType
 	_rMaxQuantity, _eMaxQuantity := r.ReadInt32()
 	if _eMaxQuantity != nil {
 		return nil, _eMaxQuantity
@@ -1694,7 +1816,11 @@ func DecodeInputKeyboardButtonRequestPeer(r *Reader) (*InputKeyboardButtonReques
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1710,7 +1836,11 @@ func DecodeInputKeyboardButtonRequestPeer(r *Reader) (*InputKeyboardButtonReques
 	if _errPeerType != nil {
 		return nil, _errPeerType
 	}
-	v.PeerType = _objPeerType.(RequestPeerTypeClass)
+	_cPeerType, _okPeerType := _objPeerType.(RequestPeerTypeClass)
+	if !_okPeerType {
+		return nil, fmt.Errorf("decode: field peer_type: unexpected type %T", _objPeerType)
+	}
+	v.PeerType = _cPeerType
 	_rMaxQuantity, _eMaxQuantity := r.ReadInt32()
 	if _eMaxQuantity != nil {
 		return nil, _eMaxQuantity
@@ -1773,7 +1903,11 @@ func DecodeKeyboardButtonCopy(r *Reader) (*KeyboardButtonCopy, error) {
 		if _errStyle != nil {
 			return nil, _errStyle
 		}
-		v.Style = _objStyle.(*KeyboardButtonStyle)
+		_cStyle, _okStyle := _objStyle.(*KeyboardButtonStyle)
+		if !_okStyle {
+			return nil, fmt.Errorf("decode: field style: unexpected type %T", _objStyle)
+		}
+		v.Style = _cStyle
 	}
 	_rText, _eText := r.ReadString()
 	if _eText != nil {
@@ -1840,7 +1974,11 @@ func DecodeKeyboardButtonRow(r *Reader) (*KeyboardButtonRow, error) {
 		if _errButtons != nil {
 			return nil, _errButtons
 		}
-		v.Buttons[_iButtons] = _objButtons.(KeyboardButtonClass)
+		_cButtons, _okButtons := _objButtons.(KeyboardButtonClass)
+		if !_okButtons {
+			return nil, fmt.Errorf("decode: field buttons: unexpected type %T", _objButtons)
+		}
+		v.Buttons[_iButtons] = _cButtons
 	}
 	_ = _vhdrButtons
 	return v, nil
@@ -1993,20 +2131,32 @@ func DecodeInputBotInlineResult(r *Reader) (*InputBotInlineResult, error) {
 		if _errThumb != nil {
 			return nil, _errThumb
 		}
-		v.Thumb = _objThumb.(*InputWebDocument)
+		_cThumb, _okThumb := _objThumb.(*InputWebDocument)
+		if !_okThumb {
+			return nil, fmt.Errorf("decode: field thumb: unexpected type %T", _objThumb)
+		}
+		v.Thumb = _cThumb
 	}
 	if v.Flags.Has(5) {
 		_objContent, _errContent := ReadTLObject(r)
 		if _errContent != nil {
 			return nil, _errContent
 		}
-		v.Content = _objContent.(*InputWebDocument)
+		_cContent, _okContent := _objContent.(*InputWebDocument)
+		if !_okContent {
+			return nil, fmt.Errorf("decode: field content: unexpected type %T", _objContent)
+		}
+		v.Content = _cContent
 	}
 	_objSendMessage, _errSendMessage := ReadTLObject(r)
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(InputBotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(InputBotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2058,12 +2208,20 @@ func DecodeInputBotInlineResultPhoto(r *Reader) (*InputBotInlineResultPhoto, err
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(InputPhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(InputPhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	_objSendMessage, _errSendMessage := ReadTLObject(r)
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(InputBotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(InputBotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2155,12 +2313,20 @@ func DecodeInputBotInlineResultDocument(r *Reader) (*InputBotInlineResultDocumen
 	if _errDocument != nil {
 		return nil, _errDocument
 	}
-	v.Document = _objDocument.(InputDocumentClass)
+	_cDocument, _okDocument := _objDocument.(InputDocumentClass)
+	if !_okDocument {
+		return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+	}
+	v.Document = _cDocument
 	_objSendMessage, _errSendMessage := ReadTLObject(r)
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(InputBotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(InputBotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2210,7 +2376,11 @@ func DecodeInputBotInlineResultGame(r *Reader) (*InputBotInlineResultGame, error
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(InputBotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(InputBotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2349,20 +2519,32 @@ func DecodeBotInlineResult(r *Reader) (*BotInlineResult, error) {
 		if _errThumb != nil {
 			return nil, _errThumb
 		}
-		v.Thumb = _objThumb.(WebDocumentClass)
+		_cThumb, _okThumb := _objThumb.(WebDocumentClass)
+		if !_okThumb {
+			return nil, fmt.Errorf("decode: field thumb: unexpected type %T", _objThumb)
+		}
+		v.Thumb = _cThumb
 	}
 	if v.Flags.Has(5) {
 		_objContent, _errContent := ReadTLObject(r)
 		if _errContent != nil {
 			return nil, _errContent
 		}
-		v.Content = _objContent.(WebDocumentClass)
+		_cContent, _okContent := _objContent.(WebDocumentClass)
+		if !_okContent {
+			return nil, fmt.Errorf("decode: field content: unexpected type %T", _objContent)
+		}
+		v.Content = _cContent
 	}
 	_objSendMessage, _errSendMessage := ReadTLObject(r)
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(BotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(BotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2453,14 +2635,22 @@ func DecodeBotInlineMediaResult(r *Reader) (*BotInlineMediaResult, error) {
 		if _errPhoto != nil {
 			return nil, _errPhoto
 		}
-		v.Photo = _objPhoto.(PhotoClass)
+		_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+		if !_okPhoto {
+			return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+		}
+		v.Photo = _cPhoto
 	}
 	if v.Flags.Has(1) {
 		_objDocument, _errDocument := ReadTLObject(r)
 		if _errDocument != nil {
 			return nil, _errDocument
 		}
-		v.Document = _objDocument.(DocumentClass)
+		_cDocument, _okDocument := _objDocument.(DocumentClass)
+		if !_okDocument {
+			return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+		}
+		v.Document = _cDocument
 	}
 	if v.Flags.Has(2) {
 		_rTitle, _eTitle := r.ReadString()
@@ -2480,7 +2670,11 @@ func DecodeBotInlineMediaResult(r *Reader) (*BotInlineMediaResult, error) {
 	if _errSendMessage != nil {
 		return nil, _errSendMessage
 	}
-	v.SendMessage = _objSendMessage.(BotInlineMessageClass)
+	_cSendMessage, _okSendMessage := _objSendMessage.(BotInlineMessageClass)
+	if !_okSendMessage {
+		return nil, fmt.Errorf("decode: field send_message: unexpected type %T", _objSendMessage)
+	}
+	v.SendMessage = _cSendMessage
 	return v, nil
 }
 
@@ -2619,13 +2813,21 @@ func DecodeGame(r *Reader) (*Game, error) {
 	if _errPhoto != nil {
 		return nil, _errPhoto
 	}
-	v.Photo = _objPhoto.(PhotoClass)
+	_cPhoto, _okPhoto := _objPhoto.(PhotoClass)
+	if !_okPhoto {
+		return nil, fmt.Errorf("decode: field photo: unexpected type %T", _objPhoto)
+	}
+	v.Photo = _cPhoto
 	if v.Flags.Has(0) {
 		_objDocument, _errDocument := ReadTLObject(r)
 		if _errDocument != nil {
 			return nil, _errDocument
 		}
-		v.Document = _objDocument.(DocumentClass)
+		_cDocument, _okDocument := _objDocument.(DocumentClass)
+		if !_okDocument {
+			return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+		}
+		v.Document = _cDocument
 	}
 	return v, nil
 }
@@ -2727,7 +2929,11 @@ func DecodeInputGameShortName(r *Reader) (*InputGameShortName, error) {
 	if _errBotID != nil {
 		return nil, _errBotID
 	}
-	v.BotID = _objBotID.(InputUserClass)
+	_cBotID, _okBotID := _objBotID.(InputUserClass)
+	if !_okBotID {
+		return nil, fmt.Errorf("decode: field bot_id: unexpected type %T", _objBotID)
+	}
+	v.BotID = _cBotID
 	_rShortName, _eShortName := r.ReadString()
 	if _eShortName != nil {
 		return nil, _eShortName
@@ -2934,7 +3140,11 @@ func DecodeBotCommandScopePeer(r *Reader) (*BotCommandScopePeer, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -2970,7 +3180,11 @@ func DecodeBotCommandScopePeerAdmins(r *Reader) (*BotCommandScopePeerAdmins, err
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	return v, nil
 }
 
@@ -3008,12 +3222,20 @@ func DecodeBotCommandScopePeerUser(r *Reader) (*BotCommandScopePeerUser, error) 
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_objUserID, _errUserID := ReadTLObject(r)
 	if _errUserID != nil {
 		return nil, _errUserID
 	}
-	v.UserID = _objUserID.(InputUserClass)
+	_cUserID, _okUserID := _objUserID.(InputUserClass)
+	if !_okUserID {
+		return nil, fmt.Errorf("decode: field user_id: unexpected type %T", _objUserID)
+	}
+	v.UserID = _cUserID
 	return v, nil
 }
 
@@ -3128,7 +3350,11 @@ func DecodeAttachMenuBotIcon(r *Reader) (*AttachMenuBotIcon, error) {
 	if _errIcon != nil {
 		return nil, _errIcon
 	}
-	v.Icon = _objIcon.(DocumentClass)
+	_cIcon, _okIcon := _objIcon.(DocumentClass)
+	if !_okIcon {
+		return nil, fmt.Errorf("decode: field icon: unexpected type %T", _objIcon)
+	}
+	v.Icon = _cIcon
 	if v.Flags.Has(0) {
 		_vhdrColors, _ehdrColors := r.ReadUint32()
 		if _ehdrColors != nil {
@@ -3147,7 +3373,11 @@ func DecodeAttachMenuBotIcon(r *Reader) (*AttachMenuBotIcon, error) {
 			if _errColors != nil {
 				return nil, _errColors
 			}
-			v.Colors[_iColors] = _objColors.(*AttachMenuBotIconColor)
+			_cColors, _okColors := _objColors.(*AttachMenuBotIconColor)
+			if !_okColors {
+				return nil, fmt.Errorf("decode: field colors: unexpected type %T", _objColors)
+			}
+			v.Colors[_iColors] = _cColors
 		}
 		_ = _vhdrColors
 	}
@@ -3274,7 +3504,11 @@ func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 			if _errPeerTypes != nil {
 				return nil, _errPeerTypes
 			}
-			v.PeerTypes[_iPeerTypes] = _objPeerTypes.(AttachMenuPeerTypeClass)
+			_cPeerTypes, _okPeerTypes := _objPeerTypes.(AttachMenuPeerTypeClass)
+			if !_okPeerTypes {
+				return nil, fmt.Errorf("decode: field peer_types: unexpected type %T", _objPeerTypes)
+			}
+			v.PeerTypes[_iPeerTypes] = _cPeerTypes
 		}
 		_ = _vhdrPeerTypes
 	}
@@ -3295,7 +3529,11 @@ func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 		if _errIcons != nil {
 			return nil, _errIcons
 		}
-		v.Icons[_iIcons] = _objIcons.(*AttachMenuBotIcon)
+		_cIcons, _okIcons := _objIcons.(*AttachMenuBotIcon)
+		if !_okIcons {
+			return nil, fmt.Errorf("decode: field icons: unexpected type %T", _objIcons)
+		}
+		v.Icons[_iIcons] = _cIcons
 	}
 	_ = _vhdrIcons
 	return v, nil
@@ -3412,7 +3650,11 @@ func DecodeAttachMenuBots(r *Reader) (*AttachMenuBots, error) {
 		if _errBots != nil {
 			return nil, _errBots
 		}
-		v.Bots[_iBots] = _objBots.(*AttachMenuBot)
+		_cBots, _okBots := _objBots.(*AttachMenuBot)
+		if !_okBots {
+			return nil, fmt.Errorf("decode: field bots: unexpected type %T", _objBots)
+		}
+		v.Bots[_iBots] = _cBots
 	}
 	_ = _vhdrBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -3432,7 +3674,11 @@ func DecodeAttachMenuBots(r *Reader) (*AttachMenuBots, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -3479,7 +3725,11 @@ func DecodeAttachMenuBotsBot(r *Reader) (*AttachMenuBotsBot, error) {
 	if _errBot != nil {
 		return nil, _errBot
 	}
-	v.Bot = _objBot.(*AttachMenuBot)
+	_cBot, _okBot := _objBot.(*AttachMenuBot)
+	if !_okBot {
+		return nil, fmt.Errorf("decode: field bot: unexpected type %T", _objBot)
+	}
+	v.Bot = _cBot
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
@@ -3497,7 +3747,11 @@ func DecodeAttachMenuBotsBot(r *Reader) (*AttachMenuBotsBot, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -3807,7 +4061,11 @@ func DecodeInputBotAppShortName(r *Reader) (*InputBotAppShortName, error) {
 	if _errBotID != nil {
 		return nil, _errBotID
 	}
-	v.BotID = _objBotID.(InputUserClass)
+	_cBotID, _okBotID := _objBotID.(InputUserClass)
+	if !_okBotID {
+		return nil, fmt.Errorf("decode: field bot_id: unexpected type %T", _objBotID)
+	}
+	v.BotID = _cBotID
 	_rShortName, _eShortName := r.ReadString()
 	if _eShortName != nil {
 		return nil, _eShortName
@@ -3940,7 +4198,11 @@ func DecodeBotsPopularAppBots(r *Reader) (*BotsPopularAppBots, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -3988,7 +4250,11 @@ func DecodeBotPreviewMedia(r *Reader) (*BotPreviewMedia, error) {
 	if _errMedia != nil {
 		return nil, _errMedia
 	}
-	v.Media = _objMedia.(MessageMediaClass)
+	_cMedia, _okMedia := _objMedia.(MessageMediaClass)
+	if !_okMedia {
+		return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+	}
+	v.Media = _cMedia
 	return v, nil
 }
 
@@ -4046,7 +4312,11 @@ func DecodeBotsPreviewInfo(r *Reader) (*BotsPreviewInfo, error) {
 		if _errMedia != nil {
 			return nil, _errMedia
 		}
-		v.Media[_iMedia] = _objMedia.(*BotPreviewMedia)
+		_cMedia, _okMedia := _objMedia.(*BotPreviewMedia)
+		if !_okMedia {
+			return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+		}
+		v.Media[_iMedia] = _cMedia
 	}
 	_ = _vhdrMedia
 	_vvLangCodes, _veLangCodes := r.ReadVectorString()
@@ -4527,7 +4797,11 @@ func DecodeBotsAccessSettings(r *Reader) (*BotsAccessSettings, error) {
 			if _errAddUsers != nil {
 				return nil, _errAddUsers
 			}
-			v.AddUsers[_iAddUsers] = _objAddUsers.(UserClass)
+			_cAddUsers, _okAddUsers := _objAddUsers.(UserClass)
+			if !_okAddUsers {
+				return nil, fmt.Errorf("decode: field add_users: unexpected type %T", _objAddUsers)
+			}
+			v.AddUsers[_iAddUsers] = _cAddUsers
 		}
 		_ = _vhdrAddUsers
 	}

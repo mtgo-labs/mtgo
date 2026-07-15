@@ -4,7 +4,7 @@ package tg
 
 // ConstructorMapBots maps constructor IDs to factory functions.
 var ConstructorMapBots = map[uint32]func() TLObject{
-	0xc27ac8c7: func() TLObject { return &BotCommand{} },
+	0x9852d6d2: func() TLObject { return &BotCommand{} },
 	0x4d8a0299: func() TLObject { return &BotInfo{} },
 	0xe8a775b0: func() TLObject { return &BotsBotInfo{} },
 	0x7d170cff: func() TLObject { return &KeyboardButton{} },

@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // InputGeoPointClass is the interface for TL type InputGeoPoint.
@@ -594,7 +595,11 @@ func DecodeInputPeerPhotoFileLocation(r *Reader) (*InputPeerPhotoFileLocation, e
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(InputPeerClass)
+	_cPeer, _okPeer := _objPeer.(InputPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rPhotoID, _ePhotoID := r.ReadInt64()
 	if _ePhotoID != nil {
 		return nil, _ePhotoID
@@ -637,7 +642,11 @@ func DecodeInputStickerSetThumb(r *Reader) (*InputStickerSetThumb, error) {
 	if _errStickerset != nil {
 		return nil, _errStickerset
 	}
-	v.Stickerset = _objStickerset.(InputStickerSetClass)
+	_cStickerset, _okStickerset := _objStickerset.(InputStickerSetClass)
+	if !_okStickerset {
+		return nil, fmt.Errorf("decode: field stickerset: unexpected type %T", _objStickerset)
+	}
+	v.Stickerset = _cStickerset
 	_rThumbVersion, _eThumbVersion := r.ReadInt32()
 	if _eThumbVersion != nil {
 		return nil, _eThumbVersion
@@ -708,7 +717,11 @@ func DecodeInputGroupCallStream(r *Reader) (*InputGroupCallStream, error) {
 	if _errCall != nil {
 		return nil, _errCall
 	}
-	v.Call = _objCall.(InputGroupCallClass)
+	_cCall, _okCall := _objCall.(InputGroupCallClass)
+	if !_okCall {
+		return nil, fmt.Errorf("decode: field call: unexpected type %T", _objCall)
+	}
+	v.Call = _cCall
 	_rTimeMs, _eTimeMs := r.ReadInt64()
 	if _eTimeMs != nil {
 		return nil, _eTimeMs
@@ -972,7 +985,11 @@ func DecodeInputWebFileGeoPointLocation(r *Reader) (*InputWebFileGeoPointLocatio
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
 	}
-	v.GeoPoint = _objGeoPoint.(InputGeoPointClass)
+	_cGeoPoint, _okGeoPoint := _objGeoPoint.(InputGeoPointClass)
+	if !_okGeoPoint {
+		return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+	}
+	v.GeoPoint = _cGeoPoint
 	_rAccessHash, _eAccessHash := r.ReadInt64()
 	if _eAccessHash != nil {
 		return nil, _eAccessHash
@@ -1070,7 +1087,11 @@ func DecodeInputWebFileAudioAlbumThumbLocation(r *Reader) (*InputWebFileAudioAlb
 		if _errDocument != nil {
 			return nil, _errDocument
 		}
-		v.Document = _objDocument.(InputDocumentClass)
+		_cDocument, _okDocument := _objDocument.(InputDocumentClass)
+		if !_okDocument {
+			return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+		}
+		v.Document = _cDocument
 	}
 	if v.Flags.Has(1) {
 		_rTitle, _eTitle := r.ReadString()

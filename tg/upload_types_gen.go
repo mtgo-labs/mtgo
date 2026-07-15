@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // FileClass is the interface for TL type File.
@@ -56,7 +57,11 @@ func DecodeUploadFile(r *Reader) (*UploadFile, error) {
 	if _errType != nil {
 		return nil, _errType
 	}
-	v.Type = _objType.(FileTypeClass)
+	_cType, _okType := _objType.(FileTypeClass)
+	if !_okType {
+		return nil, fmt.Errorf("decode: field type: unexpected type %T", _objType)
+	}
+	v.Type = _cType
 	_rMtime, _eMtime := r.ReadInt32()
 	if _eMtime != nil {
 		return nil, _eMtime
@@ -147,7 +152,11 @@ func DecodeUploadFileCDNRedirect(r *Reader) (*UploadFileCDNRedirect, error) {
 		if _errFileHashes != nil {
 			return nil, _errFileHashes
 		}
-		v.FileHashes[_iFileHashes] = _objFileHashes.(*FileHash)
+		_cFileHashes, _okFileHashes := _objFileHashes.(*FileHash)
+		if !_okFileHashes {
+			return nil, fmt.Errorf("decode: field file_hashes: unexpected type %T", _objFileHashes)
+		}
+		v.FileHashes[_iFileHashes] = _cFileHashes
 	}
 	_ = _vhdrFileHashes
 	return v, nil
@@ -206,7 +215,11 @@ func DecodeUploadWebFile(r *Reader) (*UploadWebFile, error) {
 	if _errFileType != nil {
 		return nil, _errFileType
 	}
-	v.FileType = _objFileType.(FileTypeClass)
+	_cFileType, _okFileType := _objFileType.(FileTypeClass)
+	if !_okFileType {
+		return nil, fmt.Errorf("decode: field file_type: unexpected type %T", _objFileType)
+	}
+	v.FileType = _cFileType
 	_rMtime, _eMtime := r.ReadInt32()
 	if _eMtime != nil {
 		return nil, _eMtime

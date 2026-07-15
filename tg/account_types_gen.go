@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // WallPaperClass is the interface for TL type WallPaper.
@@ -112,13 +113,21 @@ func DecodeWallPaper(r *Reader) (*WallPaper, error) {
 	if _errDocument != nil {
 		return nil, _errDocument
 	}
-	v.Document = _objDocument.(DocumentClass)
+	_cDocument, _okDocument := _objDocument.(DocumentClass)
+	if !_okDocument {
+		return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+	}
+	v.Document = _cDocument
 	if v.Flags.Has(2) {
 		_objSettings, _errSettings := ReadTLObject(r)
 		if _errSettings != nil {
 			return nil, _errSettings
 		}
-		v.Settings = _objSettings.(*WallPaperSettings)
+		_cSettings, _okSettings := _objSettings.(*WallPaperSettings)
+		if !_okSettings {
+			return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+		}
+		v.Settings = _cSettings
 	}
 	return v, nil
 }
@@ -190,7 +199,11 @@ func DecodeWallPaperNoFile(r *Reader) (*WallPaperNoFile, error) {
 		if _errSettings != nil {
 			return nil, _errSettings
 		}
-		v.Settings = _objSettings.(*WallPaperSettings)
+		_cSettings, _okSettings := _objSettings.(*WallPaperSettings)
+		if !_okSettings {
+			return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+		}
+		v.Settings = _cSettings
 	}
 	return v, nil
 }
@@ -1378,7 +1391,11 @@ func DecodeInputPrivacyValueAllowUsers(r *Reader) (*InputPrivacyValueAllowUsers,
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(InputUserClass)
+		_cUsers, _okUsers := _objUsers.(InputUserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -1491,7 +1508,11 @@ func DecodeInputPrivacyValueDisallowUsers(r *Reader) (*InputPrivacyValueDisallow
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(InputUserClass)
+		_cUsers, _okUsers := _objUsers.(InputUserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -2205,7 +2226,11 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		if _errRules != nil {
 			return nil, _errRules
 		}
-		v.Rules[_iRules] = _objRules.(PrivacyRuleClass)
+		_cRules, _okRules := _objRules.(PrivacyRuleClass)
+		if !_okRules {
+			return nil, fmt.Errorf("decode: field rules: unexpected type %T", _objRules)
+		}
+		v.Rules[_iRules] = _cRules
 	}
 	_ = _vhdrRules
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -2225,7 +2250,11 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -2245,7 +2274,11 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -2349,7 +2382,11 @@ func DecodeAccountAuthorizations(r *Reader) (*AccountAuthorizations, error) {
 		if _errAuthorizations != nil {
 			return nil, _errAuthorizations
 		}
-		v.Authorizations[_iAuthorizations] = _objAuthorizations.(AuthorizationClass)
+		_cAuthorizations, _okAuthorizations := _objAuthorizations.(AuthorizationClass)
+		if !_okAuthorizations {
+			return nil, fmt.Errorf("decode: field authorizations: unexpected type %T", _objAuthorizations)
+		}
+		v.Authorizations[_iAuthorizations] = _cAuthorizations
 	}
 	_ = _vhdrAuthorizations
 	return v, nil
@@ -2471,7 +2508,11 @@ func DecodeAccountPassword(r *Reader) (*AccountPassword, error) {
 		if _errCurrentAlgo != nil {
 			return nil, _errCurrentAlgo
 		}
-		v.CurrentAlgo = _objCurrentAlgo.(PasswordKdfAlgoClass)
+		_cCurrentAlgo, _okCurrentAlgo := _objCurrentAlgo.(PasswordKdfAlgoClass)
+		if !_okCurrentAlgo {
+			return nil, fmt.Errorf("decode: field current_algo: unexpected type %T", _objCurrentAlgo)
+		}
+		v.CurrentAlgo = _cCurrentAlgo
 	}
 	if v.Flags.Has(2) {
 		_rSRPB, _eSRPB := r.ReadBytes()
@@ -2505,12 +2546,20 @@ func DecodeAccountPassword(r *Reader) (*AccountPassword, error) {
 	if _errNewAlgo != nil {
 		return nil, _errNewAlgo
 	}
-	v.NewAlgo = _objNewAlgo.(PasswordKdfAlgoClass)
+	_cNewAlgo, _okNewAlgo := _objNewAlgo.(PasswordKdfAlgoClass)
+	if !_okNewAlgo {
+		return nil, fmt.Errorf("decode: field new_algo: unexpected type %T", _objNewAlgo)
+	}
+	v.NewAlgo = _cNewAlgo
 	_objNewSecureAlgo, _errNewSecureAlgo := ReadTLObject(r)
 	if _errNewSecureAlgo != nil {
 		return nil, _errNewSecureAlgo
 	}
-	v.NewSecureAlgo = _objNewSecureAlgo.(SecurePasswordKdfAlgoClass)
+	_cNewSecureAlgo, _okNewSecureAlgo := _objNewSecureAlgo.(SecurePasswordKdfAlgoClass)
+	if !_okNewSecureAlgo {
+		return nil, fmt.Errorf("decode: field new_secure_algo: unexpected type %T", _objNewSecureAlgo)
+	}
+	v.NewSecureAlgo = _cNewSecureAlgo
 	_rSecureRandom, _eSecureRandom := r.ReadBytes()
 	if _eSecureRandom != nil {
 		return nil, _eSecureRandom
@@ -2600,7 +2649,11 @@ func DecodeAccountPasswordSettings(r *Reader) (*AccountPasswordSettings, error) 
 		if _errSecureSettings != nil {
 			return nil, _errSecureSettings
 		}
-		v.SecureSettings = _objSecureSettings.(*SecureSecretSettings)
+		_cSecureSettings, _okSecureSettings := _objSecureSettings.(*SecureSecretSettings)
+		if !_okSecureSettings {
+			return nil, fmt.Errorf("decode: field secure_settings: unexpected type %T", _objSecureSettings)
+		}
+		v.SecureSettings = _cSecureSettings
 	}
 	return v, nil
 }
@@ -2686,7 +2739,11 @@ func DecodeAccountPasswordInputSettings(r *Reader) (*AccountPasswordInputSetting
 		if _errNewAlgo != nil {
 			return nil, _errNewAlgo
 		}
-		v.NewAlgo = _objNewAlgo.(PasswordKdfAlgoClass)
+		_cNewAlgo, _okNewAlgo := _objNewAlgo.(PasswordKdfAlgoClass)
+		if !_okNewAlgo {
+			return nil, fmt.Errorf("decode: field new_algo: unexpected type %T", _objNewAlgo)
+		}
+		v.NewAlgo = _cNewAlgo
 	}
 	if v.Flags.Has(0) {
 		_rNewPasswordHash, _eNewPasswordHash := r.ReadBytes()
@@ -2714,7 +2771,11 @@ func DecodeAccountPasswordInputSettings(r *Reader) (*AccountPasswordInputSetting
 		if _errNewSecureSettings != nil {
 			return nil, _errNewSecureSettings
 		}
-		v.NewSecureSettings = _objNewSecureSettings.(*SecureSecretSettings)
+		_cNewSecureSettings, _okNewSecureSettings := _objNewSecureSettings.(*SecureSecretSettings)
+		if !_okNewSecureSettings {
+			return nil, fmt.Errorf("decode: field new_secure_settings: unexpected type %T", _objNewSecureSettings)
+		}
+		v.NewSecureSettings = _cNewSecureSettings
 	}
 	return v, nil
 }
@@ -2823,7 +2884,11 @@ func DecodeAccountWebAuthorizations(r *Reader) (*AccountWebAuthorizations, error
 		if _errAuthorizations != nil {
 			return nil, _errAuthorizations
 		}
-		v.Authorizations[_iAuthorizations] = _objAuthorizations.(*WebAuthorization)
+		_cAuthorizations, _okAuthorizations := _objAuthorizations.(*WebAuthorization)
+		if !_okAuthorizations {
+			return nil, fmt.Errorf("decode: field authorizations: unexpected type %T", _objAuthorizations)
+		}
+		v.Authorizations[_iAuthorizations] = _cAuthorizations
 	}
 	_ = _vhdrAuthorizations
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -2843,7 +2908,11 @@ func DecodeAccountWebAuthorizations(r *Reader) (*AccountWebAuthorizations, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -2938,7 +3007,11 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		if _errRequiredTypes != nil {
 			return nil, _errRequiredTypes
 		}
-		v.RequiredTypes[_iRequiredTypes] = _objRequiredTypes.(SecureRequiredTypeClass)
+		_cRequiredTypes, _okRequiredTypes := _objRequiredTypes.(SecureRequiredTypeClass)
+		if !_okRequiredTypes {
+			return nil, fmt.Errorf("decode: field required_types: unexpected type %T", _objRequiredTypes)
+		}
+		v.RequiredTypes[_iRequiredTypes] = _cRequiredTypes
 	}
 	_ = _vhdrRequiredTypes
 	_vhdrValues, _ehdrValues := r.ReadUint32()
@@ -2958,7 +3031,11 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		if _errValues != nil {
 			return nil, _errValues
 		}
-		v.Values[_iValues] = _objValues.(*SecureValue)
+		_cValues, _okValues := _objValues.(*SecureValue)
+		if !_okValues {
+			return nil, fmt.Errorf("decode: field values: unexpected type %T", _objValues)
+		}
+		v.Values[_iValues] = _cValues
 	}
 	_ = _vhdrValues
 	_vhdrErrors, _ehdrErrors := r.ReadUint32()
@@ -2978,7 +3055,11 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		if _errErrors != nil {
 			return nil, _errErrors
 		}
-		v.Errors[_iErrors] = _objErrors.(SecureValueErrorClass)
+		_cErrors, _okErrors := _objErrors.(SecureValueErrorClass)
+		if !_okErrors {
+			return nil, fmt.Errorf("decode: field errors: unexpected type %T", _objErrors)
+		}
+		v.Errors[_iErrors] = _cErrors
 	}
 	_ = _vhdrErrors
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -2998,7 +3079,11 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	if v.Flags.Has(0) {
@@ -3342,7 +3427,11 @@ func DecodeAccountWallPapers(r *Reader) (*AccountWallPapers, error) {
 		if _errWallpapers != nil {
 			return nil, _errWallpapers
 		}
-		v.Wallpapers[_iWallpapers] = _objWallpapers.(WallPaperClass)
+		_cWallpapers, _okWallpapers := _objWallpapers.(WallPaperClass)
+		if !_okWallpapers {
+			return nil, fmt.Errorf("decode: field wallpapers: unexpected type %T", _objWallpapers)
+		}
+		v.Wallpapers[_iWallpapers] = _cWallpapers
 	}
 	_ = _vhdrWallpapers
 	return v, nil
@@ -3664,17 +3753,29 @@ func DecodeAccountAutoDownloadSettings(r *Reader) (*AccountAutoDownloadSettings,
 	if _errLow != nil {
 		return nil, _errLow
 	}
-	v.Low = _objLow.(AutoDownloadSettingsClass)
+	_cLow, _okLow := _objLow.(AutoDownloadSettingsClass)
+	if !_okLow {
+		return nil, fmt.Errorf("decode: field low: unexpected type %T", _objLow)
+	}
+	v.Low = _cLow
 	_objMedium, _errMedium := ReadTLObject(r)
 	if _errMedium != nil {
 		return nil, _errMedium
 	}
-	v.Medium = _objMedium.(AutoDownloadSettingsClass)
+	_cMedium, _okMedium := _objMedium.(AutoDownloadSettingsClass)
+	if !_okMedium {
+		return nil, fmt.Errorf("decode: field medium: unexpected type %T", _objMedium)
+	}
+	v.Medium = _cMedium
 	_objHigh, _errHigh := ReadTLObject(r)
 	if _errHigh != nil {
 		return nil, _errHigh
 	}
-	v.High = _objHigh.(AutoDownloadSettingsClass)
+	_cHigh, _okHigh := _objHigh.(AutoDownloadSettingsClass)
+	if !_okHigh {
+		return nil, fmt.Errorf("decode: field high: unexpected type %T", _objHigh)
+	}
+	v.High = _cHigh
 	return v, nil
 }
 
@@ -3783,7 +3884,11 @@ func DecodeAccountThemes(r *Reader) (*AccountThemes, error) {
 		if _errThemes != nil {
 			return nil, _errThemes
 		}
-		v.Themes[_iThemes] = _objThemes.(*Theme)
+		_cThemes, _okThemes := _objThemes.(*Theme)
+		if !_okThemes {
+			return nil, fmt.Errorf("decode: field themes: unexpected type %T", _objThemes)
+		}
+		v.Themes[_iThemes] = _cThemes
 	}
 	_ = _vhdrThemes
 	return v, nil
@@ -3940,7 +4045,11 @@ func DecodeGlobalPrivacySettings(r *Reader) (*GlobalPrivacySettings, error) {
 		if _errDisallowedGifts != nil {
 			return nil, _errDisallowedGifts
 		}
-		v.DisallowedGifts = _objDisallowedGifts.(*DisallowedGiftsSettings)
+		_cDisallowedGifts, _okDisallowedGifts := _objDisallowedGifts.(*DisallowedGiftsSettings)
+		if !_okDisallowedGifts {
+			return nil, fmt.Errorf("decode: field disallowed_gifts: unexpected type %T", _objDisallowedGifts)
+		}
+		v.DisallowedGifts = _cDisallowedGifts
 	}
 	return v, nil
 }
@@ -4208,7 +4317,11 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		if _errThemes != nil {
 			return nil, _errThemes
 		}
-		v.Themes[_iThemes] = _objThemes.(ChatThemeClass)
+		_cThemes, _okThemes := _objThemes.(ChatThemeClass)
+		if !_okThemes {
+			return nil, fmt.Errorf("decode: field themes: unexpected type %T", _objThemes)
+		}
+		v.Themes[_iThemes] = _cThemes
 	}
 	_ = _vhdrThemes
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -4228,7 +4341,11 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -4248,7 +4365,11 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	if v.Flags.Has(0) {
@@ -4366,7 +4487,11 @@ func DecodeAccountSavedRingtones(r *Reader) (*AccountSavedRingtones, error) {
 		if _errRingtones != nil {
 			return nil, _errRingtones
 		}
-		v.Ringtones[_iRingtones] = _objRingtones.(DocumentClass)
+		_cRingtones, _okRingtones := _objRingtones.(DocumentClass)
+		if !_okRingtones {
+			return nil, fmt.Errorf("decode: field ringtones: unexpected type %T", _objRingtones)
+		}
+		v.Ringtones[_iRingtones] = _cRingtones
 	}
 	_ = _vhdrRingtones
 	return v, nil
@@ -4453,7 +4578,11 @@ func DecodeAccountSavedRingtoneConverted(r *Reader) (*AccountSavedRingtoneConver
 	if _errDocument != nil {
 		return nil, _errDocument
 	}
-	v.Document = _objDocument.(DocumentClass)
+	_cDocument, _okDocument := _objDocument.(DocumentClass)
+	if !_okDocument {
+		return nil, fmt.Errorf("decode: field document: unexpected type %T", _objDocument)
+	}
+	v.Document = _cDocument
 	return v, nil
 }
 
@@ -4562,7 +4691,11 @@ func DecodeAccountEmojiStatuses(r *Reader) (*AccountEmojiStatuses, error) {
 		if _errStatuses != nil {
 			return nil, _errStatuses
 		}
-		v.Statuses[_iStatuses] = _objStatuses.(EmojiStatusClass)
+		_cStatuses, _okStatuses := _objStatuses.(EmojiStatusClass)
+		if !_okStatuses {
+			return nil, fmt.Errorf("decode: field statuses: unexpected type %T", _objStatuses)
+		}
+		v.Statuses[_iStatuses] = _cStatuses
 	}
 	_ = _vhdrStatuses
 	return v, nil
@@ -4663,7 +4796,11 @@ func DecodeAccountEmailVerifiedLogin(r *Reader) (*AccountEmailVerifiedLogin, err
 	if _errSentCode != nil {
 		return nil, _errSentCode
 	}
-	v.SentCode = _objSentCode.(SentCodeClass)
+	_cSentCode, _okSentCode := _objSentCode.(SentCodeClass)
+	if !_okSentCode {
+		return nil, fmt.Errorf("decode: field sent_code: unexpected type %T", _objSentCode)
+	}
+	v.SentCode = _cSentCode
 	return v, nil
 }
 
@@ -4806,17 +4943,29 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 	if _errUsersSettings != nil {
 		return nil, _errUsersSettings
 	}
-	v.UsersSettings = _objUsersSettings.(AutoSaveSettingsClass)
+	_cUsersSettings, _okUsersSettings := _objUsersSettings.(AutoSaveSettingsClass)
+	if !_okUsersSettings {
+		return nil, fmt.Errorf("decode: field users_settings: unexpected type %T", _objUsersSettings)
+	}
+	v.UsersSettings = _cUsersSettings
 	_objChatsSettings, _errChatsSettings := ReadTLObject(r)
 	if _errChatsSettings != nil {
 		return nil, _errChatsSettings
 	}
-	v.ChatsSettings = _objChatsSettings.(AutoSaveSettingsClass)
+	_cChatsSettings, _okChatsSettings := _objChatsSettings.(AutoSaveSettingsClass)
+	if !_okChatsSettings {
+		return nil, fmt.Errorf("decode: field chats_settings: unexpected type %T", _objChatsSettings)
+	}
+	v.ChatsSettings = _cChatsSettings
 	_objBroadcastsSettings, _errBroadcastsSettings := ReadTLObject(r)
 	if _errBroadcastsSettings != nil {
 		return nil, _errBroadcastsSettings
 	}
-	v.BroadcastsSettings = _objBroadcastsSettings.(AutoSaveSettingsClass)
+	_cBroadcastsSettings, _okBroadcastsSettings := _objBroadcastsSettings.(AutoSaveSettingsClass)
+	if !_okBroadcastsSettings {
+		return nil, fmt.Errorf("decode: field broadcasts_settings: unexpected type %T", _objBroadcastsSettings)
+	}
+	v.BroadcastsSettings = _cBroadcastsSettings
 	_vhdrExceptions, _ehdrExceptions := r.ReadUint32()
 	if _ehdrExceptions != nil {
 		return nil, _ehdrExceptions
@@ -4834,7 +4983,11 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		if _errExceptions != nil {
 			return nil, _errExceptions
 		}
-		v.Exceptions[_iExceptions] = _objExceptions.(*AutoSaveException)
+		_cExceptions, _okExceptions := _objExceptions.(*AutoSaveException)
+		if !_okExceptions {
+			return nil, fmt.Errorf("decode: field exceptions: unexpected type %T", _objExceptions)
+		}
+		v.Exceptions[_iExceptions] = _cExceptions
 	}
 	_ = _vhdrExceptions
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -4854,7 +5007,11 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -4874,7 +5031,11 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -4917,12 +5078,20 @@ func DecodeAutoSaveException(r *Reader) (*AutoSaveException, error) {
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_objSettings, _errSettings := ReadTLObject(r)
 	if _errSettings != nil {
 		return nil, _errSettings
 	}
-	v.Settings = _objSettings.(AutoSaveSettingsClass)
+	_cSettings, _okSettings := _objSettings.(AutoSaveSettingsClass)
+	if !_okSettings {
+		return nil, fmt.Errorf("decode: field settings: unexpected type %T", _objSettings)
+	}
+	v.Settings = _cSettings
 	return v, nil
 }
 
@@ -5048,7 +5217,11 @@ func DecodeBusinessWorkHours(r *Reader) (*BusinessWorkHours, error) {
 		if _errWeeklyOpen != nil {
 			return nil, _errWeeklyOpen
 		}
-		v.WeeklyOpen[_iWeeklyOpen] = _objWeeklyOpen.(*BusinessWeeklyOpen)
+		_cWeeklyOpen, _okWeeklyOpen := _objWeeklyOpen.(*BusinessWeeklyOpen)
+		if !_okWeeklyOpen {
+			return nil, fmt.Errorf("decode: field weekly_open: unexpected type %T", _objWeeklyOpen)
+		}
+		v.WeeklyOpen[_iWeeklyOpen] = _cWeeklyOpen
 	}
 	_ = _vhdrWeeklyOpen
 	return v, nil
@@ -5109,7 +5282,11 @@ func DecodeBusinessLocation(r *Reader) (*BusinessLocation, error) {
 		if _errGeoPoint != nil {
 			return nil, _errGeoPoint
 		}
-		v.GeoPoint = _objGeoPoint.(GeoPointClass)
+		_cGeoPoint, _okGeoPoint := _objGeoPoint.(GeoPointClass)
+		if !_okGeoPoint {
+			return nil, fmt.Errorf("decode: field geo_point: unexpected type %T", _objGeoPoint)
+		}
+		v.GeoPoint = _cGeoPoint
 	}
 	_rAddress, _eAddress := r.ReadString()
 	if _eAddress != nil {
@@ -5214,7 +5391,11 @@ func DecodeInputBusinessRecipients(r *Reader) (*InputBusinessRecipients, error) 
 			if _errUsers != nil {
 				return nil, _errUsers
 			}
-			v.Users[_iUsers] = _objUsers.(InputUserClass)
+			_cUsers, _okUsers := _objUsers.(InputUserClass)
+			if !_okUsers {
+				return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+			}
+			v.Users[_iUsers] = _cUsers
 		}
 		_ = _vhdrUsers
 	}
@@ -5381,12 +5562,20 @@ func DecodeConnectedBot(r *Reader) (*ConnectedBot, error) {
 	if _errRecipients != nil {
 		return nil, _errRecipients
 	}
-	v.Recipients = _objRecipients.(*BusinessBotRecipients)
+	_cRecipients, _okRecipients := _objRecipients.(*BusinessBotRecipients)
+	if !_okRecipients {
+		return nil, fmt.Errorf("decode: field recipients: unexpected type %T", _objRecipients)
+	}
+	v.Recipients = _cRecipients
 	_objRights, _errRights := ReadTLObject(r)
 	if _errRights != nil {
 		return nil, _errRights
 	}
-	v.Rights = _objRights.(*BusinessBotRights)
+	_cRights, _okRights := _objRights.(*BusinessBotRights)
+	if !_okRights {
+		return nil, fmt.Errorf("decode: field rights: unexpected type %T", _objRights)
+	}
+	v.Rights = _cRights
 	if v.Flags.Has(0) {
 		_rDevice, _eDevice := r.ReadString()
 		if _eDevice != nil {
@@ -5469,7 +5658,11 @@ func DecodeAccountConnectedBots(r *Reader) (*AccountConnectedBots, error) {
 		if _errConnectedBots != nil {
 			return nil, _errConnectedBots
 		}
-		v.ConnectedBots[_iConnectedBots] = _objConnectedBots.(*ConnectedBot)
+		_cConnectedBots, _okConnectedBots := _objConnectedBots.(*ConnectedBot)
+		if !_okConnectedBots {
+			return nil, fmt.Errorf("decode: field connected_bots: unexpected type %T", _objConnectedBots)
+		}
+		v.ConnectedBots[_iConnectedBots] = _cConnectedBots
 	}
 	_ = _vhdrConnectedBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -5489,7 +5682,11 @@ func DecodeAccountConnectedBots(r *Reader) (*AccountConnectedBots, error) {
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -5653,7 +5850,11 @@ func DecodeBotBusinessConnection(r *Reader) (*BotBusinessConnection, error) {
 		if _errRights != nil {
 			return nil, _errRights
 		}
-		v.Rights = _objRights.(*BusinessBotRights)
+		_cRights, _okRights := _objRights.(*BusinessBotRights)
+		if !_okRights {
+			return nil, fmt.Errorf("decode: field rights: unexpected type %T", _objRights)
+		}
+		v.Rights = _cRights
 	}
 	return v, nil
 }
@@ -5725,7 +5926,11 @@ func DecodeInputBusinessIntro(r *Reader) (*InputBusinessIntro, error) {
 		if _errSticker != nil {
 			return nil, _errSticker
 		}
-		v.Sticker = _objSticker.(InputDocumentClass)
+		_cSticker, _okSticker := _objSticker.(InputDocumentClass)
+		if !_okSticker {
+			return nil, fmt.Errorf("decode: field sticker: unexpected type %T", _objSticker)
+		}
+		v.Sticker = _cSticker
 	}
 	return v, nil
 }
@@ -5797,7 +6002,11 @@ func DecodeBusinessIntro(r *Reader) (*BusinessIntro, error) {
 		if _errSticker != nil {
 			return nil, _errSticker
 		}
-		v.Sticker = _objSticker.(DocumentClass)
+		_cSticker, _okSticker := _objSticker.(DocumentClass)
+		if !_okSticker {
+			return nil, fmt.Errorf("decode: field sticker: unexpected type %T", _objSticker)
+		}
+		v.Sticker = _cSticker
 	}
 	return v, nil
 }
@@ -5908,7 +6117,11 @@ func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, e
 			if _errUsers != nil {
 				return nil, _errUsers
 			}
-			v.Users[_iUsers] = _objUsers.(InputUserClass)
+			_cUsers, _okUsers := _objUsers.(InputUserClass)
+			if !_okUsers {
+				return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+			}
+			v.Users[_iUsers] = _cUsers
 		}
 		_ = _vhdrUsers
 	}
@@ -5930,7 +6143,11 @@ func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, e
 			if _errExcludeUsers != nil {
 				return nil, _errExcludeUsers
 			}
-			v.ExcludeUsers[_iExcludeUsers] = _objExcludeUsers.(InputUserClass)
+			_cExcludeUsers, _okExcludeUsers := _objExcludeUsers.(InputUserClass)
+			if !_okExcludeUsers {
+				return nil, fmt.Errorf("decode: field exclude_users: unexpected type %T", _objExcludeUsers)
+			}
+			v.ExcludeUsers[_iExcludeUsers] = _cExcludeUsers
 		}
 		_ = _vhdrExcludeUsers
 	}
@@ -6098,7 +6315,11 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		if _errLinks != nil {
 			return nil, _errLinks
 		}
-		v.Links[_iLinks] = _objLinks.(*BusinessChatLink)
+		_cLinks, _okLinks := _objLinks.(*BusinessChatLink)
+		if !_okLinks {
+			return nil, fmt.Errorf("decode: field links: unexpected type %T", _objLinks)
+		}
+		v.Links[_iLinks] = _cLinks
 	}
 	_ = _vhdrLinks
 	_vhdrChats, _ehdrChats := r.ReadUint32()
@@ -6118,7 +6339,11 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -6138,7 +6363,11 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -6216,7 +6445,11 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 	if _errPeer != nil {
 		return nil, _errPeer
 	}
-	v.Peer = _objPeer.(PeerClass)
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
 	_rMessage, _eMessage := r.ReadString()
 	if _eMessage != nil {
 		return nil, _eMessage
@@ -6240,7 +6473,11 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
 		_ = _vhdrEntities
 	}
@@ -6261,7 +6498,11 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 		if _errChats != nil {
 			return nil, _errChats
 		}
-		v.Chats[_iChats] = _objChats.(ChatClass)
+		_cChats, _okChats := _objChats.(ChatClass)
+		if !_okChats {
+			return nil, fmt.Errorf("decode: field chats: unexpected type %T", _objChats)
+		}
+		v.Chats[_iChats] = _cChats
 	}
 	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
@@ -6281,7 +6522,11 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 		if _errUsers != nil {
 			return nil, _errUsers
 		}
-		v.Users[_iUsers] = _objUsers.(UserClass)
+		_cUsers, _okUsers := _objUsers.(UserClass)
+		if !_okUsers {
+			return nil, fmt.Errorf("decode: field users: unexpected type %T", _objUsers)
+		}
+		v.Users[_iUsers] = _cUsers
 	}
 	_ = _vhdrUsers
 	return v, nil
@@ -6682,7 +6927,11 @@ func DecodeAccountPasskeys(r *Reader) (*AccountPasskeys, error) {
 		if _errPasskeys != nil {
 			return nil, _errPasskeys
 		}
-		v.Passkeys[_iPasskeys] = _objPasskeys.(*Passkey)
+		_cPasskeys, _okPasskeys := _objPasskeys.(*Passkey)
+		if !_okPasskeys {
+			return nil, fmt.Errorf("decode: field passkeys: unexpected type %T", _objPasskeys)
+		}
+		v.Passkeys[_iPasskeys] = _cPasskeys
 	}
 	_ = _vhdrPasskeys
 	return v, nil
@@ -6723,7 +6972,11 @@ func DecodeAccountPasskeyRegistrationOptions(r *Reader) (*AccountPasskeyRegistra
 	if _errOptions != nil {
 		return nil, _errOptions
 	}
-	v.Options = _objOptions.(*DataJSON)
+	_cOptions, _okOptions := _objOptions.(*DataJSON)
+	if !_okOptions {
+		return nil, fmt.Errorf("decode: field options: unexpected type %T", _objOptions)
+	}
+	v.Options = _cOptions
 	return v, nil
 }
 
@@ -6855,7 +7108,11 @@ func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, err
 		if _errExternalExceptions != nil {
 			return nil, _errExternalExceptions
 		}
-		v.ExternalExceptions[_iExternalExceptions] = _objExternalExceptions.(*WebDomainException)
+		_cExternalExceptions, _okExternalExceptions := _objExternalExceptions.(*WebDomainException)
+		if !_okExternalExceptions {
+			return nil, fmt.Errorf("decode: field external_exceptions: unexpected type %T", _objExternalExceptions)
+		}
+		v.ExternalExceptions[_iExternalExceptions] = _cExternalExceptions
 	}
 	_ = _vhdrExternalExceptions
 	_vhdrInappExceptions, _ehdrInappExceptions := r.ReadUint32()
@@ -6875,7 +7132,11 @@ func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, err
 		if _errInappExceptions != nil {
 			return nil, _errInappExceptions
 		}
-		v.InappExceptions[_iInappExceptions] = _objInappExceptions.(*WebDomainException)
+		_cInappExceptions, _okInappExceptions := _objInappExceptions.(*WebDomainException)
+		if !_okInappExceptions {
+			return nil, fmt.Errorf("decode: field inapp_exceptions: unexpected type %T", _objInappExceptions)
+		}
+		v.InappExceptions[_iInappExceptions] = _cInappExceptions
 	}
 	_ = _vhdrInappExceptions
 	_rHash, _eHash := r.ReadInt64()

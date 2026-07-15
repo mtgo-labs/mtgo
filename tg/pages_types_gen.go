@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // RichTextClass is the interface for TL type RichText.
@@ -101,6 +102,9 @@ const TextMentionNameTypeID = 0x01a9fbfc
 // TextDateTypeID is the constructor ID for TL type textDate.
 const TextDateTypeID = 0xa5b45e2b
 
+// TextDiffTypeID is the constructor ID for TL type textDiff.
+const TextDiffTypeID = 0x9686cb50
+
 // isRichText marks TextEmpty as implementing the RichTextClass interface.
 func (*TextEmpty) isRichText() {}
 
@@ -187,6 +191,9 @@ func (*TextMentionName) isRichText() {}
 
 // isRichText marks TextDate as implementing the RichTextClass interface.
 func (*TextDate) isRichText() {}
+
+// isRichText marks TextDiff as implementing the RichTextClass interface.
+func (*TextDiff) isRichText() {}
 
 // TextEmpty represents the TL constructor textEmpty (0xdc3d824f).
 //
@@ -279,7 +286,11 @@ func DecodeTextBold(r *Reader) (*TextBold, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -315,7 +326,11 @@ func DecodeTextItalic(r *Reader) (*TextItalic, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -351,7 +366,11 @@ func DecodeTextUnderline(r *Reader) (*TextUnderline, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -387,7 +406,11 @@ func DecodeTextStrike(r *Reader) (*TextStrike, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -423,7 +446,11 @@ func DecodeTextFixed(r *Reader) (*TextFixed, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -463,7 +490,11 @@ func DecodeTextURL(r *Reader) (*TextURL, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
 		return nil, _eURL
@@ -511,7 +542,11 @@ func DecodeTextEmail(r *Reader) (*TextEmail, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rEmail, _eEmail := r.ReadString()
 	if _eEmail != nil {
 		return nil, _eEmail
@@ -569,7 +604,11 @@ func DecodeTextConcat(r *Reader) (*TextConcat, error) {
 		if _errTexts != nil {
 			return nil, _errTexts
 		}
-		v.Texts[_iTexts] = _objTexts.(RichTextClass)
+		_cTexts, _okTexts := _objTexts.(RichTextClass)
+		if !_okTexts {
+			return nil, fmt.Errorf("decode: field texts: unexpected type %T", _objTexts)
+		}
+		v.Texts[_iTexts] = _cTexts
 	}
 	_ = _vhdrTexts
 	return v, nil
@@ -607,7 +646,11 @@ func DecodeTextSubscript(r *Reader) (*TextSubscript, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -643,7 +686,11 @@ func DecodeTextSuperscript(r *Reader) (*TextSuperscript, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -679,7 +726,11 @@ func DecodeTextMarked(r *Reader) (*TextMarked, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -717,7 +768,11 @@ func DecodeTextPhone(r *Reader) (*TextPhone, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rPhone, _ePhone := r.ReadString()
 	if _ePhone != nil {
 		return nil, _ePhone
@@ -810,7 +865,11 @@ func DecodeTextAnchor(r *Reader) (*TextAnchor, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rName, _eName := r.ReadString()
 	if _eName != nil {
 		return nil, _eName
@@ -930,7 +989,11 @@ func DecodeTextSpoiler(r *Reader) (*TextSpoiler, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -966,7 +1029,11 @@ func DecodeTextMention(r *Reader) (*TextMention, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1002,7 +1069,11 @@ func DecodeTextHashtag(r *Reader) (*TextHashtag, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1038,7 +1109,11 @@ func DecodeTextBotCommand(r *Reader) (*TextBotCommand, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1074,7 +1149,11 @@ func DecodeTextCashtag(r *Reader) (*TextCashtag, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1110,7 +1189,11 @@ func DecodeTextAutoURL(r *Reader) (*TextAutoURL, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1146,7 +1229,11 @@ func DecodeTextAutoEmail(r *Reader) (*TextAutoEmail, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1182,7 +1269,11 @@ func DecodeTextAutoPhone(r *Reader) (*TextAutoPhone, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1218,7 +1309,11 @@ func DecodeTextBankCard(r *Reader) (*TextBankCard, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1256,7 +1351,11 @@ func DecodeTextMentionName(r *Reader) (*TextMentionName, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -1341,7 +1440,11 @@ func DecodeTextDate(r *Reader) (*TextDate, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -1353,6 +1456,57 @@ func DecodeTextDate(r *Reader) (*TextDate, error) {
 func init() {
 	Registry[TextDateTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextDate(r)
+	}
+}
+
+// TextDiff represents the TL constructor textDiff (0x9686cb50).
+//
+// See https://core.telegram.org/constructor/textDiff for reference.
+type TextDiff struct {
+	Text    RichTextClass `json:"text,omitempty"`
+	OldText RichTextClass `json:"old_text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x9686cb50.
+func (v *TextDiff) ConstructorID() uint32 {
+	return TextDiffTypeID
+}
+
+// Encode serializes TextDiff to a bytes.Buffer using the TL binary protocol.
+func (v *TextDiff) Encode(b *bytes.Buffer) error {
+	WriteInt(b, TextDiffTypeID)
+	EncodeTLObject(b, v.Text)
+	EncodeTLObject(b, v.OldText)
+	return nil
+}
+
+// DecodeTextDiff deserializes a TextDiff from a reader using the TL binary protocol.
+func DecodeTextDiff(r *Reader) (*TextDiff, error) {
+	v := &TextDiff{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
+	_objOldText, _errOldText := ReadTLObject(r)
+	if _errOldText != nil {
+		return nil, _errOldText
+	}
+	_cOldText, _okOldText := _objOldText.(RichTextClass)
+	if !_okOldText {
+		return nil, fmt.Errorf("decode: field old_text: unexpected type %T", _objOldText)
+	}
+	v.OldText = _cOldText
+	return v, nil
+}
+
+func init() {
+	Registry[TextDiffTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextDiff(r)
 	}
 }
 
@@ -1653,7 +1807,11 @@ func DecodePageBlockTitle(r *Reader) (*PageBlockTitle, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1689,7 +1847,11 @@ func DecodePageBlockSubtitle(r *Reader) (*PageBlockSubtitle, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1727,7 +1889,11 @@ func DecodePageBlockAuthorDate(r *Reader) (*PageBlockAuthorDate, error) {
 	if _errAuthor != nil {
 		return nil, _errAuthor
 	}
-	v.Author = _objAuthor.(RichTextClass)
+	_cAuthor, _okAuthor := _objAuthor.(RichTextClass)
+	if !_okAuthor {
+		return nil, fmt.Errorf("decode: field author: unexpected type %T", _objAuthor)
+	}
+	v.Author = _cAuthor
 	_rPublishedDate, _ePublishedDate := r.ReadInt32()
 	if _ePublishedDate != nil {
 		return nil, _ePublishedDate
@@ -1768,7 +1934,11 @@ func DecodePageBlockHeader(r *Reader) (*PageBlockHeader, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1804,7 +1974,11 @@ func DecodePageBlockSubheader(r *Reader) (*PageBlockSubheader, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1840,7 +2014,11 @@ func DecodePageBlockParagraph(r *Reader) (*PageBlockParagraph, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -1878,7 +2056,11 @@ func DecodePageBlockPreformatted(r *Reader) (*PageBlockPreformatted, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rLanguage, _eLanguage := r.ReadString()
 	if _eLanguage != nil {
 		return nil, _eLanguage
@@ -1919,7 +2101,11 @@ func DecodePageBlockFooter(r *Reader) (*PageBlockFooter, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -2037,7 +2223,11 @@ func DecodePageBlockList(r *Reader) (*PageBlockList, error) {
 		if _errItems != nil {
 			return nil, _errItems
 		}
-		v.Items[_iItems] = _objItems.(PageListItemClass)
+		_cItems, _okItems := _objItems.(PageListItemClass)
+		if !_okItems {
+			return nil, fmt.Errorf("decode: field items: unexpected type %T", _objItems)
+		}
+		v.Items[_iItems] = _cItems
 	}
 	_ = _vhdrItems
 	return v, nil
@@ -2077,12 +2267,20 @@ func DecodePageBlockBlockquote(r *Reader) (*PageBlockBlockquote, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(RichTextClass)
+	_cCaption, _okCaption := _objCaption.(RichTextClass)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2120,12 +2318,20 @@ func DecodePageBlockPullquote(r *Reader) (*PageBlockPullquote, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(RichTextClass)
+	_cCaption, _okCaption := _objCaption.(RichTextClass)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2199,7 +2405,11 @@ func DecodePageBlockPhoto(r *Reader) (*PageBlockPhoto, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	if v.Flags.Has(0) {
 		_rURL, _eURL := r.ReadString()
 		if _eURL != nil {
@@ -2283,7 +2493,11 @@ func DecodePageBlockVideo(r *Reader) (*PageBlockVideo, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2319,7 +2533,11 @@ func DecodePageBlockCover(r *Reader) (*PageBlockCover, error) {
 	if _errCover != nil {
 		return nil, _errCover
 	}
-	v.Cover = _objCover.(PageBlockClass)
+	_cCover, _okCover := _objCover.(PageBlockClass)
+	if !_okCover {
+		return nil, fmt.Errorf("decode: field cover: unexpected type %T", _objCover)
+	}
+	v.Cover = _cCover
 	return v, nil
 }
 
@@ -2447,7 +2665,11 @@ func DecodePageBlockEmbed(r *Reader) (*PageBlockEmbed, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2537,14 +2759,22 @@ func DecodePageBlockEmbedPost(r *Reader) (*PageBlockEmbedPost, error) {
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2599,14 +2829,22 @@ func DecodePageBlockCollage(r *Reader) (*PageBlockCollage, error) {
 		if _errItems != nil {
 			return nil, _errItems
 		}
-		v.Items[_iItems] = _objItems.(PageBlockClass)
+		_cItems, _okItems := _objItems.(PageBlockClass)
+		if !_okItems {
+			return nil, fmt.Errorf("decode: field items: unexpected type %T", _objItems)
+		}
+		v.Items[_iItems] = _cItems
 	}
 	_ = _vhdrItems
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2661,14 +2899,22 @@ func DecodePageBlockSlideshow(r *Reader) (*PageBlockSlideshow, error) {
 		if _errItems != nil {
 			return nil, _errItems
 		}
-		v.Items[_iItems] = _objItems.(PageBlockClass)
+		_cItems, _okItems := _objItems.(PageBlockClass)
+		if !_okItems {
+			return nil, fmt.Errorf("decode: field items: unexpected type %T", _objItems)
+		}
+		v.Items[_iItems] = _cItems
 	}
 	_ = _vhdrItems
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2704,7 +2950,11 @@ func DecodePageBlockChannel(r *Reader) (*PageBlockChannel, error) {
 	if _errChannel != nil {
 		return nil, _errChannel
 	}
-	v.Channel = _objChannel.(ChatClass)
+	_cChannel, _okChannel := _objChannel.(ChatClass)
+	if !_okChannel {
+		return nil, fmt.Errorf("decode: field channel: unexpected type %T", _objChannel)
+	}
+	v.Channel = _cChannel
 	return v, nil
 }
 
@@ -2747,7 +2997,11 @@ func DecodePageBlockAudio(r *Reader) (*PageBlockAudio, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -2783,7 +3037,11 @@ func DecodePageBlockKicker(r *Reader) (*PageBlockKicker, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -2847,7 +3105,11 @@ func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 	if _errTitle != nil {
 		return nil, _errTitle
 	}
-	v.Title = _objTitle.(RichTextClass)
+	_cTitle, _okTitle := _objTitle.(RichTextClass)
+	if !_okTitle {
+		return nil, fmt.Errorf("decode: field title: unexpected type %T", _objTitle)
+	}
+	v.Title = _cTitle
 	_vhdrRows, _ehdrRows := r.ReadUint32()
 	if _ehdrRows != nil {
 		return nil, _ehdrRows
@@ -2865,7 +3127,11 @@ func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 		if _errRows != nil {
 			return nil, _errRows
 		}
-		v.Rows[_iRows] = _objRows.(*PageTableRow)
+		_cRows, _okRows := _objRows.(*PageTableRow)
+		if !_okRows {
+			return nil, fmt.Errorf("decode: field rows: unexpected type %T", _objRows)
+		}
+		v.Rows[_iRows] = _cRows
 	}
 	_ = _vhdrRows
 	return v, nil
@@ -2951,7 +3217,11 @@ func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 		if _errItems != nil {
 			return nil, _errItems
 		}
-		v.Items[_iItems] = _objItems.(PageListOrderedItemClass)
+		_cItems, _okItems := _objItems.(PageListOrderedItemClass)
+		if !_okItems {
+			return nil, fmt.Errorf("decode: field items: unexpected type %T", _objItems)
+		}
+		v.Items[_iItems] = _cItems
 	}
 	_ = _vhdrItems
 	if v.Flags.Has(0) {
@@ -3039,14 +3309,22 @@ func DecodePageBlockDetails(r *Reader) (*PageBlockDetails, error) {
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	_objTitle, _errTitle := ReadTLObject(r)
 	if _errTitle != nil {
 		return nil, _errTitle
 	}
-	v.Title = _objTitle.(RichTextClass)
+	_cTitle, _okTitle := _objTitle.(RichTextClass)
+	if !_okTitle {
+		return nil, fmt.Errorf("decode: field title: unexpected type %T", _objTitle)
+	}
+	v.Title = _cTitle
 	return v, nil
 }
 
@@ -3088,7 +3366,11 @@ func DecodePageBlockRelatedArticles(r *Reader) (*PageBlockRelatedArticles, error
 	if _errTitle != nil {
 		return nil, _errTitle
 	}
-	v.Title = _objTitle.(RichTextClass)
+	_cTitle, _okTitle := _objTitle.(RichTextClass)
+	if !_okTitle {
+		return nil, fmt.Errorf("decode: field title: unexpected type %T", _objTitle)
+	}
+	v.Title = _cTitle
 	_vhdrArticles, _ehdrArticles := r.ReadUint32()
 	if _ehdrArticles != nil {
 		return nil, _ehdrArticles
@@ -3106,7 +3388,11 @@ func DecodePageBlockRelatedArticles(r *Reader) (*PageBlockRelatedArticles, error
 		if _errArticles != nil {
 			return nil, _errArticles
 		}
-		v.Articles[_iArticles] = _objArticles.(*PageRelatedArticle)
+		_cArticles, _okArticles := _objArticles.(*PageRelatedArticle)
+		if !_okArticles {
+			return nil, fmt.Errorf("decode: field articles: unexpected type %T", _objArticles)
+		}
+		v.Articles[_iArticles] = _cArticles
 	}
 	_ = _vhdrArticles
 	return v, nil
@@ -3152,7 +3438,11 @@ func DecodePageBlockMap(r *Reader) (*PageBlockMap, error) {
 	if _errGeo != nil {
 		return nil, _errGeo
 	}
-	v.Geo = _objGeo.(GeoPointClass)
+	_cGeo, _okGeo := _objGeo.(GeoPointClass)
+	if !_okGeo {
+		return nil, fmt.Errorf("decode: field geo: unexpected type %T", _objGeo)
+	}
+	v.Geo = _cGeo
 	_rZoom, _eZoom := r.ReadInt32()
 	if _eZoom != nil {
 		return nil, _eZoom
@@ -3172,7 +3462,11 @@ func DecodePageBlockMap(r *Reader) (*PageBlockMap, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -3208,7 +3502,11 @@ func DecodePageBlockHeading1(r *Reader) (*PageBlockHeading1, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3244,7 +3542,11 @@ func DecodePageBlockHeading2(r *Reader) (*PageBlockHeading2, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3280,7 +3582,11 @@ func DecodePageBlockHeading3(r *Reader) (*PageBlockHeading3, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3316,7 +3622,11 @@ func DecodePageBlockHeading4(r *Reader) (*PageBlockHeading4, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3352,7 +3662,11 @@ func DecodePageBlockHeading5(r *Reader) (*PageBlockHeading5, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3388,7 +3702,11 @@ func DecodePageBlockHeading6(r *Reader) (*PageBlockHeading6, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3460,7 +3778,11 @@ func DecodePageBlockThinking(r *Reader) (*PageBlockThinking, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3504,7 +3826,11 @@ func DecodeInputPageBlockMap(r *Reader) (*InputPageBlockMap, error) {
 	if _errGeo != nil {
 		return nil, _errGeo
 	}
-	v.Geo = _objGeo.(InputGeoPointClass)
+	_cGeo, _okGeo := _objGeo.(InputGeoPointClass)
+	if !_okGeo {
+		return nil, fmt.Errorf("decode: field geo: unexpected type %T", _objGeo)
+	}
+	v.Geo = _cGeo
 	_rZoom, _eZoom := r.ReadInt32()
 	if _eZoom != nil {
 		return nil, _eZoom
@@ -3524,7 +3850,11 @@ func DecodeInputPageBlockMap(r *Reader) (*InputPageBlockMap, error) {
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(*PageCaption)
+	_cCaption, _okCaption := _objCaption.(*PageCaption)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -3579,14 +3909,22 @@ func DecodePageBlockBlockquoteBlocks(r *Reader) (*PageBlockBlockquoteBlocks, err
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
 	}
-	v.Caption = _objCaption.(RichTextClass)
+	_cCaption, _okCaption := _objCaption.(RichTextClass)
+	if !_okCaption {
+		return nil, fmt.Errorf("decode: field caption: unexpected type %T", _objCaption)
+	}
+	v.Caption = _cCaption
 	return v, nil
 }
 
@@ -3682,7 +4020,11 @@ func DecodePageTableCell(r *Reader) (*PageTableCell, error) {
 		if _errText != nil {
 			return nil, _errText
 		}
-		v.Text = _objText.(RichTextClass)
+		_cText, _okText := _objText.(RichTextClass)
+		if !_okText {
+			return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+		}
+		v.Text = _cText
 	}
 	if v.Flags.Has(1) {
 		_rColspan, _eColspan := r.ReadInt32()
@@ -3753,7 +4095,11 @@ func DecodePageTableRow(r *Reader) (*PageTableRow, error) {
 		if _errCells != nil {
 			return nil, _errCells
 		}
-		v.Cells[_iCells] = _objCells.(*PageTableCell)
+		_cCells, _okCells := _objCells.(*PageTableCell)
+		if !_okCells {
+			return nil, fmt.Errorf("decode: field cells: unexpected type %T", _objCells)
+		}
+		v.Cells[_iCells] = _cCells
 	}
 	_ = _vhdrCells
 	return v, nil
@@ -3796,12 +4142,20 @@ func DecodePageCaption(r *Reader) (*PageCaption, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_objCredit, _errCredit := ReadTLObject(r)
 	if _errCredit != nil {
 		return nil, _errCredit
 	}
-	v.Credit = _objCredit.(RichTextClass)
+	_cCredit, _okCredit := _objCredit.(RichTextClass)
+	if !_okCredit {
+		return nil, fmt.Errorf("decode: field credit: unexpected type %T", _objCredit)
+	}
+	v.Credit = _cCredit
 	return v, nil
 }
 
@@ -3879,7 +4233,11 @@ func DecodePageListItemText(r *Reader) (*PageListItemText, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	return v, nil
 }
 
@@ -3954,7 +4312,11 @@ func DecodePageListItemBlocks(r *Reader) (*PageListItemBlocks, error) {
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	return v, nil
@@ -4062,7 +4424,11 @@ func DecodePageListOrderedItemText(r *Reader) (*PageListOrderedItemText, error) 
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(RichTextClass)
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	if v.Flags.Has(3) {
 		_rValue, _eValue := r.ReadInt32()
 		if _eValue != nil {
@@ -4179,7 +4545,11 @@ func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, err
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	if v.Flags.Has(3) {
@@ -4432,7 +4802,11 @@ func DecodePage(r *Reader) (*Page, error) {
 		if _errBlocks != nil {
 			return nil, _errBlocks
 		}
-		v.Blocks[_iBlocks] = _objBlocks.(PageBlockClass)
+		_cBlocks, _okBlocks := _objBlocks.(PageBlockClass)
+		if !_okBlocks {
+			return nil, fmt.Errorf("decode: field blocks: unexpected type %T", _objBlocks)
+		}
+		v.Blocks[_iBlocks] = _cBlocks
 	}
 	_ = _vhdrBlocks
 	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
@@ -4452,7 +4826,11 @@ func DecodePage(r *Reader) (*Page, error) {
 		if _errPhotos != nil {
 			return nil, _errPhotos
 		}
-		v.Photos[_iPhotos] = _objPhotos.(PhotoClass)
+		_cPhotos, _okPhotos := _objPhotos.(PhotoClass)
+		if !_okPhotos {
+			return nil, fmt.Errorf("decode: field photos: unexpected type %T", _objPhotos)
+		}
+		v.Photos[_iPhotos] = _cPhotos
 	}
 	_ = _vhdrPhotos
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
@@ -4472,7 +4850,11 @@ func DecodePage(r *Reader) (*Page, error) {
 		if _errDocuments != nil {
 			return nil, _errDocuments
 		}
-		v.Documents[_iDocuments] = _objDocuments.(DocumentClass)
+		_cDocuments, _okDocuments := _objDocuments.(DocumentClass)
+		if !_okDocuments {
+			return nil, fmt.Errorf("decode: field documents: unexpected type %T", _objDocuments)
+		}
+		v.Documents[_iDocuments] = _cDocuments
 	}
 	_ = _vhdrDocuments
 	if v.Flags.Has(3) {

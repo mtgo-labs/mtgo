@@ -4,6 +4,7 @@ package tg
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // PollAnswerClass is the interface for TL type PollAnswer.
@@ -87,7 +88,11 @@ func DecodePollAnswer(r *Reader) (*PollAnswer, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(*TextWithEntities)
+	_cText, _okText := _objText.(*TextWithEntities)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	_rOption, _eOption := r.ReadBytes()
 	if _eOption != nil {
 		return nil, _eOption
@@ -98,14 +103,22 @@ func DecodePollAnswer(r *Reader) (*PollAnswer, error) {
 		if _errMedia != nil {
 			return nil, _errMedia
 		}
-		v.Media = _objMedia.(MessageMediaClass)
+		_cMedia, _okMedia := _objMedia.(MessageMediaClass)
+		if !_okMedia {
+			return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+		}
+		v.Media = _cMedia
 	}
 	if v.Flags.Has(1) {
 		_objAddedBy, _errAddedBy := ReadTLObject(r)
 		if _errAddedBy != nil {
 			return nil, _errAddedBy
 		}
-		v.AddedBy = _objAddedBy.(PeerClass)
+		_cAddedBy, _okAddedBy := _objAddedBy.(PeerClass)
+		if !_okAddedBy {
+			return nil, fmt.Errorf("decode: field added_by: unexpected type %T", _objAddedBy)
+		}
+		v.AddedBy = _cAddedBy
 	}
 	if v.Flags.Has(1) {
 		_rDate, _eDate := r.ReadInt32()
@@ -168,13 +181,21 @@ func DecodeInputPollAnswer(r *Reader) (*InputPollAnswer, error) {
 	if _errText != nil {
 		return nil, _errText
 	}
-	v.Text = _objText.(*TextWithEntities)
+	_cText, _okText := _objText.(*TextWithEntities)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
 	if v.Flags.Has(0) {
 		_objMedia, _errMedia := ReadTLObject(r)
 		if _errMedia != nil {
 			return nil, _errMedia
 		}
-		v.Media = _objMedia.(InputMediaClass)
+		_cMedia, _okMedia := _objMedia.(InputMediaClass)
+		if !_okMedia {
+			return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+		}
+		v.Media = _cMedia
 	}
 	return v, nil
 }
@@ -312,7 +333,11 @@ func DecodePoll(r *Reader) (*Poll, error) {
 	if _errQuestion != nil {
 		return nil, _errQuestion
 	}
-	v.Question = _objQuestion.(*TextWithEntities)
+	_cQuestion, _okQuestion := _objQuestion.(*TextWithEntities)
+	if !_okQuestion {
+		return nil, fmt.Errorf("decode: field question: unexpected type %T", _objQuestion)
+	}
+	v.Question = _cQuestion
 	_vhdrAnswers, _ehdrAnswers := r.ReadUint32()
 	if _ehdrAnswers != nil {
 		return nil, _ehdrAnswers
@@ -330,7 +355,11 @@ func DecodePoll(r *Reader) (*Poll, error) {
 		if _errAnswers != nil {
 			return nil, _errAnswers
 		}
-		v.Answers[_iAnswers] = _objAnswers.(PollAnswerClass)
+		_cAnswers, _okAnswers := _objAnswers.(PollAnswerClass)
+		if !_okAnswers {
+			return nil, fmt.Errorf("decode: field answers: unexpected type %T", _objAnswers)
+		}
+		v.Answers[_iAnswers] = _cAnswers
 	}
 	_ = _vhdrAnswers
 	if v.Flags.Has(4) {
@@ -463,7 +492,11 @@ func DecodePollAnswerVoters(r *Reader) (*PollAnswerVoters, error) {
 			if _errRecentVoters != nil {
 				return nil, _errRecentVoters
 			}
-			v.RecentVoters[_iRecentVoters] = _objRecentVoters.(PeerClass)
+			_cRecentVoters, _okRecentVoters := _objRecentVoters.(PeerClass)
+			if !_okRecentVoters {
+				return nil, fmt.Errorf("decode: field recent_voters: unexpected type %T", _objRecentVoters)
+			}
+			v.RecentVoters[_iRecentVoters] = _cRecentVoters
 		}
 		_ = _vhdrRecentVoters
 	}
@@ -598,7 +631,11 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			if _errResults != nil {
 				return nil, _errResults
 			}
-			v.Results[_iResults] = _objResults.(*PollAnswerVoters)
+			_cResults, _okResults := _objResults.(*PollAnswerVoters)
+			if !_okResults {
+				return nil, fmt.Errorf("decode: field results: unexpected type %T", _objResults)
+			}
+			v.Results[_iResults] = _cResults
 		}
 		_ = _vhdrResults
 	}
@@ -627,7 +664,11 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			if _errRecentVoters != nil {
 				return nil, _errRecentVoters
 			}
-			v.RecentVoters[_iRecentVoters] = _objRecentVoters.(PeerClass)
+			_cRecentVoters, _okRecentVoters := _objRecentVoters.(PeerClass)
+			if !_okRecentVoters {
+				return nil, fmt.Errorf("decode: field recent_voters: unexpected type %T", _objRecentVoters)
+			}
+			v.RecentVoters[_iRecentVoters] = _cRecentVoters
 		}
 		_ = _vhdrRecentVoters
 	}
@@ -656,7 +697,11 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			if _errSolutionEntities != nil {
 				return nil, _errSolutionEntities
 			}
-			v.SolutionEntities[_iSolutionEntities] = _objSolutionEntities.(MessageEntityClass)
+			_cSolutionEntities, _okSolutionEntities := _objSolutionEntities.(MessageEntityClass)
+			if !_okSolutionEntities {
+				return nil, fmt.Errorf("decode: field solution_entities: unexpected type %T", _objSolutionEntities)
+			}
+			v.SolutionEntities[_iSolutionEntities] = _cSolutionEntities
 		}
 		_ = _vhdrSolutionEntities
 	}
@@ -665,7 +710,11 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 		if _errSolutionMedia != nil {
 			return nil, _errSolutionMedia
 		}
-		v.SolutionMedia = _objSolutionMedia.(MessageMediaClass)
+		_cSolutionMedia, _okSolutionMedia := _objSolutionMedia.(MessageMediaClass)
+		if !_okSolutionMedia {
+			return nil, fmt.Errorf("decode: field solution_media: unexpected type %T", _objSolutionMedia)
+		}
+		v.SolutionMedia = _cSolutionMedia
 	}
 	return v, nil
 }
