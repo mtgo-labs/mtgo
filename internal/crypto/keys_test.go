@@ -6,8 +6,8 @@ import (
 )
 
 func TestServerKeyCount(t *testing.T) {
-	if len(ServerPublicKeys) < 11 {
-		t.Fatalf("expected >= 11 server public keys, got %d", len(ServerPublicKeys))
+	if len(serverPublicKeys) < 11 {
+		t.Fatalf("expected >= 11 server public keys, got %d", len(serverPublicKeys))
 	}
 }
 
@@ -26,7 +26,7 @@ func TestServerKeyFingerprints(t *testing.T) {
 		-4960899639492471258,
 	}
 	for _, fp := range fingerprints {
-		key, ok := ServerPublicKeys[fp]
+		key, ok := serverPublicKeys[fp]
 		if !ok {
 			t.Fatalf("missing fingerprint %d", fp)
 		}
@@ -40,7 +40,7 @@ func TestServerKeyFingerprints(t *testing.T) {
 }
 
 func TestServerKeyModulusSize(t *testing.T) {
-	for fp, key := range ServerPublicKeys {
+	for fp, key := range serverPublicKeys {
 		if key.N.BitLen() != 2048 {
 			t.Fatalf("key %d: expected 2048-bit modulus, got %d", fp, key.N.BitLen())
 		}

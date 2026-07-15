@@ -143,18 +143,18 @@ func BenchmarkSecretKDF(b *testing.B) {
 // --- DH validation (called once per secret chat creation) ---
 
 func BenchmarkValidateGA(b *testing.B) {
-	ga := makeTestGA(CurrentDHPrime)
+	ga := makeTestGA(currentDHPrime)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		ValidateGA(ga, CurrentDHPrime)
+		ValidateGA(ga, currentDHPrime)
 	}
 }
 
 func BenchmarkValidateDHPrime(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
-		ValidateDHPrime(CurrentDHPrime)
+		ValidateDHPrime(currentDHPrime)
 	}
 }
 

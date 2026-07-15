@@ -16,7 +16,7 @@ func TestRSAKeySet_NewSeededFromBundled(t *testing.T) {
 		t.Fatal("RSAKeySet.Current() is empty — expected bundled keys")
 	}
 	// Every bundled fingerprint should be trusted.
-	for fp := range ServerPublicKeys {
+	for fp := range serverPublicKeys {
 		if !ks.IsTrusted(fp) {
 			t.Errorf("bundled fingerprint %d not trusted", fp)
 		}
@@ -25,7 +25,7 @@ func TestRSAKeySet_NewSeededFromBundled(t *testing.T) {
 
 func TestRSAKeySet_Get(t *testing.T) {
 	ks := NewRSAKeySet()
-	for fp, want := range ServerPublicKeys {
+	for fp, want := range serverPublicKeys {
 		got, ok := ks.Get(fp)
 		if !ok {
 			t.Errorf("Get(%d): not found", fp)
@@ -63,20 +63,18 @@ func TestRSAKeySet_VerifyAndAccept_AddsVerified(t *testing.T) {
 	}
 }
 
-func TestRSAKeySet_VerifyAndAccept_TrustsCallerFingerprint(t *testing.T) {
+func TestRSAKeySet_VerifyAndAccept_RejectsFingerprintMismatch(t *testing.T) {
 	ks := NewRSAKeySet()
-	// The watchdog provides the fingerprint it received over an authenticated
-	// channel — VerifyAndAccept trusts it and records the key under that FP.
 	newKey := &ServerKey{
 		N: big.NewInt(0).SetBytes([]byte{0xAA, 0xBB, 0xCC}),
 		E: big.NewInt(65537),
 	}
-	fp := int64(77777)
-	if err := ks.VerifyAndAccept(fp, newKey); err != nil {
-		t.Fatalf("VerifyAndAccept: %v", err)
+	wrongFP := int64(77777)
+	if err := ks.VerifyAndAccept(wrongFP, newKey); err == nil {
+		t.Fatal("VerifyAndAccept: expected error for fingerprint mismatch")
 	}
-	if !ks.IsTrusted(fp) {
-		t.Fatal("key not trusted under provided fingerprint")
+	if ks.IsTrusted(wrongFP) {
+		t.Fatal("key should not be trusted with mismatched fingerprint")
 	}
 }
 
@@ -90,7 +88,7 @@ func TestRSAKeySet_VerifyAndAccept_RejectsNilKey(t *testing.T) {
 func TestRSAKeySet_BundledNotDuplicated(t *testing.T) {
 	ks := NewRSAKeySet()
 	// Pick a bundled key and try to accept it again — should be a no-op.
-	for fp, key := range ServerPublicKeys {
+	for fp, key := range serverPublicKeys {
 		before := len(ks.Current())
 		if err := ks.VerifyAndAccept(fp, key); err != nil {
 			t.Fatalf("VerifyAndAccept bundled: %v", err)

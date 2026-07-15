@@ -29,8 +29,8 @@ type RSAKeySet struct {
 // NewRSAKeySet creates a key set seeded from the bundled ServerPublicKeys.
 // The bundled map is copied so the original package-level map is untouched.
 func NewRSAKeySet() *RSAKeySet {
-	bundled := make(map[int64]*ServerKey, len(ServerPublicKeys))
-	for fp, key := range ServerPublicKeys {
+	bundled := make(map[int64]*ServerKey, len(serverPublicKeys))
+	for fp, key := range serverPublicKeys {
 		bundled[fp] = key
 	}
 	return &RSAKeySet{
@@ -94,10 +94,15 @@ func (k *RSAKeySet) TrustedFingerprints() []int64 {
 // the value the server reported for this key over an authenticated channel
 // (the watchdog fetches via an RPC over an established session, which proves
 // server identity — that IS the verification). The key is validated for
-// structural validity (non-nil with modulus and exponent). The bundled root
-// is never modified. Returns ErrKeyVerificationFailed if the key is invalid.
+// structural validity (non-nil with modulus and exponent) and its computed
+// fingerprint must match the server-reported fingerprint. The bundled root
+// is never modified. Returns ErrKeyVerificationFailed if the key is invalid
+// or its fingerprint does not match.
 func (k *RSAKeySet) VerifyAndAccept(fingerprint int64, key *ServerKey) error {
 	if key == nil || key.N == nil || key.E == nil {
+		return ErrKeyVerificationFailed
+	}
+	if computed := ComputeFingerprint(key); computed != fingerprint {
 		return ErrKeyVerificationFailed
 	}
 	k.mu.Lock()
@@ -122,17 +127,37 @@ func (errKeyVerificationFailed) Error() string {
 }
 
 // ComputeFingerprint computes the MTProto RSA key fingerprint: the lower 64
-// bits of SHA1 of the key's modulus-as-big-endian-bytes. This matches the
-// fingerprint format used in the bundled ServerPublicKeys map keys.
+// bits (bytes 12:20, little-endian) of SHA1 of the TL-serialized RSA public
+// key (n:string e:string), matching the algorithm used by Telegram servers.
+// This is verified to produce the fingerprints stored in ServerPublicKeys.
 func ComputeFingerprint(key *ServerKey) int64 {
 	if key == nil || key.N == nil {
 		return 0
 	}
-	nBytes := key.N.Bytes()
-	h := sha1.Sum(nBytes)
-	// Lower 8 bytes of SHA1 as a signed int64 (little-endian, matching the
-	// existing fingerprint constants which are signed values).
-	return int64(binary.LittleEndian.Uint64(h[len(h)-8:]))
+	// Serialize n and e as TL bytes (length-prefixed, 4-byte aligned),
+	// matching the gotd/td RSAFingerprint algorithm.
+	data := tlSerializeBytes(key.N.Bytes())
+	data = append(data, tlSerializeBytes(key.E.Bytes())...)
+	h := sha1.Sum(data)
+	return int64(binary.LittleEndian.Uint64(h[12:]))
+}
+
+// tlSerializeBytes encodes a byte slice in MTProto TL bytes format: a 1- or
+// 4-byte length prefix followed by the data, zero-padded to a 4-byte boundary.
+func tlSerializeBytes(b []byte) []byte {
+	var buf []byte
+	if len(b) < 254 {
+		buf = append(buf, byte(len(b)))
+		buf = append(buf, b...)
+	} else {
+		buf = append(buf, 0xFE)
+		buf = append(buf, byte(len(b)), byte(len(b)>>8), byte(len(b)>>16))
+		buf = append(buf, b...)
+	}
+	for len(buf)%4 != 0 {
+		buf = append(buf, 0)
+	}
+	return buf
 }
 
 // FetchedKey is a server RSA key fetched by the watchdog, paired with the

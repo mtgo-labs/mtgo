@@ -61,7 +61,7 @@ func TestFindKeyFingerprint_NilKeySetFallback(t *testing.T) {
 	a := &Auth{} // keySet is nil → backward compat path
 	// Pick any bundled fingerprint.
 	var bundledFP int64
-	for fp := range crypto.ServerPublicKeys {
+	for _, fp := range crypto.ServerKeyFingerprints() {
 		bundledFP = fp
 		break
 	}

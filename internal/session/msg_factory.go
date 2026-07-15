@@ -30,6 +30,14 @@ func (f *MsgFactory) AllocateSeqNo(contentRelated bool) int32 {
 	return f.seqNoGen.Next(contentRelated)
 }
 
+// AllocateMsgIDAndSeqNo atomically allocates both a message ID and sequence
+// number, preventing interleaving between concurrent Send calls when strict
+// ordering is required. In practice the MTProto server validates msg_id and
+// seq_no independently, so the separate calls are correct for normal use (#33).
+func (f *MsgFactory) AllocateMsgIDAndSeqNo(contentRelated bool) (int64, int32) {
+	return f.msgIDGen.Next(), f.seqNoGen.Next(contentRelated)
+}
+
 // UpdateServerTime forwards the updated server time to the underlying message
 // ID generator.
 func (f *MsgFactory) UpdateServerTime(t time.Time) {

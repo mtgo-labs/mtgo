@@ -43,10 +43,12 @@ func (t *TCPFull) Send(buf *bytes.Buffer) error {
 	copy(packet[8:8+len(data)], data)
 	binary.LittleEndian.PutUint32(packet[8+len(data):], crc32.ChecksumIEEE(packet[:8+len(data)]))
 
-	t.seqNo.Add(1)
-
 	_, err := t.conn.Write(packet)
-	return err
+	if err != nil {
+		return err
+	}
+	t.seqNo.Add(1)
+	return nil
 }
 
 // Recv reads the next full-transport framed message from the connection. It

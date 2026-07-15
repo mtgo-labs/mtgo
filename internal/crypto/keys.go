@@ -9,19 +9,42 @@ type ServerKey struct {
 	E *big.Int
 }
 
-// ServerPublicKeys maps RSA key fingerprints to their corresponding ServerKey.
-// The fingerprints are populated in init() from Telegram's known public keys.
-var ServerPublicKeys = map[int64]*ServerKey{}
+// serverPublicKeys maps RSA key fingerprints to their corresponding ServerKey.
+// Populated in init() from Telegram's known public keys. Immutable after init().
+// External code MUST use GetServerKey() or RSAKeySet for access.
+var serverPublicKeys = map[int64]*ServerKey{}
 
 // GetServerKey returns the ServerKey associated with the given fingerprint.
 // The second return value reports whether the key was found.
 func GetServerKey(fingerprint int64) (*ServerKey, bool) {
-	key, ok := ServerPublicKeys[fingerprint]
+	key, ok := serverPublicKeys[fingerprint]
 	return key, ok
 }
 
+// ServerKeyFingerprints returns a copy of all trusted bundled key fingerprints.
+func ServerKeyFingerprints() []int64 {
+	fps := make([]int64, 0, len(serverPublicKeys))
+	for fp := range serverPublicKeys {
+		fps = append(fps, fp)
+	}
+	return fps
+}
+
+// ServerKeyCount returns the number of bundled trusted server keys.
+func ServerKeyCount() int {
+	return len(serverPublicKeys)
+}
+
+// EachServerKey calls fn for each bundled trusted key. The key pointer MUST NOT
+// be retained or modified by fn.
+func EachServerKey(fn func(fingerprint int64, key *ServerKey)) {
+	for fp, key := range serverPublicKeys {
+		fn(fp, key)
+	}
+}
+
 func init() {
-	ServerPublicKeys[-5595554452916591101] = &ServerKey{
+	serverPublicKeys[-5595554452916591101] = &ServerKey{
 		N: newBigInt("C8C11D635691FAC091DD9489AEDCED2932AA8A0BCEFEF05FA800892D9B52ED032" +
 			"00865C9E97211CB2EE6C7AE96D3FB0E15AEFFD66019B44A08A240CFDD2868A85E" +
 			"1F54D6FA5DEAA041F6941DDF302690D61DC476385C2FA655142353CB4E4B59F6E" +
@@ -33,7 +56,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-3414540481677951611] = &ServerKey{
+	serverPublicKeys[-3414540481677951611] = &ServerKey{
 		N: newBigInt("E8BB3305C0B52C6CF2AFDF7637313489E63E05268E5BADB601AF417786472E5" +
 			"F93B85438968E20E6729A301C0AFC121BF7151F834436F7FDA680847A66BF64AC" +
 			"CEC78EE21C0B316F0EDAFE2F41908DA7BD1F4A5107638EEB67040ACE472A14F9" +
@@ -45,7 +68,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-4344800451088585951] = &ServerKey{
+	serverPublicKeys[-4344800451088585951] = &ServerKey{
 		N: newBigInt("C150023E2F70DB7985DED064759CFECF0AF328E69A41DAF4D6F01B538135A6F9" +
 			"1F8F8B2A0EC9BA9720CE352EFCF6C5680FFC424BD634864902DE0B4BD6D49F4E" +
 			"580230E3AE97D95C8B19442B3C0A10D8F5633FECEDD6926A7F6DAB0DDB7D457F" +
@@ -57,7 +80,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[847625836280919973] = &ServerKey{
+	serverPublicKeys[847625836280919973] = &ServerKey{
 		N: newBigInt("AEEC36C8FFC109CB099624685B97815415657BD76D8C9C3E398103D7AD16C9BB" +
 			"A6F525ED0412D7AE2C2DE2B44E77D72CBF4B7438709A4E646A05C43427C7F184" +
 			"DEBF72947519680E651500890C6832796DD11F772C25FF8F576755AFE055B0A3" +
@@ -69,7 +92,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[1562291298945373506] = &ServerKey{
+	serverPublicKeys[1562291298945373506] = &ServerKey{
 		N: newBigInt("BDF2C77D81F6AFD47BD30F29AC76E55ADFE70E487E5E48297E5A9055C9C07D2B" +
 			"93B4ED3994D3ECA5098BF18D978D54F8B7C713EB10247607E69AF9EF44F38E28" +
 			"F8B439F257A11572945CC0406FE3F37BB92B79112DB69EEDF2DC71584A661638" +
@@ -81,7 +104,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-5859577972006586033] = &ServerKey{
+	serverPublicKeys[-5859577972006586033] = &ServerKey{
 		N: newBigInt("B3F762B739BE98F343EB1921CF0148CFA27FF7AF02B6471213FED9DAA0098976" +
 			"E667750324F1ABCEA4C31E43B7D11F1579133F2B3D9FE27474E462058884E5E1" +
 			"B123BE9CBBC6A443B2925C08520E7325E6F1A6D50E117EB61EA49D2534C8BB4D" +
@@ -93,7 +116,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[6491968696586960280] = &ServerKey{
+	serverPublicKeys[6491968696586960280] = &ServerKey{
 		N: newBigInt("BE6A71558EE577FF03023CFA17AAB4E6C86383CFF8A7AD38EDB9FAFE6F323F2D" +
 			"5106CBC8CAFB83B869CFFD1CCF121CD743D509E589E68765C96601E813DC5B9D" +
 			"FC4BE415C7A6526132D0035CA33D6D6075D4F535122A1CDFE017041F1088D141" +
@@ -105,7 +128,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-7395192255793472640] = &ServerKey{
+	serverPublicKeys[-7395192255793472640] = &ServerKey{
 		N: newBigInt("E2D587706265125931BB129027016325ABA59951E0771340DF0808D84F176CD9" +
 			"C0F3CCB9D57A205799BC04462E4D23F89655D9638652256E559455E79AC253FE" +
 			"19A3C9E16AA936A3C805BA9DBF6FC195F6F7542FA83FF5642141CBB4CBBC2334" +
@@ -117,7 +140,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[2685959930972952888] = &ServerKey{
+	serverPublicKeys[2685959930972952888] = &ServerKey{
 		N: newBigInt("CEE1D50BBB04E742A1A3FC83559B569E5980E417FF68CF0A658DD6CD2D7AC3AC" +
 			"35B01AA2A63F2880C186ED42DB181B5898A11A23B20824EE963369B531A5D59E" +
 			"CA92F1DECF6860198B2F2B48DDD2ED2D9AF30A7845765E86CD09017BD9788CF8" +
@@ -129,7 +152,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-3997872768018684475] = &ServerKey{
+	serverPublicKeys[-3997872768018684475] = &ServerKey{
 		N: newBigInt("BA0E9F11355BECD917618BB9B9E66E334A6AC3585EBAA52B64D628990374952D" +
 			"28EE2EA6016C1BD7F162B1C14AFB2E0B412484C7EA14CD70218E6965F5F99BE1" +
 			"EECF6D4897A3C32E5CED118F77B9E35E835DF4E23981965E5151574690CEEF1A" +
@@ -141,7 +164,7 @@ func init() {
 		E: big.NewInt(65537),
 	}
 
-	ServerPublicKeys[-4960899639492471258] = &ServerKey{
+	serverPublicKeys[-4960899639492471258] = &ServerKey{
 		N: newBigInt("BFF2FAB5DFA68FB0E5F353477EEF977F528DB6F64F475B52E7116A92252CA27D" +
 			"6EEC3DAE94AD398CCF072AFA55D68FB51CF3EA85A5E16ACBEC5FDD2EDD320745" +
 			"0D33B89289C4A022668DC62BBA611E8CE3009F555056CEEE32806B905313DB57" +

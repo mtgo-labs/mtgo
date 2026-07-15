@@ -166,7 +166,10 @@ type Session struct {
 	// onUpdate is called when the server pushes unsolicited updates.
 	onUpdate func(tg.TLObject)
 	// updateSem bounds the number of concurrent update dispatch goroutines.
-	updateSem chan struct{}
+	// dispatchSem bounds the number of concurrent dispatchRaw goroutines to
+	// prevent goroutine explosion under message flood (#23).
+	updateSem   chan struct{}
+	dispatchSem chan struct{}
 	// onPanic is called (if non-nil) when a dispatch goroutine panics.
 	onPanic func(panicValue any)
 	// onNewSession is called when the server sends a new_session_created
@@ -377,6 +380,7 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 		pingInterval:     60 * time.Second,
 		pongTimeout:      30 * time.Second,
 		updateSem:        make(chan struct{}, 128),
+		dispatchSem:      make(chan struct{}, 64),
 		saltMgr:          newSaltManager(time.Now),
 		sm:               newStateMachine(),
 		chains:           make(map[int64]int64),
@@ -531,7 +535,12 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 
 	// When the outbound batcher is enabled, delegate packing+writing to it.
 	// The batcher coalesces multiple concurrent RPCs into a msg_container.
-	if b := s.outboundBatcher; b != nil {
+	// Read under s.mu.RLock to avoid racing with EnableOutboundBatching/
+	// CloseOutboundBatching which write s.outboundBatcher under s.mu (#6).
+	s.mu.RLock()
+	b := s.outboundBatcher
+	s.mu.RUnlock()
+	if b != nil {
 		priority := RoutePriority(body)
 		handle, err := b.Submit(ctx, msgID, seqNo, body, priority, timeout)
 		if err != nil {
@@ -1397,11 +1406,18 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 		}
 
 		if needsDecodedResult || updateFn != nil {
-			handlers.Add(1)
-			go func(raw *tg.MTProtoMessageRaw) {
-				defer handlers.Done()
+			select {
+			case s.dispatchSem <- struct{}{}:
+				handlers.Add(1)
+				go func(raw *tg.MTProtoMessageRaw) {
+					defer handlers.Done()
+					defer func() { <-s.dispatchSem }()
+					s.dispatchRaw(raw)
+				}(raw)
+			default:
+				// At capacity: process in-line (backpressure on sender).
 				s.dispatchRaw(raw)
-			}(raw)
+			}
 		}
 	}
 }
@@ -1886,6 +1902,11 @@ func (s *Session) handleRawContainer(body []byte) bool {
 		off += 4
 		if length < 0 || off+length > len(body) {
 			return false
+		}
+		// Validate each child msgID against replay/parity rules (#21).
+		if !s.msgIDValidator.Check(msgID) {
+			off += length
+			continue
 		}
 		s.addAck(msgID)
 		if !s.handleRawPacket(msgID, body[off:off+length]) && !s.decodeRawPacketIfNeeded(msgID, seqNo, body[off:off+length]) {

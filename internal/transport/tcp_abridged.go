@@ -38,21 +38,20 @@ func (t *TCPAbridged) Send(buf *bytes.Buffer) error {
 	length := len(data) / 4
 
 	if length <= 126 {
-		if _, err := t.conn.Write([]byte{byte(length)}); err != nil {
-			return err
-		}
-	} else {
-		var header [4]byte
-		header[0] = 0x7f
-		header[1] = byte(length)
-		header[2] = byte(length >> 8)
-		header[3] = byte(length >> 16)
-		if _, err := t.conn.Write(header[:]); err != nil {
-			return err
-		}
+		packet := make([]byte, 1+len(data))
+		packet[0] = byte(length)
+		copy(packet[1:], data)
+		_, err := t.conn.Write(packet)
+		return err
 	}
 
-	_, err := t.conn.Write(data)
+	packet := make([]byte, 4+len(data))
+	packet[0] = 0x7f
+	packet[1] = byte(length)
+	packet[2] = byte(length >> 8)
+	packet[3] = byte(length >> 16)
+	copy(packet[4:], data)
+	_, err := t.conn.Write(packet)
 	return err
 }
 

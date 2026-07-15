@@ -57,7 +57,7 @@ type Auth struct {
 	// TestMode indicates that the connection is using Telegram test servers.
 	TestMode bool
 	// keySet is the trusted-key set used for fingerprint verification. When
-	// nil, the static crypto.ServerPublicKeys map is used (backward compat).
+	// nil, the static crypto.ServerKeyFingerprints are used (backward compat).
 	keySet *crypto.RSAKeySet
 }
 
@@ -125,11 +125,7 @@ func (a *Auth) recvUnencrypted(conn authTransport) (tg.TLObject, error) {
 }
 
 func knownFingerprints() []int64 {
-	fps := make([]int64, 0, len(crypto.ServerPublicKeys))
-	for fp := range crypto.ServerPublicKeys {
-		fps = append(fps, fp)
-	}
-	return fps
+	return crypto.ServerKeyFingerprints()
 }
 
 func (a *Auth) findKeyFingerprint(fingerprints []int64) (int64, bool) {
@@ -324,7 +320,7 @@ func (a *Auth) createKey(conn authTransport, tempExpiresIn int32) (*AuthResult, 
 		// spec requires a SAFE 2048-bit prime (both p and (p-1)/2 prime); rather
 		// than re-validate the safe-prime property of an arbitrary server-supplied
 		// value, reject anything that is not the known constant.
-		if dhPrime.Cmp(crypto.CurrentDHPrime) != 0 {
+		if dhPrime.Cmp(crypto.GetDHPrime()) != 0 {
 			return nil, ErrDHPrimeInvalid
 		}
 

@@ -7,9 +7,10 @@ import (
 // ContainerTracker tracks which queries are in which containers.
 // Ported from td/td/telegram/net/Session.h:82-104 (Query with container_message_id_).
 type ContainerTracker struct {
-	containers map[int64]*ContainerEntry
-	logger     sessionLogger
-	mu         sync.Mutex
+	containers       map[int64]*ContainerEntry
+	childToContainer map[int64]int64
+	logger           sessionLogger
+	mu               sync.Mutex
 }
 
 // SetLogger sets the logger for the container tracker.
@@ -29,7 +30,8 @@ type ContainerEntry struct {
 // NewContainerTracker creates a new container tracker.
 func NewContainerTracker() *ContainerTracker {
 	return &ContainerTracker{
-		containers: make(map[int64]*ContainerEntry),
+		containers:       make(map[int64]*ContainerEntry),
+		childToContainer: make(map[int64]int64),
 	}
 }
 
@@ -41,6 +43,9 @@ func (t *ContainerTracker) TrackContainer(containerMsgID int64, childMsgIDs []in
 		ContainerMsgID: containerMsgID,
 		ChildMsgIDs:    childMsgIDs,
 		RefCount:       len(childMsgIDs),
+	}
+	for _, id := range childMsgIDs {
+		t.childToContainer[id] = containerMsgID
 	}
 	if t.logger != nil {
 		t.logger.Warnf("container tracked container_msg_id=%d children=%d", containerMsgID, len(childMsgIDs))
@@ -57,6 +62,9 @@ func (t *ContainerTracker) AckContainer(containerMsgID int64) []int64 {
 	}
 	childIDs := entry.ChildMsgIDs
 	delete(t.containers, containerMsgID)
+	for _, id := range childIDs {
+		delete(t.childToContainer, id)
+	}
 	return childIDs
 }
 
@@ -73,6 +81,9 @@ func (t *ContainerTracker) NackContainer(containerMsgID int64) []int64 {
 		t.logger.Warnf("container nacked container_msg_id=%d children=%d", containerMsgID, len(childIDs))
 	}
 	delete(t.containers, containerMsgID)
+	for _, id := range childIDs {
+		delete(t.childToContainer, id)
+	}
 	return childIDs
 }
 
@@ -81,20 +92,24 @@ func (t *ContainerTracker) NackContainer(containerMsgID int64) []int64 {
 func (t *ContainerTracker) AckChild(childMsgID int64) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	for _, entry := range t.containers {
+	containerMsgID, ok := t.childToContainer[childMsgID]
+	if !ok {
+		return false
+	}
+	entry := t.containers[containerMsgID]
+	if entry == nil {
+		return false
+	}
+	entry.RefCount--
+	if t.logger != nil {
+		t.logger.Warnf("container child acked child_msg_id=%d container_msg_id=%d remaining=%d", childMsgID, containerMsgID, entry.RefCount)
+	}
+	if entry.RefCount <= 0 {
+		delete(t.containers, containerMsgID)
 		for _, id := range entry.ChildMsgIDs {
-			if id == childMsgID {
-				entry.RefCount--
-				if t.logger != nil {
-					t.logger.Warnf("container child acked child_msg_id=%d container_msg_id=%d remaining=%d", childMsgID, entry.ContainerMsgID, entry.RefCount)
-				}
-				if entry.RefCount <= 0 {
-					delete(t.containers, entry.ContainerMsgID)
-					return true
-				}
-				return false
-			}
+			delete(t.childToContainer, id)
 		}
+		return true
 	}
 	return false
 }
@@ -104,6 +119,7 @@ func (t *ContainerTracker) Cleanup() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.containers = make(map[int64]*ContainerEntry)
+	t.childToContainer = make(map[int64]int64)
 }
 
 // Count returns the number of tracked containers.

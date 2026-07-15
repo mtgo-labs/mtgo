@@ -20,7 +20,7 @@ func makeTestKey(t *testing.T) []byte {
 }
 
 func TestGenerateDHSecret(t *testing.T) {
-	secret, err := GenerateDHSecret(CurrentDHPrime, 2048)
+	secret, err := GenerateDHSecret(currentDHPrime, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestGenerateDHSecret(t *testing.T) {
 	if secret.Sign() <= 0 {
 		t.Fatal("secret must be positive")
 	}
-	primeMinus1 := new(big.Int).Sub(CurrentDHPrime, big.NewInt(1))
+	primeMinus1 := new(big.Int).Sub(currentDHPrime, big.NewInt(1))
 	if secret.Cmp(primeMinus1) >= 0 {
 		t.Fatal("secret must be less than dhPrime-1")
 	}
@@ -40,11 +40,11 @@ func TestGenerateDHSecret(t *testing.T) {
 }
 
 func TestGenerateDHSecretUniqueness(t *testing.T) {
-	s1, err := GenerateDHSecret(CurrentDHPrime, 2048)
+	s1, err := GenerateDHSecret(currentDHPrime, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s2, err := GenerateDHSecret(CurrentDHPrime, 2048)
+	s2, err := GenerateDHSecret(currentDHPrime, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,23 +54,23 @@ func TestGenerateDHSecretUniqueness(t *testing.T) {
 }
 
 func TestComputeGA(t *testing.T) {
-	a, _ := GenerateDHSecret(CurrentDHPrime, 2048)
-	ga := ComputeGA(2, a, CurrentDHPrime)
+	a, _ := GenerateDHSecret(currentDHPrime, 2048)
+	ga := ComputeGA(2, a, currentDHPrime)
 	if ga == nil {
 		t.Fatal("ga is nil")
 	}
 	if ga.Sign() <= 0 {
 		t.Fatal("ga must be positive")
 	}
-	if ga.Cmp(CurrentDHPrime) >= 0 {
+	if ga.Cmp(currentDHPrime) >= 0 {
 		t.Fatal("ga must be less than dhPrime")
 	}
 }
 
 func TestComputeGADeterministic(t *testing.T) {
 	a := big.NewInt(12345)
-	ga1 := ComputeGA(2, a, CurrentDHPrime)
-	ga2 := ComputeGA(2, a, CurrentDHPrime)
+	ga1 := ComputeGA(2, a, currentDHPrime)
+	ga2 := ComputeGA(2, a, currentDHPrime)
 	if ga1.Cmp(ga2) != 0 {
 		t.Fatal("ComputeGA should be deterministic")
 	}
@@ -87,20 +87,20 @@ func TestComputeGAKnownValue(t *testing.T) {
 }
 
 func TestDHKeyExchange(t *testing.T) {
-	a, err := GenerateDHSecret(CurrentDHPrime, 2048)
+	a, err := GenerateDHSecret(currentDHPrime, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := GenerateDHSecret(CurrentDHPrime, 2048)
+	b, err := GenerateDHSecret(currentDHPrime, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ga := ComputeGA(2, a, CurrentDHPrime)
-	gb := ComputeGA(2, b, CurrentDHPrime)
+	ga := ComputeGA(2, a, currentDHPrime)
+	gb := ComputeGA(2, b, currentDHPrime)
 
-	keyAB := ComputeSharedKey(ga, b, CurrentDHPrime)
-	keyBA := ComputeSharedKey(gb, a, CurrentDHPrime)
+	keyAB := ComputeSharedKey(ga, b, currentDHPrime)
+	keyBA := ComputeSharedKey(gb, a, currentDHPrime)
 
 	if len(keyAB) != SecretChatKeyLen {
 		t.Fatalf("keyAB length: got %d, want %d", len(keyAB), SecretChatKeyLen)
@@ -201,7 +201,7 @@ func TestValidateGA(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ValidateGA(tt.ga, CurrentDHPrime); got != tt.want {
+			if got := ValidateGA(tt.ga, currentDHPrime); got != tt.want {
 				t.Fatalf("ValidateGA(%s): got %v, want %v", tt.name, got, tt.want)
 			}
 		})
@@ -209,16 +209,16 @@ func TestValidateGA(t *testing.T) {
 }
 
 func TestValidateGAPrimeMinusOne(t *testing.T) {
-	primeMinus1 := new(big.Int).Sub(CurrentDHPrime, big.NewInt(1))
-	if ValidateGA(primeMinus1, CurrentDHPrime) {
+	primeMinus1 := new(big.Int).Sub(currentDHPrime, big.NewInt(1))
+	if ValidateGA(primeMinus1, currentDHPrime) {
 		t.Fatal("ValidateGA should reject ga == p-1")
 	}
 }
 
 func TestValidateGAValid(t *testing.T) {
 	// p/2 is safely within [2^1984, p - 2^1984].
-	validGA := new(big.Int).Rsh(CurrentDHPrime, 1)
-	if !ValidateGA(validGA, CurrentDHPrime) {
+	validGA := new(big.Int).Rsh(currentDHPrime, 1)
+	if !ValidateGA(validGA, currentDHPrime) {
 		t.Fatal("ValidateGA should accept ga in valid mid-range")
 	}
 }
@@ -226,12 +226,12 @@ func TestValidateGAValid(t *testing.T) {
 func TestValidateGABelowLowerBound(t *testing.T) {
 	// ga below 2^1984 should be rejected.
 	tooSmall := new(big.Int).Lsh(big.NewInt(1), 1000) // 2^1000, well below 2^1984
-	if ValidateGA(tooSmall, CurrentDHPrime) {
+	if ValidateGA(tooSmall, currentDHPrime) {
 		t.Fatal("ValidateGA should reject ga below 2^1984")
 	}
 	// ga above p - 2^1984 should also be rejected.
-	tooLarge := new(big.Int).Sub(CurrentDHPrime, big.NewInt(100))
-	if ValidateGA(tooLarge, CurrentDHPrime) {
+	tooLarge := new(big.Int).Sub(currentDHPrime, big.NewInt(100))
+	if ValidateGA(tooLarge, currentDHPrime) {
 		t.Fatal("ValidateGA should reject ga near p (above upper bound)")
 	}
 }
@@ -623,7 +623,7 @@ func TestSecretKDF(t *testing.T) {
 }
 
 func TestComputeSharedKeyPadding(t *testing.T) {
-	padded := ComputeSharedKey(big.NewInt(1), big.NewInt(12345), CurrentDHPrime)
+	padded := ComputeSharedKey(big.NewInt(1), big.NewInt(12345), currentDHPrime)
 	if len(padded) != SecretChatKeyLen {
 		t.Fatalf("padded key length: got %d, want %d", len(padded), SecretChatKeyLen)
 	}
@@ -638,9 +638,9 @@ func TestComputeSharedKeyPadding(t *testing.T) {
 }
 
 func TestComputeSharedKeyLength256(t *testing.T) {
-	a, _ := GenerateDHSecret(CurrentDHPrime, 2048)
-	ga := ComputeGA(2, a, CurrentDHPrime)
-	key := ComputeSharedKey(ga, a, CurrentDHPrime)
+	a, _ := GenerateDHSecret(currentDHPrime, 2048)
+	ga := ComputeGA(2, a, currentDHPrime)
+	key := ComputeSharedKey(ga, a, currentDHPrime)
 	if len(key) != SecretChatKeyLen {
 		t.Fatalf("shared key length: got %d, want %d", len(key), SecretChatKeyLen)
 	}

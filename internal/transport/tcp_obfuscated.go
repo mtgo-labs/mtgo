@@ -217,10 +217,11 @@ func (t *TCPObfuscated) Send(buf *bytes.Buffer) error {
 func (t *TCPObfuscated) sendEncrypted(header, data []byte) error {
 	encHeader := t.enc.Process(header)
 	encData := t.enc.Process(data)
-	if _, err := t.conn.Write(encHeader); err != nil {
-		return fmt.Errorf("tcp_obfuscated: send: %w", err)
-	}
-	if _, err := t.conn.Write(encData); err != nil {
+
+	combined := make([]byte, 0, len(encHeader)+len(encData))
+	combined = append(combined, encHeader...)
+	combined = append(combined, encData...)
+	if _, err := t.conn.Write(combined); err != nil {
 		return fmt.Errorf("tcp_obfuscated: send: %w", err)
 	}
 	return nil

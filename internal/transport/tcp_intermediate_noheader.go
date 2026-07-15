@@ -31,13 +31,11 @@ func (t *TCPIntermediateNoHeader) Conn() net.Conn { return t.conn }
 func (t *TCPIntermediateNoHeader) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 
-	var header [4]byte
-	binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
+	packet := make([]byte, 4+len(data))
+	binary.LittleEndian.PutUint32(packet[:4], uint32(len(data)))
+	copy(packet[4:], data)
 
-	if _, err := t.conn.Write(header[:]); err != nil {
-		return err
-	}
-	_, err := t.conn.Write(data)
+	_, err := t.conn.Write(packet)
 	return err
 }
 

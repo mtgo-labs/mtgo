@@ -105,6 +105,10 @@ func RSAEncrypt(data []byte, fingerprint int64) ([]byte, error) {
 	return result, nil
 }
 
+// RSAEncryptLegacy performs deterministic RSA encryption (SHA1-prefixed data,
+// no random padding). This is cryptographically insecure — deterministic
+// encryption reveals plaintext equality and is vulnerable to chosen-plaintext
+// attacks. Retained for test compatibility only; do NOT use in production code.
 func RSAEncryptLegacy(data []byte, fingerprint int64) ([]byte, error) {
 	key, ok := GetServerKey(fingerprint)
 	if !ok {

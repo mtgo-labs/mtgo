@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -80,6 +81,9 @@ func (b *OutboundBatcher) Submit(ctx context.Context, msgID int64, seqNo uint32,
 		return nil, err
 	}
 
+	// Store the encoded body for msg_resend_req re-transmission (#4).
+	handle.StorePayload(encodeBuf(body))
+
 	item := batchItem{
 		msgID:   msgID,
 		seqNo:   seqNo,
@@ -89,6 +93,14 @@ func (b *OutboundBatcher) Submit(ctx context.Context, msgID int64, seqNo uint32,
 	}
 
 	b.mu.Lock()
+	// Reject items after Close to prevent leaking pending handles (#5).
+	select {
+	case <-b.done:
+		b.mu.Unlock()
+		b.session.pending.Cancel(msgID)
+		return nil, ErrBatcherClosed
+	default:
+	}
 	if priority == PriorityHigh {
 		b.high = append(b.high, item)
 	} else {
@@ -194,20 +206,33 @@ func (b *OutboundBatcher) packAndSend(msgs []*tg.MTProtoMessage) {
 	}
 
 	var outerBody tg.TLObject
+	var msgID int64
+	var seqNo uint32
+
 	if len(msgs) == 1 {
+		// Single-message path: use the child's own msgID/seqNo directly (#1).
+		// The server's rpc_result references this msgID, and the pending handle
+		// was registered under it.
 		outerBody = msgs[0].Body
+		msgID = msgs[0].MsgID
+		seqNo = msgs[0].SeqNo
 	} else {
+		// Container path: allocate a container-level msgID.
 		outerBody = &tg.MsgContainer{Messages: msgs}
+		msgID = s.msgFactory.AllocateMsgID()
+		seqNo = uint32(s.msgFactory.AllocateSeqNo(false))
+
+		// Track container→child mapping for bad_msg rejection (#3).
+		childIDs := make([]int64, len(msgs))
+		for i, m := range msgs {
+			childIDs[i] = m.MsgID
+		}
+		s.containerTracker.TrackContainer(msgID, childIDs)
 	}
 
-	// Allocate a container-level msgID (content=false for the container itself
-	// since it wraps content messages).
-	containerMsgID := s.msgFactory.AllocateMsgID()
-	containerSeqNo := uint32(s.msgFactory.AllocateSeqNo(false))
-
 	message := &tg.MTProtoMessage{
-		MsgID: containerMsgID,
-		SeqNo: containerSeqNo,
+		MsgID: msgID,
+		SeqNo: seqNo,
 		Body:  outerBody,
 	}
 
@@ -251,8 +276,12 @@ func (b *OutboundBatcher) Snapshot() OutboundSnapshot {
 	}
 }
 
+// ErrBatcherClosed is returned when Submit is called after Close.
+var ErrBatcherClosed = errors.New("session: outbound batcher is closed")
+
 // Close stops the flush goroutine. Pending items are NOT flushed (the caller
 // should drain before closing). Idempotent.
+
 func (b *OutboundBatcher) Close() error {
 	close(b.done)
 	b.wg.Wait()

@@ -5,9 +5,10 @@ import (
 	"math/big"
 )
 
-// CurrentDHPrime is the 2048-bit safe prime used for Diffie-Hellman key exchange
+// currentDHPrime is the 2048-bit safe prime used for Diffie-Hellman key exchange
 // in MTProto authorization. See https://core.telegram.org/mtproto/auth_key.
-var CurrentDHPrime = newBigIntFromHex(
+// The value is immutable. Use GetDHPrime() to obtain a copy.
+var currentDHPrime = newBigIntFromHex(
 	"C71CAEB9C6B1C9048E6C522F70F13F73980D40238E3E21C14934D037563D930F" +
 		"48198A0AA7C14058229493D22530F4DBFA336F6E0AC925139543AED44CCE7C37" +
 		"20FD51F69458705AC68CD4FE6B6B13ABDC9746512969328454F18FAF8C595F64" +
@@ -17,6 +18,11 @@ var CurrentDHPrime = newBigIntFromHex(
 		"E418FC15E83EBEA0F87FA9FF5EED70050DED2849F47BF959D956850CE929851F" +
 		"0D8115F635B105EE2E4E15D04B2454BF6F4FADF034B10403119CD8E3B92FCC5B",
 )
+
+// GetDHPrime returns a copy of the 2048-bit safe prime used for DH exchange.
+func GetDHPrime() *big.Int {
+	return new(big.Int).Set(currentDHPrime)
+}
 
 var smallPrimes = []int64{
 	3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,

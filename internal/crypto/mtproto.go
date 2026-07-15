@@ -89,9 +89,13 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	bufPool.Put(msgBuf)
 
 	var jb [1]byte
-	rand.Read(jb[:])
+	if _, err := rand.Read(jb[:]); err != nil {
+		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
+	}
 	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
-	rand.Read(padding)
+	if _, err := rand.Read(padding); err != nil {
+		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
+	}
 	dataBuf.Write(padding)
 
 	data := dataBuf.Bytes()
@@ -139,9 +143,13 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 	dataBuf.Write(bodyBytes)
 
 	var jb [1]byte
-	rand.Read(jb[:])
+	if _, err := rand.Read(jb[:]); err != nil {
+		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
+	}
 	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
-	rand.Read(padding)
+	if _, err := rand.Read(padding); err != nil {
+		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
+	}
 	dataBuf.Write(padding)
 
 	data := dataBuf.Bytes()

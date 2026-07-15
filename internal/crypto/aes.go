@@ -166,6 +166,10 @@ func ctrCrypt(data, key, iv []byte) ([]byte, error) {
 	var keystream [16]byte
 	block.Encrypt(keystream[:], ivCopy)
 
+	// CTREncrypt/CTRDecrypt allocate a fresh output buffer because they typically
+	// operate on small data (MTProxy headers, obfuscation). IGEEncrypt/IGEDecrypt
+	// use pooled buffers (getAESBuf) because they handle full message payloads
+	// which benefit from reuse (#40).
 	out := make([]byte, len(data))
 	pos := 0
 	for i := 0; i < len(data); i++ {

@@ -165,6 +165,10 @@ func (m *saltManager) IsExpired() bool {
 // WaitForValid blocks until the salt manager has a non-expired salt or ctx is
 // done. Returns true if a valid salt is available, false if the context was
 // cancelled.
+// WaitForValid blocks until a valid salt is available or ctx is cancelled.
+// Each call spawns a short-lived goroutine to watch ctx.Done() and broadcast
+// to the condvar. Under high contention this creates many goroutines; a
+// channel-based alternative would be more efficient (#34).
 func (m *saltManager) WaitForValid(ctx context.Context) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()

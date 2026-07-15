@@ -295,11 +295,17 @@ func GenerateFileKeyIV() (key, iv []byte, err error) {
 	return key, iv, nil
 }
 
-// cryptoRandIntn returns a cryptographically secure random integer in [0, n).
+// cryptoRandIntn returns a cryptographically secure random integer in [0, n)
+// using crypto/rand.Int to avoid modulo bias.
 func cryptoRandIntn(n int) int {
-	var b [4]byte
-	_, _ = cryptorand.Read(b[:])
-	return int(binary.LittleEndian.Uint32(b[:])) % n
+	if n <= 0 {
+		return 0
+	}
+	r, err := cryptorand.Int(cryptorand.Reader, big.NewInt(int64(n)))
+	if err != nil {
+		return 0
+	}
+	return int(r.Int64())
 }
 
 func padFile(data []byte) []byte {

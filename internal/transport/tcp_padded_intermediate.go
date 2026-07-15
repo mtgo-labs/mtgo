@@ -41,21 +41,14 @@ func (t *TCPPaddedIntermediate) Send(buf *bytes.Buffer) error {
 	}
 
 	packetLen := len(data) + padLen
-	var lenBytes [4]byte
-	binary.LittleEndian.PutUint32(lenBytes[:], uint32(packetLen))
-
-	if _, err := t.conn.Write(lenBytes[:]); err != nil {
-		return err
-	}
-	if _, err := t.conn.Write(data); err != nil {
-		return err
-	}
+	packet := make([]byte, 4, 4+packetLen)
+	binary.LittleEndian.PutUint32(packet[:4], uint32(packetLen))
+	packet = append(packet, data...)
 	if padLen > 0 {
-		if _, err := t.conn.Write(padding[:padLen]); err != nil {
-			return err
-		}
+		packet = append(packet, padding[:padLen]...)
 	}
-	return nil
+	_, err := t.conn.Write(packet)
+	return err
 }
 
 func (t *TCPPaddedIntermediate) Recv() ([]byte, error) {

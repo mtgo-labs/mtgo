@@ -46,16 +46,16 @@ func TestDecomposeLarge(t *testing.T) {
 }
 
 func TestCurrentDHPrime(t *testing.T) {
-	if CurrentDHPrime.Sign() <= 0 {
+	if currentDHPrime.Sign() <= 0 {
 		t.Fatal("CurrentDHPrime must be positive")
 	}
-	if CurrentDHPrime.BitLen() != 2048 {
-		t.Fatalf("CurrentDHPrime bit length: got %d, want 2048", CurrentDHPrime.BitLen())
+	if currentDHPrime.BitLen() != 2048 {
+		t.Fatalf("CurrentDHPrime bit length: got %d, want 2048", currentDHPrime.BitLen())
 	}
 }
 
 func TestCurrentDHPrimeIsPrime(t *testing.T) {
-	if !CurrentDHPrime.ProbablyPrime(64) {
+	if !currentDHPrime.ProbablyPrime(64) {
 		t.Fatal("CurrentDHPrime is not prime")
 	}
 }

@@ -35,13 +35,11 @@ func (t *TCPIntermediate) Conn() net.Conn { return t.conn }
 func (t *TCPIntermediate) Send(buf *bytes.Buffer) error {
 	data := buf.Bytes()
 
-	var header [4]byte
-	binary.LittleEndian.PutUint32(header[:], uint32(len(data)))
+	packet := make([]byte, 4+len(data))
+	binary.LittleEndian.PutUint32(packet[:4], uint32(len(data)))
+	copy(packet[4:], data)
 
-	if _, err := t.conn.Write(header[:]); err != nil {
-		return err
-	}
-	_, err := t.conn.Write(data)
+	_, err := t.conn.Write(packet)
 	return err
 }
 
@@ -53,11 +51,11 @@ func (t *TCPIntermediate) Recv() ([]byte, error) {
 		return nil, err
 	}
 
-	length := int(binary.LittleEndian.Uint32(lenBytes[:]))
-	if length > MaxPayloadLen {
+	rawLen := binary.LittleEndian.Uint32(lenBytes[:])
+	if rawLen > uint32(MaxPayloadLen) {
 		return nil, ErrPayloadTooLarge
 	}
-
+	length := int(rawLen)
 	if length == 0 {
 		return nil, nil
 	}

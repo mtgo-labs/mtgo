@@ -27,9 +27,9 @@ func TestKnownFingerprints(t *testing.T) {
 		}
 	}
 
-	if len(fps) != len(crypto.ServerPublicKeys) {
-		t.Errorf("knownFingerprints() returned %d entries, ServerPublicKeys has %d",
-			len(fps), len(crypto.ServerPublicKeys))
+	if len(fps) != crypto.ServerKeyCount() {
+		t.Errorf("knownFingerprints() returned %d entries, expected %d",
+			len(fps), crypto.ServerKeyCount())
 	}
 }
 
