@@ -39,10 +39,12 @@ func (m *mockConn) SetDeadline(t time.Time) error {
 	m.deadline = t
 	return nil
 }
+
 func (m *mockConn) SetReadDeadline(t time.Time) error {
 	m.deadline = t
 	return nil
 }
+
 func (m *mockConn) SetWriteDeadline(t time.Time) error {
 	m.deadline = t
 	return nil
@@ -59,6 +61,7 @@ func (e *errConn) Read(p []byte) (int, error) {
 	}
 	return 0, errors.New("read error")
 }
+
 func (e *errConn) Write(p []byte) (int, error) {
 	if e.writeErr != nil {
 		return 0, e.writeErr

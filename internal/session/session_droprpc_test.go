@@ -68,7 +68,8 @@ func TestSessionDropRPCRejectsPendingHandle(t *testing.T) {
 	}
 
 	// Server responds with RPCAnswerDropped.
-	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(),
+	mt.recvCh <- makeEncryptedResponse(
+		s, makeServerMsgID(),
 		uint32(s.msgFactory.AllocateSeqNo(false)),
 		&tg.RPCResult{ReqMsgID: sentEnv.MsgID, Result: &tg.RPCAnswerDropped{MsgID: targetMsgID, SeqNo: 1, Bytes: 4}},
 	)
@@ -112,7 +113,8 @@ func TestSessionDropRPCAnswerUnknown(t *testing.T) {
 	}
 
 	// Server responds with RPCAnswerUnknown.
-	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(),
+	mt.recvCh <- makeEncryptedResponse(
+		s, makeServerMsgID(),
 		uint32(s.msgFactory.AllocateSeqNo(false)),
 		&tg.RPCResult{ReqMsgID: sentEnv.MsgID, Result: &tg.RPCAnswerUnknown{}},
 	)
@@ -174,7 +176,8 @@ func TestSessionDropRPCRejectsOriginalCaller(t *testing.T) {
 	}
 
 	// Server responds with RPCAnswerDroppedRunning.
-	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(),
+	mt.recvCh <- makeEncryptedResponse(
+		s, makeServerMsgID(),
 		uint32(s.msgFactory.AllocateSeqNo(false)),
 		&tg.RPCResult{ReqMsgID: dropEnv.MsgID, Result: &tg.RPCAnswerDroppedRunning{}},
 	)

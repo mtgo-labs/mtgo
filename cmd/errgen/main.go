@@ -64,7 +64,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "format error: %v\nwriting unformatted output\n", err)
 		src = []byte(b.String())
 	}
-	if err := os.WriteFile(outputFile, src, 0644); err != nil {
+	if err := os.WriteFile(outputFile, src, 0o644); err != nil {
 	}
 
 	fmt.Printf("Generated %d error constants to %s\n", len(defs), outputFile)

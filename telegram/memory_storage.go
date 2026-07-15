@@ -75,50 +75,59 @@ func (m *MemoryStorage) SessionID() (string, error) {
 	defer m.mu.RUnlock()
 	return m.sessionID, nil
 }
+
 func (m *MemoryStorage) SetSessionID(v string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.sessionID = v
 	return nil
 }
+
 func (m *MemoryStorage) DCID() (int, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.dcID, nil
 }
+
 func (m *MemoryStorage) SetDCID(v int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.dcID = v
 	return nil
 }
+
 func (m *MemoryStorage) APIID() (int32, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.apiID, nil
 }
+
 func (m *MemoryStorage) SetAPIID(v int32) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.apiID = v
 	return nil
 }
+
 func (m *MemoryStorage) TestMode() (bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.testMode, nil
 }
+
 func (m *MemoryStorage) SetTestMode(v bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.testMode = v
 	return nil
 }
+
 func (m *MemoryStorage) AuthKey() ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return append([]byte(nil), m.authKey...), nil
 }
+
 func (m *MemoryStorage) SetAuthKey(v []byte) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -126,88 +135,104 @@ func (m *MemoryStorage) SetAuthKey(v []byte) error {
 	m.authKey = append([]byte(nil), v...)
 	return nil
 }
+
 func (m *MemoryStorage) UserID() (int64, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.userID, nil
 }
+
 func (m *MemoryStorage) SetUserID(v int64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.userID = v
 	return nil
 }
+
 func (m *MemoryStorage) IsBot() (bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.isBot, nil
 }
+
 func (m *MemoryStorage) SetIsBot(v bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.isBot = v
 	return nil
 }
+
 func (m *MemoryStorage) FirstName() (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.firstName, nil
 }
+
 func (m *MemoryStorage) SetFirstName(v string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.firstName = v
 	return nil
 }
+
 func (m *MemoryStorage) LastName() (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.lastName, nil
 }
+
 func (m *MemoryStorage) SetLastName(v string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.lastName = v
 	return nil
 }
+
 func (m *MemoryStorage) Username() (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.username, nil
 }
+
 func (m *MemoryStorage) SetUsername(v string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.username = v
 	return nil
 }
+
 func (m *MemoryStorage) APIHash() (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.apiHash, nil
 }
+
 func (m *MemoryStorage) SetAPIHash(v string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.apiHash = v
 	return nil
 }
+
 func (m *MemoryStorage) Date() (int, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.date, nil
 }
+
 func (m *MemoryStorage) SetDate(v int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.date = v
 	return nil
 }
+
 func (m *MemoryStorage) State() ([]byte, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return append([]byte(nil), m.state...), nil
 }
+
 func (m *MemoryStorage) SetState(v []byte) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()

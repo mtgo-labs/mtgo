@@ -191,7 +191,8 @@ type DeletedBusinessMessagesHandler = typedHandler[*types.DeletedMessages]
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewMessageHandler(callback any, filters ...Filter) *MessageHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.Message == nil },
 		func(c *Context) *types.Message { return c.Message },
 		func(c *Context, u *Update) { c.Message = u.Message },
@@ -208,7 +209,8 @@ func NewMessageHandler(callback any, filters ...Filter) *MessageHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewEditedMessageHandler(callback any, filters ...Filter) *EditedMessageHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.EditedMessage == nil },
 		func(c *Context) *types.Message { return c.EditedMessage },
 		func(c *Context, u *Update) { c.EditedMessage = u.EditedMessage },
@@ -225,7 +227,8 @@ func NewEditedMessageHandler(callback any, filters ...Filter) *EditedMessageHand
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewBusinessMessageHandler(callback any, filters ...Filter) *BusinessMessageHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.BusinessMessage == nil },
 		func(c *Context) *types.Message { return c.BusinessMessage },
 		func(c *Context, u *Update) { c.BusinessMessage = u.BusinessMessage },
@@ -242,7 +245,8 @@ func NewBusinessMessageHandler(callback any, filters ...Filter) *BusinessMessage
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewEditedBusinessMessageHandler(callback any, filters ...Filter) *EditedBusinessMessageHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.EditedBusinessMessage == nil },
 		func(c *Context) *types.Message { return c.EditedBusinessMessage },
 		func(c *Context, u *Update) { c.EditedBusinessMessage = u.EditedBusinessMessage },
@@ -262,7 +266,8 @@ func NewEditedBusinessMessageHandler(callback any, filters ...Filter) *EditedBus
 // Optional filters further restrict which updates trigger the handler.
 func NewGuestMessageHandler(callback any, filters ...Filter) *GuestMessageHandler {
 	allFilters := append([]Filter{GuestMessage}, filters...)
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.Message == nil },
 		func(c *Context) *types.Message { return c.Message },
 		func(c *Context, u *Update) { c.Message = u.Message },
@@ -280,7 +285,8 @@ func NewGuestMessageHandler(callback any, filters ...Filter) *GuestMessageHandle
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewCallbackQueryHandler(callback any, filters ...Filter) *CallbackQueryHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.CallbackQuery == nil },
 		func(c *Context) *types.CallbackQuery { return c.CallbackQuery },
 		func(c *Context, u *Update) { c.CallbackQuery = u.CallbackQuery },
@@ -297,7 +303,8 @@ func NewCallbackQueryHandler(callback any, filters ...Filter) *CallbackQueryHand
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewInlineQueryHandler(callback any, filters ...Filter) *InlineQueryHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.InlineQuery == nil },
 		func(c *Context) *types.InlineQuery { return c.InlineQuery },
 		func(c *Context, u *Update) { c.InlineQuery = u.InlineQuery },
@@ -314,7 +321,8 @@ func NewInlineQueryHandler(callback any, filters ...Filter) *InlineQueryHandler 
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewChosenInlineResultHandler(callback any, filters ...Filter) *ChosenInlineResultHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ChosenInlineResult == nil },
 		func(c *Context) *types.ChosenInlineResult { return c.ChosenInlineResult },
 		func(c *Context, u *Update) { c.ChosenInlineResult = u.ChosenInlineResult },
@@ -331,7 +339,8 @@ func NewChosenInlineResultHandler(callback any, filters ...Filter) *ChosenInline
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewUserStatusHandler(callback any, filters ...Filter) *UserStatusHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.UserStatus == nil },
 		func(c *Context) *types.UserStatusUpdated { return c.UserStatus },
 		func(c *Context, u *Update) { c.UserStatus = u.UserStatus },
@@ -348,7 +357,8 @@ func NewUserStatusHandler(callback any, filters ...Filter) *UserStatusHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewChatMemberHandler(callback any, filters ...Filter) *ChatMemberHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ChatMember == nil },
 		func(c *Context) *types.ChatMemberUpdated { return c.ChatMember },
 		func(c *Context, u *Update) { c.ChatMember = u.ChatMember },
@@ -365,7 +375,8 @@ func NewChatMemberHandler(callback any, filters ...Filter) *ChatMemberHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewMessageReactionHandler(callback any, filters ...Filter) *MessageReactionHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.MessageReaction == nil },
 		func(c *Context) *types.MessageReactionUpdate { return c.MessageReaction },
 		func(c *Context, u *Update) { c.MessageReaction = u.MessageReaction },
@@ -382,7 +393,8 @@ func NewMessageReactionHandler(callback any, filters ...Filter) *MessageReaction
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewMessageReactionCountHandler(callback any, filters ...Filter) *MessageReactionCountHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.MessageReactionCount == nil },
 		func(c *Context) *types.MessageReactionCountUpdate { return c.MessageReactionCount },
 		func(c *Context, u *Update) { c.MessageReactionCount = u.MessageReactionCount },
@@ -399,7 +411,8 @@ func NewMessageReactionCountHandler(callback any, filters ...Filter) *MessageRea
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewPollHandler(callback any, filters ...Filter) *PollHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.Poll == nil },
 		func(c *Context) *types.PollUpdated { return c.Poll },
 		func(c *Context, u *Update) { c.Poll = u.Poll },
@@ -416,7 +429,8 @@ func NewPollHandler(callback any, filters ...Filter) *PollHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewBusinessConnectionHandler(callback any, filters ...Filter) *BusinessConnectionHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.BusinessConnection == nil },
 		func(c *Context) *types.BusinessConnection { return c.BusinessConnection },
 		func(c *Context, u *Update) { c.BusinessConnection = u.BusinessConnection },
@@ -433,7 +447,8 @@ func NewBusinessConnectionHandler(callback any, filters ...Filter) *BusinessConn
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewStoryHandler(callback any, filters ...Filter) *StoryHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.Story == nil },
 		func(c *Context) *types.Story { return c.Story },
 		func(c *Context, u *Update) { c.Story = u.Story },
@@ -450,7 +465,8 @@ func NewStoryHandler(callback any, filters ...Filter) *StoryHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewChatBoostHandler(callback any, filters ...Filter) *ChatBoostHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ChatBoost == nil },
 		func(c *Context) *types.ChatBoostUpdated { return c.ChatBoost },
 		func(c *Context, u *Update) { c.ChatBoost = u.ChatBoost },
@@ -467,7 +483,8 @@ func NewChatBoostHandler(callback any, filters ...Filter) *ChatBoostHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewChatJoinRequestHandler(callback any, filters ...Filter) *ChatJoinRequestHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ChatJoinRequest == nil },
 		func(c *Context) *types.ChatJoinRequest { return c.ChatJoinRequest },
 		func(c *Context, u *Update) { c.ChatJoinRequest = u.ChatJoinRequest },
@@ -484,7 +501,8 @@ func NewChatJoinRequestHandler(callback any, filters ...Filter) *ChatJoinRequest
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewPreCheckoutQueryHandler(callback any, filters ...Filter) *PreCheckoutQueryHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.PreCheckoutQuery == nil },
 		func(c *Context) *types.PreCheckoutQuery { return c.PreCheckoutQuery },
 		func(c *Context, u *Update) { c.PreCheckoutQuery = u.PreCheckoutQuery },
@@ -501,7 +519,8 @@ func NewPreCheckoutQueryHandler(callback any, filters ...Filter) *PreCheckoutQue
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewShippingQueryHandler(callback any, filters ...Filter) *ShippingQueryHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ShippingQuery == nil },
 		func(c *Context) *types.ShippingQuery { return c.ShippingQuery },
 		func(c *Context, u *Update) { c.ShippingQuery = u.ShippingQuery },
@@ -518,7 +537,8 @@ func NewShippingQueryHandler(callback any, filters ...Filter) *ShippingQueryHand
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewPurchasedPaidMediaHandler(callback any, filters ...Filter) *PurchasedPaidMediaHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.PurchasedPaidMedia == nil },
 		func(c *Context) *types.PurchasedPaidMedia { return c.PurchasedPaidMedia },
 		func(c *Context, u *Update) { c.PurchasedPaidMedia = u.PurchasedPaidMedia },
@@ -535,7 +555,8 @@ func NewPurchasedPaidMediaHandler(callback any, filters ...Filter) *PurchasedPai
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewManagedBotHandler(callback any, filters ...Filter) *ManagedBotHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.ManagedBot == nil },
 		func(c *Context) *types.ManagedBotUpdated { return c.ManagedBot },
 		func(c *Context, u *Update) { c.ManagedBot = u.ManagedBot },
@@ -552,7 +573,8 @@ func NewManagedBotHandler(callback any, filters ...Filter) *ManagedBotHandler {
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewDeletedMessagesHandler(callback any, filters ...Filter) *DeletedMessagesHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.DeletedMessages == nil },
 		func(c *Context) *types.DeletedMessages { return c.DeletedMessages },
 		func(c *Context, u *Update) { c.DeletedMessages = u.DeletedMessages },
@@ -569,7 +591,8 @@ func NewDeletedMessagesHandler(callback any, filters ...Filter) *DeletedMessages
 //
 // Optional filters further restrict which updates trigger the handler.
 func NewDeletedBusinessMessagesHandler(callback any, filters ...Filter) *DeletedBusinessMessagesHandler {
-	return newTypedHandler(callback,
+	return newTypedHandler(
+		callback,
 		func(u *Update) bool { return u.DeletedBusinessMessages == nil },
 		func(c *Context) *types.DeletedMessages { return c.DeletedBusinessMessages },
 		func(c *Context, u *Update) { c.DeletedBusinessMessages = u.DeletedBusinessMessages },

@@ -10,7 +10,8 @@ import (
 
 func TestDcAuthManager(t *testing.T) {
 	var exports, imports int
-	mgr := NewDcAuthManager(2,
+	mgr := NewDcAuthManager(
+		2,
 		func(ctx context.Context, fromDC, toDC int) (*tg.AuthExportedAuthorization, error) {
 			exports++
 			if fromDC != 2 || toDC != 4 {
@@ -47,7 +48,8 @@ func TestDcAuthManager(t *testing.T) {
 
 func TestDcAuthManagerRetry(t *testing.T) {
 	var exports int
-	mgr := NewDcAuthManager(2,
+	mgr := NewDcAuthManager(
+		2,
 		func(ctx context.Context, fromDC, toDC int) (*tg.AuthExportedAuthorization, error) {
 			exports++
 			if exports == 1 {

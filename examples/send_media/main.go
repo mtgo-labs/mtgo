@@ -38,7 +38,8 @@ func main() {
 	// ── SendPhoto ────────────────────────────────────────────
 
 	// from file path
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.Path("photo.jpg"),
 		"photo from disk",
 		&params.SendPhoto{ReplyToMessageID: 1},
@@ -46,21 +47,24 @@ func main() {
 	printResult("SendPhoto (path)", msg, err)
 
 	// from URL
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.URL("https://example.com/photo.jpg"),
 		"photo from URL",
 	)
 	printResult("SendPhoto (url)", msg, err)
 
 	// from file_id (already uploaded)
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.FileID("AgACAgIAAxkBAAI..."),
 		"photo by file_id",
 	)
 	printResult("SendPhoto (file_id)", msg, err)
 
 	// from bytes
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.FromBytes([]byte("...png bytes..."), "pic.png"),
 		"photo from bytes",
 	)
@@ -68,7 +72,8 @@ func main() {
 
 	// ── SendVideo ────────────────────────────────────────────
 
-	msg, err = client.SendVideo(ctx, chatID,
+	msg, err = client.SendVideo(
+		ctx, chatID,
 		telegram.Path("clip.mp4"),
 		"video from disk",
 		&params.SendVideo{
@@ -80,14 +85,16 @@ func main() {
 	)
 	printResult("SendVideo (path)", msg, err)
 
-	msg, err = client.SendVideo(ctx, chatID,
+	msg, err = client.SendVideo(
+		ctx, chatID,
 		telegram.URL("https://example.com/clip.mp4"),
 		"video from URL",
 		&params.SendVideo{SupportsStreaming: true},
 	)
 	printResult("SendVideo (url)", msg, err)
 
-	msg, err = client.SendVideo(ctx, chatID,
+	msg, err = client.SendVideo(
+		ctx, chatID,
 		telegram.FromIDs(123456, 789, nil),
 		"video by file_id",
 	)
@@ -95,7 +102,8 @@ func main() {
 
 	// ── SendAudio ────────────────────────────────────────────
 
-	msg, err = client.SendAudio(ctx, chatID,
+	msg, err = client.SendAudio(
+		ctx, chatID,
 		telegram.Path("song.mp3"),
 		"here is a song",
 		&params.SendAudio{
@@ -106,7 +114,8 @@ func main() {
 	)
 	printResult("SendAudio (path)", msg, err)
 
-	msg, err = client.SendAudio(ctx, chatID,
+	msg, err = client.SendAudio(
+		ctx, chatID,
 		telegram.URL("https://example.com/track.mp3"),
 		"audio from URL",
 	)
@@ -114,7 +123,8 @@ func main() {
 
 	// ── SendDocument ─────────────────────────────────────────
 
-	msg, err = client.SendDocument(ctx, chatID,
+	msg, err = client.SendDocument(
+		ctx, chatID,
 		telegram.Path("report.pdf"),
 		"here is the report",
 		&params.SendDocument{
@@ -123,7 +133,8 @@ func main() {
 	)
 	printResult("SendDocument (path)", msg, err)
 
-	msg, err = client.SendDocument(ctx, chatID,
+	msg, err = client.SendDocument(
+		ctx, chatID,
 		telegram.URL("https://example.com/file.zip"),
 		"document from URL",
 	)
@@ -131,13 +142,15 @@ func main() {
 
 	// ── SendAnimation ────────────────────────────────────────
 
-	msg, err = client.SendAnimation(ctx, chatID,
+	msg, err = client.SendAnimation(
+		ctx, chatID,
 		telegram.Path("meme.gif"),
 		"funny gif",
 	)
 	printResult("SendAnimation (path)", msg, err)
 
-	msg, err = client.SendAnimation(ctx, chatID,
+	msg, err = client.SendAnimation(
+		ctx, chatID,
 		telegram.URL("https://example.com/cat.gif"),
 		"gif from URL",
 		&params.SendAnimation{FileName: "cat.gif"},
@@ -146,14 +159,16 @@ func main() {
 
 	// ── SendVoice ────────────────────────────────────────────
 
-	msg, err = client.SendVoice(ctx, chatID,
+	msg, err = client.SendVoice(
+		ctx, chatID,
 		telegram.Path("voice.ogg"),
 		"voice message",
 		&params.SendVoice{Duration: 15},
 	)
 	printResult("SendVoice (path)", msg, err)
 
-	msg, err = client.SendVoice(ctx, chatID,
+	msg, err = client.SendVoice(
+		ctx, chatID,
 		telegram.FromBytes([]byte("...ogg bytes..."), "note.ogg"),
 		"voice from bytes",
 	)
@@ -162,13 +177,15 @@ func main() {
 	// ── SendVideoNote ────────────────────────────────────────
 	// round video notes — no caption
 
-	msg, err = client.SendVideoNote(ctx, chatID,
+	msg, err = client.SendVideoNote(
+		ctx, chatID,
 		telegram.Path("round.mp4"),
 		&params.SendVideoNote{Duration: 6.0},
 	)
 	printResult("SendVideoNote (path)", msg, err)
 
-	msg, err = client.SendVideoNote(ctx, chatID,
+	msg, err = client.SendVideoNote(
+		ctx, chatID,
 		telegram.FromIDs(111, 222, nil),
 	)
 	printResult("SendVideoNote (file_id)", msg, err)
@@ -176,18 +193,21 @@ func main() {
 	// ── SendSticker ──────────────────────────────────────────
 	// stickers — no caption
 
-	msg, err = client.SendSticker(ctx, chatID,
+	msg, err = client.SendSticker(
+		ctx, chatID,
 		telegram.Path("sticker.webp"),
 	)
 	printResult("SendSticker (path)", msg, err)
 
-	msg, err = client.SendSticker(ctx, chatID,
+	msg, err = client.SendSticker(
+		ctx, chatID,
 		telegram.FileID("CAACAgIAAxkBAAI..."),
 		&params.SendSticker{ReplyToMessageID: 5},
 	)
 	printResult("SendSticker (file_id)", msg, err)
 
-	msg, err = client.SendSticker(ctx, chatID,
+	msg, err = client.SendSticker(
+		ctx, chatID,
 		telegram.URL("https://example.com/sticker.webp"),
 	)
 	printResult("SendSticker (url)", msg, err)

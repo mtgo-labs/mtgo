@@ -36,7 +36,8 @@ func main() {
 
 	// ── Upload + SendDocument ─────────────────────────────────
 
-	msg, err := client.SendDocument(ctx, chatID,
+	msg, err := client.SendDocument(
+		ctx, chatID,
 		telegram.Path("report.pdf"),
 		"uploaded document from disk",
 		&params.SendDocument{
@@ -47,7 +48,8 @@ func main() {
 
 	// ── Upload + SendPhoto ────────────────────────────────────
 
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.Path("photo.jpg"),
 		"uploaded photo from disk",
 	)
@@ -55,7 +57,8 @@ func main() {
 
 	// ── Upload + SendVideo ────────────────────────────────────
 
-	msg, err = client.SendVideo(ctx, chatID,
+	msg, err = client.SendVideo(
+		ctx, chatID,
 		telegram.Path("clip.mp4"),
 		"uploaded video from disk",
 		&params.SendVideo{
@@ -69,7 +72,8 @@ func main() {
 
 	// ── Upload + SendAudio ────────────────────────────────────
 
-	msg, err = client.SendAudio(ctx, chatID,
+	msg, err = client.SendAudio(
+		ctx, chatID,
 		telegram.Path("song.mp3"),
 		"uploaded audio from disk",
 		&params.SendAudio{
@@ -82,7 +86,8 @@ func main() {
 
 	// ── Upload + SendAnimation ────────────────────────────────
 
-	msg, err = client.SendAnimation(ctx, chatID,
+	msg, err = client.SendAnimation(
+		ctx, chatID,
 		telegram.Path("meme.gif"),
 		"uploaded gif from disk",
 	)
@@ -90,7 +95,8 @@ func main() {
 
 	// ── Upload from URL ───────────────────────────────────────
 
-	msg, err = client.SendPhoto(ctx, chatID,
+	msg, err = client.SendPhoto(
+		ctx, chatID,
 		telegram.URL("https://example.com/photo.jpg"),
 		"photo from URL",
 	)
@@ -98,7 +104,8 @@ func main() {
 
 	// ── Upload from bytes ─────────────────────────────────────
 
-	msg, err = client.SendDocument(ctx, chatID,
+	msg, err = client.SendDocument(
+		ctx, chatID,
 		telegram.FromBytes([]byte("hello world"), "hello.txt"),
 		"document from bytes",
 	)
