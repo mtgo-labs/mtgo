@@ -475,8 +475,12 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 	}
 
 	query := input
-	if !d.apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(d.client.config(), input)
+	if needsInitConnection(input) {
+		if !d.apiInit {
+			query = wrapInitConnection(d.client.config(), input)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
+		}
 	}
 
 	result, err := d.sess.Invoke(ctx, query, 2, timeout)
@@ -498,8 +502,12 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 
 func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	query := input
-	if !d.apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(d.client.config(), input)
+	if needsInitConnection(input) {
+		if !d.apiInit {
+			query = wrapInitConnection(d.client.config(), input)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
+		}
 	}
 
 	data, err := d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)

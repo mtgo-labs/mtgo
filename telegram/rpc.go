@@ -41,8 +41,12 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	apiInit := ci.client.apiInit.Load()
 
 	query := input
-	if !apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(cfg, input)
+	if needsInitConnection(input) {
+		if !apiInit {
+			query = wrapInitConnection(cfg, input)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
+		}
 	}
 
 	ci.client.Log.Debugf("RPC invoke method=%T timeout=%s", input, timeout)
@@ -94,8 +98,12 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 	cfg := ci.client.config()
 
 	query := input
-	if !apiInit && needsInitConnection(input) {
-		query = wrapInitConnection(cfg, input)
+	if needsInitConnection(input) {
+		if !apiInit {
+			query = wrapInitConnection(cfg, input)
+		} else {
+			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
+		}
 	}
 
 	data, err := ci.client.InvokeWithRawResult(ctx, query)
