@@ -129,12 +129,14 @@ type Config struct {
 	// PhoneNumber when authenticating as a bot.
 	BotToken string
 	// SessionString is a string-encoded session (Telethon, Pyrogram, GramJS,
-	// mtcute, or auto-detected format). The client decodes it internally
-	// during initialization; errors are returned from Connect/Start.
+	// mtcute, or other supported formats; auto-detected via
+	// session-converter). The client decodes it internally during
+	// initialization; errors are returned from Connect/Start.
 	//
-	//   session.StringSession("auto_detect")
-	//   session.TelethonSession("1abc...")
-	//   session.PyrogramSession("base64...")
+	// Set this field directly with the session string. Use the tgconv CLI
+	// or the session-converter Go package to convert between formats:
+	//
+	//   https://github.com/mtgo-labs/session-converter
 	//
 	SessionString string
 	// PhoneNumber is the phone number of the Telegram account to authorize,

@@ -46,13 +46,15 @@ go test -bench=BenchmarkSessionRPCResult -benchmem ./internal/session/
 
 ## Monorepo Layout
 
-This repo is part of the `mtgo-labs` workspace. `go.mod` has `replace` directives pointing to sibling `../storage` and `../storage/sqlite` — both must exist locally for `go build` and `go test` to work.
+This repo is part of the `mtgo-labs` workspace.
 
 ```
 mtgo-labs/
-├── mtgo/           ← this repo (module: github.com/mtgo-labs/mtgo)
-├── storage/        ← storage interfaces (required by replace)
-└── storage/sqlite/ ← SQLite adapter (required by replace)
+├── mtgo/               ← this repo (module: github.com/mtgo-labs/mtgo)
+├── session-converter/  ← session string converter library
+├── session-generator/  ← tgconv CLI for session conversion + generation
+├── storage/            ← storage interfaces
+└── storage/sqlite/     ← SQLite adapter
 ```
 
 Key packages:
@@ -67,17 +69,15 @@ Key packages:
 | `internal/transport/` | TCP transports (abridged, intermediate, full, obfuscated, WS) | Yes |
 | `internal/storage/` | Storage adapter wrapper | Yes |
 | `telegram/` | High-level client API, handlers, filters, middleware, plugins | Yes |
-| `session/` | Session string import/export (Telethon, Pyrogram, GramJS, mtcute) | Yes |
 | `mtproxy/` | MTProxy obfuscated2/fake-TLS transport | Yes |
 | `cmd/tlgen/` | TL schema code generator | Yes |
 | `cmd/errgen/` | Error type generator | Yes |
 
-## Code Generation
-
-```bash
-go run cmd/tlgen/main.go    # regenerates tg/*_gen.go files
-go run cmd/errgen/main.go   # regenerates tgerr/errors_gen.go
-```
+Session string conversion (Telethon, Pyrogram, GramJS, mtcute, MTKruto, gogram,
+gotgproto) is provided by the external
+[session-converter](https://github.com/mtgo-labs/session-converter) package.
+The CLI tool for session conversion and generation lives in
+[session-generator](https://github.com/mtgo-labs/session-generator).
 
 Never edit `*_gen.go` files directly. If a TL type is missing or wrong, fix the schema/compiler and regenerate.
 

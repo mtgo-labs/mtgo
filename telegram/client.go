@@ -30,7 +30,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/internal/storage"
 
-	sessions "github.com/mtgo-labs/mtgo/session"
+	tgconv "github.com/mtgo-labs/session-converter"
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -1108,23 +1108,23 @@ func (c *Client) importSessionString(st storage.Storage) error {
 		}
 		return nil
 	}
-	src, err := sessions.StringSession(c.config().SessionString)
+	src, _, err := tgconv.Decode(c.config().SessionString)
 	if err != nil {
 		return fmt.Errorf("telegram: decode session string: %w", err)
 	}
-	if dc, _ := src.DCID(); dc > 0 {
-		if err := st.SetDCID(dc); err != nil {
+	if src.DCID > 0 {
+		if err := st.SetDCID(src.DCID); err != nil {
 			return fmt.Errorf("telegram: import session dc_id: %w", err)
 		}
 	}
-	if key, _ := src.AuthKey(); len(key) > 0 {
-		if err := st.SetAuthKey(key); err != nil {
+	if len(src.AuthKey) > 0 {
+		if err := st.SetAuthKey(src.AuthKey); err != nil {
 			return fmt.Errorf("telegram: import session auth key: %w", err)
 		}
 	}
 	if c.config().APIID == 0 {
-		if appID, _ := src.APIID(); appID > 0 {
-			c.updateConfig(func(cfg *Config) { cfg.APIID = appID })
+		if src.AppID > 0 {
+			c.updateConfig(func(cfg *Config) { cfg.APIID = src.AppID })
 		}
 	}
 	if c.config().APIID == 0 {
@@ -1133,15 +1133,13 @@ func (c *Client) importSessionString(st storage.Storage) error {
 	if err := st.SetAPIID(c.config().APIID); err != nil {
 		return fmt.Errorf("telegram: import session api_id: %w", err)
 	}
-	if uid, err := src.UserID(); err == nil && uid != 0 {
-		if err := st.SetUserID(uid); err != nil {
+	if src.UserID != 0 {
+		if err := st.SetUserID(src.UserID); err != nil {
 			return fmt.Errorf("telegram: import session user_id: %w", err)
 		}
 	}
-	if isBot, err := src.IsBot(); err == nil {
-		if err := st.SetIsBot(isBot); err != nil {
-			c.Log.Warnf("import session is_bot: %v", err)
-		}
+	if err := st.SetIsBot(src.IsBot); err != nil {
+		c.Log.Warnf("import session is_bot: %v", err)
 	}
 	return nil
 }

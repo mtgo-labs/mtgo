@@ -10,8 +10,8 @@ import (
 	"github.com/mtgo-labs/mtgo/telegram/types"
 )
 
-// import_session demonstrates using a session string from any format
-// (Telethon, Pyrogram, GramJS, mtcute) with auto-detection.
+// import_session demonstrates using a session string from any supported
+// format (Telethon, Pyrogram, GramJS, mtcute, etc.) with auto-detection.
 //
 // Required environment variables:
 //   - API_ID:     your Telegram API ID
@@ -23,7 +23,7 @@ import (
 //	# From a Telethon string:
 //	SESSION="1abc..." go run .
 //
-//	# From a Pyrogram string (auto-converted):
+//	# From a Pyrogram string (auto-detected):
 //	SESSION="base64..." go run .
 func main() {
 	apiID := mustEnv("API_ID")
