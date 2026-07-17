@@ -799,7 +799,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := query.Encode(&buf); err != nil {
-		return nil, fmt.Errorf("session: invoke raw: encode query: %w", err)
+		return nil, fmt.Errorf("encode query: %w", err)
 	}
 	bodyBytes := buf.Bytes()
 
@@ -813,12 +813,12 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
 			}
-			lastErr = fmt.Errorf("invoke raw: send: %w", err)
+			lastErr = fmt.Errorf("send: %w", err)
 			continue
 		}
 
 		if len(data) < 4 {
-			lastErr = fmt.Errorf("invoke raw: rpc result too short: %d", len(data))
+			lastErr = fmt.Errorf("rpc result too short: %d", len(data))
 			continue
 		}
 
@@ -829,9 +829,9 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 		return data, nil
 	}
 	if lastErr == nil {
-		return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d)", retries)
+		return nil, fmt.Errorf("retries exhausted (%d)", retries)
 	}
-	return nil, fmt.Errorf("session: invoke raw: retries exhausted (%d): %w", retries, lastErr)
+	return nil, fmt.Errorf("retries exhausted (%d): %w", retries, lastErr)
 }
 
 func checkRawRPCError(data []byte) error {
@@ -849,7 +849,7 @@ func checkRawRPCError(data []byte) error {
 		return nil
 	}
 	parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-	return fmt.Errorf("invoke raw: %w", parsed)
+	return parsed
 }
 
 // Invoke sends an RPC query and decodes the response into a TLObject.
@@ -880,7 +880,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
 			}
-			lastErr = fmt.Errorf("invoke %s: send: %w", methodName, err)
+			lastErr = fmt.Errorf("send: %w", err)
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
 			} else {
@@ -895,15 +895,15 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		if bad, ok := obj.(tg.BadMsgNotificationClass); ok {
 			switch v := bad.(type) {
 			case *tg.BadMsgNotification:
-				lastErr = fmt.Errorf("invoke %s: bad message (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
+				lastErr = fmt.Errorf("bad message (msg_id=%d, code=%d)", msgID, v.ErrorCode)
 			case *tg.BadServerSalt:
-				lastErr = fmt.Errorf("invoke %s: bad server salt (msg_id=%d, code=%d)", methodName, msgID, v.ErrorCode)
+				lastErr = fmt.Errorf("bad server salt (msg_id=%d, code=%d)", msgID, v.ErrorCode)
 				if badSaltRetries == 0 && i+1 >= maxAttempts {
 					badSaltRetries++
 					maxAttempts++
 				}
 			default:
-				lastErr = fmt.Errorf("invoke %s: bad message notification: %T", methodName, bad)
+				lastErr = fmt.Errorf("bad message notification: %T", bad)
 			}
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
@@ -929,7 +929,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				if s.log != nil {
 					s.log.Warnf("chain msg wait failed method=%s chain_id=%d, retrying unwrapped", methodName, chainID)
 				}
-				lastErr = fmt.Errorf("invoke %s: chain msg wait failed", methodName)
+				lastErr = fmt.Errorf("chain msg wait failed")
 				backoff = 100 * time.Millisecond
 				maxAttempts++
 				continue
@@ -943,7 +943,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				if s.log != nil {
 					s.log.Warnf("connection not inited method=%s attempt=%d", methodName, i+1)
 				}
-				lastErr = fmt.Errorf("invoke %s: connection not inited", methodName)
+				lastErr = fmt.Errorf("connection not inited")
 				backoff = 100 * time.Millisecond
 				maxAttempts++
 				continue
@@ -963,7 +963,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 					return nil, ErrSessionClosed
 				case <-time.After(1 * time.Second):
 				}
-				lastErr = fmt.Errorf("invoke %s: persistent timestamp outdated", methodName)
+				lastErr = fmt.Errorf("persistent timestamp outdated")
 				backoff = 0
 				maxAttempts++
 				continue
@@ -979,9 +979,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 						s.log.Warnf("auth key perm empty method=%s, rebinding temp key", methodName)
 					}
 					if err := pfs.Bind(ctx, s.sessionID, s.Invoke); err != nil {
-						return nil, fmt.Errorf("invoke %s: auth key perm empty: rebind failed: %w", methodName, err)
+						return nil, fmt.Errorf("auth key perm empty: rebind failed: %w", err)
 					}
-					lastErr = fmt.Errorf("invoke %s: auth key perm empty, temp key rebound", methodName)
+					lastErr = fmt.Errorf("auth key perm empty, temp key rebound")
 					backoff = 0
 					maxAttempts++
 					continue
@@ -990,9 +990,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			}
 
 			if rpcErr.ErrorCode == 401 || rpcErr.ErrorCode == 400 || rpcErr.ErrorCode == 403 {
-				return nil, fmt.Errorf("invoke %s: %w", methodName, parsed)
+				return nil, parsed
 			}
-			lastErr = fmt.Errorf("invoke %s: %w", methodName, parsed)
+			lastErr = parsed
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
 			} else {
@@ -1010,9 +1010,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		return obj, nil
 	}
 	if lastErr == nil {
-		return nil, fmt.Errorf("invoke %s: retries exhausted (%d)", methodName, retries)
+		return nil, fmt.Errorf("retries exhausted (%d)", retries)
 	}
-	return nil, fmt.Errorf("invoke %s: retries exhausted (%d): %w", methodName, retries, lastErr)
+	return nil, fmt.Errorf("retries exhausted (%d): %w", retries, lastErr)
 }
 
 // DropRPC sends rpc_drop_answer for the given msg_id, asking the server to

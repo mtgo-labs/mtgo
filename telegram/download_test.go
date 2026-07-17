@@ -370,7 +370,7 @@ func TestIsRecoverableDownloadError(t *testing.T) {
 		{"bare session closed", errors.New("send: session: closed"), true},
 		{
 			"wrapped session closed",
-			errors.New("download: get file at offset 0: invoke *tg.UploadGetFileRequest(cid=be5335be): retries exhausted (2): invoke *tg.UploadGetFileRequest(cid=be5335be): send: session: closed"),
+			errors.New("download: get file at offset 0: retries exhausted (2): send: session: closed"),
 			true,
 		},
 	}
@@ -399,8 +399,8 @@ func TestRecoverDownloadRPC_EvictsDeadCrossDCSession(t *testing.T) {
 	// Recreation fails fast (no network in unit tests).
 	c.testDialer = transport.Dialer(failingDialer{})
 
-	// The exact error the user reported.
-	downloadErr := errors.New("download: get file at offset 0: invoke *tg.UploadGetFileRequest(cid=be5335be): retries exhausted (2): invoke *tg.UploadGetFileRequest(cid=be5335be): send: session: closed")
+	// The error the user reported (new clean format: no Go type leak, no invoke prefix).
+	downloadErr := errors.New("download: get file at offset 0: retries exhausted (2): send: session: closed")
 
 	_, recovered, err := c.recoverDownloadRPC(context.Background(), 4, downloadErr)
 

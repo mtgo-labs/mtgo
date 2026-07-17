@@ -1872,10 +1872,8 @@ func (c *Client) migrateExportImport(ctx context.Context, targetDC int, query tg
 	return rpc.Invoke(ctx, query, nil)
 }
 
-// Invoke sends a TLObject query through the primary session with the given retry count and timeout.
-// The provided context is used for cancellation: when cancelled after the message has been sent,
-// an RPCDropAnswerRequest is sent to the server. It wraps errors from the session with a
-// "client: invoke:" prefix.
+// Invoke sends a TLObject query through the primary session. If the query needs
+// initialization, it is wrapped in InvokeWithLayer+InitConnection automatically.
 //
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
@@ -1931,7 +1929,7 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
 			return c.handleMigrationError(ctx, rpcErr, query)
 		}
-		return nil, fmt.Errorf("client: invoke: %w", err)
+		return nil, err
 	}
 	if !apiInit && needsInitConnection(query) {
 		c.apiInit.Store(true)
