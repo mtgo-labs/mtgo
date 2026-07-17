@@ -258,9 +258,12 @@ func encodeResultToJSON(obj tg.TLObject, useSnakeCase bool) ([]byte, error) {
 		return nil, fmt.Errorf("telegram: marshal result: %w", err)
 	}
 
+	// Non-object results (e.g. BoolTrue/BoolFalse → JSON true/false) cannot
+	// be unmarshaled into a map. Return the marshaled data directly — there
+	// are no keys to convert or constructor tag to inject.
 	var raw map[string]any
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, fmt.Errorf("telegram: unmarshal result: %w", err)
+		return data, nil
 	}
 
 	tlName, hasName := getIDToName()[obj.ConstructorID()]
