@@ -180,7 +180,12 @@ func TestConnStateBackwardCompat(t *testing.T) {
 }
 
 func TestBackoffConfig(t *testing.T) {
-	cfg := defaultBackoffConfig
+	// Use a jitter-free config for deterministic delay checks.
+	cfg := backoffConfig{
+		BaseDelay:  1 * time.Second,
+		MaxDelay:   60 * time.Second,
+		Multiplier: 2.0,
+	}
 
 	if d := cfg.delay(0); d != cfg.BaseDelay {
 		t.Fatalf("delay(0) = %v, want %v", d, cfg.BaseDelay)
@@ -190,6 +195,16 @@ func TestBackoffConfig(t *testing.T) {
 	}
 	if d := cfg.delay(10); d != cfg.MaxDelay {
 		t.Fatalf("delay(10) = %v, want MaxDelay %v", d, cfg.MaxDelay)
+	}
+
+	// Verify jitter is applied when Jitter > 0.
+	jittered := defaultBackoffConfig // Jitter: 0.1
+	base := time.Duration(float64(jittered.BaseDelay) * jittered.Multiplier)
+	d := jittered.delay(1)
+	lo := time.Duration(float64(base) * (1 - jittered.Jitter))
+	hi := time.Duration(float64(base) * (1 + jittered.Jitter))
+	if d < lo || d > hi {
+		t.Fatalf("jittered delay(1) = %v, want within [%v, %v]", d, lo, hi)
 	}
 }
 

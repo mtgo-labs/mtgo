@@ -7,25 +7,18 @@ import (
 
 var (
 	globalClientsMu sync.Mutex
-	globalClients   []*Client
+	globalClients   = make(map[*Client]struct{})
 )
 
 func registerClient(c *Client) {
 	globalClientsMu.Lock()
-	globalClients = append(globalClients, c)
+	globalClients[c] = struct{}{}
 	globalClientsMu.Unlock()
 }
 
 func unregisterClient(c *Client) {
 	globalClientsMu.Lock()
-	for i, cl := range globalClients {
-		if cl == c {
-			globalClients[i] = globalClients[len(globalClients)-1]
-			globalClients[len(globalClients)-1] = nil
-			globalClients = globalClients[:len(globalClients)-1]
-			break
-		}
-	}
+	delete(globalClients, c)
 	globalClientsMu.Unlock()
 }
 
@@ -42,8 +35,10 @@ func unregisterClient(c *Client) {
 //	telegram.Idle()
 func Idle() {
 	globalClientsMu.Lock()
-	clients := make([]*Client, len(globalClients))
-	copy(clients, globalClients)
+	clients := make([]*Client, 0, len(globalClients))
+	for c := range globalClients {
+		clients = append(clients, c)
+	}
 	globalClientsMu.Unlock()
 
 	var wg sync.WaitGroup
