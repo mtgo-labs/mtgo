@@ -205,6 +205,9 @@ var (
 	// ErrSocks4Domain is returned when a SOCKS4 proxy receives a domain name
 	// instead of an IP address, which SOCKS4 does not support.
 	ErrProxyResponseTooLarge = errors.New("response too large")
+	// ErrNetworkChanged identifies an application-reported interface or route
+	// change that invalidated active transports.
+	ErrNetworkChanged = errors.New("telegram: network changed")
 )
 
 // Business, secret chat, forum, and group call errors.
@@ -386,3 +389,25 @@ type UnsafeMigrationError struct {
 func (e *UnsafeMigrationError) Error() string {
 	return fmt.Sprintf("client: refusing to retry non-idempotent %q after dc migration to dc %d", e.Method, e.TargetDC)
 }
+
+// RPCDeliveryState describes what Telegram confirmed before a disconnect.
+type RPCDeliveryState string
+
+const (
+	RPCDeliveryUnknown  RPCDeliveryState = "unknown"
+	RPCDeliveryReceived RPCDeliveryState = "received"
+)
+
+// RPCDeliveryError is returned instead of automatically replaying a query
+// that may already have produced side effects.
+type RPCDeliveryError struct {
+	Method string
+	State  RPCDeliveryState
+	Err    error
+}
+
+func (e *RPCDeliveryError) Error() string {
+	return fmt.Sprintf("client: RPC %s delivery is %s; automatic replay refused: %v", e.Method, e.State, e.Err)
+}
+
+func (e *RPCDeliveryError) Unwrap() error { return e.Err }

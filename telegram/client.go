@@ -18,7 +18,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"net"
-	"os"
+	"net/http"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -118,6 +119,7 @@ type Client struct {
 	reconnectMgr *reconnectManager
 
 	autoConnectMu sync.Mutex
+	migration     migrationCoordinator
 
 	sessionWg sync.WaitGroup
 
@@ -154,6 +156,7 @@ type Client struct {
 	// overloadController gates RPC admission by priority when non-nil.
 	// Constructed when Config.MaxInFlightRPCs > 0.
 	overloadController *OverloadController
+	connMetrics        *connectionMetrics
 
 	testStorage  storage.Storage
 	testSession  *session.Session
@@ -256,6 +259,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		dcSessions:        newDCSessions(),
 		dcOptionPool:      session.NewDCOptionPool(2, c.EndpointCoolDown),
 		connPool:          session.NewConnectionPool(c.ConnPoolTTL),
+		connMetrics:       newConnectionMetrics(c.Telemetry),
 		Log:               logger,
 		rng:               rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())^0x9E3779B97F4A7C15)),
 	}
@@ -478,6 +482,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.MTProxy != nil {
 		c.MTProxy = src.MTProxy
 	}
+	if src.HTTPTransport != nil {
+		c.HTTPTransport = src.HTTPTransport
+	}
 	if src.SavePeers {
 		c.SavePeers = true
 	}
@@ -530,6 +537,12 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.MaxRPCReconnectRetries != 0 {
 		c.MaxRPCReconnectRetries = src.MaxRPCReconnectRetries
 	}
+	if src.RPCReplaySafe != nil {
+		c.RPCReplaySafe = src.RPCReplaySafe
+	}
+	if src.Telemetry != nil {
+		c.Telemetry = src.Telemetry
+	}
 	if src.PFS {
 		c.PFS = true
 	}
@@ -538,6 +551,9 @@ func (c *Config) mergeConfig(src *Config) {
 	}
 	if src.ConnPoolTTL != 0 {
 		c.ConnPoolTTL = src.ConnPoolTTL
+	}
+	if src.DCPoolSize != 0 {
+		c.DCPoolSize = min(max(src.DCPoolSize, 1), 16)
 	}
 	if src.EndpointCoolDown != 0 {
 		c.EndpointCoolDown = src.EndpointCoolDown
@@ -814,9 +830,7 @@ func (c *Client) MarkDurableUpdateFailed(sessionID string, id string, attempts i
 
 // Config returns a copy of the client's current configuration.
 func (c *Client) Config() Config {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.cfg
+	return c.config()
 }
 
 func configureSessionDispatch(sess *session.Session, c *Client) {
@@ -835,6 +849,22 @@ func configureSessionDispatch(sess *session.Session, c *Client) {
 			firstMsgID, uniqueID, serverSalt)
 		go c.fireReconnect()
 	})
+}
+
+func configureSessionHealth(sess *session.Session, cfg Config, metrics *connectionMetrics) {
+	if !cfg.HealthEnabled {
+		sess.SetPingInterval(0)
+		return
+	}
+	if cfg.HealthPingInterval > 0 {
+		sess.SetPingInterval(cfg.HealthPingInterval)
+	}
+	if cfg.HealthPongTimeout > 0 {
+		sess.SetPongTimeout(cfg.HealthPongTimeout)
+	}
+	if metrics != nil {
+		sess.SetOnRTT(metrics.recordPingRTT)
+	}
 }
 
 // SetDispatcher replaces the update dispatcher used to route incoming updates to handlers.
@@ -1046,6 +1076,13 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 	}
 
 	if err := c.bindPFS(sess); err != nil {
+		if errors.Is(err, session.ErrBindRequiresKeyRotation) {
+			if clearErr := st.SetAuthKey(nil); clearErr != nil {
+				err = errors.Join(err, fmt.Errorf("clear stale permanent auth key: %w", clearErr))
+			}
+		}
+		c.cleanupSessions(false)
+		c.state.SetDisconnected(err)
 		return err
 	}
 
@@ -1174,19 +1211,24 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 // dialTransport establishes the underlying transport connection (TCP,
 // WebSocket, or MTProxy) to the given data center.
 func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, testDialer transport.Dialer) (*sessionTransport, error) {
-	// Add this endpoint to the pool if not already present.
 	c.dcOptionPool.AddOption(dc)
-
-	// Check connection pool first (warm cache).
-	if cached, ok := c.connPool.Get(dc.ID, dc); ok {
-		if st, ok := cached.(*sessionTransport); ok {
-			c.Log.Debug("reusing cached connection for ", dc)
-			c.dcOptionPool.RecordSuccess(dc)
-			return st, nil
+	if dc.Address() != "" {
+		c.dcOptionPool.AddOption(session.DataCenter{ID: dc.ID, TestMode: dc.TestMode, IPv6: !dc.IPv6})
+	}
+	if cfg := c.config(); cfg.HTTPTransport != nil {
+		if useWebSocket(cfg) || cfg.MTProxy != nil {
+			return nil, errors.New("telegram: HTTPTransport is mutually exclusive with WebSocket and MTProxy")
 		}
+		dialer := c.dialer
+		if testDialer != nil {
+			dialer = testDialer
+		}
+		return c.newHTTPTransport(dc, timeout, cfg.HTTPTransport, dialer)
 	}
 
 	if useWebSocket(c.cfg) {
+		start := time.Now()
+		c.connMetrics.recordDialStart(1)
 		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.config().WebSocketTLS)
 		wsCtx, wsCancel := dialerCtx(timeout)
 		defer wsCancel()
@@ -1199,33 +1241,45 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 		}
 		if err != nil {
 			c.dcOptionPool.RecordFailure(dc)
+			c.connMetrics.recordDialFailure(wsAddr, err)
 			return nil, fmt.Errorf("ws dial %s: %w", wsAddr, err)
 		}
 		tp := transport.NewTCPIntermediateNoHeader(wsConn)
 		if err := tp.Connect(); err != nil {
 			wsConn.Close()
 			c.dcOptionPool.RecordFailure(dc)
+			c.connMetrics.recordDialFailure(wsAddr, err)
 			return nil, fmt.Errorf("ws transport handshake: %w", err)
 		}
 		st := newSessionTransport(tp, wsConn)
 		c.dcOptionPool.RecordSuccess(dc)
+		c.connMetrics.recordDialSuccess(wsAddr, time.Since(start))
 		return st, nil
 	}
 	if c.config().MTProxy != nil {
+		start := time.Now()
+		c.connMetrics.recordDialStart(1)
 		mpConn, err := mtproxy.Dial(c.config().MTProxy.Addr, c.config().MTProxy.Secret, dc.ID, timeout)
 		if err != nil {
 			c.dcOptionPool.RecordFailure(dc)
+			c.connMetrics.recordDialFailure(c.config().MTProxy.Addr, err)
 			return nil, fmt.Errorf("mtproxy dial: %w", err)
 		}
 		tp := transport.NewTCPIntermediateNoHeader(mpConn)
 		if err := tp.Connect(); err != nil {
 			mpConn.Close()
 			c.dcOptionPool.RecordFailure(dc)
+			c.connMetrics.recordDialFailure(c.config().MTProxy.Addr, err)
 			return nil, fmt.Errorf("mtproxy transport handshake: %w", err)
 		}
 		st := newSessionTransport(tp, mpConn)
 		c.dcOptionPool.RecordSuccess(dc)
+		c.connMetrics.recordDialSuccess(c.config().MTProxy.Addr, time.Since(start))
 		return st, nil
+	}
+
+	if _, ok := c.dialer.(transport.ContextDialer); c.config().ServerAddr == "" && testDialer == nil && ok {
+		return c.dialRacedTCPTransport(dc, timeout)
 	}
 
 	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
@@ -1236,29 +1290,259 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 	if testDialer != nil {
 		d = testDialer
 	}
+	start := time.Now()
+	c.connMetrics.recordDialStart(1)
 	conn, err := d.Dial("tcp", addr, timeout)
 	if err != nil {
 		c.dcOptionPool.RecordFailure(dc)
+		c.connMetrics.recordDialFailure(addr, err)
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
 	}
 	tp, err := c.createTransport(conn)
 	if err != nil {
 		conn.Close()
 		c.dcOptionPool.RecordFailure(dc)
+		c.connMetrics.recordDialFailure(addr, err)
 		return nil, err
 	}
 	if err := tp.Connect(); err != nil {
 		conn.Close()
 		c.dcOptionPool.RecordFailure(dc)
+		c.connMetrics.recordDialFailure(addr, err)
 		return nil, fmt.Errorf("transport handshake: %w", err)
 	}
 	st := newSessionTransport(tp, conn)
 	c.dcOptionPool.RecordSuccess(dc)
-
-	// Cache the connection for potential reuse.
-	c.connPool.Put(dc.ID, dc, st)
+	c.connMetrics.recordDialSuccess(addr, time.Since(start))
 
 	return st, nil
+}
+
+func (c *Client) newHTTPTransport(dc session.DataCenter, timeout time.Duration, cfg *HTTPTransportConfig, dialer transport.Dialer) (*sessionTransport, error) {
+	urls := append([]string(nil), cfg.URLs...)
+	if len(urls) == 0 {
+		candidates, err := c.dcOptionPool.CandidatesForDC(dc.ID, 0)
+		if err != nil || len(candidates) == 0 {
+			candidates = []session.DataCenter{dc}
+		}
+		scheme := "http"
+		port := 80
+		if cfg.TLS {
+			scheme = "https"
+			port = 443
+		}
+		seen := make(map[string]struct{}, len(candidates))
+		for _, candidate := range candidates {
+			host := candidate.Address()
+			if host == "" {
+				continue
+			}
+			endpoint := scheme + "://" + net.JoinHostPort(host, strconv.Itoa(port)) + "/api"
+			if _, ok := seen[endpoint]; ok {
+				continue
+			}
+			seen[endpoint] = struct{}{}
+			urls = append(urls, endpoint)
+		}
+	}
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("telegram: no HTTP endpoint for %s", dc)
+	}
+	if timeout <= 0 {
+		timeout = DefaultConfig.Timeout
+	}
+	maxInFlight := cfg.MaxInFlight
+	if maxInFlight <= 0 {
+		maxInFlight = 16
+	}
+	if maxInFlight > 1024 {
+		return nil, fmt.Errorf("telegram: HTTPTransport MaxInFlight %d exceeds limit 1024", maxInFlight)
+	}
+	httpClient := &http.Client{Transport: &http.Transport{
+		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+			return dialWithContext(ctx, dialer, network, address, timeout)
+		},
+		MaxIdleConns:        maxInFlight * len(urls),
+		MaxIdleConnsPerHost: maxInFlight,
+		MaxConnsPerHost:     maxInFlight,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: timeout,
+		DisableCompression:  true,
+	}, CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	httpTransport, err := transport.NewHTTP(transport.HTTPConfig{
+		URLs:           urls,
+		Client:         httpClient,
+		MaxDelay:       durationMilliseconds(cfg.MaxDelay),
+		WaitAfter:      durationMilliseconds(cfg.WaitAfter),
+		MaxWait:        durationMilliseconds(cfg.MaxWait),
+		MaxInFlight:    maxInFlight,
+		CloseIdleConns: true,
+		OnRequest:      c.connMetrics.recordHTTPRequest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return newSessionTransport(httpTransport, nil), nil
+}
+
+func durationMilliseconds(duration time.Duration) int32 {
+	if duration <= 0 {
+		return 0
+	}
+	milliseconds := duration / time.Millisecond
+	if milliseconds > 1<<31-1 {
+		return 1<<31 - 1
+	}
+	return int32(milliseconds)
+}
+
+type dialResult struct {
+	endpoint session.DataCenter
+	st       *sessionTransport
+	err      error
+	elapsed  time.Duration
+}
+
+func (c *Client) dialRacedTCPTransport(dc session.DataCenter, timeout time.Duration) (*sessionTransport, error) {
+	candidates, err := c.dcOptionPool.CandidatesForDC(dc.ID, 0)
+	if err != nil {
+		candidates = []session.DataCenter{dc}
+	}
+	for _, candidate := range candidates {
+		cached, ok := c.connPool.Get(dc.ID, candidate)
+		if !ok {
+			continue
+		}
+		st, ok := cached.(*sessionTransport)
+		if !ok {
+			_ = cached.Close()
+			c.Log.Warnf("discarded invalid cached transport for %s", candidate)
+			continue
+		}
+		c.dcOptionPool.RecordSuccess(candidate)
+		c.Log.Debugf("reusing warm DC endpoint %s", candidate)
+		return st, nil
+	}
+	c.connMetrics.recordDialStart(len(candidates))
+	if len(candidates) == 1 {
+		start := time.Now()
+		st, err := c.dialTCPTransportContext(context.Background(), candidates[0], timeout)
+		if err != nil {
+			c.dcOptionPool.RecordFailure(candidates[0])
+			c.connMetrics.recordDialFailure(candidates[0].String(), err)
+			return nil, err
+		}
+		c.dcOptionPool.RecordSuccess(candidates[0])
+		c.connMetrics.recordDialSuccess(candidates[0].String(), time.Since(start))
+		return st, nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	results := make(chan dialResult, len(candidates))
+	for _, candidate := range candidates {
+		candidate := candidate
+		go func() {
+			start := time.Now()
+			st, err := c.dialTCPTransportContext(ctx, candidate, timeout)
+			results <- dialResult{
+				endpoint: candidate,
+				st:       st,
+				err:      err,
+				elapsed:  time.Since(start),
+			}
+		}()
+	}
+
+	var failures []error
+	for received := 0; received < len(candidates); received++ {
+		result := <-results
+		if result.err == nil {
+			cancel()
+			c.dcOptionPool.RecordSuccess(result.endpoint)
+			c.connMetrics.recordDialSuccess(result.endpoint.String(), result.elapsed)
+			c.Log.Debugf("selected DC endpoint %s in %v", result.endpoint, result.elapsed)
+			go c.drainRacingLosers(results, len(candidates)-received-1)
+			return result.st, nil
+		}
+		c.dcOptionPool.RecordFailure(result.endpoint)
+		c.connMetrics.recordDialFailure(result.endpoint.String(), result.err)
+		failures = append(failures, fmt.Errorf("%s: %w", result.endpoint, result.err))
+		c.Log.Warnf("DC endpoint %s failed in %v: %v", result.endpoint, result.elapsed, result.err)
+	}
+
+	return nil, fmt.Errorf("dial DC%d: all %d endpoint candidates failed: %v", dc.ID, len(candidates), failures)
+}
+
+func (c *Client) drainRacingLosers(results <-chan dialResult, count int) {
+	for i := 0; i < count; i++ {
+		result := <-results
+		if result.err == nil && result.st != nil {
+			c.dcOptionPool.RecordSuccess(result.endpoint)
+			c.connPool.Put(result.endpoint.ID, result.endpoint, result.st)
+			continue
+		}
+		if result.err != nil && !errors.Is(result.err, context.Canceled) {
+			c.dcOptionPool.RecordFailure(result.endpoint)
+			c.connMetrics.recordDialFailure(result.endpoint.String(), result.err)
+		}
+	}
+}
+
+func (c *Client) dialTCPTransportContext(ctx context.Context, endpoint session.DataCenter, timeout time.Duration) (*sessionTransport, error) {
+	dialCtx := ctx
+	cancel := func() {}
+	if timeout > 0 {
+		dialCtx, cancel = context.WithTimeout(ctx, timeout)
+	}
+	defer cancel()
+
+	addr := fmt.Sprintf("%s:%d", endpoint.Address(), endpoint.Port())
+	d := c.dialer
+	var (
+		conn net.Conn
+		err  error
+	)
+	if cd, ok := d.(transport.ContextDialer); ok {
+		conn, err = cd.DialContext(dialCtx, "tcp", addr, timeout)
+	} else {
+		conn, err = d.Dial("tcp", addr, timeout)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("dial %s: %w", addr, err)
+	}
+	select {
+	case <-dialCtx.Done():
+		conn.Close()
+		return nil, dialCtx.Err()
+	default:
+	}
+
+	stopClose := context.AfterFunc(dialCtx, func() {
+		_ = conn.Close()
+	})
+	tp, err := c.createTransport(conn)
+	if err != nil {
+		stopClose()
+		conn.Close()
+		return nil, err
+	}
+	if err := tp.Connect(); err != nil {
+		stopClose()
+		conn.Close()
+		if dialCtx.Err() != nil {
+			return nil, dialCtx.Err()
+		}
+		return nil, fmt.Errorf("transport handshake: %w", err)
+	}
+	if !stopClose() && dialCtx.Err() != nil {
+		conn.Close()
+		return nil, dialCtx.Err()
+	}
+	return newSessionTransport(tp, conn), nil
 }
 
 // performDHExchange runs the MTProto DH key exchange if no auth key exists or
@@ -1289,6 +1573,9 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 	sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
 	if err := st.SetAuthKey(result.AuthKey); err != nil {
 		return fmt.Errorf("save auth key: %w", err)
+	}
+	if err := st.SetDate(int(time.Now().Unix())); err != nil {
+		return fmt.Errorf("save auth key creation time: %w", err)
 	}
 	if err := st.SetAPIID(c.config().APIID); err != nil {
 		c.Log.Warnf("save api_id: %v", err)
@@ -1329,23 +1616,55 @@ func (c *Client) performPFS(sess *session.Session, st storage.Storage, dc sessio
 
 	permKey, _ := st.AuthKey()
 	if len(permKey) == 0 {
-		return nil
+		return fmt.Errorf("PFS: permanent auth key is unavailable")
 	}
 
 	c.Log.Debug("PFS: generating temporary auth key (24h expiry)")
-
-	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, st)
-	if err := mgr.Generate(sessionTp); err != nil {
-		c.Log.Warnf("PFS: temp key generation failed, continuing with perm key: %v", err)
-		return nil // non-fatal
+	if err := c.prepareSessionPFS(sess, st, dc, sessionTp, permKey); err != nil {
+		return err
 	}
-
-	tempKey, _ := mgr.GetKey()
-	sess.SwapAuthKey(tempKey)
-	sess.SetPFS(mgr)
 
 	c.Log.Debug("PFS: temp key generated, session swapped to temp key")
 	return nil
+}
+
+func (c *Client) prepareSessionPFS(sess *session.Session, st storage.Storage, dc session.DataCenter, sessionTp *sessionTransport, permKey []byte) error {
+	if !c.config().PFS {
+		return nil
+	}
+	if len(permKey) == 0 {
+		return fmt.Errorf("PFS: permanent auth key is unavailable for DC %d", dc.ID)
+	}
+	var permKeyCreatedAt time.Time
+	if st != nil {
+		if createdUnix, err := st.Date(); err == nil && createdUnix > 0 {
+			permKeyCreatedAt = time.Unix(int64(createdUnix), 0)
+		}
+	}
+	mgr := session.NewTempKeyManager(dc.ID, dc.TestMode, permKey, true, st, permKeyCreatedAt)
+	if err := mgr.Generate(sessionTp); err != nil {
+		return fmt.Errorf("PFS: generate temporary auth key for DC %d: %w", dc.ID, err)
+	}
+	tempKey, _ := mgr.GetKey()
+	sess.SwapAuthKey(tempKey)
+	sess.SetPFS(mgr)
+	return nil
+}
+
+func (c *Client) bindSessionPFS(ctx context.Context, sess *session.Session) error {
+	pfs := sess.PFS()
+	if pfs == nil {
+		return nil
+	}
+	err := pfs.Bind(ctx, sess.SessionID(), func(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
+		return sess.Invoke(ctx, query, retries, timeout)
+	})
+	if err == nil {
+		return nil
+	}
+	sess.SwapAuthKey(pfs.PermKey())
+	sess.SetPFS(nil)
+	return fmt.Errorf("PFS: bind temporary auth key: %w", err)
 }
 
 // bindPFS sends auth.bindTempAuthKey to bind the temp key to the permanent
@@ -1365,14 +1684,8 @@ func (c *Client) bindPFS(sess *session.Session) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	err := pfs.Bind(ctx, sess.SessionID(), func(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-		return sess.Invoke(ctx, query, retries, timeout)
-	})
-	if err != nil {
-		c.Log.Warnf("PFS: bind failed, falling back to permanent key: %v", err)
-		sess.SwapAuthKey(pfs.PermKey())
-		sess.SetPFS(nil)
-		return nil // non-fatal
+	if err := c.bindSessionPFS(ctx, sess); err != nil {
+		return err
 	}
 
 	if pfs.NeedsInitConnection() {
@@ -1400,12 +1713,7 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 
 	c.apiInit.Store(false)
 
-	if c.config().HealthPingInterval > 0 {
-		sess.SetPingInterval(c.config().HealthPingInterval)
-	}
-	if c.config().HealthPongTimeout > 0 {
-		sess.SetPongTimeout(c.config().HealthPongTimeout)
-	}
+	configureSessionHealth(sess, c.config(), c.connMetrics)
 
 	c.Log.Debug("starting encrypted session")
 	if err := sess.Connect(sessionTp, timeout); err != nil {
@@ -1426,6 +1734,7 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.state.SetConnected()
 	c.state.SetDC(c.initialDCID(c.storage))
 	c.mu.Unlock()
+	c.connMetrics.recordConnected()
 	c.signalReconnect()
 	return nil
 }
@@ -1614,6 +1923,7 @@ func (c *Client) postConnect() {
 	}
 	// Notify session-loaded hooks before any update processing.
 	c.fireSessionLoaded()
+	c.refreshDCOptions(context.Background())
 
 	if !c.config().NoUpdates {
 		c.Log.Debug("fetching updates state")
@@ -1642,6 +1952,50 @@ func (c *Client) postConnect() {
 
 	// Notify connected hooks after all post-connect setup is done.
 	c.fireConnected()
+}
+
+func (c *Client) refreshDCOptions(ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	cfg, err := c.Raw().HelpGetConfig(ctx)
+	if err != nil {
+		c.connMetrics.recordDCConfigRefresh(err)
+		c.Log.Warnf("help.getConfig: %v (continuing with existing DC options)", err)
+		return
+	}
+
+	candidates := dcOptionsFromConfig(cfg, c.initialDCID(c.storage), c.config().TestMode)
+	if len(candidates) == 0 {
+		c.connMetrics.recordDCConfigRefresh(nil)
+		return
+	}
+	c.dcOptionPool.UpdateOptions(candidates)
+	c.connMetrics.recordDCConfigRefresh(nil)
+	c.Log.Debugf("updated DC option pool from help.getConfig: %d endpoint(s)", len(candidates))
+}
+
+func dcOptionsFromConfig(cfg *tg.Config, dcID int, testMode bool) []session.DataCenter {
+	if cfg == nil {
+		return nil
+	}
+	options := make([]session.DataCenter, 0, len(cfg.DCOptions))
+	for _, opt := range cfg.DCOptions {
+		if opt == nil || int(opt.ID) != dcID || opt.IpAddress == "" || opt.Port <= 0 {
+			continue
+		}
+		if opt.MediaOnly || opt.CDN || opt.TcpoOnly {
+			continue
+		}
+		options = append(options, session.DataCenter{
+			ID:        int(opt.ID),
+			TestMode:  testMode || cfg.TestMode,
+			IPv6:      opt.IPv6,
+			IPAddress: opt.IpAddress,
+			PortValue: int(opt.Port),
+		})
+	}
+	return options
 }
 
 func (c *Client) processRawUpdate(obj tg.TLObject) {
@@ -1700,6 +2054,10 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 		sess.Stop()
 	}
 	c.sessionWg.Wait()
+	c.connMetrics.recordDisconnected(nil)
+	if shouldCloseStorage && c.connPool != nil {
+		c.connPool.Clear()
+	}
 
 	if shouldCloseStorage && c.storage != nil {
 		c.storage.Close()
@@ -1739,6 +2097,9 @@ func (c *Client) hasActiveResources() bool {
 	if hasSessions {
 		return true
 	}
+	if c.connPool != nil && c.connPool.Count() > 0 {
+		return true
+	}
 
 	if c.dcSessions != nil {
 		c.dcSessions.mu.Lock()
@@ -1755,8 +2116,9 @@ func (c *Client) hasActiveResources() bool {
 func (c *Client) Close() {
 	c.stopPlugins(context.Background())
 	c.cleanupSessions()
-	// Purge expired connection pool entries (#42).
-	c.connPool.Purge()
+	if c.connPool != nil {
+		c.connPool.Close()
+	}
 	// Stop the RSA key rotation watchdog (no goroutine leak — Principle V).
 	if c.keyWatchdogCancel != nil {
 		c.keyWatchdogCancel()
@@ -1808,44 +2170,17 @@ func (c *Client) handleMigrationError(ctx context.Context, rpcErr *tgerr.Error, 
 	}
 }
 
-var idempotentConstructors = map[uint32]bool{
-	tg.InvokeWithLayerTypeID:         true,
-	tg.InitConnectionTypeID:          true,
-	tg.AuthExportAuthorizationTypeID: true,
-	tg.AuthImportAuthorizationTypeID: true,
-	tg.AuthSendCodeTypeID:            true,
-}
-
-func isIdempotent(query tg.TLObject) bool {
-	if query == nil {
-		return false
-	}
-	return idempotentConstructors[query.ConstructorID()]
-}
-
 func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLObject, st storage.Storage) (tg.TLObject, error) {
-	if !isIdempotent(query) {
-		return nil, &UnsafeMigrationError{TargetDC: targetDC, Method: fmt.Sprintf("%T", query)}
+	if query == nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: errors.New("nil migration query")}
 	}
 
-	fmt.Fprintf(os.Stderr, "migrating to DC %d...\n", targetDC)
-
-	c.cleanupSessions(false)
-
-	c.migratingDC.Store(true)
-
-	if err := st.SetDCID(targetDC); err != nil {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("save dc_id: %w", err)}
-	}
-	if err := st.SetAuthKey(nil); err != nil {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("clear auth key: %w", err)}
-	}
-	if err := st.SetUserID(0); err != nil {
-		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("clear user id: %w", err)}
-	}
-	c.updateConfig(func(cfg *Config) { cfg.DC = targetDC })
-
-	if err := c.connectTransport(30 * time.Second); err != nil {
+	if err := c.migration.Do(ctx, targetDC, func(ctx context.Context) error {
+		if c.homeDC() == targetDC && c.IsConnected() {
+			return nil
+		}
+		return c.switchPrimaryDC(ctx, targetDC, st, c.connectTransport)
+	}); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
 
@@ -1923,7 +2258,7 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		var invokeErr error
 		result, invokeErr = sess.Invoke(ctx, query, retries, timeout)
 		return invokeErr
-	})
+	}, query)
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
@@ -1972,7 +2307,7 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 		var invokeErr error
 		result, invokeErr = sess.Invoke(ctx, query, retries, timeout)
 		return invokeErr
-	})
+	}, query)
 	if err != nil {
 		return nil, err
 	}
@@ -2030,7 +2365,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 		var invokeErr error
 		result, invokeErr = sess.InvokeRaw(ctx, query, retries, timeout)
 		return invokeErr
-	})
+	}, query)
 	if err != nil {
 		return nil, err
 	}

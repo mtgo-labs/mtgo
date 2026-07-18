@@ -1,12 +1,19 @@
 package telegram
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/transport"
+)
+
+var (
+	_ transport.ContextDialer = (*socksDialer)(nil)
+	_ transport.ContextDialer = (*httpProxyDialer)(nil)
 )
 
 func TestProxyFromURL(t *testing.T) {
@@ -186,6 +193,33 @@ func TestBytesEndsWith(t *testing.T) {
 				t.Errorf("bytesEndsWith(%q,%q) = %v, want %v", c.data, c.suf, got, c.want)
 			}
 		})
+	}
+}
+
+func TestDialDeadline(t *testing.T) {
+	ctxDeadline := time.Now().Add(50 * time.Millisecond)
+	ctx, cancel := context.WithDeadline(context.Background(), ctxDeadline)
+	defer cancel()
+
+	deadline, ok := dialDeadline(ctx, time.Second)
+	if !ok {
+		t.Fatal("dialDeadline should report a deadline")
+	}
+	if !deadline.Equal(ctxDeadline) {
+		t.Fatalf("deadline = %v, want context deadline %v", deadline, ctxDeadline)
+	}
+
+	deadline, ok = dialDeadline(context.Background(), time.Millisecond)
+	if !ok {
+		t.Fatal("dialDeadline with timeout should report a deadline")
+	}
+	if time.Until(deadline) > time.Second {
+		t.Fatalf("deadline too far in future: %v", deadline)
+	}
+
+	_, ok = dialDeadline(context.Background(), 0)
+	if ok {
+		t.Fatal("dialDeadline without timeout or context deadline should report no deadline")
 	}
 }
 

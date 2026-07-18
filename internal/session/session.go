@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -47,12 +48,17 @@ type Transport interface {
 	SetReadDeadline(t time.Time) error
 }
 
+type httpWaitTransport interface {
+	HTTPWaitParams() (maxDelay, waitAfter, maxWait int32, enabled bool)
+	StartHTTPWait(frame func(context.Context) ([]byte, error))
+}
+
 const (
 	numFutureSalts       = 4
 	initialSaltFetchWait = 15 * time.Second
 	saltFetchInterval    = time.Hour
 	ackFlushInterval     = 30 * time.Second
-	pfsRenewalInterval   = 60 * time.Second
+	slowWriteThreshold   = 3 * time.Second
 )
 
 // hasDecodedResults returns true if any goroutine is waiting for a decoded TL
@@ -147,6 +153,12 @@ type Session struct {
 	// pingCbs maps pingID to a channel that is closed when the matching
 	// pong is received.
 	pingCbs map[int64]chan struct{}
+	// Ping health values are lock-free because they are read by observability
+	// while the ping loop updates them.
+	rttEWMA     atomic.Int64
+	rttVariance atomic.Int64
+	lastPong    atomic.Int64
+	onRTT       func(time.Duration, time.Duration)
 	// ackCh is a channel consumed by ackLoop to batch and send message
 	// acknowledgments.
 	ackCh chan int64
@@ -269,6 +281,34 @@ func (s *Session) SetPongTimeout(d time.Duration) {
 	s.mu.Lock()
 	s.pongTimeout = d
 	s.mu.Unlock()
+}
+
+// SetOnRTT registers a lightweight callback for ping RTT updates. The callback
+// runs in the ping goroutine and must not block.
+func (s *Session) SetOnRTT(fn func(rtt, variation time.Duration)) {
+	s.mu.Lock()
+	s.onRTT = fn
+	s.mu.Unlock()
+}
+
+// SessionHealthSnapshot is a lock-free view of keepalive health.
+type SessionHealthSnapshot struct {
+	RTT       time.Duration
+	Variation time.Duration
+	LastPong  time.Time
+}
+
+// HealthSnapshot returns the current smoothed ping RTT and last pong time.
+func (s *Session) HealthSnapshot() SessionHealthSnapshot {
+	lastPong := s.lastPong.Load()
+	snapshot := SessionHealthSnapshot{
+		RTT:       time.Duration(s.rttEWMA.Load()),
+		Variation: time.Duration(s.rttVariance.Load()),
+	}
+	if lastPong > 0 {
+		snapshot.LastPong = time.Unix(0, lastPong)
+	}
+	return snapshot
 }
 
 func (s *Session) SetSaltRefreshRatio(r float64) {
@@ -413,6 +453,9 @@ func (s *Session) addAck(msgID int64) {
 	select {
 	case s.ackCh <- msgID:
 	default:
+		if s.log != nil {
+			s.log.Warnf("session: ack queue full, dropping ack msg_id=%d", msgID)
+		}
 	}
 }
 
@@ -431,6 +474,7 @@ func (s *Session) SetOnDisconnect(func(error)) {}
 // SetAuthKey replaces the current authorization key and recomputes its ID.
 // Passing an empty slice clears the key and its ID.
 func (s *Session) SetAuthKey(key []byte) {
+	key = bytes.Clone(key)
 	s.mu.Lock()
 	s.authKey = key
 	if len(key) > 0 {
@@ -445,6 +489,7 @@ func (s *Session) SetAuthKey(key []byte) {
 // from the permanent key to the temporary key after binding succeeds.
 // The caller must ensure no in-flight messages depend on the old key.
 func (s *Session) SwapAuthKey(newKey []byte) {
+	newKey = bytes.Clone(newKey)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.authKey = newKey
@@ -585,7 +630,7 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 
 	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
-		return nil, fmt.Errorf("session: send: %w", err)
+		return nil, fmt.Errorf("session: send: %w", deliveryFailure(handle, err))
 	}
 
 	return s.waitResponse(ctx, handle, msgID, timeout)
@@ -600,7 +645,7 @@ func (s *Session) waitResponse(ctx context.Context, handle *CallHandle, msgID in
 	select {
 	case <-handle.Done():
 		obj, _, err := handle.Result()
-		return obj, err
+		return obj, deliveryFailure(handle, err)
 	case <-ctx.Done():
 		s.pending.Cancel(msgID)
 		s.sendRPCDrop(msgID)
@@ -609,11 +654,26 @@ func (s *Session) waitResponse(ctx context.Context, handle *CallHandle, msgID in
 		s.pending.Reject(msgID, ErrSessionClosed)
 		<-handle.Done()
 		obj, _, err := handle.Result()
-		return obj, err
+		return obj, deliveryFailure(handle, err)
 	case <-respTimer.C:
 		s.pending.Cancel(msgID)
-		return nil, ErrSendTimeout
+		return nil, deliveryFailure(handle, ErrSendTimeout)
 	}
+}
+
+func deliveryFailure(handle *CallHandle, err error) error {
+	if err == nil || errors.Is(err, ErrMsgNotReceived) || errors.Is(err, ErrRPCDropped) {
+		return err
+	}
+	var deliveryErr *DeliveryError
+	if errors.As(err, &deliveryErr) {
+		return err
+	}
+	state := DeliveryUnknown
+	if handle != nil && handle.IsAcked() {
+		state = DeliveryReceived
+	}
+	return &DeliveryError{State: state, Err: err}
 }
 
 func (s *Session) sendRPCDrop(reqMsgID int64) {
@@ -776,10 +836,11 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	if regErr != nil {
 		return nil, fmt.Errorf("session: send raw: %w", regErr)
 	}
+	handle.StorePayload(encrypted)
 
 	if err := s.writeEncrypted(ctx, encrypted, timeout); err != nil {
 		s.pending.Cancel(msgID)
-		return nil, fmt.Errorf("session: send raw: %w", err)
+		return nil, fmt.Errorf("session: send raw: %w", deliveryFailure(handle, err))
 	}
 
 	respTimer := time.NewTimer(timeout)
@@ -787,7 +848,7 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 	select {
 	case <-handle.Done():
 		_, raw, err := handle.Result()
-		return raw, err
+		return raw, deliveryFailure(handle, err)
 	case <-ctx.Done():
 		s.pending.Cancel(msgID)
 		s.sendRPCDrop(msgID)
@@ -796,10 +857,10 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		s.pending.Reject(msgID, ErrSessionClosed)
 		<-handle.Done()
 		_, raw, err := handle.Result()
-		return raw, err
+		return raw, deliveryFailure(handle, err)
 	case <-respTimer.C:
 		s.pending.Cancel(msgID)
-		return nil, ErrSendTimeout
+		return nil, deliveryFailure(handle, ErrSendTimeout)
 	}
 }
 
@@ -824,6 +885,10 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 				return nil, ctx.Err()
 			}
 			lastErr = fmt.Errorf("send: %w", err)
+			var deliveryErr *DeliveryError
+			if errors.As(err, &deliveryErr) {
+				return nil, lastErr
+			}
 			continue
 		}
 
@@ -891,6 +956,10 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return nil, ctx.Err()
 			}
 			lastErr = fmt.Errorf("send: %w", err)
+			var deliveryErr *DeliveryError
+			if errors.As(err, &deliveryErr) {
+				return nil, lastErr
+			}
 			if backoff == 0 {
 				backoff = 100 * time.Millisecond
 			} else {
@@ -1113,6 +1182,23 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 		close(s.done)
 		return fmt.Errorf("session: initial ping: %w", err)
 	}
+	if httpTransport, ok := tp.(httpWaitTransport); ok {
+		maxDelay, waitAfter, maxWait, enabled := httpTransport.HTTPWaitParams()
+		if enabled {
+			httpTransport.StartHTTPWait(func(ctx context.Context) ([]byte, error) {
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				default:
+				}
+				return s.buildServiceMessage(&tg.HTTPWait{
+					MaxDelay:  maxDelay,
+					WaitAfter: waitAfter,
+					MaxWait:   maxWait,
+				})
+			})
+		}
+	}
 
 	s.sm.transition(StateConnecting, StateActive)
 
@@ -1243,18 +1329,7 @@ func (s *Session) sendServiceMessage(body tg.TLObject) error {
 		return ErrSessionClosed
 	default:
 	}
-	s.mu.RLock()
-	authKey := s.authKey
-	authKeyID := s.authKeyID
-	s.mu.RUnlock()
-	msgID := s.msgFactory.AllocateMsgID()
-	seqNo := s.msgFactory.AllocateSeqNo(false)
-	message := &tg.MTProtoMessage{
-		MsgID: msgID,
-		SeqNo: uint32(seqNo),
-		Body:  body,
-	}
-	encrypted, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	encrypted, err := s.buildServiceMessage(body)
 	if err != nil {
 		if s.log != nil {
 			s.log.Errorf("session: pack service message: %v", err)
@@ -1268,6 +1343,19 @@ func (s *Session) sendServiceMessage(body tg.TLObject) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Session) buildServiceMessage(body tg.TLObject) ([]byte, error) {
+	s.mu.RLock()
+	authKey := s.authKey
+	authKeyID := s.authKeyID
+	s.mu.RUnlock()
+	message := &tg.MTProtoMessage{
+		MsgID: s.msgFactory.AllocateMsgID(),
+		SeqNo: uint32(s.msgFactory.AllocateSeqNo(false)),
+		Body:  body,
+	}
+	return crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
 }
 
 // writeEncryptedImpl is the shared implementation for writeEncrypted and
@@ -1285,7 +1373,11 @@ func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error
 		return ErrTransportNotSet
 	}
 
+	lockStart := time.Now()
 	s.writeMux.Lock()
+	if wait := time.Since(lockStart); wait > slowWriteThreshold && s.log != nil {
+		s.log.Warnf("session: slow write lock wait: %v", wait)
+	}
 	defer s.writeMux.Unlock()
 
 	if s.writeBreakerThreshold.Load() > 0 && s.writeBreakerOpen.Load() {
@@ -1299,7 +1391,11 @@ func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error
 	}
 
 	tp.SetWriteDeadline(deadline)
+	writeStart := time.Now()
 	err := tp.Send(encrypted)
+	if elapsed := time.Since(writeStart); elapsed > slowWriteThreshold && s.log != nil {
+		s.log.Warnf("session: slow transport write: %v", elapsed)
+	}
 	tp.SetWriteDeadline(time.Time{})
 	s.trackWriteResult(err)
 	return err
@@ -1448,9 +1544,28 @@ func (s *Session) pingLoop(ctx context.Context) error {
 		return ctx.Err()
 	}
 
-	delay := s.pingInterval + s.pongTimeout
+	if jitter := time.Duration(uint64(s.sessionID) % uint64(s.pingInterval)); jitter > 0 {
+		timer := time.NewTimer(jitter)
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
+
 	ticker := time.NewTicker(s.pingInterval)
 	defer ticker.Stop()
+	pongTimer := time.NewTimer(time.Hour)
+	if !pongTimer.Stop() {
+		<-pongTimer.C
+	}
+	defer pongTimer.Stop()
 
 	for {
 		select {
@@ -1461,26 +1576,93 @@ func (s *Session) pingLoop(ctx context.Context) error {
 
 		pingID := time.Now().UnixNano()
 		pongCh := make(chan struct{})
+		started := time.Now()
+		pongTimeout := s.adaptivePongTimeout()
+		delay := s.pingInterval + pongTimeout
+		disconnectDelay := int32((delay + time.Second - 1) / time.Second)
 
 		s.pingMux.Lock()
 		s.pingCbs[pingID] = pongCh
 		s.pingMux.Unlock()
 
-	if err := s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
-		PingID:          pingID,
-		DisconnectDelay: int32(delay.Seconds()),
-	}); err != nil {
-		return fmt.Errorf("session: ping write failed: %w", err)
-	}
+		if err := s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
+			PingID:          pingID,
+			DisconnectDelay: max(disconnectDelay, 1),
+		}); err != nil {
+			s.removePingCallback(pingID)
+			return fmt.Errorf("session: ping write failed: %w", err)
+		}
 
+		pongTimer.Reset(pongTimeout)
 		select {
 		case <-ctx.Done():
+			s.removePingCallback(pingID)
+			if !pongTimer.Stop() {
+				select {
+				case <-pongTimer.C:
+				default:
+				}
+			}
 			return ctx.Err()
 		case <-pongCh:
-		case <-time.After(s.pongTimeout):
+			if !pongTimer.Stop() {
+				select {
+				case <-pongTimer.C:
+				default:
+				}
+			}
+			s.recordPingRTT(time.Since(started))
+		case <-pongTimer.C:
+			s.removePingCallback(pingID)
 			return fmt.Errorf("session: pong timeout")
 		}
 	}
+}
+
+func (s *Session) removePingCallback(pingID int64) {
+	s.pingMux.Lock()
+	delete(s.pingCbs, pingID)
+	s.pingMux.Unlock()
+}
+
+func (s *Session) recordPingRTT(sample time.Duration) {
+	oldRTT := time.Duration(s.rttEWMA.Load())
+	oldVariation := time.Duration(s.rttVariance.Load())
+	newRTT := sample
+	newVariation := sample / 2
+	if oldRTT > 0 {
+		delta := oldRTT - sample
+		if delta < 0 {
+			delta = -delta
+		}
+		newVariation = (3*oldVariation + delta) / 4
+		newRTT = (7*oldRTT + sample) / 8
+	}
+	s.rttEWMA.Store(int64(newRTT))
+	s.rttVariance.Store(int64(newVariation))
+	s.lastPong.Store(time.Now().UnixNano())
+
+	s.mu.RLock()
+	callback := s.onRTT
+	s.mu.RUnlock()
+	if callback != nil {
+		callback(newRTT, newVariation)
+	}
+}
+
+func (s *Session) adaptivePongTimeout() time.Duration {
+	configured := s.pongTimeout
+	if configured <= 0 {
+		configured = 30 * time.Second
+	}
+	rtt := time.Duration(s.rttEWMA.Load())
+	if rtt <= 0 {
+		return configured
+	}
+	variation := time.Duration(s.rttVariance.Load())
+	adaptive := rtt + 4*variation
+	adaptive = max(adaptive, time.Second)
+	return min(adaptive, configured)
 }
 
 // handlePong signals the pong channel for the given pingID.
@@ -1508,7 +1690,11 @@ func (s *Session) ackLoop(ctx context.Context) error {
 		batch := make([]int64, len(buf))
 		copy(batch, buf)
 		buf = buf[:0]
+		start := time.Now()
 		_ = s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
+		if elapsed := time.Since(start); elapsed > slowWriteThreshold && s.log != nil {
+			s.log.Warnf("session: slow ack flush: count=%d elapsed=%v", len(batch), elapsed)
+		}
 	}
 
 	for {
@@ -1558,10 +1744,9 @@ func (s *Session) saltLoop(ctx context.Context) error {
 }
 
 // pfsRenewalLoop is an errgroup goroutine that proactively renews the PFS
-// temporary key before it expires. When NeedsRotation returns true the loop
-// returns an error, which cancels the errgroup and triggers a reconnect that
-// generates a fresh temp key. If PFS is disabled the loop is a no-op that
-// blocks until the context is cancelled.
+// temporary key after 75% of its lifetime. It uses one deadline timer; expiry
+// cancels the errgroup and triggers a reconnect that generates a fresh key. If
+// PFS is disabled the loop blocks until the context is cancelled.
 //
 // Ported from tdesktop's create_gen_auth_key_actor renewal timer and
 // gotd/td's session.rekey logic. See https://core.telegram.org/api/pfs.
@@ -1572,18 +1757,17 @@ func (s *Session) pfsRenewalLoop(ctx context.Context) error {
 		return ctx.Err()
 	}
 
-	ticker := time.NewTicker(pfsRenewalInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			if pfs.NeedsRotation() {
-				return fmt.Errorf("session: pfs temp key needs rotation")
-			}
-		}
+	wait := pfs.rotationDueIn()
+	if wait <= 0 {
+		return fmt.Errorf("session: pfs temp key needs rotation")
+	}
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return fmt.Errorf("session: pfs temp key needs rotation")
 	}
 }
 
@@ -2059,296 +2243,6 @@ func (s *Session) SetUpdateHandler(fn func(tg.TLObject)) {
 	s.mu.Lock()
 	s.onUpdate = fn
 	s.mu.Unlock()
-}
-
-// TempKeyManager manages PFS temporary auth key lifecycle.
-// Ported from td/td/telegram/net/Session.cpp:1488-1498 (auth_loop TmpAuthKey).
-type TempKeyManager struct {
-	dcID      int
-	testMode  bool
-	permKey   []byte    // permanent auth key
-	tempKey   []byte    // current temp auth key
-	tempKeyID int64     // SHA1-based temp key ID
-	expiresAt time.Time // when the temp key expires
-	bound     bool      // whether auth.bindTempAuthKey succeeded
-	enabled   bool      // PFS mode flag
-	createdAt time.Time // when this manager (and perm key) was initialized
-	needInit  bool      // caller must call initConnection after bind
-	storage   storage.Storage
-	mu        sync.Mutex
-}
-
-// NewTempKeyManager creates a new temp key manager.
-func NewTempKeyManager(dcID int, testMode bool, permKey []byte, enabled bool, st storage.Storage) *TempKeyManager {
-	return &TempKeyManager{
-		dcID:      dcID,
-		testMode:  testMode,
-		permKey:   permKey,
-		enabled:   enabled,
-		createdAt: time.Now(),
-		storage:   st,
-	}
-}
-
-// IsEnabled reports whether PFS mode is active.
-func (m *TempKeyManager) IsEnabled() bool {
-	return m.enabled
-}
-
-// IsBound reports whether the temp key has been successfully bound to the
-// permanent key via auth.bindTempAuthKey.
-func (m *TempKeyManager) IsBound() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.bound
-}
-
-// PermKey returns the permanent auth key. Used for fallback when bind fails.
-func (m *TempKeyManager) PermKey() []byte {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.permKey
-}
-
-// NeedsInitConnection reports whether the caller must call initConnection
-// (wrapping help.getConfig) after a successful temp key binding. The flag is
-// set by Bind and cleared once read.
-//
-// The PFS spec requires rewriting client info after each binding — see
-// https://core.telegram.org/api/pfs.
-func (m *TempKeyManager) NeedsInitConnection() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	n := m.needInit
-	m.needInit = false
-	return n
-}
-
-// GetKey returns the current temp key and key ID. If PFS is disabled or no
-// temp key exists, returns the permanent key.
-func (m *TempKeyManager) GetKey() ([]byte, int64) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if !m.enabled || len(m.tempKey) == 0 {
-		return m.permKey, computeAuthKeyIDInt64(m.permKey)
-	}
-	return m.tempKey, m.tempKeyID
-}
-
-// NeedsRotation reports whether the temp key is approaching expiry and needs rotation.
-func (m *TempKeyManager) NeedsRotation() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if !m.enabled || len(m.tempKey) == 0 {
-		return false
-	}
-	// Rotate when within 30 seconds of expiry.
-	return time.Until(m.expiresAt) < 30*time.Second
-}
-
-// FallbackToPermKey disables PFS for this session (e.g., after bind failure).
-func (m *TempKeyManager) FallbackToPermKey() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.enabled = false
-	m.tempKey = nil
-	m.tempKeyID = 0
-	m.bound = false
-}
-
-// Generate performs DH exchange to generate a new temp key for PFS.
-// Uses p_q_inner_data_temp_dc so the server treats the key as temporary.
-// Ported from td/td/telegram/net/Session.cpp:1488-1498 (create_gen_auth_key_actor).
-func (m *TempKeyManager) Generate(transport Transport) error {
-	auth := &Auth{
-		DC:       m.dcID,
-		TestMode: m.testMode,
-	}
-
-	// Request a temp key with 24h expiry, matching MadelineProto's PFS_DURATION.
-	expiresIn := int32(24 * 60 * 60) // 24 hours
-	result, err := auth.CreateTemp(transport, expiresIn)
-	if err != nil {
-		return fmt.Errorf("temp key DH exchange: %w", err)
-	}
-
-	m.mu.Lock()
-	m.tempKey = result.AuthKey
-	m.tempKeyID = computeAuthKeyIDInt64(result.AuthKey)
-	m.expiresAt = time.Now().Add(time.Duration(expiresIn) * time.Second)
-	m.bound = false
-	m.mu.Unlock()
-
-	return nil
-}
-
-// deriveMsgAESKeyIV computes the MTProto v1 AES key and IV from an auth key
-// and message key. x is the offset into auth_key (0 for client→server,
-// 8 for server→client). This is the same algorithm used in session/tdesktop.
-func deriveMsgAESKeyIV(authKey []byte, msgKey [16]byte, x int) (key [32]byte, iv [32]byte) {
-	sha1A := sha1.Sum(append(msgKey[:], authKey[x:x+32]...))
-	sha1B := sha1.Sum(append(append(authKey[x+32:x+48], msgKey[:]...), authKey[x+48:x+64]...))
-	sha1C := sha1.Sum(append(authKey[x+64:x+96], msgKey[:]...))
-	sha1D := sha1.Sum(append(msgKey[:], authKey[x+96:x+128]...))
-
-	copy(key[0:8], sha1A[0:8])
-	copy(key[8:20], sha1B[8:20])
-	copy(key[20:32], sha1C[4:16])
-
-	copy(iv[0:12], sha1A[8:20])
-	copy(iv[12:20], sha1B[0:8])
-	copy(iv[20:24], sha1C[16:20])
-	copy(iv[24:32], sha1D[0:8])
-	return key, iv
-}
-
-// buildEncryptedBindMessage constructs the encrypted_message for
-// auth.bindTempAuthKey, following the format described at
-// https://core.telegram.org/method/auth.bindTempAuthKey#binding-message-contents
-//
-// The message contains a bind_auth_key_inner payload, wrapped in a standard
-// MTProto message structure, encrypted with AES-IGE using a key derived from
-// the permanent auth key.
-func (m *TempKeyManager) buildEncryptedBindMessage(permKey, tempKey []byte, permKeyID, nonce, sessionID int64, expiresAt int32) ([]byte, error) {
-	// 1. Serialize bind_auth_key_inner.
-	inner := &tg.BindAuthKeyInner{
-		Nonce:         nonce,
-		TempAuthKeyID: computeAuthKeyIDInt64(tempKey),
-		PermAuthKeyID: permKeyID,
-		TempSessionID: sessionID,
-		ExpiresAt:     expiresAt,
-	}
-	var innerBuf bytes.Buffer
-	if err := inner.Encode(&innerBuf); err != nil {
-		return nil, fmt.Errorf("encode bind_auth_key_inner: %w", err)
-	}
-	innerBytes := innerBuf.Bytes()
-
-	// 2. Build MTProto message: random(16) + msg_id(8) + seq_no(4) + length(4) + data
-	var randPrefix [16]byte
-	if _, err := rand.Read(randPrefix[:]); err != nil {
-		return nil, fmt.Errorf("generate random prefix: %w", err)
-	}
-	now := time.Now()
-	msgID := (now.Unix() << 32) | int64(now.Nanosecond()&^3)
-
-	msg := make([]byte, 0, 32+len(innerBytes))
-	msg = append(msg, randPrefix[:]...)
-	var buf8 [8]byte
-	binary.LittleEndian.PutUint64(buf8[:], uint64(msgID))
-	msg = append(msg, buf8[:]...)
-	var buf4 [4]byte
-	binary.LittleEndian.PutUint32(buf4[:], 0) // seq_no = 0
-	msg = append(msg, buf4[:]...)
-	binary.LittleEndian.PutUint32(buf4[:], uint32(len(innerBytes)))
-	msg = append(msg, buf4[:]...)
-	msg = append(msg, innerBytes...)
-
-	// 3. msg_key = last 16 bytes of SHA1(message)
-	msgHash := sha1.Sum(msg)
-	var msgKey [16]byte
-	copy(msgKey[:], msgHash[4:20])
-
-	// 4. Pad to 16-byte multiple with random bytes.
-	padLen := (16 - len(msg)%16) % 16
-	if padLen > 0 {
-		pad := make([]byte, padLen)
-		if _, err := rand.Read(pad); err != nil {
-			return nil, fmt.Errorf("generate padding: %w", err)
-		}
-		msg = append(msg, pad...)
-	}
-
-	// 5. Derive AES key/IV from permanent auth key + msg_key (x=0 client→server).
-	aesKey, aesIV := deriveMsgAESKeyIV(permKey, msgKey, 0)
-
-	// 6. AES-IGE encrypt.
-	encrypted, err := crypto.IGEEncrypt(msg, aesKey[:], aesIV[:])
-	if err != nil {
-		return nil, fmt.Errorf("encrypt binding message: %w", err)
-	}
-	defer crypto.ReleaseAESBuf(encrypted)
-
-	// 7. Final: perm_auth_key_id(8) + msg_key(16) + encrypted_data.
-	result := make([]byte, 0, 8+16+len(encrypted))
-	binary.LittleEndian.PutUint64(buf8[:], uint64(permKeyID))
-	result = append(result, buf8[:]...)
-	result = append(result, msgKey[:]...)
-	result = append(result, encrypted...)
-	return result, nil
-}
-
-// ErrBindRequiresKeyRotation signals that auth.bindTempAuthKey returned
-// ENCRYPTED_MESSAGE_INVALID and the permanent auth key is older than 60 seconds.
-// Both the permanent and temporary keys must be dropped and recreated.
-var ErrBindRequiresKeyRotation = fmt.Errorf("session: ENCRYPTED_MESSAGE_INVALID with stale perm key; both keys must be recreated")
-
-// Bind calls auth.bindTempAuthKey to bind the temp key to the permanent key.
-// The encrypted_message is constructed per the MTProto PFS spec.
-// Ported from td/td/telegram/net/Session.cpp:1556-1579 (need_send_bind_key).
-//
-// If the server returns ENCRYPTED_MESSAGE_INVALID and the permanent key was
-// created more than 60 seconds ago, Bind returns ErrBindRequiresKeyRotation.
-// The caller must then drop both keys, recreate them, and retry.
-// See https://core.telegram.org/api/pfs for the full recovery procedure.
-func (m *TempKeyManager) Bind(ctx context.Context, sessionID int64, invoke func(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error)) error {
-	m.mu.Lock()
-	tempKey := m.tempKey
-	permKey := m.permKey
-	expiresAt := m.expiresAt
-	createdAt := m.createdAt
-	m.mu.Unlock()
-
-	if len(tempKey) == 0 {
-		return fmt.Errorf("temp key not generated")
-	}
-	if len(permKey) < 256 {
-		return fmt.Errorf("permanent key too short: %d bytes", len(permKey))
-	}
-
-	permKeyID := computeAuthKeyIDInt64(permKey)
-
-	// Generate random nonce.
-	var nonceBytes [8]byte
-	if _, err := rand.Read(nonceBytes[:]); err != nil {
-		return fmt.Errorf("generate nonce: %w", err)
-	}
-	nonce := int64(binary.LittleEndian.Uint64(nonceBytes[:]))
-
-	// Build the encrypted binding message.
-	encMsg, err := m.buildEncryptedBindMessage(permKey, tempKey, permKeyID, nonce, sessionID, int32(expiresAt.Unix()))
-	if err != nil {
-		return fmt.Errorf("build bind message: %w", err)
-	}
-
-	bindReq := &tg.AuthBindTempAuthKeyRequest{
-		PermAuthKeyID:    permKeyID,
-		Nonce:            nonce,
-		ExpiresAt:        int32(expiresAt.Unix()),
-		EncryptedMessage: encMsg,
-	}
-
-	_, err = invoke(ctx, bindReq, 1, 10*time.Second)
-	if err != nil {
-		m.mu.Lock()
-		m.bound = false
-		m.mu.Unlock()
-
-		// Handle ENCRYPTED_MESSAGE_INVALID per the PFS spec.
-		if tgerr.Is(err, tgerr.ErrEncryptedMessageInvalid) {
-			if time.Since(createdAt) > 60*time.Second {
-				return ErrBindRequiresKeyRotation
-			}
-			return fmt.Errorf("auth.bindTempAuthKey (ENCRYPTED_MESSAGE_INVALID, key <60s old, will retry): %w", err)
-		}
-		return fmt.Errorf("auth.bindTempAuthKey: %w", err)
-	}
-
-	m.mu.Lock()
-	m.bound = true
-	m.needInit = true // caller must initConnection after bind per PFS spec
-	m.mu.Unlock()
-	return nil
 }
 
 // Connect sets the transport and starts the session. It requires that an auth

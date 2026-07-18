@@ -35,6 +35,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -541,7 +542,7 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
 	written, cdnRedirect, err := downloadToFileRPC(ctx, rpc, location, fileSize, writer, opts)
 	if cdnRedirect != nil {
-		cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, fileSize, writer, opts)
+		cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, written, fileSize, writer, opts)
 		if cdnErr != nil {
 			return written + cdnWritten, cdnErr
 		}
@@ -800,7 +801,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 		file, ok := result.(*tg.UploadFile)
 		if !ok {
 			if cdnRedirect, ok := result.(*tg.UploadFileCDNRedirect); ok {
-				cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, fileSize, writer, opts)
+				cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, totalWritten, fileSize, writer, opts)
 				return totalWritten + cdnWritten, cdnErr
 			}
 			return totalWritten, fmt.Errorf("download: unexpected result type %T", result)
@@ -1028,7 +1029,7 @@ func getMediaFileSize(media types.Media) int64 {
 	}
 }
 
-func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFileCDNRedirect, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
+func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFileCDNRedirect, startOffset, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
 	cdnRPC, err := c.dcRPC(ctx, int(redirect.DCID))
 	if err != nil {
 		return 0, fmt.Errorf("cdn: connect to dc %d: %w", redirect.DCID, err)
@@ -1042,7 +1043,8 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 
 	hasher := &cdnHashChecker{hashes: redirect.FileHashes}
 	var totalWritten int64
-	offset := int64(0)
+	offset := startOffset
+	reuploadAttempts := 0
 
 	for {
 		select {
@@ -1051,10 +1053,22 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 		default:
 		}
 
+		coverageEnd, err := hasher.ensureCoverage(ctx, cdnRPC, redirect.FileToken, offset)
+		if err != nil {
+			return totalWritten, err
+		}
+		limit := int64(chunkSize)
+		if available := coverageEnd - offset; available < limit {
+			limit = available
+		}
+		if limit <= 0 {
+			return totalWritten, fmt.Errorf("cdn: no authenticated range at offset %d", offset)
+		}
+
 		req := &tg.UploadGetCDNFileRequest{
 			FileToken: redirect.FileToken,
 			Offset:    offset,
-			Limit:     chunkSize,
+			Limit:     int32(limit),
 		}
 
 		result, err := cdnRPC.UploadGetCDNFile(ctx, req)
@@ -1065,6 +1079,10 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 		cdnFile, ok := result.(*tg.UploadCDNFile)
 		if !ok {
 			if reupload, ok := result.(*tg.UploadCDNFileReuploadNeeded); ok {
+				reuploadAttempts++
+				if reuploadAttempts > 3 {
+					return totalWritten, fmt.Errorf("cdn: too many reupload attempts at offset %d", offset)
+				}
 				_, reuploadErr := cdnRPC.UploadReuploadCDNFile(ctx, &tg.UploadReuploadCDNFileRequest{
 					FileToken:    redirect.FileToken,
 					RequestToken: reupload.RequestToken,
@@ -1075,6 +1093,13 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 				continue
 			}
 			return totalWritten, fmt.Errorf("cdn: unexpected result type %T", result)
+		}
+		reuploadAttempts = 0
+		if len(cdnFile.Bytes) == 0 {
+			return totalWritten, fmt.Errorf("cdn: empty response inside authenticated range at offset %d", offset)
+		}
+		if len(cdnFile.Bytes) > int(limit) {
+			return totalWritten, fmt.Errorf("cdn: response at offset %d exceeds requested authenticated range", offset)
 		}
 
 		decrypted, err := cdnDecryptChunk(cdnFile.Bytes, key, iv, offset)
@@ -1094,22 +1119,31 @@ func (c *Client) downloadCDNToWriter(ctx context.Context, redirect *tg.UploadFil
 		if err != nil {
 			return totalWritten, fmt.Errorf("cdn: write: %w", err)
 		}
+		if n != len(decrypted) {
+			return totalWritten, fmt.Errorf("cdn: write: %w", io.ErrShortWrite)
+		}
 		totalWritten += int64(n)
 		offset += int64(len(decrypted))
 
-		if len(cdnFile.Bytes) < int(chunkSize) {
+		if len(cdnFile.Bytes) < int(limit) {
+			if err := hasher.finish(); err != nil {
+				return totalWritten, err
+			}
 			return totalWritten, nil
 		}
 
 		if opts != nil && opts.Progress != nil {
 			opts.Progress(params.ProgressInfo{
 				TotalBytes:      fileSize,
-				DownloadedBytes: totalWritten,
+				DownloadedBytes: startOffset + totalWritten,
 				IsUpload:        false,
 			})
 		}
 
-		if fileSize > 0 && totalWritten >= fileSize {
+		if fileSize > 0 && offset >= fileSize {
+			if err := hasher.finish(); err != nil {
+				return totalWritten, err
+			}
 			return totalWritten, nil
 		}
 	}
@@ -1176,6 +1210,88 @@ type cdnHashChecker struct {
 	hashes []*tg.FileHash
 	idx    int
 	buf    []byte
+}
+
+func (c *cdnHashChecker) ensureCoverage(ctx context.Context, rpc *tg.RPCClient, fileToken []byte, offset int64) (int64, error) {
+	for attempt := 0; attempt < 3; attempt++ {
+		for i := c.idx; i < len(c.hashes); i++ {
+			h := c.hashes[i]
+			if h == nil || h.Offset < 0 || h.Limit <= 0 || len(h.Hash) != sha256.Size {
+				return 0, fmt.Errorf("cdn: invalid hash descriptor at index %d", i)
+			}
+		}
+		sort.Slice(c.hashes[c.idx:], func(i, j int) bool {
+			return c.hashes[c.idx+i].Offset < c.hashes[c.idx+j].Offset
+		})
+		end, err := c.coverageEnd(offset)
+		if err != nil {
+			return 0, err
+		}
+		if end > offset {
+			return end, nil
+		}
+
+		result, err := rpc.Invoke(ctx, &tg.UploadGetCDNFileHashesRequest{
+			FileToken: fileToken,
+			Offset:    offset,
+		}, decodeFileHashVector)
+		if err != nil {
+			return 0, fmt.Errorf("cdn: get hashes at offset %d: %w", offset, err)
+		}
+		fhr, ok := result.(*fileHashResult)
+		if !ok || len(fhr.items) == 0 {
+			return 0, fmt.Errorf("cdn: server returned no hashes at offset %d", offset)
+		}
+		c.hashes = append(c.hashes, fhr.items...)
+		sort.Slice(c.hashes[c.idx:], func(i, j int) bool {
+			return c.hashes[c.idx+i].Offset < c.hashes[c.idx+j].Offset
+		})
+	}
+	return 0, fmt.Errorf("cdn: no authenticated range at offset %d", offset)
+}
+
+func (c *cdnHashChecker) coverageEnd(offset int64) (int64, error) {
+	for c.idx < len(c.hashes) {
+		h := c.hashes[c.idx]
+		if h == nil || h.Offset < 0 || h.Limit <= 0 || len(h.Hash) != sha256.Size {
+			return 0, fmt.Errorf("cdn: invalid hash descriptor at index %d", c.idx)
+		}
+		if h.Offset+int64(h.Limit) > offset {
+			break
+		}
+		c.idx++
+	}
+
+	end := offset
+	for i := c.idx; i < len(c.hashes); i++ {
+		h := c.hashes[i]
+		if h == nil || h.Offset < 0 || h.Limit <= 0 || len(h.Hash) != sha256.Size {
+			return 0, fmt.Errorf("cdn: invalid hash descriptor at index %d", i)
+		}
+		hashEnd := h.Offset + int64(h.Limit)
+		if i == c.idx && len(c.buf) != 0 {
+			if h.Offset >= offset || hashEnd <= offset {
+				return 0, fmt.Errorf("cdn: hash range does not cover buffered offset %d", offset)
+			}
+			end = hashEnd
+			continue
+		}
+		if h.Offset > end {
+			break
+		}
+		if h.Offset < end {
+			return 0, fmt.Errorf("cdn: overlapping hash range at offset %d", h.Offset)
+		}
+		end = hashEnd
+	}
+	return end, nil
+}
+
+func (c *cdnHashChecker) finish() error {
+	if len(c.buf) != 0 {
+		return fmt.Errorf("cdn: incomplete authenticated range (%d buffered bytes)", len(c.buf))
+	}
+	return nil
 }
 
 // feed offers the decrypted bytes covering absolute range [base, base+len(data))

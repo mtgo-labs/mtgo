@@ -2,6 +2,7 @@ package session
 
 import (
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 )
@@ -36,7 +37,7 @@ type DCOptionWithHealth struct {
 	Health EndpointHealth
 }
 
-// DCOptionPool manages candidate endpoints for a single DC with health scoring.
+// DCOptionPool manages candidate endpoints with per-DC health scoring.
 // Ported from td/td/telegram/net/DcOptionsSet.h (find_connection).
 type DCOptionPool struct {
 	dcID     int
@@ -57,51 +58,11 @@ func NewDCOptionPool(dcID int, coolDown time.Duration) *DCOptionPool {
 // Scoring: Ok (most recent ok_at) > Untested (random) > Error with cool-down expired.
 // Ported from td/td/telegram/net/DcOptionsSet.h:64-68 find_connection.
 func (p *DCOptionPool) FindBest() (DataCenter, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-
-	if len(p.options) == 0 {
-		return DataCenter{}, ErrNoEndpoints
+	candidates, err := p.Candidates(1)
+	if err != nil {
+		return DataCenter{}, err
 	}
-
-	// 1. Prefer Ok endpoints (most recent ok_at first)
-	var okEndpoints []DCOptionWithHealth
-	for _, ep := range p.options {
-		if ep.Health.State == HealthOk {
-			okEndpoints = append(okEndpoints, ep)
-		}
-	}
-	if len(okEndpoints) > 0 {
-		best := okEndpoints[0]
-		for _, ep := range okEndpoints[1:] {
-			if ep.Health.OkAt.After(best.Health.OkAt) {
-				best = ep
-			}
-		}
-		return best.Option, nil
-	}
-
-	// 2. Then Untested endpoints (random order to spread load)
-	var untestedEndpoints []DCOptionWithHealth
-	for _, ep := range p.options {
-		if ep.Health.State == HealthUntested {
-			untestedEndpoints = append(untestedEndpoints, ep)
-		}
-	}
-	if len(untestedEndpoints) > 0 {
-		idx := rand.Intn(len(untestedEndpoints))
-		return untestedEndpoints[idx].Option, nil
-	}
-
-	// 3. Then Error endpoints with cool-down expired
-	now := time.Now()
-	for _, ep := range p.options {
-		if ep.Health.State == HealthError && ep.Health.ErrorAt.Add(p.coolDown).Before(now) {
-			return ep.Option, nil
-		}
-	}
-
-	return DataCenter{}, ErrAllEndpointsFailing
+	return candidates[0], nil
 }
 
 // RecordSuccess marks an endpoint as healthy.
@@ -164,6 +125,85 @@ func (p *DCOptionPool) UpdateOptions(options []DataCenter) {
 			})
 		}
 	}
+}
+
+// ResetHealth marks every endpoint untested after a network change so stale
+// failures and successes from the previous network do not affect selection.
+func (p *DCOptionPool) ResetHealth() {
+	p.mu.Lock()
+	for i := range p.options {
+		p.options[i].Health = EndpointHealth{State: HealthUntested}
+	}
+	p.mu.Unlock()
+}
+
+// Candidates returns up to max endpoints ordered by current health.
+// Order: Ok by newest success, Untested shuffled, then Error after cool-down.
+// A max <= 0 returns every currently eligible endpoint.
+func (p *DCOptionPool) Candidates(max int) ([]DataCenter, error) {
+	return p.CandidatesForDC(p.dcID, max)
+}
+
+// CandidatesForDC returns up to max endpoints for dcID ordered by current health.
+func (p *DCOptionPool) CandidatesForDC(dcID, max int) ([]DataCenter, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if len(p.options) == 0 {
+		return nil, ErrNoEndpoints
+	}
+
+	now := time.Now()
+	okEndpoints := make([]DCOptionWithHealth, 0, len(p.options))
+	untestedEndpoints := make([]DCOptionWithHealth, 0, len(p.options))
+	retryEndpoints := make([]DCOptionWithHealth, 0, len(p.options))
+	for _, ep := range p.options {
+		if ep.Option.ID != dcID {
+			continue
+		}
+		switch ep.Health.State {
+		case HealthOk:
+			okEndpoints = append(okEndpoints, ep)
+		case HealthUntested, HealthChecking:
+			untestedEndpoints = append(untestedEndpoints, ep)
+		case HealthError:
+			if ep.Health.ErrorAt.Add(p.coolDown).Before(now) {
+				retryEndpoints = append(retryEndpoints, ep)
+			}
+		}
+	}
+
+	sort.Slice(okEndpoints, func(i, j int) bool {
+		return okEndpoints[i].Health.OkAt.After(okEndpoints[j].Health.OkAt)
+	})
+	rand.Shuffle(len(untestedEndpoints), func(i, j int) {
+		untestedEndpoints[i], untestedEndpoints[j] = untestedEndpoints[j], untestedEndpoints[i]
+	})
+	sort.Slice(retryEndpoints, func(i, j int) bool {
+		return retryEndpoints[i].Health.ErrorAt.Before(retryEndpoints[j].Health.ErrorAt)
+	})
+
+	candidates := make([]DataCenter, 0, len(p.options))
+	appendEndpoint := func(ep DCOptionWithHealth) {
+		if max > 0 && len(candidates) >= max {
+			return
+		}
+		candidates = append(candidates, ep.Option)
+	}
+	for _, ep := range okEndpoints {
+		appendEndpoint(ep)
+	}
+	for _, ep := range untestedEndpoints {
+		appendEndpoint(ep)
+	}
+	for _, ep := range retryEndpoints {
+		appendEndpoint(ep)
+	}
+
+	if len(candidates) == 0 {
+		return nil, ErrAllEndpointsFailing
+	}
+	return candidates, nil
 }
 
 // OptionCount returns the number of endpoints in the pool.

@@ -8,6 +8,7 @@ import (
 	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 // Proxy holds connection details for routing Telegram traffic through an
@@ -38,6 +39,25 @@ type MTProxyConfig struct {
 	Addr string
 	// Secret is the hex-encoded MTProxy secret string.
 	Secret string
+}
+
+// HTTPTransportConfig enables MTProto's request/response HTTP transport.
+// It is intended for networks that block raw TCP and WebSocket connections.
+// MTProto payloads remain end-to-end encrypted; TLS can additionally protect
+// transport metadata.
+type HTTPTransportConfig struct {
+	// URLs optionally overrides the Telegram DC endpoints. Each value must be a
+	// complete http:// or https:// URL. When empty, DC /api URLs are generated.
+	URLs []string
+	// TLS uses HTTPS for generated DC URLs. It has no effect when URLs is set.
+	TLS bool
+	// MaxInFlight bounds concurrent HTTP requests per session. Defaults to 16.
+	MaxInFlight int
+	// MaxDelay, WaitAfter, and MaxWait configure encrypted http_wait polling.
+	// MaxWait defaults to 25 seconds; the other values default to zero.
+	MaxDelay  time.Duration
+	WaitAfter time.Duration
+	MaxWait   time.Duration
 }
 
 // LogConfig controls logging behaviour for the MTProto client. Use it to
@@ -185,6 +205,9 @@ type Config struct {
 	//	    Secret: "dd05fb7acb549be047a7c585116581418",
 	//	}
 	MTProxy *MTProxyConfig
+	// HTTPTransport routes MTProto through Telegram's HTTP /api endpoint.
+	// It is mutually exclusive with WebSocket and MTProxy.
+	HTTPTransport *HTTPTransportConfig
 	// TestMode connects to Telegram's test datacenters instead of production.
 	// Only useful during library development or integration testing.
 	TestMode bool
@@ -418,7 +441,8 @@ type Config struct {
 
 	// PFS enables Perfect Forward Secrecy mode where temporary auth keys
 	// are used for message encryption instead of the permanent key. Temp
-	// keys are generated via DH exchange and bound to the permanent key.
+	// keys are generated per connection via DH exchange and bound to the
+	// permanent key. Generation and binding fail closed when PFS is enabled.
 	// When false (default), the permanent auth key is used directly.
 	// Ported from td/td/telegram/net/Session.cpp:1488-1498 (auth_loop PFS).
 	PFS bool
@@ -427,6 +451,11 @@ type Config struct {
 	// on reconnect instead of dialing fresh. Defaults to 10 seconds.
 	// Ported from td/td/telegram/net/ConnectionCreator.cpp (READY_CONNECTIONS_TIMEOUT).
 	ConnPoolTTL time.Duration
+	// DCPoolSize bounds the number of persistent connections created for each
+	// non-primary DC. Values above 1 enable health-aware request scheduling;
+	// values above 16 are clamped. Defaults to 1 to avoid multiplying connection
+	// count in large multi-account deployments.
+	DCPoolSize int
 	// EndpointCoolDown is the time to wait before retrying a failed DC
 	// endpoint. Failed endpoints are skipped until the cool-down expires.
 	// Defaults to 16 seconds.
@@ -485,11 +514,9 @@ type Config struct {
 	// Callers see only a latency spike, not an error. The retry budget is
 	// bounded by MaxRPCReconnectRetries and the caller's context deadline.
 	//
-	// WARNING: enabling this may cause duplicate execution of
-	// non-idempotent operations (e.g., messages.sendMessage) because the
-	// server may have already processed the original request before the
-	// disconnect. Read-only operations (get*, checks) are always safe to
-	// retry.
+	// MTGO only replays methods classified as safe. Delivery-uncertain calls
+	// return RPCDeliveryError instead of being replayed; RPCReplaySafe can opt
+	// additional application-specific idempotent methods into replay.
 	RetryRPCOnReconnect bool
 
 	// MaxRPCReconnectRetries limits how many reconnect-retry cycles a single
@@ -497,6 +524,13 @@ type Config struct {
 	// RetryRPCOnReconnect is enabled and this is 0. Set to -1 for unlimited
 	// retries (bounded only by the context deadline).
 	MaxRPCReconnectRetries int
+	// RPCReplaySafe optionally marks additional queries safe to replay after an
+	// uncertain disconnect. MTGO already recognizes read-only methods. Return
+	// true only when repeating the operation cannot duplicate side effects.
+	RPCReplaySafe func(tg.TLObject) bool
+	// Telemetry receives structured RPC and connection observations. Nil keeps
+	// the hot path free of telemetry work and dependencies.
+	Telemetry Telemetry
 }
 
 // DeviceTDesktopWindows returns a DeviceConfig that mimics Telegram Desktop
@@ -561,4 +595,7 @@ var DefaultConfig = Config{
 	HealthEnabled:      true,
 	HealthPingInterval: 60 * time.Second,
 	HealthPongTimeout:  30 * time.Second,
+	ConnPoolTTL:        10 * time.Second,
+	DCPoolSize:         1,
+	EndpointCoolDown:   16 * time.Second,
 }

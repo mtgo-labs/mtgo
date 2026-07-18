@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"time"
@@ -17,6 +18,24 @@ type sessionTransport struct {
 type tcpTransport interface {
 	transport.Transport
 	Connect() error
+}
+
+type closableTransport interface {
+	Close() error
+}
+
+type connectedTransport interface {
+	IsConnected() bool
+}
+
+type deadlineTransport interface {
+	SetWriteDeadline(time.Time) error
+	SetReadDeadline(time.Time) error
+}
+
+type httpWaitInnerTransport interface {
+	HTTPWaitParams() (maxDelay, waitAfter, maxWait int32)
+	StartHTTPWait(frame func(context.Context) ([]byte, error))
 }
 
 func newSessionTransport(t transport.Transport, conn net.Conn) *sessionTransport {
@@ -84,11 +103,17 @@ func (s *sessionTransport) Close() error {
 	if s.conn != nil {
 		return s.conn.Close()
 	}
+	if transport, ok := s.transport.(closableTransport); ok {
+		return transport.Close()
+	}
 	return nil
 }
 
 func (s *sessionTransport) IsConnected() bool {
 	if s.conn == nil {
+		if transport, ok := s.transport.(connectedTransport); ok {
+			return transport.IsConnected()
+		}
 		return false
 	}
 	return s.conn.RemoteAddr() != nil
@@ -98,6 +123,9 @@ func (s *sessionTransport) SetWriteDeadline(t time.Time) error {
 	if s.conn != nil {
 		return s.conn.SetWriteDeadline(t)
 	}
+	if transport, ok := s.transport.(deadlineTransport); ok {
+		return transport.SetWriteDeadline(t)
+	}
 	return nil
 }
 
@@ -105,5 +133,23 @@ func (s *sessionTransport) SetReadDeadline(t time.Time) error {
 	if s.conn != nil {
 		return s.conn.SetReadDeadline(t)
 	}
+	if transport, ok := s.transport.(deadlineTransport); ok {
+		return transport.SetReadDeadline(t)
+	}
 	return nil
+}
+
+func (s *sessionTransport) HTTPWaitParams() (maxDelay, waitAfter, maxWait int32, enabled bool) {
+	transport, ok := s.transport.(httpWaitInnerTransport)
+	if !ok {
+		return 0, 0, 0, false
+	}
+	maxDelay, waitAfter, maxWait = transport.HTTPWaitParams()
+	return maxDelay, waitAfter, maxWait, true
+}
+
+func (s *sessionTransport) StartHTTPWait(frame func(context.Context) ([]byte, error)) {
+	if transport, ok := s.transport.(httpWaitInnerTransport); ok {
+		transport.StartHTTPWait(frame)
+	}
 }

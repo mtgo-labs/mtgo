@@ -192,3 +192,57 @@ func TestCDNHashCheckerSpanning(t *testing.T) {
 		t.Fatal("tampered spanning hash should fail verification")
 	}
 }
+
+func TestCDNHashCheckerCoverage(t *testing.T) {
+	hashA := sha256.Sum256([]byte("a"))
+	hashB := sha256.Sum256([]byte("b"))
+	checker := &cdnHashChecker{hashes: []*tg.FileHash{
+		{Offset: 1, Limit: 1, Hash: hashB[:]},
+		{Offset: 0, Limit: 1, Hash: hashA[:]},
+	}}
+
+	end, err := checker.ensureCoverage(t.Context(), nil, nil, 0)
+	if err != nil {
+		t.Fatalf("ensure coverage: %v", err)
+	}
+	if end != 2 {
+		t.Fatalf("coverage end = %d, want 2", end)
+	}
+}
+
+func TestCDNHashCheckerRejectsInvalidCoverage(t *testing.T) {
+	validHash := sha256.Sum256([]byte("a"))
+	tests := []struct {
+		name   string
+		hashes []*tg.FileHash
+	}{
+		{name: "nil descriptor", hashes: []*tg.FileHash{nil}},
+		{name: "wrong hash size", hashes: []*tg.FileHash{{Offset: 0, Limit: 1, Hash: []byte{1}}}},
+		{name: "overlap", hashes: []*tg.FileHash{
+			{Offset: 0, Limit: 2, Hash: validHash[:]},
+			{Offset: 1, Limit: 1, Hash: validHash[:]},
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checker := &cdnHashChecker{hashes: tt.hashes}
+			if _, err := checker.ensureCoverage(t.Context(), nil, nil, 0); err == nil {
+				t.Fatal("expected invalid coverage error")
+			}
+		})
+	}
+}
+
+func TestCDNHashCheckerFinishRejectsPartialHash(t *testing.T) {
+	data := []byte("authenticated")
+	hash := sha256.Sum256(data)
+	checker := &cdnHashChecker{hashes: []*tg.FileHash{{Offset: 0, Limit: int32(len(data)), Hash: hash[:]}}}
+
+	if err := checker.feed(data[:4], 0); err != nil {
+		t.Fatalf("feed: %v", err)
+	}
+	if err := checker.finish(); err == nil {
+		t.Fatal("expected incomplete authenticated range error")
+	}
+}

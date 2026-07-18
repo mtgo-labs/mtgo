@@ -288,9 +288,6 @@ func (pm *PendingManager) OverduePending(threshold time.Duration) []int64 {
 	defer pm.mu.Unlock()
 	var ids []int64
 	for msgID, h := range pm.pending {
-		if h.isRaw {
-			continue
-		}
 		if h.acked.Load() {
 			continue
 		}

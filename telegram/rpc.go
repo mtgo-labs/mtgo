@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
@@ -20,10 +22,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	deadline, ok := ctx.Deadline()
 	timeout := time.Duration(0)
 	if ok {
-		timeout = time.Until(deadline)
-		if timeout < 0 {
-			timeout = 0
-		}
+		timeout = max(time.Until(deadline), 0)
 	} else {
 		timeout = cfg.ReqTimeout
 		if timeout <= 0 {
@@ -34,10 +33,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		timeout = time.Second
 	}
 
-	retries := cfg.Retries
-	if retries < 1 {
-		retries = 1
-	}
+	retries := max(cfg.Retries, 1)
 	apiInit := ci.client.apiInit.Load()
 
 	query := input
@@ -251,6 +247,9 @@ func (c *Client) InvokeJSON(ctx context.Context, functionName string, payload []
 // longer usable (closed, draining, or disconnected). These are the errors that
 // trigger reconnect-retry when RetryRPCOnReconnect is enabled.
 func isSessionDeadErr(err error) bool {
+	if _, ok := errors.AsType[*session.DeliveryError](err); ok {
+		return true
+	}
 	return errors.Is(err, session.ErrSessionClosed) ||
 		errors.Is(err, session.ErrDraining) ||
 		errors.Is(err, session.ErrNotConnected) ||
@@ -296,9 +295,12 @@ func (c *Client) waitForConnect(ctx context.Context) error {
 // retrySessionErr retries fn when it returns a session-death error, waiting for
 // reconnection between attempts. When RetryRPCOnReconnect is disabled, fn is
 // called exactly once.
-func (c *Client) retrySessionErr(ctx context.Context, fn func() error) error {
+func (c *Client) retrySessionErr(ctx context.Context, fn func() error, query ...tg.TLObject) error {
 	if !c.config().RetryRPCOnReconnect {
-		return fn()
+		started := time.Now()
+		err := fn()
+		c.observeRPC(ctx, firstQuery(query), 1, started, err)
+		return publicDeliveryError(err, firstQuery(query))
 	}
 
 	maxRetries := c.config().MaxRPCReconnectRetries
@@ -308,23 +310,108 @@ func (c *Client) retrySessionErr(ctx context.Context, fn func() error) error {
 
 	var lastErr error
 	for attempt := 0; maxRetries < 0 || attempt <= maxRetries; attempt++ {
+		started := time.Now()
 		err := fn()
+		c.observeRPC(ctx, firstQuery(query), attempt+1, started, err)
 		if err == nil {
 			return nil
 		}
 		if !isSessionDeadErr(err) {
 			return err
 		}
+		if _, ok := errors.AsType[*session.DeliveryError](err); ok && !c.replaySafe(firstQuery(query)) {
+			return publicDeliveryError(err, firstQuery(query))
+		}
 		lastErr = err
 		if c.Log != nil {
 			c.Log.Debugf("RPC reconnect retry attempt=%d err=%v", attempt+1, err)
 		}
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
-			if lastErr != nil {
-				return fmt.Errorf("%w (last session error: %v)", waitErr, lastErr)
-			}
-			return waitErr
+			return fmt.Errorf("%w (last session error: %v)", waitErr, lastErr)
 		}
 	}
 	return fmt.Errorf("session closed after %d reconnect retries: %w", maxRetries, lastErr)
+}
+
+func publicDeliveryError(err error, query tg.TLObject) error {
+	deliveryErr, ok := errors.AsType[*session.DeliveryError](err)
+	if !ok {
+		return err
+	}
+	state := RPCDeliveryUnknown
+	if deliveryErr.State == session.DeliveryReceived {
+		state = RPCDeliveryReceived
+	}
+	return &RPCDeliveryError{
+		Method: rpcQueryName(query),
+		State:  state,
+		Err:    err,
+	}
+}
+
+func firstQuery(queries []tg.TLObject) tg.TLObject {
+	if len(queries) == 0 {
+		return nil
+	}
+	return queries[0]
+}
+
+func (c *Client) replaySafe(query tg.TLObject) bool {
+	query = unwrapRPCQuery(query)
+	if query == nil {
+		return false
+	}
+	if callback := c.config().RPCReplaySafe; callback != nil && callback(query) {
+		return true
+	}
+	name := rpcQueryName(query)
+	for _, marker := range []string{
+		"AccountGet", "AuthExportAuthorization", "BotsGet", "ChannelsGet",
+		"ChatlistsGet", "ContactsGet", "ContactsResolve", "ContactsSearch",
+		"HelpGet", "LangpackGet", "MessagesCheck", "MessagesGet", "MessagesSearch",
+		"PaymentsGet", "PhoneGet", "PhotosGet", "PremiumGet", "StatsGet",
+		"StatsLoad", "StickersGet", "StoriesGet", "StoriesSearch", "UpdatesGet",
+		"UploadGet", "UsersGet",
+	} {
+		if strings.HasPrefix(name, marker) {
+			return true
+		}
+	}
+	return false
+}
+
+func unwrapRPCQuery(query tg.TLObject) tg.TLObject {
+	for query != nil {
+		switch wrapped := query.(type) {
+		case *tg.InvokeWithLayerRequest:
+			query = wrapped.Query
+		case *tg.InitConnectionRequest:
+			query = wrapped.Query
+		case *tg.InvokeAfterMsgRequest:
+			query = wrapped.Query
+		case *tg.InvokeAfterMsgsRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithoutUpdatesRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithTakeoutRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithBusinessConnectionRequest:
+			query = wrapped.Query
+		default:
+			return query
+		}
+	}
+	return nil
+}
+
+func rpcQueryName(query tg.TLObject) string {
+	query = unwrapRPCQuery(query)
+	if query == nil {
+		return "unknown"
+	}
+	t := reflect.TypeOf(query)
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	return strings.TrimSuffix(t.Name(), "Request")
 }
