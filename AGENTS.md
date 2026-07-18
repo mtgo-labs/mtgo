@@ -61,7 +61,7 @@ Key packages:
 
 | Path | Role | Editable? |
 |------|------|-----------|
-| `tg/` | Generated TL types (layer 227) | **No** — use codegen |
+| `tg/` | Generated TL types (layer 228) | **No** — use codegen |
 | `tgerr/` | Generated error types | **No** — use codegen |
 | `compiler/` | TL compiler and templates | Yes |
 | `internal/session/` | MTProto session, state machine, auth, pending RPCs | Yes |
@@ -92,13 +92,18 @@ Never edit `*_gen.go` files directly. If a TL type is missing or wrong, fix the 
 
 ## Architecture Notes
 
+- **Engineering priority order**: (1) security and correctness, (2) maximum measured
+  performance, (3) lowest real-world latency, (4) minimal raw MTProto overhead.
+  Every hot-path abstraction must justify copies, allocations, queues, locks,
+  goroutines, and interface boundaries with correctness or benchmark evidence.
+
 - `telegram.Client` is the main entry point. It owns `session.Session` instances (one per DC).
 - `internal/session.Session` manages the MTProto connection: encrypted message packing/unpacking, RPC lifecycle, keep-alive pings, salt management, and state machine (Idle → Connecting → Active → Draining → Closed).
 - `tg.TLObject` is the base interface for all generated TL types. Hand-written files in `tg/`: `tl.go`, `reader.go`, `primitives.go`, `fields.go`, `gzip.go`, `msg_container.go`, `invoker.go`, `layer.go`.
 - Handler dispatch: `telegram.Dispatcher` → handler groups sorted by priority → `handler.Check(update)` → `handler.Handle(ctx)`.
 - Middleware chains: invoker-level (wraps RPC calls) and handler-level (update dispatch).
 - `internal/session.PendingManager` tracks outstanding RPC calls with `CallHandle` (future-like: `Done() <-chan struct{}`, `Result()`).
-- **RPC Retry on Reconnect**: On transport disconnect, `handleClose` rejects all pending RPCs with `ErrSessionClosed`. When `Config.RetryRPCOnReconnect` is enabled, `Client.Invoke`/`InvokeRaw`/`InvokeWithRawResult` catch session-death errors (`ErrSessionClosed`, `ErrDraining`, `ErrNotConnected`), wait for reconnection via `waitForConnect` (50ms poll loop), and transparently re-send the query on the new session up to `MaxRPCReconnectRetries` times (default 3). Callers see only a latency spike, not an error. WARNING: non-idempotent operations may execute twice. The dead `PrepareForReconnect`/`MarkAllUnknown`/`GetUnknown`/`RejectExcessUnknowns` scaffolding was removed; the `msgs_state_req` reconciliation path remains unimplemented (Option B).
+- **RPC Retry on Reconnect**: On transport disconnect, pending RPCs carry explicit delivery state. Read-only/replay-safe methods wait on the event-driven reconnect signal and retry up to `MaxRPCReconnectRetries`; delivery-uncertain mutations return `RPCDeliveryError` instead of risking duplicate execution. `stateCheckLoop` proactively uses `msgs_state_req` and handles `msgs_state_info`/`msg_resend_req` for overdue decoded and raw calls.
 - **DC Endpoint Health**: `DCOptionPool` tracks per-endpoint health (Ok/Error/Untested) with timestamps. Scoring: Ok (most recent) > Untested > Error with cool-down. Ported from TDLib `DcOptionsSet::find_connection`.
 - **Connection Pool**: `ConnectionPool` caches warm connections for 10s TTL to avoid redundant TCP handshakes. Entries consumed on first use. Ported from TDLib `ConnectionCreator::ready_connections`.
 - **Multi-Session Routing**: `SessionRouter` routes queries to session slots by method name: `upload.*` → SlotUpload, `upload.getFile/getWebFile` → SlotDownload, else → SlotMain. Idle upload/download slots auto-close after 5min. Ported from TDLib `NetQueryDispatcher`.
@@ -106,7 +111,7 @@ Never edit `*_gen.go` files directly. If a TL type is missing or wrong, fix the 
 - **Container ACK Tracking**: `ContainerTracker` maps container message IDs to child message IDs and tracks child/container ACK cleanup. Ported from TDLib `Session` query container tracking.
 - **Per-DC Backoff**: `PerDCBackoff` keeps reconnect delays independent per DC, preventing one failing DC from delaying unrelated DCs. Ported from TDLib `ConnectionCreator::ClientInfo::Backoff`.
 - **Flood Wait Handling**: `FloodWaitQueue` records delayed FLOOD_WAIT queries while `Session.Invoke` parses `FLOOD_WAIT_X`, waits, and retries without surfacing the first flood error to callers. Ported from TDLib `NetQueryDelayer`.
-- **PFS (Perfect Forward Secrecy)**: `TempKeyManager` generates temp auth keys via DH exchange, binds via `auth.bindTempAuthKey`. Opt-in via `Config.PFS`. Temp keys persisted across reconnects. Ported from TDLib `Session::auth_loop`.
+- **PFS (Perfect Forward Secrecy)**: `TempKeyManager` generates a separate temp auth key for every main, upload, download, and CDN session, binds each key to its own session ID via `auth.bindTempAuthKey`, rotates at 75% lifetime, and fails closed when enabled. Ported from TDLib `Session::auth_loop`.
 - **Outbound Container Packing**: `OutboundBatcher` coalesces concurrent RPCs into MTProto `msg_container#73f1f8dc` via adaptive flushing (immediate on idle/lone, batch when N>1 queued). Per-priority FIFOs (High/Low). Opt-in via `Config.OutboundBatchEnabled`. Ported from TDLib `net/Session.h` outbound container packing.
 - **Cryptographic Trust**: `RSAKeySet` wraps bundled canonical Telegram RSA keys as the immutable trust root; `PublicRsaKeyWatchdog` fetches and verifies rotated keys against the trust set (fail-closed). `ErrKeyVerificationFailed` typed error for MITM detection. Opt-in via `Config.RSAKeyRotationInterval`. Ported from TDLib `net/PublicRsaKeyWatchdog.h`.
 - **Overload Control**: `OverloadController` gates RPC admission by priority — low-priority fast-fails at capacity (`ErrOverload`), high-priority gets bounded deferred admission. `LoadSnapshot` aggregates queue depths, in-flight counts, throttle level for observability. Opt-in via `Config.MaxInFlightRPCs`. Ported from TDLib `net/NetQueryDispatcher.h`.
