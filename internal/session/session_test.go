@@ -1917,7 +1917,7 @@ func TestCompletedCallsFreePendingCapacity(t *testing.T) {
 	}
 }
 
-func TestWriteBreakerBlocksWritesButKeepsSessionAlive(t *testing.T) {
+func TestWriteBreakerTrippedCancelsErrgroup(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	ft := newFailingTransport()
 	s.SetTransport(ft)
@@ -1950,14 +1950,15 @@ func TestWriteBreakerBlocksWritesButKeepsSessionAlive(t *testing.T) {
 		t.Fatal("breaker should be open")
 	}
 
-	// The group context should NOT be cancelled — the session stays alive.
+	// Fail-fast: the errgroup context should be cancelled to trigger
+	// immediate session shutdown + reconnect.
 	select {
 	case <-g.ctx.Done():
-		t.Fatal("group context should NOT be cancelled when breaker opens")
-	case <-time.After(100 * time.Millisecond):
+	case <-time.After(time.Second):
+		t.Fatal("errgroup context should be cancelled when breaker opens (fail-fast)")
 	}
 
-	// Subsequent writes should get ErrWriteCircuitOpen.
+	// Subsequent writes should still get ErrWriteCircuitOpen.
 	err = s.writeEncryptedDirect(make([]byte, 10), time.Second)
 	if !errors.Is(err, ErrWriteCircuitOpen) {
 		t.Fatalf("expected ErrWriteCircuitOpen, got %v", err)

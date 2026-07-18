@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	mrand "math/rand/v2"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -51,6 +52,11 @@ func (c backoffConfig) delay(attempt int) time.Duration {
 	delay := float64(c.BaseDelay) * math.Pow(c.Multiplier, float64(attempt))
 	if delay > float64(c.MaxDelay) {
 		delay = float64(c.MaxDelay)
+	}
+	// Apply jitter: randomize within [1-Jitter, 1+Jitter) to desynchronize
+	// reconnect schedules across sessions after mass disconnect events.
+	if c.Jitter > 0 {
+		delay *= 1 + (mrand.Float64()*2-1)*c.Jitter
 	}
 	return time.Duration(delay)
 }
@@ -372,7 +378,10 @@ func (rm *reconnectManager) Attempts() int {
 }
 
 func (rm *reconnectManager) loop(ctx context.Context) {
-	defer close(rm.done)
+	defer func() {
+		rm.running.Store(false)
+		close(rm.done)
+	}()
 	timer := time.NewTimer(0)
 	if !timer.Stop() {
 		<-timer.C
@@ -390,7 +399,6 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 				Attempts: attempt,
 				Err:      ErrReconnectFailed,
 			})
-			rm.running.Store(false)
 			rm.client.signalReconnect()
 			return
 		}
@@ -421,7 +429,6 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 		err := rm.client.reconnectOnce()
 		if err == nil {
 			rm.client.Log.Info("reconnected successfully")
-			rm.running.Store(false)
 			return
 		}
 
@@ -431,7 +438,6 @@ func (rm *reconnectManager) loop(ctx context.Context) {
 				Attempts: attempt,
 				Err:      fmt.Errorf("auth key invalid: %w", err),
 			})
-			rm.running.Store(false)
 			rm.client.signalReconnect()
 			return
 		}

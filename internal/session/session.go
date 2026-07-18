@@ -300,9 +300,10 @@ func (s *Session) ResetWriteBreaker() {
 	s.writeBreakerOpen.Store(false)
 }
 
-// trackWriteResult updates the write circuit breaker. Consecutive failures open the
-// breaker, which blocks new writes via ErrWriteCircuitOpen but does NOT kill the
-// session. Successful writes reset both counter and breaker flag.
+// trackWriteResult updates the write circuit breaker. After threshold
+// consecutive failures the breaker opens and the errgroup is cancelled to
+// trigger immediate session shutdown + reconnect (fail-fast). Successful
+// writes reset both counter and breaker flag.
 func (s *Session) trackWriteResult(err error) {
 	threshold := int(s.writeBreakerThreshold.Load())
 	if threshold <= 0 {
@@ -312,6 +313,15 @@ func (s *Session) trackWriteResult(err error) {
 		newCount := s.consecWriteFailures.Add(1)
 		if int(newCount) >= threshold && !s.writeBreakerOpen.Load() {
 			s.writeBreakerOpen.Store(true)
+			if s.log != nil {
+				s.log.Errorf("session: write circuit breaker tripped after %d consecutive failures, forcing reconnect", newCount)
+			}
+			// Fail-fast: cancel the errgroup to trigger immediate session
+			// shutdown + reconnect via handleClose, rather than lingering
+			// until the read deadline expires (~60-120s).
+			if s.group != nil {
+				s.group.Cancel()
+			}
 		}
 	} else {
 		s.consecWriteFailures.Store(0)
@@ -1117,7 +1127,9 @@ func (s *Session) runLoop(ctx context.Context) error {
 	g.Go(s.pingLoop)
 	g.Go(s.saltLoop)
 	g.Go(s.handleClose)
-	g.Go(s.pfsRenewalLoop)
+	if pfs := s.PFS(); pfs != nil && pfs.IsEnabled() {
+		g.Go(s.pfsRenewalLoop)
+	}
 
 	err := g.Wait()
 	s.sm.transitionTo(StateClosed)
@@ -1225,10 +1237,10 @@ func (s *Session) storeFutureSalts(fs *tg.FutureSalts) {
 	s.saltMgr.StoreFromFutureSalts(saltEntriesFromFuture(fs.Salts))
 }
 
-func (s *Session) sendServiceMessage(body tg.TLObject) {
+func (s *Session) sendServiceMessage(body tg.TLObject) error {
 	select {
 	case <-s.done:
-		return
+		return ErrSessionClosed
 	default:
 	}
 	s.mu.RLock()
@@ -1247,9 +1259,15 @@ func (s *Session) sendServiceMessage(body tg.TLObject) {
 		if s.log != nil {
 			s.log.Errorf("session: pack service message: %v", err)
 		}
-		return
+		return fmt.Errorf("session: pack service message: %w", err)
 	}
-	_ = s.writeEncryptedDirect(encrypted, 10*time.Second)
+	if err := s.writeEncryptedDirect(encrypted, 10*time.Second); err != nil {
+		if s.log != nil {
+			s.log.Warnf("session: service message write failed (%T): %v", body, err)
+		}
+		return err
+	}
+	return nil
 }
 
 // writeEncryptedImpl is the shared implementation for writeEncrypted and
@@ -1448,10 +1466,12 @@ func (s *Session) pingLoop(ctx context.Context) error {
 		s.pingCbs[pingID] = pongCh
 		s.pingMux.Unlock()
 
-		s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
-			PingID:          pingID,
-			DisconnectDelay: int32(delay.Seconds()),
-		})
+	if err := s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
+		PingID:          pingID,
+		DisconnectDelay: int32(delay.Seconds()),
+	}); err != nil {
+		return fmt.Errorf("session: ping write failed: %w", err)
+	}
 
 		select {
 		case <-ctx.Done():
@@ -1488,7 +1508,7 @@ func (s *Session) ackLoop(ctx context.Context) error {
 		batch := make([]int64, len(buf))
 		copy(batch, buf)
 		buf = buf[:0]
-		s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
+		_ = s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
 	}
 
 	for {
@@ -1510,10 +1530,13 @@ func (s *Session) ackLoop(ctx context.Context) error {
 // saltLoop is an errgroup goroutine that periodically requests future salts
 // from the server.
 func (s *Session) saltLoop(ctx context.Context) error {
+	timer := time.NewTimer(initialSaltFetchWait)
+	defer timer.Stop()
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-time.After(initialSaltFetchWait):
+	case <-timer.C:
 	}
 
 	s.fetchSaltsWithRetry(ctx)
@@ -1524,10 +1547,11 @@ func (s *Session) saltLoop(ctx context.Context) error {
 			wait = defaultSaltRefreshMin
 		}
 
+		timer.Reset(wait)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(wait):
+		case <-timer.C:
 			s.fetchSaltsWithRetry(ctx)
 		}
 	}
