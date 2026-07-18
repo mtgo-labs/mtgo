@@ -435,6 +435,53 @@ func TestInvokeNotConnected(t *testing.T) {
 	}
 }
 
+func TestAutoConnectFailureRestoresDisconnectedState(t *testing.T) {
+	c, _ := NewClient(12345, "hash", &Config{AutoConnect: true})
+
+	for attempt := range 2 {
+		_, err := c.Invoke(context.Background(), nil, 1, time.Second)
+		if !errors.Is(err, ErrNoStorage) {
+			t.Fatalf("Invoke() attempt %d = %v, want ErrNoStorage", attempt+1, err)
+		}
+		if state := c.Health().State; state != ConnStateDisconnected {
+			t.Fatalf("state after attempt %d = %v, want disconnected", attempt+1, state)
+		}
+	}
+}
+
+func TestAutoConnectDisabledPreservesClosedError(t *testing.T) {
+	c, _ := NewClient(12345, "hash", nil)
+	c.state.SetClosed()
+
+	_, err := c.Invoke(context.Background(), nil, 1, time.Second)
+	if !errors.Is(err, ErrClientClosed) {
+		t.Fatalf("Invoke() = %v, want ErrClientClosed", err)
+	}
+}
+
+func TestRetryRPCOnReconnectDoesNotWaitForInitialConnection(t *testing.T) {
+	c, _ := NewClient(12345, "hash", &Config{RetryRPCOnReconnect: true})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := c.Invoke(ctx, nil, 1, time.Second)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, ErrNotConnected) {
+			t.Fatalf("Invoke() = %v, want ErrNotConnected", err)
+		}
+	case <-time.After(250 * time.Millisecond):
+		cancel()
+		<-done
+		t.Fatal("Invoke() waited for a reconnect before any connection existed")
+	}
+}
+
 func TestNewClientAppliesRetriesConfig(t *testing.T) {
 	c, err := NewClient(12345, "hash", &Config{Retries: 3})
 	if err != nil {

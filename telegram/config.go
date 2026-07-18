@@ -218,10 +218,10 @@ type Config struct {
 	// Set to true when the client only needs to send requests, not listen for
 	// incoming events.
 	NoUpdates bool
-	// AutoConnect enables automatic connection on first RPC call or update
-	// handler registration, without requiring an explicit Connect() call.
-	// When true, the client lazily connects when needed and automatically
-	// reconnects on disconnection. Defaults to false.
+	// AutoConnect enables automatic connection on the first operation that
+	// requires an active connection, without requiring an explicit Connect call.
+	// Reconnection after a dropped connection is controlled separately by
+	// ReconnectEnabled. Defaults to false.
 	AutoConnect bool
 	// SkipUpdates discards all updates that arrived while the client was
 	// offline. Prevents a flood of stale messages on reconnection.

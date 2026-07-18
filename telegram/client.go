@@ -905,24 +905,26 @@ func (c *Client) setTestDialer(d transport.Dialer) {
 //
 // When AutoConnect is false, this is equivalent to state.requireConnected().
 func (c *Client) ensureConnected() error {
-	if err := c.state.requireConnected(); err == nil {
+	stateErr := c.state.requireConnected()
+	if stateErr == nil {
 		return nil
 	}
 	if !c.config().AutoConnect {
-		return ErrNotConnected
+		return stateErr
 	}
 	if c.state.IsClosed() {
-		return ErrClientClosed
+		return stateErr
 	}
 
 	c.autoConnectMu.Lock()
 	defer c.autoConnectMu.Unlock()
 
-	if err := c.state.requireConnected(); err == nil {
+	stateErr = c.state.requireConnected()
+	if stateErr == nil {
 		return nil
 	}
 	if c.state.IsClosed() {
-		return ErrClientClosed
+		return stateErr
 	}
 
 	timeout := c.config().Timeout
@@ -1038,11 +1040,16 @@ func (c *Client) initialDCID(st storage.Storage) int {
 	return 2
 }
 
-func (c *Client) connectTransport(timeout time.Duration) error {
+func (c *Client) connectTransport(timeout time.Duration) (retErr error) {
 	st, migratingDC, err := c.initStorage()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if retErr != nil {
+			c.state.SetDisconnected(retErr)
+		}
+	}()
 	defer c.migratingDC.Store(false)
 	testSession := c.testSession
 	testDialer := c.testDialer
@@ -1096,15 +1103,20 @@ func (c *Client) connectTransport(timeout time.Duration) error {
 
 // initStorage resolves the storage backend, sets the connecting state, and
 // returns the storage, whether a DC migration is in progress, and any error.
-func (c *Client) initStorage() (storage.Storage, bool, error) {
+func (c *Client) initStorage() (st storage.Storage, migratingDC bool, retErr error) {
 	c.mu.Lock()
 	dcID := c.initialDCID(c.testStorage)
 	if err := c.state.SetConnecting(dcID); err != nil {
 		c.mu.Unlock()
 		return nil, false, err
 	}
+	defer func() {
+		if retErr != nil {
+			c.state.SetDisconnected(retErr)
+		}
+	}()
 
-	st := c.testStorage
+	st = c.testStorage
 	if st == nil {
 		if c.storage != nil {
 			st = c.storage
@@ -1125,7 +1137,7 @@ func (c *Client) initStorage() (storage.Storage, bool, error) {
 		}
 	}
 	c.storage = st
-	migratingDC := c.migratingDC.Load()
+	migratingDC = c.migratingDC.Load()
 	c.mu.Unlock()
 
 	if c.config().SessionName != "" {
@@ -2213,12 +2225,12 @@ func (c *Client) migrateExportImport(ctx context.Context, targetDC int, query tg
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		// Wait for reconnection, then proceed.
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
-			return nil, err
+			return nil, waitErr
 		}
 	}
 
@@ -2279,11 +2291,11 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
-			return nil, err
+			return nil, waitErr
 		}
 	}
 
@@ -2323,11 +2335,11 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 // gzip_packed, the bytes start with the gzip_packed constructor.
 func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]byte, error) {
 	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.IsClosed() {
+		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
-			return nil, err
+			return nil, waitErr
 		}
 	}
 
