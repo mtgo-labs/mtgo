@@ -23,18 +23,27 @@ func TestPendingManagerOverduePending(t *testing.T) {
 	}
 	_ = h2
 
-	// Register a raw query (should be excluded).
+	// Raw queries use the same MTProto delivery reconciliation.
 	h3, err := pm.Register(300, true)
 	if err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 	h3.sentAt = time.Now().Add(-2 * time.Second).UnixNano()
 
-	// Overdue with 1s threshold should return only msgID 100.
+	// Both overdue decoded and raw queries should be returned.
 	ids := pm.OverduePending(1 * time.Second)
-	if len(ids) != 1 || ids[0] != 100 {
-		t.Fatalf("OverduePending: got %v, want [100]", ids)
+	if len(ids) != 2 || !containsMsgID(ids, 100) || !containsMsgID(ids, 300) {
+		t.Fatalf("OverduePending: got %v, want 100 and 300", ids)
 	}
+}
+
+func containsMsgID(ids []int64, target int64) bool {
+	for _, id := range ids {
+		if id == target {
+			return true
+		}
+	}
+	return false
 }
 
 func TestPendingManagerMarkAckedExcludesFromOverdue(t *testing.T) {

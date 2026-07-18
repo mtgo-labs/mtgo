@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func TestIsSessionDeadErr(t *testing.T) {
@@ -224,6 +225,67 @@ func TestRetrySessionErrContextCancelled(t *testing.T) {
 	// Should only have been called once (first call fails, then wait times out).
 	if calls.Load() != 1 {
 		t.Fatalf("fn called %d times, want 1", calls.Load())
+	}
+}
+
+func TestRetrySessionErrRefusesUncertainMutation(t *testing.T) {
+	c, _ := NewClient(1, "hash", &Config{InMemory: true, RetryRPCOnReconnect: true})
+	c.state.SetConnecting(2)
+	c.state.SetConnected()
+
+	calls := 0
+	err := c.retrySessionErr(context.Background(), func() error {
+		calls++
+		return &session.DeliveryError{State: session.DeliveryReceived, Err: session.ErrSessionClosed}
+	}, &tg.MessagesSendMessageRequest{})
+	var deliveryErr *RPCDeliveryError
+	if !errors.As(err, &deliveryErr) {
+		t.Fatalf("error = %T %v, want *RPCDeliveryError", err, err)
+	}
+	if deliveryErr.State != RPCDeliveryReceived || deliveryErr.Method != "MessagesSendMessage" {
+		t.Fatalf("delivery error = %+v", deliveryErr)
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d, want 1", calls)
+	}
+}
+
+func TestRetrySessionErrReplaysSafeRead(t *testing.T) {
+	c, _ := NewClient(1, "hash", &Config{InMemory: true, RetryRPCOnReconnect: true})
+	c.state.SetConnecting(2)
+	c.state.SetConnected()
+
+	calls := 0
+	err := c.retrySessionErr(context.Background(), func() error {
+		calls++
+		if calls == 1 {
+			return &session.DeliveryError{State: session.DeliveryUnknown, Err: session.ErrSessionClosed}
+		}
+		return nil
+	}, &tg.MessagesGetHistoryRequest{})
+	if err != nil {
+		t.Fatalf("retry safe read: %v", err)
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+}
+
+func TestReplaySafeUnwrapsAndSupportsOverride(t *testing.T) {
+	c, _ := NewClient(1, "hash", &Config{InMemory: true})
+	wrappedRead := &tg.InvokeWithLayerRequest{Query: &tg.InitConnectionRequest{Query: &tg.UploadGetFileRequest{}}}
+	if !c.replaySafe(wrappedRead) {
+		t.Fatal("wrapped upload.getFile should be replay-safe")
+	}
+	mutation := &tg.MessagesSendMessageRequest{}
+	if c.replaySafe(mutation) {
+		t.Fatal("messages.sendMessage should not be replay-safe by default")
+	}
+	c.updateConfig(func(cfg *Config) {
+		cfg.RPCReplaySafe = func(query tg.TLObject) bool { return query == mutation }
+	})
+	if !c.replaySafe(mutation) {
+		t.Fatal("RPCReplaySafe override was ignored")
 	}
 }
 

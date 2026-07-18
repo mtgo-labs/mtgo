@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"net"
 	"time"
 )
@@ -14,6 +15,14 @@ type Dialer interface {
 	Dial(network, address string, timeout time.Duration) (net.Conn, error)
 }
 
+// ContextDialer extends Dialer with context cancellation for racing dial paths.
+// Existing custom dialers only need Dial; implementations that can abort
+// slower attempts should implement DialContext too.
+type ContextDialer interface {
+	Dialer
+	DialContext(ctx context.Context, network, address string, timeout time.Duration) (net.Conn, error)
+}
+
 // NetDialer implements [Dialer] using the standard library's
 // [net.DialTimeout].
 type NetDialer struct {
@@ -21,14 +30,18 @@ type NetDialer struct {
 }
 
 func (d *NetDialer) Dial(network, address string, timeout time.Duration) (net.Conn, error) {
+	return d.DialContext(context.Background(), network, address, timeout)
+}
+
+func (d *NetDialer) DialContext(ctx context.Context, network, address string, timeout time.Duration) (net.Conn, error) {
 	if d.LocalAddr != "" {
 		laddr, err := net.ResolveTCPAddr(network, d.LocalAddr)
 		if err != nil {
 			return nil, err
 		}
 		dialer := net.Dialer{Timeout: timeout, KeepAlive: 30 * time.Second, LocalAddr: laddr}
-		return dialer.Dial(network, address)
+		return dialer.DialContext(ctx, network, address)
 	}
 	dialer := net.Dialer{Timeout: timeout, KeepAlive: 30 * time.Second}
-	return dialer.Dial(network, address)
+	return dialer.DialContext(ctx, network, address)
 }

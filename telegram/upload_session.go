@@ -2,10 +2,13 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
+	"io"
+	"net"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
@@ -93,15 +96,11 @@ func (p *uploadPoolInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject)
 }
 
 func isSessionClosedErr(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "session: closed") ||
-		strings.Contains(msg, "session closed") ||
-		strings.Contains(msg, "transport is closed") ||
-		strings.Contains(msg, "connection reset") ||
-		strings.Contains(msg, "broken pipe")
+	return isSessionDeadErr(err) ||
+		errors.Is(err, net.ErrClosed) ||
+		errors.Is(err, io.EOF) ||
+		errors.Is(err, syscall.ECONNRESET) ||
+		errors.Is(err, syscall.EPIPE)
 }
 
 // uploadRPC returns an RPC client backed by a pool of dedicated upload
@@ -208,8 +207,8 @@ func hasDeadSession(pool []*sideSession) bool {
 	return false
 }
 
-// createUploadSession dials a new TCP connection to the home DC and creates a
-// session that shares the main session's auth key and server salt.
+// createUploadSession opens a transport to the home DC and creates a session
+// that shares the main session's auth key and server salt.
 func (c *Client) createUploadSession() (*sideSession, error) {
 	c.mu.RLock()
 	cfg := c.cfg
@@ -222,33 +221,14 @@ func (c *Client) createUploadSession() (*sideSession, error) {
 	}
 
 	dc := mainSess.DC()
-	addr := dc.Address()
-	port := dc.Port()
-	if addr == "" {
+	if dc.Address() == "" {
 		return nil, fmt.Errorf("upload session: unknown DC address")
 	}
 
-	d := c.dialer
-	if c.testDialer != nil {
-		d = c.testDialer
-	}
-
-	conn, err := d.Dial("tcp", fmt.Sprintf("%s:%d", addr, port), 15*time.Second)
+	sessionTp, err := c.dialTransport(dc, 15*time.Second, c.testDialer)
 	if err != nil {
-		return nil, fmt.Errorf("upload session: dial %s:%d: %w", addr, port, err)
-	}
-
-	tp, err := c.createTransport(conn)
-	if err != nil {
-		conn.Close()
 		return nil, fmt.Errorf("upload session: transport: %w", err)
 	}
-	if err := tp.Connect(); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("upload session: transport handshake: %w", err)
-	}
-
-	sessionTp := newSessionTransport(tp, conn)
 
 	uploadStorage := NewMemoryStorage()
 	sess, err := session.NewSession(dc, uploadStorage,
@@ -262,16 +242,31 @@ func (c *Client) createUploadSession() (*sideSession, error) {
 	sess.SetUpdateHandler(func(obj tg.TLObject) {})
 
 	authKey := mainSess.AuthKey()
+	if pfs := mainSess.PFS(); pfs != nil {
+		authKey = pfs.PermKey()
+	}
 	if len(authKey) == 0 {
 		sessionTp.Close()
 		return nil, fmt.Errorf("upload session: no auth key on main session")
 	}
 	sess.SetAuthKey(authKey)
 	sess.SetServerSalt(mainSess.ServerSalt())
+	configureSessionHealth(sess, c.config(), c.connMetrics)
+	if err := c.prepareSessionPFS(sess, uploadStorage, dc, sessionTp, authKey); err != nil {
+		sessionTp.Close()
+		return nil, fmt.Errorf("upload session: prepare PFS: %w", err)
+	}
 
 	if err := sess.Connect(sessionTp, 15*time.Second); err != nil {
 		sessionTp.Close()
 		return nil, fmt.Errorf("upload session: connect: %w", err)
+	}
+	bindCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := c.bindSessionPFS(bindCtx, sess); err != nil {
+		sess.Stop()
+		sessionTp.Close()
+		return nil, fmt.Errorf("upload session: bind PFS: %w", err)
 	}
 
 	log.Debugf("upload session established for DC %d", dc.ID)

@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -84,6 +85,36 @@ var (
 	// rpc_drop_answer. The original caller receives this error.
 	ErrRPCDropped = errors.New("session: rpc dropped by client")
 )
+
+// DeliveryState describes what is known about an RPC when its connection dies.
+type DeliveryState uint8
+
+const (
+	// DeliveryUnknown means bytes may have reached Telegram, but no ACK arrived.
+	DeliveryUnknown DeliveryState = iota
+	// DeliveryReceived means Telegram acknowledged the request before disconnect.
+	DeliveryReceived
+)
+
+func (s DeliveryState) String() string {
+	if s == DeliveryReceived {
+		return "received"
+	}
+	return "unknown"
+}
+
+// DeliveryError prevents callers from treating an uncertain write as a
+// definitely unsent request. Err retains the underlying transport/session error.
+type DeliveryError struct {
+	State DeliveryState
+	Err   error
+}
+
+func (e *DeliveryError) Error() string {
+	return fmt.Sprintf("session: RPC delivery %s: %v", e.State, e.Err)
+}
+
+func (e *DeliveryError) Unwrap() error { return e.Err }
 
 // ErrorClass classifies a transport or session error for reconnect decisions.
 type ErrorClass int

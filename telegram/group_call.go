@@ -240,13 +240,25 @@ func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCD
 	if err != nil {
 		return nil, fmt.Errorf("connect to cdn dc %d: %w", redirect.DCID, err)
 	}
+	hasher := &cdnHashChecker{hashes: redirect.FileHashes}
+	coverageEnd, err := hasher.ensureCoverage(ctx, cdnRPC, redirect.FileToken, 0)
+	if err != nil {
+		return nil, err
+	}
+	limit := coverageEnd
+	if limit > 512*1024 {
+		limit = 512 * 1024
+	}
+	if limit <= 0 {
+		return nil, fmt.Errorf("cdn: no authenticated stream range")
+	}
 
 	var chunk []byte
 	for attempt := 0; attempt < 3; attempt++ {
 		result, err := cdnRPC.UploadGetCDNFile(ctx, &tg.UploadGetCDNFileRequest{
 			FileToken: redirect.FileToken,
 			Offset:    0,
-			Limit:     512 * 1024,
+			Limit:     int32(limit),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cdn get file: %w", err)
@@ -254,8 +266,17 @@ func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCD
 
 		switch f := result.(type) {
 		case *tg.UploadCDNFile:
+			if len(f.Bytes) > int(limit) {
+				return nil, fmt.Errorf("cdn: stream response exceeds authenticated range")
+			}
 			chunk, err = cdnDecryptChunk(f.Bytes, redirect.EncryptionKey, redirect.EncryptionIv, 0)
 			if err != nil {
+				return nil, err
+			}
+			if err := hasher.feed(chunk, 0); err != nil {
+				return nil, err
+			}
+			if err := hasher.finish(); err != nil {
 				return nil, err
 			}
 			return chunk, nil

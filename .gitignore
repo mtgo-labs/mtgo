@@ -52,3 +52,7 @@ AGENTS.specify.md
 new.txt
 old.txt
 bench_result.txt
+
+# Local architecture review artifacts
+ARCHITECTURE.md
+CONNECTION_COMPARISON.md

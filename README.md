@@ -8,6 +8,9 @@
 
 A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram.org/mtproto).
 
+Engineering priorities are security and correctness, measured performance,
+low latency, and minimal raw-protocol overhead.
+
 > **Note:** mtgo stands for **MTProto Go**. It is a Telegram client library and has no relation to Magic: The Gathering Online.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -30,6 +33,7 @@ A fast, idiomatic Go client for the [Telegram MTProto API](https://core.telegram
 - **Storage backends** — [SQLite](https://github.com/mtgo-labs/storage), [PostgreSQL](https://github.com/mtgo-labs/storage), [MongoDB](https://github.com/mtgo-labs/storage), or bring your own adapter
 - **MTProxy support** — dd/ee/simple secrets with obfuscated2 and fake TLS
 - **WebSocket transport** — MTProto over WebSocket for restrictive networks
+- **HTTP transport** — bounded MTProto-over-HTTP with encrypted long polling and endpoint failover
 - **Auto-reconnect** — exponential backoff with jitter and configurable max attempts
 - **Health checks** — periodic ping/pong keepalive with configurable timeout
 - **Generated TL layer** — auto-generated from Telegram schemas; update with one command
@@ -299,6 +303,40 @@ client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
 ```
 
 Backends: [SQLite](https://github.com/mtgo-labs/storage/sqlite), [PostgreSQL](https://github.com/mtgo-labs/storage/postgres), [MongoDB](https://github.com/mtgo-labs/storage/mongodb). See the [storage repo](https://github.com/mtgo-labs/storage) for custom adapter docs.
+
+## HTTP Transport
+
+Enable MTProto-over-HTTP only when raw TCP or WebSocket is unavailable:
+
+```go
+cfg := telegram.Config{
+    HTTPTransport: &telegram.HTTPTransportConfig{TLS: true},
+}
+client, err := telegram.NewClient(apiID, apiHash, &cfg)
+```
+
+MTGO generates the DC `/api` endpoints automatically. `URLs` can override them
+for a custom gateway. HTTP transport is mutually exclusive with `WebSocket` and
+`MTProxy`; SOCKS and HTTP CONNECT proxy settings still apply.
+
+## Telemetry
+
+Set `Config.Telemetry` to receive structured RPC and connection observations
+without adding a dependency to the raw MTProto core. OpenTelemetry users can use
+the optional adapter:
+
+```go
+import mtgootel "github.com/mtgo-labs/mtgo/telegram/otel"
+
+telemetry, err := mtgootel.New(mtgootel.Config{})
+if err != nil {
+    return err
+}
+cfg.Telemetry = telemetry
+```
+
+The adapter records RPC duration and attempts, connection events, flood waits,
+and corresponding spans through the configured or global OpenTelemetry providers.
 
 ## Multi-Client — Manage Multiple Client Instances
 

@@ -11,11 +11,20 @@ type DataCenter struct {
 	TestMode bool
 	// IPv6 indicates whether to use IPv6 addresses.
 	IPv6 bool
+	// IPAddress overrides the built-in Telegram address table when populated
+	// from help.getConfig.
+	IPAddress string
+	// PortValue overrides the default Telegram port when populated from
+	// help.getConfig.
+	PortValue int
 }
 
 // Address returns the IP address (IPv4 or IPv6) of this data center based on
 // its ID, test mode, and IPv6 flags.
 func (dc DataCenter) Address() string {
+	if dc.IPAddress != "" {
+		return dc.IPAddress
+	}
 	if dc.IPv6 {
 		return dcIPv6Address(dc.ID, dc.TestMode)
 	}
@@ -24,11 +33,17 @@ func (dc DataCenter) Address() string {
 
 // Port returns the port number for connecting to this data center.
 func (dc DataCenter) Port() int {
+	if dc.PortValue > 0 {
+		return dc.PortValue
+	}
 	return 443
 }
 
 // String returns a human-readable label for this data center, e.g. "DC2".
 func (dc DataCenter) String() string {
+	if dc.IPAddress != "" || dc.PortValue > 0 {
+		return fmt.Sprintf("DC%d(%s:%d)", dc.ID, dc.Address(), dc.Port())
+	}
 	return fmt.Sprintf("DC%d", dc.ID)
 }
 

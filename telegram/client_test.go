@@ -65,6 +65,12 @@ func TestNewClientDefaults(t *testing.T) {
 	if c.cfg.TransportMode != TransportModeAbridged {
 		t.Errorf("TransportMode = %v, want %v", c.cfg.TransportMode, TransportModeAbridged)
 	}
+	if c.cfg.ConnPoolTTL != 10*time.Second {
+		t.Errorf("ConnPoolTTL = %v, want 10s", c.cfg.ConnPoolTTL)
+	}
+	if c.cfg.EndpointCoolDown != 16*time.Second {
+		t.Errorf("EndpointCoolDown = %v, want 16s", c.cfg.EndpointCoolDown)
+	}
 }
 
 func TestNewClientWithOptions(t *testing.T) {
@@ -1402,10 +1408,21 @@ func (s *closeTrackingStorage) Close() error {
 	return nil
 }
 
+type closeTrackingResource struct {
+	closed bool
+}
+
+func (r *closeTrackingResource) Close() error {
+	r.closed = true
+	return nil
+}
+
 func TestCleanupSessionsCanKeepStorageForMigration(t *testing.T) {
 	c, _ := NewClient(1, "hash", nil)
 	st := &closeTrackingStorage{MemoryStorage: NewMemoryStorage()}
+	warm := &closeTrackingResource{}
 	c.storage = st
+	c.connPool.Put(2, session.DataCenter{ID: 2}, warm)
 
 	c.cleanupSessions(false)
 	if st.closed {
@@ -1413,6 +1430,9 @@ func TestCleanupSessionsCanKeepStorageForMigration(t *testing.T) {
 	}
 	if c.storage != st {
 		t.Fatal("storage should remain attached for migration retry")
+	}
+	if warm.closed || c.connPool.Count() != 1 {
+		t.Fatal("warm connection should remain available for migration retry")
 	}
 
 	c.cleanupSessions()
@@ -1422,4 +1442,25 @@ func TestCleanupSessionsCanKeepStorageForMigration(t *testing.T) {
 	if c.storage != nil {
 		t.Fatal("storage should be released during regular cleanup")
 	}
+	if !warm.closed || c.connPool.Count() != 0 {
+		t.Fatal("regular cleanup should close warm connections")
+	}
+}
+
+func TestConfigConcurrentReadUpdate(t *testing.T) {
+	c, _ := NewClient(1, "hash", nil)
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 1_000; j++ {
+				_ = c.Config()
+			}
+		}()
+	}
+	for i := 0; i < 1_000; i++ {
+		c.updateConfig(func(cfg *Config) { cfg.DC = i%5 + 1 })
+	}
+	wg.Wait()
 }

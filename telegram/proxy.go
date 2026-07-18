@@ -138,17 +138,21 @@ type socksDialer struct {
 }
 
 func (d *socksDialer) Dial(network, address string, timeout time.Duration) (net.Conn, error) {
-	conn, err := d.forward.Dial(network, d.proxyAddr, timeout)
+	return d.DialContext(context.Background(), network, address, timeout)
+}
+
+func (d *socksDialer) DialContext(ctx context.Context, network, address string, timeout time.Duration) (net.Conn, error) {
+	conn, err := dialWithContext(ctx, d.forward, network, d.proxyAddr, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("socks connect to %s: %w", d.proxyAddr, err)
 	}
 	// Bound the handshake so a half-open proxy that accepts the TCP connection
 	// but never replies does not hang the dialer indefinitely.
-	if timeout > 0 {
-		_ = conn.SetReadDeadline(time.Now().Add(timeout))
+	if deadline, ok := dialDeadline(ctx, timeout); ok {
+		_ = conn.SetDeadline(deadline)
 	}
 	if d.version == "socks4" {
-		conn, err = d.socks4Handshake(conn, address)
+		conn, err = d.socks4Handshake(ctx, conn, address)
 	} else {
 		conn, err = d.socks5Handshake(conn, address)
 	}
@@ -156,7 +160,7 @@ func (d *socksDialer) Dial(network, address string, timeout time.Duration) (net.
 		return nil, err
 	}
 	if timeout > 0 {
-		_ = conn.SetReadDeadline(time.Time{}) // clear; MTProto sets its own deadlines
+		_ = conn.SetDeadline(time.Time{}) // clear; MTProto sets its own deadlines
 	}
 	return conn, nil
 }
@@ -280,7 +284,7 @@ func (d *socksDialer) socks5Handshake(conn net.Conn, address string) (net.Conn, 
 	return conn, nil
 }
 
-func (d *socksDialer) socks4Handshake(conn net.Conn, address string) (net.Conn, error) {
+func (d *socksDialer) socks4Handshake(ctx context.Context, conn net.Conn, address string) (net.Conn, error) {
 	host, portStr, err := net.SplitHostPort(address)
 	if err != nil {
 		conn.Close()
@@ -308,7 +312,7 @@ func (d *socksDialer) socks4Handshake(conn net.Conn, address string) (net.Conn, 
 	} else if ip4 := ip.To4(); ip4 == nil {
 		// IPv6: SOCKS4 doesn't support IPv6 addresses. Resolve to IPv4
 		// via DNS first and use the resolved address.
-		ips, err := net.DefaultResolver.LookupIPAddr(context.Background(), host)
+		ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
 		if err != nil {
 			conn.Close()
 			return nil, fmt.Errorf("socks4: resolve ipv6 host %s: %w", host, err)
@@ -363,13 +367,17 @@ type httpProxyDialer struct {
 }
 
 func (d *httpProxyDialer) Dial(network, address string, timeout time.Duration) (net.Conn, error) {
-	conn, err := d.forward.Dial(network, d.proxyAddr, timeout)
+	return d.DialContext(context.Background(), network, address, timeout)
+}
+
+func (d *httpProxyDialer) DialContext(ctx context.Context, network, address string, timeout time.Duration) (net.Conn, error) {
+	conn, err := dialWithContext(ctx, d.forward, network, d.proxyAddr, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("http proxy connect to %s: %w", d.proxyAddr, err)
 	}
 	// Bound the handshake so a half-open proxy does not hang the dialer.
-	if timeout > 0 {
-		_ = conn.SetReadDeadline(time.Now().Add(timeout))
+	if deadline, ok := dialDeadline(ctx, timeout); ok {
+		_ = conn.SetDeadline(deadline)
 	}
 	req := fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\n", address, address)
 	if d.username != "" {
@@ -393,9 +401,42 @@ func (d *httpProxyDialer) Dial(network, address string, timeout time.Duration) (
 		return nil, fmt.Errorf("http proxy: %s", strings.Split(resp, "\r\n")[0])
 	}
 	if timeout > 0 {
-		_ = conn.SetReadDeadline(time.Time{}) // clear; MTProto sets its own deadlines
+		_ = conn.SetDeadline(time.Time{}) // clear; MTProto sets its own deadlines
 	}
 	return conn, nil
+}
+
+func dialWithContext(ctx context.Context, d transport.Dialer, network, address string, timeout time.Duration) (net.Conn, error) {
+	if cd, ok := d.(transport.ContextDialer); ok {
+		return cd.DialContext(ctx, network, address, timeout)
+	}
+	type result struct {
+		conn net.Conn
+		err  error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		conn, err := d.Dial(network, address, timeout)
+		ch <- result{conn: conn, err: err}
+	}()
+	select {
+	case result := <-ch:
+		return result.conn, result.err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func dialDeadline(ctx context.Context, timeout time.Duration) (time.Time, bool) {
+	deadline, ok := ctx.Deadline()
+	if timeout <= 0 {
+		return deadline, ok
+	}
+	timeoutDeadline := time.Now().Add(timeout)
+	if !ok || timeoutDeadline.Before(deadline) {
+		return timeoutDeadline, true
+	}
+	return deadline, true
 }
 
 func readFull(conn net.Conn, buf []byte) (int, error) {

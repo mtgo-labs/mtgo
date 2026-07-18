@@ -185,3 +185,65 @@ func TestPFSRenewalLoopDisabledExplicitNil(t *testing.T) {
 		t.Fatal("pfsRenewalLoop did not return after context cancellation")
 	}
 }
+
+func TestTempKeyRotationUsesQuarterLifetimeMargin(t *testing.T) {
+	now := time.Now()
+	mgr := NewTempKeyManager(2, false, make([]byte, 256), true, nil)
+	mgr.tempKey = make([]byte, 256)
+	mgr.issuedAt = now.Add(-12 * time.Hour)
+	mgr.expiresAt = now.Add(12 * time.Hour)
+	if mgr.NeedsRotation() {
+		t.Fatal("NeedsRotation = true at half lifetime")
+	}
+	due := mgr.rotationDueIn()
+	if due < 5*time.Hour+59*time.Minute || due > 6*time.Hour+time.Minute {
+		t.Fatalf("rotation due in %v, want about 6h", due)
+	}
+
+	mgr.issuedAt = now.Add(-19 * time.Hour)
+	mgr.expiresAt = now.Add(5 * time.Hour)
+	if !mgr.NeedsRotation() {
+		t.Fatal("NeedsRotation = false after 75%% of lifetime")
+	}
+}
+
+func TestPFSRenewalLoopUsesDeadlineTimer(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mgr := NewTempKeyManager(2, false, make([]byte, 256), true, nil)
+	mgr.tempKey = make([]byte, 256)
+	mgr.issuedAt = time.Now().Add(-2 * time.Minute)
+	mgr.expiresAt = time.Now().Add(40*time.Second + 50*time.Millisecond)
+	s.SetPFS(mgr)
+
+	started := time.Now()
+	err := s.pfsRenewalLoop(context.Background())
+	if err == nil {
+		t.Fatal("pfsRenewalLoop returned nil")
+	}
+	elapsed := time.Since(started)
+	if elapsed < 20*time.Millisecond || elapsed > 500*time.Millisecond {
+		t.Fatalf("renewal fired after %v, want about 40ms", elapsed)
+	}
+}
+
+func TestAuthKeyOwnershipIsIsolated(t *testing.T) {
+	key := make([]byte, 256)
+	key[0] = 1
+	s := newSessionWithAuthKey(t)
+	s.SetAuthKey(key)
+	key[0] = 2
+	if got := s.AuthKey()[0]; got != 1 {
+		t.Fatalf("session auth key changed through caller slice: got %d", got)
+	}
+
+	mgr := NewTempKeyManager(2, false, key, true, nil)
+	key[1] = 3
+	perm := mgr.PermKey()
+	if perm[1] != 0 {
+		t.Fatalf("manager permanent key changed through caller slice: got %d", perm[1])
+	}
+	perm[0] = 9
+	if got := mgr.PermKey()[0]; got == 9 {
+		t.Fatal("PermKey returned mutable internal key material")
+	}
+}

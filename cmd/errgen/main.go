@@ -65,6 +65,8 @@ func main() {
 		src = []byte(b.String())
 	}
 	if err := os.WriteFile(outputFile, src, 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "write %s: %v\n", outputFile, err)
+		os.Exit(1)
 	}
 
 	fmt.Printf("Generated %d error constants to %s\n", len(defs), outputFile)

@@ -20,8 +20,6 @@ type msgIDValidator struct {
 
 func newMsgIDValidator(serverTS func() int64) *msgIDValidator {
 	return &msgIDValidator{
-		ids:      make([]int64, 0, msgIDReplayCapacity),
-		idSet:    make(map[int64]struct{}, msgIDReplayCapacity),
 		serverTS: serverTS,
 	}
 }
@@ -42,6 +40,10 @@ func (v *msgIDValidator) Check(msgID int64) bool {
 
 	v.mu.Lock()
 	defer v.mu.Unlock()
+	if v.idSet == nil {
+		v.ids = make([]int64, 0, msgIDReplayCapacity)
+		v.idSet = make(map[int64]struct{}, msgIDReplayCapacity)
+	}
 
 	if _, exists := v.idSet[msgID]; exists {
 		return false

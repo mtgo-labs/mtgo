@@ -239,6 +239,23 @@ type mockTransport struct {
 	closeOnce sync.Once
 }
 
+type httpWaitMockTransport struct {
+	*mockTransport
+	waitFrame chan []byte
+}
+
+func (m *httpWaitMockTransport) HTTPWaitParams() (maxDelay, waitAfter, maxWait int32, enabled bool) {
+	return 10, 20, 30_000, true
+}
+
+func (m *httpWaitMockTransport) StartHTTPWait(frame func(context.Context) ([]byte, error)) {
+	encrypted, err := frame(context.Background())
+	if err != nil {
+		return
+	}
+	m.waitFrame <- encrypted
+}
+
 func newMockTransport() *mockTransport {
 	return &mockTransport{
 		sendCh: make(chan []byte, 100),
@@ -335,7 +352,7 @@ func writeRawMTProtoMessage(b *bytes.Buffer, msgID int64, seqNo uint32, body []b
 	b.Write(body)
 }
 
-func newSessionWithAuthKey(t *testing.T) *Session {
+func newSessionWithAuthKey(t testing.TB) *Session {
 	t.Helper()
 	dc := DataCenter{ID: 2}
 	st := newTestStorage()
@@ -357,8 +374,17 @@ func startTestWorkers(s *Session, mt *mockTransport) func() {
 	s.pingCbs = make(map[int64]chan struct{})
 	s.done = make(chan struct{})
 	s.sm.forceSetState(StateActive)
-	go func() { _ = s.readLoop(ctx) }()
-	go func() { _ = s.ackLoop(ctx) }()
+	started := make(chan struct{}, 2)
+	go func() {
+		started <- struct{}{}
+		_ = s.readLoop(ctx)
+	}()
+	go func() {
+		started <- struct{}{}
+		_ = s.ackLoop(ctx)
+	}()
+	<-started
+	<-started
 	return func() {
 		cancel()
 		close(s.done)
@@ -1097,6 +1123,50 @@ func TestSessionStartStop(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	if s.IsConnected() {
 		t.Error("IsConnected() = true after Stop()")
+	}
+}
+
+func TestSessionStartsEncryptedHTTPWaitAfterPing(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := &httpWaitMockTransport{
+		mockTransport: newMockTransport(),
+		waitFrame:     make(chan []byte, 1),
+	}
+	s.SetTransport(mt)
+	s.pingInterval = time.Hour
+
+	go func() {
+		sentData := <-mt.sendCh
+		message := unpackIncoming(sentData, s)
+		ping, ok := message.Body.(*tg.PingRequest)
+		if !ok {
+			return
+		}
+		mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), 0, &tg.Pong{
+			MsgID:  message.MsgID,
+			PingID: ping.PingID,
+		})
+	}()
+
+	if err := s.Start(3 * time.Second); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer s.Stop()
+	select {
+	case encrypted := <-mt.waitFrame:
+		message := unpackIncoming(encrypted, s)
+		if message == nil {
+			t.Fatal("http_wait frame did not decrypt")
+		}
+		wait, ok := message.Body.(*tg.HTTPWait)
+		if !ok {
+			t.Fatalf("poll body = %T, want *tg.HTTPWait", message.Body)
+		}
+		if wait.MaxDelay != 10 || wait.WaitAfter != 20 || wait.MaxWait != 30_000 {
+			t.Fatalf("http_wait = %+v, want 10/20/30000", wait)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("encrypted http_wait was not started")
 	}
 }
 
@@ -2132,6 +2202,63 @@ func TestDCOptionPoolFindBest(t *testing.T) {
 	}
 }
 
+func TestDCOptionPoolCandidates(t *testing.T) {
+	pool := NewDCOptionPool(2, 100*time.Millisecond)
+	dc1 := DataCenter{ID: 2}
+	dc2 := DataCenter{ID: 2, IPv6: true}
+	dc3 := DataCenter{ID: 3}
+
+	pool.AddOption(dc1)
+	pool.AddOption(dc2)
+	pool.AddOption(dc3)
+	pool.RecordSuccess(dc2)
+	pool.RecordFailure(dc1)
+
+	candidates, err := pool.Candidates(0)
+	if err != nil {
+		t.Fatalf("Candidates: %v", err)
+	}
+	if len(candidates) != 1 {
+		t.Fatalf("Candidates len = %d, want 1 while dc1 is cooling down", len(candidates))
+	}
+	if candidates[0] != dc2 {
+		t.Fatalf("Candidates should prefer healthy dc2 first, got %v", candidates)
+	}
+
+	dc3Candidates, err := pool.CandidatesForDC(3, 0)
+	if err != nil {
+		t.Fatalf("CandidatesForDC(3): %v", err)
+	}
+	if len(dc3Candidates) != 1 || dc3Candidates[0] != dc3 {
+		t.Fatalf("CandidatesForDC(3) = %v, want [%v]", dc3Candidates, dc3)
+	}
+
+	time.Sleep(150 * time.Millisecond)
+	candidates, err = pool.Candidates(0)
+	if err != nil {
+		t.Fatalf("Candidates after cool-down: %v", err)
+	}
+	if len(candidates) != 2 {
+		t.Fatalf("Candidates len after cool-down = %d, want 2", len(candidates))
+	}
+	if candidates[1] != dc1 {
+		t.Fatalf("Candidates should retry cooled-down failed endpoint last, got %v", candidates)
+	}
+}
+
+func TestDataCenterDynamicAddress(t *testing.T) {
+	dc := DataCenter{ID: 2, IPAddress: "203.0.113.10", PortValue: 1443}
+	if got := dc.Address(); got != "203.0.113.10" {
+		t.Fatalf("Address() = %q, want dynamic address", got)
+	}
+	if got := dc.Port(); got != 1443 {
+		t.Fatalf("Port() = %d, want dynamic port", got)
+	}
+	if got := dc.String(); got != "DC2(203.0.113.10:1443)" {
+		t.Fatalf("String() = %q", got)
+	}
+}
+
 func TestDCOptionPoolCoolDown(t *testing.T) {
 	pool := NewDCOptionPool(2, 100*time.Millisecond)
 
@@ -2162,9 +2289,10 @@ func TestDCOptionPoolCoolDown(t *testing.T) {
 
 func TestConnectionPoolGetPut(t *testing.T) {
 	pool := NewConnectionPool(10 * time.Second)
+	defer pool.Close()
 
 	dc := DataCenter{ID: 2}
-	conn := &mockTransport{}
+	conn := newMockTransport()
 
 	// Cache miss.
 	_, ok := pool.Get(2, dc)
@@ -2189,34 +2317,44 @@ func TestConnectionPoolGetPut(t *testing.T) {
 	if ok {
 		t.Fatal("Get should return false after consumption")
 	}
+	pool.Close()
+	if !conn.IsConnected() {
+		t.Fatal("consumed connection should be owned by caller, not closed by pool")
+	}
+	conn.Close()
 }
 
 func TestConnectionPoolExpiry(t *testing.T) {
-	pool := NewConnectionPool(100 * time.Millisecond)
+	pool := NewConnectionPool(10 * time.Millisecond)
+	defer pool.Close()
 
 	dc := DataCenter{ID: 2}
-	conn := &mockTransport{}
+	conn := newMockTransport()
 
 	pool.Put(2, dc, conn)
 
-	// Wait for expiry.
-	time.Sleep(150 * time.Millisecond)
-
-	// Should miss (expired).
-	_, ok := pool.Get(2, dc)
-	if ok {
-		t.Fatal("Get should return false after expiry")
+	select {
+	case <-conn.done:
+	case <-time.After(time.Second):
+		t.Fatal("expired connection was not closed automatically")
+	}
+	if pool.Count() != 0 {
+		t.Fatalf("Count after automatic expiry = %d, want 0", pool.Count())
 	}
 }
 
 func TestConnectionPoolEvict(t *testing.T) {
 	pool := NewConnectionPool(10 * time.Second)
+	defer pool.Close()
 
 	dc := DataCenter{ID: 2}
-	conn := &mockTransport{}
+	conn := newMockTransport()
 
 	pool.Put(2, dc, conn)
 	pool.Evict(2, dc)
+	if conn.IsConnected() {
+		t.Fatal("Evict should close the cached connection")
+	}
 
 	_, ok := pool.Get(2, dc)
 	if ok {
@@ -2225,17 +2363,24 @@ func TestConnectionPoolEvict(t *testing.T) {
 }
 
 func TestConnectionPoolPurge(t *testing.T) {
-	pool := NewConnectionPool(100 * time.Millisecond)
+	pool := NewConnectionPool(10 * time.Second)
+	defer pool.Close()
 
 	dc := DataCenter{ID: 2}
-	pool.Put(2, dc, &mockTransport{})
-	pool.Put(2, DataCenter{ID: 2, IPv6: true}, &mockTransport{})
+	conn1 := newMockTransport()
+	conn2 := newMockTransport()
+	pool.Put(2, dc, conn1)
+	pool.Put(2, DataCenter{ID: 2, IPv6: true}, conn2)
 
 	if pool.Count() != 2 {
 		t.Fatalf("Count before purge: %d, want 2", pool.Count())
 	}
 
-	time.Sleep(150 * time.Millisecond)
+	pool.mu.Lock()
+	for i := range pool.entries {
+		pool.entries[i].CreatedAt = time.Now().Add(-time.Minute)
+	}
+	pool.mu.Unlock()
 
 	purged := pool.Purge()
 	if purged != 2 {
@@ -2243,5 +2388,48 @@ func TestConnectionPoolPurge(t *testing.T) {
 	}
 	if pool.Count() != 0 {
 		t.Fatalf("Count after purge: %d, want 0", pool.Count())
+	}
+	if conn1.IsConnected() || conn2.IsConnected() {
+		t.Fatal("Purge should close expired cached connections")
+	}
+}
+
+func TestConnectionPoolReplaceAndClear(t *testing.T) {
+	pool := NewConnectionPool(10 * time.Second)
+	dc := DataCenter{ID: 2}
+	first := newMockTransport()
+	second := newMockTransport()
+
+	pool.Put(2, dc, first)
+	pool.Put(2, dc, second)
+	if first.IsConnected() {
+		t.Fatal("replacing an endpoint should close the previous connection")
+	}
+	if pool.Count() != 1 {
+		t.Fatalf("Count after replacement = %d, want 1", pool.Count())
+	}
+
+	pool.Clear()
+	if second.IsConnected() {
+		t.Fatal("Clear should close cached connections")
+	}
+	if pool.Count() != 0 {
+		t.Fatalf("Count after Clear = %d, want 0", pool.Count())
+	}
+
+	third := newMockTransport()
+	pool.Put(2, dc, third)
+	if pool.Count() != 1 {
+		t.Fatal("Clear should leave the pool reusable")
+	}
+	pool.Close()
+	if third.IsConnected() {
+		t.Fatal("Close should close cached connections")
+	}
+
+	fourth := newMockTransport()
+	pool.Put(2, dc, fourth)
+	if fourth.IsConnected() {
+		t.Fatal("Put after Close should close the rejected connection")
 	}
 }

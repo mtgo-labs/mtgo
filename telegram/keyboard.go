@@ -121,7 +121,7 @@ func (b *KeyboardBuilder) RequestPhone(text string) *KeyboardBuilder {
 // peerType is one of &tg.RequestPeerTypeUser{}, &tg.RequestPeerTypeChat{},
 // or &tg.RequestPeerTypeBroadcast{}.
 // maxQuantity controls how many peers the user can share (for users only).
-// PeerUserOpts are optional filters when requesting a user peer.
+// PeerUserOpts configures optional filters when requesting a user peer.
 type PeerUserOpts struct {
 	Bot     bool
 	Premium bool

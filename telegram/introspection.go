@@ -1,9 +1,5 @@
 package telegram
 
-import (
-	"time"
-)
-
 // LoadSnapshot is a read-only runtime snapshot of client load for operator
 // observability (FR-020). All fields are populated from atomic reads with zero
 // hot-path allocation. Safe for concurrent use.
@@ -15,6 +11,7 @@ type LoadSnapshot struct {
 	MessagesPacked    int64
 	ThrottleLevel     ThrottleLevel
 	OverloadActive    bool
+	Connection        ConnectionSnapshot
 }
 
 // LoadSnapshot returns an aggregated view of the client's internal load state.
@@ -44,9 +41,12 @@ func (c *Client) LoadSnapshot() LoadSnapshot {
 		snap.ThrottleLevel = os.ThrottleLevel
 		snap.OverloadActive = os.OverloadActive
 	}
+	snap.Connection = c.ConnectionSnapshot()
 
 	return snap
 }
 
-// Ensure time import is used for potential future latency fields.
-var _ = time.Second
+// ConnectionSnapshot returns transport and connection lifecycle diagnostics.
+func (c *Client) ConnectionSnapshot() ConnectionSnapshot {
+	return c.connMetrics.Snapshot()
+}
