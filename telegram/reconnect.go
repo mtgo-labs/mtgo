@@ -187,6 +187,21 @@ func (c *Client) signalReconnect() {
 }
 
 func (c *Client) reconnectOnce() error {
+	// Serialize with ensureConnected's inline AutoConnect path. Without this,
+	// the background reconnector and an RPC-triggered inline reconnect race:
+	// both create competing sessions, dial transports, and mutate c.session +
+	// state concurrently. Last writer wins; the loser's session/transport is
+	// leaked and its session-exit watcher fires a cascade of spurious
+	// reconnects. See ensureConnected (client.go) which holds the same lock.
+	c.autoConnectMu.Lock()
+	defer c.autoConnectMu.Unlock()
+
+	// If ensureConnected already reconnected us inline while we waited for
+	// the lock, nothing to do.
+	if c.state.IsConnected() {
+		return nil
+	}
+
 	c.mu.Lock()
 	st := c.storage
 	c.mu.Unlock()
