@@ -86,6 +86,15 @@ func (s *Session) checkWrite() error {
 // the established auth key, server salt, and server time.
 type AuthFunc func(transport Transport) (*AuthResult, error)
 
+// sessionShutdownCause captures the first error that terminated a session
+// for diagnostic purposes. Stored atomically via Session.shutdownCause;
+// first writer wins so cascading goroutine exits never overwrite the root cause.
+type sessionShutdownCause struct {
+	err    error
+	source string
+	at     time.Time
+}
+
 // Session manages an encrypted MTProto session with a Telegram data center.
 // It handles message ID and sequence number generation, encrypted message
 // packing/unpacking, RPC invocation with retries, keep-alive pings, and
@@ -195,6 +204,7 @@ type Session struct {
 	consecWriteFailures   atomic.Int32
 	writeBreakerThreshold atomic.Int32
 	writeBreakerOpen      atomic.Bool
+	shutdownCause         atomic.Pointer[sessionShutdownCause]
 
 	// Production-hardening fields (end of struct to keep hot-path fields in
 	// the first 6 cache lines — only accessed when features are enabled).
@@ -265,6 +275,18 @@ func (s *Session) BatcherSnapshot() OutboundSnapshot {
 // exits. Callers can use this to detect session termination.
 func (s *Session) SessionDone() <-chan struct{} {
 	return s.runDone
+}
+
+// ShutdownCause returns the first error that terminated the session, the
+// goroutine source that detected it, and the time it was recorded. Returns
+// nil, "", time.Time{} if the session has not terminated or was stopped
+// without a real error (e.g., explicit Stop / context cancellation).
+func (s *Session) ShutdownCause() (source string, at time.Time, err error) {
+	cause := s.shutdownCause.Load()
+	if cause == nil {
+		return "", time.Time{}, nil
+	}
+	return cause.source, cause.at, cause.err
 }
 
 // SetPingInterval configures the keep-alive ping interval. Must be called
@@ -340,6 +362,38 @@ func (s *Session) ResetWriteBreaker() {
 	s.writeBreakerOpen.Store(false)
 }
 
+// recordShutdownCause stores the first terminating error for diagnostic
+// access and logs it exactly once. Uses atomic CompareAndSwap to guarantee
+// first-error-wins: subsequent calls from cascading goroutine exits are
+// silent no-ops.
+func (s *Session) recordShutdownCause(err error, source string) {
+	if err == nil {
+		return
+	}
+	cause := &sessionShutdownCause{err: err, source: source, at: time.Now()}
+	if !s.shutdownCause.CompareAndSwap(nil, cause) {
+		return
+	}
+	if s.log != nil {
+		s.log.Errorf("session: shutdown cause: source=%s dc=%d session_id=%d: %v",
+			source, s.dc.ID, s.sessionID, err)
+	}
+}
+
+// wrapGoroutine wraps an errgroup goroutine function so that the first real
+// (non-context) error it returns is recorded as the session's shutdown cause.
+// context.Canceled and context.DeadlineExceeded are filtered because they are
+// reactive exits caused by another goroutine's failure, not the root cause.
+func (s *Session) wrapGoroutine(name string, f func(context.Context) error) func(context.Context) error {
+	return func(ctx context.Context) error {
+		err := f(ctx)
+		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+			s.recordShutdownCause(err, name)
+		}
+		return err
+	}
+}
+
 // trackWriteResult updates the write circuit breaker. After threshold
 // consecutive failures the breaker opens and the errgroup is cancelled to
 // trigger immediate session shutdown + reconnect (fail-fast). Successful
@@ -353,6 +407,7 @@ func (s *Session) trackWriteResult(err error) {
 		newCount := s.consecWriteFailures.Add(1)
 		if int(newCount) >= threshold && !s.writeBreakerOpen.Load() {
 			s.writeBreakerOpen.Store(true)
+			s.recordShutdownCause(fmt.Errorf("write circuit breaker: %d consecutive write failures", newCount), "writeBreaker")
 			if s.log != nil {
 				s.log.Errorf("session: write circuit breaker tripped after %d consecutive failures, forcing reconnect", newCount)
 			}
@@ -1164,12 +1219,13 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.chains = make(map[int64]int64)
 	s.consecWriteFailures.Store(0)
 	s.writeBreakerOpen.Store(false)
+	s.shutdownCause.Store(nil)
 	s.sm.transition(StateIdle, StateConnecting)
 
 	// Start the errgroup so readLoop is running during the initial ping.
 	g := newErrGroup(groupCtx)
-	g.Go(s.readLoop)
-	g.Go(s.ackLoop)
+	g.Go(s.wrapGoroutine("readLoop", s.readLoop))
+	g.Go(s.wrapGoroutine("ackLoop", s.ackLoop))
 
 	s.group = g
 
@@ -1177,6 +1233,7 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	_, err := s.Invoke(initPingCtx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeoutFromContext(pingCtx))
 	initPingCancel()
 	if err != nil {
+		s.recordShutdownCause(fmt.Errorf("initial ping: %w", err), "runInit")
 		g.Cancel()
 		s.sm.transition(StateConnecting, StateClosed)
 		close(s.done)
@@ -1209,12 +1266,12 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 // is cancelled or a goroutine returns a fatal error.
 func (s *Session) runLoop(ctx context.Context) error {
 	g := s.group
-	g.Go(s.stateCheckLoop)
-	g.Go(s.pingLoop)
-	g.Go(s.saltLoop)
+	g.Go(s.wrapGoroutine("stateCheckLoop", s.stateCheckLoop))
+	g.Go(s.wrapGoroutine("pingLoop", s.pingLoop))
+	g.Go(s.wrapGoroutine("saltLoop", s.saltLoop))
 	g.Go(s.handleClose)
 	if pfs := s.PFS(); pfs != nil && pfs.IsEnabled() {
-		g.Go(s.pfsRenewalLoop)
+		g.Go(s.wrapGoroutine("pfsRenewalLoop", s.pfsRenewalLoop))
 	}
 
 	err := g.Wait()
@@ -1276,7 +1333,9 @@ func (s *Session) StartContext(ctx context.Context) error {
 	}
 	go func() {
 		defer close(s.runDone)
-		s.runLoop(runCtx)
+		if err := s.runLoop(runCtx); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+			s.recordShutdownCause(err, "runLoop")
+		}
 	}()
 	return nil
 }

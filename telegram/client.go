@@ -1737,7 +1737,11 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 	c.sessionWg.Go(func() {
 		<-sess.SessionDone()
 		if c.state.IsConnected() {
-			c.triggerReconnect(fmt.Errorf("session exited"))
+			if source, _, cause := sess.ShutdownCause(); cause != nil {
+				c.triggerReconnect(fmt.Errorf("session exited [%s]: %w", source, cause))
+			} else {
+				c.triggerReconnect(fmt.Errorf("session exited"))
+			}
 		}
 	})
 

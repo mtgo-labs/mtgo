@@ -307,7 +307,11 @@ func (c *Client) reconnectOnce() error {
 		defer c.sessionWg.Done()
 		<-sess.SessionDone()
 		if c.state.IsConnected() && !c.state.IsClosed() {
-			c.triggerReconnect(fmt.Errorf("session exited"))
+			if source, _, cause := sess.ShutdownCause(); cause != nil {
+				c.triggerReconnect(fmt.Errorf("session exited [%s]: %w", source, cause))
+			} else {
+				c.triggerReconnect(fmt.Errorf("session exited"))
+			}
 		}
 	}()
 
