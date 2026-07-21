@@ -26,7 +26,9 @@ func ReadIntErr(r io.Reader) (uint32, error) {
 
 // WriteInt writes a 32-bit little-endian unsigned integer to b.
 func WriteInt(b *bytes.Buffer, v uint32) {
-	_ = binary.Write(b, binary.LittleEndian, v)
+	var data [4]byte
+	binary.LittleEndian.PutUint32(data[:], v)
+	_, _ = b.Write(data[:])
 }
 
 // ReadLong reads a 64-bit little-endian signed integer from r.
@@ -38,7 +40,9 @@ func ReadLong(r io.Reader) int64 {
 
 // WriteLong writes a 64-bit little-endian signed integer to b.
 func WriteLong(b *bytes.Buffer, v int64) {
-	_ = binary.Write(b, binary.LittleEndian, v)
+	var data [8]byte
+	binary.LittleEndian.PutUint64(data[:], uint64(v))
+	_, _ = b.Write(data[:])
 }
 
 // ReadInt128 reads a 128-bit (16-byte) value from r.

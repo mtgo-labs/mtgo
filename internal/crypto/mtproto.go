@@ -65,6 +65,8 @@ func encryptedPaddingLen(bufLen int, randByte byte) int {
 	return pad
 }
 
+const maxEncryptedPadding = 267
+
 // Pack serializes, pads, and encrypts a message for transmission. It assembles
 // the plaintext (salt + sessionID + encoded message + random padding), computes
 // msgKey as SHA-256(authKey[88:120] + plaintext)[8:24], derives the AES key/IV
@@ -92,11 +94,12 @@ func Pack(message *tg.MTProtoMessage, salt int64, sessionID []byte, authKey, aut
 	if _, err := rand.Read(jb[:]); err != nil {
 		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
 	}
-	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
-	if _, err := rand.Read(padding); err != nil {
+	var padding [maxEncryptedPadding]byte
+	paddingLen := encryptedPaddingLen(dataBuf.Len(), jb[0])
+	if _, err := rand.Read(padding[:paddingLen]); err != nil {
 		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
 	}
-	dataBuf.Write(padding)
+	dataBuf.Write(padding[:paddingLen])
 
 	data := dataBuf.Bytes()
 
@@ -146,11 +149,12 @@ func PackRaw(msgID int64, seqNo uint32, bodyBytes []byte, salt int64, sessionID,
 	if _, err := rand.Read(jb[:]); err != nil {
 		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
 	}
-	padding := make([]byte, encryptedPaddingLen(dataBuf.Len(), jb[0]))
-	if _, err := rand.Read(padding); err != nil {
+	var padding [maxEncryptedPadding]byte
+	paddingLen := encryptedPaddingLen(dataBuf.Len(), jb[0])
+	if _, err := rand.Read(padding[:paddingLen]); err != nil {
 		return nil, fmt.Errorf("crypto/mtproto: padding random: %w", err)
 	}
-	dataBuf.Write(padding)
+	dataBuf.Write(padding[:paddingLen])
 
 	data := dataBuf.Bytes()
 
