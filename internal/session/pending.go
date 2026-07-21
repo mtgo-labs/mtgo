@@ -154,8 +154,9 @@ func (pm *PendingManager) ResolveRaw(msgID int64, data []byte) bool {
 }
 
 // ResolveRPCResult handles an incoming raw RPC result payload for reqMsgID.
-// It resolves raw waiters immediately. Returns true if a decoded waiter
-// exists — the caller should decode the payload and call Resolve.
+// It takes ownership of rawPayload and resolves raw waiters immediately.
+// Returns true if a decoded waiter exists — the caller should decode the
+// payload and call Resolve.
 func (pm *PendingManager) ResolveRPCResult(reqMsgID int64, rawPayload []byte) bool {
 	pm.mu.Lock()
 	h, ok := pm.pending[reqMsgID]
@@ -168,9 +169,7 @@ func (pm *PendingManager) ResolveRPCResult(reqMsgID int64, rawPayload []byte) bo
 		delete(pm.pending, reqMsgID)
 		pm.mu.Unlock()
 		h.complete(func() {
-			cp := make([]byte, len(rawPayload))
-			copy(cp, rawPayload)
-			h.rawResult = cp
+			h.rawResult = rawPayload[:len(rawPayload):len(rawPayload)]
 		})
 		pm.dec(h)
 		return false

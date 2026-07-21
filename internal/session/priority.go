@@ -27,14 +27,43 @@ const (
 )
 
 // RoutePriority classifies a TL query into a Priority using method-name
-// heuristics mirroring TDLib's NetQuery::Priority. It inspects the Go type
-// name of the query. Unknown methods default to PriorityHigh (safe default —
-// never starve a caller's interactive request).
+// heuristics mirroring TDLib's NetQuery::Priority. Helper method wrappers are
+// unwrapped before classification. Unknown methods default to PriorityHigh
+// (safe default — never starve a caller's interactive request).
 func RoutePriority(query tg.TLObject) Priority {
-	if query == nil {
-		return PriorityHigh
+	for range 16 {
+		if query == nil {
+			return PriorityHigh
+		}
+
+		switch q := query.(type) {
+		case *tg.InvokeAfterMsgRequest:
+			query = q.Query
+		case *tg.InvokeAfterMsgsRequest:
+			query = q.Query
+		case *tg.InitConnectionRequest:
+			query = q.Query
+		case *tg.InvokeWithLayerRequest:
+			query = q.Query
+		case *tg.InvokeWithoutUpdatesRequest:
+			query = q.Query
+		case *tg.InvokeWithMessagesRangeRequest:
+			query = q.Query
+		case *tg.InvokeWithTakeoutRequest:
+			query = q.Query
+		case *tg.InvokeWithBusinessConnectionRequest:
+			query = q.Query
+		case *tg.InvokeWithGooglePlayIntegrityRequest:
+			query = q.Query
+		case *tg.InvokeWithApnsSecretRequest:
+			query = q.Query
+		case *tg.InvokeWithReCaptchaRequest:
+			query = q.Query
+		default:
+			return classifyGoType(fmt.Sprintf("%T", query))
+		}
 	}
-	return classifyGoType(fmt.Sprintf("%T", query))
+	return PriorityHigh
 }
 
 // classifyGoType inspects a Go type string like "*tg.UploadGetFileRequest" or

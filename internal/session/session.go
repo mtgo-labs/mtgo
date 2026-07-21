@@ -237,7 +237,8 @@ func (s *Session) SetOnNewSession(fn func(firstMsgID int64, uniqueID int64, serv
 }
 
 // EnableOutboundBatching creates and starts an OutboundBatcher on this session.
-// When enabled, Send coalesces concurrent RPCs into msg_container messages.
+// When enabled, Send coalesces low-priority RPCs into msg_container messages;
+// high-priority RPCs continue to write directly.
 // Pass maxContainerBytes=0 for the default 1 MiB, and coalesceWindow=0 for the
 // default 10ms. Call before sending RPCs. To disable, call CloseOutboundBatching.
 func (s *Session) EnableOutboundBatching(maxContainerBytes int, coalesceWindow time.Duration) {
@@ -643,16 +644,16 @@ func (s *Session) Send(ctx context.Context, msgID int64, seqNo uint32, body tg.T
 		return nil, ErrTransportNotSet
 	}
 
-	// When the outbound batcher is enabled, delegate packing+writing to it.
-	// The batcher coalesces multiple concurrent RPCs into a msg_container.
+	// When the outbound batcher is enabled, delegate low-priority bulk work to
+	// it. High-priority interactive RPCs write directly to avoid the coalescing
+	// window.
 	// Read under s.mu.RLock to avoid racing with EnableOutboundBatching/
 	// CloseOutboundBatching which write s.outboundBatcher under s.mu (#6).
 	s.mu.RLock()
 	b := s.outboundBatcher
 	s.mu.RUnlock()
-	if b != nil {
-		priority := RoutePriority(body)
-		handle, err := b.Submit(ctx, msgID, seqNo, body, priority, timeout)
+	if b != nil && RoutePriority(body) == PriorityLow {
+		handle, err := b.Submit(ctx, msgID, seqNo, body, PriorityLow, timeout)
 		if err != nil {
 			return nil, fmt.Errorf("session: send (batched): %w", err)
 		}
@@ -906,7 +907,6 @@ func (s *Session) SendRaw(ctx context.Context, msgID int64, seqNo uint32, bodyBy
 		return raw, deliveryFailure(handle, err)
 	case <-ctx.Done():
 		s.pending.Cancel(msgID)
-		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.done:
 		s.pending.Reject(msgID, ErrSessionClosed)
@@ -965,21 +965,41 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 }
 
 func checkRawRPCError(data []byte) error {
+	return checkRawRPCErrorDepth(data, 0)
+}
+
+func checkRawRPCErrorDepth(data []byte, depth int) error {
 	if len(data) < 4 {
 		return nil
 	}
 	constructorID := binary.LittleEndian.Uint32(data[:4])
-	if constructorID != tg.RPCErrorTypeID {
+	switch constructorID {
+	case tg.RPCErrorTypeID:
+		r := tg.NewReader(data[4:])
+		defer tg.ReleaseReader(r)
+		rpcErr, err := tg.DecodeRPCError(r)
+		if err != nil {
+			return fmt.Errorf("decode raw rpc error: %w", err)
+		}
+		return tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+	case tg.GzipPackedID:
+		if depth >= 4 {
+			return fmt.Errorf("decode raw rpc error: gzip nesting exceeds 4 levels")
+		}
+		r := tg.NewReader(data[4:])
+		defer tg.ReleaseReader(r)
+		gz, err := tg.DecodeGzipPacked(r)
+		if err != nil {
+			return fmt.Errorf("decode raw gzip payload: %w", err)
+		}
+		payload, ok := gz.Data.(*tg.GzipPackedData)
+		if !ok {
+			return fmt.Errorf("decode raw gzip payload: unexpected payload type %T", gz.Data)
+		}
+		return checkRawRPCErrorDepth(payload.Raw, depth+1)
+	default:
 		return nil
 	}
-	r := tg.NewReader(data[4:])
-	defer tg.ReleaseReader(r)
-	rpcErr, err := tg.DecodeRPCError(r)
-	if err != nil {
-		return nil
-	}
-	parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-	return parsed
 }
 
 // Invoke sends an RPC query and decodes the response into a TLObject.

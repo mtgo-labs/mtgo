@@ -2223,8 +2223,75 @@ func (c *Client) migrateExportImport(ctx context.Context, targetDC int, query tg
 	return rpc.Invoke(ctx, query, nil)
 }
 
-// Invoke sends a TLObject query through the primary session. If the query needs
-// initialization, it is wrapped in InvokeWithLayer+InitConnection automatically.
+func (c *Client) handleRawMigrationError(ctx context.Context, rpcErr *tgerr.Error, query tg.TLObject) ([]byte, error) {
+	targetDC := rpcErr.Argument
+	if targetDC <= 0 {
+		return nil, &MigrationError{TargetDC: targetDC, Err: ErrMigrationUnknown}
+	}
+	if rpcErr.Code != 303 {
+		return nil, rpcErr
+	}
+
+	c.Log.Infof("DC migration required: %s -> DC %d", rpcErr.Type, targetDC)
+	c.mu.RLock()
+	st := c.storage
+	c.mu.RUnlock()
+	if st == nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: ErrNotConnected}
+	}
+
+	switch rpcErr.Type {
+	case "PHONE_MIGRATE", "NETWORK_MIGRATE", "USER_MIGRATE":
+		return c.migrateAndRetryRaw(ctx, targetDC, query, st)
+	case "FILE_MIGRATE", "STATS_MIGRATE":
+		return c.migrateExportImportRaw(ctx, targetDC, query)
+	default:
+		return nil, &MigrationError{TargetDC: targetDC, Err: fmt.Errorf("unsupported migration type: %s", rpcErr.Type)}
+	}
+}
+
+func (c *Client) migrateAndRetryRaw(ctx context.Context, targetDC int, query tg.TLObject, st storage.Storage) ([]byte, error) {
+	if query == nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: errors.New("nil migration query")}
+	}
+	if err := c.migration.Do(ctx, targetDC, func(ctx context.Context) error {
+		if c.homeDC() == targetDC && c.IsConnected() {
+			return nil
+		}
+		return c.switchPrimaryDC(ctx, targetDC, st, c.connectTransport)
+	}); err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: err}
+	}
+
+	data, err := c.InvokeWithRawResult(ctx, query)
+	if err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: err}
+	}
+	return data, nil
+}
+
+func (c *Client) migrateExportImportRaw(ctx context.Context, targetDC int, query tg.TLObject) ([]byte, error) {
+	rpc, err := c.dcRPC(ctx, targetDC)
+	if err != nil {
+		return nil, &MigrationError{TargetDC: targetDC, Err: err}
+	}
+
+	c.Log.Infof("DC migration to DC %d complete via dcRPC", targetDC)
+	return rpc.InvokeWithRawResult(ctx, query)
+}
+
+func (c *Client) admitRPC(ctx context.Context, query tg.TLObject) (func(), error) {
+	c.mu.RLock()
+	oc := c.overloadController
+	c.mu.RUnlock()
+	if oc == nil || !oc.Enabled() {
+		return nil, nil
+	}
+	return oc.Admit(ctx, int(session.RoutePriority(query)))
+}
+
+// Invoke sends a TLObject query through the primary session. The first API query
+// on a connection is wrapped in InvokeWithLayer+InitConnection automatically.
 //
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
@@ -2238,33 +2305,20 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		}
 	}
 
-	c.mu.RLock()
-	oc := c.overloadController
-	c.mu.RUnlock()
-
 	// Overload control: gate admission by priority (FR-018). When disabled
 	// (MaxInFlightRPCs == 0), Admit is a no-op (backward compat).
-	if oc != nil && oc.Enabled() {
-		priority := int(session.RoutePriority(query))
-		release, err := oc.Admit(ctx, priority)
-		if err != nil {
-			return nil, err
-		}
+	release, err := c.admitRPC(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if release != nil {
 		defer release()
 	}
 
-	// Wrap with InvokeWithLayer so server returns layer-correct constructor IDs.
-	apiInit := c.apiInit.Load()
-	if needsInitConnection(query) {
-		if !apiInit {
-			query = wrapInitConnection(c.config(), query)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result tg.TLObject
-	err := c.retrySessionErr(ctx, func() error {
+	err = c.retrySessionErr(ctx, func() error {
 		c.mu.RLock()
 		sess := c.session
 		c.mu.RUnlock()
@@ -2282,7 +2336,7 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 		}
 		return nil, err
 	}
-	if !apiInit && needsInitConnection(query) {
+	if initializesAPI {
 		c.apiInit.Store(true)
 	}
 	return result, nil
@@ -2303,14 +2357,7 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 		}
 	}
 
-	apiInit := c.apiInit.Load()
-	if needsInitConnection(query) {
-		if !apiInit {
-			query = wrapInitConnection(c.config(), query)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result tg.TLObject
 	err := c.retrySessionErr(ctx, func() error {
@@ -2327,7 +2374,7 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 	if err != nil {
 		return nil, err
 	}
-	if !apiInit && needsInitConnection(query) {
+	if initializesAPI {
 		c.apiInit.Store(true)
 	}
 	return result, nil
@@ -2347,6 +2394,14 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 		}
 	}
 
+	release, err := c.admitRPC(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if release != nil {
+		defer release()
+	}
+
 	timeout := c.config().ReqTimeout
 	if deadline, ok := ctx.Deadline(); ok {
 		if d := time.Until(deadline); d < timeout {
@@ -2361,17 +2416,10 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	}
 	retries := max(c.config().Retries, 1)
 
-	apiInit := c.apiInit.Load()
-	if needsInitConnection(query) {
-		if !apiInit {
-			query = wrapInitConnection(c.config(), query)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: query}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result []byte
-	err := c.retrySessionErr(ctx, func() error {
+	err = c.retrySessionErr(ctx, func() error {
 		c.mu.RLock()
 		sess := c.session
 		c.mu.RUnlock()
@@ -2385,7 +2433,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	if err != nil {
 		return nil, err
 	}
-	if !apiInit && needsInitConnection(query) {
+	if initializesAPI {
 		c.apiInit.Store(true)
 	}
 	return result, nil

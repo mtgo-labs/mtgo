@@ -79,6 +79,27 @@ func TestRegisterAndResolveRaw(t *testing.T) {
 	}
 }
 
+func TestResolveRPCResultTransfersRawPayloadOwnership(t *testing.T) {
+	pm := NewPendingManager()
+	h, err := pm.Register(3, true)
+	if err != nil {
+		t.Fatalf("Register() error: %v", err)
+	}
+
+	payload := []byte{1, 2, 3}
+	if decoded := pm.ResolveRPCResult(3, payload); decoded {
+		t.Fatal("raw result should not request decoded handling")
+	}
+	<-h.Done()
+	_, raw, err := h.Result()
+	if err != nil {
+		t.Fatalf("Result() error: %v", err)
+	}
+	if len(raw) == 0 || &raw[0] != &payload[0] {
+		t.Fatal("raw payload was copied instead of transferred")
+	}
+}
+
 func TestReject(t *testing.T) {
 	pm := NewPendingManager()
 	h, err := pm.Register(3, false)

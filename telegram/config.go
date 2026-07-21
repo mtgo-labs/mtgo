@@ -475,18 +475,17 @@ type Config struct {
 	// overload. When 0 and MaxInFlightRPCs > 0, defaults to 5s.
 	AdmissionDeadline time.Duration
 
-	// OutboundBatchEnabled enables outbound container packing: multiple RPCs
-	// queued within a short window are coalesced into a single MTProto
-	// msg_container. When false (default), each RPC is sent as a separate
-	// encrypted message (current behavior).
+	// OutboundBatchEnabled enables outbound container packing for low-priority
+	// bulk RPCs queued within a short window. High-priority interactive RPCs
+	// always bypass the batcher. When false (default), each RPC is sent as a
+	// separate encrypted message.
 	OutboundBatchEnabled bool
 	// OutboundMaxContainerBytes caps the serialized size of a single container.
 	// When 0 and OutboundBatchEnabled is true, defaults to 1 MiB.
 	OutboundMaxContainerBytes int
-	// OutboundCoalesceWindow is the max time to wait for additional RPCs
-	// before sending. The window engages only when N>1 RPCs are queued and a
-	// send is in flight; lone/idle RPCs always flush immediately (zero added
-	// latency). When 0 and OutboundBatchEnabled is true, defaults to 10ms.
+	// OutboundCoalesceWindow is the max time low-priority RPCs wait for
+	// additional work before sending. When 0 and OutboundBatchEnabled is true,
+	// defaults to 10ms.
 	// Set to -1 to disable the coalesce window (items already queued are
 	// packed, but the batcher does not wait for more).
 	OutboundCoalesceWindow time.Duration

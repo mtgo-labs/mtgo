@@ -490,14 +490,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 		timeout = 60 * time.Second
 	}
 
-	query := input
-	if needsInitConnection(input) {
-		if !d.apiInit.Load() {
-			query = wrapInitConnection(d.client.config(), input)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
 	result, err = d.sess.Invoke(ctx, query, 2, timeout)
 	if err != nil {
@@ -509,7 +502,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 		return nil, parsed
 	}
 
-	if !d.apiInit.Load() && needsInitConnection(input) {
+	if initializesAPI {
 		d.apiInit.Store(true)
 	}
 
@@ -528,21 +521,14 @@ func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) 
 		defer func() { d.entry.endRequest(started, err, d.client.config().EndpointCoolDown) }()
 	}
 
-	query := input
-	if needsInitConnection(input) {
-		if !d.apiInit.Load() {
-			query = wrapInitConnection(d.client.config(), input)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
 	data, err = d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)
 	if err != nil {
 		return nil, err
 	}
 
-	if !d.apiInit.Load() && needsInitConnection(input) {
+	if initializesAPI {
 		d.apiInit.Store(true)
 	}
 

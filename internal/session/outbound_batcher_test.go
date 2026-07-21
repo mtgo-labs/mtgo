@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"runtime"
 	"sync"
 	"testing"
@@ -29,7 +30,82 @@ func TestBatcher_DisabledByDefault(t *testing.T) {
 	}
 }
 
-func TestBatcher_LoneRPCImmediateFlush(t *testing.T) {
+func TestSessionSendHighPriorityBypassesBatcher(t *testing.T) {
+	s, mt, cleanup := newBatcherTestSession(t)
+	defer cleanup()
+
+	s.EnableOutboundBatching(1<<20, 5*time.Second)
+	defer s.CloseOutboundBatching()
+
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(true)
+	pingID := time.Now().UnixNano()
+	sendDone := make(chan error, 1)
+	go func() {
+		_, err := s.Send(context.Background(), msgID, uint32(seqNo), &tg.PingRequest{PingID: pingID}, 5*time.Second)
+		sendDone <- err
+	}()
+
+	select {
+	case <-mt.sendCh:
+	case <-time.After(time.Second):
+		t.Fatal("high-priority RPC waited for the batching window")
+	}
+
+	snap := s.BatcherSnapshot()
+	if snap.HighDepth != 0 || snap.MessagesPacked != 0 {
+		t.Fatalf("high-priority RPC entered batcher: %+v", snap)
+	}
+
+	mt.recvCh <- makeEncryptedResponse(s, makeServerMsgID(), uint32(s.msgFactory.AllocateSeqNo(false)), &tg.Pong{
+		MsgID:  msgID,
+		PingID: pingID,
+	})
+	if err := <-sendDone; err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+}
+
+func TestSessionSendLowPriorityUsesBatcher(t *testing.T) {
+	s, mt, cleanup := newBatcherTestSession(t)
+	defer cleanup()
+
+	s.EnableOutboundBatching(1<<20, 5*time.Second)
+	defer s.CloseOutboundBatching()
+
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := s.msgFactory.AllocateSeqNo(true)
+	sendDone := make(chan error, 1)
+	go func() {
+		_, err := s.Send(context.Background(), msgID, uint32(seqNo), &tg.UploadSaveFilePartRequest{
+			FileID:   1,
+			FilePart: 0,
+			Bytes:    []byte{1},
+		}, 10*time.Second)
+		sendDone <- err
+	}()
+
+	deadline := time.Now().Add(time.Second)
+	for s.BatcherSnapshot().LowDepth != 1 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if snap := s.BatcherSnapshot(); snap.LowDepth != 1 {
+		t.Fatalf("low-priority RPC did not enter batcher: %+v", snap)
+	}
+	select {
+	case <-mt.sendCh:
+		t.Fatal("low-priority RPC bypassed the batching window")
+	default:
+	}
+
+	wantErr := errors.New("test complete")
+	s.pending.Reject(msgID, wantErr)
+	if err := <-sendDone; !errors.Is(err, wantErr) {
+		t.Fatalf("Send error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestBatcher_LoneRPCFlushesAfterWindow(t *testing.T) {
 	s, mt, cleanup := newBatcherTestSession(t)
 	defer cleanup()
 

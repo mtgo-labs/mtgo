@@ -34,16 +34,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 	}
 
 	retries := max(cfg.Retries, 1)
-	apiInit := ci.client.apiInit.Load()
-
-	query := input
-	if needsInitConnection(input) {
-		if !apiInit {
-			query = wrapInitConnection(cfg, input)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(cfg, ci.client.apiInit.Load(), input)
 
 	ci.client.Log.Debugf("RPC invoke method=%T timeout=%s", input, timeout)
 
@@ -83,24 +74,15 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		ci.client.Log.Warnf("RPC nil result method=%T", input)
 		return nil, fmt.Errorf("telegram: nil RPC result for %T", input)
 	}
-	if !apiInit && needsInitConnection(input) {
+	if initializesAPI {
 		ci.client.apiInit.Store(true)
 	}
 	return result, nil
 }
 
 func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
-	apiInit := ci.client.apiInit.Load()
 	cfg := ci.client.config()
-
-	query := input
-	if needsInitConnection(input) {
-		if !apiInit {
-			query = wrapInitConnection(cfg, input)
-		} else {
-			query = &tg.InvokeWithLayerRequest{Layer: tg.Layer, Query: input}
-		}
-	}
+	query, initializesAPI := prepareAPIQuery(cfg, ci.client.apiInit.Load(), input)
 
 	data, err := ci.client.InvokeWithRawResult(ctx, query)
 	if err != nil {
@@ -119,13 +101,12 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 				if shouldReturnMigrationToCaller(input, rpcErr) {
 					return nil, rpcErr
 				}
-				_, migErr := ci.client.handleMigrationError(ctx, rpcErr, input)
-				return nil, migErr
+				return ci.client.handleRawMigrationError(ctx, rpcErr, input)
 			}
 			return nil, err
 		}
 	}
-	if !apiInit && needsInitConnection(input) {
+	if initializesAPI {
 		ci.client.apiInit.Store(true)
 	}
 	return data, nil
@@ -150,6 +131,13 @@ func needsInitConnection(input tg.TLObject) bool {
 	default:
 		return true
 	}
+}
+
+func prepareAPIQuery(cfg Config, initialized bool, input tg.TLObject) (tg.TLObject, bool) {
+	if initialized || !needsInitConnection(input) {
+		return input, false
+	}
+	return wrapInitConnection(cfg, input), true
 }
 
 func wrapInitConnection(cfg Config, input tg.TLObject) tg.TLObject {

@@ -7,7 +7,24 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
+
+type migrationRawInvoker struct {
+	input  tg.TLObject
+	result []byte
+}
+
+func (m *migrationRawInvoker) RPCInvoke(context.Context, tg.TLObject, func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+	return nil, errors.New("unexpected decoded invoke")
+}
+
+func (m *migrationRawInvoker) RPCInvokeRaw(_ context.Context, input tg.TLObject) ([]byte, error) {
+	m.input = input
+	return m.result, nil
+}
 
 func TestMigrationCoordinatorCoalescesSameTarget(t *testing.T) {
 	var coordinator migrationCoordinator
@@ -187,5 +204,31 @@ func TestSwitchPrimaryDCRollsBackFailedTarget(t *testing.T) {
 	userID, _ := st.UserID()
 	if dcID != 2 || string(authKey) != string(oldKey) || userID != 42 || client.config().DC != 2 {
 		t.Fatalf("rollback state = dc:%d key:%q user:%d config:%d", dcID, authKey, userID, client.config().DC)
+	}
+}
+
+func TestHandleRawMigrationErrorReturnsTargetRawResult(t *testing.T) {
+	client, err := NewClient(12345, "hash", &Config{InMemory: true, DC: 2, DCPoolSize: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.state.SetConnecting(2)
+	client.state.SetConnected()
+	client.storage = NewMemoryStorage()
+
+	want := []byte{1, 2, 3, 4}
+	invoker := &migrationRawInvoker{result: want}
+	client.dcSessions.put(4, &dcSessionEntry{rpc: tg.NewRPCClient(invoker)})
+	query := &tg.UploadGetFileRequest{}
+
+	got, err := client.handleRawMigrationError(context.Background(), tgerr.New(303, "FILE_MIGRATE_4"), query)
+	if err != nil {
+		t.Fatalf("handleRawMigrationError: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Fatalf("raw result = %x, want %x", got, want)
+	}
+	if invoker.input != query {
+		t.Fatalf("target query = %T, want original query", invoker.input)
 	}
 }

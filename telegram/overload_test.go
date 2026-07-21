@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mtgo-labs/mtgo/tg"
 )
 
 func TestOverloadController_DisabledAlwaysAdmits(t *testing.T) {
@@ -44,6 +46,29 @@ func TestOverload_LowPriorityFastFail(t *testing.T) {
 
 	r1()
 	r2()
+}
+
+func TestInvokeWithRawResultHonorsOverloadControl(t *testing.T) {
+	c, err := NewClient(12345, "hash", &Config{
+		InMemory:        true,
+		MaxInFlightRPCs: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.state.SetConnecting(2)
+	c.state.SetConnected()
+
+	release, err := c.overloadController.Admit(context.Background(), overloadPriorityHigh)
+	if err != nil {
+		t.Fatalf("occupy overload slot: %v", err)
+	}
+	defer release()
+
+	_, err = c.InvokeWithRawResult(context.Background(), &tg.UploadSaveFilePartRequest{})
+	if !errors.Is(err, ErrOverload) {
+		t.Fatalf("InvokeWithRawResult error = %v, want ErrOverload", err)
+	}
 }
 
 func TestOverload_HighPriorityDeferredAdmitted(t *testing.T) {

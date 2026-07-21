@@ -48,3 +48,25 @@ func TestRoutePriority_RealTypes(t *testing.T) {
 		t.Errorf("messages.SendMessage: want High, got %d", got)
 	}
 }
+
+func TestRoutePriority_UnwrapsHelperMethods(t *testing.T) {
+	low := &tg.InvokeAfterMsgRequest{
+		MsgID: 1,
+		Query: &tg.InvokeWithLayerRequest{
+			Layer: tg.Layer,
+			Query: &tg.InitConnectionRequest{
+				Query: &tg.UploadSaveFilePartRequest{},
+			},
+		},
+	}
+	if got := RoutePriority(low); got != PriorityLow {
+		t.Errorf("wrapped upload.SaveFilePart: want Low, got %d", got)
+	}
+
+	high := &tg.InvokeWithoutUpdatesRequest{
+		Query: &tg.MessagesSendMessageRequest{},
+	}
+	if got := RoutePriority(high); got != PriorityHigh {
+		t.Errorf("wrapped messages.SendMessage: want High, got %d", got)
+	}
+}

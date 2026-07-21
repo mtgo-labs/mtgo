@@ -22,11 +22,9 @@ type batchItem struct {
 }
 
 // OutboundBatcher coalesces multiple outbound RPCs into MTProto msg_container
-// messages using adaptive flushing. When enabled, the Session's Send method
-// delegates to Submit, which registers a pending handle and queues the item.
-// A flush goroutine drains queued items: a single item flushes immediately
-// (zero added latency); multiple items are packed into a single container and
-// sent as one encrypted message.
+// messages using a bounded coalescing window. When enabled, the Session's Send
+// method delegates low-priority work to Submit, which registers a pending
+// handle and queues the item. High-priority work bypasses the batcher.
 //
 // Ported conceptually from TDLib net/Session.h outbound container packing.
 type OutboundBatcher struct {
