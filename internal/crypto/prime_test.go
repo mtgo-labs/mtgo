@@ -36,6 +36,14 @@ func TestDecomposeEven(t *testing.T) {
 	}
 }
 
+func TestDecomposeRejectsInvalidInput(t *testing.T) {
+	for _, pq := range []int64{-1, 0, 1, 2, 3} {
+		if got := Decompose(pq); got != 0 {
+			t.Fatalf("Decompose(%d) = %d, want 0", pq, got)
+		}
+	}
+}
+
 func TestDecomposeLarge(t *testing.T) {
 	p, q := int64(104729), int64(104743)
 	pq := p * q

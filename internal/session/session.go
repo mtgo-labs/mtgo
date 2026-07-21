@@ -830,32 +830,36 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 }
 
 // dispatchUpdate spawns a goroutine to deliver an update to the handler,
-// bounded by the updateSem semaphore. If 128 dispatches are already in
-// flight, the update is dropped.
+// bounded by the updateSem semaphore. Saturation applies backpressure to the
+// receive loop so an acknowledged update is never silently dropped.
 func (s *Session) dispatchUpdate(obj tg.TLObject) {
 	s.mu.RLock()
 	handlerFn := s.onUpdate
 	panicFn := s.onPanic
 	s.mu.RUnlock()
+	if handlerFn == nil {
+		return
+	}
 	select {
 	case s.updateSem <- struct{}{}:
-		go func() {
-			defer func() { <-s.updateSem }()
-			defer func() {
-				if r := recover(); r != nil {
-					if panicFn != nil {
-						panicFn(r)
-					} else {
-						if s.log != nil {
-							s.log.Errorf("dispatchUpdate panic: %v", r)
-						}
+	case <-s.done:
+		return
+	}
+	go func() {
+		defer func() { <-s.updateSem }()
+		defer func() {
+			if r := recover(); r != nil {
+				if panicFn != nil {
+					panicFn(r)
+				} else {
+					if s.log != nil {
+						s.log.Errorf("dispatchUpdate panic: %v", r)
 					}
 				}
-			}()
-			handlerFn(obj)
+			}
 		}()
-	default:
-	}
+		handlerFn(obj)
+	}()
 }
 
 // SendRaw encrypts and sends raw body bytes as a single MTProto message, then
@@ -1263,8 +1267,10 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	if err != nil {
 		s.recordShutdownCause(fmt.Errorf("initial ping: %w", err), "runInit")
 		g.Cancel()
-		s.sm.transition(StateConnecting, StateClosed)
 		close(s.done)
+		_ = tp.Close()
+		_ = g.Wait()
+		s.sm.transition(StateConnecting, StateClosed)
 		return fmt.Errorf("session: initial ping: %w", err)
 	}
 	if httpTransport, ok := tp.(httpWaitTransport); ok {
@@ -1357,6 +1363,7 @@ func (s *Session) StartContext(ctx context.Context) error {
 	// so the goroutines survive after the caller's context expires.
 	if err := s.runInitWithCtx(ctx, runCtx); err != nil {
 		runCancel()
+		close(s.runDone)
 		return err
 	}
 	go func() {
@@ -2309,6 +2316,22 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 		if payload := s.pending.GetPayload(id); payload != nil {
 			_ = s.writeEncryptedDirect(payload, 10*time.Second)
 			continue
+		}
+		if seqNo, bodyRaw, ok := s.pending.GetResendMessage(id); ok {
+			s.mu.RLock()
+			authKey := s.authKey
+			authKeyID := s.authKeyID
+			s.mu.RUnlock()
+			payload, err := crypto.PackRaw(id, seqNo, bodyRaw, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
+			if err == nil {
+				err = s.writeEncryptedDirect(payload, 10*time.Second)
+			}
+			if err == nil {
+				continue
+			}
+			if s.log != nil {
+				s.log.Warnf("msg_resend_req: failed to resend msg_id=%d: %v", id, err)
+			}
 		}
 		// Payload not available — nack and ack as fallback.
 		s.containerTracker.NackContainer(id)

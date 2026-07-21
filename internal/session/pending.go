@@ -12,16 +12,18 @@ import (
 // use: the receive loop calls complete (via Resolve/Reject) while the caller
 // goroutine waits on Done.
 type CallHandle struct {
-	done      chan struct{} // closed exactly once on completion
-	once      sync.Once     // ensures single-shot close(done)
-	mu        sync.Mutex    // protects result, rawResult, err, payload
-	result    tg.TLObject   // stored decoded TL result
-	rawResult []byte        // stored raw result bytes
-	err       error         // stored error
-	isRaw     bool          // true for SendRaw waiters
-	sentAt    int64         // unix-nano timestamp when the query was sent (for state checks)
-	acked     atomic.Bool   // true when the server acknowledged receipt
-	payload   []byte        // encrypted payload for re-send on msg_resend_req
+	done          chan struct{} // closed exactly once on completion
+	once          sync.Once     // ensures single-shot close(done)
+	mu            sync.Mutex    // protects result, rawResult, err, and resend data
+	result        tg.TLObject   // stored decoded TL result
+	rawResult     []byte        // stored raw result bytes
+	err           error         // stored error
+	isRaw         bool          // true for SendRaw waiters
+	sentAt        int64         // unix-nano timestamp when the query was sent (for state checks)
+	acked         atomic.Bool   // true when the server acknowledged receipt
+	payload       []byte        // encrypted payload for re-send on msg_resend_req
+	resendSeqNo   uint32
+	resendBodyRaw []byte
 }
 
 // SentAt returns the time the query was sent.
@@ -59,6 +61,25 @@ func (h *CallHandle) GetPayload() []byte {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	return h.payload
+}
+
+// StoreResendMessage stores a serialized message body and sequence number for
+// re-encryption if Telegram requests a batched child message again.
+func (h *CallHandle) StoreResendMessage(seqNo uint32, body []byte) {
+	h.mu.Lock()
+	h.resendSeqNo = seqNo
+	h.resendBodyRaw = body
+	h.mu.Unlock()
+}
+
+// GetResendMessage returns the serialized message data stored for re-send.
+func (h *CallHandle) GetResendMessage() (uint32, []byte, bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.resendBodyRaw == nil {
+		return 0, nil, false
+	}
+	return h.resendSeqNo, h.resendBodyRaw, true
 }
 
 // complete is the shared completion path. fn is called inside the mutex to
@@ -276,6 +297,17 @@ func (pm *PendingManager) GetPayload(msgID int64) []byte {
 		return nil
 	}
 	return h.GetPayload()
+}
+
+// GetResendMessage returns serialized message data for a batched pending call.
+func (pm *PendingManager) GetResendMessage(msgID int64) (uint32, []byte, bool) {
+	pm.mu.Lock()
+	h, ok := pm.pending[msgID]
+	pm.mu.Unlock()
+	if !ok {
+		return 0, nil, false
+	}
+	return h.GetResendMessage()
 }
 
 // OverduePending returns the message IDs of content-related pending queries

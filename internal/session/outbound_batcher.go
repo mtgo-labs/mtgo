@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -17,6 +18,7 @@ type batchItem struct {
 	msgID   int64
 	seqNo   uint32
 	body    tg.TLObject
+	bodyRaw []byte
 	handle  *CallHandle
 	timeout time.Duration
 }
@@ -79,13 +81,18 @@ func (b *OutboundBatcher) Submit(ctx context.Context, msgID int64, seqNo uint32,
 		return nil, err
 	}
 
-	// Store the encoded body for msg_resend_req re-transmission (#4).
-	handle.StorePayload(encodeBuf(body))
+	bodyRaw, err := encodeBuf(body)
+	if err != nil {
+		b.session.pending.Cancel(msgID)
+		return nil, fmt.Errorf("session: encode batched message: %w", err)
+	}
+	handle.StoreResendMessage(seqNo, bodyRaw)
 
 	item := batchItem{
 		msgID:   msgID,
 		seqNo:   seqNo,
 		body:    body,
+		bodyRaw: bodyRaw,
 		handle:  handle,
 		timeout: timeout,
 	}
@@ -160,7 +167,6 @@ func (b *OutboundBatcher) flush() {
 	// Build MTProtoMessages for each item.
 	msgs := make([]*tg.MTProtoMessage, 0, len(items))
 	totalSize := 0
-	pendingItems := items[:0] // reuse for items we actually pack
 	for _, item := range items {
 		if item.handle == nil {
 			continue
@@ -170,17 +176,15 @@ func (b *OutboundBatcher) flush() {
 			SeqNo: item.seqNo,
 			Body:  item.body,
 		}
-		// Estimate serialized size (rough: encode and measure).
-		msgBuf := encodeBuf(msg)
-		if totalSize+len(msgBuf) > b.maxContainerBytes && len(msgs) > 0 {
+		messageSize := 16 + len(item.bodyRaw)
+		if totalSize+messageSize > b.maxContainerBytes && len(msgs) > 0 {
 			// Flush what we have, start a new container.
 			b.packAndSend(msgs)
 			msgs = msgs[:0]
 			totalSize = 0
 		}
 		msgs = append(msgs, msg)
-		totalSize += len(msgBuf)
-		pendingItems = append(pendingItems, item)
+		totalSize += messageSize
 	}
 
 	if len(msgs) > 0 {
@@ -245,7 +249,7 @@ func (b *OutboundBatcher) packAndSend(msgs []*tg.MTProtoMessage) {
 
 	if err := s.writeEncrypted(context.Background(), encrypted, 10*time.Second); err != nil {
 		for _, msg := range msgs {
-			s.pending.Cancel(msg.MsgID)
+			s.pending.Reject(msg.MsgID, fmt.Errorf("session: write batched message: %w", err))
 		}
 		return
 	}
@@ -286,12 +290,10 @@ func (b *OutboundBatcher) Close() error {
 	return nil
 }
 
-// encodeBuf serializes a TLObject to measure its wire size. Returns a nil slice
-// on error (the item is still packed; size tracking is best-effort).
-func encodeBuf(obj tg.TLObject) []byte {
+func encodeBuf(obj tg.TLObject) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := obj.Encode(&buf); err != nil {
-		return nil
+		return nil, err
 	}
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }

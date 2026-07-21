@@ -136,19 +136,19 @@ func (s *Session) handleStateInfo(reqMsgID int64, info string) {
 
 // interpretStateByte acts on a single MTProto status byte for the given msgID.
 //
-// Status byte layout (bits 0-1 = state mod 4):
+// Status byte layout (bits 0-2 = state):
 //
-//	0 = unknown — keep waiting.
-//	1 = not received (msg_id not found).
-//	2 = not received (msg_id found, message not in storage).
-//	3 = received and being processed.
+//	1 = unknown — keep waiting.
+//	2 = not received.
+//	3 = not received because msg_id is too high or too low.
+//	4 = received.
 //
-// bit 2 (0x04): forwarded. bit 3 (0x08): acknowledged.
-// bit 4 (0x10): response generated. bit 5 (0x20): being processed.
-// bit 6 (0x40): response already generated and sent.
+// bit 3 (0x08): acknowledged. bit 4 (0x10): acknowledgement not required.
+// bit 5 (0x20): being processed. bit 6 (0x40): response generated.
+// bit 7 (0x80): other related message sent.
 func (s *Session) interpretStateByte(msgID int64, status byte) {
-	switch status & 0x03 {
-	case 1, 2:
+	switch status & 0x07 {
+	case 2, 3:
 		// Message was not received by the server. Reject the pending handle so
 		// the caller's retry loop can re-send.
 		if s.pending.Reject(msgID, ErrMsgNotReceived) {
@@ -156,12 +156,13 @@ func (s *Session) interpretStateByte(msgID int64, status byte) {
 				s.log.Warnf("state-check: msg_id=%d not received by server (status=0x%02x), rejecting", msgID, status)
 			}
 		}
-	case 3:
-		// Message received and being processed. If bit 6 is set, the response
-		// was generated but not delivered — the result should arrive shortly
-		// or the next readLoop iteration will pick it up. No action needed.
+	case 4:
+		// Receipt is confirmed even when the response is still being processed.
+		// Marking the handle acknowledged removes it from future state probes.
+		s.pending.MarkAcked(msgID)
 	default:
-		// 0 = unknown, or bits 0-1 are 0. Keep waiting.
+		// Unknown or malformed state. Keep waiting rather than risk replaying a
+		// request whose delivery cannot be disproved.
 	}
 }
 

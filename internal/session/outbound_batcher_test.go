@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"runtime"
@@ -10,6 +11,13 @@ import (
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
+
+type failingSendTransport struct {
+	*mockTransport
+	err error
+}
+
+func (m *failingSendTransport) Send([]byte) error { return m.err }
 
 // newBatcherTestSession creates a session with mock transport and test workers
 // suitable for batcher testing. Returns the session, transport, and cleanup.
@@ -196,6 +204,86 @@ func TestBatcher_BurstCoalesced(t *testing.T) {
 done:
 	if sentCount == 0 {
 		t.Fatal("no data sent to transport")
+	}
+}
+
+func TestBatcher_ResendsChildAsEncryptedMessage(t *testing.T) {
+	s, mt, cleanup := newBatcherTestSession(t)
+	defer cleanup()
+
+	s.EnableOutboundBatching(1<<20, time.Millisecond)
+	defer s.CloseOutboundBatching()
+
+	msgID1 := s.msgFactory.AllocateMsgID()
+	seqNo1 := uint32(s.msgFactory.AllocateSeqNo(true))
+	msgID2 := s.msgFactory.AllocateMsgID()
+	seqNo2 := uint32(s.msgFactory.AllocateSeqNo(true))
+	if _, err := s.outboundBatcher.Submit(context.Background(), msgID1, seqNo1, &tg.PingRequest{PingID: 11}, PriorityHigh, 5*time.Second); err != nil {
+		t.Fatalf("Submit first: %v", err)
+	}
+	if _, err := s.outboundBatcher.Submit(context.Background(), msgID2, seqNo2, &tg.PingRequest{PingID: 22}, PriorityHigh, 5*time.Second); err != nil {
+		t.Fatalf("Submit second: %v", err)
+	}
+
+	select {
+	case <-mt.sendCh:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for initial container")
+	}
+
+	var resendReq bytes.Buffer
+	tg.WriteVectorLong(&resendReq, []int64{msgID1})
+	s.handleRawMsgResendReq(resendReq.Bytes())
+
+	select {
+	case payload := <-mt.sendCh:
+		msg, err := unpackTestOutgoing(s, payload)
+		if err != nil {
+			t.Fatalf("unpack resent message: %v", err)
+		}
+		if msg.MsgID != msgID1 || msg.SeqNo != seqNo1 {
+			t.Fatalf("resent envelope = (%d, %d), want (%d, %d)", msg.MsgID, msg.SeqNo, msgID1, seqNo1)
+		}
+		ping, ok := msg.Body.(*tg.PingRequest)
+		if !ok || ping.PingID != 11 {
+			t.Fatalf("resent body = %#v, want PingRequest(11)", msg.Body)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for resent child")
+	}
+
+	s.pending.Cancel(msgID1)
+	s.pending.Cancel(msgID2)
+}
+
+func TestBatcher_WriteFailureCompletesCaller(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	wantErr := errors.New("write failed")
+	mt := &failingSendTransport{mockTransport: newMockTransport(), err: wantErr}
+	s.SetTransport(mt)
+	cleanup := startTestWorkers(s, mt.mockTransport)
+	defer cleanup()
+
+	s.EnableOutboundBatching(1<<20, time.Millisecond)
+	defer s.CloseOutboundBatching()
+
+	started := time.Now()
+	msgID := s.msgFactory.AllocateMsgID()
+	seqNo := uint32(s.msgFactory.AllocateSeqNo(true))
+	_, err := s.Send(context.Background(), msgID, seqNo, &tg.UploadSaveFilePartRequest{
+		FileID:   1,
+		FilePart: 0,
+		Bytes:    []byte{1},
+	}, 2*time.Second)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Send error = %v, want wrapped %v", err, wantErr)
+	}
+	var deliveryErr *DeliveryError
+	if !errors.As(err, &deliveryErr) || deliveryErr.State != DeliveryUnknown {
+		t.Fatalf("Send error = %v, want unknown DeliveryError", err)
+	}
+	if elapsed := time.Since(started); elapsed >= time.Second {
+		t.Fatalf("write failure took %v; caller was not completed promptly", elapsed)
 	}
 }
 

@@ -45,6 +45,9 @@ func newBigIntFromHex(hex string) *big.Int {
 //
 // See https://core.telegram.org/mtproto/pq.
 func Decompose(pq int64) int64 {
+	if pq <= 3 {
+		return 0
+	}
 	if pq%2 == 0 {
 		return 2
 	}

@@ -1126,6 +1126,68 @@ func TestSessionStartStop(t *testing.T) {
 	}
 }
 
+func TestSessionStopAfterStartFailure(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	if err := s.StartContext(ctx); err == nil {
+		t.Fatal("StartContext unexpectedly succeeded")
+	}
+
+	stopped := make(chan struct{})
+	go func() {
+		s.Stop()
+		close(stopped)
+	}()
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("Stop blocked after StartContext failure")
+	}
+
+	select {
+	case <-mt.done:
+	default:
+		t.Fatal("transport was not closed after initial ping failure")
+	}
+}
+
+func TestDispatchUpdateBackpressuresAtCapacity(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	for range cap(s.updateSem) {
+		s.updateSem <- struct{}{}
+	}
+
+	called := make(chan struct{})
+	s.SetUpdateHandler(func(tg.TLObject) { close(called) })
+	dispatched := make(chan struct{})
+	go func() {
+		s.dispatchUpdate(&tg.PingRequest{PingID: 1})
+		close(dispatched)
+	}()
+
+	select {
+	case <-dispatched:
+		t.Fatal("dispatchUpdate returned while the semaphore was full")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	<-s.updateSem
+	select {
+	case <-called:
+	case <-time.After(time.Second):
+		t.Fatal("update was dropped after capacity became available")
+	}
+	select {
+	case <-dispatched:
+	case <-time.After(time.Second):
+		t.Fatal("dispatchUpdate did not return after capacity became available")
+	}
+}
+
 func TestSessionStartsEncryptedHTTPWaitAfterPing(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := &httpWaitMockTransport{

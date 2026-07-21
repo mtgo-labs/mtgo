@@ -45,9 +45,9 @@ var (
 	// ErrDHNonceMismatch is returned during key exchange step 8 when the
 	// nonce in the DH inner data does not match the expected value.
 	ErrDHNonceMismatch = errors.New("step 8: nonce mismatch in dh inner data")
-	// ErrNewNonceHashMismatch is returned during key exchange step 10 when
-	// the new_nonce_hash1 value does not match the expected hash.
-	ErrNewNonceHashMismatch = errors.New("step 10: new_nonce_hash1 mismatch")
+	// ErrNewNonceHashMismatch is returned during key exchange when a
+	// new_nonce_hash value does not match the expected hash.
+	ErrNewNonceHashMismatch = errors.New("session: new_nonce_hash mismatch")
 	// ErrDHGenRetry is returned during key exchange step 10 when the server
 	// responds with dh_gen_retry, indicating the client should retry with a
 	// new nonce.

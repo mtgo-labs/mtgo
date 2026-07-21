@@ -55,10 +55,14 @@ func computeKeyAndIV(newNonce, serverNonce []byte) (key, iv []byte) {
 }
 
 func computeNewNonceHash1(newNonce []byte, authKey []byte) []byte {
+	return computeNewNonceHash(newNonce, authKey, 1)
+}
+
+func computeNewNonceHash(newNonce, authKey []byte, number byte) []byte {
 	authKeyHash := sha1Hash(authKey)
 	buf := make([]byte, len(newNonce)+1+8)
 	copy(buf, newNonce)
-	buf[len(newNonce)] = 1
+	buf[len(newNonce)] = number
 	copy(buf[len(newNonce)+1:], authKeyHash[:8])
 	h := sha1Hash(buf)
 	return h[4:20]
@@ -87,6 +91,18 @@ func unwrapDataWithHash(dataWithHash []byte) ([]byte, error) {
 func computeAuthKey(gA, b, dhPrime *big.Int) []byte {
 	k := new(big.Int).Exp(gA, b, dhPrime)
 	return k.Bytes()
+}
+
+func normalizeAuthKey(authKey []byte) []byte {
+	if len(authKey) == 256 {
+		return authKey
+	}
+	normalized := make([]byte, 256)
+	if len(authKey) > len(normalized) {
+		authKey = authKey[len(authKey)-len(normalized):]
+	}
+	copy(normalized[len(normalized)-len(authKey):], authKey)
+	return normalized
 }
 
 func computeServerSalt(newNonce, serverNonce []byte) int64 {

@@ -89,8 +89,8 @@ func TestHandleStateInfoRejectsNotReceived(t *testing.T) {
 		sentAt: time.Now(),
 	}
 
-	// Server responds: status byte 0x01 = not received.
-	s.handleStateInfo(stateReqMsgID, string([]byte{0x01}))
+	// Server responds: status byte 0x02 = not received.
+	s.handleStateInfo(stateReqMsgID, string([]byte{0x02}))
 
 	// The pending handle should be rejected.
 	select {
@@ -127,8 +127,8 @@ func TestHandleStateInfoKeepsReceived(t *testing.T) {
 		sentAt: time.Now(),
 	}
 
-	// Server responds: status byte 0x03 = received and being processed.
-	s.handleStateInfo(stateReqMsgID, string([]byte{0x03}))
+	// Server responds: status byte 0x44 = received with a generated response.
+	s.handleStateInfo(stateReqMsgID, string([]byte{0x44}))
 
 	// The pending handle should still be active (not completed).
 	select {
@@ -136,6 +136,9 @@ func TestHandleStateInfoKeepsReceived(t *testing.T) {
 		t.Fatal("handle should NOT be completed for status 'received'")
 	default:
 		// Good — still pending.
+	}
+	if !h.IsAcked() {
+		t.Fatal("received handle should be marked acknowledged")
 	}
 }
 
@@ -173,28 +176,31 @@ func TestHandleStateInfoMultipleMessages(t *testing.T) {
 		sentAt: time.Now(),
 	}
 
-	// Status bytes: 0x01 (not received), 0x03 (received), 0x02 (not received).
-	s.handleStateInfo(stateReqMsgID, string([]byte{0x01, 0x03, 0x02}))
+	// Status bytes: 0x01 (unknown), 0x03 (not received), 0x04 (received).
+	s.handleStateInfo(stateReqMsgID, string([]byte{0x01, 0x03, 0x04}))
 
-	// h1 should be rejected (0x01).
+	// h1 should remain pending because delivery is unknown (0x01).
 	select {
 	case <-h1.Done():
-	case <-time.After(time.Second):
-		t.Fatal("h1 should be rejected")
-	}
-
-	// h2 should still be pending (0x03 = received).
-	select {
-	case <-h2.Done():
-		t.Fatal("h2 should still be pending")
+		t.Fatal("h1 should remain pending")
 	default:
 	}
 
-	// h3 should be rejected (0x02).
+	// h2 should be rejected (0x03 = definitely not received).
+	select {
+	case <-h2.Done():
+	case <-time.After(time.Second):
+		t.Fatal("h2 should be rejected")
+	}
+
+	// h3 should remain pending and be marked acknowledged (0x04).
 	select {
 	case <-h3.Done():
-	case <-time.After(time.Second):
-		t.Fatal("h3 should be rejected")
+		t.Fatal("h3 should remain pending")
+	default:
+	}
+	if !h3.IsAcked() {
+		t.Fatal("h3 should be marked acknowledged")
 	}
 }
 
