@@ -51,6 +51,52 @@ func makeSuccessResponse(s *Session, reqMsgID, pingID int64) []byte {
 // G12: Additional error recovery
 // ---------------------------------------------------------------------------
 
+func TestInvokeFloodWaitDoesNotRetry(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	done := make(chan struct {
+		obj tg.TLObject
+		err error
+	}, 1)
+	go func() {
+		obj, err := s.Invoke(context.Background(), &tg.PingRequest{PingID: 1}, 3, 5*time.Second)
+		done <- struct {
+			obj tg.TLObject
+			err error
+		}{obj: obj, err: err}
+	}()
+
+	first := <-mt.sendCh
+	firstMsg := unpackIncoming(first, s)
+	if firstMsg == nil {
+		t.Fatal("first message did not decode")
+	}
+	mt.recvCh <- makeRPCErrorResponse(s, firstMsg.MsgID, 420, "FLOOD_WAIT_10")
+
+	select {
+	case result := <-done:
+		if result.err != nil {
+			t.Fatalf("Invoke error = %v", result.err)
+		}
+		rpcErr, ok := result.obj.(*tg.RPCError)
+		if !ok || rpcErr.ErrorCode != 420 || rpcErr.ErrorMessage != "FLOOD_WAIT_10" {
+			t.Fatalf("Invoke result = %T %#v, want FLOOD_WAIT", result.obj, result.obj)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Invoke did not return flood wait promptly")
+	}
+
+	select {
+	case <-mt.sendCh:
+		t.Fatal("Invoke retried a flood-wait response")
+	case <-time.After(150 * time.Millisecond):
+	}
+}
+
 func TestInvokeConnectionNotInitedRetries(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()

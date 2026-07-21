@@ -100,11 +100,12 @@ func (h *CallHandle) complete(fn func()) bool {
 // PendingManager owns the lifecycle of all pending RPC calls for a session.
 // Resolve/Reject/Cancel never block on caller behavior.
 type PendingManager struct {
-	mu           sync.Mutex
-	pending      map[int64]*CallHandle
-	maxPending   int64
-	totalPending atomic.Int64
-	rawPending   atomic.Int64
+	mu             sync.Mutex
+	pending        map[int64]*CallHandle
+	maxPending     int64
+	totalPending   atomic.Int64
+	rawPending     atomic.Int64
+	decodedPending atomic.Int64
 }
 
 func NewPendingManager() *PendingManager {
@@ -143,6 +144,8 @@ func (pm *PendingManager) Register(msgID int64, isRaw bool) (*CallHandle, error)
 	pm.totalPending.Add(1)
 	if isRaw {
 		pm.rawPending.Add(1)
+	} else {
+		pm.decodedPending.Add(1)
 	}
 	return h, nil
 }
@@ -229,13 +232,15 @@ func (pm *PendingManager) Cancel(msgID int64) bool {
 func (pm *PendingManager) RejectAll(err error) {
 	pm.mu.Lock()
 	handles := make([]*CallHandle, 0, len(pm.pending))
-	var total, raw int64
+	var total, raw, decoded int64
 	for msgID, h := range pm.pending {
 		handles = append(handles, h)
 		delete(pm.pending, msgID)
 		total++
 		if h.isRaw {
 			raw++
+		} else {
+			decoded++
 		}
 	}
 	pm.mu.Unlock()
@@ -244,6 +249,7 @@ func (pm *PendingManager) RejectAll(err error) {
 	}
 	pm.totalPending.Add(-total)
 	pm.rawPending.Add(-raw)
+	pm.decodedPending.Add(-decoded)
 }
 
 // Has reports whether a specific msgID has a pending handle.
@@ -270,6 +276,11 @@ func (pm *PendingManager) HasAny() bool {
 // HasAnyRaw reports whether any raw pending calls exist.
 func (pm *PendingManager) HasAnyRaw() bool {
 	return pm.rawPending.Load() > 0
+}
+
+// HasAnyDecoded reports whether any pending call requires TL decoding.
+func (pm *PendingManager) HasAnyDecoded() bool {
+	return pm.decodedPending.Load() > 0
 }
 
 // Count returns the number of active pending calls.
@@ -346,5 +357,7 @@ func (pm *PendingManager) dec(h *CallHandle) {
 	pm.totalPending.Add(-1)
 	if h.isRaw {
 		pm.rawPending.Add(-1)
+	} else {
+		pm.decodedPending.Add(-1)
 	}
 }

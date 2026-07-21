@@ -205,12 +205,15 @@ func TestOneShotCompletion(t *testing.T) {
 func TestHasHasRawHasAny(t *testing.T) {
 	pm := NewPendingManager()
 
-	if pm.HasAny() || pm.HasAnyRaw() {
+	if pm.HasAny() || pm.HasAnyRaw() || pm.HasAnyDecoded() {
 		t.Fatal("empty manager should report false")
 	}
 
 	pm.Register(1, false)
 	pm.Register(2, true)
+	if !pm.HasAnyDecoded() {
+		t.Fatal("decoded pending call was not reported")
+	}
 
 	if !pm.Has(1) || !pm.Has(2) {
 		t.Fatal("both should be present")
@@ -228,6 +231,9 @@ func TestHasHasRawHasAny(t *testing.T) {
 	}
 	if !pm.Has(2) {
 		t.Fatal("msgID 2 should still be present")
+	}
+	if pm.HasAnyDecoded() {
+		t.Fatal("raw-only pending calls should not require decoding")
 	}
 }
 

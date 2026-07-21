@@ -65,7 +65,7 @@ const (
 // RPC result. Raw result waiters are tracked separately so they do not force
 // TL decoding or gzip unpacking.
 func (s *Session) hasDecodedResults() bool {
-	return s.pending.HasAny()
+	return s.pending.HasAnyDecoded()
 }
 
 func (s *Session) checkWrite() error {
@@ -508,15 +508,12 @@ func (s *Session) SetDispatchConfig(_, _ int) {}
 func (s *Session) addAck(msgID int64) {
 	select {
 	case s.ackCh <- msgID:
-	default:
-		if s.log != nil {
-			s.log.Warnf("session: ack queue full, dropping ack msg_id=%d", msgID)
-		}
+	case <-s.done:
 	}
 }
 
-func (s *Session) sendQuickAck(msgID int64) {
-	s.sendServiceMessage(&tg.MsgsAck{MsgIds: []int64{msgID}})
+func requiresAck(seqNo uint32) bool {
+	return seqNo&1 != 0
 }
 
 func (s *Session) TrackContainer(containerMsgID int64, childMsgIDs []int64) {
@@ -758,8 +755,6 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 }
 
 func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
-	s.addAck(msgID)
-
 	obj := body
 	if gz, ok := body.(*tg.GzipPacked); ok {
 		decoded, err := gz.Decode()
@@ -808,7 +803,6 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 		}
 		s.pending.Resolve(v.ReqMsgID, result)
 	case tg.UpdatesClass:
-		s.sendQuickAck(msgID)
 		s.mu.RLock()
 		fn := s.onUpdate
 		s.mu.RUnlock()
@@ -1087,6 +1081,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return obj, nil
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+			if rpcErr.ErrorCode == 420 {
+				return obj, nil
+			}
 			// G13: MSG_WAIT_FAILED — the referenced msg in an invokeAfterMsg
 			// chain failed. Clear the chain dependency and resend unwrapped
 			// so the query is not permanently blocked.
@@ -1602,7 +1599,9 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 		// ever moves the offset forward, so it cannot perturb msg_id ordering.
 		s.msgFactory.AdvanceServerTime(time.Unix(raw.MsgID>>32, 0))
 
-		s.addAck(raw.MsgID)
+		if requiresAck(raw.SeqNo) {
+			s.addAck(raw.MsgID)
+		}
 
 		rawHandled := s.handleRawPacket(raw.MsgID, raw.BodyRaw)
 		needsDecodedResult := s.hasDecodedResults()
@@ -1774,35 +1773,48 @@ func (s *Session) handlePong(pingID int64) {
 // sends them periodically or when the batch is full.
 func (s *Session) ackLoop(ctx context.Context) error {
 	var buf []int64
+	seen := make(map[int64]struct{})
 	ticker := time.NewTicker(ackFlushInterval)
 	defer ticker.Stop()
 
-	flush := func() {
+	flush := func() error {
 		if len(buf) == 0 {
-			return
+			return nil
 		}
 		batch := make([]int64, len(buf))
 		copy(batch, buf)
-		buf = buf[:0]
 		start := time.Now()
-		_ = s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch})
+		if err := s.sendServiceMessage(&tg.MsgsAck{MsgIds: batch}); err != nil {
+			return fmt.Errorf("session: flush acknowledgements: %w", err)
+		}
+		buf = buf[:0]
+		clear(seen)
 		if elapsed := time.Since(start); elapsed > slowWriteThreshold && s.log != nil {
 			s.log.Warnf("session: slow ack flush: count=%d elapsed=%v", len(batch), elapsed)
 		}
+		return nil
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			flush()
+			_ = flush()
 			return ctx.Err()
 		case msgID := <-s.ackCh:
+			if _, ok := seen[msgID]; ok {
+				continue
+			}
+			seen[msgID] = struct{}{}
 			buf = append(buf, msgID)
 			if len(buf) >= 8192 {
-				flush()
+				if err := flush(); err != nil {
+					return err
+				}
 			}
 		case <-ticker.C:
-			flush()
+			if err := flush(); err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -2210,7 +2222,9 @@ func (s *Session) handleRawContainer(body []byte) bool {
 			off += length
 			continue
 		}
-		s.addAck(msgID)
+		if requiresAck(seqNo) {
+			s.addAck(msgID)
+		}
 		if !s.handleRawPacket(msgID, body[off:off+length]) && !s.decodeRawPacketIfNeeded(msgID, seqNo, body[off:off+length]) {
 			allHandled = false
 		}

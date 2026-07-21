@@ -197,6 +197,44 @@ func TestSessionAckTracking(t *testing.T) {
 	}
 }
 
+func TestRequiresAck(t *testing.T) {
+	if requiresAck(0) || requiresAck(2) {
+		t.Fatal("even sequence numbers should not require acknowledgements")
+	}
+	if !requiresAck(1) || !requiresAck(3) {
+		t.Fatal("odd sequence numbers should require acknowledgements")
+	}
+}
+
+func TestRawContainerAcknowledgesOnlyContentMessages(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	s.ackCh = make(chan int64, 2)
+
+	contentID := makeServerMsgID()
+	serviceID := makeServerMsgID()
+	body := encodeTLObject(t, &tg.MsgsAck{})
+	var container bytes.Buffer
+	tg.WriteInt(&container, 2)
+	writeRawMTProtoMessage(&container, contentID, 1, body)
+	writeRawMTProtoMessage(&container, serviceID, 2, body)
+
+	s.handleRawContainer(container.Bytes())
+
+	select {
+	case got := <-s.ackCh:
+		if got != contentID {
+			t.Fatalf("ack msg_id = %d, want %d", got, contentID)
+		}
+	default:
+		t.Fatal("content-related child was not acknowledged")
+	}
+	select {
+	case got := <-s.ackCh:
+		t.Fatalf("unexpected acknowledgement for msg_id=%d", got)
+	default:
+	}
+}
+
 func TestSessionRawMsgsAckCleansTrackedContainer(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	s.TrackContainer(1001, []int64{2001, 2002})
@@ -1245,6 +1283,8 @@ func TestSessionAckLoopFlushesAcks(t *testing.T) {
 
 	s.addAck(1)
 	s.addAck(2)
+	s.addAck(1)
+	s.addAck(2)
 
 	// Give ackLoop time to consume acks from the channel.
 	time.Sleep(50 * time.Millisecond)
@@ -2134,7 +2174,7 @@ func TestResetWriteBreaker(t *testing.T) {
 	close(s.done)
 }
 
-func TestQuickAckSentOnUpdatesClass(t *testing.T) {
+func TestUpdateQueuesSingleAck(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
 	s.SetTransport(mt)
@@ -2144,39 +2184,45 @@ func TestQuickAckSentOnUpdatesClass(t *testing.T) {
 		updateCh <- obj
 	})
 
-	cleanup := startTestWorkers(s, mt)
-	defer cleanup()
+	ctx, cancel := context.WithCancel(context.Background())
+	s.ackCh = make(chan int64, 1024)
+	s.done = make(chan struct{})
+	s.sm.forceSetState(StateActive)
+	readDone := make(chan struct{})
+	go func() {
+		_ = s.readLoop(ctx)
+		close(readDone)
+	}()
+	defer func() {
+		cancel()
+		close(s.done)
+		_ = mt.Close()
+		<-readDone
+	}()
 
 	update := &tg.Updates{Updates: []tg.UpdateClass{}, Users: []tg.UserClass{}, Chats: []tg.ChatClass{}, Date: 12345, Seq: 1}
 	serverMsgID := makeServerMsgID()
-	encrypted := makeEncryptedResponse(s, serverMsgID, uint32(s.msgFactory.AllocateSeqNo(false)), update)
-
-	go func() {
-		time.Sleep(50 * time.Millisecond)
-		mt.recvCh <- encrypted
-	}()
+	encrypted := makeEncryptedResponse(s, serverMsgID, 1, update)
+	mt.recvCh <- encrypted
 
 	select {
-	case data := <-mt.sendCh:
-		msg, _, err := crypto.Unpack(data, s.sessionIDBytes(), s.authKey, s.authKeyID)
-		if err != nil {
-			t.Fatalf("unpack: %v", err)
+	case <-updateCh:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for update")
+	}
+
+	select {
+	case got := <-s.ackCh:
+		if got != serverMsgID {
+			t.Fatalf("ack msg_id = %d, want %d", got, serverMsgID)
 		}
-		if msg == nil || msg.Body == nil {
-			t.Fatal("no message body")
-		}
-		ack, ok := msg.Body.(*tg.MsgsAck)
-		if !ok {
-			t.Fatalf("expected MsgsAck, got %T", msg.Body)
-		}
-		if len(ack.MsgIds) != 1 {
-			t.Fatalf("expected 1 ack msg ID, got %d", len(ack.MsgIds))
-		}
-		if ack.MsgIds[0] != serverMsgID {
-			t.Errorf("ack msg ID = %d, want %d", ack.MsgIds[0], serverMsgID)
-		}
-	case <-time.After(5 * time.Second):
-		t.Fatal("timed out waiting for quick ACK")
+	default:
+		t.Fatal("update acknowledgement was not queued")
+	}
+	select {
+	case got := <-s.ackCh:
+		t.Fatalf("duplicate acknowledgement queued for msg_id=%d", got)
+	default:
 	}
 }
 

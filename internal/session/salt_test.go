@@ -159,6 +159,53 @@ func TestSaltManagerNoGoroutineLeak(t *testing.T) {
 	m.NextRefreshIn()
 }
 
+func TestSaltManagerWaitForValidCancellation(t *testing.T) {
+	for range 100 {
+		m := newSaltManager(time.Now)
+		m.mu.Lock()
+		m.salt = 1
+		m.validSince = time.Now().Add(-2 * time.Hour).Unix()
+		m.validUntil = time.Now().Add(-time.Hour).Unix()
+		m.mu.Unlock()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan bool, 1)
+		go func() { done <- m.WaitForValid(ctx) }()
+		cancel()
+
+		select {
+		case valid := <-done:
+			if valid {
+				t.Fatal("WaitForValid returned true for an expired salt")
+			}
+		case <-time.After(time.Second):
+			t.Fatal("WaitForValid missed context cancellation")
+		}
+	}
+}
+
+func TestSaltManagerWaitForValidWakesOnStore(t *testing.T) {
+	m := newSaltManager(time.Now)
+	m.mu.Lock()
+	m.salt = 1
+	m.validSince = time.Now().Add(-2 * time.Hour).Unix()
+	m.validUntil = time.Now().Add(-time.Hour).Unix()
+	m.mu.Unlock()
+
+	done := make(chan bool, 1)
+	go func() { done <- m.WaitForValid(context.Background()) }()
+	m.StoreSimple(2)
+
+	select {
+	case valid := <-done:
+		if !valid {
+			t.Fatal("WaitForValid returned false after a valid salt was stored")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("WaitForValid did not wake after StoreSimple")
+	}
+}
+
 func TestSaltManagerStoreFromFutureSaltsEmpty(t *testing.T) {
 	m := newSaltManager(time.Now)
 	m.StoreFromFutureSalts(nil)
