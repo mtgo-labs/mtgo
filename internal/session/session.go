@@ -986,9 +986,17 @@ func checkRawRPCErrorDepth(data []byte, depth int) error {
 		if depth >= 4 {
 			return fmt.Errorf("decode raw rpc error: gzip nesting exceeds 4 levels")
 		}
+		innerConstructor, err := tg.PeekGzipPackedConstructor(data[4:])
+		if err != nil {
+			return fmt.Errorf("decode raw gzip payload: %w", err)
+		}
+		if innerConstructor != tg.RPCErrorTypeID && innerConstructor != tg.GzipPackedID {
+			return nil
+		}
+
 		r := tg.NewReader(data[4:])
-		defer tg.ReleaseReader(r)
 		gz, err := tg.DecodeGzipPacked(r)
+		tg.ReleaseReader(r)
 		if err != nil {
 			return fmt.Errorf("decode raw gzip payload: %w", err)
 		}

@@ -2,6 +2,7 @@ package tg
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -55,6 +56,49 @@ func DecodeGzipPacked(r *Reader) (*GzipPacked, error) {
 		return nil, err
 	}
 	return &GzipPacked{Data: &GzipPackedData{Raw: decompressed}}, nil
+}
+
+// PeekGzipPackedConstructor returns the constructor ID at the start of a
+// TL-encoded gzip_packed bytes field without copying or fully decompressing it.
+func PeekGzipPackedConstructor(data []byte) (uint32, error) {
+	compressed, err := readTLBytesView(data)
+	if err != nil {
+		return 0, err
+	}
+
+	zr := gzipReaderPool.Get().(*gzip.Reader)
+	defer gzipReaderPool.Put(zr)
+	if err := zr.Reset(bytes.NewReader(compressed)); err != nil {
+		return 0, err
+	}
+
+	var constructor [4]byte
+	if _, err := io.ReadFull(zr, constructor[:]); err != nil {
+		return 0, fmt.Errorf("gzip: read constructor: %w", err)
+	}
+	return binary.LittleEndian.Uint32(constructor[:]), nil
+}
+
+func readTLBytesView(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	headerLen := 1
+	length := int(data[0])
+	if length > 253 {
+		if len(data) < 4 {
+			return nil, io.ErrUnexpectedEOF
+		}
+		headerLen = 4
+		length = int(data[1]) | int(data[2])<<8 | int(data[3])<<16
+	}
+
+	end := headerLen + length
+	padding := (4 - (length+headerLen)%4) % 4
+	if end+padding > len(data) {
+		return nil, io.ErrUnexpectedEOF
+	}
+	return data[headerLen:end], nil
 }
 
 type GzipPackedData struct {

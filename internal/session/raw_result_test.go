@@ -3,7 +3,9 @@ package session
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-func encodeGzipResult(t *testing.T, obj tg.TLObject) []byte {
+func encodeGzipResult(t testing.TB, obj tg.TLObject) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	tg.WriteInt(&buf, tg.GzipPackedID)
@@ -19,6 +21,30 @@ func encodeGzipResult(t *testing.T, obj tg.TLObject) []byte {
 		t.Fatalf("encode gzip result: %v", err)
 	}
 	return buf.Bytes()
+}
+
+var benchmarkRawRPCError error
+
+func BenchmarkCheckRawRPCErrorGzipSuccess(b *testing.B) {
+	for _, size := range []int{1 << 10, 64 << 10, 1 << 20} {
+		payload := make([]byte, size)
+		binary.LittleEndian.PutUint32(payload, tg.PongTypeID)
+		state := uint32(0x9E3779B9)
+		for i := 4; i < len(payload); i++ {
+			state ^= state << 13
+			state ^= state >> 17
+			state ^= state << 5
+			payload[i] = byte(state)
+		}
+		data := encodeGzipResult(b, &tg.GzipPackedData{Raw: payload})
+
+		b.Run(fmt.Sprintf("%dB", size), func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				benchmarkRawRPCError = checkRawRPCError(data)
+			}
+		})
+	}
 }
 
 func TestCheckRawRPCErrorRejectsMalformedError(t *testing.T) {
@@ -43,6 +69,15 @@ func TestCheckRawRPCErrorDetectsGzipPackedError(t *testing.T) {
 func TestCheckRawRPCErrorPreservesSuccessfulGzipPayload(t *testing.T) {
 	if err := checkRawRPCError(encodeGzipResult(t, &tg.Pong{})); err != nil {
 		t.Fatalf("successful gzip payload: %v", err)
+	}
+}
+
+func TestCheckRawRPCErrorRejectsMalformedGzip(t *testing.T) {
+	var data bytes.Buffer
+	tg.WriteInt(&data, tg.GzipPackedID)
+	tg.WriteString(&data, "invalid gzip")
+	if err := checkRawRPCError(data.Bytes()); err == nil {
+		t.Fatal("malformed gzip payload was accepted")
 	}
 }
 

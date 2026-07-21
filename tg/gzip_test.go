@@ -35,3 +35,24 @@ func TestGzipPacked_ConstructorID(t *testing.T) {
 		t.Fatalf("expected 0x3072CFA1, got 0x%x", gz.ConstructorID())
 	}
 }
+
+func TestPeekGzipPackedConstructor(t *testing.T) {
+	var buf bytes.Buffer
+	if err := (&GzipPacked{Data: &mockTLObject{data: []byte{0xDE, 0xAD, 0xBE, 0xEF}}}).Encode(&buf); err != nil {
+		t.Fatal(err)
+	}
+
+	constructor, err := PeekGzipPackedConstructor(buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if constructor != 0xDEADBEEF {
+		t.Fatalf("constructor = 0x%x, want 0xDEADBEEF", constructor)
+	}
+}
+
+func TestPeekGzipPackedConstructorRejectsMalformedPayload(t *testing.T) {
+	if _, err := PeekGzipPackedConstructor([]byte{1, 0, 0, 0}); err == nil {
+		t.Fatal("malformed gzip payload was accepted")
+	}
+}
