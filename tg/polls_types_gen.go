@@ -79,11 +79,11 @@ func (v *PollAnswer) Encode(b *bytes.Buffer) error {
 // DecodePollAnswer deserializes a PollAnswer from a reader using the TL binary protocol.
 func DecodePollAnswer(r *Reader) (*PollAnswer, error) {
 	v := &PollAnswer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objText, _errText := ReadTLObject(r)
 	if _errText != nil {
 		return nil, _errText
@@ -172,11 +172,11 @@ func (v *InputPollAnswer) Encode(b *bytes.Buffer) error {
 // DecodeInputPollAnswer deserializes a InputPollAnswer from a reader using the TL binary protocol.
 func DecodeInputPollAnswer(r *Reader) (*InputPollAnswer, error) {
 	v := &InputPollAnswer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objText, _errText := ReadTLObject(r)
 	if _errText != nil {
 		return nil, _errText
@@ -314,11 +314,11 @@ func DecodePoll(r *Reader) (*Poll, error) {
 		return nil, _eID
 	}
 	v.ID = _rID
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Closed = v.Flags.Has(0)
 	v.PublicVoters = v.Flags.Has(1)
 	v.MultipleChoice = v.Flags.Has(2)
@@ -342,6 +342,9 @@ func DecodePoll(r *Reader) (*Poll, error) {
 	if _ehdrAnswers != nil {
 		return nil, _ehdrAnswers
 	}
+	if _errAnswers := checkVectorConstructor(_vhdrAnswers); _errAnswers != nil {
+		return nil, _errAnswers
+	}
 	_cntAnswers, _ecntAnswers := r.ReadUint32()
 	if _ecntAnswers != nil {
 		return nil, _ecntAnswers
@@ -361,7 +364,6 @@ func DecodePoll(r *Reader) (*Poll, error) {
 		}
 		v.Answers[_iAnswers] = _cAnswers
 	}
-	_ = _vhdrAnswers
 	if v.Flags.Has(4) {
 		_rClosePeriod, _eClosePeriod := r.ReadInt32()
 		if _eClosePeriod != nil {
@@ -455,11 +457,11 @@ func (v *PollAnswerVoters) Encode(b *bytes.Buffer) error {
 // DecodePollAnswerVoters deserializes a PollAnswerVoters from a reader using the TL binary protocol.
 func DecodePollAnswerVoters(r *Reader) (*PollAnswerVoters, error) {
 	v := &PollAnswerVoters{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Chosen = v.Flags.Has(0)
 	v.Correct = v.Flags.Has(1)
 	_rOption, _eOption := r.ReadBytes()
@@ -478,6 +480,9 @@ func DecodePollAnswerVoters(r *Reader) (*PollAnswerVoters, error) {
 		_vhdrRecentVoters, _ehdrRecentVoters := r.ReadUint32()
 		if _ehdrRecentVoters != nil {
 			return nil, _ehdrRecentVoters
+		}
+		if _errRecentVoters := checkVectorConstructor(_vhdrRecentVoters); _errRecentVoters != nil {
+			return nil, _errRecentVoters
 		}
 		_cntRecentVoters, _ecntRecentVoters := r.ReadUint32()
 		if _ecntRecentVoters != nil {
@@ -498,7 +503,6 @@ func DecodePollAnswerVoters(r *Reader) (*PollAnswerVoters, error) {
 			}
 			v.RecentVoters[_iRecentVoters] = _cRecentVoters
 		}
-		_ = _vhdrRecentVoters
 	}
 	return v, nil
 }
@@ -605,11 +609,11 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 // DecodePollResults deserializes a PollResults from a reader using the TL binary protocol.
 func DecodePollResults(r *Reader) (*PollResults, error) {
 	v := &PollResults{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Min = v.Flags.Has(0)
 	v.HasUnreadVotes = v.Flags.Has(6)
 	v.CanViewStats = v.Flags.Has(7)
@@ -617,6 +621,9 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 		_vhdrResults, _ehdrResults := r.ReadUint32()
 		if _ehdrResults != nil {
 			return nil, _ehdrResults
+		}
+		if _errResults := checkVectorConstructor(_vhdrResults); _errResults != nil {
+			return nil, _errResults
 		}
 		_cntResults, _ecntResults := r.ReadUint32()
 		if _ecntResults != nil {
@@ -637,7 +644,6 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			}
 			v.Results[_iResults] = _cResults
 		}
-		_ = _vhdrResults
 	}
 	if v.Flags.Has(2) {
 		_rTotalVoters, _eTotalVoters := r.ReadInt32()
@@ -650,6 +656,9 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 		_vhdrRecentVoters, _ehdrRecentVoters := r.ReadUint32()
 		if _ehdrRecentVoters != nil {
 			return nil, _ehdrRecentVoters
+		}
+		if _errRecentVoters := checkVectorConstructor(_vhdrRecentVoters); _errRecentVoters != nil {
+			return nil, _errRecentVoters
 		}
 		_cntRecentVoters, _ecntRecentVoters := r.ReadUint32()
 		if _ecntRecentVoters != nil {
@@ -670,7 +679,6 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			}
 			v.RecentVoters[_iRecentVoters] = _cRecentVoters
 		}
-		_ = _vhdrRecentVoters
 	}
 	if v.Flags.Has(4) {
 		_rSolution, _eSolution := r.ReadString()
@@ -683,6 +691,9 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 		_vhdrSolutionEntities, _ehdrSolutionEntities := r.ReadUint32()
 		if _ehdrSolutionEntities != nil {
 			return nil, _ehdrSolutionEntities
+		}
+		if _errSolutionEntities := checkVectorConstructor(_vhdrSolutionEntities); _errSolutionEntities != nil {
+			return nil, _errSolutionEntities
 		}
 		_cntSolutionEntities, _ecntSolutionEntities := r.ReadUint32()
 		if _ecntSolutionEntities != nil {
@@ -703,7 +714,6 @@ func DecodePollResults(r *Reader) (*PollResults, error) {
 			}
 			v.SolutionEntities[_iSolutionEntities] = _cSolutionEntities
 		}
-		_ = _vhdrSolutionEntities
 	}
 	if v.Flags.Has(5) {
 		_objSolutionMedia, _errSolutionMedia := ReadTLObject(r)

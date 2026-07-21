@@ -3,6 +3,7 @@ package tlgen
 import (
 	"bufio"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"regexp"
 	"strconv"
@@ -11,10 +12,21 @@ import (
 
 var (
 	sectionRe    = regexp.MustCompile(`^---(\w+)---$`)
-	combinatorRe = regexp.MustCompile(`^(\w[\w.]*)#([0-9a-fA-F]+)\s+(.*)=\s*([^;]+);$`)
+	combinatorRe = regexp.MustCompile(`^(\w[\w.]*)(?:#([0-9a-fA-F]+))?(?:\s+(.*?))?\s*=\s*([^;]+);$`)
 	argRe        = regexp.MustCompile(`^(\w[\w]*)\s*:\s*(.+)$`)
 	flagsRe      = regexp.MustCompile(`^(flags\d*)\.(\d+)\?(.+)$`)
 )
+
+var builtinDeclarations = map[string]struct{}{
+	"int ? = Int;":                                 {},
+	"long ? = Long;":                               {},
+	"double ? = Double;":                           {},
+	"string ? = String;":                           {},
+	"int128 4*[ int ] = Int128;":                   {},
+	"int256 8*[ int ] = Int256;":                   {},
+	"vector {t:Type} # [ t ] = Vector t;":          {},
+	"vector#1cb5c415 {t:Type} # [ t ] = Vector t;": {},
+}
 
 func Parse(r io.Reader) ([]Combinator, error) {
 	var combos []Combinator
@@ -38,20 +50,22 @@ func Parse(r io.Reader) ([]Combinator, error) {
 				section = SectionTypes
 			case "functions":
 				section = SectionFunctions
+			default:
+				return nil, fmt.Errorf("line %d: unknown section %q", lineNo, m[1])
 			}
+			continue
+		}
+
+		if _, ok := builtinDeclarations[line]; ok {
 			continue
 		}
 
 		m := combinatorRe.FindStringSubmatch(line)
 		if m == nil {
-			// Non-combinator lines are intentionally skipped. The TL schema
-			// contains builtin primitive declarations (e.g. "int ? = Int;",
-			// "vector {t:Type} # [ t ] = Vector t;" in mtproto.tl) that use a
-			// different grammar and are not codegen targets.
-			continue
+			return nil, fmt.Errorf("line %d: unsupported TL declaration %q", lineNo, line)
 		}
 
-		combo, err := parseCombinator(section, m[1], m[2], m[3], m[4])
+		combo, err := parseCombinator(section, m[1], m[2], m[3], m[4], strings.TrimSuffix(line, ";"))
 		if err != nil {
 			return nil, fmt.Errorf("line %d: %w", lineNo, err)
 		}
@@ -64,10 +78,16 @@ func Parse(r io.Reader) ([]Combinator, error) {
 	return combos, nil
 }
 
-func parseCombinator(section Section, name, hexID, argsStr, retType string) (Combinator, error) {
-	id, err := strconv.ParseUint(hexID, 16, 32)
-	if err != nil {
-		return Combinator{}, fmt.Errorf("invalid constructor id %q: %w", hexID, err)
+func parseCombinator(section Section, name, hexID, argsStr, retType, declaration string) (Combinator, error) {
+	var id uint64
+	if hexID == "" {
+		id = uint64(crc32.ChecksumIEEE([]byte(declaration)))
+	} else {
+		parsed, err := strconv.ParseUint(hexID, 16, 32)
+		if err != nil {
+			return Combinator{}, fmt.Errorf("invalid constructor id %q: %w", hexID, err)
+		}
+		id = parsed
 	}
 
 	parts := strings.SplitN(name, ".", 2)
@@ -131,10 +151,7 @@ func parseArgs(s string) ([]Arg, error) {
 
 		m := argRe.FindStringSubmatch(field)
 		if m == nil {
-			// Tokens from builtin combinator grammar (e.g. the "# [ t ]"
-			// portion of "vector#1cb5c415 {t:Type} # [ t ] = Vector t;")
-			// don't follow the name:type field format and are skipped.
-			continue
+			return nil, fmt.Errorf("unsupported argument token %q", field)
 		}
 
 		name := m[1]
@@ -149,6 +166,9 @@ func parseArgs(s string) ([]Arg, error) {
 			bit, err := strconv.Atoi(fm[2])
 			if err != nil {
 				return nil, fmt.Errorf("invalid flag bit %q in field %q: %w", fm[2], field, err)
+			}
+			if bit >= 32 {
+				return nil, fmt.Errorf("invalid flag bit %d in field %q: must be between 0 and 31", bit, field)
 			}
 			args = append(args, Arg{
 				Name:     name,

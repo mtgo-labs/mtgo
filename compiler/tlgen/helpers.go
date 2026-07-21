@@ -442,7 +442,7 @@ func buildTypeData(c Combinator, section string, baseTypes map[string]bool, type
 			})
 
 			readLines = append(readLines, readLine{
-				Code: fmt.Sprintf("{ var _f uint32; _f, _ = r.ReadUint32(); v.%s = Fields(_f) }", fd.Name),
+				Code: fmt.Sprintf("_r%s, _e%s := r.ReadUint32()\nif _e%s != nil { return nil, _e%s }\nv.%s = Fields(_r%s)", fd.Name, fd.Name, fd.Name, fd.Name, fd.Name, fd.Name),
 			})
 			continue
 		}
@@ -570,6 +570,9 @@ func writeBareVectorExpr(inner, access string, typeToConstructor map[string][]Co
 
 	if c, ok := constructorByQualName(inner, typeToConstructor); ok {
 		var body strings.Builder
+		if c.HasFlags() {
+			body.WriteString("_item.SetFlags()\n")
+		}
 		for _, a := range c.Args {
 			if a.Type == "#" && a.Name == "flags" {
 				body.WriteString("WriteInt(b, uint32(_item.Flags))\n")
@@ -610,7 +613,8 @@ func readBareVectorExpr(inner, assign, fname, goType string, typeToConstructor m
 		} else {
 			fmt.Fprintf(&buf, "\t_obj%s, _err%s := ReadTLObject(r)\n", idx, idx)
 			fmt.Fprintf(&buf, "\tif _err%s != nil {\n\t\treturn nil, _err%s\n\t}\n", idx, idx)
-			fmt.Fprintf(&buf, "\t_item%s := %s\n", idx, typeAssertExpr("_obj"+idx, elemType))
+			fmt.Fprintf(&buf, "\t_item%s, _ok%s := _obj%s.(%s)\n", idx, idx, idx, elemType)
+			fmt.Fprintf(&buf, "\tif !_ok%s {\n\t\treturn nil, fmt.Errorf(\"decode: field %s: unexpected type %%T\", _obj%s)\n\t}\n", idx, fname, idx)
 			fmt.Fprintf(&buf, "\t%s[_i%s] = _item%s\n", assign, idx, idx)
 			buf.WriteString("}")
 			return buf.String()
@@ -789,6 +793,7 @@ func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToCons
 			var buf strings.Builder
 			fmt.Fprintf(&buf, "_vhdr%s, _ehdr%s := r.ReadUint32()\n", idx, idx)
 			fmt.Fprintf(&buf, "if _ehdr%s != nil { return nil, _ehdr%s }\n", idx, idx)
+			fmt.Fprintf(&buf, "if _err%s := checkVectorConstructor(_vhdr%s); _err%s != nil { return nil, _err%s }\n", idx, idx, idx, idx)
 			fmt.Fprintf(&buf, "_cnt%s, _ecnt%s := r.ReadUint32()\n", idx, idx)
 			fmt.Fprintf(&buf, "if _ecnt%s != nil { return nil, _ecnt%s }\n", idx, idx)
 			fmt.Fprintf(&buf, "if _err%s := checkVectorCount(_cnt%s); _err%s != nil {\n\treturn nil, _err%s\n}\n", idx, idx, idx, idx)
@@ -805,7 +810,7 @@ func buildReadExpr(arg Arg, goType string, baseTypes map[string]bool, typeToCons
 				fmt.Fprintf(&buf, "\t}\n")
 				fmt.Fprintf(&buf, "\t%s[_i%s] = _c%s\n", assign, idx, idx)
 			}
-			fmt.Fprintf(&buf, "}\n_ = _vhdr%s", idx)
+			buf.WriteString("}")
 			return buf.String()
 		}
 	}

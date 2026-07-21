@@ -60,11 +60,11 @@ func (v *Folder) Encode(b *bytes.Buffer) error {
 // DecodeFolder deserializes a Folder from a reader using the TL binary protocol.
 func DecodeFolder(r *Reader) (*Folder, error) {
 	v := &Folder{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.AutofillNewBroadcasts = v.Flags.Has(0)
 	v.AutofillPublicGroups = v.Flags.Has(1)
 	v.AutofillNewCorrespondents = v.Flags.Has(2)
@@ -155,11 +155,11 @@ func (v *ExportedChatlistInvite) Encode(b *bytes.Buffer) error {
 // DecodeExportedChatlistInvite deserializes a ExportedChatlistInvite from a reader using the TL binary protocol.
 func DecodeExportedChatlistInvite(r *Reader) (*ExportedChatlistInvite, error) {
 	v := &ExportedChatlistInvite{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -173,6 +173,9 @@ func DecodeExportedChatlistInvite(r *Reader) (*ExportedChatlistInvite, error) {
 	_vhdrPeers, _ehdrPeers := r.ReadUint32()
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
+	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
 	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
@@ -193,7 +196,6 @@ func DecodeExportedChatlistInvite(r *Reader) (*ExportedChatlistInvite, error) {
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	return v, nil
 }
 
@@ -299,6 +301,9 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 	if _ehdrInvites != nil {
 		return nil, _ehdrInvites
 	}
+	if _errInvites := checkVectorConstructor(_vhdrInvites); _errInvites != nil {
+		return nil, _errInvites
+	}
 	_cntInvites, _ecntInvites := r.ReadUint32()
 	if _ecntInvites != nil {
 		return nil, _ecntInvites
@@ -318,10 +323,12 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		}
 		v.Invites[_iInvites] = _cInvites
 	}
-	_ = _vhdrInvites
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -342,10 +349,12 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -366,7 +375,6 @@ func DecodeChatlistsExportedInvites(r *Reader) (*ChatlistsExportedInvites, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -451,6 +459,9 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 	if _ehdrMissingPeers != nil {
 		return nil, _ehdrMissingPeers
 	}
+	if _errMissingPeers := checkVectorConstructor(_vhdrMissingPeers); _errMissingPeers != nil {
+		return nil, _errMissingPeers
+	}
 	_cntMissingPeers, _ecntMissingPeers := r.ReadUint32()
 	if _ecntMissingPeers != nil {
 		return nil, _ecntMissingPeers
@@ -470,10 +481,12 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		}
 		v.MissingPeers[_iMissingPeers] = _cMissingPeers
 	}
-	_ = _vhdrMissingPeers
 	_vhdrAlreadyPeers, _ehdrAlreadyPeers := r.ReadUint32()
 	if _ehdrAlreadyPeers != nil {
 		return nil, _ehdrAlreadyPeers
+	}
+	if _errAlreadyPeers := checkVectorConstructor(_vhdrAlreadyPeers); _errAlreadyPeers != nil {
+		return nil, _errAlreadyPeers
 	}
 	_cntAlreadyPeers, _ecntAlreadyPeers := r.ReadUint32()
 	if _ecntAlreadyPeers != nil {
@@ -494,10 +507,12 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		}
 		v.AlreadyPeers[_iAlreadyPeers] = _cAlreadyPeers
 	}
-	_ = _vhdrAlreadyPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -518,10 +533,12 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -542,7 +559,6 @@ func DecodeChatlistsChatlistInviteAlready(r *Reader) (*ChatlistsChatlistInviteAl
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -610,11 +626,11 @@ func (v *ChatlistsChatlistInvite) Encode(b *bytes.Buffer) error {
 // DecodeChatlistsChatlistInvite deserializes a ChatlistsChatlistInvite from a reader using the TL binary protocol.
 func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) {
 	v := &ChatlistsChatlistInvite{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.TitleNoanimate = v.Flags.Has(1)
 	_objTitle, _errTitle := ReadTLObject(r)
 	if _errTitle != nil {
@@ -636,6 +652,9 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -655,10 +674,12 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -679,10 +700,12 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -703,7 +726,6 @@ func DecodeChatlistsChatlistInvite(r *Reader) (*ChatlistsChatlistInvite, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -758,6 +780,9 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 	if _ehdrMissingPeers != nil {
 		return nil, _ehdrMissingPeers
 	}
+	if _errMissingPeers := checkVectorConstructor(_vhdrMissingPeers); _errMissingPeers != nil {
+		return nil, _errMissingPeers
+	}
 	_cntMissingPeers, _ecntMissingPeers := r.ReadUint32()
 	if _ecntMissingPeers != nil {
 		return nil, _ecntMissingPeers
@@ -777,10 +802,12 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		}
 		v.MissingPeers[_iMissingPeers] = _cMissingPeers
 	}
-	_ = _vhdrMissingPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -801,10 +828,12 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -825,7 +854,6 @@ func DecodeChatlistsChatlistUpdates(r *Reader) (*ChatlistsChatlistUpdates, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

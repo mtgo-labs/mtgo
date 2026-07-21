@@ -189,7 +189,9 @@ func (r *Reader) ReadVectorInt() ([]int32, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = hdr
+	if err := checkVectorConstructor(hdr); err != nil {
+		return nil, err
+	}
 	count, err := r.ReadUint32()
 	if err != nil {
 		return nil, err
@@ -216,7 +218,9 @@ func (r *Reader) ReadVectorLong() ([]int64, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = hdr
+	if err := checkVectorConstructor(hdr); err != nil {
+		return nil, err
+	}
 	count, err := r.ReadUint32()
 	if err != nil {
 		return nil, err
@@ -243,7 +247,9 @@ func (r *Reader) ReadVectorString() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = hdr
+	if err := checkVectorConstructor(hdr); err != nil {
+		return nil, err
+	}
 	count, err := r.ReadUint32()
 	if err != nil {
 		return nil, err
@@ -267,7 +273,9 @@ func (r *Reader) ReadVectorBytes() ([][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = hdr
+	if err := checkVectorConstructor(hdr); err != nil {
+		return nil, err
+	}
 	count, err := r.ReadUint32()
 	if err != nil {
 		return nil, err

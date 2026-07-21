@@ -45,11 +45,11 @@ func (v *BotCommand) Encode(b *bytes.Buffer) error {
 // DecodeBotCommand deserializes a BotCommand from a reader using the TL binary protocol.
 func DecodeBotCommand(r *Reader) (*BotCommand, error) {
 	v := &BotCommand{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Ephemeral = v.Flags.Has(0)
 	_rCommand, _eCommand := r.ReadString()
 	if _eCommand != nil {
@@ -188,11 +188,11 @@ func (v *BotInfo) Encode(b *bytes.Buffer) error {
 // DecodeBotInfo deserializes a BotInfo from a reader using the TL binary protocol.
 func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 	v := &BotInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasPreviewMedias = v.Flags.Has(6)
 	if v.Flags.Has(0) {
 		_rUserID, _eUserID := r.ReadInt64()
@@ -235,6 +235,9 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 		if _ehdrCommands != nil {
 			return nil, _ehdrCommands
 		}
+		if _errCommands := checkVectorConstructor(_vhdrCommands); _errCommands != nil {
+			return nil, _errCommands
+		}
 		_cntCommands, _ecntCommands := r.ReadUint32()
 		if _ecntCommands != nil {
 			return nil, _ecntCommands
@@ -254,7 +257,6 @@ func DecodeBotInfo(r *Reader) (*BotInfo, error) {
 			}
 			v.Commands[_iCommands] = _cCommands
 		}
-		_ = _vhdrCommands
 	}
 	if v.Flags.Has(3) {
 		_objMenuButton, _errMenuButton := ReadTLObject(r)
@@ -507,11 +509,11 @@ func (v *KeyboardButton) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButton deserializes a KeyboardButton from a reader using the TL binary protocol.
 func DecodeKeyboardButton(r *Reader) (*KeyboardButton, error) {
 	v := &KeyboardButton{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -575,11 +577,11 @@ func (v *KeyboardButtonURL) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonURL deserializes a KeyboardButtonURL from a reader using the TL binary protocol.
 func DecodeKeyboardButtonURL(r *Reader) (*KeyboardButtonURL, error) {
 	v := &KeyboardButtonURL{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -652,11 +654,11 @@ func (v *KeyboardButtonCallback) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonCallback deserializes a KeyboardButtonCallback from a reader using the TL binary protocol.
 func DecodeKeyboardButtonCallback(r *Reader) (*KeyboardButtonCallback, error) {
 	v := &KeyboardButtonCallback{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RequiresPassword = v.Flags.Has(0)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
@@ -724,11 +726,11 @@ func (v *KeyboardButtonRequestPhone) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonRequestPhone deserializes a KeyboardButtonRequestPhone from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestPhone(r *Reader) (*KeyboardButtonRequestPhone, error) {
 	v := &KeyboardButtonRequestPhone{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -790,11 +792,11 @@ func (v *KeyboardButtonRequestGeoLocation) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonRequestGeoLocation deserializes a KeyboardButtonRequestGeoLocation from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestGeoLocation(r *Reader) (*KeyboardButtonRequestGeoLocation, error) {
 	v := &KeyboardButtonRequestGeoLocation{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -873,11 +875,11 @@ func (v *KeyboardButtonSwitchInline) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonSwitchInline deserializes a KeyboardButtonSwitchInline from a reader using the TL binary protocol.
 func DecodeKeyboardButtonSwitchInline(r *Reader) (*KeyboardButtonSwitchInline, error) {
 	v := &KeyboardButtonSwitchInline{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.SamePeer = v.Flags.Has(0)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
@@ -905,6 +907,9 @@ func DecodeKeyboardButtonSwitchInline(r *Reader) (*KeyboardButtonSwitchInline, e
 		if _ehdrPeerTypes != nil {
 			return nil, _ehdrPeerTypes
 		}
+		if _errPeerTypes := checkVectorConstructor(_vhdrPeerTypes); _errPeerTypes != nil {
+			return nil, _errPeerTypes
+		}
 		_cntPeerTypes, _ecntPeerTypes := r.ReadUint32()
 		if _ecntPeerTypes != nil {
 			return nil, _ecntPeerTypes
@@ -924,7 +929,6 @@ func DecodeKeyboardButtonSwitchInline(r *Reader) (*KeyboardButtonSwitchInline, e
 			}
 			v.PeerTypes[_iPeerTypes] = _cPeerTypes
 		}
-		_ = _vhdrPeerTypes
 	}
 	return v, nil
 }
@@ -971,11 +975,11 @@ func (v *KeyboardButtonGame) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonGame deserializes a KeyboardButtonGame from a reader using the TL binary protocol.
 func DecodeKeyboardButtonGame(r *Reader) (*KeyboardButtonGame, error) {
 	v := &KeyboardButtonGame{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1037,11 +1041,11 @@ func (v *KeyboardButtonBuy) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonBuy deserializes a KeyboardButtonBuy from a reader using the TL binary protocol.
 func DecodeKeyboardButtonBuy(r *Reader) (*KeyboardButtonBuy, error) {
 	v := &KeyboardButtonBuy{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1114,11 +1118,11 @@ func (v *KeyboardButtonURLAuth) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonURLAuth deserializes a KeyboardButtonURLAuth from a reader using the TL binary protocol.
 func DecodeKeyboardButtonURLAuth(r *Reader) (*KeyboardButtonURLAuth, error) {
 	v := &KeyboardButtonURLAuth{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1212,11 +1216,11 @@ func (v *InputKeyboardButtonURLAuth) Encode(b *bytes.Buffer) error {
 // DecodeInputKeyboardButtonURLAuth deserializes a InputKeyboardButtonURLAuth from a reader using the TL binary protocol.
 func DecodeInputKeyboardButtonURLAuth(r *Reader) (*InputKeyboardButtonURLAuth, error) {
 	v := &InputKeyboardButtonURLAuth{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RequestWriteAccess = v.Flags.Has(0)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
@@ -1325,11 +1329,11 @@ func (v *KeyboardButtonRequestPoll) GetQuiz() (value bool, ok bool) {
 // DecodeKeyboardButtonRequestPoll deserializes a KeyboardButtonRequestPoll from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestPoll(r *Reader) (*KeyboardButtonRequestPoll, error) {
 	v := &KeyboardButtonRequestPoll{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1400,11 +1404,11 @@ func (v *InputKeyboardButtonUserProfile) Encode(b *bytes.Buffer) error {
 // DecodeInputKeyboardButtonUserProfile deserializes a InputKeyboardButtonUserProfile from a reader using the TL binary protocol.
 func DecodeInputKeyboardButtonUserProfile(r *Reader) (*InputKeyboardButtonUserProfile, error) {
 	v := &InputKeyboardButtonUserProfile{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1477,11 +1481,11 @@ func (v *KeyboardButtonUserProfile) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonUserProfile deserializes a KeyboardButtonUserProfile from a reader using the TL binary protocol.
 func DecodeKeyboardButtonUserProfile(r *Reader) (*KeyboardButtonUserProfile, error) {
 	v := &KeyboardButtonUserProfile{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1550,11 +1554,11 @@ func (v *KeyboardButtonWebView) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonWebView deserializes a KeyboardButtonWebView from a reader using the TL binary protocol.
 func DecodeKeyboardButtonWebView(r *Reader) (*KeyboardButtonWebView, error) {
 	v := &KeyboardButtonWebView{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1623,11 +1627,11 @@ func (v *KeyboardButtonSimpleWebView) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonSimpleWebView deserializes a KeyboardButtonSimpleWebView from a reader using the TL binary protocol.
 func DecodeKeyboardButtonSimpleWebView(r *Reader) (*KeyboardButtonSimpleWebView, error) {
 	v := &KeyboardButtonSimpleWebView{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1700,11 +1704,11 @@ func (v *KeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonRequestPeer deserializes a KeyboardButtonRequestPeer from a reader using the TL binary protocol.
 func DecodeKeyboardButtonRequestPeer(r *Reader) (*KeyboardButtonRequestPeer, error) {
 	v := &KeyboardButtonRequestPeer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1803,11 +1807,11 @@ func (v *InputKeyboardButtonRequestPeer) Encode(b *bytes.Buffer) error {
 // DecodeInputKeyboardButtonRequestPeer deserializes a InputKeyboardButtonRequestPeer from a reader using the TL binary protocol.
 func DecodeInputKeyboardButtonRequestPeer(r *Reader) (*InputKeyboardButtonRequestPeer, error) {
 	v := &InputKeyboardButtonRequestPeer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NameRequested = v.Flags.Has(0)
 	v.UsernameRequested = v.Flags.Has(1)
 	v.PhotoRequested = v.Flags.Has(2)
@@ -1893,11 +1897,11 @@ func (v *KeyboardButtonCopy) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonCopy deserializes a KeyboardButtonCopy from a reader using the TL binary protocol.
 func DecodeKeyboardButtonCopy(r *Reader) (*KeyboardButtonCopy, error) {
 	v := &KeyboardButtonCopy{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(10) {
 		_objStyle, _errStyle := ReadTLObject(r)
 		if _errStyle != nil {
@@ -1961,6 +1965,9 @@ func DecodeKeyboardButtonRow(r *Reader) (*KeyboardButtonRow, error) {
 	if _ehdrButtons != nil {
 		return nil, _ehdrButtons
 	}
+	if _errButtons := checkVectorConstructor(_vhdrButtons); _errButtons != nil {
+		return nil, _errButtons
+	}
 	_cntButtons, _ecntButtons := r.ReadUint32()
 	if _ecntButtons != nil {
 		return nil, _ecntButtons
@@ -1980,7 +1987,6 @@ func DecodeKeyboardButtonRow(r *Reader) (*KeyboardButtonRow, error) {
 		}
 		v.Buttons[_iButtons] = _cButtons
 	}
-	_ = _vhdrButtons
 	return v, nil
 }
 
@@ -2090,11 +2096,11 @@ func (v *InputBotInlineResult) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineResult deserializes a InputBotInlineResult from a reader using the TL binary protocol.
 func DecodeInputBotInlineResult(r *Reader) (*InputBotInlineResult, error) {
 	v := &InputBotInlineResult{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadString()
 	if _eID != nil {
 		return nil, _eID
@@ -2280,11 +2286,11 @@ func (v *InputBotInlineResultDocument) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineResultDocument deserializes a InputBotInlineResultDocument from a reader using the TL binary protocol.
 func DecodeInputBotInlineResultDocument(r *Reader) (*InputBotInlineResultDocument, error) {
 	v := &InputBotInlineResultDocument{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadString()
 	if _eID != nil {
 		return nil, _eID
@@ -2478,11 +2484,11 @@ func (v *BotInlineResult) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineResult deserializes a BotInlineResult from a reader using the TL binary protocol.
 func DecodeBotInlineResult(r *Reader) (*BotInlineResult, error) {
 	v := &BotInlineResult{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadString()
 	if _eID != nil {
 		return nil, _eID
@@ -2615,11 +2621,11 @@ func (v *BotInlineMediaResult) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMediaResult deserializes a BotInlineMediaResult from a reader using the TL binary protocol.
 func DecodeBotInlineMediaResult(r *Reader) (*BotInlineMediaResult, error) {
 	v := &BotInlineMediaResult{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadString()
 	if _eID != nil {
 		return nil, _eID
@@ -2779,11 +2785,11 @@ func (v *Game) Encode(b *bytes.Buffer) error {
 // DecodeGame deserializes a Game from a reader using the TL binary protocol.
 func DecodeGame(r *Reader) (*Game, error) {
 	v := &Game{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -3336,11 +3342,11 @@ func (v *AttachMenuBotIcon) Encode(b *bytes.Buffer) error {
 // DecodeAttachMenuBotIcon deserializes a AttachMenuBotIcon from a reader using the TL binary protocol.
 func DecodeAttachMenuBotIcon(r *Reader) (*AttachMenuBotIcon, error) {
 	v := &AttachMenuBotIcon{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rName, _eName := r.ReadString()
 	if _eName != nil {
 		return nil, _eName
@@ -3359,6 +3365,9 @@ func DecodeAttachMenuBotIcon(r *Reader) (*AttachMenuBotIcon, error) {
 		_vhdrColors, _ehdrColors := r.ReadUint32()
 		if _ehdrColors != nil {
 			return nil, _ehdrColors
+		}
+		if _errColors := checkVectorConstructor(_vhdrColors); _errColors != nil {
+			return nil, _errColors
 		}
 		_cntColors, _ecntColors := r.ReadUint32()
 		if _ecntColors != nil {
@@ -3379,7 +3388,6 @@ func DecodeAttachMenuBotIcon(r *Reader) (*AttachMenuBotIcon, error) {
 			}
 			v.Colors[_iColors] = _cColors
 		}
-		_ = _vhdrColors
 	}
 	return v, nil
 }
@@ -3465,11 +3473,11 @@ func (v *AttachMenuBot) Encode(b *bytes.Buffer) error {
 // DecodeAttachMenuBot deserializes a AttachMenuBot from a reader using the TL binary protocol.
 func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 	v := &AttachMenuBot{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inactive = v.Flags.Has(0)
 	v.HasSettings = v.Flags.Has(1)
 	v.RequestWriteAccess = v.Flags.Has(2)
@@ -3491,6 +3499,9 @@ func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 		if _ehdrPeerTypes != nil {
 			return nil, _ehdrPeerTypes
 		}
+		if _errPeerTypes := checkVectorConstructor(_vhdrPeerTypes); _errPeerTypes != nil {
+			return nil, _errPeerTypes
+		}
 		_cntPeerTypes, _ecntPeerTypes := r.ReadUint32()
 		if _ecntPeerTypes != nil {
 			return nil, _ecntPeerTypes
@@ -3510,11 +3521,13 @@ func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 			}
 			v.PeerTypes[_iPeerTypes] = _cPeerTypes
 		}
-		_ = _vhdrPeerTypes
 	}
 	_vhdrIcons, _ehdrIcons := r.ReadUint32()
 	if _ehdrIcons != nil {
 		return nil, _ehdrIcons
+	}
+	if _errIcons := checkVectorConstructor(_vhdrIcons); _errIcons != nil {
+		return nil, _errIcons
 	}
 	_cntIcons, _ecntIcons := r.ReadUint32()
 	if _ecntIcons != nil {
@@ -3535,7 +3548,6 @@ func DecodeAttachMenuBot(r *Reader) (*AttachMenuBot, error) {
 		}
 		v.Icons[_iIcons] = _cIcons
 	}
-	_ = _vhdrIcons
 	return v, nil
 }
 
@@ -3637,6 +3649,9 @@ func DecodeAttachMenuBots(r *Reader) (*AttachMenuBots, error) {
 	if _ehdrBots != nil {
 		return nil, _ehdrBots
 	}
+	if _errBots := checkVectorConstructor(_vhdrBots); _errBots != nil {
+		return nil, _errBots
+	}
 	_cntBots, _ecntBots := r.ReadUint32()
 	if _ecntBots != nil {
 		return nil, _ecntBots
@@ -3656,10 +3671,12 @@ func DecodeAttachMenuBots(r *Reader) (*AttachMenuBots, error) {
 		}
 		v.Bots[_iBots] = _cBots
 	}
-	_ = _vhdrBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -3680,7 +3697,6 @@ func DecodeAttachMenuBots(r *Reader) (*AttachMenuBots, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -3734,6 +3750,9 @@ func DecodeAttachMenuBotsBot(r *Reader) (*AttachMenuBotsBot, error) {
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -3753,7 +3772,6 @@ func DecodeAttachMenuBotsBot(r *Reader) (*AttachMenuBotsBot, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -3814,11 +3832,11 @@ func (v *WebViewResultURL) Encode(b *bytes.Buffer) error {
 // DecodeWebViewResultURL deserializes a WebViewResultURL from a reader using the TL binary protocol.
 func DecodeWebViewResultURL(r *Reader) (*WebViewResultURL, error) {
 	v := &WebViewResultURL{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Fullsize = v.Flags.Has(1)
 	v.Fullscreen = v.Flags.Has(2)
 	v.SameOrigin = v.Flags.Has(3)
@@ -4169,11 +4187,11 @@ func (v *BotsPopularAppBots) Encode(b *bytes.Buffer) error {
 // DecodeBotsPopularAppBots deserializes a BotsPopularAppBots from a reader using the TL binary protocol.
 func DecodeBotsPopularAppBots(r *Reader) (*BotsPopularAppBots, error) {
 	v := &BotsPopularAppBots{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -4184,6 +4202,9 @@ func DecodeBotsPopularAppBots(r *Reader) (*BotsPopularAppBots, error) {
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -4204,7 +4225,6 @@ func DecodeBotsPopularAppBots(r *Reader) (*BotsPopularAppBots, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -4299,6 +4319,9 @@ func DecodeBotsPreviewInfo(r *Reader) (*BotsPreviewInfo, error) {
 	if _ehdrMedia != nil {
 		return nil, _ehdrMedia
 	}
+	if _errMedia := checkVectorConstructor(_vhdrMedia); _errMedia != nil {
+		return nil, _errMedia
+	}
 	_cntMedia, _ecntMedia := r.ReadUint32()
 	if _ecntMedia != nil {
 		return nil, _ecntMedia
@@ -4318,7 +4341,6 @@ func DecodeBotsPreviewInfo(r *Reader) (*BotsPreviewInfo, error) {
 		}
 		v.Media[_iMedia] = _cMedia
 	}
-	_ = _vhdrMedia
 	_vvLangCodes, _veLangCodes := r.ReadVectorString()
 	if _veLangCodes != nil {
 		return nil, _veLangCodes
@@ -4398,11 +4420,11 @@ func (v *BotAppSettings) Encode(b *bytes.Buffer) error {
 // DecodeBotAppSettings deserializes a BotAppSettings from a reader using the TL binary protocol.
 func DecodeBotAppSettings(r *Reader) (*BotAppSettings, error) {
 	v := &BotAppSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rPlaceholderPath, _ePlaceholderPath := r.ReadBytes()
 		if _ePlaceholderPath != nil {
@@ -4492,11 +4514,11 @@ func (v *BotVerifierSettings) Encode(b *bytes.Buffer) error {
 // DecodeBotVerifierSettings deserializes a BotVerifierSettings from a reader using the TL binary protocol.
 func DecodeBotVerifierSettings(r *Reader) (*BotVerifierSettings, error) {
 	v := &BotVerifierSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanModifyCustomDescription = v.Flags.Has(1)
 	_rIcon, _eIcon := r.ReadInt64()
 	if _eIcon != nil {
@@ -4626,11 +4648,11 @@ func (v *KeyboardButtonStyle) Encode(b *bytes.Buffer) error {
 // DecodeKeyboardButtonStyle deserializes a KeyboardButtonStyle from a reader using the TL binary protocol.
 func DecodeKeyboardButtonStyle(r *Reader) (*KeyboardButtonStyle, error) {
 	v := &KeyboardButtonStyle{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.BgPrimary = v.Flags.Has(0)
 	v.BgDanger = v.Flags.Has(1)
 	v.BgSuccess = v.Flags.Has(2)
@@ -4773,16 +4795,19 @@ func (v *BotsAccessSettings) Encode(b *bytes.Buffer) error {
 // DecodeBotsAccessSettings deserializes a BotsAccessSettings from a reader using the TL binary protocol.
 func DecodeBotsAccessSettings(r *Reader) (*BotsAccessSettings, error) {
 	v := &BotsAccessSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Restricted = v.Flags.Has(0)
 	if v.Flags.Has(1) {
 		_vhdrAddUsers, _ehdrAddUsers := r.ReadUint32()
 		if _ehdrAddUsers != nil {
 			return nil, _ehdrAddUsers
+		}
+		if _errAddUsers := checkVectorConstructor(_vhdrAddUsers); _errAddUsers != nil {
+			return nil, _errAddUsers
 		}
 		_cntAddUsers, _ecntAddUsers := r.ReadUint32()
 		if _ecntAddUsers != nil {
@@ -4803,7 +4828,6 @@ func DecodeBotsAccessSettings(r *Reader) (*BotsAccessSettings, error) {
 			}
 			v.AddUsers[_iAddUsers] = _cAddUsers
 		}
-		_ = _vhdrAddUsers
 	}
 	return v, nil
 }

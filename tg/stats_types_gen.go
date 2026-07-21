@@ -271,6 +271,9 @@ func DecodeStatsBroadcastStats(r *Reader) (*StatsBroadcastStats, error) {
 	if _ehdrRecentPostsInteractions != nil {
 		return nil, _ehdrRecentPostsInteractions
 	}
+	if _errRecentPostsInteractions := checkVectorConstructor(_vhdrRecentPostsInteractions); _errRecentPostsInteractions != nil {
+		return nil, _errRecentPostsInteractions
+	}
 	_cntRecentPostsInteractions, _ecntRecentPostsInteractions := r.ReadUint32()
 	if _ecntRecentPostsInteractions != nil {
 		return nil, _ecntRecentPostsInteractions
@@ -290,7 +293,6 @@ func DecodeStatsBroadcastStats(r *Reader) (*StatsBroadcastStats, error) {
 		}
 		v.RecentPostsInteractions[_iRecentPostsInteractions] = _cRecentPostsInteractions
 	}
-	_ = _vhdrRecentPostsInteractions
 	return v, nil
 }
 
@@ -494,6 +496,9 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 	if _ehdrTopPosters != nil {
 		return nil, _ehdrTopPosters
 	}
+	if _errTopPosters := checkVectorConstructor(_vhdrTopPosters); _errTopPosters != nil {
+		return nil, _errTopPosters
+	}
 	_cntTopPosters, _ecntTopPosters := r.ReadUint32()
 	if _ecntTopPosters != nil {
 		return nil, _ecntTopPosters
@@ -513,10 +518,12 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		}
 		v.TopPosters[_iTopPosters] = _cTopPosters
 	}
-	_ = _vhdrTopPosters
 	_vhdrTopAdmins, _ehdrTopAdmins := r.ReadUint32()
 	if _ehdrTopAdmins != nil {
 		return nil, _ehdrTopAdmins
+	}
+	if _errTopAdmins := checkVectorConstructor(_vhdrTopAdmins); _errTopAdmins != nil {
+		return nil, _errTopAdmins
 	}
 	_cntTopAdmins, _ecntTopAdmins := r.ReadUint32()
 	if _ecntTopAdmins != nil {
@@ -537,10 +544,12 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		}
 		v.TopAdmins[_iTopAdmins] = _cTopAdmins
 	}
-	_ = _vhdrTopAdmins
 	_vhdrTopInviters, _ehdrTopInviters := r.ReadUint32()
 	if _ehdrTopInviters != nil {
 		return nil, _ehdrTopInviters
+	}
+	if _errTopInviters := checkVectorConstructor(_vhdrTopInviters); _errTopInviters != nil {
+		return nil, _errTopInviters
 	}
 	_cntTopInviters, _ecntTopInviters := r.ReadUint32()
 	if _ecntTopInviters != nil {
@@ -561,10 +570,12 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		}
 		v.TopInviters[_iTopInviters] = _cTopInviters
 	}
-	_ = _vhdrTopInviters
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -585,7 +596,6 @@ func DecodeStatsMegagroupStats(r *Reader) (*StatsMegagroupStats, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -760,11 +770,11 @@ func (v *StatsPublicForwards) Encode(b *bytes.Buffer) error {
 // DecodeStatsPublicForwards deserializes a StatsPublicForwards from a reader using the TL binary protocol.
 func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 	v := &StatsPublicForwards{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -773,6 +783,9 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 	_vhdrForwards, _ehdrForwards := r.ReadUint32()
 	if _ehdrForwards != nil {
 		return nil, _ehdrForwards
+	}
+	if _errForwards := checkVectorConstructor(_vhdrForwards); _errForwards != nil {
+		return nil, _errForwards
 	}
 	_cntForwards, _ecntForwards := r.ReadUint32()
 	if _ecntForwards != nil {
@@ -793,7 +806,6 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		}
 		v.Forwards[_iForwards] = _cForwards
 	}
-	_ = _vhdrForwards
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -804,6 +816,9 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -824,10 +839,12 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -848,7 +865,6 @@ func DecodeStatsPublicForwards(r *Reader) (*StatsPublicForwards, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

@@ -28,9 +28,43 @@ func TestVectorTooLargeErrorMessage(t *testing.T) {
 	}
 }
 
+func TestReaderRejectsInvalidVectorConstructor(t *testing.T) {
+	tests := []struct {
+		name string
+		read func(*Reader) error
+	}{
+		{"int", func(r *Reader) error { _, err := r.ReadVectorInt(); return err }},
+		{"long", func(r *Reader) error { _, err := r.ReadVectorLong(); return err }},
+		{"string", func(r *Reader) error { _, err := r.ReadVectorString(); return err }},
+		{"bytes", func(r *Reader) error { _, err := r.ReadVectorBytes(); return err }},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			binary.Write(&buf, binary.LittleEndian, uint32(0xdeadbeef))
+			binary.Write(&buf, binary.LittleEndian, uint32(0))
+			r := NewReader(buf.Bytes())
+			defer ReleaseReader(r)
+			err := tt.read(r)
+			if err == nil || !strings.Contains(err.Error(), "invalid vector constructor") {
+				t.Fatalf("expected invalid vector constructor error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestGeneratedFlagsDecoderPropagatesReadError(t *testing.T) {
+	r := NewReader(nil)
+	defer ReleaseReader(r)
+	if _, err := DecodeUserStatusRecently(r); err == nil {
+		t.Fatal("expected missing flags word to fail decoding")
+	}
+}
+
 func TestReader_ReadVectorInt_BufferBoundsShort(t *testing.T) {
 	var buf bytes.Buffer
-	binary.Write(&buf, binary.LittleEndian, uint32(vectorBareID))
+	binary.Write(&buf, binary.LittleEndian, uint32(VectorTypeID))
 	binary.Write(&buf, binary.LittleEndian, uint32(5))
 
 	r := NewReader(buf.Bytes())
@@ -46,7 +80,7 @@ func TestReader_ReadVectorInt_BufferBoundsShort(t *testing.T) {
 
 func TestReader_ReadVectorLong_BufferBoundsShort(t *testing.T) {
 	var buf bytes.Buffer
-	binary.Write(&buf, binary.LittleEndian, uint32(vectorBareID))
+	binary.Write(&buf, binary.LittleEndian, uint32(VectorTypeID))
 	binary.Write(&buf, binary.LittleEndian, uint32(3))
 
 	r := NewReader(buf.Bytes())
@@ -62,7 +96,7 @@ func TestReader_ReadVectorLong_BufferBoundsShort(t *testing.T) {
 
 func TestReader_ReadVectorInt_BufferBoundsExact(t *testing.T) {
 	var buf bytes.Buffer
-	binary.Write(&buf, binary.LittleEndian, uint32(vectorBareID))
+	binary.Write(&buf, binary.LittleEndian, uint32(VectorTypeID))
 	binary.Write(&buf, binary.LittleEndian, uint32(3))
 	for i := 0; i < 3; i++ {
 		binary.Write(&buf, binary.LittleEndian, int32(i+10))
@@ -84,7 +118,7 @@ func TestReader_ReadVectorInt_BufferBoundsExact(t *testing.T) {
 
 func TestReader_ReadVectorLong_BufferBoundsExact(t *testing.T) {
 	var buf bytes.Buffer
-	binary.Write(&buf, binary.LittleEndian, uint32(vectorBareID))
+	binary.Write(&buf, binary.LittleEndian, uint32(VectorTypeID))
 	binary.Write(&buf, binary.LittleEndian, uint32(2))
 	for i := 0; i < 2; i++ {
 		binary.Write(&buf, binary.LittleEndian, int64(i+100))

@@ -139,6 +139,9 @@ func DecodeUploadFileCDNRedirect(r *Reader) (*UploadFileCDNRedirect, error) {
 	if _ehdrFileHashes != nil {
 		return nil, _ehdrFileHashes
 	}
+	if _errFileHashes := checkVectorConstructor(_vhdrFileHashes); _errFileHashes != nil {
+		return nil, _errFileHashes
+	}
 	_cntFileHashes, _ecntFileHashes := r.ReadUint32()
 	if _ecntFileHashes != nil {
 		return nil, _ecntFileHashes
@@ -158,7 +161,6 @@ func DecodeUploadFileCDNRedirect(r *Reader) (*UploadFileCDNRedirect, error) {
 		}
 		v.FileHashes[_iFileHashes] = _cFileHashes
 	}
-	_ = _vhdrFileHashes
 	return v, nil
 }
 

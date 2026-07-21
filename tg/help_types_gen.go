@@ -91,11 +91,11 @@ func (v *HelpAppUpdate) Encode(b *bytes.Buffer) error {
 // DecodeHelpAppUpdate deserializes a HelpAppUpdate from a reader using the TL binary protocol.
 func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 	v := &HelpAppUpdate{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanNotSkip = v.Flags.Has(0)
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
@@ -116,6 +116,9 @@ func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 	if _ehdrEntities != nil {
 		return nil, _ehdrEntities
 	}
+	if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+		return nil, _errEntities
+	}
 	_cntEntities, _ecntEntities := r.ReadUint32()
 	if _ecntEntities != nil {
 		return nil, _ecntEntities
@@ -135,7 +138,6 @@ func DecodeHelpAppUpdate(r *Reader) (*HelpAppUpdate, error) {
 		}
 		v.Entities[_iEntities] = _cEntities
 	}
-	_ = _vhdrEntities
 	if v.Flags.Has(1) {
 		_objDocument, _errDocument := ReadTLObject(r)
 		if _errDocument != nil {
@@ -343,11 +345,11 @@ func (v *HelpTermsOfService) Encode(b *bytes.Buffer) error {
 // DecodeHelpTermsOfService deserializes a HelpTermsOfService from a reader using the TL binary protocol.
 func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 	v := &HelpTermsOfService{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Popup = v.Flags.Has(0)
 	_objID, _errID := ReadTLObject(r)
 	if _errID != nil {
@@ -366,6 +368,9 @@ func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 	_vhdrEntities, _ehdrEntities := r.ReadUint32()
 	if _ehdrEntities != nil {
 		return nil, _ehdrEntities
+	}
+	if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+		return nil, _errEntities
 	}
 	_cntEntities, _ecntEntities := r.ReadUint32()
 	if _ecntEntities != nil {
@@ -386,7 +391,6 @@ func DecodeHelpTermsOfService(r *Reader) (*HelpTermsOfService, error) {
 		}
 		v.Entities[_iEntities] = _cEntities
 	}
-	_ = _vhdrEntities
 	if v.Flags.Has(1) {
 		_rMinAgeConfirm, _eMinAgeConfirm := r.ReadInt32()
 		if _eMinAgeConfirm != nil {
@@ -448,6 +452,9 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 	if _ehdrUrls != nil {
 		return nil, _ehdrUrls
 	}
+	if _errUrls := checkVectorConstructor(_vhdrUrls); _errUrls != nil {
+		return nil, _errUrls
+	}
 	_cntUrls, _ecntUrls := r.ReadUint32()
 	if _ecntUrls != nil {
 		return nil, _ecntUrls
@@ -467,10 +474,12 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		}
 		v.Urls[_iUrls] = _cUrls
 	}
-	_ = _vhdrUrls
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -491,10 +500,12 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -515,7 +526,6 @@ func DecodeHelpRecentMeUrls(r *Reader) (*HelpRecentMeUrls, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -721,11 +731,11 @@ func (v *HelpDeepLinkInfo) Encode(b *bytes.Buffer) error {
 // DecodeHelpDeepLinkInfo deserializes a HelpDeepLinkInfo from a reader using the TL binary protocol.
 func DecodeHelpDeepLinkInfo(r *Reader) (*HelpDeepLinkInfo, error) {
 	v := &HelpDeepLinkInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.UpdateApp = v.Flags.Has(0)
 	_rMessage, _eMessage := r.ReadString()
 	if _eMessage != nil {
@@ -736,6 +746,9 @@ func DecodeHelpDeepLinkInfo(r *Reader) (*HelpDeepLinkInfo, error) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -756,7 +769,6 @@ func DecodeHelpDeepLinkInfo(r *Reader) (*HelpDeepLinkInfo, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	return v, nil
 }
@@ -992,6 +1004,9 @@ func DecodeHelpUserInfo(r *Reader) (*HelpUserInfo, error) {
 	if _ehdrEntities != nil {
 		return nil, _ehdrEntities
 	}
+	if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+		return nil, _errEntities
+	}
 	_cntEntities, _ecntEntities := r.ReadUint32()
 	if _ecntEntities != nil {
 		return nil, _ecntEntities
@@ -1011,7 +1026,6 @@ func DecodeHelpUserInfo(r *Reader) (*HelpUserInfo, error) {
 		}
 		v.Entities[_iEntities] = _cEntities
 	}
-	_ = _vhdrEntities
 	_rAuthor, _eAuthor := r.ReadString()
 	if _eAuthor != nil {
 		return nil, _eAuthor
@@ -1164,11 +1178,11 @@ func (v *HelpPromoData) Encode(b *bytes.Buffer) error {
 // DecodeHelpPromoData deserializes a HelpPromoData from a reader using the TL binary protocol.
 func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 	v := &HelpPromoData{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Proxy = v.Flags.Has(0)
 	_rExpires, _eExpires := r.ReadInt32()
 	if _eExpires != nil {
@@ -1225,6 +1239,9 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -1244,10 +1261,12 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1268,7 +1287,6 @@ func DecodeHelpPromoData(r *Reader) (*HelpPromoData, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1324,11 +1342,11 @@ func (v *HelpCountryCode) Encode(b *bytes.Buffer) error {
 // DecodeHelpCountryCode deserializes a HelpCountryCode from a reader using the TL binary protocol.
 func DecodeHelpCountryCode(r *Reader) (*HelpCountryCode, error) {
 	v := &HelpCountryCode{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCountryCode, _eCountryCode := r.ReadString()
 	if _eCountryCode != nil {
 		return nil, _eCountryCode
@@ -1408,11 +1426,11 @@ func (v *HelpCountry) Encode(b *bytes.Buffer) error {
 // DecodeHelpCountry deserializes a HelpCountry from a reader using the TL binary protocol.
 func DecodeHelpCountry(r *Reader) (*HelpCountry, error) {
 	v := &HelpCountry{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Hidden = v.Flags.Has(0)
 	_rIso2, _eIso2 := r.ReadString()
 	if _eIso2 != nil {
@@ -1435,6 +1453,9 @@ func DecodeHelpCountry(r *Reader) (*HelpCountry, error) {
 	if _ehdrCountryCodes != nil {
 		return nil, _ehdrCountryCodes
 	}
+	if _errCountryCodes := checkVectorConstructor(_vhdrCountryCodes); _errCountryCodes != nil {
+		return nil, _errCountryCodes
+	}
 	_cntCountryCodes, _ecntCountryCodes := r.ReadUint32()
 	if _ecntCountryCodes != nil {
 		return nil, _ecntCountryCodes
@@ -1454,7 +1475,6 @@ func DecodeHelpCountry(r *Reader) (*HelpCountry, error) {
 		}
 		v.CountryCodes[_iCountryCodes] = _cCountryCodes
 	}
-	_ = _vhdrCountryCodes
 	return v, nil
 }
 
@@ -1545,6 +1565,9 @@ func DecodeHelpCountriesList(r *Reader) (*HelpCountriesList, error) {
 	if _ehdrCountries != nil {
 		return nil, _ehdrCountries
 	}
+	if _errCountries := checkVectorConstructor(_vhdrCountries); _errCountries != nil {
+		return nil, _errCountries
+	}
 	_cntCountries, _ecntCountries := r.ReadUint32()
 	if _ecntCountries != nil {
 		return nil, _ecntCountries
@@ -1564,7 +1587,6 @@ func DecodeHelpCountriesList(r *Reader) (*HelpCountriesList, error) {
 		}
 		v.Countries[_iCountries] = _cCountries
 	}
-	_ = _vhdrCountries
 	_rHash, _eHash := r.ReadInt32()
 	if _eHash != nil {
 		return nil, _eHash
@@ -1639,6 +1661,9 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 	if _ehdrStatusEntities != nil {
 		return nil, _ehdrStatusEntities
 	}
+	if _errStatusEntities := checkVectorConstructor(_vhdrStatusEntities); _errStatusEntities != nil {
+		return nil, _errStatusEntities
+	}
 	_cntStatusEntities, _ecntStatusEntities := r.ReadUint32()
 	if _ecntStatusEntities != nil {
 		return nil, _ecntStatusEntities
@@ -1658,7 +1683,6 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		}
 		v.StatusEntities[_iStatusEntities] = _cStatusEntities
 	}
-	_ = _vhdrStatusEntities
 	_vvVideoSections, _veVideoSections := r.ReadVectorString()
 	if _veVideoSections != nil {
 		return nil, _veVideoSections
@@ -1667,6 +1691,9 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 	_vhdrVideos, _ehdrVideos := r.ReadUint32()
 	if _ehdrVideos != nil {
 		return nil, _ehdrVideos
+	}
+	if _errVideos := checkVectorConstructor(_vhdrVideos); _errVideos != nil {
+		return nil, _errVideos
 	}
 	_cntVideos, _ecntVideos := r.ReadUint32()
 	if _ecntVideos != nil {
@@ -1687,10 +1714,12 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		}
 		v.Videos[_iVideos] = _cVideos
 	}
-	_ = _vhdrVideos
 	_vhdrPeriodOptions, _ehdrPeriodOptions := r.ReadUint32()
 	if _ehdrPeriodOptions != nil {
 		return nil, _ehdrPeriodOptions
+	}
+	if _errPeriodOptions := checkVectorConstructor(_vhdrPeriodOptions); _errPeriodOptions != nil {
+		return nil, _errPeriodOptions
 	}
 	_cntPeriodOptions, _ecntPeriodOptions := r.ReadUint32()
 	if _ecntPeriodOptions != nil {
@@ -1711,10 +1740,12 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		}
 		v.PeriodOptions[_iPeriodOptions] = _cPeriodOptions
 	}
-	_ = _vhdrPeriodOptions
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1735,7 +1766,6 @@ func DecodeHelpPremiumPromo(r *Reader) (*HelpPremiumPromo, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -2011,11 +2041,11 @@ func (v *HelpPeerColorOption) Encode(b *bytes.Buffer) error {
 // DecodeHelpPeerColorOption deserializes a HelpPeerColorOption from a reader using the TL binary protocol.
 func DecodeHelpPeerColorOption(r *Reader) (*HelpPeerColorOption, error) {
 	v := &HelpPeerColorOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Hidden = v.Flags.Has(0)
 	_rColorID, _eColorID := r.ReadInt32()
 	if _eColorID != nil {
@@ -2153,6 +2183,9 @@ func DecodeHelpPeerColors(r *Reader) (*HelpPeerColors, error) {
 	if _ehdrColors != nil {
 		return nil, _ehdrColors
 	}
+	if _errColors := checkVectorConstructor(_vhdrColors); _errColors != nil {
+		return nil, _errColors
+	}
 	_cntColors, _ecntColors := r.ReadUint32()
 	if _ecntColors != nil {
 		return nil, _ecntColors
@@ -2172,7 +2205,6 @@ func DecodeHelpPeerColors(r *Reader) (*HelpPeerColors, error) {
 		}
 		v.Colors[_iColors] = _cColors
 	}
-	_ = _vhdrColors
 	return v, nil
 }
 
@@ -2263,6 +2295,9 @@ func DecodeHelpTimezonesList(r *Reader) (*HelpTimezonesList, error) {
 	if _ehdrTimezones != nil {
 		return nil, _ehdrTimezones
 	}
+	if _errTimezones := checkVectorConstructor(_vhdrTimezones); _errTimezones != nil {
+		return nil, _errTimezones
+	}
 	_cntTimezones, _ecntTimezones := r.ReadUint32()
 	if _ecntTimezones != nil {
 		return nil, _ecntTimezones
@@ -2282,7 +2317,6 @@ func DecodeHelpTimezonesList(r *Reader) (*HelpTimezonesList, error) {
 		}
 		v.Timezones[_iTimezones] = _cTimezones
 	}
-	_ = _vhdrTimezones
 	_rHash, _eHash := r.ReadInt32()
 	if _eHash != nil {
 		return nil, _eHash
@@ -2352,7 +2386,10 @@ func DecodeHelpConfigSimple(r *Reader) (*HelpConfigSimple, error) {
 		if _errRules != nil {
 			return nil, _errRules
 		}
-		_itemRules := _objRules.(*AccessPointRule)
+		_itemRules, _okRules := _objRules.(*AccessPointRule)
+		if !_okRules {
+			return nil, fmt.Errorf("decode: field Rules: unexpected type %T", _objRules)
+		}
 		v.Rules[_iRules] = _itemRules
 	}
 	return v, nil

@@ -94,11 +94,11 @@ func (v *InputGeoPoint) Encode(b *bytes.Buffer) error {
 // DecodeInputGeoPoint deserializes a InputGeoPoint from a reader using the TL binary protocol.
 func DecodeInputGeoPoint(r *Reader) (*InputGeoPoint, error) {
 	v := &InputGeoPoint{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rLat, _eLat := r.ReadFloat64()
 	if _eLat != nil {
 		return nil, _eLat
@@ -585,11 +585,11 @@ func (v *InputPeerPhotoFileLocation) Encode(b *bytes.Buffer) error {
 // DecodeInputPeerPhotoFileLocation deserializes a InputPeerPhotoFileLocation from a reader using the TL binary protocol.
 func DecodeInputPeerPhotoFileLocation(r *Reader) (*InputPeerPhotoFileLocation, error) {
 	v := &InputPeerPhotoFileLocation{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Big = v.Flags.Has(0)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -708,11 +708,11 @@ func (v *InputGroupCallStream) Encode(b *bytes.Buffer) error {
 // DecodeInputGroupCallStream deserializes a InputGroupCallStream from a reader using the TL binary protocol.
 func DecodeInputGroupCallStream(r *Reader) (*InputGroupCallStream, error) {
 	v := &InputGroupCallStream{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objCall, _errCall := ReadTLObject(r)
 	if _errCall != nil {
 		return nil, _errCall
@@ -844,11 +844,11 @@ func (v *GeoPoint) Encode(b *bytes.Buffer) error {
 // DecodeGeoPoint deserializes a GeoPoint from a reader using the TL binary protocol.
 func DecodeGeoPoint(r *Reader) (*GeoPoint, error) {
 	v := &GeoPoint{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rLong, _eLong := r.ReadFloat64()
 	if _eLong != nil {
 		return nil, _eLong
@@ -1076,11 +1076,11 @@ func (v *InputWebFileAudioAlbumThumbLocation) Encode(b *bytes.Buffer) error {
 // DecodeInputWebFileAudioAlbumThumbLocation deserializes a InputWebFileAudioAlbumThumbLocation from a reader using the TL binary protocol.
 func DecodeInputWebFileAudioAlbumThumbLocation(r *Reader) (*InputWebFileAudioAlbumThumbLocation, error) {
 	v := &InputWebFileAudioAlbumThumbLocation{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Small = v.Flags.Has(2)
 	if v.Flags.Has(0) {
 		_objDocument, _errDocument := ReadTLObject(r)
@@ -1169,11 +1169,11 @@ func (v *GeoPointAddress) Encode(b *bytes.Buffer) error {
 // DecodeGeoPointAddress deserializes a GeoPointAddress from a reader using the TL binary protocol.
 func DecodeGeoPointAddress(r *Reader) (*GeoPointAddress, error) {
 	v := &GeoPointAddress{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCountryIso2, _eCountryIso2 := r.ReadString()
 	if _eCountryIso2 != nil {
 		return nil, _eCountryIso2

@@ -379,11 +379,11 @@ func (v *PhoneCallWaiting) Encode(b *bytes.Buffer) error {
 // DecodePhoneCallWaiting deserializes a PhoneCallWaiting from a reader using the TL binary protocol.
 func DecodePhoneCallWaiting(r *Reader) (*PhoneCallWaiting, error) {
 	v := &PhoneCallWaiting{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Video = v.Flags.Has(6)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -480,11 +480,11 @@ func (v *PhoneCallRequested) Encode(b *bytes.Buffer) error {
 // DecodePhoneCallRequested deserializes a PhoneCallRequested from a reader using the TL binary protocol.
 func DecodePhoneCallRequested(r *Reader) (*PhoneCallRequested, error) {
 	v := &PhoneCallRequested{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Video = v.Flags.Has(6)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -579,11 +579,11 @@ func (v *PhoneCallAccepted) Encode(b *bytes.Buffer) error {
 // DecodePhoneCallAccepted deserializes a PhoneCallAccepted from a reader using the TL binary protocol.
 func DecodePhoneCallAccepted(r *Reader) (*PhoneCallAccepted, error) {
 	v := &PhoneCallAccepted{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Video = v.Flags.Has(6)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -703,11 +703,11 @@ func (v *PhoneCall) Encode(b *bytes.Buffer) error {
 // DecodePhoneCall deserializes a PhoneCall from a reader using the TL binary protocol.
 func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 	v := &PhoneCall{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.P2pAllowed = v.Flags.Has(5)
 	v.Video = v.Flags.Has(6)
 	v.ConferenceSupported = v.Flags.Has(8)
@@ -759,6 +759,9 @@ func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 	if _ehdrConnections != nil {
 		return nil, _ehdrConnections
 	}
+	if _errConnections := checkVectorConstructor(_vhdrConnections); _errConnections != nil {
+		return nil, _errConnections
+	}
 	_cntConnections, _ecntConnections := r.ReadUint32()
 	if _ecntConnections != nil {
 		return nil, _ecntConnections
@@ -778,7 +781,6 @@ func DecodePhoneCall(r *Reader) (*PhoneCall, error) {
 		}
 		v.Connections[_iConnections] = _cConnections
 	}
-	_ = _vhdrConnections
 	_rStartDate, _eStartDate := r.ReadInt32()
 	if _eStartDate != nil {
 		return nil, _eStartDate
@@ -859,11 +861,11 @@ func (v *PhoneCallDiscarded) Encode(b *bytes.Buffer) error {
 // DecodePhoneCallDiscarded deserializes a PhoneCallDiscarded from a reader using the TL binary protocol.
 func DecodePhoneCallDiscarded(r *Reader) (*PhoneCallDiscarded, error) {
 	v := &PhoneCallDiscarded{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NeedRating = v.Flags.Has(2)
 	v.NeedDebug = v.Flags.Has(3)
 	v.Video = v.Flags.Has(6)
@@ -940,6 +942,9 @@ func DecodePhonePhoneCall(r *Reader) (*PhonePhoneCall, error) {
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -959,7 +964,6 @@ func DecodePhonePhoneCall(r *Reader) (*PhonePhoneCall, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1030,11 +1034,11 @@ func (v *PhoneConnection) Encode(b *bytes.Buffer) error {
 // DecodePhoneConnection deserializes a PhoneConnection from a reader using the TL binary protocol.
 func DecodePhoneConnection(r *Reader) (*PhoneConnection, error) {
 	v := &PhoneConnection{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.TCP = v.Flags.Has(0)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -1117,11 +1121,11 @@ func (v *PhoneConnectionWebrtc) Encode(b *bytes.Buffer) error {
 // DecodePhoneConnectionWebrtc deserializes a PhoneConnectionWebrtc from a reader using the TL binary protocol.
 func DecodePhoneConnectionWebrtc(r *Reader) (*PhoneConnectionWebrtc, error) {
 	v := &PhoneConnectionWebrtc{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Turn = v.Flags.Has(0)
 	v.Stun = v.Flags.Has(1)
 	_rID, _eID := r.ReadInt64()
@@ -1207,11 +1211,11 @@ func (v *PhoneCallProtocol) Encode(b *bytes.Buffer) error {
 // DecodePhoneCallProtocol deserializes a PhoneCallProtocol from a reader using the TL binary protocol.
 func DecodePhoneCallProtocol(r *Reader) (*PhoneCallProtocol, error) {
 	v := &PhoneCallProtocol{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.UDPP2p = v.Flags.Has(0)
 	v.UDPReflector = v.Flags.Has(1)
 	_rMinLayer, _eMinLayer := r.ReadInt32()
@@ -1459,11 +1463,11 @@ func (v *GroupCall) Encode(b *bytes.Buffer) error {
 // DecodeGroupCall deserializes a GroupCall from a reader using the TL binary protocol.
 func DecodeGroupCall(r *Reader) (*GroupCall, error) {
 	v := &GroupCall{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.JoinMuted = v.Flags.Has(1)
 	v.CanChangeJoinMuted = v.Flags.Has(2)
 	v.JoinDateAsc = v.Flags.Has(6)
@@ -1626,6 +1630,9 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 	if _ehdrParticipants != nil {
 		return nil, _ehdrParticipants
 	}
+	if _errParticipants := checkVectorConstructor(_vhdrParticipants); _errParticipants != nil {
+		return nil, _errParticipants
+	}
 	_cntParticipants, _ecntParticipants := r.ReadUint32()
 	if _ecntParticipants != nil {
 		return nil, _ecntParticipants
@@ -1645,7 +1652,6 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		}
 		v.Participants[_iParticipants] = _cParticipants
 	}
-	_ = _vhdrParticipants
 	_rParticipantsNextOffset, _eParticipantsNextOffset := r.ReadString()
 	if _eParticipantsNextOffset != nil {
 		return nil, _eParticipantsNextOffset
@@ -1654,6 +1660,9 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -1674,10 +1683,12 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1698,7 +1709,6 @@ func DecodePhoneGroupCall(r *Reader) (*PhoneGroupCall, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1905,6 +1915,9 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 	if _ehdrParticipants != nil {
 		return nil, _ehdrParticipants
 	}
+	if _errParticipants := checkVectorConstructor(_vhdrParticipants); _errParticipants != nil {
+		return nil, _errParticipants
+	}
 	_cntParticipants, _ecntParticipants := r.ReadUint32()
 	if _ecntParticipants != nil {
 		return nil, _ecntParticipants
@@ -1924,7 +1937,6 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		}
 		v.Participants[_iParticipants] = _cParticipants
 	}
-	_ = _vhdrParticipants
 	_rNextOffset, _eNextOffset := r.ReadString()
 	if _eNextOffset != nil {
 		return nil, _eNextOffset
@@ -1933,6 +1945,9 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -1953,10 +1968,12 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1977,7 +1994,6 @@ func DecodePhoneGroupParticipants(r *Reader) (*PhoneGroupParticipants, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_rVersion, _eVersion := r.ReadInt32()
 	if _eVersion != nil {
 		return nil, _eVersion
@@ -2037,6 +2053,9 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -2056,10 +2075,12 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -2080,10 +2101,12 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -2104,7 +2127,6 @@ func DecodePhoneJoinAsPeers(r *Reader) (*PhoneJoinAsPeers, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -2186,6 +2208,9 @@ func DecodePhoneGroupCallStreamChannels(r *Reader) (*PhoneGroupCallStreamChannel
 	if _ehdrChannels != nil {
 		return nil, _ehdrChannels
 	}
+	if _errChannels := checkVectorConstructor(_vhdrChannels); _errChannels != nil {
+		return nil, _errChannels
+	}
 	_cntChannels, _ecntChannels := r.ReadUint32()
 	if _ecntChannels != nil {
 		return nil, _ecntChannels
@@ -2205,7 +2230,6 @@ func DecodePhoneGroupCallStreamChannels(r *Reader) (*PhoneGroupCallStreamChannel
 		}
 		v.Channels[_iChannels] = _cChannels
 	}
-	_ = _vhdrChannels
 	return v, nil
 }
 
@@ -2308,11 +2332,11 @@ func (v *GroupCallDonor) Encode(b *bytes.Buffer) error {
 // DecodeGroupCallDonor deserializes a GroupCallDonor from a reader using the TL binary protocol.
 func DecodeGroupCallDonor(r *Reader) (*GroupCallDonor, error) {
 	v := &GroupCallDonor{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Top = v.Flags.Has(0)
 	v.My = v.Flags.Has(1)
 	if v.Flags.Has(3) {
@@ -2392,6 +2416,9 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 	if _ehdrTopDonors != nil {
 		return nil, _ehdrTopDonors
 	}
+	if _errTopDonors := checkVectorConstructor(_vhdrTopDonors); _errTopDonors != nil {
+		return nil, _errTopDonors
+	}
 	_cntTopDonors, _ecntTopDonors := r.ReadUint32()
 	if _ecntTopDonors != nil {
 		return nil, _ecntTopDonors
@@ -2411,10 +2438,12 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		}
 		v.TopDonors[_iTopDonors] = _cTopDonors
 	}
-	_ = _vhdrTopDonors
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -2435,10 +2464,12 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -2459,7 +2490,6 @@ func DecodePhoneGroupCallStars(r *Reader) (*PhoneGroupCallStars, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

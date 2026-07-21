@@ -667,11 +667,11 @@ func (v *Document) Encode(b *bytes.Buffer) error {
 // DecodeDocument deserializes a Document from a reader using the TL binary protocol.
 func DecodeDocument(r *Reader) (*Document, error) {
 	v := &Document{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -707,6 +707,9 @@ func DecodeDocument(r *Reader) (*Document, error) {
 		if _ehdrThumbs != nil {
 			return nil, _ehdrThumbs
 		}
+		if _errThumbs := checkVectorConstructor(_vhdrThumbs); _errThumbs != nil {
+			return nil, _errThumbs
+		}
 		_cntThumbs, _ecntThumbs := r.ReadUint32()
 		if _ecntThumbs != nil {
 			return nil, _ecntThumbs
@@ -726,12 +729,14 @@ func DecodeDocument(r *Reader) (*Document, error) {
 			}
 			v.Thumbs[_iThumbs] = _cThumbs
 		}
-		_ = _vhdrThumbs
 	}
 	if v.Flags.Has(1) {
 		_vhdrVideoThumbs, _ehdrVideoThumbs := r.ReadUint32()
 		if _ehdrVideoThumbs != nil {
 			return nil, _ehdrVideoThumbs
+		}
+		if _errVideoThumbs := checkVectorConstructor(_vhdrVideoThumbs); _errVideoThumbs != nil {
+			return nil, _errVideoThumbs
 		}
 		_cntVideoThumbs, _ecntVideoThumbs := r.ReadUint32()
 		if _ecntVideoThumbs != nil {
@@ -752,7 +757,6 @@ func DecodeDocument(r *Reader) (*Document, error) {
 			}
 			v.VideoThumbs[_iVideoThumbs] = _cVideoThumbs
 		}
-		_ = _vhdrVideoThumbs
 	}
 	_rDCID, _eDCID := r.ReadInt32()
 	if _eDCID != nil {
@@ -762,6 +766,9 @@ func DecodeDocument(r *Reader) (*Document, error) {
 	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
+	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
@@ -782,7 +789,6 @@ func DecodeDocument(r *Reader) (*Document, error) {
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 
@@ -962,11 +968,11 @@ func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeSticker deserializes a DocumentAttributeSticker from a reader using the TL binary protocol.
 func DecodeDocumentAttributeSticker(r *Reader) (*DocumentAttributeSticker, error) {
 	v := &DocumentAttributeSticker{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Mask = v.Flags.Has(1)
 	_rAlt, _eAlt := r.ReadString()
 	if _eAlt != nil {
@@ -1068,11 +1074,11 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeVideo deserializes a DocumentAttributeVideo from a reader using the TL binary protocol.
 func DecodeDocumentAttributeVideo(r *Reader) (*DocumentAttributeVideo, error) {
 	v := &DocumentAttributeVideo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RoundMessage = v.Flags.Has(0)
 	v.SupportsStreaming = v.Flags.Has(1)
 	v.Nosound = v.Flags.Has(3)
@@ -1175,11 +1181,11 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeAudio deserializes a DocumentAttributeAudio from a reader using the TL binary protocol.
 func DecodeDocumentAttributeAudio(r *Reader) (*DocumentAttributeAudio, error) {
 	v := &DocumentAttributeAudio{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Voice = v.Flags.Has(10)
 	_rDuration, _eDuration := r.ReadInt32()
 	if _eDuration != nil {
@@ -1320,11 +1326,11 @@ func (v *DocumentAttributeCustomEmoji) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeCustomEmoji deserializes a DocumentAttributeCustomEmoji from a reader using the TL binary protocol.
 func DecodeDocumentAttributeCustomEmoji(r *Reader) (*DocumentAttributeCustomEmoji, error) {
 	v := &DocumentAttributeCustomEmoji{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Free = v.Flags.Has(0)
 	v.TextColor = v.Flags.Has(1)
 	_rAlt, _eAlt := r.ReadString()
@@ -1488,6 +1494,9 @@ func DecodeWebDocument(r *Reader) (*WebDocument, error) {
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -1507,7 +1516,6 @@ func DecodeWebDocument(r *Reader) (*WebDocument, error) {
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 
@@ -1568,6 +1576,9 @@ func DecodeWebDocumentNoProxy(r *Reader) (*WebDocumentNoProxy, error) {
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -1587,7 +1598,6 @@ func DecodeWebDocumentNoProxy(r *Reader) (*WebDocumentNoProxy, error) {
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 
@@ -1651,6 +1661,9 @@ func DecodeInputWebDocument(r *Reader) (*InputWebDocument, error) {
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -1670,7 +1683,6 @@ func DecodeInputWebDocument(r *Reader) (*InputWebDocument, error) {
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 
@@ -1775,15 +1787,18 @@ func (v *WebPageAttributeTheme) Encode(b *bytes.Buffer) error {
 // DecodeWebPageAttributeTheme deserializes a WebPageAttributeTheme from a reader using the TL binary protocol.
 func DecodeWebPageAttributeTheme(r *Reader) (*WebPageAttributeTheme, error) {
 	v := &WebPageAttributeTheme{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 		if _ehdrDocuments != nil {
 			return nil, _ehdrDocuments
+		}
+		if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+			return nil, _errDocuments
 		}
 		_cntDocuments, _ecntDocuments := r.ReadUint32()
 		if _ecntDocuments != nil {
@@ -1804,7 +1819,6 @@ func DecodeWebPageAttributeTheme(r *Reader) (*WebPageAttributeTheme, error) {
 			}
 			v.Documents[_iDocuments] = _cDocuments
 		}
-		_ = _vhdrDocuments
 	}
 	if v.Flags.Has(1) {
 		_objSettings, _errSettings := ReadTLObject(r)
@@ -1864,11 +1878,11 @@ func (v *WebPageAttributeStory) Encode(b *bytes.Buffer) error {
 // DecodeWebPageAttributeStory deserializes a WebPageAttributeStory from a reader using the TL binary protocol.
 func DecodeWebPageAttributeStory(r *Reader) (*WebPageAttributeStory, error) {
 	v := &WebPageAttributeStory{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
 		return nil, _errPeer
@@ -1944,16 +1958,19 @@ func (v *WebPageAttributeStickerSet) Encode(b *bytes.Buffer) error {
 // DecodeWebPageAttributeStickerSet deserializes a WebPageAttributeStickerSet from a reader using the TL binary protocol.
 func DecodeWebPageAttributeStickerSet(r *Reader) (*WebPageAttributeStickerSet, error) {
 	v := &WebPageAttributeStickerSet{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Emojis = v.Flags.Has(0)
 	v.TextColor = v.Flags.Has(1)
 	_vhdrStickers, _ehdrStickers := r.ReadUint32()
 	if _ehdrStickers != nil {
 		return nil, _ehdrStickers
+	}
+	if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+		return nil, _errStickers
 	}
 	_cntStickers, _ecntStickers := r.ReadUint32()
 	if _ecntStickers != nil {
@@ -1974,7 +1991,6 @@ func DecodeWebPageAttributeStickerSet(r *Reader) (*WebPageAttributeStickerSet, e
 		}
 		v.Stickers[_iStickers] = _cStickers
 	}
-	_ = _vhdrStickers
 	return v, nil
 }
 
@@ -2054,6 +2070,9 @@ func DecodeWebPageAttributeStarGiftCollection(r *Reader) (*WebPageAttributeStarG
 	if _ehdrIcons != nil {
 		return nil, _ehdrIcons
 	}
+	if _errIcons := checkVectorConstructor(_vhdrIcons); _errIcons != nil {
+		return nil, _errIcons
+	}
 	_cntIcons, _ecntIcons := r.ReadUint32()
 	if _ecntIcons != nil {
 		return nil, _ecntIcons
@@ -2073,7 +2092,6 @@ func DecodeWebPageAttributeStarGiftCollection(r *Reader) (*WebPageAttributeStarG
 		}
 		v.Icons[_iIcons] = _cIcons
 	}
-	_ = _vhdrIcons
 	return v, nil
 }
 
@@ -2234,11 +2252,11 @@ func (v *VideoSize) Encode(b *bytes.Buffer) error {
 // DecodeVideoSize deserializes a VideoSize from a reader using the TL binary protocol.
 func DecodeVideoSize(r *Reader) (*VideoSize, error) {
 	v := &VideoSize{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rType, _eType := r.ReadString()
 	if _eType != nil {
 		return nil, _eType

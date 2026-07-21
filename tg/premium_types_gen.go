@@ -58,11 +58,11 @@ func (v *PremiumBoostsList) Encode(b *bytes.Buffer) error {
 // DecodePremiumBoostsList deserializes a PremiumBoostsList from a reader using the TL binary protocol.
 func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 	v := &PremiumBoostsList{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -71,6 +71,9 @@ func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 	_vhdrBoosts, _ehdrBoosts := r.ReadUint32()
 	if _ehdrBoosts != nil {
 		return nil, _ehdrBoosts
+	}
+	if _errBoosts := checkVectorConstructor(_vhdrBoosts); _errBoosts != nil {
+		return nil, _errBoosts
 	}
 	_cntBoosts, _ecntBoosts := r.ReadUint32()
 	if _ecntBoosts != nil {
@@ -91,7 +94,6 @@ func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 		}
 		v.Boosts[_iBoosts] = _cBoosts
 	}
-	_ = _vhdrBoosts
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -102,6 +104,9 @@ func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -122,7 +127,6 @@ func DecodePremiumBoostsList(r *Reader) (*PremiumBoostsList, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -177,6 +181,9 @@ func DecodePremiumMyBoosts(r *Reader) (*PremiumMyBoosts, error) {
 	if _ehdrMyBoosts != nil {
 		return nil, _ehdrMyBoosts
 	}
+	if _errMyBoosts := checkVectorConstructor(_vhdrMyBoosts); _errMyBoosts != nil {
+		return nil, _errMyBoosts
+	}
 	_cntMyBoosts, _ecntMyBoosts := r.ReadUint32()
 	if _ecntMyBoosts != nil {
 		return nil, _ecntMyBoosts
@@ -196,10 +203,12 @@ func DecodePremiumMyBoosts(r *Reader) (*PremiumMyBoosts, error) {
 		}
 		v.MyBoosts[_iMyBoosts] = _cMyBoosts
 	}
-	_ = _vhdrMyBoosts
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -220,10 +229,12 @@ func DecodePremiumMyBoosts(r *Reader) (*PremiumMyBoosts, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -244,7 +255,6 @@ func DecodePremiumMyBoosts(r *Reader) (*PremiumMyBoosts, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -335,11 +345,11 @@ func (v *PremiumBoostsStatus) Encode(b *bytes.Buffer) error {
 // DecodePremiumBoostsStatus deserializes a PremiumBoostsStatus from a reader using the TL binary protocol.
 func DecodePremiumBoostsStatus(r *Reader) (*PremiumBoostsStatus, error) {
 	v := &PremiumBoostsStatus{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.MyBoost = v.Flags.Has(2)
 	_rLevel, _eLevel := r.ReadInt32()
 	if _eLevel != nil {
@@ -391,6 +401,9 @@ func DecodePremiumBoostsStatus(r *Reader) (*PremiumBoostsStatus, error) {
 		if _ehdrPrepaidGiveaways != nil {
 			return nil, _ehdrPrepaidGiveaways
 		}
+		if _errPrepaidGiveaways := checkVectorConstructor(_vhdrPrepaidGiveaways); _errPrepaidGiveaways != nil {
+			return nil, _errPrepaidGiveaways
+		}
 		_cntPrepaidGiveaways, _ecntPrepaidGiveaways := r.ReadUint32()
 		if _ecntPrepaidGiveaways != nil {
 			return nil, _ecntPrepaidGiveaways
@@ -410,7 +423,6 @@ func DecodePremiumBoostsStatus(r *Reader) (*PremiumBoostsStatus, error) {
 			}
 			v.PrepaidGiveaways[_iPrepaidGiveaways] = _cPrepaidGiveaways
 		}
-		_ = _vhdrPrepaidGiveaways
 	}
 	if v.Flags.Has(2) {
 		_vvMyBoostSlots, _veMyBoostSlots := r.ReadVectorInt()

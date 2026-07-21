@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -365,7 +366,11 @@ func DecodeDocumentAttributeSticker(r *tg.Reader) (*DocumentAttributeSticker, er
 	if _errStickerset != nil {
 		return nil, _errStickerset
 	}
-	v.Stickerset = _objStickerset.(InputStickerSetClass)
+	_cStickerset, _okStickerset := _objStickerset.(InputStickerSetClass)
+	if !_okStickerset {
+		return nil, fmt.Errorf("decode: field stickerset: unexpected type %T", _objStickerset)
+	}
+	v.Stickerset = _cStickerset
 	return v, nil
 }
 
@@ -427,11 +432,11 @@ func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeAudio deserializes a DocumentAttributeAudio from a reader using the TL binary protocol.
 func DecodeDocumentAttributeAudio(r *tg.Reader) (*DocumentAttributeAudio, error) {
 	v := &DocumentAttributeAudio{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = tg.Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = tg.Fields(_rFlags)
 	v.Voice = v.Flags.Has(10)
 	_rDuration, _eDuration := r.ReadInt32()
 	if _eDuration != nil {
@@ -503,11 +508,11 @@ func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
 // DecodeDocumentAttributeVideo deserializes a DocumentAttributeVideo from a reader using the TL binary protocol.
 func DecodeDocumentAttributeVideo(r *tg.Reader) (*DocumentAttributeVideo, error) {
 	v := &DocumentAttributeVideo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = tg.Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = tg.Fields(_rFlags)
 	v.RoundMessage = v.Flags.Has(0)
 	_rDuration, _eDuration := r.ReadInt32()
 	if _eDuration != nil {
@@ -630,7 +635,11 @@ func DecodePhotoSize(r *tg.Reader) (*PhotoSize, error) {
 	if _errLocation != nil {
 		return nil, _errLocation
 	}
-	v.Location = _objLocation.(FileLocationClass)
+	_cLocation, _okLocation := _objLocation.(FileLocationClass)
+	if !_okLocation {
+		return nil, fmt.Errorf("decode: field location: unexpected type %T", _objLocation)
+	}
+	v.Location = _cLocation
 	_rW, _eW := r.ReadInt32()
 	if _eW != nil {
 		return nil, _eW
@@ -692,7 +701,11 @@ func DecodePhotoCachedSize(r *tg.Reader) (*PhotoCachedSize, error) {
 	if _errLocation != nil {
 		return nil, _errLocation
 	}
-	v.Location = _objLocation.(FileLocationClass)
+	_cLocation, _okLocation := _objLocation.(FileLocationClass)
+	if !_okLocation {
+		return nil, fmt.Errorf("decode: field location: unexpected type %T", _objLocation)
+	}
+	v.Location = _cLocation
 	_rW, _eW := r.ReadInt32()
 	if _eW != nil {
 		return nil, _eW

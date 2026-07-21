@@ -284,11 +284,11 @@ func (v *AiComposeTone) Encode(b *bytes.Buffer) error {
 // DecodeAiComposeTone deserializes a AiComposeTone from a reader using the TL binary protocol.
 func DecodeAiComposeTone(r *Reader) (*AiComposeTone, error) {
 	v := &AiComposeTone{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -500,6 +500,9 @@ func DecodeAicomposeTones(r *Reader) (*AicomposeTones, error) {
 	if _ehdrTones != nil {
 		return nil, _ehdrTones
 	}
+	if _errTones := checkVectorConstructor(_vhdrTones); _errTones != nil {
+		return nil, _errTones
+	}
 	_cntTones, _ecntTones := r.ReadUint32()
 	if _ecntTones != nil {
 		return nil, _ecntTones
@@ -519,10 +522,12 @@ func DecodeAicomposeTones(r *Reader) (*AicomposeTones, error) {
 		}
 		v.Tones[_iTones] = _cTones
 	}
-	_ = _vhdrTones
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -543,7 +548,6 @@ func DecodeAicomposeTones(r *Reader) (*AicomposeTones, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

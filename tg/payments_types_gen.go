@@ -109,11 +109,11 @@ func (v *Invoice) Encode(b *bytes.Buffer) error {
 // DecodeInvoice deserializes a Invoice from a reader using the TL binary protocol.
 func DecodeInvoice(r *Reader) (*Invoice, error) {
 	v := &Invoice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Test = v.Flags.Has(0)
 	v.NameRequested = v.Flags.Has(1)
 	v.PhoneRequested = v.Flags.Has(2)
@@ -131,6 +131,9 @@ func DecodeInvoice(r *Reader) (*Invoice, error) {
 	_vhdrPrices, _ehdrPrices := r.ReadUint32()
 	if _ehdrPrices != nil {
 		return nil, _ehdrPrices
+	}
+	if _errPrices := checkVectorConstructor(_vhdrPrices); _errPrices != nil {
+		return nil, _errPrices
 	}
 	_cntPrices, _ecntPrices := r.ReadUint32()
 	if _ecntPrices != nil {
@@ -151,7 +154,6 @@ func DecodeInvoice(r *Reader) (*Invoice, error) {
 		}
 		v.Prices[_iPrices] = _cPrices
 	}
-	_ = _vhdrPrices
 	if v.Flags.Has(8) {
 		_rMaxTipAmount, _eMaxTipAmount := r.ReadInt64()
 		if _eMaxTipAmount != nil {
@@ -293,11 +295,11 @@ func (v *PaymentRequestedInfo) Encode(b *bytes.Buffer) error {
 // DecodePaymentRequestedInfo deserializes a PaymentRequestedInfo from a reader using the TL binary protocol.
 func DecodePaymentRequestedInfo(r *Reader) (*PaymentRequestedInfo, error) {
 	v := &PaymentRequestedInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rName, _eName := r.ReadString()
 		if _eName != nil {
@@ -516,11 +518,11 @@ func (v *PaymentsPaymentForm) Encode(b *bytes.Buffer) error {
 // DecodePaymentsPaymentForm deserializes a PaymentsPaymentForm from a reader using the TL binary protocol.
 func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 	v := &PaymentsPaymentForm{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanSaveCredentials = v.Flags.Has(2)
 	v.PasswordMissing = v.Flags.Has(3)
 	_rFormID, _eFormID := r.ReadInt64()
@@ -596,6 +598,9 @@ func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 		if _ehdrAdditionalMethods != nil {
 			return nil, _ehdrAdditionalMethods
 		}
+		if _errAdditionalMethods := checkVectorConstructor(_vhdrAdditionalMethods); _errAdditionalMethods != nil {
+			return nil, _errAdditionalMethods
+		}
 		_cntAdditionalMethods, _ecntAdditionalMethods := r.ReadUint32()
 		if _ecntAdditionalMethods != nil {
 			return nil, _ecntAdditionalMethods
@@ -615,7 +620,6 @@ func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 			}
 			v.AdditionalMethods[_iAdditionalMethods] = _cAdditionalMethods
 		}
-		_ = _vhdrAdditionalMethods
 	}
 	if v.Flags.Has(0) {
 		_objSavedInfo, _errSavedInfo := ReadTLObject(r)
@@ -632,6 +636,9 @@ func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 		_vhdrSavedCredentials, _ehdrSavedCredentials := r.ReadUint32()
 		if _ehdrSavedCredentials != nil {
 			return nil, _ehdrSavedCredentials
+		}
+		if _errSavedCredentials := checkVectorConstructor(_vhdrSavedCredentials); _errSavedCredentials != nil {
+			return nil, _errSavedCredentials
 		}
 		_cntSavedCredentials, _ecntSavedCredentials := r.ReadUint32()
 		if _ecntSavedCredentials != nil {
@@ -652,11 +659,13 @@ func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 			}
 			v.SavedCredentials[_iSavedCredentials] = _cSavedCredentials
 		}
-		_ = _vhdrSavedCredentials
 	}
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -677,7 +686,6 @@ func DecodePaymentsPaymentForm(r *Reader) (*PaymentsPaymentForm, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -737,11 +745,11 @@ func (v *PaymentsPaymentFormStars) Encode(b *bytes.Buffer) error {
 // DecodePaymentsPaymentFormStars deserializes a PaymentsPaymentFormStars from a reader using the TL binary protocol.
 func DecodePaymentsPaymentFormStars(r *Reader) (*PaymentsPaymentFormStars, error) {
 	v := &PaymentsPaymentFormStars{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rFormID, _eFormID := r.ReadInt64()
 	if _eFormID != nil {
 		return nil, _eFormID
@@ -786,6 +794,9 @@ func DecodePaymentsPaymentFormStars(r *Reader) (*PaymentsPaymentFormStars, error
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -805,7 +816,6 @@ func DecodePaymentsPaymentFormStars(r *Reader) (*PaymentsPaymentFormStars, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -910,11 +920,11 @@ func (v *PaymentsValidatedRequestedInfo) Encode(b *bytes.Buffer) error {
 // DecodePaymentsValidatedRequestedInfo deserializes a PaymentsValidatedRequestedInfo from a reader using the TL binary protocol.
 func DecodePaymentsValidatedRequestedInfo(r *Reader) (*PaymentsValidatedRequestedInfo, error) {
 	v := &PaymentsValidatedRequestedInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rID, _eID := r.ReadString()
 		if _eID != nil {
@@ -926,6 +936,9 @@ func DecodePaymentsValidatedRequestedInfo(r *Reader) (*PaymentsValidatedRequeste
 		_vhdrShippingOptions, _ehdrShippingOptions := r.ReadUint32()
 		if _ehdrShippingOptions != nil {
 			return nil, _ehdrShippingOptions
+		}
+		if _errShippingOptions := checkVectorConstructor(_vhdrShippingOptions); _errShippingOptions != nil {
+			return nil, _errShippingOptions
 		}
 		_cntShippingOptions, _ecntShippingOptions := r.ReadUint32()
 		if _ecntShippingOptions != nil {
@@ -946,7 +959,6 @@ func DecodePaymentsValidatedRequestedInfo(r *Reader) (*PaymentsValidatedRequeste
 			}
 			v.ShippingOptions[_iShippingOptions] = _cShippingOptions
 		}
-		_ = _vhdrShippingOptions
 	}
 	return v, nil
 }
@@ -1152,11 +1164,11 @@ func (v *PaymentsPaymentReceipt) Encode(b *bytes.Buffer) error {
 // DecodePaymentsPaymentReceipt deserializes a PaymentsPaymentReceipt from a reader using the TL binary protocol.
 func DecodePaymentsPaymentReceipt(r *Reader) (*PaymentsPaymentReceipt, error) {
 	v := &PaymentsPaymentReceipt{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -1250,6 +1262,9 @@ func DecodePaymentsPaymentReceipt(r *Reader) (*PaymentsPaymentReceipt, error) {
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -1269,7 +1284,6 @@ func DecodePaymentsPaymentReceipt(r *Reader) (*PaymentsPaymentReceipt, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1335,11 +1349,11 @@ func (v *PaymentsPaymentReceiptStars) Encode(b *bytes.Buffer) error {
 // DecodePaymentsPaymentReceiptStars deserializes a PaymentsPaymentReceiptStars from a reader using the TL binary protocol.
 func DecodePaymentsPaymentReceiptStars(r *Reader) (*PaymentsPaymentReceiptStars, error) {
 	v := &PaymentsPaymentReceiptStars{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rDate, _eDate := r.ReadInt32()
 	if _eDate != nil {
 		return nil, _eDate
@@ -1399,6 +1413,9 @@ func DecodePaymentsPaymentReceiptStars(r *Reader) (*PaymentsPaymentReceiptStars,
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -1418,7 +1435,6 @@ func DecodePaymentsPaymentReceiptStars(r *Reader) (*PaymentsPaymentReceiptStars,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1469,11 +1485,11 @@ func (v *PaymentsSavedInfo) Encode(b *bytes.Buffer) error {
 // DecodePaymentsSavedInfo deserializes a PaymentsSavedInfo from a reader using the TL binary protocol.
 func DecodePaymentsSavedInfo(r *Reader) (*PaymentsSavedInfo, error) {
 	v := &PaymentsSavedInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasSavedCredentials = v.Flags.Has(1)
 	if v.Flags.Has(0) {
 		_objSavedInfo, _errSavedInfo := ReadTLObject(r)
@@ -1603,11 +1619,11 @@ func (v *InputPaymentCredentials) Encode(b *bytes.Buffer) error {
 // DecodeInputPaymentCredentials deserializes a InputPaymentCredentials from a reader using the TL binary protocol.
 func DecodeInputPaymentCredentials(r *Reader) (*InputPaymentCredentials, error) {
 	v := &InputPaymentCredentials{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Save = v.Flags.Has(0)
 	_objData, _errData := ReadTLObject(r)
 	if _errData != nil {
@@ -1754,6 +1770,9 @@ func DecodeShippingOption(r *Reader) (*ShippingOption, error) {
 	if _ehdrPrices != nil {
 		return nil, _ehdrPrices
 	}
+	if _errPrices := checkVectorConstructor(_vhdrPrices); _errPrices != nil {
+		return nil, _errPrices
+	}
 	_cntPrices, _ecntPrices := r.ReadUint32()
 	if _ecntPrices != nil {
 		return nil, _ecntPrices
@@ -1773,7 +1792,6 @@ func DecodeShippingOption(r *Reader) (*ShippingOption, error) {
 		}
 		v.Prices[_iPrices] = _cPrices
 	}
-	_ = _vhdrPrices
 	return v, nil
 }
 
@@ -1869,6 +1887,9 @@ func DecodePaymentsBankCardData(r *Reader) (*PaymentsBankCardData, error) {
 	if _ehdrOpenUrls != nil {
 		return nil, _ehdrOpenUrls
 	}
+	if _errOpenUrls := checkVectorConstructor(_vhdrOpenUrls); _errOpenUrls != nil {
+		return nil, _errOpenUrls
+	}
 	_cntOpenUrls, _ecntOpenUrls := r.ReadUint32()
 	if _ecntOpenUrls != nil {
 		return nil, _ecntOpenUrls
@@ -1888,7 +1909,6 @@ func DecodePaymentsBankCardData(r *Reader) (*PaymentsBankCardData, error) {
 		}
 		v.OpenUrls[_iOpenUrls] = _cOpenUrls
 	}
-	_ = _vhdrOpenUrls
 	return v, nil
 }
 
@@ -2252,11 +2272,11 @@ func (v *InputInvoiceStarGift) Encode(b *bytes.Buffer) error {
 // DecodeInputInvoiceStarGift deserializes a InputInvoiceStarGift from a reader using the TL binary protocol.
 func DecodeInputInvoiceStarGift(r *Reader) (*InputInvoiceStarGift, error) {
 	v := &InputInvoiceStarGift{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HideName = v.Flags.Has(0)
 	v.IncludeUpgrade = v.Flags.Has(2)
 	_objPeer, _errPeer := ReadTLObject(r)
@@ -2326,11 +2346,11 @@ func (v *InputInvoiceStarGiftUpgrade) Encode(b *bytes.Buffer) error {
 // DecodeInputInvoiceStarGiftUpgrade deserializes a InputInvoiceStarGiftUpgrade from a reader using the TL binary protocol.
 func DecodeInputInvoiceStarGiftUpgrade(r *Reader) (*InputInvoiceStarGiftUpgrade, error) {
 	v := &InputInvoiceStarGiftUpgrade{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.KeepOriginalDetails = v.Flags.Has(0)
 	_objStargift, _errStargift := ReadTLObject(r)
 	if _errStargift != nil {
@@ -2439,11 +2459,11 @@ func (v *InputInvoicePremiumGiftStars) Encode(b *bytes.Buffer) error {
 // DecodeInputInvoicePremiumGiftStars deserializes a InputInvoicePremiumGiftStars from a reader using the TL binary protocol.
 func DecodeInputInvoicePremiumGiftStars(r *Reader) (*InputInvoicePremiumGiftStars, error) {
 	v := &InputInvoicePremiumGiftStars{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objUserID, _errUserID := ReadTLObject(r)
 	if _errUserID != nil {
 		return nil, _errUserID
@@ -2560,11 +2580,11 @@ func (v *InputInvoiceStarGiftResale) Encode(b *bytes.Buffer) error {
 // DecodeInputInvoiceStarGiftResale deserializes a InputInvoiceStarGiftResale from a reader using the TL binary protocol.
 func DecodeInputInvoiceStarGiftResale(r *Reader) (*InputInvoiceStarGiftResale, error) {
 	v := &InputInvoiceStarGiftResale{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Ton = v.Flags.Has(0)
 	_rSlug, _eSlug := r.ReadString()
 	if _eSlug != nil {
@@ -2769,11 +2789,11 @@ func (v *InputInvoiceStarGiftAuctionBid) Encode(b *bytes.Buffer) error {
 // DecodeInputInvoiceStarGiftAuctionBid deserializes a InputInvoiceStarGiftAuctionBid from a reader using the TL binary protocol.
 func DecodeInputInvoiceStarGiftAuctionBid(r *Reader) (*InputInvoiceStarGiftAuctionBid, error) {
 	v := &InputInvoiceStarGiftAuctionBid{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HideName = v.Flags.Has(0)
 	v.UpdateBid = v.Flags.Has(2)
 	if v.Flags.Has(3) {
@@ -2947,11 +2967,11 @@ func (v *InputStorePaymentPremiumSubscription) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentPremiumSubscription deserializes a InputStorePaymentPremiumSubscription from a reader using the TL binary protocol.
 func DecodeInputStorePaymentPremiumSubscription(r *Reader) (*InputStorePaymentPremiumSubscription, error) {
 	v := &InputStorePaymentPremiumSubscription{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Restore = v.Flags.Has(0)
 	v.Upgrade = v.Flags.Has(1)
 	return v, nil
@@ -3068,14 +3088,17 @@ func (v *InputStorePaymentPremiumGiftCode) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentPremiumGiftCode deserializes a InputStorePaymentPremiumGiftCode from a reader using the TL binary protocol.
 func DecodeInputStorePaymentPremiumGiftCode(r *Reader) (*InputStorePaymentPremiumGiftCode, error) {
 	v := &InputStorePaymentPremiumGiftCode{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -3096,7 +3119,6 @@ func DecodeInputStorePaymentPremiumGiftCode(r *Reader) (*InputStorePaymentPremiu
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_objBoostPeer, _errBoostPeer := ReadTLObject(r)
 		if _errBoostPeer != nil {
@@ -3208,11 +3230,11 @@ func (v *InputStorePaymentPremiumGiveaway) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentPremiumGiveaway deserializes a InputStorePaymentPremiumGiveaway from a reader using the TL binary protocol.
 func DecodeInputStorePaymentPremiumGiveaway(r *Reader) (*InputStorePaymentPremiumGiveaway, error) {
 	v := &InputStorePaymentPremiumGiveaway{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.WinnersAreVisible = v.Flags.Has(3)
 	_objBoostPeer, _errBoostPeer := ReadTLObject(r)
@@ -3228,6 +3250,9 @@ func DecodeInputStorePaymentPremiumGiveaway(r *Reader) (*InputStorePaymentPremiu
 		_vhdrAdditionalPeers, _ehdrAdditionalPeers := r.ReadUint32()
 		if _ehdrAdditionalPeers != nil {
 			return nil, _ehdrAdditionalPeers
+		}
+		if _errAdditionalPeers := checkVectorConstructor(_vhdrAdditionalPeers); _errAdditionalPeers != nil {
+			return nil, _errAdditionalPeers
 		}
 		_cntAdditionalPeers, _ecntAdditionalPeers := r.ReadUint32()
 		if _ecntAdditionalPeers != nil {
@@ -3248,7 +3273,6 @@ func DecodeInputStorePaymentPremiumGiveaway(r *Reader) (*InputStorePaymentPremiu
 			}
 			v.AdditionalPeers[_iAdditionalPeers] = _cAdditionalPeers
 		}
-		_ = _vhdrAdditionalPeers
 	}
 	if v.Flags.Has(2) {
 		_vvCountriesIso2, _veCountriesIso2 := r.ReadVectorString()
@@ -3333,11 +3357,11 @@ func (v *InputStorePaymentStarsTopup) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentStarsTopup deserializes a InputStorePaymentStarsTopup from a reader using the TL binary protocol.
 func DecodeInputStorePaymentStarsTopup(r *Reader) (*InputStorePaymentStarsTopup, error) {
 	v := &InputStorePaymentStarsTopup{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
 		return nil, _eStars
@@ -3508,11 +3532,11 @@ func (v *InputStorePaymentStarsGiveaway) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentStarsGiveaway deserializes a InputStorePaymentStarsGiveaway from a reader using the TL binary protocol.
 func DecodeInputStorePaymentStarsGiveaway(r *Reader) (*InputStorePaymentStarsGiveaway, error) {
 	v := &InputStorePaymentStarsGiveaway{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.WinnersAreVisible = v.Flags.Has(3)
 	_rStars, _eStars := r.ReadInt64()
@@ -3534,6 +3558,9 @@ func DecodeInputStorePaymentStarsGiveaway(r *Reader) (*InputStorePaymentStarsGiv
 		if _ehdrAdditionalPeers != nil {
 			return nil, _ehdrAdditionalPeers
 		}
+		if _errAdditionalPeers := checkVectorConstructor(_vhdrAdditionalPeers); _errAdditionalPeers != nil {
+			return nil, _errAdditionalPeers
+		}
 		_cntAdditionalPeers, _ecntAdditionalPeers := r.ReadUint32()
 		if _ecntAdditionalPeers != nil {
 			return nil, _ecntAdditionalPeers
@@ -3553,7 +3580,6 @@ func DecodeInputStorePaymentStarsGiveaway(r *Reader) (*InputStorePaymentStarsGiv
 			}
 			v.AdditionalPeers[_iAdditionalPeers] = _cAdditionalPeers
 		}
-		_ = _vhdrAdditionalPeers
 	}
 	if v.Flags.Has(2) {
 		_vvCountriesIso2, _veCountriesIso2 := r.ReadVectorString()
@@ -3644,11 +3670,11 @@ func (v *InputStorePaymentAuthCode) Encode(b *bytes.Buffer) error {
 // DecodeInputStorePaymentAuthCode deserializes a InputStorePaymentAuthCode from a reader using the TL binary protocol.
 func DecodeInputStorePaymentAuthCode(r *Reader) (*InputStorePaymentAuthCode, error) {
 	v := &InputStorePaymentAuthCode{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Restore = v.Flags.Has(0)
 	_rPhoneNumber, _ePhoneNumber := r.ReadString()
 	if _ePhoneNumber != nil {
@@ -3790,11 +3816,11 @@ func (v *PremiumSubscriptionOption) Encode(b *bytes.Buffer) error {
 // DecodePremiumSubscriptionOption deserializes a PremiumSubscriptionOption from a reader using the TL binary protocol.
 func DecodePremiumSubscriptionOption(r *Reader) (*PremiumSubscriptionOption, error) {
 	v := &PremiumSubscriptionOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Current = v.Flags.Has(1)
 	v.CanPurchaseUpgrade = v.Flags.Has(2)
 	if v.Flags.Has(3) {
@@ -3892,11 +3918,11 @@ func (v *PremiumGiftCodeOption) Encode(b *bytes.Buffer) error {
 // DecodePremiumGiftCodeOption deserializes a PremiumGiftCodeOption from a reader using the TL binary protocol.
 func DecodePremiumGiftCodeOption(r *Reader) (*PremiumGiftCodeOption, error) {
 	v := &PremiumGiftCodeOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUsers, _eUsers := r.ReadInt32()
 	if _eUsers != nil {
 		return nil, _eUsers
@@ -4018,11 +4044,11 @@ func (v *PaymentsCheckedGiftCode) Encode(b *bytes.Buffer) error {
 // DecodePaymentsCheckedGiftCode deserializes a PaymentsCheckedGiftCode from a reader using the TL binary protocol.
 func DecodePaymentsCheckedGiftCode(r *Reader) (*PaymentsCheckedGiftCode, error) {
 	v := &PaymentsCheckedGiftCode{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViaGiveaway = v.Flags.Has(2)
 	if v.Flags.Has(4) {
 		_objFromID, _errFromID := ReadTLObject(r)
@@ -4070,6 +4096,9 @@ func DecodePaymentsCheckedGiftCode(r *Reader) (*PaymentsCheckedGiftCode, error) 
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -4089,10 +4118,12 @@ func DecodePaymentsCheckedGiftCode(r *Reader) (*PaymentsCheckedGiftCode, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -4113,7 +4144,6 @@ func DecodePaymentsCheckedGiftCode(r *Reader) (*PaymentsCheckedGiftCode, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -4201,11 +4231,11 @@ func (v *PaymentsGiveawayInfo) Encode(b *bytes.Buffer) error {
 // DecodePaymentsGiveawayInfo deserializes a PaymentsGiveawayInfo from a reader using the TL binary protocol.
 func DecodePaymentsGiveawayInfo(r *Reader) (*PaymentsGiveawayInfo, error) {
 	v := &PaymentsGiveawayInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Participating = v.Flags.Has(0)
 	v.PreparingResults = v.Flags.Has(3)
 	_rStartDate, _eStartDate := r.ReadInt32()
@@ -4305,11 +4335,11 @@ func (v *PaymentsGiveawayInfoResults) Encode(b *bytes.Buffer) error {
 // DecodePaymentsGiveawayInfoResults deserializes a PaymentsGiveawayInfoResults from a reader using the TL binary protocol.
 func DecodePaymentsGiveawayInfoResults(r *Reader) (*PaymentsGiveawayInfoResults, error) {
 	v := &PaymentsGiveawayInfoResults{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Winner = v.Flags.Has(0)
 	v.Refunded = v.Flags.Has(1)
 	_rStartDate, _eStartDate := r.ReadInt32()
@@ -4581,11 +4611,11 @@ func (v *Boost) Encode(b *bytes.Buffer) error {
 // DecodeBoost deserializes a Boost from a reader using the TL binary protocol.
 func DecodeBoost(r *Reader) (*Boost, error) {
 	v := &Boost{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Gift = v.Flags.Has(1)
 	v.Giveaway = v.Flags.Has(2)
 	v.Unclaimed = v.Flags.Has(3)
@@ -4698,11 +4728,11 @@ func (v *MyBoost) Encode(b *bytes.Buffer) error {
 // DecodeMyBoost deserializes a MyBoost from a reader using the TL binary protocol.
 func DecodeMyBoost(r *Reader) (*MyBoost, error) {
 	v := &MyBoost{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rSlot, _eSlot := r.ReadInt32()
 	if _eSlot != nil {
 		return nil, _eSlot
@@ -4792,11 +4822,11 @@ func (v *StarsTopupOption) Encode(b *bytes.Buffer) error {
 // DecodeStarsTopupOption deserializes a StarsTopupOption from a reader using the TL binary protocol.
 func DecodeStarsTopupOption(r *Reader) (*StarsTopupOption, error) {
 	v := &StarsTopupOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Extended = v.Flags.Has(1)
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
@@ -5060,11 +5090,11 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 // DecodeStarsTransaction deserializes a StarsTransaction from a reader using the TL binary protocol.
 func DecodeStarsTransaction(r *Reader) (*StarsTransaction, error) {
 	v := &StarsTransaction{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Refund = v.Flags.Has(3)
 	v.Pending = v.Flags.Has(4)
 	v.Failed = v.Flags.Has(6)
@@ -5165,6 +5195,9 @@ func DecodeStarsTransaction(r *Reader) (*StarsTransaction, error) {
 		if _ehdrExtendedMedia != nil {
 			return nil, _ehdrExtendedMedia
 		}
+		if _errExtendedMedia := checkVectorConstructor(_vhdrExtendedMedia); _errExtendedMedia != nil {
+			return nil, _errExtendedMedia
+		}
 		_cntExtendedMedia, _ecntExtendedMedia := r.ReadUint32()
 		if _ecntExtendedMedia != nil {
 			return nil, _ecntExtendedMedia
@@ -5184,7 +5217,6 @@ func DecodeStarsTransaction(r *Reader) (*StarsTransaction, error) {
 			}
 			v.ExtendedMedia[_iExtendedMedia] = _cExtendedMedia
 		}
-		_ = _vhdrExtendedMedia
 	}
 	if v.Flags.Has(12) {
 		_rSubscriptionPeriod, _eSubscriptionPeriod := r.ReadInt32()
@@ -5371,11 +5403,11 @@ func (v *PaymentsStarsStatus) Encode(b *bytes.Buffer) error {
 // DecodePaymentsStarsStatus deserializes a PaymentsStarsStatus from a reader using the TL binary protocol.
 func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 	v := &PaymentsStarsStatus{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objBalance, _errBalance := ReadTLObject(r)
 	if _errBalance != nil {
 		return nil, _errBalance
@@ -5389,6 +5421,9 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 		_vhdrSubscriptions, _ehdrSubscriptions := r.ReadUint32()
 		if _ehdrSubscriptions != nil {
 			return nil, _ehdrSubscriptions
+		}
+		if _errSubscriptions := checkVectorConstructor(_vhdrSubscriptions); _errSubscriptions != nil {
+			return nil, _errSubscriptions
 		}
 		_cntSubscriptions, _ecntSubscriptions := r.ReadUint32()
 		if _ecntSubscriptions != nil {
@@ -5409,7 +5444,6 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 			}
 			v.Subscriptions[_iSubscriptions] = _cSubscriptions
 		}
-		_ = _vhdrSubscriptions
 	}
 	if v.Flags.Has(2) {
 		_rSubscriptionsNextOffset, _eSubscriptionsNextOffset := r.ReadString()
@@ -5430,6 +5464,9 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 		if _ehdrHistory != nil {
 			return nil, _ehdrHistory
 		}
+		if _errHistory := checkVectorConstructor(_vhdrHistory); _errHistory != nil {
+			return nil, _errHistory
+		}
 		_cntHistory, _ecntHistory := r.ReadUint32()
 		if _ecntHistory != nil {
 			return nil, _ecntHistory
@@ -5449,7 +5486,6 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 			}
 			v.History[_iHistory] = _cHistory
 		}
-		_ = _vhdrHistory
 	}
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
@@ -5461,6 +5497,9 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -5481,10 +5520,12 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -5505,7 +5546,6 @@ func DecodePaymentsStarsStatus(r *Reader) (*PaymentsStarsStatus, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -5562,11 +5602,11 @@ func (v *StarsRevenueStatus) Encode(b *bytes.Buffer) error {
 // DecodeStarsRevenueStatus deserializes a StarsRevenueStatus from a reader using the TL binary protocol.
 func DecodeStarsRevenueStatus(r *Reader) (*StarsRevenueStatus, error) {
 	v := &StarsRevenueStatus{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.WithdrawalEnabled = v.Flags.Has(0)
 	_objCurrentBalance, _errCurrentBalance := ReadTLObject(r)
 	if _errCurrentBalance != nil {
@@ -5654,11 +5694,11 @@ func (v *PaymentsStarsRevenueStats) Encode(b *bytes.Buffer) error {
 // DecodePaymentsStarsRevenueStats deserializes a PaymentsStarsRevenueStats from a reader using the TL binary protocol.
 func DecodePaymentsStarsRevenueStats(r *Reader) (*PaymentsStarsRevenueStats, error) {
 	v := &PaymentsStarsRevenueStats{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objTopHoursGraph, _errTopHoursGraph := ReadTLObject(r)
 		if _errTopHoursGraph != nil {
@@ -5816,11 +5856,11 @@ func (v *InputStarsTransaction) Encode(b *bytes.Buffer) error {
 // DecodeInputStarsTransaction deserializes a InputStarsTransaction from a reader using the TL binary protocol.
 func DecodeInputStarsTransaction(r *Reader) (*InputStarsTransaction, error) {
 	v := &InputStarsTransaction{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Refund = v.Flags.Has(0)
 	_rID, _eID := r.ReadString()
 	if _eID != nil {
@@ -5883,11 +5923,11 @@ func (v *StarsGiftOption) Encode(b *bytes.Buffer) error {
 // DecodeStarsGiftOption deserializes a StarsGiftOption from a reader using the TL binary protocol.
 func DecodeStarsGiftOption(r *Reader) (*StarsGiftOption, error) {
 	v := &StarsGiftOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Extended = v.Flags.Has(1)
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
@@ -6048,11 +6088,11 @@ func (v *StarsSubscription) Encode(b *bytes.Buffer) error {
 // DecodeStarsSubscription deserializes a StarsSubscription from a reader using the TL binary protocol.
 func DecodeStarsSubscription(r *Reader) (*StarsSubscription, error) {
 	v := &StarsSubscription{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Canceled = v.Flags.Has(0)
 	v.CanRefulfill = v.Flags.Has(1)
 	v.MissingBalance = v.Flags.Has(2)
@@ -6185,11 +6225,11 @@ func (v *StarsGiveawayOption) Encode(b *bytes.Buffer) error {
 // DecodeStarsGiveawayOption deserializes a StarsGiveawayOption from a reader using the TL binary protocol.
 func DecodeStarsGiveawayOption(r *Reader) (*StarsGiveawayOption, error) {
 	v := &StarsGiveawayOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Extended = v.Flags.Has(0)
 	v.Default = v.Flags.Has(1)
 	_rStars, _eStars := r.ReadInt64()
@@ -6223,6 +6263,9 @@ func DecodeStarsGiveawayOption(r *Reader) (*StarsGiveawayOption, error) {
 	if _ehdrWinners != nil {
 		return nil, _ehdrWinners
 	}
+	if _errWinners := checkVectorConstructor(_vhdrWinners); _errWinners != nil {
+		return nil, _errWinners
+	}
 	_cntWinners, _ecntWinners := r.ReadUint32()
 	if _ecntWinners != nil {
 		return nil, _ecntWinners
@@ -6242,7 +6285,6 @@ func DecodeStarsGiveawayOption(r *Reader) (*StarsGiveawayOption, error) {
 		}
 		v.Winners[_iWinners] = _cWinners
 	}
-	_ = _vhdrWinners
 	return v, nil
 }
 
@@ -6290,11 +6332,11 @@ func (v *StarsGiveawayWinnersOption) Encode(b *bytes.Buffer) error {
 // DecodeStarsGiveawayWinnersOption deserializes a StarsGiveawayWinnersOption from a reader using the TL binary protocol.
 func DecodeStarsGiveawayWinnersOption(r *Reader) (*StarsGiveawayWinnersOption, error) {
 	v := &StarsGiveawayWinnersOption{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Default = v.Flags.Has(0)
 	_rUsers, _eUsers := r.ReadInt32()
 	if _eUsers != nil {
@@ -6517,11 +6559,11 @@ func (v *StarGift) Encode(b *bytes.Buffer) error {
 // DecodeStarGift deserializes a StarGift from a reader using the TL binary protocol.
 func DecodeStarGift(r *Reader) (*StarGift, error) {
 	v := &StarGift{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Limited = v.Flags.Has(0)
 	v.SoldOut = v.Flags.Has(1)
 	v.Birthday = v.Flags.Has(2)
@@ -6858,11 +6900,11 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftUnique deserializes a StarGiftUnique from a reader using the TL binary protocol.
 func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 	v := &StarGiftUnique{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RequirePremium = v.Flags.Has(6)
 	v.ResaleTonOnly = v.Flags.Has(7)
 	v.ThemeAvailable = v.Flags.Has(9)
@@ -6922,6 +6964,9 @@ func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -6941,7 +6986,6 @@ func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	_rAvailabilityIssued, _eAvailabilityIssued := r.ReadInt32()
 	if _eAvailabilityIssued != nil {
 		return nil, _eAvailabilityIssued
@@ -6964,6 +7008,9 @@ func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 		if _ehdrResellAmount != nil {
 			return nil, _ehdrResellAmount
 		}
+		if _errResellAmount := checkVectorConstructor(_vhdrResellAmount); _errResellAmount != nil {
+			return nil, _errResellAmount
+		}
 		_cntResellAmount, _ecntResellAmount := r.ReadUint32()
 		if _ecntResellAmount != nil {
 			return nil, _ecntResellAmount
@@ -6983,7 +7030,6 @@ func DecodeStarGiftUnique(r *Reader) (*StarGiftUnique, error) {
 			}
 			v.ResellAmount[_iResellAmount] = _cResellAmount
 		}
-		_ = _vhdrResellAmount
 	}
 	if v.Flags.Has(5) {
 		_objReleasedBy, _errReleasedBy := ReadTLObject(r)
@@ -7171,6 +7217,9 @@ func DecodePaymentsStarGifts(r *Reader) (*PaymentsStarGifts, error) {
 	if _ehdrGifts != nil {
 		return nil, _ehdrGifts
 	}
+	if _errGifts := checkVectorConstructor(_vhdrGifts); _errGifts != nil {
+		return nil, _errGifts
+	}
 	_cntGifts, _ecntGifts := r.ReadUint32()
 	if _ecntGifts != nil {
 		return nil, _ecntGifts
@@ -7190,10 +7239,12 @@ func DecodePaymentsStarGifts(r *Reader) (*PaymentsStarGifts, error) {
 		}
 		v.Gifts[_iGifts] = _cGifts
 	}
-	_ = _vhdrGifts
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -7214,10 +7265,12 @@ func DecodePaymentsStarGifts(r *Reader) (*PaymentsStarGifts, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -7238,7 +7291,6 @@ func DecodePaymentsStarGifts(r *Reader) (*PaymentsStarGifts, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -7303,11 +7355,11 @@ func (v *StarRefProgram) Encode(b *bytes.Buffer) error {
 // DecodeStarRefProgram deserializes a StarRefProgram from a reader using the TL binary protocol.
 func DecodeStarRefProgram(r *Reader) (*StarRefProgram, error) {
 	v := &StarRefProgram{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rBotID, _eBotID := r.ReadInt64()
 	if _eBotID != nil {
 		return nil, _eBotID
@@ -7398,6 +7450,9 @@ func DecodePaymentsConnectedStarRefBots(r *Reader) (*PaymentsConnectedStarRefBot
 	if _ehdrConnectedBots != nil {
 		return nil, _ehdrConnectedBots
 	}
+	if _errConnectedBots := checkVectorConstructor(_vhdrConnectedBots); _errConnectedBots != nil {
+		return nil, _errConnectedBots
+	}
 	_cntConnectedBots, _ecntConnectedBots := r.ReadUint32()
 	if _ecntConnectedBots != nil {
 		return nil, _ecntConnectedBots
@@ -7417,10 +7472,12 @@ func DecodePaymentsConnectedStarRefBots(r *Reader) (*PaymentsConnectedStarRefBot
 		}
 		v.ConnectedBots[_iConnectedBots] = _cConnectedBots
 	}
-	_ = _vhdrConnectedBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -7441,7 +7498,6 @@ func DecodePaymentsConnectedStarRefBots(r *Reader) (*PaymentsConnectedStarRefBot
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -7502,11 +7558,11 @@ func (v *PaymentsSuggestedStarRefBots) Encode(b *bytes.Buffer) error {
 // DecodePaymentsSuggestedStarRefBots deserializes a PaymentsSuggestedStarRefBots from a reader using the TL binary protocol.
 func DecodePaymentsSuggestedStarRefBots(r *Reader) (*PaymentsSuggestedStarRefBots, error) {
 	v := &PaymentsSuggestedStarRefBots{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -7515,6 +7571,9 @@ func DecodePaymentsSuggestedStarRefBots(r *Reader) (*PaymentsSuggestedStarRefBot
 	_vhdrSuggestedBots, _ehdrSuggestedBots := r.ReadUint32()
 	if _ehdrSuggestedBots != nil {
 		return nil, _ehdrSuggestedBots
+	}
+	if _errSuggestedBots := checkVectorConstructor(_vhdrSuggestedBots); _errSuggestedBots != nil {
+		return nil, _errSuggestedBots
 	}
 	_cntSuggestedBots, _ecntSuggestedBots := r.ReadUint32()
 	if _ecntSuggestedBots != nil {
@@ -7535,10 +7594,12 @@ func DecodePaymentsSuggestedStarRefBots(r *Reader) (*PaymentsSuggestedStarRefBot
 		}
 		v.SuggestedBots[_iSuggestedBots] = _cSuggestedBots
 	}
-	_ = _vhdrSuggestedBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -7559,7 +7620,6 @@ func DecodePaymentsSuggestedStarRefBots(r *Reader) (*PaymentsSuggestedStarRefBot
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -7744,11 +7804,11 @@ func (v *StarGiftAttributeModel) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftAttributeModel deserializes a StarGiftAttributeModel from a reader using the TL binary protocol.
 func DecodeStarGiftAttributeModel(r *Reader) (*StarGiftAttributeModel, error) {
 	v := &StarGiftAttributeModel{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Crafted = v.Flags.Has(0)
 	_rName, _eName := r.ReadString()
 	if _eName != nil {
@@ -7967,11 +8027,11 @@ func (v *StarGiftAttributeOriginalDetails) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftAttributeOriginalDetails deserializes a StarGiftAttributeOriginalDetails from a reader using the TL binary protocol.
 func DecodeStarGiftAttributeOriginalDetails(r *Reader) (*StarGiftAttributeOriginalDetails, error) {
 	v := &StarGiftAttributeOriginalDetails{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objSenderID, _errSenderID := ReadTLObject(r)
 		if _errSenderID != nil {
@@ -8062,6 +8122,9 @@ func DecodePaymentsStarGiftUpgradePreview(r *Reader) (*PaymentsStarGiftUpgradePr
 	if _ehdrSampleAttributes != nil {
 		return nil, _ehdrSampleAttributes
 	}
+	if _errSampleAttributes := checkVectorConstructor(_vhdrSampleAttributes); _errSampleAttributes != nil {
+		return nil, _errSampleAttributes
+	}
 	_cntSampleAttributes, _ecntSampleAttributes := r.ReadUint32()
 	if _ecntSampleAttributes != nil {
 		return nil, _ecntSampleAttributes
@@ -8081,10 +8144,12 @@ func DecodePaymentsStarGiftUpgradePreview(r *Reader) (*PaymentsStarGiftUpgradePr
 		}
 		v.SampleAttributes[_iSampleAttributes] = _cSampleAttributes
 	}
-	_ = _vhdrSampleAttributes
 	_vhdrPrices, _ehdrPrices := r.ReadUint32()
 	if _ehdrPrices != nil {
 		return nil, _ehdrPrices
+	}
+	if _errPrices := checkVectorConstructor(_vhdrPrices); _errPrices != nil {
+		return nil, _errPrices
 	}
 	_cntPrices, _ecntPrices := r.ReadUint32()
 	if _ecntPrices != nil {
@@ -8105,10 +8170,12 @@ func DecodePaymentsStarGiftUpgradePreview(r *Reader) (*PaymentsStarGiftUpgradePr
 		}
 		v.Prices[_iPrices] = _cPrices
 	}
-	_ = _vhdrPrices
 	_vhdrNextPrices, _ehdrNextPrices := r.ReadUint32()
 	if _ehdrNextPrices != nil {
 		return nil, _ehdrNextPrices
+	}
+	if _errNextPrices := checkVectorConstructor(_vhdrNextPrices); _errNextPrices != nil {
+		return nil, _errNextPrices
 	}
 	_cntNextPrices, _ecntNextPrices := r.ReadUint32()
 	if _ecntNextPrices != nil {
@@ -8129,7 +8196,6 @@ func DecodePaymentsStarGiftUpgradePreview(r *Reader) (*PaymentsStarGiftUpgradePr
 		}
 		v.NextPrices[_iNextPrices] = _cNextPrices
 	}
-	_ = _vhdrNextPrices
 	return v, nil
 }
 
@@ -8189,6 +8255,9 @@ func DecodePaymentsUniqueStarGift(r *Reader) (*PaymentsUniqueStarGift, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -8208,10 +8277,12 @@ func DecodePaymentsUniqueStarGift(r *Reader) (*PaymentsUniqueStarGift, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -8232,7 +8303,6 @@ func DecodePaymentsUniqueStarGift(r *Reader) (*PaymentsUniqueStarGift, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -8405,11 +8475,11 @@ func (v *SavedStarGift) Encode(b *bytes.Buffer) error {
 // DecodeSavedStarGift deserializes a SavedStarGift from a reader using the TL binary protocol.
 func DecodeSavedStarGift(r *Reader) (*SavedStarGift, error) {
 	v := &SavedStarGift{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NameHidden = v.Flags.Has(0)
 	v.Unsaved = v.Flags.Has(5)
 	v.Refunded = v.Flags.Has(9)
@@ -8634,11 +8704,11 @@ func (v *PaymentsSavedStarGifts) GetChatNotificationsEnabled() (value bool, ok b
 // DecodePaymentsSavedStarGifts deserializes a PaymentsSavedStarGifts from a reader using the TL binary protocol.
 func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 	v := &PaymentsSavedStarGifts{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -8654,6 +8724,9 @@ func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 	_vhdrGifts, _ehdrGifts := r.ReadUint32()
 	if _ehdrGifts != nil {
 		return nil, _ehdrGifts
+	}
+	if _errGifts := checkVectorConstructor(_vhdrGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	_cntGifts, _ecntGifts := r.ReadUint32()
 	if _ecntGifts != nil {
@@ -8674,7 +8747,6 @@ func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 		}
 		v.Gifts[_iGifts] = _cGifts
 	}
-	_ = _vhdrGifts
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -8685,6 +8757,9 @@ func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -8705,10 +8780,12 @@ func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -8729,7 +8806,6 @@ func DecodePaymentsSavedStarGifts(r *Reader) (*PaymentsSavedStarGifts, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -9193,11 +9269,11 @@ func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
 // DecodePaymentsResaleStarGifts deserializes a PaymentsResaleStarGifts from a reader using the TL binary protocol.
 func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) {
 	v := &PaymentsResaleStarGifts{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -9206,6 +9282,9 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 	_vhdrGifts, _ehdrGifts := r.ReadUint32()
 	if _ehdrGifts != nil {
 		return nil, _ehdrGifts
+	}
+	if _errGifts := checkVectorConstructor(_vhdrGifts); _errGifts != nil {
+		return nil, _errGifts
 	}
 	_cntGifts, _ecntGifts := r.ReadUint32()
 	if _ecntGifts != nil {
@@ -9226,7 +9305,6 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 		}
 		v.Gifts[_iGifts] = _cGifts
 	}
-	_ = _vhdrGifts
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -9238,6 +9316,9 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 		_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
 		if _ehdrAttributes != nil {
 			return nil, _ehdrAttributes
+		}
+		if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+			return nil, _errAttributes
 		}
 		_cntAttributes, _ecntAttributes := r.ReadUint32()
 		if _ecntAttributes != nil {
@@ -9258,7 +9339,6 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 			}
 			v.Attributes[_iAttributes] = _cAttributes
 		}
-		_ = _vhdrAttributes
 	}
 	if v.Flags.Has(1) {
 		_rAttributesHash, _eAttributesHash := r.ReadInt64()
@@ -9270,6 +9350,9 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -9290,11 +9373,13 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	if v.Flags.Has(2) {
 		_vhdrCounters, _ehdrCounters := r.ReadUint32()
 		if _ehdrCounters != nil {
 			return nil, _ehdrCounters
+		}
+		if _errCounters := checkVectorConstructor(_vhdrCounters); _errCounters != nil {
+			return nil, _errCounters
 		}
 		_cntCounters, _ecntCounters := r.ReadUint32()
 		if _ecntCounters != nil {
@@ -9315,11 +9400,13 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 			}
 			v.Counters[_iCounters] = _cCounters
 		}
-		_ = _vhdrCounters
 	}
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -9340,7 +9427,6 @@ func DecodePaymentsResaleStarGifts(r *Reader) (*PaymentsResaleStarGifts, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -9393,11 +9479,11 @@ func (v *StarsRating) Encode(b *bytes.Buffer) error {
 // DecodeStarsRating deserializes a StarsRating from a reader using the TL binary protocol.
 func DecodeStarsRating(r *Reader) (*StarsRating, error) {
 	v := &StarsRating{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rLevel, _eLevel := r.ReadInt32()
 	if _eLevel != nil {
 		return nil, _eLevel
@@ -9474,11 +9560,11 @@ func (v *StarGiftCollection) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftCollection deserializes a StarGiftCollection from a reader using the TL binary protocol.
 func DecodeStarGiftCollection(r *Reader) (*StarGiftCollection, error) {
 	v := &StarGiftCollection{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCollectionID, _eCollectionID := r.ReadInt32()
 	if _eCollectionID != nil {
 		return nil, _eCollectionID
@@ -9598,6 +9684,9 @@ func DecodePaymentsStarGiftCollections(r *Reader) (*PaymentsStarGiftCollections,
 	if _ehdrCollections != nil {
 		return nil, _ehdrCollections
 	}
+	if _errCollections := checkVectorConstructor(_vhdrCollections); _errCollections != nil {
+		return nil, _errCollections
+	}
 	_cntCollections, _ecntCollections := r.ReadUint32()
 	if _ecntCollections != nil {
 		return nil, _ecntCollections
@@ -9617,7 +9706,6 @@ func DecodePaymentsStarGiftCollections(r *Reader) (*PaymentsStarGiftCollections,
 		}
 		v.Collections[_iCollections] = _cCollections
 	}
-	_ = _vhdrCollections
 	return v, nil
 }
 
@@ -9724,11 +9812,11 @@ func (v *PaymentsUniqueStarGiftValueInfo) Encode(b *bytes.Buffer) error {
 // DecodePaymentsUniqueStarGiftValueInfo deserializes a PaymentsUniqueStarGiftValueInfo from a reader using the TL binary protocol.
 func DecodePaymentsUniqueStarGiftValueInfo(r *Reader) (*PaymentsUniqueStarGiftValueInfo, error) {
 	v := &PaymentsUniqueStarGiftValueInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.LastSaleOnFragment = v.Flags.Has(1)
 	v.ValueIsAverage = v.Flags.Has(6)
 	_rCurrency, _eCurrency := r.ReadString()
@@ -10086,6 +10174,9 @@ func DecodeStarGiftAuctionState(r *Reader) (*StarGiftAuctionState, error) {
 	if _ehdrBidLevels != nil {
 		return nil, _ehdrBidLevels
 	}
+	if _errBidLevels := checkVectorConstructor(_vhdrBidLevels); _errBidLevels != nil {
+		return nil, _errBidLevels
+	}
 	_cntBidLevels, _ecntBidLevels := r.ReadUint32()
 	if _ecntBidLevels != nil {
 		return nil, _ecntBidLevels
@@ -10105,7 +10196,6 @@ func DecodeStarGiftAuctionState(r *Reader) (*StarGiftAuctionState, error) {
 		}
 		v.BidLevels[_iBidLevels] = _cBidLevels
 	}
-	_ = _vhdrBidLevels
 	_vvTopBidders, _veTopBidders := r.ReadVectorLong()
 	if _veTopBidders != nil {
 		return nil, _veTopBidders
@@ -10140,6 +10230,9 @@ func DecodeStarGiftAuctionState(r *Reader) (*StarGiftAuctionState, error) {
 	if _ehdrRounds != nil {
 		return nil, _ehdrRounds
 	}
+	if _errRounds := checkVectorConstructor(_vhdrRounds); _errRounds != nil {
+		return nil, _errRounds
+	}
 	_cntRounds, _ecntRounds := r.ReadUint32()
 	if _ecntRounds != nil {
 		return nil, _ecntRounds
@@ -10159,7 +10252,6 @@ func DecodeStarGiftAuctionState(r *Reader) (*StarGiftAuctionState, error) {
 		}
 		v.Rounds[_iRounds] = _cRounds
 	}
-	_ = _vhdrRounds
 	return v, nil
 }
 
@@ -10223,11 +10315,11 @@ func (v *StarGiftAuctionStateFinished) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftAuctionStateFinished deserializes a StarGiftAuctionStateFinished from a reader using the TL binary protocol.
 func DecodeStarGiftAuctionStateFinished(r *Reader) (*StarGiftAuctionStateFinished, error) {
 	v := &StarGiftAuctionStateFinished{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rStartDate, _eStartDate := r.ReadInt32()
 	if _eStartDate != nil {
 		return nil, _eStartDate
@@ -10349,6 +10441,9 @@ func DecodePaymentsStarGiftAuctionState(r *Reader) (*PaymentsStarGiftAuctionStat
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -10368,10 +10463,12 @@ func DecodePaymentsStarGiftAuctionState(r *Reader) (*PaymentsStarGiftAuctionStat
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10392,7 +10489,6 @@ func DecodePaymentsStarGiftAuctionState(r *Reader) (*PaymentsStarGiftAuctionStat
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	return v, nil
 }
 
@@ -10460,11 +10556,11 @@ func (v *StarGiftAuctionAcquiredGift) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftAuctionAcquiredGift deserializes a StarGiftAuctionAcquiredGift from a reader using the TL binary protocol.
 func DecodeStarGiftAuctionAcquiredGift(r *Reader) (*StarGiftAuctionAcquiredGift, error) {
 	v := &StarGiftAuctionAcquiredGift{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NameHidden = v.Flags.Has(0)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -10567,6 +10663,9 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r *Reader) (*PaymentsStarGiftAuc
 	if _ehdrGifts != nil {
 		return nil, _ehdrGifts
 	}
+	if _errGifts := checkVectorConstructor(_vhdrGifts); _errGifts != nil {
+		return nil, _errGifts
+	}
 	_cntGifts, _ecntGifts := r.ReadUint32()
 	if _ecntGifts != nil {
 		return nil, _ecntGifts
@@ -10586,10 +10685,12 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r *Reader) (*PaymentsStarGiftAuc
 		}
 		v.Gifts[_iGifts] = _cGifts
 	}
-	_ = _vhdrGifts
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -10610,10 +10711,12 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r *Reader) (*PaymentsStarGiftAuc
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10634,7 +10737,6 @@ func DecodePaymentsStarGiftAuctionAcquiredGifts(r *Reader) (*PaymentsStarGiftAuc
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	return v, nil
 }
 
@@ -10800,6 +10902,9 @@ func DecodePaymentsStarGiftActiveAuctions(r *Reader) (*PaymentsStarGiftActiveAuc
 	if _ehdrAuctions != nil {
 		return nil, _ehdrAuctions
 	}
+	if _errAuctions := checkVectorConstructor(_vhdrAuctions); _errAuctions != nil {
+		return nil, _errAuctions
+	}
 	_cntAuctions, _ecntAuctions := r.ReadUint32()
 	if _ecntAuctions != nil {
 		return nil, _ecntAuctions
@@ -10819,10 +10924,12 @@ func DecodePaymentsStarGiftActiveAuctions(r *Reader) (*PaymentsStarGiftActiveAuc
 		}
 		v.Auctions[_iAuctions] = _cAuctions
 	}
-	_ = _vhdrAuctions
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -10843,10 +10950,12 @@ func DecodePaymentsStarGiftActiveAuctions(r *Reader) (*PaymentsStarGiftActiveAuc
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10867,7 +10976,6 @@ func DecodePaymentsStarGiftActiveAuctions(r *Reader) (*PaymentsStarGiftActiveAuc
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	return v, nil
 }
 
@@ -11175,6 +11283,9 @@ func DecodePaymentsStarGiftUpgradeAttributes(r *Reader) (*PaymentsStarGiftUpgrad
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -11194,7 +11305,6 @@ func DecodePaymentsStarGiftUpgradeAttributes(r *Reader) (*PaymentsStarGiftUpgrad
 		}
 		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 

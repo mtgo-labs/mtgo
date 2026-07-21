@@ -382,11 +382,11 @@ func (v *UserFull) Encode(b *bytes.Buffer) error {
 // DecodeUserFull deserializes a UserFull from a reader using the TL binary protocol.
 func DecodeUserFull(r *Reader) (*UserFull, error) {
 	v := &UserFull{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Blocked = v.Flags.Has(0)
 	v.PhoneCallsAvailable = v.Flags.Has(4)
 	v.PhoneCallsPrivate = v.Flags.Has(5)
@@ -400,11 +400,11 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 	v.WallpaperOverridden = v.Flags.Has(28)
 	v.ContactRequirePremium = v.Flags.Has(29)
 	v.ReadDatesPrivate = v.Flags.Has(30)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.SponsoredEnabled = v.Flags2.Has(7)
 	v.CanViewRevenue = v.Flags2.Has(9)
 	v.BotCanManageEmojiStatus = v.Flags2.Has(10)
@@ -826,6 +826,9 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -845,10 +848,12 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -869,7 +874,6 @@ func DecodeUsersUserFull(r *Reader) (*UsersUserFull, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -929,6 +933,9 @@ func DecodeUsersUsers(r *Reader) (*UsersUsers, error) {
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -948,7 +955,6 @@ func DecodeUsersUsers(r *Reader) (*UsersUsers, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -995,6 +1001,9 @@ func DecodeUsersUsersSlice(r *Reader) (*UsersUsersSlice, error) {
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -1014,7 +1023,6 @@ func DecodeUsersUsersSlice(r *Reader) (*UsersUsersSlice, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1117,6 +1125,9 @@ func DecodeUsersSavedMusic(r *Reader) (*UsersSavedMusic, error) {
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
 	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
+	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
 		return nil, _ecntDocuments
@@ -1136,7 +1147,6 @@ func DecodeUsersSavedMusic(r *Reader) (*UsersSavedMusic, error) {
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	return v, nil
 }
 

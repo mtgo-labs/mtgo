@@ -64,11 +64,11 @@ func (v *CommunitiesPeerLinkRequests) Encode(b *bytes.Buffer) error {
 // DecodeCommunitiesPeerLinkRequests deserializes a CommunitiesPeerLinkRequests from a reader using the TL binary protocol.
 func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests, error) {
 	v := &CommunitiesPeerLinkRequests{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rTotalCount, _eTotalCount := r.ReadInt32()
 	if _eTotalCount != nil {
 		return nil, _eTotalCount
@@ -77,6 +77,9 @@ func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests,
 	_vhdrRequests, _ehdrRequests := r.ReadUint32()
 	if _ehdrRequests != nil {
 		return nil, _ehdrRequests
+	}
+	if _errRequests := checkVectorConstructor(_vhdrRequests); _errRequests != nil {
+		return nil, _errRequests
 	}
 	_cntRequests, _ecntRequests := r.ReadUint32()
 	if _ecntRequests != nil {
@@ -97,7 +100,6 @@ func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests,
 		}
 		v.Requests[_iRequests] = _cRequests
 	}
-	_ = _vhdrRequests
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -108,6 +110,9 @@ func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests,
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -128,10 +133,12 @@ func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests,
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -152,7 +159,6 @@ func DecodeCommunitiesPeerLinkRequests(r *Reader) (*CommunitiesPeerLinkRequests,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -215,6 +221,9 @@ func DecodeCommunitiesParticipantJoinedChats(r *Reader) (*CommunitiesParticipant
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -234,10 +243,12 @@ func DecodeCommunitiesParticipantJoinedChats(r *Reader) (*CommunitiesParticipant
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -258,7 +269,6 @@ func DecodeCommunitiesParticipantJoinedChats(r *Reader) (*CommunitiesParticipant
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

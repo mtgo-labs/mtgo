@@ -591,6 +591,9 @@ func DecodeTextConcat(r *Reader) (*TextConcat, error) {
 	if _ehdrTexts != nil {
 		return nil, _ehdrTexts
 	}
+	if _errTexts := checkVectorConstructor(_vhdrTexts); _errTexts != nil {
+		return nil, _errTexts
+	}
 	_cntTexts, _ecntTexts := r.ReadUint32()
 	if _ecntTexts != nil {
 		return nil, _ecntTexts
@@ -610,7 +613,6 @@ func DecodeTextConcat(r *Reader) (*TextConcat, error) {
 		}
 		v.Texts[_iTexts] = _cTexts
 	}
-	_ = _vhdrTexts
 	return v, nil
 }
 
@@ -1425,11 +1427,11 @@ func (v *TextDate) Encode(b *bytes.Buffer) error {
 // DecodeTextDate deserializes a TextDate from a reader using the TL binary protocol.
 func DecodeTextDate(r *Reader) (*TextDate, error) {
 	v := &TextDate{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Relative = v.Flags.Has(0)
 	v.ShortTime = v.Flags.Has(1)
 	v.LongTime = v.Flags.Has(2)
@@ -2210,6 +2212,9 @@ func DecodePageBlockList(r *Reader) (*PageBlockList, error) {
 	if _ehdrItems != nil {
 		return nil, _ehdrItems
 	}
+	if _errItems := checkVectorConstructor(_vhdrItems); _errItems != nil {
+		return nil, _errItems
+	}
 	_cntItems, _ecntItems := r.ReadUint32()
 	if _ecntItems != nil {
 		return nil, _ecntItems
@@ -2229,7 +2234,6 @@ func DecodePageBlockList(r *Reader) (*PageBlockList, error) {
 		}
 		v.Items[_iItems] = _cItems
 	}
-	_ = _vhdrItems
 	return v, nil
 }
 
@@ -2390,11 +2394,11 @@ func (v *PageBlockPhoto) Encode(b *bytes.Buffer) error {
 // DecodePageBlockPhoto deserializes a PageBlockPhoto from a reader using the TL binary protocol.
 func DecodePageBlockPhoto(r *Reader) (*PageBlockPhoto, error) {
 	v := &PageBlockPhoto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Spoiler = v.Flags.Has(1)
 	_rPhotoID, _ePhotoID := r.ReadInt64()
 	if _ePhotoID != nil {
@@ -2476,11 +2480,11 @@ func (v *PageBlockVideo) Encode(b *bytes.Buffer) error {
 // DecodePageBlockVideo deserializes a PageBlockVideo from a reader using the TL binary protocol.
 func DecodePageBlockVideo(r *Reader) (*PageBlockVideo, error) {
 	v := &PageBlockVideo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Autoplay = v.Flags.Has(0)
 	v.Loop = v.Flags.Has(1)
 	v.Spoiler = v.Flags.Has(2)
@@ -2619,11 +2623,11 @@ func (v *PageBlockEmbed) Encode(b *bytes.Buffer) error {
 // DecodePageBlockEmbed deserializes a PageBlockEmbed from a reader using the TL binary protocol.
 func DecodePageBlockEmbed(r *Reader) (*PageBlockEmbed, error) {
 	v := &PageBlockEmbed{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.FullWidth = v.Flags.Has(0)
 	v.AllowScrolling = v.Flags.Has(3)
 	if v.Flags.Has(1) {
@@ -2746,6 +2750,9 @@ func DecodePageBlockEmbedPost(r *Reader) (*PageBlockEmbedPost, error) {
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
 	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
 		return nil, _ecntBlocks
@@ -2765,7 +2772,6 @@ func DecodePageBlockEmbedPost(r *Reader) (*PageBlockEmbedPost, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
@@ -2816,6 +2822,9 @@ func DecodePageBlockCollage(r *Reader) (*PageBlockCollage, error) {
 	if _ehdrItems != nil {
 		return nil, _ehdrItems
 	}
+	if _errItems := checkVectorConstructor(_vhdrItems); _errItems != nil {
+		return nil, _errItems
+	}
 	_cntItems, _ecntItems := r.ReadUint32()
 	if _ecntItems != nil {
 		return nil, _ecntItems
@@ -2835,7 +2844,6 @@ func DecodePageBlockCollage(r *Reader) (*PageBlockCollage, error) {
 		}
 		v.Items[_iItems] = _cItems
 	}
-	_ = _vhdrItems
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
@@ -2886,6 +2894,9 @@ func DecodePageBlockSlideshow(r *Reader) (*PageBlockSlideshow, error) {
 	if _ehdrItems != nil {
 		return nil, _ehdrItems
 	}
+	if _errItems := checkVectorConstructor(_vhdrItems); _errItems != nil {
+		return nil, _errItems
+	}
 	_cntItems, _ecntItems := r.ReadUint32()
 	if _ecntItems != nil {
 		return nil, _ecntItems
@@ -2905,7 +2916,6 @@ func DecodePageBlockSlideshow(r *Reader) (*PageBlockSlideshow, error) {
 		}
 		v.Items[_iItems] = _cItems
 	}
-	_ = _vhdrItems
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
@@ -3094,11 +3104,11 @@ func (v *PageBlockTable) Encode(b *bytes.Buffer) error {
 // DecodePageBlockTable deserializes a PageBlockTable from a reader using the TL binary protocol.
 func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 	v := &PageBlockTable{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Bordered = v.Flags.Has(0)
 	v.Striped = v.Flags.Has(1)
 	_objTitle, _errTitle := ReadTLObject(r)
@@ -3113,6 +3123,9 @@ func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 	_vhdrRows, _ehdrRows := r.ReadUint32()
 	if _ehdrRows != nil {
 		return nil, _ehdrRows
+	}
+	if _errRows := checkVectorConstructor(_vhdrRows); _errRows != nil {
+		return nil, _errRows
 	}
 	_cntRows, _ecntRows := r.ReadUint32()
 	if _ecntRows != nil {
@@ -3133,7 +3146,6 @@ func DecodePageBlockTable(r *Reader) (*PageBlockTable, error) {
 		}
 		v.Rows[_iRows] = _cRows
 	}
-	_ = _vhdrRows
 	return v, nil
 }
 
@@ -3194,15 +3206,18 @@ func (v *PageBlockOrderedList) Encode(b *bytes.Buffer) error {
 // DecodePageBlockOrderedList deserializes a PageBlockOrderedList from a reader using the TL binary protocol.
 func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 	v := &PageBlockOrderedList{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Reversed = v.Flags.Has(2)
 	_vhdrItems, _ehdrItems := r.ReadUint32()
 	if _ehdrItems != nil {
 		return nil, _ehdrItems
+	}
+	if _errItems := checkVectorConstructor(_vhdrItems); _errItems != nil {
+		return nil, _errItems
 	}
 	_cntItems, _ecntItems := r.ReadUint32()
 	if _ecntItems != nil {
@@ -3223,7 +3238,6 @@ func DecodePageBlockOrderedList(r *Reader) (*PageBlockOrderedList, error) {
 		}
 		v.Items[_iItems] = _cItems
 	}
-	_ = _vhdrItems
 	if v.Flags.Has(0) {
 		_rStart, _eStart := r.ReadInt32()
 		if _eStart != nil {
@@ -3286,15 +3300,18 @@ func (v *PageBlockDetails) Encode(b *bytes.Buffer) error {
 // DecodePageBlockDetails deserializes a PageBlockDetails from a reader using the TL binary protocol.
 func DecodePageBlockDetails(r *Reader) (*PageBlockDetails, error) {
 	v := &PageBlockDetails{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Open = v.Flags.Has(0)
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -3315,7 +3332,6 @@ func DecodePageBlockDetails(r *Reader) (*PageBlockDetails, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	_objTitle, _errTitle := ReadTLObject(r)
 	if _errTitle != nil {
 		return nil, _errTitle
@@ -3375,6 +3391,9 @@ func DecodePageBlockRelatedArticles(r *Reader) (*PageBlockRelatedArticles, error
 	if _ehdrArticles != nil {
 		return nil, _ehdrArticles
 	}
+	if _errArticles := checkVectorConstructor(_vhdrArticles); _errArticles != nil {
+		return nil, _errArticles
+	}
 	_cntArticles, _ecntArticles := r.ReadUint32()
 	if _ecntArticles != nil {
 		return nil, _ecntArticles
@@ -3394,7 +3413,6 @@ func DecodePageBlockRelatedArticles(r *Reader) (*PageBlockRelatedArticles, error
 		}
 		v.Articles[_iArticles] = _cArticles
 	}
-	_ = _vhdrArticles
 	return v, nil
 }
 
@@ -3896,6 +3914,9 @@ func DecodePageBlockBlockquoteBlocks(r *Reader) (*PageBlockBlockquoteBlocks, err
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
 	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
+	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
 		return nil, _ecntBlocks
@@ -3915,7 +3936,6 @@ func DecodePageBlockBlockquoteBlocks(r *Reader) (*PageBlockBlockquoteBlocks, err
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	_objCaption, _errCaption := ReadTLObject(r)
 	if _errCaption != nil {
 		return nil, _errCaption
@@ -4005,11 +4025,11 @@ func (v *PageTableCell) Encode(b *bytes.Buffer) error {
 // DecodePageTableCell deserializes a PageTableCell from a reader using the TL binary protocol.
 func DecodePageTableCell(r *Reader) (*PageTableCell, error) {
 	v := &PageTableCell{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Header = v.Flags.Has(0)
 	v.AlignCenter = v.Flags.Has(3)
 	v.AlignRight = v.Flags.Has(4)
@@ -4082,6 +4102,9 @@ func DecodePageTableRow(r *Reader) (*PageTableRow, error) {
 	if _ehdrCells != nil {
 		return nil, _ehdrCells
 	}
+	if _errCells := checkVectorConstructor(_vhdrCells); _errCells != nil {
+		return nil, _errCells
+	}
 	_cntCells, _ecntCells := r.ReadUint32()
 	if _ecntCells != nil {
 		return nil, _ecntCells
@@ -4101,7 +4124,6 @@ func DecodePageTableRow(r *Reader) (*PageTableRow, error) {
 		}
 		v.Cells[_iCells] = _cCells
 	}
-	_ = _vhdrCells
 	return v, nil
 }
 
@@ -4222,11 +4244,11 @@ func (v *PageListItemText) Encode(b *bytes.Buffer) error {
 // DecodePageListItemText deserializes a PageListItemText from a reader using the TL binary protocol.
 func DecodePageListItemText(r *Reader) (*PageListItemText, error) {
 	v := &PageListItemText{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Checkbox = v.Flags.Has(0)
 	v.Checked = v.Flags.Has(1)
 	_objText, _errText := ReadTLObject(r)
@@ -4288,16 +4310,19 @@ func (v *PageListItemBlocks) Encode(b *bytes.Buffer) error {
 // DecodePageListItemBlocks deserializes a PageListItemBlocks from a reader using the TL binary protocol.
 func DecodePageListItemBlocks(r *Reader) (*PageListItemBlocks, error) {
 	v := &PageListItemBlocks{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Checkbox = v.Flags.Has(0)
 	v.Checked = v.Flags.Has(1)
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -4318,7 +4343,6 @@ func DecodePageListItemBlocks(r *Reader) (*PageListItemBlocks, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	return v, nil
 }
 
@@ -4406,11 +4430,11 @@ func (v *PageListOrderedItemText) Encode(b *bytes.Buffer) error {
 // DecodePageListOrderedItemText deserializes a PageListOrderedItemText from a reader using the TL binary protocol.
 func DecodePageListOrderedItemText(r *Reader) (*PageListOrderedItemText, error) {
 	v := &PageListOrderedItemText{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Checkbox = v.Flags.Has(0)
 	v.Checked = v.Flags.Has(1)
 	if v.Flags.Has(2) {
@@ -4514,11 +4538,11 @@ func (v *PageListOrderedItemBlocks) Encode(b *bytes.Buffer) error {
 // DecodePageListOrderedItemBlocks deserializes a PageListOrderedItemBlocks from a reader using the TL binary protocol.
 func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, error) {
 	v := &PageListOrderedItemBlocks{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Checkbox = v.Flags.Has(0)
 	v.Checked = v.Flags.Has(1)
 	if v.Flags.Has(2) {
@@ -4531,6 +4555,9 @@ func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, err
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -4551,7 +4578,6 @@ func DecodePageListOrderedItemBlocks(r *Reader) (*PageListOrderedItemBlocks, err
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	if v.Flags.Has(3) {
 		_rValue, _eValue := r.ReadInt32()
 		if _eValue != nil {
@@ -4644,11 +4670,11 @@ func (v *PageRelatedArticle) Encode(b *bytes.Buffer) error {
 // DecodePageRelatedArticle deserializes a PageRelatedArticle from a reader using the TL binary protocol.
 func DecodePageRelatedArticle(r *Reader) (*PageRelatedArticle, error) {
 	v := &PageRelatedArticle{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
 		return nil, _eURL
@@ -4772,11 +4798,11 @@ func (v *Page) Encode(b *bytes.Buffer) error {
 // DecodePage deserializes a Page from a reader using the TL binary protocol.
 func DecodePage(r *Reader) (*Page, error) {
 	v := &Page{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Part = v.Flags.Has(0)
 	v.Rtl = v.Flags.Has(1)
 	v.V2 = v.Flags.Has(2)
@@ -4788,6 +4814,9 @@ func DecodePage(r *Reader) (*Page, error) {
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -4808,10 +4837,12 @@ func DecodePage(r *Reader) (*Page, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
 	if _ehdrPhotos != nil {
 		return nil, _ehdrPhotos
+	}
+	if _errPhotos := checkVectorConstructor(_vhdrPhotos); _errPhotos != nil {
+		return nil, _errPhotos
 	}
 	_cntPhotos, _ecntPhotos := r.ReadUint32()
 	if _ecntPhotos != nil {
@@ -4832,10 +4863,12 @@ func DecodePage(r *Reader) (*Page, error) {
 		}
 		v.Photos[_iPhotos] = _cPhotos
 	}
-	_ = _vhdrPhotos
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
+	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
@@ -4856,7 +4889,6 @@ func DecodePage(r *Reader) (*Page, error) {
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	if v.Flags.Has(3) {
 		_rViews, _eViews := r.ReadInt32()
 		if _eViews != nil {

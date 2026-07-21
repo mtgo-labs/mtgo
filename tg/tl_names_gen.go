@@ -7,7 +7,6 @@ var NamesMap = map[string]uint32{
 	"boolFalse":                                          0xbc799737,
 	"boolTrue":                                           0x997275b5,
 	"true":                                               0x3fedd339,
-	"vector":                                             0x1cb5c415,
 	"error":                                              0xc4b9f9bb,
 	"null":                                               0x56730bcc,
 	"inputPeerEmpty":                                     0x7f3b18ea,

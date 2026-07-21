@@ -181,11 +181,11 @@ func (v *ChatFull) Encode(b *bytes.Buffer) error {
 // DecodeChatFull deserializes a ChatFull from a reader using the TL binary protocol.
 func DecodeChatFull(r *Reader) (*ChatFull, error) {
 	v := &ChatFull{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanSetUsername = v.Flags.Has(7)
 	v.HasScheduled = v.Flags.Has(8)
 	v.TranslationsDisabled = v.Flags.Has(19)
@@ -244,6 +244,9 @@ func DecodeChatFull(r *Reader) (*ChatFull, error) {
 		if _ehdrBotInfo != nil {
 			return nil, _ehdrBotInfo
 		}
+		if _errBotInfo := checkVectorConstructor(_vhdrBotInfo); _errBotInfo != nil {
+			return nil, _errBotInfo
+		}
 		_cntBotInfo, _ecntBotInfo := r.ReadUint32()
 		if _ecntBotInfo != nil {
 			return nil, _ecntBotInfo
@@ -263,7 +266,6 @@ func DecodeChatFull(r *Reader) (*ChatFull, error) {
 			}
 			v.BotInfo[_iBotInfo] = _cBotInfo
 		}
-		_ = _vhdrBotInfo
 	}
 	if v.Flags.Has(6) {
 		_rPinnedMsgID, _ePinnedMsgID := r.ReadInt32()
@@ -750,11 +752,11 @@ func (v *ChannelFull) Encode(b *bytes.Buffer) error {
 // DecodeChannelFull deserializes a ChannelFull from a reader using the TL binary protocol.
 func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 	v := &ChannelFull{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanViewParticipants = v.Flags.Has(3)
 	v.CanSetUsername = v.Flags.Has(6)
 	v.CanSetStickers = v.Flags.Has(7)
@@ -763,11 +765,11 @@ func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 	v.HasScheduled = v.Flags.Has(19)
 	v.CanViewStats = v.Flags.Has(20)
 	v.Blocked = v.Flags.Has(22)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.CanDeleteChannel = v.Flags2.Has(0)
 	v.Antispam = v.Flags2.Has(1)
 	v.ParticipantsHidden = v.Flags2.Has(2)
@@ -874,6 +876,9 @@ func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 	if _ehdrBotInfo != nil {
 		return nil, _ehdrBotInfo
 	}
+	if _errBotInfo := checkVectorConstructor(_vhdrBotInfo); _errBotInfo != nil {
+		return nil, _errBotInfo
+	}
 	_cntBotInfo, _ecntBotInfo := r.ReadUint32()
 	if _ecntBotInfo != nil {
 		return nil, _ecntBotInfo
@@ -893,7 +898,6 @@ func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 		}
 		v.BotInfo[_iBotInfo] = _cBotInfo
 	}
-	_ = _vhdrBotInfo
 	if v.Flags.Has(4) {
 		_rMigratedFromChatID, _eMigratedFromChatID := r.ReadInt64()
 		if _eMigratedFromChatID != nil {
@@ -1229,11 +1233,11 @@ func (v *CommunityFull) Encode(b *bytes.Buffer) error {
 // DecodeCommunityFull deserializes a CommunityFull from a reader using the TL binary protocol.
 func DecodeCommunityFull(r *Reader) (*CommunityFull, error) {
 	v := &CommunityFull{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -1257,6 +1261,9 @@ func DecodeCommunityFull(r *Reader) (*CommunityFull, error) {
 	if _ehdrLinkedPeers != nil {
 		return nil, _ehdrLinkedPeers
 	}
+	if _errLinkedPeers := checkVectorConstructor(_vhdrLinkedPeers); _errLinkedPeers != nil {
+		return nil, _errLinkedPeers
+	}
 	_cntLinkedPeers, _ecntLinkedPeers := r.ReadUint32()
 	if _ecntLinkedPeers != nil {
 		return nil, _ecntLinkedPeers
@@ -1276,7 +1283,6 @@ func DecodeCommunityFull(r *Reader) (*CommunityFull, error) {
 		}
 		v.LinkedPeers[_iLinkedPeers] = _cLinkedPeers
 	}
-	_ = _vhdrLinkedPeers
 	if v.Flags.Has(1) {
 		_rAdminsCount, _eAdminsCount := r.ReadInt32()
 		if _eAdminsCount != nil {
@@ -1354,6 +1360,9 @@ func DecodeMessagesChatFull(r *Reader) (*MessagesChatFull, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -1373,10 +1382,12 @@ func DecodeMessagesChatFull(r *Reader) (*MessagesChatFull, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1397,7 +1408,6 @@ func DecodeMessagesChatFull(r *Reader) (*MessagesChatFull, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1469,11 +1479,11 @@ func (v *MessageEmpty) Encode(b *bytes.Buffer) error {
 // DecodeMessageEmpty deserializes a MessageEmpty from a reader using the TL binary protocol.
 func DecodeMessageEmpty(r *Reader) (*MessageEmpty, error) {
 	v := &MessageEmpty{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
 		return nil, _eID
@@ -1814,11 +1824,11 @@ func (v *Message) Encode(b *bytes.Buffer) error {
 // DecodeMessage deserializes a Message from a reader using the TL binary protocol.
 func DecodeMessage(r *Reader) (*Message, error) {
 	v := &Message{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Out = v.Flags.Has(1)
 	v.Mentioned = v.Flags.Has(4)
 	v.MediaUnread = v.Flags.Has(5)
@@ -1830,11 +1840,11 @@ func DecodeMessage(r *Reader) (*Message, error) {
 	v.Pinned = v.Flags.Has(24)
 	v.Noforwards = v.Flags.Has(26)
 	v.InvertMedia = v.Flags.Has(27)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.Offline = v.Flags2.Has(1)
 	v.VideoProcessingPending = v.Flags2.Has(4)
 	v.PaidSuggestedPostStars = v.Flags2.Has(8)
@@ -1973,6 +1983,9 @@ func DecodeMessage(r *Reader) (*Message, error) {
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
 		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
 			return nil, _ecntEntities
@@ -1992,7 +2005,6 @@ func DecodeMessage(r *Reader) (*Message, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(10) {
 		_rViews, _eViews := r.ReadInt32()
@@ -2056,6 +2068,9 @@ func DecodeMessage(r *Reader) (*Message, error) {
 		if _ehdrRestrictionReason != nil {
 			return nil, _ehdrRestrictionReason
 		}
+		if _errRestrictionReason := checkVectorConstructor(_vhdrRestrictionReason); _errRestrictionReason != nil {
+			return nil, _errRestrictionReason
+		}
 		_cntRestrictionReason, _ecntRestrictionReason := r.ReadUint32()
 		if _ecntRestrictionReason != nil {
 			return nil, _ecntRestrictionReason
@@ -2075,7 +2090,6 @@ func DecodeMessage(r *Reader) (*Message, error) {
 			}
 			v.RestrictionReason[_iRestrictionReason] = _cRestrictionReason
 		}
-		_ = _vhdrRestrictionReason
 	}
 	if v.Flags.Has(25) {
 		_rTTLPeriod, _eTTLPeriod := r.ReadInt32()
@@ -2266,11 +2280,11 @@ func (v *MessageService) Encode(b *bytes.Buffer) error {
 // DecodeMessageService deserializes a MessageService from a reader using the TL binary protocol.
 func DecodeMessageService(r *Reader) (*MessageService, error) {
 	v := &MessageService{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Out = v.Flags.Has(1)
 	v.Mentioned = v.Flags.Has(4)
 	v.MediaUnread = v.Flags.Has(5)
@@ -2573,11 +2587,11 @@ func (v *MessageMediaPhoto) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaPhoto deserializes a MessageMediaPhoto from a reader using the TL binary protocol.
 func DecodeMessageMediaPhoto(r *Reader) (*MessageMediaPhoto, error) {
 	v := &MessageMediaPhoto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Spoiler = v.Flags.Has(3)
 	v.LivePhoto = v.Flags.Has(4)
 	if v.Flags.Has(0) {
@@ -2837,11 +2851,11 @@ func (v *MessageMediaDocument) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaDocument deserializes a MessageMediaDocument from a reader using the TL binary protocol.
 func DecodeMessageMediaDocument(r *Reader) (*MessageMediaDocument, error) {
 	v := &MessageMediaDocument{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Nopremium = v.Flags.Has(3)
 	v.Spoiler = v.Flags.Has(4)
 	v.Video = v.Flags.Has(6)
@@ -2863,6 +2877,9 @@ func DecodeMessageMediaDocument(r *Reader) (*MessageMediaDocument, error) {
 		if _ehdrAltDocuments != nil {
 			return nil, _ehdrAltDocuments
 		}
+		if _errAltDocuments := checkVectorConstructor(_vhdrAltDocuments); _errAltDocuments != nil {
+			return nil, _errAltDocuments
+		}
 		_cntAltDocuments, _ecntAltDocuments := r.ReadUint32()
 		if _ecntAltDocuments != nil {
 			return nil, _ecntAltDocuments
@@ -2882,7 +2899,6 @@ func DecodeMessageMediaDocument(r *Reader) (*MessageMediaDocument, error) {
 			}
 			v.AltDocuments[_iAltDocuments] = _cAltDocuments
 		}
-		_ = _vhdrAltDocuments
 	}
 	if v.Flags.Has(9) {
 		_objVideoCover, _errVideoCover := ReadTLObject(r)
@@ -2963,11 +2979,11 @@ func (v *MessageMediaWebPage) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaWebPage deserializes a MessageMediaWebPage from a reader using the TL binary protocol.
 func DecodeMessageMediaWebPage(r *Reader) (*MessageMediaWebPage, error) {
 	v := &MessageMediaWebPage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ForceLargeMedia = v.Flags.Has(0)
 	v.ForceSmallMedia = v.Flags.Has(1)
 	v.Manual = v.Flags.Has(3)
@@ -3171,11 +3187,11 @@ func (v *MessageMediaInvoice) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaInvoice deserializes a MessageMediaInvoice from a reader using the TL binary protocol.
 func DecodeMessageMediaInvoice(r *Reader) (*MessageMediaInvoice, error) {
 	v := &MessageMediaInvoice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ShippingAddressRequested = v.Flags.Has(1)
 	v.Test = v.Flags.Has(3)
 	_rTitle, _eTitle := r.ReadString()
@@ -3286,11 +3302,11 @@ func (v *MessageMediaGeoLive) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaGeoLive deserializes a MessageMediaGeoLive from a reader using the TL binary protocol.
 func DecodeMessageMediaGeoLive(r *Reader) (*MessageMediaGeoLive, error) {
 	v := &MessageMediaGeoLive{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objGeo, _errGeo := ReadTLObject(r)
 	if _errGeo != nil {
 		return nil, _errGeo
@@ -3366,11 +3382,11 @@ func (v *MessageMediaPoll) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaPoll deserializes a MessageMediaPoll from a reader using the TL binary protocol.
 func DecodeMessageMediaPoll(r *Reader) (*MessageMediaPoll, error) {
 	v := &MessageMediaPoll{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objPoll, _errPoll := ReadTLObject(r)
 	if _errPoll != nil {
 		return nil, _errPoll
@@ -3447,11 +3463,11 @@ func (v *MessageMediaDice) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaDice deserializes a MessageMediaDice from a reader using the TL binary protocol.
 func DecodeMessageMediaDice(r *Reader) (*MessageMediaDice, error) {
 	v := &MessageMediaDice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rValue, _eValue := r.ReadInt32()
 	if _eValue != nil {
 		return nil, _eValue
@@ -3524,11 +3540,11 @@ func (v *MessageMediaStory) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaStory deserializes a MessageMediaStory from a reader using the TL binary protocol.
 func DecodeMessageMediaStory(r *Reader) (*MessageMediaStory, error) {
 	v := &MessageMediaStory{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViaMention = v.Flags.Has(1)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -3633,11 +3649,11 @@ func (v *MessageMediaGiveaway) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaGiveaway deserializes a MessageMediaGiveaway from a reader using the TL binary protocol.
 func DecodeMessageMediaGiveaway(r *Reader) (*MessageMediaGiveaway, error) {
 	v := &MessageMediaGiveaway{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.WinnersAreVisible = v.Flags.Has(2)
 	_vvChannels, _veChannels := r.ReadVectorLong()
@@ -3767,11 +3783,11 @@ func (v *MessageMediaGiveawayResults) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaGiveawayResults deserializes a MessageMediaGiveawayResults from a reader using the TL binary protocol.
 func DecodeMessageMediaGiveawayResults(r *Reader) (*MessageMediaGiveawayResults, error) {
 	v := &MessageMediaGiveawayResults{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OnlyNewSubscribers = v.Flags.Has(0)
 	v.Refunded = v.Flags.Has(2)
 	_rChannelID, _eChannelID := r.ReadInt64()
@@ -3878,6 +3894,9 @@ func DecodeMessageMediaPaidMedia(r *Reader) (*MessageMediaPaidMedia, error) {
 	if _ehdrExtendedMedia != nil {
 		return nil, _ehdrExtendedMedia
 	}
+	if _errExtendedMedia := checkVectorConstructor(_vhdrExtendedMedia); _errExtendedMedia != nil {
+		return nil, _errExtendedMedia
+	}
 	_cntExtendedMedia, _ecntExtendedMedia := r.ReadUint32()
 	if _ecntExtendedMedia != nil {
 		return nil, _ecntExtendedMedia
@@ -3897,7 +3916,6 @@ func DecodeMessageMediaPaidMedia(r *Reader) (*MessageMediaPaidMedia, error) {
 		}
 		v.ExtendedMedia[_iExtendedMedia] = _cExtendedMedia
 	}
-	_ = _vhdrExtendedMedia
 	return v, nil
 }
 
@@ -3947,11 +3965,11 @@ func (v *MessageMediaToDo) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaToDo deserializes a MessageMediaToDo from a reader using the TL binary protocol.
 func DecodeMessageMediaToDo(r *Reader) (*MessageMediaToDo, error) {
 	v := &MessageMediaToDo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objTodo, _errTodo := ReadTLObject(r)
 	if _errTodo != nil {
 		return nil, _errTodo
@@ -3965,6 +3983,9 @@ func DecodeMessageMediaToDo(r *Reader) (*MessageMediaToDo, error) {
 		_vhdrCompletions, _ehdrCompletions := r.ReadUint32()
 		if _ehdrCompletions != nil {
 			return nil, _ehdrCompletions
+		}
+		if _errCompletions := checkVectorConstructor(_vhdrCompletions); _errCompletions != nil {
+			return nil, _errCompletions
 		}
 		_cntCompletions, _ecntCompletions := r.ReadUint32()
 		if _ecntCompletions != nil {
@@ -3985,7 +4006,6 @@ func DecodeMessageMediaToDo(r *Reader) (*MessageMediaToDo, error) {
 			}
 			v.Completions[_iCompletions] = _cCompletions
 		}
-		_ = _vhdrCompletions
 	}
 	return v, nil
 }
@@ -4029,11 +4049,11 @@ func (v *MessageMediaVideoStream) Encode(b *bytes.Buffer) error {
 // DecodeMessageMediaVideoStream deserializes a MessageMediaVideoStream from a reader using the TL binary protocol.
 func DecodeMessageMediaVideoStream(r *Reader) (*MessageMediaVideoStream, error) {
 	v := &MessageMediaVideoStream{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RtmpStream = v.Flags.Has(0)
 	_objCall, _errCall := ReadTLObject(r)
 	if _errCall != nil {
@@ -5034,11 +5054,11 @@ func (v *MessageActionPaymentSentMe) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPaymentSentMe deserializes a MessageActionPaymentSentMe from a reader using the TL binary protocol.
 func DecodeMessageActionPaymentSentMe(r *Reader) (*MessageActionPaymentSentMe, error) {
 	v := &MessageActionPaymentSentMe{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RecurringInit = v.Flags.Has(2)
 	v.RecurringUsed = v.Flags.Has(3)
 	_rCurrency, _eCurrency := r.ReadString()
@@ -5152,11 +5172,11 @@ func (v *MessageActionPaymentSent) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPaymentSent deserializes a MessageActionPaymentSent from a reader using the TL binary protocol.
 func DecodeMessageActionPaymentSent(r *Reader) (*MessageActionPaymentSent, error) {
 	v := &MessageActionPaymentSent{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.RecurringInit = v.Flags.Has(2)
 	v.RecurringUsed = v.Flags.Has(3)
 	_rCurrency, _eCurrency := r.ReadString()
@@ -5239,11 +5259,11 @@ func (v *MessageActionPhoneCall) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPhoneCall deserializes a MessageActionPhoneCall from a reader using the TL binary protocol.
 func DecodeMessageActionPhoneCall(r *Reader) (*MessageActionPhoneCall, error) {
 	v := &MessageActionPhoneCall{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Video = v.Flags.Has(2)
 	_rCallID, _eCallID := r.ReadInt64()
 	if _eCallID != nil {
@@ -5391,11 +5411,11 @@ func (v *MessageActionBotAllowed) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionBotAllowed deserializes a MessageActionBotAllowed from a reader using the TL binary protocol.
 func DecodeMessageActionBotAllowed(r *Reader) (*MessageActionBotAllowed, error) {
 	v := &MessageActionBotAllowed{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.AttachMenu = v.Flags.Has(1)
 	v.FromRequest = v.Flags.Has(3)
 	if v.Flags.Has(0) {
@@ -5457,6 +5477,9 @@ func DecodeMessageActionSecureValuesSentMe(r *Reader) (*MessageActionSecureValue
 	if _ehdrValues != nil {
 		return nil, _ehdrValues
 	}
+	if _errValues := checkVectorConstructor(_vhdrValues); _errValues != nil {
+		return nil, _errValues
+	}
 	_cntValues, _ecntValues := r.ReadUint32()
 	if _ecntValues != nil {
 		return nil, _ecntValues
@@ -5476,7 +5499,6 @@ func DecodeMessageActionSecureValuesSentMe(r *Reader) (*MessageActionSecureValue
 		}
 		v.Values[_iValues] = _cValues
 	}
-	_ = _vhdrValues
 	_objCredentials, _errCredentials := ReadTLObject(r)
 	if _errCredentials != nil {
 		return nil, _errCredentials
@@ -5525,6 +5547,9 @@ func DecodeMessageActionSecureValuesSent(r *Reader) (*MessageActionSecureValuesS
 	if _ehdrTypes != nil {
 		return nil, _ehdrTypes
 	}
+	if _errTypes := checkVectorConstructor(_vhdrTypes); _errTypes != nil {
+		return nil, _errTypes
+	}
 	_cntTypes, _ecntTypes := r.ReadUint32()
 	if _ecntTypes != nil {
 		return nil, _ecntTypes
@@ -5544,7 +5569,6 @@ func DecodeMessageActionSecureValuesSent(r *Reader) (*MessageActionSecureValuesS
 		}
 		v.Types[_iTypes] = _cTypes
 	}
-	_ = _vhdrTypes
 	return v, nil
 }
 
@@ -5677,11 +5701,11 @@ func (v *MessageActionGroupCall) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGroupCall deserializes a MessageActionGroupCall from a reader using the TL binary protocol.
 func DecodeMessageActionGroupCall(r *Reader) (*MessageActionGroupCall, error) {
 	v := &MessageActionGroupCall{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objCall, _errCall := ReadTLObject(r)
 	if _errCall != nil {
 		return nil, _errCall
@@ -5790,11 +5814,11 @@ func (v *MessageActionSetMessagesTTL) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionSetMessagesTTL deserializes a MessageActionSetMessagesTTL from a reader using the TL binary protocol.
 func DecodeMessageActionSetMessagesTTL(r *Reader) (*MessageActionSetMessagesTTL, error) {
 	v := &MessageActionSetMessagesTTL{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rPeriod, _ePeriod := r.ReadInt32()
 	if _ePeriod != nil {
 		return nil, _ePeriod
@@ -6065,11 +6089,11 @@ func (v *MessageActionGiftPremium) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiftPremium deserializes a MessageActionGiftPremium from a reader using the TL binary protocol.
 func DecodeMessageActionGiftPremium(r *Reader) (*MessageActionGiftPremium, error) {
 	v := &MessageActionGiftPremium{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCurrency, _eCurrency := r.ReadString()
 	if _eCurrency != nil {
 		return nil, _eCurrency
@@ -6161,11 +6185,11 @@ func (v *MessageActionTopicCreate) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionTopicCreate deserializes a MessageActionTopicCreate from a reader using the TL binary protocol.
 func DecodeMessageActionTopicCreate(r *Reader) (*MessageActionTopicCreate, error) {
 	v := &MessageActionTopicCreate{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.TitleMissing = v.Flags.Has(1)
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
@@ -6284,11 +6308,11 @@ func (v *MessageActionTopicEdit) GetHidden() (value bool, ok bool) {
 // DecodeMessageActionTopicEdit deserializes a MessageActionTopicEdit from a reader using the TL binary protocol.
 func DecodeMessageActionTopicEdit(r *Reader) (*MessageActionTopicEdit, error) {
 	v := &MessageActionTopicEdit{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rTitle, _eTitle := r.ReadString()
 		if _eTitle != nil {
@@ -6403,6 +6427,9 @@ func DecodeMessageActionRequestedPeer(r *Reader) (*MessageActionRequestedPeer, e
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -6422,7 +6449,6 @@ func DecodeMessageActionRequestedPeer(r *Reader) (*MessageActionRequestedPeer, e
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	return v, nil
 }
 
@@ -6469,11 +6495,11 @@ func (v *MessageActionSetChatWallPaper) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionSetChatWallPaper deserializes a MessageActionSetChatWallPaper from a reader using the TL binary protocol.
 func DecodeMessageActionSetChatWallPaper(r *Reader) (*MessageActionSetChatWallPaper, error) {
 	v := &MessageActionSetChatWallPaper{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Same = v.Flags.Has(0)
 	v.ForBoth = v.Flags.Has(1)
 	_objWallpaper, _errWallpaper := ReadTLObject(r)
@@ -6575,11 +6601,11 @@ func (v *MessageActionGiftCode) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiftCode deserializes a MessageActionGiftCode from a reader using the TL binary protocol.
 func DecodeMessageActionGiftCode(r *Reader) (*MessageActionGiftCode, error) {
 	v := &MessageActionGiftCode{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViaGiveaway = v.Flags.Has(0)
 	v.Unclaimed = v.Flags.Has(5)
 	if v.Flags.Has(1) {
@@ -6685,11 +6711,11 @@ func (v *MessageActionGiveawayLaunch) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiveawayLaunch deserializes a MessageActionGiveawayLaunch from a reader using the TL binary protocol.
 func DecodeMessageActionGiveawayLaunch(r *Reader) (*MessageActionGiveawayLaunch, error) {
 	v := &MessageActionGiveawayLaunch{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rStars, _eStars := r.ReadInt64()
 		if _eStars != nil {
@@ -6741,11 +6767,11 @@ func (v *MessageActionGiveawayResults) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiveawayResults deserializes a MessageActionGiveawayResults from a reader using the TL binary protocol.
 func DecodeMessageActionGiveawayResults(r *Reader) (*MessageActionGiveawayResults, error) {
 	v := &MessageActionGiveawayResults{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Stars = v.Flags.Has(0)
 	_rWinnersCount, _eWinnersCount := r.ReadInt32()
 	if _eWinnersCount != nil {
@@ -6839,6 +6865,9 @@ func DecodeMessageActionRequestedPeerSentMe(r *Reader) (*MessageActionRequestedP
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -6858,7 +6887,6 @@ func DecodeMessageActionRequestedPeerSentMe(r *Reader) (*MessageActionRequestedP
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	return v, nil
 }
 
@@ -6910,11 +6938,11 @@ func (v *MessageActionPaymentRefunded) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPaymentRefunded deserializes a MessageActionPaymentRefunded from a reader using the TL binary protocol.
 func DecodeMessageActionPaymentRefunded(r *Reader) (*MessageActionPaymentRefunded, error) {
 	v := &MessageActionPaymentRefunded{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
 		return nil, _errPeer
@@ -7013,11 +7041,11 @@ func (v *MessageActionGiftStars) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiftStars deserializes a MessageActionGiftStars from a reader using the TL binary protocol.
 func DecodeMessageActionGiftStars(r *Reader) (*MessageActionGiftStars, error) {
 	v := &MessageActionGiftStars{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCurrency, _eCurrency := r.ReadString()
 	if _eCurrency != nil {
 		return nil, _eCurrency
@@ -7102,11 +7130,11 @@ func (v *MessageActionPrizeStars) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPrizeStars deserializes a MessageActionPrizeStars from a reader using the TL binary protocol.
 func DecodeMessageActionPrizeStars(r *Reader) (*MessageActionPrizeStars, error) {
 	v := &MessageActionPrizeStars{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Unclaimed = v.Flags.Has(0)
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
@@ -7283,11 +7311,11 @@ func (v *MessageActionStarGift) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionStarGift deserializes a MessageActionStarGift from a reader using the TL binary protocol.
 func DecodeMessageActionStarGift(r *Reader) (*MessageActionStarGift, error) {
 	v := &MessageActionStarGift{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NameHidden = v.Flags.Has(0)
 	v.Saved = v.Flags.Has(2)
 	v.Converted = v.Flags.Has(3)
@@ -7539,11 +7567,11 @@ func (v *MessageActionStarGiftUnique) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionStarGiftUnique deserializes a MessageActionStarGiftUnique from a reader using the TL binary protocol.
 func DecodeMessageActionStarGiftUnique(r *Reader) (*MessageActionStarGiftUnique, error) {
 	v := &MessageActionStarGiftUnique{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Upgrade = v.Flags.Has(0)
 	v.Transferred = v.Flags.Has(1)
 	v.Saved = v.Flags.Has(2)
@@ -7728,11 +7756,11 @@ func (v *MessageActionPaidMessagesPrice) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionPaidMessagesPrice deserializes a MessageActionPaidMessagesPrice from a reader using the TL binary protocol.
 func DecodeMessageActionPaidMessagesPrice(r *Reader) (*MessageActionPaidMessagesPrice, error) {
 	v := &MessageActionPaidMessagesPrice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.BroadcastMessagesAllowed = v.Flags.Has(0)
 	_rStars, _eStars := r.ReadInt64()
 	if _eStars != nil {
@@ -7807,11 +7835,11 @@ func (v *MessageActionConferenceCall) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionConferenceCall deserializes a MessageActionConferenceCall from a reader using the TL binary protocol.
 func DecodeMessageActionConferenceCall(r *Reader) (*MessageActionConferenceCall, error) {
 	v := &MessageActionConferenceCall{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Missed = v.Flags.Has(0)
 	v.Active = v.Flags.Has(1)
 	v.Video = v.Flags.Has(4)
@@ -7832,6 +7860,9 @@ func DecodeMessageActionConferenceCall(r *Reader) (*MessageActionConferenceCall,
 		if _ehdrOtherParticipants != nil {
 			return nil, _ehdrOtherParticipants
 		}
+		if _errOtherParticipants := checkVectorConstructor(_vhdrOtherParticipants); _errOtherParticipants != nil {
+			return nil, _errOtherParticipants
+		}
 		_cntOtherParticipants, _ecntOtherParticipants := r.ReadUint32()
 		if _ecntOtherParticipants != nil {
 			return nil, _ecntOtherParticipants
@@ -7851,7 +7882,6 @@ func DecodeMessageActionConferenceCall(r *Reader) (*MessageActionConferenceCall,
 			}
 			v.OtherParticipants[_iOtherParticipants] = _cOtherParticipants
 		}
-		_ = _vhdrOtherParticipants
 	}
 	return v, nil
 }
@@ -7935,6 +7965,9 @@ func DecodeMessageActionTodoAppendTasks(r *Reader) (*MessageActionTodoAppendTask
 	if _ehdrList != nil {
 		return nil, _ehdrList
 	}
+	if _errList := checkVectorConstructor(_vhdrList); _errList != nil {
+		return nil, _errList
+	}
 	_cntList, _ecntList := r.ReadUint32()
 	if _ecntList != nil {
 		return nil, _ecntList
@@ -7954,7 +7987,6 @@ func DecodeMessageActionTodoAppendTasks(r *Reader) (*MessageActionTodoAppendTask
 		}
 		v.List[_iList] = _cList
 	}
-	_ = _vhdrList
 	return v, nil
 }
 
@@ -8020,11 +8052,11 @@ func (v *MessageActionSuggestedPostApproval) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionSuggestedPostApproval deserializes a MessageActionSuggestedPostApproval from a reader using the TL binary protocol.
 func DecodeMessageActionSuggestedPostApproval(r *Reader) (*MessageActionSuggestedPostApproval, error) {
 	v := &MessageActionSuggestedPostApproval{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Rejected = v.Flags.Has(0)
 	v.BalanceTooLow = v.Flags.Has(1)
 	if v.Flags.Has(2) {
@@ -8132,11 +8164,11 @@ func (v *MessageActionSuggestedPostRefund) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionSuggestedPostRefund deserializes a MessageActionSuggestedPostRefund from a reader using the TL binary protocol.
 func DecodeMessageActionSuggestedPostRefund(r *Reader) (*MessageActionSuggestedPostRefund, error) {
 	v := &MessageActionSuggestedPostRefund{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.PayerInitiated = v.Flags.Has(0)
 	return v, nil
 }
@@ -8189,11 +8221,11 @@ func (v *MessageActionGiftTon) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionGiftTon deserializes a MessageActionGiftTon from a reader using the TL binary protocol.
 func DecodeMessageActionGiftTon(r *Reader) (*MessageActionGiftTon, error) {
 	v := &MessageActionGiftTon{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCurrency, _eCurrency := r.ReadString()
 	if _eCurrency != nil {
 		return nil, _eCurrency
@@ -8311,11 +8343,11 @@ func (v *MessageActionStarGiftPurchaseOffer) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionStarGiftPurchaseOffer deserializes a MessageActionStarGiftPurchaseOffer from a reader using the TL binary protocol.
 func DecodeMessageActionStarGiftPurchaseOffer(r *Reader) (*MessageActionStarGiftPurchaseOffer, error) {
 	v := &MessageActionStarGiftPurchaseOffer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Accepted = v.Flags.Has(0)
 	v.Declined = v.Flags.Has(1)
 	_objGift, _errGift := ReadTLObject(r)
@@ -8385,11 +8417,11 @@ func (v *MessageActionStarGiftPurchaseOfferDeclined) Encode(b *bytes.Buffer) err
 // DecodeMessageActionStarGiftPurchaseOfferDeclined deserializes a MessageActionStarGiftPurchaseOfferDeclined from a reader using the TL binary protocol.
 func DecodeMessageActionStarGiftPurchaseOfferDeclined(r *Reader) (*MessageActionStarGiftPurchaseOfferDeclined, error) {
 	v := &MessageActionStarGiftPurchaseOfferDeclined{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Expired = v.Flags.Has(0)
 	_objGift, _errGift := ReadTLObject(r)
 	if _errGift != nil {
@@ -8568,11 +8600,11 @@ func (v *MessageActionNoForwardsRequest) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionNoForwardsRequest deserializes a MessageActionNoForwardsRequest from a reader using the TL binary protocol.
 func DecodeMessageActionNoForwardsRequest(r *Reader) (*MessageActionNoForwardsRequest, error) {
 	v := &MessageActionNoForwardsRequest{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Expired = v.Flags.Has(0)
 	_rPrevValue, _ePrevValue := r.ReadBool()
 	if _ePrevValue != nil {
@@ -8743,11 +8775,11 @@ func (v *MessageActionChangeCommunity) Encode(b *bytes.Buffer) error {
 // DecodeMessageActionChangeCommunity deserializes a MessageActionChangeCommunity from a reader using the TL binary protocol.
 func DecodeMessageActionChangeCommunity(r *Reader) (*MessageActionChangeCommunity, error) {
 	v := &MessageActionChangeCommunity{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rCommunityID, _eCommunityID := r.ReadInt64()
 		if _eCommunityID != nil {
@@ -8875,11 +8907,11 @@ func (v *Dialog) Encode(b *bytes.Buffer) error {
 // DecodeDialog deserializes a Dialog from a reader using the TL binary protocol.
 func DecodeDialog(r *Reader) (*Dialog, error) {
 	v := &Dialog{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pinned = v.Flags.Has(2)
 	v.UnreadMark = v.Flags.Has(3)
 	v.ViewForumAsMessages = v.Flags.Has(6)
@@ -9022,11 +9054,11 @@ func (v *DialogFolder) Encode(b *bytes.Buffer) error {
 // DecodeDialogFolder deserializes a DialogFolder from a reader using the TL binary protocol.
 func DecodeDialogFolder(r *Reader) (*DialogFolder, error) {
 	v := &DialogFolder{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pinned = v.Flags.Has(2)
 	_objFolder, _errFolder := ReadTLObject(r)
 	if _errFolder != nil {
@@ -9115,11 +9147,11 @@ func (v *DialogCommunity) Encode(b *bytes.Buffer) error {
 // DecodeDialogCommunity deserializes a DialogCommunity from a reader using the TL binary protocol.
 func DecodeDialogCommunity(r *Reader) (*DialogCommunity, error) {
 	v := &DialogCommunity{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pinned = v.Flags.Has(2)
 	_rCommunityID, _eCommunityID := r.ReadInt64()
 	if _eCommunityID != nil {
@@ -9305,11 +9337,11 @@ func (v *PeerSettings) Encode(b *bytes.Buffer) error {
 // DecodePeerSettings deserializes a PeerSettings from a reader using the TL binary protocol.
 func DecodePeerSettings(r *Reader) (*PeerSettings, error) {
 	v := &PeerSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ReportSpam = v.Flags.Has(0)
 	v.AddContact = v.Flags.Has(1)
 	v.BlockContact = v.Flags.Has(2)
@@ -9447,6 +9479,9 @@ func DecodeMessagesPeerSettings(r *Reader) (*MessagesPeerSettings, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -9466,10 +9501,12 @@ func DecodeMessagesPeerSettings(r *Reader) (*MessagesPeerSettings, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -9490,7 +9527,6 @@ func DecodeMessagesPeerSettings(r *Reader) (*MessagesPeerSettings, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -9574,6 +9610,9 @@ func DecodeMessagesDialogs(r *Reader) (*MessagesDialogs, error) {
 	if _ehdrDialogs != nil {
 		return nil, _ehdrDialogs
 	}
+	if _errDialogs := checkVectorConstructor(_vhdrDialogs); _errDialogs != nil {
+		return nil, _errDialogs
+	}
 	_cntDialogs, _ecntDialogs := r.ReadUint32()
 	if _ecntDialogs != nil {
 		return nil, _ecntDialogs
@@ -9593,10 +9632,12 @@ func DecodeMessagesDialogs(r *Reader) (*MessagesDialogs, error) {
 		}
 		v.Dialogs[_iDialogs] = _cDialogs
 	}
-	_ = _vhdrDialogs
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -9617,10 +9658,12 @@ func DecodeMessagesDialogs(r *Reader) (*MessagesDialogs, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -9641,10 +9684,12 @@ func DecodeMessagesDialogs(r *Reader) (*MessagesDialogs, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -9665,7 +9710,6 @@ func DecodeMessagesDialogs(r *Reader) (*MessagesDialogs, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -9730,6 +9774,9 @@ func DecodeMessagesDialogsSlice(r *Reader) (*MessagesDialogsSlice, error) {
 	if _ehdrDialogs != nil {
 		return nil, _ehdrDialogs
 	}
+	if _errDialogs := checkVectorConstructor(_vhdrDialogs); _errDialogs != nil {
+		return nil, _errDialogs
+	}
 	_cntDialogs, _ecntDialogs := r.ReadUint32()
 	if _ecntDialogs != nil {
 		return nil, _ecntDialogs
@@ -9749,10 +9796,12 @@ func DecodeMessagesDialogsSlice(r *Reader) (*MessagesDialogsSlice, error) {
 		}
 		v.Dialogs[_iDialogs] = _cDialogs
 	}
-	_ = _vhdrDialogs
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -9773,10 +9822,12 @@ func DecodeMessagesDialogsSlice(r *Reader) (*MessagesDialogsSlice, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -9797,10 +9848,12 @@ func DecodeMessagesDialogsSlice(r *Reader) (*MessagesDialogsSlice, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -9821,7 +9874,6 @@ func DecodeMessagesDialogsSlice(r *Reader) (*MessagesDialogsSlice, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -9947,6 +9999,9 @@ func DecodeMessagesMessages(r *Reader) (*MessagesMessages, error) {
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
 	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
+	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
 		return nil, _ecntMessages
@@ -9966,10 +10021,12 @@ func DecodeMessagesMessages(r *Reader) (*MessagesMessages, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrTopics, _ehdrTopics := r.ReadUint32()
 	if _ehdrTopics != nil {
 		return nil, _ehdrTopics
+	}
+	if _errTopics := checkVectorConstructor(_vhdrTopics); _errTopics != nil {
+		return nil, _errTopics
 	}
 	_cntTopics, _ecntTopics := r.ReadUint32()
 	if _ecntTopics != nil {
@@ -9990,10 +10047,12 @@ func DecodeMessagesMessages(r *Reader) (*MessagesMessages, error) {
 		}
 		v.Topics[_iTopics] = _cTopics
 	}
-	_ = _vhdrTopics
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10014,10 +10073,12 @@ func DecodeMessagesMessages(r *Reader) (*MessagesMessages, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -10038,7 +10099,6 @@ func DecodeMessagesMessages(r *Reader) (*MessagesMessages, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -10126,11 +10186,11 @@ func (v *MessagesMessagesSlice) Encode(b *bytes.Buffer) error {
 // DecodeMessagesMessagesSlice deserializes a MessagesMessagesSlice from a reader using the TL binary protocol.
 func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 	v := &MessagesMessagesSlice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inexact = v.Flags.Has(1)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
@@ -10166,6 +10226,9 @@ func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
 	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
+	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
 		return nil, _ecntMessages
@@ -10185,10 +10248,12 @@ func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrTopics, _ehdrTopics := r.ReadUint32()
 	if _ehdrTopics != nil {
 		return nil, _ehdrTopics
+	}
+	if _errTopics := checkVectorConstructor(_vhdrTopics); _errTopics != nil {
+		return nil, _errTopics
 	}
 	_cntTopics, _ecntTopics := r.ReadUint32()
 	if _ecntTopics != nil {
@@ -10209,10 +10274,12 @@ func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 		}
 		v.Topics[_iTopics] = _cTopics
 	}
-	_ = _vhdrTopics
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10233,10 +10300,12 @@ func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -10257,7 +10326,6 @@ func DecodeMessagesMessagesSlice(r *Reader) (*MessagesMessagesSlice, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -10333,11 +10401,11 @@ func (v *MessagesChannelMessages) Encode(b *bytes.Buffer) error {
 // DecodeMessagesChannelMessages deserializes a MessagesChannelMessages from a reader using the TL binary protocol.
 func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) {
 	v := &MessagesChannelMessages{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inexact = v.Flags.Has(1)
 	_rPTS, _ePTS := r.ReadInt32()
 	if _ePTS != nil {
@@ -10360,6 +10428,9 @@ func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) 
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
 	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
+	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
 		return nil, _ecntMessages
@@ -10379,10 +10450,12 @@ func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) 
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrTopics, _ehdrTopics := r.ReadUint32()
 	if _ehdrTopics != nil {
 		return nil, _ehdrTopics
+	}
+	if _errTopics := checkVectorConstructor(_vhdrTopics); _errTopics != nil {
+		return nil, _errTopics
 	}
 	_cntTopics, _ecntTopics := r.ReadUint32()
 	if _ecntTopics != nil {
@@ -10403,10 +10476,12 @@ func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) 
 		}
 		v.Topics[_iTopics] = _cTopics
 	}
-	_ = _vhdrTopics
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -10427,10 +10502,12 @@ func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -10451,7 +10528,6 @@ func DecodeMessagesChannelMessages(r *Reader) (*MessagesChannelMessages, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -10547,6 +10623,9 @@ func DecodeMessagesChats(r *Reader) (*MessagesChats, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -10566,7 +10645,6 @@ func DecodeMessagesChats(r *Reader) (*MessagesChats, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	return v, nil
 }
 
@@ -10613,6 +10691,9 @@ func DecodeMessagesChatsSlice(r *Reader) (*MessagesChatsSlice, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -10632,7 +10713,6 @@ func DecodeMessagesChatsSlice(r *Reader) (*MessagesChatsSlice, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	return v, nil
 }
 
@@ -11132,11 +11212,11 @@ func (v *InputMessagesFilterPhoneCalls) Encode(b *bytes.Buffer) error {
 // DecodeInputMessagesFilterPhoneCalls deserializes a InputMessagesFilterPhoneCalls from a reader using the TL binary protocol.
 func DecodeInputMessagesFilterPhoneCalls(r *Reader) (*InputMessagesFilterPhoneCalls, error) {
 	v := &InputMessagesFilterPhoneCalls{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Missed = v.Flags.Has(0)
 	return v, nil
 }
@@ -12668,6 +12748,9 @@ func DecodeMessagesStickers(r *Reader) (*MessagesStickers, error) {
 	if _ehdrStickers != nil {
 		return nil, _ehdrStickers
 	}
+	if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+		return nil, _errStickers
+	}
 	_cntStickers, _ecntStickers := r.ReadUint32()
 	if _ecntStickers != nil {
 		return nil, _ecntStickers
@@ -12687,7 +12770,6 @@ func DecodeMessagesStickers(r *Reader) (*MessagesStickers, error) {
 		}
 		v.Stickers[_iStickers] = _cStickers
 	}
-	_ = _vhdrStickers
 	return v, nil
 }
 
@@ -12829,6 +12911,9 @@ func DecodeMessagesAllStickers(r *Reader) (*MessagesAllStickers, error) {
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
 	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
+	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
 		return nil, _ecntSets
@@ -12848,7 +12933,6 @@ func DecodeMessagesAllStickers(r *Reader) (*MessagesAllStickers, error) {
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	return v, nil
 }
 
@@ -12978,11 +13062,11 @@ func (v *WebPageEmpty) Encode(b *bytes.Buffer) error {
 // DecodeWebPageEmpty deserializes a WebPageEmpty from a reader using the TL binary protocol.
 func DecodeWebPageEmpty(r *Reader) (*WebPageEmpty, error) {
 	v := &WebPageEmpty{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -13042,11 +13126,11 @@ func (v *WebPagePending) Encode(b *bytes.Buffer) error {
 // DecodeWebPagePending deserializes a WebPagePending from a reader using the TL binary protocol.
 func DecodeWebPagePending(r *Reader) (*WebPagePending, error) {
 	v := &WebPagePending{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -13218,11 +13302,11 @@ func (v *WebPage) Encode(b *bytes.Buffer) error {
 // DecodeWebPage deserializes a WebPage from a reader using the TL binary protocol.
 func DecodeWebPage(r *Reader) (*WebPage, error) {
 	v := &WebPage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasLargeMedia = v.Flags.Has(13)
 	v.VideoCoverPhoto = v.Flags.Has(14)
 	_rID, _eID := r.ReadInt64()
@@ -13353,6 +13437,9 @@ func DecodeWebPage(r *Reader) (*WebPage, error) {
 		if _ehdrAttributes != nil {
 			return nil, _ehdrAttributes
 		}
+		if _errAttributes := checkVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+			return nil, _errAttributes
+		}
 		_cntAttributes, _ecntAttributes := r.ReadUint32()
 		if _ecntAttributes != nil {
 			return nil, _ecntAttributes
@@ -13372,7 +13459,6 @@ func DecodeWebPage(r *Reader) (*WebPage, error) {
 			}
 			v.Attributes[_iAttributes] = _cAttributes
 		}
-		_ = _vhdrAttributes
 	}
 	return v, nil
 }
@@ -13417,11 +13503,11 @@ func (v *WebPageNotModified) Encode(b *bytes.Buffer) error {
 // DecodeWebPageNotModified deserializes a WebPageNotModified from a reader using the TL binary protocol.
 func DecodeWebPageNotModified(r *Reader) (*WebPageNotModified, error) {
 	v := &WebPageNotModified{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rCachedPageViews, _eCachedPageViews := r.ReadInt32()
 		if _eCachedPageViews != nil {
@@ -13485,6 +13571,9 @@ func DecodeMessagesWebPage(r *Reader) (*MessagesWebPage, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -13504,10 +13593,12 @@ func DecodeMessagesWebPage(r *Reader) (*MessagesWebPage, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -13528,7 +13619,6 @@ func DecodeMessagesWebPage(r *Reader) (*MessagesWebPage, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -13717,11 +13807,11 @@ func (v *ChatInviteExported) Encode(b *bytes.Buffer) error {
 // DecodeChatInviteExported deserializes a ChatInviteExported from a reader using the TL binary protocol.
 func DecodeChatInviteExported(r *Reader) (*ChatInviteExported, error) {
 	v := &ChatInviteExported{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Revoked = v.Flags.Has(0)
 	v.Permanent = v.Flags.Has(5)
 	v.RequestNeeded = v.Flags.Has(6)
@@ -13879,6 +13969,9 @@ func DecodeMessagesExportedChatInvite(r *Reader) (*MessagesExportedChatInvite, e
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -13898,7 +13991,6 @@ func DecodeMessagesExportedChatInvite(r *Reader) (*MessagesExportedChatInvite, e
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -13960,6 +14052,9 @@ func DecodeMessagesExportedChatInviteReplaced(r *Reader) (*MessagesExportedChatI
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -13979,7 +14074,6 @@ func DecodeMessagesExportedChatInviteReplaced(r *Reader) (*MessagesExportedChatI
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -14577,11 +14671,11 @@ func (v *StickerSet) Encode(b *bytes.Buffer) error {
 // DecodeStickerSet deserializes a StickerSet from a reader using the TL binary protocol.
 func DecodeStickerSet(r *Reader) (*StickerSet, error) {
 	v := &StickerSet{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Archived = v.Flags.Has(1)
 	v.Official = v.Flags.Has(2)
 	v.Masks = v.Flags.Has(3)
@@ -14621,6 +14715,9 @@ func DecodeStickerSet(r *Reader) (*StickerSet, error) {
 		if _ehdrThumbs != nil {
 			return nil, _ehdrThumbs
 		}
+		if _errThumbs := checkVectorConstructor(_vhdrThumbs); _errThumbs != nil {
+			return nil, _errThumbs
+		}
 		_cntThumbs, _ecntThumbs := r.ReadUint32()
 		if _ecntThumbs != nil {
 			return nil, _ecntThumbs
@@ -14640,7 +14737,6 @@ func DecodeStickerSet(r *Reader) (*StickerSet, error) {
 			}
 			v.Thumbs[_iThumbs] = _cThumbs
 		}
-		_ = _vhdrThumbs
 	}
 	if v.Flags.Has(4) {
 		_rThumbDCID, _eThumbDCID := r.ReadInt32()
@@ -14735,6 +14831,9 @@ func DecodeMessagesStickerSet(r *Reader) (*MessagesStickerSet, error) {
 	if _ehdrPacks != nil {
 		return nil, _ehdrPacks
 	}
+	if _errPacks := checkVectorConstructor(_vhdrPacks); _errPacks != nil {
+		return nil, _errPacks
+	}
 	_cntPacks, _ecntPacks := r.ReadUint32()
 	if _ecntPacks != nil {
 		return nil, _ecntPacks
@@ -14754,10 +14853,12 @@ func DecodeMessagesStickerSet(r *Reader) (*MessagesStickerSet, error) {
 		}
 		v.Packs[_iPacks] = _cPacks
 	}
-	_ = _vhdrPacks
 	_vhdrKeywords, _ehdrKeywords := r.ReadUint32()
 	if _ehdrKeywords != nil {
 		return nil, _ehdrKeywords
+	}
+	if _errKeywords := checkVectorConstructor(_vhdrKeywords); _errKeywords != nil {
+		return nil, _errKeywords
 	}
 	_cntKeywords, _ecntKeywords := r.ReadUint32()
 	if _ecntKeywords != nil {
@@ -14778,10 +14879,12 @@ func DecodeMessagesStickerSet(r *Reader) (*MessagesStickerSet, error) {
 		}
 		v.Keywords[_iKeywords] = _cKeywords
 	}
-	_ = _vhdrKeywords
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
+	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
@@ -14802,7 +14905,6 @@ func DecodeMessagesStickerSet(r *Reader) (*MessagesStickerSet, error) {
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	return v, nil
 }
 
@@ -15933,11 +16035,11 @@ func (v *MessageEntityBlockquote) Encode(b *bytes.Buffer) error {
 // DecodeMessageEntityBlockquote deserializes a MessageEntityBlockquote from a reader using the TL binary protocol.
 func DecodeMessageEntityBlockquote(r *Reader) (*MessageEntityBlockquote, error) {
 	v := &MessageEntityBlockquote{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Collapsed = v.Flags.Has(0)
 	_rOffset, _eOffset := r.ReadInt32()
 	if _eOffset != nil {
@@ -16015,11 +16117,11 @@ func (v *MessageEntityFormattedDate) Encode(b *bytes.Buffer) error {
 // DecodeMessageEntityFormattedDate deserializes a MessageEntityFormattedDate from a reader using the TL binary protocol.
 func DecodeMessageEntityFormattedDate(r *Reader) (*MessageEntityFormattedDate, error) {
 	v := &MessageEntityFormattedDate{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Relative = v.Flags.Has(0)
 	v.ShortTime = v.Flags.Has(1)
 	v.LongTime = v.Flags.Has(2)
@@ -16318,15 +16420,18 @@ func (v *ChannelMessagesFilter) Encode(b *bytes.Buffer) error {
 // DecodeChannelMessagesFilter deserializes a ChannelMessagesFilter from a reader using the TL binary protocol.
 func DecodeChannelMessagesFilter(r *Reader) (*ChannelMessagesFilter, error) {
 	v := &ChannelMessagesFilter{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ExcludeNewMessages = v.Flags.Has(1)
 	_vhdrRanges, _ehdrRanges := r.ReadUint32()
 	if _ehdrRanges != nil {
 		return nil, _ehdrRanges
+	}
+	if _errRanges := checkVectorConstructor(_vhdrRanges); _errRanges != nil {
+		return nil, _errRanges
 	}
 	_cntRanges, _ecntRanges := r.ReadUint32()
 	if _ecntRanges != nil {
@@ -16347,7 +16452,6 @@ func DecodeChannelMessagesFilter(r *Reader) (*ChannelMessagesFilter, error) {
 		}
 		v.Ranges[_iRanges] = _cRanges
 	}
-	_ = _vhdrRanges
 	return v, nil
 }
 
@@ -16443,6 +16547,9 @@ func DecodeMessagesSavedGifs(r *Reader) (*MessagesSavedGifs, error) {
 	if _ehdrGifs != nil {
 		return nil, _ehdrGifs
 	}
+	if _errGifs := checkVectorConstructor(_vhdrGifs); _errGifs != nil {
+		return nil, _errGifs
+	}
 	_cntGifs, _ecntGifs := r.ReadUint32()
 	if _ecntGifs != nil {
 		return nil, _ecntGifs
@@ -16462,7 +16569,6 @@ func DecodeMessagesSavedGifs(r *Reader) (*MessagesSavedGifs, error) {
 		}
 		v.Gifs[_iGifs] = _cGifs
 	}
-	_ = _vhdrGifs
 	return v, nil
 }
 
@@ -16585,11 +16691,11 @@ func (v *InputBotInlineMessageMediaAuto) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaAuto deserializes a InputBotInlineMessageMediaAuto from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaAuto(r *Reader) (*InputBotInlineMessageMediaAuto, error) {
 	v := &InputBotInlineMessageMediaAuto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.InvertMedia = v.Flags.Has(3)
 	_rMessage, _eMessage := r.ReadString()
 	if _eMessage != nil {
@@ -16600,6 +16706,9 @@ func DecodeInputBotInlineMessageMediaAuto(r *Reader) (*InputBotInlineMessageMedi
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -16620,7 +16729,6 @@ func DecodeInputBotInlineMessageMediaAuto(r *Reader) (*InputBotInlineMessageMedi
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
@@ -16697,11 +16805,11 @@ func (v *InputBotInlineMessageText) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageText deserializes a InputBotInlineMessageText from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageText(r *Reader) (*InputBotInlineMessageText, error) {
 	v := &InputBotInlineMessageText{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NoWebpage = v.Flags.Has(0)
 	v.InvertMedia = v.Flags.Has(3)
 	_rMessage, _eMessage := r.ReadString()
@@ -16713,6 +16821,9 @@ func DecodeInputBotInlineMessageText(r *Reader) (*InputBotInlineMessageText, err
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -16733,7 +16844,6 @@ func DecodeInputBotInlineMessageText(r *Reader) (*InputBotInlineMessageText, err
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
@@ -16812,11 +16922,11 @@ func (v *InputBotInlineMessageMediaGeo) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaGeo deserializes a InputBotInlineMessageMediaGeo from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaGeo(r *Reader) (*InputBotInlineMessageMediaGeo, error) {
 	v := &InputBotInlineMessageMediaGeo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
@@ -16913,11 +17023,11 @@ func (v *InputBotInlineMessageMediaVenue) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaVenue deserializes a InputBotInlineMessageMediaVenue from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaVenue(r *Reader) (*InputBotInlineMessageMediaVenue, error) {
 	v := &InputBotInlineMessageMediaVenue{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objGeoPoint, _errGeoPoint := ReadTLObject(r)
 	if _errGeoPoint != nil {
 		return nil, _errGeoPoint
@@ -17014,11 +17124,11 @@ func (v *InputBotInlineMessageMediaContact) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaContact deserializes a InputBotInlineMessageMediaContact from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaContact(r *Reader) (*InputBotInlineMessageMediaContact, error) {
 	v := &InputBotInlineMessageMediaContact{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rPhoneNumber, _ePhoneNumber := r.ReadString()
 	if _ePhoneNumber != nil {
 		return nil, _ePhoneNumber
@@ -17093,11 +17203,11 @@ func (v *InputBotInlineMessageGame) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageGame deserializes a InputBotInlineMessageGame from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageGame(r *Reader) (*InputBotInlineMessageGame, error) {
 	v := &InputBotInlineMessageGame{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
 		if _errReplyMarkup != nil {
@@ -17171,11 +17281,11 @@ func (v *InputBotInlineMessageMediaInvoice) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaInvoice deserializes a InputBotInlineMessageMediaInvoice from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaInvoice(r *Reader) (*InputBotInlineMessageMediaInvoice, error) {
 	v := &InputBotInlineMessageMediaInvoice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -17310,11 +17420,11 @@ func (v *InputBotInlineMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageMediaWebPage deserializes a InputBotInlineMessageMediaWebPage from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageMediaWebPage(r *Reader) (*InputBotInlineMessageMediaWebPage, error) {
 	v := &InputBotInlineMessageMediaWebPage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.InvertMedia = v.Flags.Has(3)
 	v.ForceLargeMedia = v.Flags.Has(4)
 	v.ForceSmallMedia = v.Flags.Has(5)
@@ -17328,6 +17438,9 @@ func DecodeInputBotInlineMessageMediaWebPage(r *Reader) (*InputBotInlineMessageM
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -17348,7 +17461,6 @@ func DecodeInputBotInlineMessageMediaWebPage(r *Reader) (*InputBotInlineMessageM
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
@@ -17411,11 +17523,11 @@ func (v *InputBotInlineMessageRichMessage) Encode(b *bytes.Buffer) error {
 // DecodeInputBotInlineMessageRichMessage deserializes a InputBotInlineMessageRichMessage from a reader using the TL binary protocol.
 func DecodeInputBotInlineMessageRichMessage(r *Reader) (*InputBotInlineMessageRichMessage, error) {
 	v := &InputBotInlineMessageRichMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
 		if _errReplyMarkup != nil {
@@ -17552,11 +17664,11 @@ func (v *BotInlineMessageMediaAuto) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaAuto deserializes a BotInlineMessageMediaAuto from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaAuto(r *Reader) (*BotInlineMessageMediaAuto, error) {
 	v := &BotInlineMessageMediaAuto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.InvertMedia = v.Flags.Has(3)
 	_rMessage, _eMessage := r.ReadString()
 	if _eMessage != nil {
@@ -17567,6 +17679,9 @@ func DecodeBotInlineMessageMediaAuto(r *Reader) (*BotInlineMessageMediaAuto, err
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -17587,7 +17702,6 @@ func DecodeBotInlineMessageMediaAuto(r *Reader) (*BotInlineMessageMediaAuto, err
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
@@ -17664,11 +17778,11 @@ func (v *BotInlineMessageText) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageText deserializes a BotInlineMessageText from a reader using the TL binary protocol.
 func DecodeBotInlineMessageText(r *Reader) (*BotInlineMessageText, error) {
 	v := &BotInlineMessageText{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NoWebpage = v.Flags.Has(0)
 	v.InvertMedia = v.Flags.Has(3)
 	_rMessage, _eMessage := r.ReadString()
@@ -17680,6 +17794,9 @@ func DecodeBotInlineMessageText(r *Reader) (*BotInlineMessageText, error) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -17700,7 +17817,6 @@ func DecodeBotInlineMessageText(r *Reader) (*BotInlineMessageText, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
@@ -17779,11 +17895,11 @@ func (v *BotInlineMessageMediaGeo) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaGeo deserializes a BotInlineMessageMediaGeo from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaGeo(r *Reader) (*BotInlineMessageMediaGeo, error) {
 	v := &BotInlineMessageMediaGeo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objGeo, _errGeo := ReadTLObject(r)
 	if _errGeo != nil {
 		return nil, _errGeo
@@ -17880,11 +17996,11 @@ func (v *BotInlineMessageMediaVenue) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaVenue deserializes a BotInlineMessageMediaVenue from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaVenue(r *Reader) (*BotInlineMessageMediaVenue, error) {
 	v := &BotInlineMessageMediaVenue{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objGeo, _errGeo := ReadTLObject(r)
 	if _errGeo != nil {
 		return nil, _errGeo
@@ -17981,11 +18097,11 @@ func (v *BotInlineMessageMediaContact) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaContact deserializes a BotInlineMessageMediaContact from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaContact(r *Reader) (*BotInlineMessageMediaContact, error) {
 	v := &BotInlineMessageMediaContact{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rPhoneNumber, _ePhoneNumber := r.ReadString()
 	if _ePhoneNumber != nil {
 		return nil, _ePhoneNumber
@@ -18083,11 +18199,11 @@ func (v *BotInlineMessageMediaInvoice) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaInvoice deserializes a BotInlineMessageMediaInvoice from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaInvoice(r *Reader) (*BotInlineMessageMediaInvoice, error) {
 	v := &BotInlineMessageMediaInvoice{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ShippingAddressRequested = v.Flags.Has(1)
 	v.Test = v.Flags.Has(3)
 	_rTitle, _eTitle := r.ReadString()
@@ -18210,11 +18326,11 @@ func (v *BotInlineMessageMediaWebPage) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageMediaWebPage deserializes a BotInlineMessageMediaWebPage from a reader using the TL binary protocol.
 func DecodeBotInlineMessageMediaWebPage(r *Reader) (*BotInlineMessageMediaWebPage, error) {
 	v := &BotInlineMessageMediaWebPage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.InvertMedia = v.Flags.Has(3)
 	v.ForceLargeMedia = v.Flags.Has(4)
 	v.ForceSmallMedia = v.Flags.Has(5)
@@ -18229,6 +18345,9 @@ func DecodeBotInlineMessageMediaWebPage(r *Reader) (*BotInlineMessageMediaWebPag
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -18249,7 +18368,6 @@ func DecodeBotInlineMessageMediaWebPage(r *Reader) (*BotInlineMessageMediaWebPag
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
@@ -18312,11 +18430,11 @@ func (v *BotInlineMessageRichMessage) Encode(b *bytes.Buffer) error {
 // DecodeBotInlineMessageRichMessage deserializes a BotInlineMessageRichMessage from a reader using the TL binary protocol.
 func DecodeBotInlineMessageRichMessage(r *Reader) (*BotInlineMessageRichMessage, error) {
 	v := &BotInlineMessageRichMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(2) {
 		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
 		if _errReplyMarkup != nil {
@@ -18417,11 +18535,11 @@ func (v *MessagesBotResults) Encode(b *bytes.Buffer) error {
 // DecodeMessagesBotResults deserializes a MessagesBotResults from a reader using the TL binary protocol.
 func DecodeMessagesBotResults(r *Reader) (*MessagesBotResults, error) {
 	v := &MessagesBotResults{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Gallery = v.Flags.Has(0)
 	_rQueryID, _eQueryID := r.ReadInt64()
 	if _eQueryID != nil {
@@ -18461,6 +18579,9 @@ func DecodeMessagesBotResults(r *Reader) (*MessagesBotResults, error) {
 	if _ehdrResults != nil {
 		return nil, _ehdrResults
 	}
+	if _errResults := checkVectorConstructor(_vhdrResults); _errResults != nil {
+		return nil, _errResults
+	}
 	_cntResults, _ecntResults := r.ReadUint32()
 	if _ecntResults != nil {
 		return nil, _ecntResults
@@ -18480,7 +18601,6 @@ func DecodeMessagesBotResults(r *Reader) (*MessagesBotResults, error) {
 		}
 		v.Results[_iResults] = _cResults
 	}
-	_ = _vhdrResults
 	_rCacheTime, _eCacheTime := r.ReadInt32()
 	if _eCacheTime != nil {
 		return nil, _eCacheTime
@@ -18489,6 +18609,9 @@ func DecodeMessagesBotResults(r *Reader) (*MessagesBotResults, error) {
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -18509,7 +18632,6 @@ func DecodeMessagesBotResults(r *Reader) (*MessagesBotResults, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -18675,11 +18797,11 @@ func (v *MessageFwdHeader) Encode(b *bytes.Buffer) error {
 // DecodeMessageFwdHeader deserializes a MessageFwdHeader from a reader using the TL binary protocol.
 func DecodeMessageFwdHeader(r *Reader) (*MessageFwdHeader, error) {
 	v := &MessageFwdHeader{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Imported = v.Flags.Has(7)
 	v.SavedOut = v.Flags.Has(11)
 	if v.Flags.Has(0) {
@@ -18836,11 +18958,11 @@ func (v *MessagesBotCallbackAnswer) Encode(b *bytes.Buffer) error {
 // DecodeMessagesBotCallbackAnswer deserializes a MessagesBotCallbackAnswer from a reader using the TL binary protocol.
 func DecodeMessagesBotCallbackAnswer(r *Reader) (*MessagesBotCallbackAnswer, error) {
 	v := &MessagesBotCallbackAnswer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Alert = v.Flags.Has(1)
 	v.HasURL = v.Flags.Has(3)
 	v.NativeUi = v.Flags.Has(4)
@@ -18906,11 +19028,11 @@ func (v *MessagesMessageEditData) Encode(b *bytes.Buffer) error {
 // DecodeMessagesMessageEditData deserializes a MessagesMessageEditData from a reader using the TL binary protocol.
 func DecodeMessagesMessageEditData(r *Reader) (*MessagesMessageEditData, error) {
 	v := &MessagesMessageEditData{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Caption = v.Flags.Has(0)
 	return v, nil
 }
@@ -19101,6 +19223,9 @@ func DecodeMessagesPeerDialogs(r *Reader) (*MessagesPeerDialogs, error) {
 	if _ehdrDialogs != nil {
 		return nil, _ehdrDialogs
 	}
+	if _errDialogs := checkVectorConstructor(_vhdrDialogs); _errDialogs != nil {
+		return nil, _errDialogs
+	}
 	_cntDialogs, _ecntDialogs := r.ReadUint32()
 	if _ecntDialogs != nil {
 		return nil, _ecntDialogs
@@ -19120,10 +19245,12 @@ func DecodeMessagesPeerDialogs(r *Reader) (*MessagesPeerDialogs, error) {
 		}
 		v.Dialogs[_iDialogs] = _cDialogs
 	}
-	_ = _vhdrDialogs
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -19144,10 +19271,12 @@ func DecodeMessagesPeerDialogs(r *Reader) (*MessagesPeerDialogs, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -19168,10 +19297,12 @@ func DecodeMessagesPeerDialogs(r *Reader) (*MessagesPeerDialogs, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -19192,7 +19323,6 @@ func DecodeMessagesPeerDialogs(r *Reader) (*MessagesPeerDialogs, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_objState, _errState := ReadTLObject(r)
 	if _errState != nil {
 		return nil, _errState
@@ -19265,11 +19395,11 @@ func (v *DraftMessageEmpty) Encode(b *bytes.Buffer) error {
 // DecodeDraftMessageEmpty deserializes a DraftMessageEmpty from a reader using the TL binary protocol.
 func DecodeDraftMessageEmpty(r *Reader) (*DraftMessageEmpty, error) {
 	v := &DraftMessageEmpty{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rDate, _eDate := r.ReadInt32()
 		if _eDate != nil {
@@ -19371,11 +19501,11 @@ func (v *DraftMessage) Encode(b *bytes.Buffer) error {
 // DecodeDraftMessage deserializes a DraftMessage from a reader using the TL binary protocol.
 func DecodeDraftMessage(r *Reader) (*DraftMessage, error) {
 	v := &DraftMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.NoWebpage = v.Flags.Has(1)
 	v.InvertMedia = v.Flags.Has(6)
 	if v.Flags.Has(4) {
@@ -19399,6 +19529,9 @@ func DecodeDraftMessage(r *Reader) (*DraftMessage, error) {
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
 		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
 			return nil, _ecntEntities
@@ -19418,7 +19551,6 @@ func DecodeDraftMessage(r *Reader) (*DraftMessage, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(5) {
 		_objMedia, _errMedia := ReadTLObject(r)
@@ -19573,11 +19705,11 @@ func (v *MessagesFeaturedStickers) Encode(b *bytes.Buffer) error {
 // DecodeMessagesFeaturedStickers deserializes a MessagesFeaturedStickers from a reader using the TL binary protocol.
 func DecodeMessagesFeaturedStickers(r *Reader) (*MessagesFeaturedStickers, error) {
 	v := &MessagesFeaturedStickers{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Premium = v.Flags.Has(0)
 	_rHash, _eHash := r.ReadInt64()
 	if _eHash != nil {
@@ -19592,6 +19724,9 @@ func DecodeMessagesFeaturedStickers(r *Reader) (*MessagesFeaturedStickers, error
 	_vhdrSets, _ehdrSets := r.ReadUint32()
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
+	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
 	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
@@ -19612,7 +19747,6 @@ func DecodeMessagesFeaturedStickers(r *Reader) (*MessagesFeaturedStickers, error
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	_vvUnread, _veUnread := r.ReadVectorLong()
 	if _veUnread != nil {
 		return nil, _veUnread
@@ -19721,6 +19855,9 @@ func DecodeMessagesRecentStickers(r *Reader) (*MessagesRecentStickers, error) {
 	if _ehdrPacks != nil {
 		return nil, _ehdrPacks
 	}
+	if _errPacks := checkVectorConstructor(_vhdrPacks); _errPacks != nil {
+		return nil, _errPacks
+	}
 	_cntPacks, _ecntPacks := r.ReadUint32()
 	if _ecntPacks != nil {
 		return nil, _ecntPacks
@@ -19740,10 +19877,12 @@ func DecodeMessagesRecentStickers(r *Reader) (*MessagesRecentStickers, error) {
 		}
 		v.Packs[_iPacks] = _cPacks
 	}
-	_ = _vhdrPacks
 	_vhdrStickers, _ehdrStickers := r.ReadUint32()
 	if _ehdrStickers != nil {
 		return nil, _ehdrStickers
+	}
+	if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+		return nil, _errStickers
 	}
 	_cntStickers, _ecntStickers := r.ReadUint32()
 	if _ecntStickers != nil {
@@ -19764,7 +19903,6 @@ func DecodeMessagesRecentStickers(r *Reader) (*MessagesRecentStickers, error) {
 		}
 		v.Stickers[_iStickers] = _cStickers
 	}
-	_ = _vhdrStickers
 	_vvDates, _veDates := r.ReadVectorInt()
 	if _veDates != nil {
 		return nil, _veDates
@@ -19819,6 +19957,9 @@ func DecodeMessagesArchivedStickers(r *Reader) (*MessagesArchivedStickers, error
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
 	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
+	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
 		return nil, _ecntSets
@@ -19838,7 +19979,6 @@ func DecodeMessagesArchivedStickers(r *Reader) (*MessagesArchivedStickers, error
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	return v, nil
 }
 
@@ -19927,6 +20067,9 @@ func DecodeMessagesStickerSetInstallResultArchive(r *Reader) (*MessagesStickerSe
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
 	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
+	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
 		return nil, _ecntSets
@@ -19946,7 +20089,6 @@ func DecodeMessagesStickerSetInstallResultArchive(r *Reader) (*MessagesStickerSe
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	return v, nil
 }
 
@@ -20080,6 +20222,9 @@ func DecodeStickerSetMultiCovered(r *Reader) (*StickerSetMultiCovered, error) {
 	if _ehdrCovers != nil {
 		return nil, _ehdrCovers
 	}
+	if _errCovers := checkVectorConstructor(_vhdrCovers); _errCovers != nil {
+		return nil, _errCovers
+	}
 	_cntCovers, _ecntCovers := r.ReadUint32()
 	if _ecntCovers != nil {
 		return nil, _ecntCovers
@@ -20099,7 +20244,6 @@ func DecodeStickerSetMultiCovered(r *Reader) (*StickerSetMultiCovered, error) {
 		}
 		v.Covers[_iCovers] = _cCovers
 	}
-	_ = _vhdrCovers
 	return v, nil
 }
 
@@ -20162,6 +20306,9 @@ func DecodeStickerSetFullCovered(r *Reader) (*StickerSetFullCovered, error) {
 	if _ehdrPacks != nil {
 		return nil, _ehdrPacks
 	}
+	if _errPacks := checkVectorConstructor(_vhdrPacks); _errPacks != nil {
+		return nil, _errPacks
+	}
 	_cntPacks, _ecntPacks := r.ReadUint32()
 	if _ecntPacks != nil {
 		return nil, _ecntPacks
@@ -20181,10 +20328,12 @@ func DecodeStickerSetFullCovered(r *Reader) (*StickerSetFullCovered, error) {
 		}
 		v.Packs[_iPacks] = _cPacks
 	}
-	_ = _vhdrPacks
 	_vhdrKeywords, _ehdrKeywords := r.ReadUint32()
 	if _ehdrKeywords != nil {
 		return nil, _ehdrKeywords
+	}
+	if _errKeywords := checkVectorConstructor(_vhdrKeywords); _errKeywords != nil {
+		return nil, _errKeywords
 	}
 	_cntKeywords, _ecntKeywords := r.ReadUint32()
 	if _ecntKeywords != nil {
@@ -20205,10 +20354,12 @@ func DecodeStickerSetFullCovered(r *Reader) (*StickerSetFullCovered, error) {
 		}
 		v.Keywords[_iKeywords] = _cKeywords
 	}
-	_ = _vhdrKeywords
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
+	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
@@ -20229,7 +20380,6 @@ func DecodeStickerSetFullCovered(r *Reader) (*StickerSetFullCovered, error) {
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	return v, nil
 }
 
@@ -20418,6 +20568,9 @@ func DecodeMessagesHighScores(r *Reader) (*MessagesHighScores, error) {
 	if _ehdrScores != nil {
 		return nil, _ehdrScores
 	}
+	if _errScores := checkVectorConstructor(_vhdrScores); _errScores != nil {
+		return nil, _errScores
+	}
 	_cntScores, _ecntScores := r.ReadUint32()
 	if _ecntScores != nil {
 		return nil, _ecntScores
@@ -20437,10 +20590,12 @@ func DecodeMessagesHighScores(r *Reader) (*MessagesHighScores, error) {
 		}
 		v.Scores[_iScores] = _cScores
 	}
-	_ = _vhdrScores
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -20461,7 +20616,6 @@ func DecodeMessagesHighScores(r *Reader) (*MessagesHighScores, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -20519,11 +20673,11 @@ func (v *InputStickerSetItem) Encode(b *bytes.Buffer) error {
 // DecodeInputStickerSetItem deserializes a InputStickerSetItem from a reader using the TL binary protocol.
 func DecodeInputStickerSetItem(r *Reader) (*InputStickerSetItem, error) {
 	v := &InputStickerSetItem{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objDocument, _errDocument := ReadTLObject(r)
 	if _errDocument != nil {
 		return nil, _errDocument
@@ -20657,6 +20811,9 @@ func DecodeMessagesFavedStickers(r *Reader) (*MessagesFavedStickers, error) {
 	if _ehdrPacks != nil {
 		return nil, _ehdrPacks
 	}
+	if _errPacks := checkVectorConstructor(_vhdrPacks); _errPacks != nil {
+		return nil, _errPacks
+	}
 	_cntPacks, _ecntPacks := r.ReadUint32()
 	if _ecntPacks != nil {
 		return nil, _ecntPacks
@@ -20676,10 +20833,12 @@ func DecodeMessagesFavedStickers(r *Reader) (*MessagesFavedStickers, error) {
 		}
 		v.Packs[_iPacks] = _cPacks
 	}
-	_ = _vhdrPacks
 	_vhdrStickers, _ehdrStickers := r.ReadUint32()
 	if _ehdrStickers != nil {
 		return nil, _ehdrStickers
+	}
+	if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+		return nil, _errStickers
 	}
 	_cntStickers, _ecntStickers := r.ReadUint32()
 	if _ecntStickers != nil {
@@ -20700,7 +20859,6 @@ func DecodeMessagesFavedStickers(r *Reader) (*MessagesFavedStickers, error) {
 		}
 		v.Stickers[_iStickers] = _cStickers
 	}
-	_ = _vhdrStickers
 	return v, nil
 }
 
@@ -21252,6 +21410,9 @@ func DecodeMessagesFoundStickerSets(r *Reader) (*MessagesFoundStickerSets, error
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
 	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
+	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
 		return nil, _ecntSets
@@ -21271,7 +21432,6 @@ func DecodeMessagesFoundStickerSets(r *Reader) (*MessagesFoundStickerSets, error
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	return v, nil
 }
 
@@ -21441,6 +21601,9 @@ func DecodeEmojiKeywordsDifference(r *Reader) (*EmojiKeywordsDifference, error) 
 	if _ehdrKeywords != nil {
 		return nil, _ehdrKeywords
 	}
+	if _errKeywords := checkVectorConstructor(_vhdrKeywords); _errKeywords != nil {
+		return nil, _errKeywords
+	}
 	_cntKeywords, _ecntKeywords := r.ReadUint32()
 	if _ecntKeywords != nil {
 		return nil, _ecntKeywords
@@ -21460,7 +21623,6 @@ func DecodeEmojiKeywordsDifference(r *Reader) (*EmojiKeywordsDifference, error) 
 		}
 		v.Keywords[_iKeywords] = _cKeywords
 	}
-	_ = _vhdrKeywords
 	return v, nil
 }
 
@@ -21586,11 +21748,11 @@ func (v *MessagesSearchCounter) Encode(b *bytes.Buffer) error {
 // DecodeMessagesSearchCounter deserializes a MessagesSearchCounter from a reader using the TL binary protocol.
 func DecodeMessagesSearchCounter(r *Reader) (*MessagesSearchCounter, error) {
 	v := &MessagesSearchCounter{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inexact = v.Flags.Has(1)
 	_objFilter, _errFilter := ReadTLObject(r)
 	if _errFilter != nil {
@@ -21661,6 +21823,9 @@ func DecodeMessagesInactiveChats(r *Reader) (*MessagesInactiveChats, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -21680,10 +21845,12 @@ func DecodeMessagesInactiveChats(r *Reader) (*MessagesInactiveChats, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -21704,7 +21871,6 @@ func DecodeMessagesInactiveChats(r *Reader) (*MessagesInactiveChats, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -21771,11 +21937,11 @@ func (v *MessagesVotesList) Encode(b *bytes.Buffer) error {
 // DecodeMessagesVotesList deserializes a MessagesVotesList from a reader using the TL binary protocol.
 func DecodeMessagesVotesList(r *Reader) (*MessagesVotesList, error) {
 	v := &MessagesVotesList{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -21784,6 +21950,9 @@ func DecodeMessagesVotesList(r *Reader) (*MessagesVotesList, error) {
 	_vhdrVotes, _ehdrVotes := r.ReadUint32()
 	if _ehdrVotes != nil {
 		return nil, _ehdrVotes
+	}
+	if _errVotes := checkVectorConstructor(_vhdrVotes); _errVotes != nil {
+		return nil, _errVotes
 	}
 	_cntVotes, _ecntVotes := r.ReadUint32()
 	if _ecntVotes != nil {
@@ -21804,10 +21973,12 @@ func DecodeMessagesVotesList(r *Reader) (*MessagesVotesList, error) {
 		}
 		v.Votes[_iVotes] = _cVotes
 	}
-	_ = _vhdrVotes
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -21828,10 +21999,12 @@ func DecodeMessagesVotesList(r *Reader) (*MessagesVotesList, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -21852,7 +22025,6 @@ func DecodeMessagesVotesList(r *Reader) (*MessagesVotesList, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -21994,11 +22166,11 @@ func (v *DialogFilter) Encode(b *bytes.Buffer) error {
 // DecodeDialogFilter deserializes a DialogFilter from a reader using the TL binary protocol.
 func DecodeDialogFilter(r *Reader) (*DialogFilter, error) {
 	v := &DialogFilter{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Contacts = v.Flags.Has(0)
 	v.NonContacts = v.Flags.Has(1)
 	v.Groups = v.Flags.Has(2)
@@ -22040,6 +22212,9 @@ func DecodeDialogFilter(r *Reader) (*DialogFilter, error) {
 	if _ehdrPinnedPeers != nil {
 		return nil, _ehdrPinnedPeers
 	}
+	if _errPinnedPeers := checkVectorConstructor(_vhdrPinnedPeers); _errPinnedPeers != nil {
+		return nil, _errPinnedPeers
+	}
 	_cntPinnedPeers, _ecntPinnedPeers := r.ReadUint32()
 	if _ecntPinnedPeers != nil {
 		return nil, _ecntPinnedPeers
@@ -22059,10 +22234,12 @@ func DecodeDialogFilter(r *Reader) (*DialogFilter, error) {
 		}
 		v.PinnedPeers[_iPinnedPeers] = _cPinnedPeers
 	}
-	_ = _vhdrPinnedPeers
 	_vhdrIncludePeers, _ehdrIncludePeers := r.ReadUint32()
 	if _ehdrIncludePeers != nil {
 		return nil, _ehdrIncludePeers
+	}
+	if _errIncludePeers := checkVectorConstructor(_vhdrIncludePeers); _errIncludePeers != nil {
+		return nil, _errIncludePeers
 	}
 	_cntIncludePeers, _ecntIncludePeers := r.ReadUint32()
 	if _ecntIncludePeers != nil {
@@ -22083,10 +22260,12 @@ func DecodeDialogFilter(r *Reader) (*DialogFilter, error) {
 		}
 		v.IncludePeers[_iIncludePeers] = _cIncludePeers
 	}
-	_ = _vhdrIncludePeers
 	_vhdrExcludePeers, _ehdrExcludePeers := r.ReadUint32()
 	if _ehdrExcludePeers != nil {
 		return nil, _ehdrExcludePeers
+	}
+	if _errExcludePeers := checkVectorConstructor(_vhdrExcludePeers); _errExcludePeers != nil {
+		return nil, _errExcludePeers
 	}
 	_cntExcludePeers, _ecntExcludePeers := r.ReadUint32()
 	if _ecntExcludePeers != nil {
@@ -22107,7 +22286,6 @@ func DecodeDialogFilter(r *Reader) (*DialogFilter, error) {
 		}
 		v.ExcludePeers[_iExcludePeers] = _cExcludePeers
 	}
-	_ = _vhdrExcludePeers
 	return v, nil
 }
 
@@ -22211,11 +22389,11 @@ func (v *DialogFilterChatlist) Encode(b *bytes.Buffer) error {
 // DecodeDialogFilterChatlist deserializes a DialogFilterChatlist from a reader using the TL binary protocol.
 func DecodeDialogFilterChatlist(r *Reader) (*DialogFilterChatlist, error) {
 	v := &DialogFilterChatlist{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasMyInvites = v.Flags.Has(26)
 	v.TitleNoanimate = v.Flags.Has(28)
 	_rID, _eID := r.ReadInt32()
@@ -22250,6 +22428,9 @@ func DecodeDialogFilterChatlist(r *Reader) (*DialogFilterChatlist, error) {
 	if _ehdrPinnedPeers != nil {
 		return nil, _ehdrPinnedPeers
 	}
+	if _errPinnedPeers := checkVectorConstructor(_vhdrPinnedPeers); _errPinnedPeers != nil {
+		return nil, _errPinnedPeers
+	}
 	_cntPinnedPeers, _ecntPinnedPeers := r.ReadUint32()
 	if _ecntPinnedPeers != nil {
 		return nil, _ecntPinnedPeers
@@ -22269,10 +22450,12 @@ func DecodeDialogFilterChatlist(r *Reader) (*DialogFilterChatlist, error) {
 		}
 		v.PinnedPeers[_iPinnedPeers] = _cPinnedPeers
 	}
-	_ = _vhdrPinnedPeers
 	_vhdrIncludePeers, _ehdrIncludePeers := r.ReadUint32()
 	if _ehdrIncludePeers != nil {
 		return nil, _ehdrIncludePeers
+	}
+	if _errIncludePeers := checkVectorConstructor(_vhdrIncludePeers); _errIncludePeers != nil {
+		return nil, _errIncludePeers
 	}
 	_cntIncludePeers, _ecntIncludePeers := r.ReadUint32()
 	if _ecntIncludePeers != nil {
@@ -22293,7 +22476,6 @@ func DecodeDialogFilterChatlist(r *Reader) (*DialogFilterChatlist, error) {
 		}
 		v.IncludePeers[_iIncludePeers] = _cIncludePeers
 	}
-	_ = _vhdrIncludePeers
 	return v, nil
 }
 
@@ -22421,11 +22603,11 @@ func (v *MessageViews) Encode(b *bytes.Buffer) error {
 // DecodeMessageViews deserializes a MessageViews from a reader using the TL binary protocol.
 func DecodeMessageViews(r *Reader) (*MessageViews, error) {
 	v := &MessageViews{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rViews, _eViews := r.ReadInt32()
 		if _eViews != nil {
@@ -22502,6 +22684,9 @@ func DecodeMessagesMessageViews(r *Reader) (*MessagesMessageViews, error) {
 	if _ehdrViews != nil {
 		return nil, _ehdrViews
 	}
+	if _errViews := checkVectorConstructor(_vhdrViews); _errViews != nil {
+		return nil, _errViews
+	}
 	_cntViews, _ecntViews := r.ReadUint32()
 	if _ecntViews != nil {
 		return nil, _ecntViews
@@ -22521,10 +22706,12 @@ func DecodeMessagesMessageViews(r *Reader) (*MessagesMessageViews, error) {
 		}
 		v.Views[_iViews] = _cViews
 	}
-	_ = _vhdrViews
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -22545,10 +22732,12 @@ func DecodeMessagesMessageViews(r *Reader) (*MessagesMessageViews, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -22569,7 +22758,6 @@ func DecodeMessagesMessageViews(r *Reader) (*MessagesMessageViews, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -22650,14 +22838,17 @@ func (v *MessagesDiscussionMessage) Encode(b *bytes.Buffer) error {
 // DecodeMessagesDiscussionMessage deserializes a MessagesDiscussionMessage from a reader using the TL binary protocol.
 func DecodeMessagesDiscussionMessage(r *Reader) (*MessagesDiscussionMessage, error) {
 	v := &MessagesDiscussionMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -22678,7 +22869,6 @@ func DecodeMessagesDiscussionMessage(r *Reader) (*MessagesDiscussionMessage, err
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	if v.Flags.Has(0) {
 		_rMaxID, _eMaxID := r.ReadInt32()
 		if _eMaxID != nil {
@@ -22709,6 +22899,9 @@ func DecodeMessagesDiscussionMessage(r *Reader) (*MessagesDiscussionMessage, err
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -22728,10 +22921,12 @@ func DecodeMessagesDiscussionMessage(r *Reader) (*MessagesDiscussionMessage, err
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -22752,7 +22947,6 @@ func DecodeMessagesDiscussionMessage(r *Reader) (*MessagesDiscussionMessage, err
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -22899,11 +23093,11 @@ func (v *MessageReplyHeader) Encode(b *bytes.Buffer) error {
 // DecodeMessageReplyHeader deserializes a MessageReplyHeader from a reader using the TL binary protocol.
 func DecodeMessageReplyHeader(r *Reader) (*MessageReplyHeader, error) {
 	v := &MessageReplyHeader{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ReplyToScheduled = v.Flags.Has(2)
 	v.ForumTopic = v.Flags.Has(3)
 	v.Quote = v.Flags.Has(9)
@@ -22967,6 +23161,9 @@ func DecodeMessageReplyHeader(r *Reader) (*MessageReplyHeader, error) {
 		if _ehdrQuoteEntities != nil {
 			return nil, _ehdrQuoteEntities
 		}
+		if _errQuoteEntities := checkVectorConstructor(_vhdrQuoteEntities); _errQuoteEntities != nil {
+			return nil, _errQuoteEntities
+		}
 		_cntQuoteEntities, _ecntQuoteEntities := r.ReadUint32()
 		if _ecntQuoteEntities != nil {
 			return nil, _ecntQuoteEntities
@@ -22986,7 +23183,6 @@ func DecodeMessageReplyHeader(r *Reader) (*MessageReplyHeader, error) {
 			}
 			v.QuoteEntities[_iQuoteEntities] = _cQuoteEntities
 		}
-		_ = _vhdrQuoteEntities
 	}
 	if v.Flags.Has(10) {
 		_rQuoteOffset, _eQuoteOffset := r.ReadInt32()
@@ -23135,11 +23331,11 @@ func (v *MessageReplies) Encode(b *bytes.Buffer) error {
 // DecodeMessageReplies deserializes a MessageReplies from a reader using the TL binary protocol.
 func DecodeMessageReplies(r *Reader) (*MessageReplies, error) {
 	v := &MessageReplies{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Comments = v.Flags.Has(0)
 	_rReplies, _eReplies := r.ReadInt32()
 	if _eReplies != nil {
@@ -23155,6 +23351,9 @@ func DecodeMessageReplies(r *Reader) (*MessageReplies, error) {
 		_vhdrRecentRepliers, _ehdrRecentRepliers := r.ReadUint32()
 		if _ehdrRecentRepliers != nil {
 			return nil, _ehdrRecentRepliers
+		}
+		if _errRecentRepliers := checkVectorConstructor(_vhdrRecentRepliers); _errRecentRepliers != nil {
+			return nil, _errRecentRepliers
 		}
 		_cntRecentRepliers, _ecntRecentRepliers := r.ReadUint32()
 		if _ecntRecentRepliers != nil {
@@ -23175,7 +23374,6 @@ func DecodeMessageReplies(r *Reader) (*MessageReplies, error) {
 			}
 			v.RecentRepliers[_iRecentRepliers] = _cRecentRepliers
 		}
-		_ = _vhdrRecentRepliers
 	}
 	if v.Flags.Has(0) {
 		_rChannelID, _eChannelID := r.ReadInt64()
@@ -23291,11 +23489,11 @@ func (v *MessagesHistoryImportParsed) Encode(b *bytes.Buffer) error {
 // DecodeMessagesHistoryImportParsed deserializes a MessagesHistoryImportParsed from a reader using the TL binary protocol.
 func DecodeMessagesHistoryImportParsed(r *Reader) (*MessagesHistoryImportParsed, error) {
 	v := &MessagesHistoryImportParsed{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pm = v.Flags.Has(0)
 	v.Group = v.Flags.Has(1)
 	if v.Flags.Has(2) {
@@ -23420,6 +23618,9 @@ func DecodeMessagesExportedChatInvites(r *Reader) (*MessagesExportedChatInvites,
 	if _ehdrInvites != nil {
 		return nil, _ehdrInvites
 	}
+	if _errInvites := checkVectorConstructor(_vhdrInvites); _errInvites != nil {
+		return nil, _errInvites
+	}
 	_cntInvites, _ecntInvites := r.ReadUint32()
 	if _ecntInvites != nil {
 		return nil, _ecntInvites
@@ -23439,10 +23640,12 @@ func DecodeMessagesExportedChatInvites(r *Reader) (*MessagesExportedChatInvites,
 		}
 		v.Invites[_iInvites] = _cInvites
 	}
-	_ = _vhdrInvites
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -23463,7 +23666,6 @@ func DecodeMessagesExportedChatInvites(r *Reader) (*MessagesExportedChatInvites,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -23519,6 +23721,9 @@ func DecodeMessagesChatInviteImporters(r *Reader) (*MessagesChatInviteImporters,
 	if _ehdrImporters != nil {
 		return nil, _ehdrImporters
 	}
+	if _errImporters := checkVectorConstructor(_vhdrImporters); _errImporters != nil {
+		return nil, _errImporters
+	}
 	_cntImporters, _ecntImporters := r.ReadUint32()
 	if _ecntImporters != nil {
 		return nil, _ecntImporters
@@ -23538,10 +23743,12 @@ func DecodeMessagesChatInviteImporters(r *Reader) (*MessagesChatInviteImporters,
 		}
 		v.Importers[_iImporters] = _cImporters
 	}
-	_ = _vhdrImporters
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -23562,7 +23769,6 @@ func DecodeMessagesChatInviteImporters(r *Reader) (*MessagesChatInviteImporters,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -23611,6 +23817,9 @@ func DecodeMessagesChatAdminsWithInvites(r *Reader) (*MessagesChatAdminsWithInvi
 	if _ehdrAdmins != nil {
 		return nil, _ehdrAdmins
 	}
+	if _errAdmins := checkVectorConstructor(_vhdrAdmins); _errAdmins != nil {
+		return nil, _errAdmins
+	}
 	_cntAdmins, _ecntAdmins := r.ReadUint32()
 	if _ecntAdmins != nil {
 		return nil, _ecntAdmins
@@ -23630,10 +23839,12 @@ func DecodeMessagesChatAdminsWithInvites(r *Reader) (*MessagesChatAdminsWithInvi
 		}
 		v.Admins[_iAdmins] = _cAdmins
 	}
-	_ = _vhdrAdmins
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -23654,7 +23865,6 @@ func DecodeMessagesChatAdminsWithInvites(r *Reader) (*MessagesChatAdminsWithInvi
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -23811,11 +24021,11 @@ func (v *SponsoredMessage) Encode(b *bytes.Buffer) error {
 // DecodeSponsoredMessage deserializes a SponsoredMessage from a reader using the TL binary protocol.
 func DecodeSponsoredMessage(r *Reader) (*SponsoredMessage, error) {
 	v := &SponsoredMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Recommended = v.Flags.Has(5)
 	v.CanReport = v.Flags.Has(12)
 	_rRandomID, _eRandomID := r.ReadBytes()
@@ -23843,6 +24053,9 @@ func DecodeSponsoredMessage(r *Reader) (*SponsoredMessage, error) {
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
 		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
 			return nil, _ecntEntities
@@ -23862,7 +24075,6 @@ func DecodeSponsoredMessage(r *Reader) (*SponsoredMessage, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(6) {
 		_objPhoto, _errPhoto := ReadTLObject(r)
@@ -24025,11 +24237,11 @@ func (v *MessagesSponsoredMessages) Encode(b *bytes.Buffer) error {
 // DecodeMessagesSponsoredMessages deserializes a MessagesSponsoredMessages from a reader using the TL binary protocol.
 func DecodeMessagesSponsoredMessages(r *Reader) (*MessagesSponsoredMessages, error) {
 	v := &MessagesSponsoredMessages{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rPostsBetween, _ePostsBetween := r.ReadInt32()
 		if _ePostsBetween != nil {
@@ -24055,6 +24267,9 @@ func DecodeMessagesSponsoredMessages(r *Reader) (*MessagesSponsoredMessages, err
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
 	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
+	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
 		return nil, _ecntMessages
@@ -24074,10 +24289,12 @@ func DecodeMessagesSponsoredMessages(r *Reader) (*MessagesSponsoredMessages, err
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -24098,10 +24315,12 @@ func DecodeMessagesSponsoredMessages(r *Reader) (*MessagesSponsoredMessages, err
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -24122,7 +24341,6 @@ func DecodeMessagesSponsoredMessages(r *Reader) (*MessagesSponsoredMessages, err
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -24232,11 +24450,11 @@ func (v *MessagesSearchResultsCalendar) Encode(b *bytes.Buffer) error {
 // DecodeMessagesSearchResultsCalendar deserializes a MessagesSearchResultsCalendar from a reader using the TL binary protocol.
 func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalendar, error) {
 	v := &MessagesSearchResultsCalendar{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inexact = v.Flags.Has(0)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
@@ -24264,6 +24482,9 @@ func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalen
 	if _ehdrPeriods != nil {
 		return nil, _ehdrPeriods
 	}
+	if _errPeriods := checkVectorConstructor(_vhdrPeriods); _errPeriods != nil {
+		return nil, _errPeriods
+	}
 	_cntPeriods, _ecntPeriods := r.ReadUint32()
 	if _ecntPeriods != nil {
 		return nil, _ecntPeriods
@@ -24283,10 +24504,12 @@ func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalen
 		}
 		v.Periods[_iPeriods] = _cPeriods
 	}
-	_ = _vhdrPeriods
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -24307,10 +24530,12 @@ func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalen
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -24331,10 +24556,12 @@ func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalen
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -24355,7 +24582,6 @@ func DecodeMessagesSearchResultsCalendar(r *Reader) (*MessagesSearchResultsCalen
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -24405,6 +24631,9 @@ func DecodeMessagesSearchResultsPositions(r *Reader) (*MessagesSearchResultsPosi
 	if _ehdrPositions != nil {
 		return nil, _ehdrPositions
 	}
+	if _errPositions := checkVectorConstructor(_vhdrPositions); _errPositions != nil {
+		return nil, _errPositions
+	}
 	_cntPositions, _ecntPositions := r.ReadUint32()
 	if _ecntPositions != nil {
 		return nil, _ecntPositions
@@ -24424,7 +24653,6 @@ func DecodeMessagesSearchResultsPositions(r *Reader) (*MessagesSearchResultsPosi
 		}
 		v.Positions[_iPositions] = _cPositions
 	}
-	_ = _vhdrPositions
 	return v, nil
 }
 
@@ -24475,11 +24703,11 @@ func (v *ReactionCount) Encode(b *bytes.Buffer) error {
 // DecodeReactionCount deserializes a ReactionCount from a reader using the TL binary protocol.
 func DecodeReactionCount(r *Reader) (*ReactionCount, error) {
 	v := &ReactionCount{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rChosenOrder, _eChosenOrder := r.ReadInt32()
 		if _eChosenOrder != nil {
@@ -24580,17 +24808,20 @@ func (v *MessageReactions) Encode(b *bytes.Buffer) error {
 // DecodeMessageReactions deserializes a MessageReactions from a reader using the TL binary protocol.
 func DecodeMessageReactions(r *Reader) (*MessageReactions, error) {
 	v := &MessageReactions{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Min = v.Flags.Has(0)
 	v.CanSeeList = v.Flags.Has(2)
 	v.ReactionsAsTags = v.Flags.Has(3)
 	_vhdrResults, _ehdrResults := r.ReadUint32()
 	if _ehdrResults != nil {
 		return nil, _ehdrResults
+	}
+	if _errResults := checkVectorConstructor(_vhdrResults); _errResults != nil {
+		return nil, _errResults
 	}
 	_cntResults, _ecntResults := r.ReadUint32()
 	if _ecntResults != nil {
@@ -24611,11 +24842,13 @@ func DecodeMessageReactions(r *Reader) (*MessageReactions, error) {
 		}
 		v.Results[_iResults] = _cResults
 	}
-	_ = _vhdrResults
 	if v.Flags.Has(1) {
 		_vhdrRecentReactions, _ehdrRecentReactions := r.ReadUint32()
 		if _ehdrRecentReactions != nil {
 			return nil, _ehdrRecentReactions
+		}
+		if _errRecentReactions := checkVectorConstructor(_vhdrRecentReactions); _errRecentReactions != nil {
+			return nil, _errRecentReactions
 		}
 		_cntRecentReactions, _ecntRecentReactions := r.ReadUint32()
 		if _ecntRecentReactions != nil {
@@ -24636,12 +24869,14 @@ func DecodeMessageReactions(r *Reader) (*MessageReactions, error) {
 			}
 			v.RecentReactions[_iRecentReactions] = _cRecentReactions
 		}
-		_ = _vhdrRecentReactions
 	}
 	if v.Flags.Has(4) {
 		_vhdrTopReactors, _ehdrTopReactors := r.ReadUint32()
 		if _ehdrTopReactors != nil {
 			return nil, _ehdrTopReactors
+		}
+		if _errTopReactors := checkVectorConstructor(_vhdrTopReactors); _errTopReactors != nil {
+			return nil, _errTopReactors
 		}
 		_cntTopReactors, _ecntTopReactors := r.ReadUint32()
 		if _ecntTopReactors != nil {
@@ -24662,7 +24897,6 @@ func DecodeMessageReactions(r *Reader) (*MessageReactions, error) {
 			}
 			v.TopReactors[_iTopReactors] = _cTopReactors
 		}
-		_ = _vhdrTopReactors
 	}
 	return v, nil
 }
@@ -24730,11 +24964,11 @@ func (v *MessagesMessageReactionsList) Encode(b *bytes.Buffer) error {
 // DecodeMessagesMessageReactionsList deserializes a MessagesMessageReactionsList from a reader using the TL binary protocol.
 func DecodeMessagesMessageReactionsList(r *Reader) (*MessagesMessageReactionsList, error) {
 	v := &MessagesMessageReactionsList{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
 		return nil, _eCount
@@ -24743,6 +24977,9 @@ func DecodeMessagesMessageReactionsList(r *Reader) (*MessagesMessageReactionsLis
 	_vhdrReactions, _ehdrReactions := r.ReadUint32()
 	if _ehdrReactions != nil {
 		return nil, _ehdrReactions
+	}
+	if _errReactions := checkVectorConstructor(_vhdrReactions); _errReactions != nil {
+		return nil, _errReactions
 	}
 	_cntReactions, _ecntReactions := r.ReadUint32()
 	if _ecntReactions != nil {
@@ -24763,10 +25000,12 @@ func DecodeMessagesMessageReactionsList(r *Reader) (*MessagesMessageReactionsLis
 		}
 		v.Reactions[_iReactions] = _cReactions
 	}
-	_ = _vhdrReactions
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -24787,10 +25026,12 @@ func DecodeMessagesMessageReactionsList(r *Reader) (*MessagesMessageReactionsLis
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -24811,7 +25052,6 @@ func DecodeMessagesMessageReactionsList(r *Reader) (*MessagesMessageReactionsLis
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -24894,11 +25134,11 @@ func (v *AvailableReaction) Encode(b *bytes.Buffer) error {
 // DecodeAvailableReaction deserializes a AvailableReaction from a reader using the TL binary protocol.
 func DecodeAvailableReaction(r *Reader) (*AvailableReaction, error) {
 	v := &AvailableReaction{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inactive = v.Flags.Has(0)
 	v.Premium = v.Flags.Has(2)
 	_rReaction, _eReaction := r.ReadString()
@@ -25073,6 +25313,9 @@ func DecodeMessagesAvailableReactions(r *Reader) (*MessagesAvailableReactions, e
 	if _ehdrReactions != nil {
 		return nil, _ehdrReactions
 	}
+	if _errReactions := checkVectorConstructor(_vhdrReactions); _errReactions != nil {
+		return nil, _errReactions
+	}
 	_cntReactions, _ecntReactions := r.ReadUint32()
 	if _ecntReactions != nil {
 		return nil, _ecntReactions
@@ -25092,7 +25335,6 @@ func DecodeMessagesAvailableReactions(r *Reader) (*MessagesAvailableReactions, e
 		}
 		v.Reactions[_iReactions] = _cReactions
 	}
-	_ = _vhdrReactions
 	return v, nil
 }
 
@@ -25150,11 +25392,11 @@ func (v *MessagePeerReaction) Encode(b *bytes.Buffer) error {
 // DecodeMessagePeerReaction deserializes a MessagePeerReaction from a reader using the TL binary protocol.
 func DecodeMessagePeerReaction(r *Reader) (*MessagePeerReaction, error) {
 	v := &MessagePeerReaction{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Big = v.Flags.Has(0)
 	v.Unread = v.Flags.Has(1)
 	v.My = v.Flags.Has(2)
@@ -25227,11 +25469,11 @@ func (v *WebViewMessageSent) Encode(b *bytes.Buffer) error {
 // DecodeWebViewMessageSent deserializes a WebViewMessageSent from a reader using the TL binary protocol.
 func DecodeWebViewMessageSent(r *Reader) (*WebViewMessageSent, error) {
 	v := &WebViewMessageSent{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objMsgID, _errMsgID := ReadTLObject(r)
 		if _errMsgID != nil {
@@ -25304,11 +25546,11 @@ func (v *MessagesTranscribedAudio) Encode(b *bytes.Buffer) error {
 // DecodeMessagesTranscribedAudio deserializes a MessagesTranscribedAudio from a reader using the TL binary protocol.
 func DecodeMessagesTranscribedAudio(r *Reader) (*MessagesTranscribedAudio, error) {
 	v := &MessagesTranscribedAudio{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pending = v.Flags.Has(0)
 	_rTranscriptionID, _eTranscriptionID := r.ReadInt64()
 	if _eTranscriptionID != nil {
@@ -25440,11 +25682,11 @@ func (v *EmojiStatus) Encode(b *bytes.Buffer) error {
 // DecodeEmojiStatus deserializes a EmojiStatus from a reader using the TL binary protocol.
 func DecodeEmojiStatus(r *Reader) (*EmojiStatus, error) {
 	v := &EmojiStatus{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rDocumentID, _eDocumentID := r.ReadInt64()
 	if _eDocumentID != nil {
 		return nil, _eDocumentID
@@ -25518,11 +25760,11 @@ func (v *EmojiStatusCollectible) Encode(b *bytes.Buffer) error {
 // DecodeEmojiStatusCollectible deserializes a EmojiStatusCollectible from a reader using the TL binary protocol.
 func DecodeEmojiStatusCollectible(r *Reader) (*EmojiStatusCollectible, error) {
 	v := &EmojiStatusCollectible{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCollectibleID, _eCollectibleID := r.ReadInt64()
 	if _eCollectibleID != nil {
 		return nil, _eCollectibleID
@@ -25620,11 +25862,11 @@ func (v *InputEmojiStatusCollectible) Encode(b *bytes.Buffer) error {
 // DecodeInputEmojiStatusCollectible deserializes a InputEmojiStatusCollectible from a reader using the TL binary protocol.
 func DecodeInputEmojiStatusCollectible(r *Reader) (*InputEmojiStatusCollectible, error) {
 	v := &InputEmojiStatusCollectible{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCollectibleID, _eCollectibleID := r.ReadInt64()
 	if _eCollectibleID != nil {
 		return nil, _eCollectibleID
@@ -25894,11 +26136,11 @@ func (v *ChatReactionsAll) Encode(b *bytes.Buffer) error {
 // DecodeChatReactionsAll deserializes a ChatReactionsAll from a reader using the TL binary protocol.
 func DecodeChatReactionsAll(r *Reader) (*ChatReactionsAll, error) {
 	v := &ChatReactionsAll{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.AllowCustom = v.Flags.Has(0)
 	return v, nil
 }
@@ -25939,6 +26181,9 @@ func DecodeChatReactionsSome(r *Reader) (*ChatReactionsSome, error) {
 	if _ehdrReactions != nil {
 		return nil, _ehdrReactions
 	}
+	if _errReactions := checkVectorConstructor(_vhdrReactions); _errReactions != nil {
+		return nil, _errReactions
+	}
 	_cntReactions, _ecntReactions := r.ReadUint32()
 	if _ecntReactions != nil {
 		return nil, _ecntReactions
@@ -25958,7 +26203,6 @@ func DecodeChatReactionsSome(r *Reader) (*ChatReactionsSome, error) {
 		}
 		v.Reactions[_iReactions] = _cReactions
 	}
-	_ = _vhdrReactions
 	return v, nil
 }
 
@@ -26054,6 +26298,9 @@ func DecodeMessagesReactions(r *Reader) (*MessagesReactions, error) {
 	if _ehdrReactions != nil {
 		return nil, _ehdrReactions
 	}
+	if _errReactions := checkVectorConstructor(_vhdrReactions); _errReactions != nil {
+		return nil, _errReactions
+	}
 	_cntReactions, _ecntReactions := r.ReadUint32()
 	if _ecntReactions != nil {
 		return nil, _ecntReactions
@@ -26073,7 +26320,6 @@ func DecodeMessagesReactions(r *Reader) (*MessagesReactions, error) {
 		}
 		v.Reactions[_iReactions] = _cReactions
 	}
-	_ = _vhdrReactions
 	return v, nil
 }
 
@@ -26158,11 +26404,11 @@ func (v *MessageExtendedMediaPreview) Encode(b *bytes.Buffer) error {
 // DecodeMessageExtendedMediaPreview deserializes a MessageExtendedMediaPreview from a reader using the TL binary protocol.
 func DecodeMessageExtendedMediaPreview(r *Reader) (*MessageExtendedMediaPreview, error) {
 	v := &MessageExtendedMediaPreview{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rW, _eW := r.ReadInt32()
 		if _eW != nil {
@@ -26439,11 +26685,11 @@ func (v *ForumTopic) Encode(b *bytes.Buffer) error {
 // DecodeForumTopic deserializes a ForumTopic from a reader using the TL binary protocol.
 func DecodeForumTopic(r *Reader) (*ForumTopic, error) {
 	v := &ForumTopic{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.My = v.Flags.Has(1)
 	v.Closed = v.Flags.Has(2)
 	v.Pinned = v.Flags.Has(3)
@@ -26621,11 +26867,11 @@ func (v *MessagesForumTopics) Encode(b *bytes.Buffer) error {
 // DecodeMessagesForumTopics deserializes a MessagesForumTopics from a reader using the TL binary protocol.
 func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 	v := &MessagesForumTopics{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OrderByCreateDate = v.Flags.Has(0)
 	_rCount, _eCount := r.ReadInt32()
 	if _eCount != nil {
@@ -26635,6 +26881,9 @@ func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 	_vhdrTopics, _ehdrTopics := r.ReadUint32()
 	if _ehdrTopics != nil {
 		return nil, _ehdrTopics
+	}
+	if _errTopics := checkVectorConstructor(_vhdrTopics); _errTopics != nil {
+		return nil, _errTopics
 	}
 	_cntTopics, _ecntTopics := r.ReadUint32()
 	if _ecntTopics != nil {
@@ -26655,10 +26904,12 @@ func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 		}
 		v.Topics[_iTopics] = _cTopics
 	}
-	_ = _vhdrTopics
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -26679,10 +26930,12 @@ func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -26703,10 +26956,12 @@ func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -26727,7 +26982,6 @@ func DecodeMessagesForumTopics(r *Reader) (*MessagesForumTopics, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	_rPTS, _ePTS := r.ReadInt32()
 	if _ePTS != nil {
 		return nil, _ePTS
@@ -27089,6 +27343,9 @@ func DecodeMessagesEmojiGroups(r *Reader) (*MessagesEmojiGroups, error) {
 	if _ehdrGroups != nil {
 		return nil, _ehdrGroups
 	}
+	if _errGroups := checkVectorConstructor(_vhdrGroups); _errGroups != nil {
+		return nil, _errGroups
+	}
 	_cntGroups, _ecntGroups := r.ReadUint32()
 	if _ecntGroups != nil {
 		return nil, _ecntGroups
@@ -27108,7 +27365,6 @@ func DecodeMessagesEmojiGroups(r *Reader) (*MessagesEmojiGroups, error) {
 		}
 		v.Groups[_iGroups] = _cGroups
 	}
-	_ = _vhdrGroups
 	return v, nil
 }
 
@@ -27151,6 +27407,9 @@ func DecodeMessagesTranslateResult(r *Reader) (*MessagesTranslateResult, error) 
 	if _ehdrResult != nil {
 		return nil, _ehdrResult
 	}
+	if _errResult := checkVectorConstructor(_vhdrResult); _errResult != nil {
+		return nil, _errResult
+	}
 	_cntResult, _ecntResult := r.ReadUint32()
 	if _ecntResult != nil {
 		return nil, _ecntResult
@@ -27170,7 +27429,6 @@ func DecodeMessagesTranslateResult(r *Reader) (*MessagesTranslateResult, error) 
 		}
 		v.Result[_iResult] = _cResult
 	}
-	_ = _vhdrResult
 	return v, nil
 }
 
@@ -27283,11 +27541,11 @@ func (v *BotApp) Encode(b *bytes.Buffer) error {
 // DecodeBotApp deserializes a BotApp from a reader using the TL binary protocol.
 func DecodeBotApp(r *Reader) (*BotApp, error) {
 	v := &BotApp{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -27388,11 +27646,11 @@ func (v *MessagesBotApp) Encode(b *bytes.Buffer) error {
 // DecodeMessagesBotApp deserializes a MessagesBotApp from a reader using the TL binary protocol.
 func DecodeMessagesBotApp(r *Reader) (*MessagesBotApp, error) {
 	v := &MessagesBotApp{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Inactive = v.Flags.Has(0)
 	v.RequestWriteAccess = v.Flags.Has(1)
 	v.HasSettings = v.Flags.Has(2)
@@ -27825,11 +28083,11 @@ func (v *SavedDialog) Encode(b *bytes.Buffer) error {
 // DecodeSavedDialog deserializes a SavedDialog from a reader using the TL binary protocol.
 func DecodeSavedDialog(r *Reader) (*SavedDialog, error) {
 	v := &SavedDialog{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Pinned = v.Flags.Has(2)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -27908,11 +28166,11 @@ func (v *MonoForumDialog) Encode(b *bytes.Buffer) error {
 // DecodeMonoForumDialog deserializes a MonoForumDialog from a reader using the TL binary protocol.
 func DecodeMonoForumDialog(r *Reader) (*MonoForumDialog, error) {
 	v := &MonoForumDialog{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.UnreadMark = v.Flags.Has(3)
 	v.NopaidMessagesException = v.Flags.Has(4)
 	_objPeer, _errPeer := ReadTLObject(r)
@@ -28043,6 +28301,9 @@ func DecodeMessagesSavedDialogs(r *Reader) (*MessagesSavedDialogs, error) {
 	if _ehdrDialogs != nil {
 		return nil, _ehdrDialogs
 	}
+	if _errDialogs := checkVectorConstructor(_vhdrDialogs); _errDialogs != nil {
+		return nil, _errDialogs
+	}
 	_cntDialogs, _ecntDialogs := r.ReadUint32()
 	if _ecntDialogs != nil {
 		return nil, _ecntDialogs
@@ -28062,10 +28323,12 @@ func DecodeMessagesSavedDialogs(r *Reader) (*MessagesSavedDialogs, error) {
 		}
 		v.Dialogs[_iDialogs] = _cDialogs
 	}
-	_ = _vhdrDialogs
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -28086,10 +28349,12 @@ func DecodeMessagesSavedDialogs(r *Reader) (*MessagesSavedDialogs, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -28110,10 +28375,12 @@ func DecodeMessagesSavedDialogs(r *Reader) (*MessagesSavedDialogs, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -28134,7 +28401,6 @@ func DecodeMessagesSavedDialogs(r *Reader) (*MessagesSavedDialogs, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -28199,6 +28465,9 @@ func DecodeMessagesSavedDialogsSlice(r *Reader) (*MessagesSavedDialogsSlice, err
 	if _ehdrDialogs != nil {
 		return nil, _ehdrDialogs
 	}
+	if _errDialogs := checkVectorConstructor(_vhdrDialogs); _errDialogs != nil {
+		return nil, _errDialogs
+	}
 	_cntDialogs, _ecntDialogs := r.ReadUint32()
 	if _ecntDialogs != nil {
 		return nil, _ecntDialogs
@@ -28218,10 +28487,12 @@ func DecodeMessagesSavedDialogsSlice(r *Reader) (*MessagesSavedDialogsSlice, err
 		}
 		v.Dialogs[_iDialogs] = _cDialogs
 	}
-	_ = _vhdrDialogs
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -28242,10 +28513,12 @@ func DecodeMessagesSavedDialogsSlice(r *Reader) (*MessagesSavedDialogsSlice, err
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -28266,10 +28539,12 @@ func DecodeMessagesSavedDialogsSlice(r *Reader) (*MessagesSavedDialogsSlice, err
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -28290,7 +28565,6 @@ func DecodeMessagesSavedDialogsSlice(r *Reader) (*MessagesSavedDialogsSlice, err
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -28377,11 +28651,11 @@ func (v *SavedReactionTag) Encode(b *bytes.Buffer) error {
 // DecodeSavedReactionTag deserializes a SavedReactionTag from a reader using the TL binary protocol.
 func DecodeSavedReactionTag(r *Reader) (*SavedReactionTag, error) {
 	v := &SavedReactionTag{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objReaction, _errReaction := ReadTLObject(r)
 	if _errReaction != nil {
 		return nil, _errReaction
@@ -28493,6 +28767,9 @@ func DecodeMessagesSavedReactionTags(r *Reader) (*MessagesSavedReactionTags, err
 	if _ehdrTags != nil {
 		return nil, _ehdrTags
 	}
+	if _errTags := checkVectorConstructor(_vhdrTags); _errTags != nil {
+		return nil, _errTags
+	}
 	_cntTags, _ecntTags := r.ReadUint32()
 	if _ecntTags != nil {
 		return nil, _ecntTags
@@ -28512,7 +28789,6 @@ func DecodeMessagesSavedReactionTags(r *Reader) (*MessagesSavedReactionTags, err
 		}
 		v.Tags[_iTags] = _cTags
 	}
-	_ = _vhdrTags
 	_rHash, _eHash := r.ReadInt64()
 	if _eHash != nil {
 		return nil, _eHash
@@ -28808,11 +29084,11 @@ func (v *InputBusinessAwayMessage) Encode(b *bytes.Buffer) error {
 // DecodeInputBusinessAwayMessage deserializes a InputBusinessAwayMessage from a reader using the TL binary protocol.
 func DecodeInputBusinessAwayMessage(r *Reader) (*InputBusinessAwayMessage, error) {
 	v := &InputBusinessAwayMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OfflineOnly = v.Flags.Has(0)
 	_rShortcutID, _eShortcutID := r.ReadInt32()
 	if _eShortcutID != nil {
@@ -28886,11 +29162,11 @@ func (v *BusinessAwayMessage) Encode(b *bytes.Buffer) error {
 // DecodeBusinessAwayMessage deserializes a BusinessAwayMessage from a reader using the TL binary protocol.
 func DecodeBusinessAwayMessage(r *Reader) (*BusinessAwayMessage, error) {
 	v := &BusinessAwayMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OfflineOnly = v.Flags.Has(0)
 	_rShortcutID, _eShortcutID := r.ReadInt32()
 	if _eShortcutID != nil {
@@ -29144,6 +29420,9 @@ func DecodeMessagesQuickReplies(r *Reader) (*MessagesQuickReplies, error) {
 	if _ehdrQuickReplies != nil {
 		return nil, _ehdrQuickReplies
 	}
+	if _errQuickReplies := checkVectorConstructor(_vhdrQuickReplies); _errQuickReplies != nil {
+		return nil, _errQuickReplies
+	}
 	_cntQuickReplies, _ecntQuickReplies := r.ReadUint32()
 	if _ecntQuickReplies != nil {
 		return nil, _ecntQuickReplies
@@ -29163,10 +29442,12 @@ func DecodeMessagesQuickReplies(r *Reader) (*MessagesQuickReplies, error) {
 		}
 		v.QuickReplies[_iQuickReplies] = _cQuickReplies
 	}
-	_ = _vhdrQuickReplies
 	_vhdrMessages, _ehdrMessages := r.ReadUint32()
 	if _ehdrMessages != nil {
 		return nil, _ehdrMessages
+	}
+	if _errMessages := checkVectorConstructor(_vhdrMessages); _errMessages != nil {
+		return nil, _errMessages
 	}
 	_cntMessages, _ecntMessages := r.ReadUint32()
 	if _ecntMessages != nil {
@@ -29187,10 +29468,12 @@ func DecodeMessagesQuickReplies(r *Reader) (*MessagesQuickReplies, error) {
 		}
 		v.Messages[_iMessages] = _cMessages
 	}
-	_ = _vhdrMessages
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -29211,10 +29494,12 @@ func DecodeMessagesQuickReplies(r *Reader) (*MessagesQuickReplies, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -29235,7 +29520,6 @@ func DecodeMessagesQuickReplies(r *Reader) (*MessagesQuickReplies, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -29314,15 +29598,18 @@ func (v *MessagesDialogFilters) Encode(b *bytes.Buffer) error {
 // DecodeMessagesDialogFilters deserializes a MessagesDialogFilters from a reader using the TL binary protocol.
 func DecodeMessagesDialogFilters(r *Reader) (*MessagesDialogFilters, error) {
 	v := &MessagesDialogFilters{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.TagsEnabled = v.Flags.Has(0)
 	_vhdrFilters, _ehdrFilters := r.ReadUint32()
 	if _ehdrFilters != nil {
 		return nil, _ehdrFilters
+	}
+	if _errFilters := checkVectorConstructor(_vhdrFilters); _errFilters != nil {
+		return nil, _errFilters
 	}
 	_cntFilters, _ecntFilters := r.ReadUint32()
 	if _ecntFilters != nil {
@@ -29343,7 +29630,6 @@ func DecodeMessagesDialogFilters(r *Reader) (*MessagesDialogFilters, error) {
 		}
 		v.Filters[_iFilters] = _cFilters
 	}
-	_ = _vhdrFilters
 	return v, nil
 }
 
@@ -29393,6 +29679,9 @@ func DecodeMessagesMyStickers(r *Reader) (*MessagesMyStickers, error) {
 	if _ehdrSets != nil {
 		return nil, _ehdrSets
 	}
+	if _errSets := checkVectorConstructor(_vhdrSets); _errSets != nil {
+		return nil, _errSets
+	}
 	_cntSets, _ecntSets := r.ReadUint32()
 	if _ecntSets != nil {
 		return nil, _ecntSets
@@ -29412,7 +29701,6 @@ func DecodeMessagesMyStickers(r *Reader) (*MessagesMyStickers, error) {
 		}
 		v.Sets[_iSets] = _cSets
 	}
-	_ = _vhdrSets
 	return v, nil
 }
 
@@ -29466,6 +29754,9 @@ func DecodeMessagesInvitedUsers(r *Reader) (*MessagesInvitedUsers, error) {
 	if _ehdrMissingInvitees != nil {
 		return nil, _ehdrMissingInvitees
 	}
+	if _errMissingInvitees := checkVectorConstructor(_vhdrMissingInvitees); _errMissingInvitees != nil {
+		return nil, _errMissingInvitees
+	}
 	_cntMissingInvitees, _ecntMissingInvitees := r.ReadUint32()
 	if _ecntMissingInvitees != nil {
 		return nil, _ecntMissingInvitees
@@ -29485,7 +29776,6 @@ func DecodeMessagesInvitedUsers(r *Reader) (*MessagesInvitedUsers, error) {
 		}
 		v.MissingInvitees[_iMissingInvitees] = _cMissingInvitees
 	}
-	_ = _vhdrMissingInvitees
 	return v, nil
 }
 
@@ -29674,11 +29964,11 @@ func (v *ReactionsNotifySettings) Encode(b *bytes.Buffer) error {
 // DecodeReactionsNotifySettings deserializes a ReactionsNotifySettings from a reader using the TL binary protocol.
 func DecodeReactionsNotifySettings(r *Reader) (*ReactionsNotifySettings, error) {
 	v := &ReactionsNotifySettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objMessagesNotifyFrom, _errMessagesNotifyFrom := ReadTLObject(r)
 		if _errMessagesNotifyFrom != nil {
@@ -29827,6 +30117,9 @@ func DecodeMessagesAvailableEffects(r *Reader) (*MessagesAvailableEffects, error
 	if _ehdrEffects != nil {
 		return nil, _ehdrEffects
 	}
+	if _errEffects := checkVectorConstructor(_vhdrEffects); _errEffects != nil {
+		return nil, _errEffects
+	}
 	_cntEffects, _ecntEffects := r.ReadUint32()
 	if _ecntEffects != nil {
 		return nil, _ecntEffects
@@ -29846,10 +30139,12 @@ func DecodeMessagesAvailableEffects(r *Reader) (*MessagesAvailableEffects, error
 		}
 		v.Effects[_iEffects] = _cEffects
 	}
-	_ = _vhdrEffects
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
+	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
@@ -29870,7 +30165,6 @@ func DecodeMessagesAvailableEffects(r *Reader) (*MessagesAvailableEffects, error
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	return v, nil
 }
 
@@ -29931,11 +30225,11 @@ func (v *MessageReactor) Encode(b *bytes.Buffer) error {
 // DecodeMessageReactor deserializes a MessageReactor from a reader using the TL binary protocol.
 func DecodeMessageReactor(r *Reader) (*MessageReactor, error) {
 	v := &MessageReactor{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Top = v.Flags.Has(0)
 	v.My = v.Flags.Has(1)
 	v.Anonymous = v.Flags.Has(2)
@@ -30115,6 +30409,9 @@ func DecodeMessagesPreparedInlineMessage(r *Reader) (*MessagesPreparedInlineMess
 	if _ehdrPeerTypes != nil {
 		return nil, _ehdrPeerTypes
 	}
+	if _errPeerTypes := checkVectorConstructor(_vhdrPeerTypes); _errPeerTypes != nil {
+		return nil, _errPeerTypes
+	}
 	_cntPeerTypes, _ecntPeerTypes := r.ReadUint32()
 	if _ecntPeerTypes != nil {
 		return nil, _ecntPeerTypes
@@ -30134,7 +30431,6 @@ func DecodeMessagesPreparedInlineMessage(r *Reader) (*MessagesPreparedInlineMess
 		}
 		v.PeerTypes[_iPeerTypes] = _cPeerTypes
 	}
-	_ = _vhdrPeerTypes
 	_rCacheTime, _eCacheTime := r.ReadInt32()
 	if _eCacheTime != nil {
 		return nil, _eCacheTime
@@ -30143,6 +30439,9 @@ func DecodeMessagesPreparedInlineMessage(r *Reader) (*MessagesPreparedInlineMess
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -30163,7 +30462,6 @@ func DecodeMessagesPreparedInlineMessage(r *Reader) (*MessagesPreparedInlineMess
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -30227,11 +30525,11 @@ func (v *MessagesFoundStickersNotModified) Encode(b *bytes.Buffer) error {
 // DecodeMessagesFoundStickersNotModified deserializes a MessagesFoundStickersNotModified from a reader using the TL binary protocol.
 func DecodeMessagesFoundStickersNotModified(r *Reader) (*MessagesFoundStickersNotModified, error) {
 	v := &MessagesFoundStickersNotModified{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadInt32()
 		if _eNextOffset != nil {
@@ -30290,11 +30588,11 @@ func (v *MessagesFoundStickers) Encode(b *bytes.Buffer) error {
 // DecodeMessagesFoundStickers deserializes a MessagesFoundStickers from a reader using the TL binary protocol.
 func DecodeMessagesFoundStickers(r *Reader) (*MessagesFoundStickers, error) {
 	v := &MessagesFoundStickers{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadInt32()
 		if _eNextOffset != nil {
@@ -30310,6 +30608,9 @@ func DecodeMessagesFoundStickers(r *Reader) (*MessagesFoundStickers, error) {
 	_vhdrStickers, _ehdrStickers := r.ReadUint32()
 	if _ehdrStickers != nil {
 		return nil, _ehdrStickers
+	}
+	if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+		return nil, _errStickers
 	}
 	_cntStickers, _ecntStickers := r.ReadUint32()
 	if _ecntStickers != nil {
@@ -30330,7 +30631,6 @@ func DecodeMessagesFoundStickers(r *Reader) (*MessagesFoundStickers, error) {
 		}
 		v.Stickers[_iStickers] = _cStickers
 	}
-	_ = _vhdrStickers
 	return v, nil
 }
 
@@ -30390,6 +30690,9 @@ func DecodeMessagesWebPagePreview(r *Reader) (*MessagesWebPagePreview, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -30409,10 +30712,12 @@ func DecodeMessagesWebPagePreview(r *Reader) (*MessagesWebPagePreview, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -30433,7 +30738,6 @@ func DecodeMessagesWebPagePreview(r *Reader) (*MessagesWebPagePreview, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -30615,11 +30919,11 @@ func (v *SponsoredPeer) Encode(b *bytes.Buffer) error {
 // DecodeSponsoredPeer deserializes a SponsoredPeer from a reader using the TL binary protocol.
 func DecodeSponsoredPeer(r *Reader) (*SponsoredPeer, error) {
 	v := &SponsoredPeer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rRandomID, _eRandomID := r.ReadBytes()
 	if _eRandomID != nil {
 		return nil, _eRandomID
@@ -30753,11 +31057,11 @@ func (v *TodoList) Encode(b *bytes.Buffer) error {
 // DecodeTodoList deserializes a TodoList from a reader using the TL binary protocol.
 func DecodeTodoList(r *Reader) (*TodoList, error) {
 	v := &TodoList{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OthersCanAppend = v.Flags.Has(0)
 	v.OthersCanComplete = v.Flags.Has(1)
 	_objTitle, _errTitle := ReadTLObject(r)
@@ -30772,6 +31076,9 @@ func DecodeTodoList(r *Reader) (*TodoList, error) {
 	_vhdrList, _ehdrList := r.ReadUint32()
 	if _ehdrList != nil {
 		return nil, _ehdrList
+	}
+	if _errList := checkVectorConstructor(_vhdrList); _errList != nil {
+		return nil, _errList
 	}
 	_cntList, _ecntList := r.ReadUint32()
 	if _ecntList != nil {
@@ -30792,7 +31099,6 @@ func DecodeTodoList(r *Reader) (*TodoList, error) {
 		}
 		v.List[_iList] = _cList
 	}
-	_ = _vhdrList
 	return v, nil
 }
 
@@ -30908,11 +31214,11 @@ func (v *GroupCallMessage) Encode(b *bytes.Buffer) error {
 // DecodeGroupCallMessage deserializes a GroupCallMessage from a reader using the TL binary protocol.
 func DecodeGroupCallMessage(r *Reader) (*GroupCallMessage, error) {
 	v := &GroupCallMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.FromAdmin = v.Flags.Has(1)
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
@@ -31102,11 +31408,11 @@ func (v *MessagesEmojiGameDiceInfo) Encode(b *bytes.Buffer) error {
 // DecodeMessagesEmojiGameDiceInfo deserializes a MessagesEmojiGameDiceInfo from a reader using the TL binary protocol.
 func DecodeMessagesEmojiGameDiceInfo(r *Reader) (*MessagesEmojiGameDiceInfo, error) {
 	v := &MessagesEmojiGameDiceInfo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rGameHash, _eGameHash := r.ReadString()
 	if _eGameHash != nil {
 		return nil, _eGameHash
@@ -31256,11 +31562,11 @@ func (v *MessagesComposedMessageWithAi) Encode(b *bytes.Buffer) error {
 // DecodeMessagesComposedMessageWithAi deserializes a MessagesComposedMessageWithAi from a reader using the TL binary protocol.
 func DecodeMessagesComposedMessageWithAi(r *Reader) (*MessagesComposedMessageWithAi, error) {
 	v := &MessagesComposedMessageWithAi{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objResultText, _errResultText := ReadTLObject(r)
 	if _errResultText != nil {
 		return nil, _errResultText
@@ -31394,6 +31700,9 @@ func DecodeMessagesChatInviteJoinResultWebView(r *Reader) (*MessagesChatInviteJo
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -31413,7 +31722,6 @@ func DecodeMessagesChatInviteJoinResultWebView(r *Reader) (*MessagesChatInviteJo
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -31523,16 +31831,19 @@ func (v *InputRichMessage) Encode(b *bytes.Buffer) error {
 // DecodeInputRichMessage deserializes a InputRichMessage from a reader using the TL binary protocol.
 func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
 	v := &InputRichMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Rtl = v.Flags.Has(0)
 	v.Noautolink = v.Flags.Has(1)
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -31553,11 +31864,13 @@ func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	if v.Flags.Has(2) {
 		_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
 		if _ehdrPhotos != nil {
 			return nil, _ehdrPhotos
+		}
+		if _errPhotos := checkVectorConstructor(_vhdrPhotos); _errPhotos != nil {
+			return nil, _errPhotos
 		}
 		_cntPhotos, _ecntPhotos := r.ReadUint32()
 		if _ecntPhotos != nil {
@@ -31578,12 +31891,14 @@ func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
 			}
 			v.Photos[_iPhotos] = _cPhotos
 		}
-		_ = _vhdrPhotos
 	}
 	if v.Flags.Has(3) {
 		_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 		if _ehdrDocuments != nil {
 			return nil, _ehdrDocuments
+		}
+		if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+			return nil, _errDocuments
 		}
 		_cntDocuments, _ecntDocuments := r.ReadUint32()
 		if _ecntDocuments != nil {
@@ -31604,12 +31919,14 @@ func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
 			}
 			v.Documents[_iDocuments] = _cDocuments
 		}
-		_ = _vhdrDocuments
 	}
 	if v.Flags.Has(4) {
 		_vhdrUsers, _ehdrUsers := r.ReadUint32()
 		if _ehdrUsers != nil {
 			return nil, _ehdrUsers
+		}
+		if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+			return nil, _errUsers
 		}
 		_cntUsers, _ecntUsers := r.ReadUint32()
 		if _ecntUsers != nil {
@@ -31630,7 +31947,6 @@ func DecodeInputRichMessage(r *Reader) (*InputRichMessage, error) {
 			}
 			v.Users[_iUsers] = _cUsers
 		}
-		_ = _vhdrUsers
 	}
 	return v, nil
 }
@@ -31689,11 +32005,11 @@ func (v *InputRichMessageHTML) Encode(b *bytes.Buffer) error {
 // DecodeInputRichMessageHTML deserializes a InputRichMessageHTML from a reader using the TL binary protocol.
 func DecodeInputRichMessageHTML(r *Reader) (*InputRichMessageHTML, error) {
 	v := &InputRichMessageHTML{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Rtl = v.Flags.Has(0)
 	v.Noautolink = v.Flags.Has(1)
 	_rHTML, _eHTML := r.ReadString()
@@ -31705,6 +32021,9 @@ func DecodeInputRichMessageHTML(r *Reader) (*InputRichMessageHTML, error) {
 		_vhdrFiles, _ehdrFiles := r.ReadUint32()
 		if _ehdrFiles != nil {
 			return nil, _ehdrFiles
+		}
+		if _errFiles := checkVectorConstructor(_vhdrFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
 		_cntFiles, _ecntFiles := r.ReadUint32()
 		if _ecntFiles != nil {
@@ -31725,7 +32044,6 @@ func DecodeInputRichMessageHTML(r *Reader) (*InputRichMessageHTML, error) {
 			}
 			v.Files[_iFiles] = _cFiles
 		}
-		_ = _vhdrFiles
 	}
 	return v, nil
 }
@@ -31784,11 +32102,11 @@ func (v *InputRichMessageMarkdown) Encode(b *bytes.Buffer) error {
 // DecodeInputRichMessageMarkdown deserializes a InputRichMessageMarkdown from a reader using the TL binary protocol.
 func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error) {
 	v := &InputRichMessageMarkdown{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Rtl = v.Flags.Has(0)
 	v.Noautolink = v.Flags.Has(1)
 	_rMarkdown, _eMarkdown := r.ReadString()
@@ -31800,6 +32118,9 @@ func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error
 		_vhdrFiles, _ehdrFiles := r.ReadUint32()
 		if _ehdrFiles != nil {
 			return nil, _ehdrFiles
+		}
+		if _errFiles := checkVectorConstructor(_vhdrFiles); _errFiles != nil {
+			return nil, _errFiles
 		}
 		_cntFiles, _ecntFiles := r.ReadUint32()
 		if _ecntFiles != nil {
@@ -31820,7 +32141,6 @@ func DecodeInputRichMessageMarkdown(r *Reader) (*InputRichMessageMarkdown, error
 			}
 			v.Files[_iFiles] = _cFiles
 		}
-		_ = _vhdrFiles
 	}
 	return v, nil
 }
@@ -31887,16 +32207,19 @@ func (v *RichMessage) Encode(b *bytes.Buffer) error {
 // DecodeRichMessage deserializes a RichMessage from a reader using the TL binary protocol.
 func DecodeRichMessage(r *Reader) (*RichMessage, error) {
 	v := &RichMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Rtl = v.Flags.Has(0)
 	v.Part = v.Flags.Has(1)
 	_vhdrBlocks, _ehdrBlocks := r.ReadUint32()
 	if _ehdrBlocks != nil {
 		return nil, _ehdrBlocks
+	}
+	if _errBlocks := checkVectorConstructor(_vhdrBlocks); _errBlocks != nil {
+		return nil, _errBlocks
 	}
 	_cntBlocks, _ecntBlocks := r.ReadUint32()
 	if _ecntBlocks != nil {
@@ -31917,10 +32240,12 @@ func DecodeRichMessage(r *Reader) (*RichMessage, error) {
 		}
 		v.Blocks[_iBlocks] = _cBlocks
 	}
-	_ = _vhdrBlocks
 	_vhdrPhotos, _ehdrPhotos := r.ReadUint32()
 	if _ehdrPhotos != nil {
 		return nil, _ehdrPhotos
+	}
+	if _errPhotos := checkVectorConstructor(_vhdrPhotos); _errPhotos != nil {
+		return nil, _errPhotos
 	}
 	_cntPhotos, _ecntPhotos := r.ReadUint32()
 	if _ecntPhotos != nil {
@@ -31941,10 +32266,12 @@ func DecodeRichMessage(r *Reader) (*RichMessage, error) {
 		}
 		v.Photos[_iPhotos] = _cPhotos
 	}
-	_ = _vhdrPhotos
 	_vhdrDocuments, _ehdrDocuments := r.ReadUint32()
 	if _ehdrDocuments != nil {
 		return nil, _ehdrDocuments
+	}
+	if _errDocuments := checkVectorConstructor(_vhdrDocuments); _errDocuments != nil {
+		return nil, _errDocuments
 	}
 	_cntDocuments, _ecntDocuments := r.ReadUint32()
 	if _ecntDocuments != nil {
@@ -31965,7 +32292,6 @@ func DecodeRichMessage(r *Reader) (*RichMessage, error) {
 		}
 		v.Documents[_iDocuments] = _cDocuments
 	}
-	_ = _vhdrDocuments
 	return v, nil
 }
 
@@ -32060,11 +32386,11 @@ func (v *EphemeralMessage) Encode(b *bytes.Buffer) error {
 // DecodeEphemeralMessage deserializes a EphemeralMessage from a reader using the TL binary protocol.
 func DecodeEphemeralMessage(r *Reader) (*EphemeralMessage, error) {
 	v := &EphemeralMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Out = v.Flags.Has(0)
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
@@ -32116,6 +32442,9 @@ func DecodeEphemeralMessage(r *Reader) (*EphemeralMessage, error) {
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
 		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
 			return nil, _ecntEntities
@@ -32135,7 +32464,6 @@ func DecodeEphemeralMessage(r *Reader) (*EphemeralMessage, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(3) {
 		_objMedia, _errMedia := ReadTLObject(r)
@@ -32212,6 +32540,9 @@ func DecodeMessagesTranslatedRichMessage(r *Reader) (*MessagesTranslatedRichMess
 	if _ehdrResult != nil {
 		return nil, _ehdrResult
 	}
+	if _errResult := checkVectorConstructor(_vhdrResult); _errResult != nil {
+		return nil, _errResult
+	}
 	_cntResult, _ecntResult := r.ReadUint32()
 	if _ecntResult != nil {
 		return nil, _ecntResult
@@ -32231,7 +32562,6 @@ func DecodeMessagesTranslatedRichMessage(r *Reader) (*MessagesTranslatedRichMess
 		}
 		v.Result[_iResult] = _cResult
 	}
-	_ = _vhdrResult
 	return v, nil
 }
 

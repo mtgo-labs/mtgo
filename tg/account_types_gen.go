@@ -90,11 +90,11 @@ func DecodeWallPaper(r *Reader) (*WallPaper, error) {
 		return nil, _eID
 	}
 	v.ID = _rID
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	v.Default = v.Flags.Has(1)
 	v.Pattern = v.Flags.Has(3)
@@ -187,11 +187,11 @@ func DecodeWallPaperNoFile(r *Reader) (*WallPaperNoFile, error) {
 		return nil, _eID
 	}
 	v.ID = _rID
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Default = v.Flags.Has(1)
 	v.Dark = v.Flags.Has(4)
 	if v.Flags.Has(2) {
@@ -1378,6 +1378,9 @@ func DecodeInputPrivacyValueAllowUsers(r *Reader) (*InputPrivacyValueAllowUsers,
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -1397,7 +1400,6 @@ func DecodeInputPrivacyValueAllowUsers(r *Reader) (*InputPrivacyValueAllowUsers,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1495,6 +1497,9 @@ func DecodeInputPrivacyValueDisallowUsers(r *Reader) (*InputPrivacyValueDisallow
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
 	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
+	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
 		return nil, _ecntUsers
@@ -1514,7 +1519,6 @@ func DecodeInputPrivacyValueDisallowUsers(r *Reader) (*InputPrivacyValueDisallow
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -2213,6 +2217,9 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 	if _ehdrRules != nil {
 		return nil, _ehdrRules
 	}
+	if _errRules := checkVectorConstructor(_vhdrRules); _errRules != nil {
+		return nil, _errRules
+	}
 	_cntRules, _ecntRules := r.ReadUint32()
 	if _ecntRules != nil {
 		return nil, _ecntRules
@@ -2232,10 +2239,12 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		}
 		v.Rules[_iRules] = _cRules
 	}
-	_ = _vhdrRules
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -2256,10 +2265,12 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -2280,7 +2291,6 @@ func DecodeAccountPrivacyRules(r *Reader) (*AccountPrivacyRules, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -2369,6 +2379,9 @@ func DecodeAccountAuthorizations(r *Reader) (*AccountAuthorizations, error) {
 	if _ehdrAuthorizations != nil {
 		return nil, _ehdrAuthorizations
 	}
+	if _errAuthorizations := checkVectorConstructor(_vhdrAuthorizations); _errAuthorizations != nil {
+		return nil, _errAuthorizations
+	}
 	_cntAuthorizations, _ecntAuthorizations := r.ReadUint32()
 	if _ecntAuthorizations != nil {
 		return nil, _ecntAuthorizations
@@ -2388,7 +2401,6 @@ func DecodeAccountAuthorizations(r *Reader) (*AccountAuthorizations, error) {
 		}
 		v.Authorizations[_iAuthorizations] = _cAuthorizations
 	}
-	_ = _vhdrAuthorizations
 	return v, nil
 }
 
@@ -2495,11 +2507,11 @@ func (v *AccountPassword) Encode(b *bytes.Buffer) error {
 // DecodeAccountPassword deserializes a AccountPassword from a reader using the TL binary protocol.
 func DecodeAccountPassword(r *Reader) (*AccountPassword, error) {
 	v := &AccountPassword{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasRecovery = v.Flags.Has(0)
 	v.HasSecureValues = v.Flags.Has(1)
 	v.HasPassword = v.Flags.Has(2)
@@ -2632,11 +2644,11 @@ func (v *AccountPasswordSettings) Encode(b *bytes.Buffer) error {
 // DecodeAccountPasswordSettings deserializes a AccountPasswordSettings from a reader using the TL binary protocol.
 func DecodeAccountPasswordSettings(r *Reader) (*AccountPasswordSettings, error) {
 	v := &AccountPasswordSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rEmail, _eEmail := r.ReadString()
 		if _eEmail != nil {
@@ -2729,11 +2741,11 @@ func (v *AccountPasswordInputSettings) Encode(b *bytes.Buffer) error {
 // DecodeAccountPasswordInputSettings deserializes a AccountPasswordInputSettings from a reader using the TL binary protocol.
 func DecodeAccountPasswordInputSettings(r *Reader) (*AccountPasswordInputSettings, error) {
 	v := &AccountPasswordInputSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objNewAlgo, _errNewAlgo := ReadTLObject(r)
 		if _errNewAlgo != nil {
@@ -2871,6 +2883,9 @@ func DecodeAccountWebAuthorizations(r *Reader) (*AccountWebAuthorizations, error
 	if _ehdrAuthorizations != nil {
 		return nil, _ehdrAuthorizations
 	}
+	if _errAuthorizations := checkVectorConstructor(_vhdrAuthorizations); _errAuthorizations != nil {
+		return nil, _errAuthorizations
+	}
 	_cntAuthorizations, _ecntAuthorizations := r.ReadUint32()
 	if _ecntAuthorizations != nil {
 		return nil, _ecntAuthorizations
@@ -2890,10 +2905,12 @@ func DecodeAccountWebAuthorizations(r *Reader) (*AccountWebAuthorizations, error
 		}
 		v.Authorizations[_iAuthorizations] = _cAuthorizations
 	}
-	_ = _vhdrAuthorizations
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -2914,7 +2931,6 @@ func DecodeAccountWebAuthorizations(r *Reader) (*AccountWebAuthorizations, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -2985,14 +3001,17 @@ func (v *AccountAuthorizationForm) Encode(b *bytes.Buffer) error {
 // DecodeAccountAuthorizationForm deserializes a AccountAuthorizationForm from a reader using the TL binary protocol.
 func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error) {
 	v := &AccountAuthorizationForm{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_vhdrRequiredTypes, _ehdrRequiredTypes := r.ReadUint32()
 	if _ehdrRequiredTypes != nil {
 		return nil, _ehdrRequiredTypes
+	}
+	if _errRequiredTypes := checkVectorConstructor(_vhdrRequiredTypes); _errRequiredTypes != nil {
+		return nil, _errRequiredTypes
 	}
 	_cntRequiredTypes, _ecntRequiredTypes := r.ReadUint32()
 	if _ecntRequiredTypes != nil {
@@ -3013,10 +3032,12 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		}
 		v.RequiredTypes[_iRequiredTypes] = _cRequiredTypes
 	}
-	_ = _vhdrRequiredTypes
 	_vhdrValues, _ehdrValues := r.ReadUint32()
 	if _ehdrValues != nil {
 		return nil, _ehdrValues
+	}
+	if _errValues := checkVectorConstructor(_vhdrValues); _errValues != nil {
+		return nil, _errValues
 	}
 	_cntValues, _ecntValues := r.ReadUint32()
 	if _ecntValues != nil {
@@ -3037,10 +3058,12 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		}
 		v.Values[_iValues] = _cValues
 	}
-	_ = _vhdrValues
 	_vhdrErrors, _ehdrErrors := r.ReadUint32()
 	if _ehdrErrors != nil {
 		return nil, _ehdrErrors
+	}
+	if _errErrors := checkVectorConstructor(_vhdrErrors); _errErrors != nil {
+		return nil, _errErrors
 	}
 	_cntErrors, _ecntErrors := r.ReadUint32()
 	if _ecntErrors != nil {
@@ -3061,10 +3084,12 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		}
 		v.Errors[_iErrors] = _cErrors
 	}
-	_ = _vhdrErrors
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -3085,7 +3110,6 @@ func DecodeAccountAuthorizationForm(r *Reader) (*AccountAuthorizationForm, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_rPrivacyPolicyURL, _ePrivacyPolicyURL := r.ReadString()
 		if _ePrivacyPolicyURL != nil {
@@ -3414,6 +3438,9 @@ func DecodeAccountWallPapers(r *Reader) (*AccountWallPapers, error) {
 	if _ehdrWallpapers != nil {
 		return nil, _ehdrWallpapers
 	}
+	if _errWallpapers := checkVectorConstructor(_vhdrWallpapers); _errWallpapers != nil {
+		return nil, _errWallpapers
+	}
 	_cntWallpapers, _ecntWallpapers := r.ReadUint32()
 	if _ecntWallpapers != nil {
 		return nil, _ecntWallpapers
@@ -3433,7 +3460,6 @@ func DecodeAccountWallPapers(r *Reader) (*AccountWallPapers, error) {
 		}
 		v.Wallpapers[_iWallpapers] = _cWallpapers
 	}
-	_ = _vhdrWallpapers
 	return v, nil
 }
 
@@ -3530,11 +3556,11 @@ func (v *WallPaperSettings) Encode(b *bytes.Buffer) error {
 // DecodeWallPaperSettings deserializes a WallPaperSettings from a reader using the TL binary protocol.
 func DecodeWallPaperSettings(r *Reader) (*WallPaperSettings, error) {
 	v := &WallPaperSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Blur = v.Flags.Has(1)
 	v.Motion = v.Flags.Has(2)
 	if v.Flags.Has(0) {
@@ -3674,11 +3700,11 @@ func (v *AutoDownloadSettings) Encode(b *bytes.Buffer) error {
 // DecodeAutoDownloadSettings deserializes a AutoDownloadSettings from a reader using the TL binary protocol.
 func DecodeAutoDownloadSettings(r *Reader) (*AutoDownloadSettings, error) {
 	v := &AutoDownloadSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Disabled = v.Flags.Has(0)
 	v.VideoPreloadLarge = v.Flags.Has(1)
 	v.AudioPreloadNext = v.Flags.Has(2)
@@ -3871,6 +3897,9 @@ func DecodeAccountThemes(r *Reader) (*AccountThemes, error) {
 	if _ehdrThemes != nil {
 		return nil, _ehdrThemes
 	}
+	if _errThemes := checkVectorConstructor(_vhdrThemes); _errThemes != nil {
+		return nil, _errThemes
+	}
 	_cntThemes, _ecntThemes := r.ReadUint32()
 	if _ecntThemes != nil {
 		return nil, _ecntThemes
@@ -3890,7 +3919,6 @@ func DecodeAccountThemes(r *Reader) (*AccountThemes, error) {
 		}
 		v.Themes[_iThemes] = _cThemes
 	}
-	_ = _vhdrThemes
 	return v, nil
 }
 
@@ -3938,11 +3966,11 @@ func (v *AccountContentSettings) Encode(b *bytes.Buffer) error {
 // DecodeAccountContentSettings deserializes a AccountContentSettings from a reader using the TL binary protocol.
 func DecodeAccountContentSettings(r *Reader) (*AccountContentSettings, error) {
 	v := &AccountContentSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.SensitiveEnabled = v.Flags.Has(0)
 	v.SensitiveCanChange = v.Flags.Has(1)
 	return v, nil
@@ -4022,11 +4050,11 @@ func (v *GlobalPrivacySettings) Encode(b *bytes.Buffer) error {
 // DecodeGlobalPrivacySettings deserializes a GlobalPrivacySettings from a reader using the TL binary protocol.
 func DecodeGlobalPrivacySettings(r *Reader) (*GlobalPrivacySettings, error) {
 	v := &GlobalPrivacySettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ArchiveAndMuteNewNoncontactPeers = v.Flags.Has(0)
 	v.KeepArchivedUnmuted = v.Flags.Has(1)
 	v.KeepArchivedFolders = v.Flags.Has(2)
@@ -4290,11 +4318,11 @@ func (v *AccountChatThemes) Encode(b *bytes.Buffer) error {
 // DecodeAccountChatThemes deserializes a AccountChatThemes from a reader using the TL binary protocol.
 func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 	v := &AccountChatThemes{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rHash, _eHash := r.ReadInt64()
 	if _eHash != nil {
 		return nil, _eHash
@@ -4303,6 +4331,9 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 	_vhdrThemes, _ehdrThemes := r.ReadUint32()
 	if _ehdrThemes != nil {
 		return nil, _ehdrThemes
+	}
+	if _errThemes := checkVectorConstructor(_vhdrThemes); _errThemes != nil {
+		return nil, _errThemes
 	}
 	_cntThemes, _ecntThemes := r.ReadUint32()
 	if _ecntThemes != nil {
@@ -4323,10 +4354,12 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		}
 		v.Themes[_iThemes] = _cThemes
 	}
-	_ = _vhdrThemes
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -4347,10 +4380,12 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -4371,7 +4406,6 @@ func DecodeAccountChatThemes(r *Reader) (*AccountChatThemes, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	if v.Flags.Has(0) {
 		_rNextOffset, _eNextOffset := r.ReadString()
 		if _eNextOffset != nil {
@@ -4474,6 +4508,9 @@ func DecodeAccountSavedRingtones(r *Reader) (*AccountSavedRingtones, error) {
 	if _ehdrRingtones != nil {
 		return nil, _ehdrRingtones
 	}
+	if _errRingtones := checkVectorConstructor(_vhdrRingtones); _errRingtones != nil {
+		return nil, _errRingtones
+	}
 	_cntRingtones, _ecntRingtones := r.ReadUint32()
 	if _ecntRingtones != nil {
 		return nil, _ecntRingtones
@@ -4493,7 +4530,6 @@ func DecodeAccountSavedRingtones(r *Reader) (*AccountSavedRingtones, error) {
 		}
 		v.Ringtones[_iRingtones] = _cRingtones
 	}
-	_ = _vhdrRingtones
 	return v, nil
 }
 
@@ -4678,6 +4714,9 @@ func DecodeAccountEmojiStatuses(r *Reader) (*AccountEmojiStatuses, error) {
 	if _ehdrStatuses != nil {
 		return nil, _ehdrStatuses
 	}
+	if _errStatuses := checkVectorConstructor(_vhdrStatuses); _errStatuses != nil {
+		return nil, _errStatuses
+	}
 	_cntStatuses, _ecntStatuses := r.ReadUint32()
 	if _ecntStatuses != nil {
 		return nil, _ecntStatuses
@@ -4697,7 +4736,6 @@ func DecodeAccountEmojiStatuses(r *Reader) (*AccountEmojiStatuses, error) {
 		}
 		v.Statuses[_iStatuses] = _cStatuses
 	}
-	_ = _vhdrStatuses
 	return v, nil
 }
 
@@ -4872,11 +4910,11 @@ func (v *AutoSaveSettings) Encode(b *bytes.Buffer) error {
 // DecodeAutoSaveSettings deserializes a AutoSaveSettings from a reader using the TL binary protocol.
 func DecodeAutoSaveSettings(r *Reader) (*AutoSaveSettings, error) {
 	v := &AutoSaveSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Photos = v.Flags.Has(0)
 	v.Videos = v.Flags.Has(1)
 	if v.Flags.Has(2) {
@@ -4970,6 +5008,9 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 	if _ehdrExceptions != nil {
 		return nil, _ehdrExceptions
 	}
+	if _errExceptions := checkVectorConstructor(_vhdrExceptions); _errExceptions != nil {
+		return nil, _errExceptions
+	}
 	_cntExceptions, _ecntExceptions := r.ReadUint32()
 	if _ecntExceptions != nil {
 		return nil, _ecntExceptions
@@ -4989,10 +5030,12 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		}
 		v.Exceptions[_iExceptions] = _cExceptions
 	}
-	_ = _vhdrExceptions
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -5013,10 +5056,12 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -5037,7 +5082,6 @@ func DecodeAccountAutoSaveSettings(r *Reader) (*AccountAutoSaveSettings, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -5189,11 +5233,11 @@ func (v *BusinessWorkHours) Encode(b *bytes.Buffer) error {
 // DecodeBusinessWorkHours deserializes a BusinessWorkHours from a reader using the TL binary protocol.
 func DecodeBusinessWorkHours(r *Reader) (*BusinessWorkHours, error) {
 	v := &BusinessWorkHours{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OpenNow = v.Flags.Has(0)
 	_rTimezoneID, _eTimezoneID := r.ReadString()
 	if _eTimezoneID != nil {
@@ -5203,6 +5247,9 @@ func DecodeBusinessWorkHours(r *Reader) (*BusinessWorkHours, error) {
 	_vhdrWeeklyOpen, _ehdrWeeklyOpen := r.ReadUint32()
 	if _ehdrWeeklyOpen != nil {
 		return nil, _ehdrWeeklyOpen
+	}
+	if _errWeeklyOpen := checkVectorConstructor(_vhdrWeeklyOpen); _errWeeklyOpen != nil {
+		return nil, _errWeeklyOpen
 	}
 	_cntWeeklyOpen, _ecntWeeklyOpen := r.ReadUint32()
 	if _ecntWeeklyOpen != nil {
@@ -5223,7 +5270,6 @@ func DecodeBusinessWorkHours(r *Reader) (*BusinessWorkHours, error) {
 		}
 		v.WeeklyOpen[_iWeeklyOpen] = _cWeeklyOpen
 	}
-	_ = _vhdrWeeklyOpen
 	return v, nil
 }
 
@@ -5272,11 +5318,11 @@ func (v *BusinessLocation) Encode(b *bytes.Buffer) error {
 // DecodeBusinessLocation deserializes a BusinessLocation from a reader using the TL binary protocol.
 func DecodeBusinessLocation(r *Reader) (*BusinessLocation, error) {
 	v := &BusinessLocation{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objGeoPoint, _errGeoPoint := ReadTLObject(r)
 		if _errGeoPoint != nil {
@@ -5363,11 +5409,11 @@ func (v *InputBusinessRecipients) Encode(b *bytes.Buffer) error {
 // DecodeInputBusinessRecipients deserializes a InputBusinessRecipients from a reader using the TL binary protocol.
 func DecodeInputBusinessRecipients(r *Reader) (*InputBusinessRecipients, error) {
 	v := &InputBusinessRecipients{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ExistingChats = v.Flags.Has(0)
 	v.NewChats = v.Flags.Has(1)
 	v.Contacts = v.Flags.Has(2)
@@ -5377,6 +5423,9 @@ func DecodeInputBusinessRecipients(r *Reader) (*InputBusinessRecipients, error) 
 		_vhdrUsers, _ehdrUsers := r.ReadUint32()
 		if _ehdrUsers != nil {
 			return nil, _ehdrUsers
+		}
+		if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+			return nil, _errUsers
 		}
 		_cntUsers, _ecntUsers := r.ReadUint32()
 		if _ecntUsers != nil {
@@ -5397,7 +5446,6 @@ func DecodeInputBusinessRecipients(r *Reader) (*InputBusinessRecipients, error) 
 			}
 			v.Users[_iUsers] = _cUsers
 		}
-		_ = _vhdrUsers
 	}
 	return v, nil
 }
@@ -5465,11 +5513,11 @@ func (v *BusinessRecipients) Encode(b *bytes.Buffer) error {
 // DecodeBusinessRecipients deserializes a BusinessRecipients from a reader using the TL binary protocol.
 func DecodeBusinessRecipients(r *Reader) (*BusinessRecipients, error) {
 	v := &BusinessRecipients{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ExistingChats = v.Flags.Has(0)
 	v.NewChats = v.Flags.Has(1)
 	v.Contacts = v.Flags.Has(2)
@@ -5548,11 +5596,11 @@ func (v *ConnectedBot) Encode(b *bytes.Buffer) error {
 // DecodeConnectedBot deserializes a ConnectedBot from a reader using the TL binary protocol.
 func DecodeConnectedBot(r *Reader) (*ConnectedBot, error) {
 	v := &ConnectedBot{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rBotID, _eBotID := r.ReadInt64()
 	if _eBotID != nil {
 		return nil, _eBotID
@@ -5645,6 +5693,9 @@ func DecodeAccountConnectedBots(r *Reader) (*AccountConnectedBots, error) {
 	if _ehdrConnectedBots != nil {
 		return nil, _ehdrConnectedBots
 	}
+	if _errConnectedBots := checkVectorConstructor(_vhdrConnectedBots); _errConnectedBots != nil {
+		return nil, _errConnectedBots
+	}
 	_cntConnectedBots, _ecntConnectedBots := r.ReadUint32()
 	if _ecntConnectedBots != nil {
 		return nil, _ecntConnectedBots
@@ -5664,10 +5715,12 @@ func DecodeAccountConnectedBots(r *Reader) (*AccountConnectedBots, error) {
 		}
 		v.ConnectedBots[_iConnectedBots] = _cConnectedBots
 	}
-	_ = _vhdrConnectedBots
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -5688,7 +5741,6 @@ func DecodeAccountConnectedBots(r *Reader) (*AccountConnectedBots, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -5739,11 +5791,11 @@ func (v *Birthday) Encode(b *bytes.Buffer) error {
 // DecodeBirthday deserializes a Birthday from a reader using the TL binary protocol.
 func DecodeBirthday(r *Reader) (*Birthday, error) {
 	v := &Birthday{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rDay, _eDay := r.ReadInt32()
 	if _eDay != nil {
 		return nil, _eDay
@@ -5819,11 +5871,11 @@ func (v *BotBusinessConnection) Encode(b *bytes.Buffer) error {
 // DecodeBotBusinessConnection deserializes a BotBusinessConnection from a reader using the TL binary protocol.
 func DecodeBotBusinessConnection(r *Reader) (*BotBusinessConnection, error) {
 	v := &BotBusinessConnection{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Disabled = v.Flags.Has(1)
 	_rConnectionID, _eConnectionID := r.ReadString()
 	if _eConnectionID != nil {
@@ -5906,11 +5958,11 @@ func (v *InputBusinessIntro) Encode(b *bytes.Buffer) error {
 // DecodeInputBusinessIntro deserializes a InputBusinessIntro from a reader using the TL binary protocol.
 func DecodeInputBusinessIntro(r *Reader) (*InputBusinessIntro, error) {
 	v := &InputBusinessIntro{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -5982,11 +6034,11 @@ func (v *BusinessIntro) Encode(b *bytes.Buffer) error {
 // DecodeBusinessIntro deserializes a BusinessIntro from a reader using the TL binary protocol.
 func DecodeBusinessIntro(r *Reader) (*BusinessIntro, error) {
 	v := &BusinessIntro{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rTitle, _eTitle := r.ReadString()
 	if _eTitle != nil {
 		return nil, _eTitle
@@ -6089,11 +6141,11 @@ func (v *InputBusinessBotRecipients) Encode(b *bytes.Buffer) error {
 // DecodeInputBusinessBotRecipients deserializes a InputBusinessBotRecipients from a reader using the TL binary protocol.
 func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, error) {
 	v := &InputBusinessBotRecipients{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ExistingChats = v.Flags.Has(0)
 	v.NewChats = v.Flags.Has(1)
 	v.Contacts = v.Flags.Has(2)
@@ -6103,6 +6155,9 @@ func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, e
 		_vhdrUsers, _ehdrUsers := r.ReadUint32()
 		if _ehdrUsers != nil {
 			return nil, _ehdrUsers
+		}
+		if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+			return nil, _errUsers
 		}
 		_cntUsers, _ecntUsers := r.ReadUint32()
 		if _ecntUsers != nil {
@@ -6123,12 +6178,14 @@ func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, e
 			}
 			v.Users[_iUsers] = _cUsers
 		}
-		_ = _vhdrUsers
 	}
 	if v.Flags.Has(6) {
 		_vhdrExcludeUsers, _ehdrExcludeUsers := r.ReadUint32()
 		if _ehdrExcludeUsers != nil {
 			return nil, _ehdrExcludeUsers
+		}
+		if _errExcludeUsers := checkVectorConstructor(_vhdrExcludeUsers); _errExcludeUsers != nil {
+			return nil, _errExcludeUsers
 		}
 		_cntExcludeUsers, _ecntExcludeUsers := r.ReadUint32()
 		if _ecntExcludeUsers != nil {
@@ -6149,7 +6206,6 @@ func DecodeInputBusinessBotRecipients(r *Reader) (*InputBusinessBotRecipients, e
 			}
 			v.ExcludeUsers[_iExcludeUsers] = _cExcludeUsers
 		}
-		_ = _vhdrExcludeUsers
 	}
 	return v, nil
 }
@@ -6224,11 +6280,11 @@ func (v *BusinessBotRecipients) Encode(b *bytes.Buffer) error {
 // DecodeBusinessBotRecipients deserializes a BusinessBotRecipients from a reader using the TL binary protocol.
 func DecodeBusinessBotRecipients(r *Reader) (*BusinessBotRecipients, error) {
 	v := &BusinessBotRecipients{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ExistingChats = v.Flags.Has(0)
 	v.NewChats = v.Flags.Has(1)
 	v.Contacts = v.Flags.Has(2)
@@ -6302,6 +6358,9 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 	if _ehdrLinks != nil {
 		return nil, _ehdrLinks
 	}
+	if _errLinks := checkVectorConstructor(_vhdrLinks); _errLinks != nil {
+		return nil, _errLinks
+	}
 	_cntLinks, _ecntLinks := r.ReadUint32()
 	if _ecntLinks != nil {
 		return nil, _ecntLinks
@@ -6321,10 +6380,12 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		}
 		v.Links[_iLinks] = _cLinks
 	}
-	_ = _vhdrLinks
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -6345,10 +6406,12 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -6369,7 +6432,6 @@ func DecodeAccountBusinessChatLinks(r *Reader) (*AccountBusinessChatLinks, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -6436,11 +6498,11 @@ func (v *AccountResolvedBusinessChatLinks) Encode(b *bytes.Buffer) error {
 // DecodeAccountResolvedBusinessChatLinks deserializes a AccountResolvedBusinessChatLinks from a reader using the TL binary protocol.
 func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusinessChatLinks, error) {
 	v := &AccountResolvedBusinessChatLinks{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
 		return nil, _errPeer
@@ -6459,6 +6521,9 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -6479,11 +6544,13 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -6504,10 +6571,12 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -6528,7 +6597,6 @@ func DecodeAccountResolvedBusinessChatLinks(r *Reader) (*AccountResolvedBusiness
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -6591,11 +6659,11 @@ func (v *ConnectedBotStarRef) Encode(b *bytes.Buffer) error {
 // DecodeConnectedBotStarRef deserializes a ConnectedBotStarRef from a reader using the TL binary protocol.
 func DecodeConnectedBotStarRef(r *Reader) (*ConnectedBotStarRef, error) {
 	v := &ConnectedBotStarRef{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Revoked = v.Flags.Has(1)
 	_rURL, _eURL := r.ReadString()
 	if _eURL != nil {
@@ -6768,11 +6836,11 @@ func (v *BusinessBotRights) Encode(b *bytes.Buffer) error {
 // DecodeBusinessBotRights deserializes a BusinessBotRights from a reader using the TL binary protocol.
 func DecodeBusinessBotRights(r *Reader) (*BusinessBotRights, error) {
 	v := &BusinessBotRights{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Reply = v.Flags.Has(0)
 	v.ReadMessages = v.Flags.Has(1)
 	v.DeleteSentMessages = v.Flags.Has(2)
@@ -6914,6 +6982,9 @@ func DecodeAccountPasskeys(r *Reader) (*AccountPasskeys, error) {
 	if _ehdrPasskeys != nil {
 		return nil, _ehdrPasskeys
 	}
+	if _errPasskeys := checkVectorConstructor(_vhdrPasskeys); _errPasskeys != nil {
+		return nil, _errPasskeys
+	}
 	_cntPasskeys, _ecntPasskeys := r.ReadUint32()
 	if _ecntPasskeys != nil {
 		return nil, _ecntPasskeys
@@ -6933,7 +7004,6 @@ func DecodeAccountPasskeys(r *Reader) (*AccountPasskeys, error) {
 		}
 		v.Passkeys[_iPasskeys] = _cPasskeys
 	}
-	_ = _vhdrPasskeys
 	return v, nil
 }
 
@@ -7084,16 +7154,19 @@ func (v *AccountWebBrowserSettings) Encode(b *bytes.Buffer) error {
 // DecodeAccountWebBrowserSettings deserializes a AccountWebBrowserSettings from a reader using the TL binary protocol.
 func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, error) {
 	v := &AccountWebBrowserSettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.OpenExternalBrowser = v.Flags.Has(0)
 	v.DisplayCloseButton = v.Flags.Has(1)
 	_vhdrExternalExceptions, _ehdrExternalExceptions := r.ReadUint32()
 	if _ehdrExternalExceptions != nil {
 		return nil, _ehdrExternalExceptions
+	}
+	if _errExternalExceptions := checkVectorConstructor(_vhdrExternalExceptions); _errExternalExceptions != nil {
+		return nil, _errExternalExceptions
 	}
 	_cntExternalExceptions, _ecntExternalExceptions := r.ReadUint32()
 	if _ecntExternalExceptions != nil {
@@ -7114,10 +7187,12 @@ func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, err
 		}
 		v.ExternalExceptions[_iExternalExceptions] = _cExternalExceptions
 	}
-	_ = _vhdrExternalExceptions
 	_vhdrInappExceptions, _ehdrInappExceptions := r.ReadUint32()
 	if _ehdrInappExceptions != nil {
 		return nil, _ehdrInappExceptions
+	}
+	if _errInappExceptions := checkVectorConstructor(_vhdrInappExceptions); _errInappExceptions != nil {
+		return nil, _errInappExceptions
 	}
 	_cntInappExceptions, _ecntInappExceptions := r.ReadUint32()
 	if _ecntInappExceptions != nil {
@@ -7138,7 +7213,6 @@ func DecodeAccountWebBrowserSettings(r *Reader) (*AccountWebBrowserSettings, err
 		}
 		v.InappExceptions[_iInappExceptions] = _cInappExceptions
 	}
-	_ = _vhdrInappExceptions
 	_rHash, _eHash := r.ReadInt64()
 	if _eHash != nil {
 		return nil, _eHash

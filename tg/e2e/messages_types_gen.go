@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -96,7 +97,11 @@ func DecodeDecryptedMessage8(r *tg.Reader) (*DecryptedMessage8, error) {
 	if _errMedia != nil {
 		return nil, _errMedia
 	}
-	v.Media = _objMedia.(DecryptedMessageMediaClass)
+	_cMedia, _okMedia := _objMedia.(DecryptedMessageMediaClass)
+	if !_okMedia {
+		return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+	}
+	v.Media = _cMedia
 	return v, nil
 }
 
@@ -144,7 +149,11 @@ func DecodeDecryptedMessageService8(r *tg.Reader) (*DecryptedMessageService8, er
 	if _errAction != nil {
 		return nil, _errAction
 	}
-	v.Action = _objAction.(DecryptedMessageActionClass)
+	_cAction, _okAction := _objAction.(DecryptedMessageActionClass)
+	if !_okAction {
+		return nil, fmt.Errorf("decode: field action: unexpected type %T", _objAction)
+	}
+	v.Action = _cAction
 	return v, nil
 }
 
@@ -199,7 +208,11 @@ func DecodeDecryptedMessage23(r *tg.Reader) (*DecryptedMessage23, error) {
 	if _errMedia != nil {
 		return nil, _errMedia
 	}
-	v.Media = _objMedia.(DecryptedMessageMediaClass)
+	_cMedia, _okMedia := _objMedia.(DecryptedMessageMediaClass)
+	if !_okMedia {
+		return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+	}
+	v.Media = _cMedia
 	return v, nil
 }
 
@@ -240,7 +253,11 @@ func DecodeDecryptedMessageService(r *tg.Reader) (*DecryptedMessageService, erro
 	if _errAction != nil {
 		return nil, _errAction
 	}
-	v.Action = _objAction.(DecryptedMessageActionClass)
+	_cAction, _okAction := _objAction.(DecryptedMessageActionClass)
+	if !_okAction {
+		return nil, fmt.Errorf("decode: field action: unexpected type %T", _objAction)
+	}
+	v.Action = _cAction
 	return v, nil
 }
 
@@ -313,11 +330,11 @@ func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
 // DecodeDecryptedMessage46 deserializes a DecryptedMessage46 from a reader using the TL binary protocol.
 func DecodeDecryptedMessage46(r *tg.Reader) (*DecryptedMessage46, error) {
 	v := &DecryptedMessage46{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = tg.Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = tg.Fields(_rFlags)
 	_rRandomID, _eRandomID := r.ReadInt64()
 	if _eRandomID != nil {
 		return nil, _eRandomID
@@ -338,12 +355,19 @@ func DecodeDecryptedMessage46(r *tg.Reader) (*DecryptedMessage46, error) {
 		if _errMedia != nil {
 			return nil, _errMedia
 		}
-		v.Media = _objMedia.(DecryptedMessageMediaClass)
+		_cMedia, _okMedia := _objMedia.(DecryptedMessageMediaClass)
+		if !_okMedia {
+			return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+		}
+		v.Media = _cMedia
 	}
 	if v.Flags.Has(7) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := tg.CheckVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -358,9 +382,12 @@ func DecodeDecryptedMessage46(r *tg.Reader) (*DecryptedMessage46, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(11) {
 		_rViaBotName, _eViaBotName := r.ReadString()
@@ -459,11 +486,11 @@ func (v *DecryptedMessage) Encode(b *bytes.Buffer) error {
 // DecodeDecryptedMessage deserializes a DecryptedMessage from a reader using the TL binary protocol.
 func DecodeDecryptedMessage(r *tg.Reader) (*DecryptedMessage, error) {
 	v := &DecryptedMessage{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = tg.Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = tg.Fields(_rFlags)
 	v.Silent = v.Flags.Has(5)
 	_rRandomID, _eRandomID := r.ReadInt64()
 	if _eRandomID != nil {
@@ -485,12 +512,19 @@ func DecodeDecryptedMessage(r *tg.Reader) (*DecryptedMessage, error) {
 		if _errMedia != nil {
 			return nil, _errMedia
 		}
-		v.Media = _objMedia.(DecryptedMessageMediaClass)
+		_cMedia, _okMedia := _objMedia.(DecryptedMessageMediaClass)
+		if !_okMedia {
+			return nil, fmt.Errorf("decode: field media: unexpected type %T", _objMedia)
+		}
+		v.Media = _cMedia
 	}
 	if v.Flags.Has(7) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := tg.CheckVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -505,9 +539,12 @@ func DecodeDecryptedMessage(r *tg.Reader) (*DecryptedMessage, error) {
 			if _errEntities != nil {
 				return nil, _errEntities
 			}
-			v.Entities[_iEntities] = _objEntities.(MessageEntityClass)
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(11) {
 		_rViaBotName, _eViaBotName := r.ReadString()
@@ -1303,7 +1340,11 @@ func DecodeDecryptedMessageMediaExternalDocument(r *tg.Reader) (*DecryptedMessag
 	if _errThumb != nil {
 		return nil, _errThumb
 	}
-	v.Thumb = _objThumb.(PhotoSizeClass)
+	_cThumb, _okThumb := _objThumb.(PhotoSizeClass)
+	if !_okThumb {
+		return nil, fmt.Errorf("decode: field thumb: unexpected type %T", _objThumb)
+	}
+	v.Thumb = _cThumb
 	_rDCID, _eDCID := r.ReadInt32()
 	if _eDCID != nil {
 		return nil, _eDCID
@@ -1312,6 +1353,9 @@ func DecodeDecryptedMessageMediaExternalDocument(r *tg.Reader) (*DecryptedMessag
 	_vhdrAttributes, _ehdrAttributes := r.ReadUint32()
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
+	}
+	if _errAttributes := tg.CheckVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
 	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
@@ -1326,9 +1370,12 @@ func DecodeDecryptedMessageMediaExternalDocument(r *tg.Reader) (*DecryptedMessag
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	return v, nil
 }
 
@@ -1611,6 +1658,9 @@ func DecodeDecryptedMessageMediaDocument46(r *tg.Reader) (*DecryptedMessageMedia
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := tg.CheckVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -1624,9 +1674,12 @@ func DecodeDecryptedMessageMediaDocument46(r *tg.Reader) (*DecryptedMessageMedia
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	_rCaption, _eCaption := r.ReadString()
 	if _eCaption != nil {
 		return nil, _eCaption
@@ -1823,6 +1876,9 @@ func DecodeDecryptedMessageMediaDocument(r *tg.Reader) (*DecryptedMessageMediaDo
 	if _ehdrAttributes != nil {
 		return nil, _ehdrAttributes
 	}
+	if _errAttributes := tg.CheckVectorConstructor(_vhdrAttributes); _errAttributes != nil {
+		return nil, _errAttributes
+	}
 	_cntAttributes, _ecntAttributes := r.ReadUint32()
 	if _ecntAttributes != nil {
 		return nil, _ecntAttributes
@@ -1836,9 +1892,12 @@ func DecodeDecryptedMessageMediaDocument(r *tg.Reader) (*DecryptedMessageMediaDo
 		if _errAttributes != nil {
 			return nil, _errAttributes
 		}
-		v.Attributes[_iAttributes] = _objAttributes.(DocumentAttributeClass)
+		_cAttributes, _okAttributes := _objAttributes.(DocumentAttributeClass)
+		if !_okAttributes {
+			return nil, fmt.Errorf("decode: field attributes: unexpected type %T", _objAttributes)
+		}
+		v.Attributes[_iAttributes] = _cAttributes
 	}
-	_ = _vhdrAttributes
 	_rCaption, _eCaption := r.ReadString()
 	if _eCaption != nil {
 		return nil, _eCaption
@@ -2201,7 +2260,11 @@ func DecodeDecryptedMessageActionTyping(r *tg.Reader) (*DecryptedMessageActionTy
 	if _errAction != nil {
 		return nil, _errAction
 	}
-	v.Action = _objAction.(SendMessageActionClass)
+	_cAction, _okAction := _objAction.(SendMessageActionClass)
+	if !_okAction {
+		return nil, fmt.Errorf("decode: field action: unexpected type %T", _objAction)
+	}
+	v.Action = _cAction
 	return v, nil
 }
 
@@ -2457,7 +2520,11 @@ func DecodeDecryptedMessageLayer(r *tg.Reader) (*DecryptedMessageLayer, error) {
 	if _errMessage != nil {
 		return nil, _errMessage
 	}
-	v.Message = _objMessage.(DecryptedMessageClass)
+	_cMessage, _okMessage := _objMessage.(DecryptedMessageClass)
+	if !_okMessage {
+		return nil, fmt.Errorf("decode: field message: unexpected type %T", _objMessage)
+	}
+	v.Message = _cMessage
 	return v, nil
 }
 

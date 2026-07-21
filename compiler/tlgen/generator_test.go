@@ -212,11 +212,19 @@ func TestBareVectorBoxedElements(t *testing.T) {
 	if strings.Contains(read, "_vhdr") {
 		t.Fatalf("bare vector read should not include vector header: %s", read)
 	}
-	if !strings.Contains(read, "ReadTLObject(r)") || !strings.Contains(read, ".(IpPortClass)") {
+	if !strings.Contains(read, "ReadTLObject(r)") || !strings.Contains(read, ".(IpPortClass)") || !strings.Contains(read, "_okIps") {
 		t.Fatalf("boxed vector elements should use TL object decoding: %s", read)
 	}
 	if strings.Index(read, "if _errIps != nil") > strings.Index(read, "_objIps.(IpPortClass)") {
 		t.Fatalf("read error should be checked before type assertion: %s", read)
+	}
+}
+
+func TestBuildReadExprValidatesBoxedVectorConstructor(t *testing.T) {
+	arg := Arg{Name: "items", Type: "Vector<Item>"}
+	got := buildReadExpr(arg, "[]ItemClass", nil, nil)
+	if !strings.Contains(got, "checkVectorConstructor(_vhdrItems)") {
+		t.Fatalf("boxed vector read should validate its constructor: %s", got)
 	}
 }
 
@@ -305,6 +313,12 @@ func TestGenerateTypes(t *testing.T) {
 	}
 	if !strings.Contains(content, "Flags") || !strings.Contains(content, "uint32") {
 		t.Fatal("missing Flags field")
+	}
+	if strings.Contains(content, "_f, _ = r.ReadUint32()") {
+		t.Fatal("flags decoder should not discard read errors")
+	}
+	if !strings.Contains(content, "if _eFlags != nil") {
+		t.Fatal("flags decoder should propagate read errors")
 	}
 	if !strings.Contains(content, "Val") || !strings.Contains(content, "bool") {
 		t.Fatal("missing Val field")

@@ -100,13 +100,58 @@ func TestParseInvalidFlagBit(t *testing.T) {
 	}
 }
 
+func TestParseFlagBitOutOfRange(t *testing.T) {
+	src := "badFlags#abcdef00 flags:# val:flags.32?int = BadFlags;"
+	_, err := Parse(strings.NewReader(src))
+	if err == nil {
+		t.Fatal("expected error for flag bit 32, got nil")
+	}
+	if !strings.Contains(err.Error(), "between 0 and 31") {
+		t.Fatalf("error should include the valid flag range, got: %v", err)
+	}
+}
+
+func TestParseImplicitConstructorID(t *testing.T) {
+	combos, err := Parse(strings.NewReader("user id:int first_name:string last_name:string = User;"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(combos) != 1 {
+		t.Fatalf("expected 1 combinator, got %d", len(combos))
+	}
+	if combos[0].ID != 0xd23c81a3 {
+		t.Fatalf("expected implicit constructor ID 0xd23c81a3, got 0x%08x", combos[0].ID)
+	}
+}
+
+func TestParseRejectsMalformedDeclaration(t *testing.T) {
+	_, err := Parse(strings.NewReader("bad declaration"))
+	if err == nil || !strings.Contains(err.Error(), "unsupported TL declaration") {
+		t.Fatalf("expected unsupported declaration error, got: %v", err)
+	}
+}
+
+func TestParseRejectsMalformedArgument(t *testing.T) {
+	_, err := Parse(strings.NewReader("bad#abcdef00 value:int stray = Bad;"))
+	if err == nil || !strings.Contains(err.Error(), "unsupported argument token") {
+		t.Fatalf("expected unsupported argument error, got: %v", err)
+	}
+}
+
+func TestParseRejectsUnknownSection(t *testing.T) {
+	_, err := Parse(strings.NewReader("---unknown---"))
+	if err == nil || !strings.Contains(err.Error(), "unknown section") {
+		t.Fatalf("expected unknown section error, got: %v", err)
+	}
+}
+
 func TestParseBuiltinPrimitivesSkipped(t *testing.T) {
-	// Builtin primitive declarations that don't match combinatorRe are
-	// silently skipped, not errors.
+	// Builtin primitive declarations are explicitly recognized and skipped.
 	src := `int ? = Int;
 long ? = Long;
 string ? = String;
 vector {t:Type} # [ t ] = Vector t;
+vector#1cb5c415 {t:Type} # [ t ] = Vector t;
 realObj#deadbeef val:int = RealObj;`
 	combos, err := Parse(strings.NewReader(src))
 	if err != nil {
@@ -117,5 +162,20 @@ realObj#deadbeef val:int = RealObj;`
 	}
 	if combos[0].Name != "realObj" {
 		t.Fatalf("expected realObj, got %s", combos[0].Name)
+	}
+}
+
+func TestParseCheckedInSchemas(t *testing.T) {
+	for _, path := range []string{"../source/api.tl", "../source/mtproto.tl", "../e2e.tl"} {
+		t.Run(path, func(t *testing.T) {
+			file, err := os.Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer file.Close()
+			if _, err := Parse(file); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

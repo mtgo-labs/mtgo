@@ -102,11 +102,11 @@ func (v *ChannelParticipant) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipant deserializes a ChannelParticipant from a reader using the TL binary protocol.
 func DecodeChannelParticipant(r *Reader) (*ChannelParticipant, error) {
 	v := &ChannelParticipant{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -191,11 +191,11 @@ func (v *ChannelParticipantSelf) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipantSelf deserializes a ChannelParticipantSelf from a reader using the TL binary protocol.
 func DecodeChannelParticipantSelf(r *Reader) (*ChannelParticipantSelf, error) {
 	v := &ChannelParticipantSelf{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViaRequest = v.Flags.Has(0)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
@@ -273,11 +273,11 @@ func (v *ChannelParticipantCreator) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipantCreator deserializes a ChannelParticipantCreator from a reader using the TL binary protocol.
 func DecodeChannelParticipantCreator(r *Reader) (*ChannelParticipantCreator, error) {
 	v := &ChannelParticipantCreator{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -365,11 +365,11 @@ func (v *ChannelParticipantAdmin) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipantAdmin deserializes a ChannelParticipantAdmin from a reader using the TL binary protocol.
 func DecodeChannelParticipantAdmin(r *Reader) (*ChannelParticipantAdmin, error) {
 	v := &ChannelParticipantAdmin{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanEdit = v.Flags.Has(0)
 	v.Self = v.Flags.Has(1)
 	_rUserID, _eUserID := r.ReadInt64()
@@ -465,11 +465,11 @@ func (v *ChannelParticipantBanned) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipantBanned deserializes a ChannelParticipantBanned from a reader using the TL binary protocol.
 func DecodeChannelParticipantBanned(r *Reader) (*ChannelParticipantBanned, error) {
 	v := &ChannelParticipantBanned{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Left = v.Flags.Has(0)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -602,6 +602,9 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -621,10 +624,12 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -645,7 +650,6 @@ func DecodeChannelsChannelParticipant(r *Reader) (*ChannelsChannelParticipant, e
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -724,6 +728,9 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 	if _ehdrParticipants != nil {
 		return nil, _ehdrParticipants
 	}
+	if _errParticipants := checkVectorConstructor(_vhdrParticipants); _errParticipants != nil {
+		return nil, _errParticipants
+	}
 	_cntParticipants, _ecntParticipants := r.ReadUint32()
 	if _ecntParticipants != nil {
 		return nil, _ecntParticipants
@@ -743,10 +750,12 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		}
 		v.Participants[_iParticipants] = _cParticipants
 	}
-	_ = _vhdrParticipants
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -767,10 +776,12 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -791,7 +802,6 @@ func DecodeChannelsChannelParticipants(r *Reader) (*ChannelsChannelParticipants,
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -875,6 +885,9 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 	if _ehdrEvents != nil {
 		return nil, _ehdrEvents
 	}
+	if _errEvents := checkVectorConstructor(_vhdrEvents); _errEvents != nil {
+		return nil, _errEvents
+	}
 	_cntEvents, _ecntEvents := r.ReadUint32()
 	if _ecntEvents != nil {
 		return nil, _ecntEvents
@@ -894,10 +907,12 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		}
 		v.Events[_iEvents] = _cEvents
 	}
-	_ = _vhdrEvents
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -918,10 +933,12 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -942,7 +959,6 @@ func DecodeChannelsAdminLogResults(r *Reader) (*ChannelsAdminLogResults, error) 
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -997,6 +1013,9 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -1016,10 +1035,12 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -1040,10 +1061,12 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1064,7 +1087,6 @@ func DecodeChannelsSendAsPeers(r *Reader) (*ChannelsSendAsPeers, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1137,6 +1159,9 @@ func DecodeChannelsSponsoredMessageReportResultChooseOption(r *Reader) (*Channel
 	if _ehdrOptions != nil {
 		return nil, _ehdrOptions
 	}
+	if _errOptions := checkVectorConstructor(_vhdrOptions); _errOptions != nil {
+		return nil, _errOptions
+	}
 	_cntOptions, _ecntOptions := r.ReadUint32()
 	if _ecntOptions != nil {
 		return nil, _ecntOptions
@@ -1156,7 +1181,6 @@ func DecodeChannelsSponsoredMessageReportResultChooseOption(r *Reader) (*Channel
 		}
 		v.Options[_iOptions] = _cOptions
 	}
-	_ = _vhdrOptions
 	return v, nil
 }
 

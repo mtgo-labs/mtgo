@@ -89,6 +89,29 @@ func (e *vectorTooLargeError) Error() string {
 
 const maxVectorElements uint32 = 100000
 
+// VectorTypeID is the universal constructor ID for boxed TL vectors.
+const VectorTypeID uint32 = 0x1cb5c415
+
+type invalidVectorConstructorError struct {
+	got uint32
+}
+
+func (e *invalidVectorConstructorError) Error() string {
+	return fmt.Sprintf("tg: invalid vector constructor: got 0x%08x, want 0x%08x", e.got, VectorTypeID)
+}
+
+// CheckVectorConstructor validates the universal constructor prefix of a boxed vector.
+func CheckVectorConstructor(id uint32) error {
+	if id != VectorTypeID {
+		return &invalidVectorConstructorError{got: id}
+	}
+	return nil
+}
+
+func checkVectorConstructor(id uint32) error {
+	return CheckVectorConstructor(id)
+}
+
 // CheckVectorCount rejects implausibly large TL vector lengths before allocating.
 func CheckVectorCount(count uint32) error {
 	if count > maxVectorElements {

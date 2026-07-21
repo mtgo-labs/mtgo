@@ -105,11 +105,11 @@ func (v *SmsjobsStatus) Encode(b *bytes.Buffer) error {
 // DecodeSmsjobsStatus deserializes a SmsjobsStatus from a reader using the TL binary protocol.
 func DecodeSmsjobsStatus(r *Reader) (*SmsjobsStatus, error) {
 	v := &SmsjobsStatus{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.AllowInternational = v.Flags.Has(0)
 	_rRecentSent, _eRecentSent := r.ReadInt32()
 	if _eRecentSent != nil {

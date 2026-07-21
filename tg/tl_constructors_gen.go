@@ -1392,7 +1392,6 @@ var ConstructorMap = map[uint32]func() TLObject{
 	0xbc799737: func() TLObject { return &BoolFalse{} },
 	0x997275b5: func() TLObject { return &BoolTrue{} },
 	0x3fedd339: func() TLObject { return &True{} },
-	0x1cb5c415: func() TLObject { return &Vector{} },
 	0xc4b9f9bb: func() TLObject { return &Error{} },
 	0x56730bcc: func() TLObject { return &Null{} },
 	0xf52ff27f: func() TLObject { return &InputFile{} },

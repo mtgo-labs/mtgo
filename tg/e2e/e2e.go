@@ -23,8 +23,6 @@ func ReadE2ETLObject(r *tg.Reader) (tg.TLObject, error) {
 	return constructor(r)
 }
 
-const vectorBareID uint32 = 0x1cb5c415
-
 // EncodeTLObject encodes any TLObject to the buffer.
 func EncodeTLObject(b *bytes.Buffer, obj tg.TLObject) error {
 	return obj.Encode(b)

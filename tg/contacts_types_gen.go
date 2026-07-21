@@ -94,6 +94,9 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 	if _ehdrContacts != nil {
 		return nil, _ehdrContacts
 	}
+	if _errContacts := checkVectorConstructor(_vhdrContacts); _errContacts != nil {
+		return nil, _errContacts
+	}
 	_cntContacts, _ecntContacts := r.ReadUint32()
 	if _ecntContacts != nil {
 		return nil, _ecntContacts
@@ -113,7 +116,6 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 		}
 		v.Contacts[_iContacts] = _cContacts
 	}
-	_ = _vhdrContacts
 	_rSavedCount, _eSavedCount := r.ReadInt32()
 	if _eSavedCount != nil {
 		return nil, _eSavedCount
@@ -122,6 +124,9 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -142,7 +147,6 @@ func DecodeContactsContacts(r *Reader) (*ContactsContacts, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -199,6 +203,9 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 	if _ehdrImported != nil {
 		return nil, _ehdrImported
 	}
+	if _errImported := checkVectorConstructor(_vhdrImported); _errImported != nil {
+		return nil, _errImported
+	}
 	_cntImported, _ecntImported := r.ReadUint32()
 	if _ecntImported != nil {
 		return nil, _ecntImported
@@ -218,10 +225,12 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		}
 		v.Imported[_iImported] = _cImported
 	}
-	_ = _vhdrImported
 	_vhdrPopularInvites, _ehdrPopularInvites := r.ReadUint32()
 	if _ehdrPopularInvites != nil {
 		return nil, _ehdrPopularInvites
+	}
+	if _errPopularInvites := checkVectorConstructor(_vhdrPopularInvites); _errPopularInvites != nil {
+		return nil, _errPopularInvites
 	}
 	_cntPopularInvites, _ecntPopularInvites := r.ReadUint32()
 	if _ecntPopularInvites != nil {
@@ -242,7 +251,6 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		}
 		v.PopularInvites[_iPopularInvites] = _cPopularInvites
 	}
-	_ = _vhdrPopularInvites
 	_vvRetryContacts, _veRetryContacts := r.ReadVectorLong()
 	if _veRetryContacts != nil {
 		return nil, _veRetryContacts
@@ -251,6 +259,9 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -271,7 +282,6 @@ func DecodeContactsImportedContacts(r *Reader) (*ContactsImportedContacts, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -343,6 +353,9 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 	if _ehdrBlocked != nil {
 		return nil, _ehdrBlocked
 	}
+	if _errBlocked := checkVectorConstructor(_vhdrBlocked); _errBlocked != nil {
+		return nil, _errBlocked
+	}
 	_cntBlocked, _ecntBlocked := r.ReadUint32()
 	if _ecntBlocked != nil {
 		return nil, _ecntBlocked
@@ -362,10 +375,12 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		}
 		v.Blocked[_iBlocked] = _cBlocked
 	}
-	_ = _vhdrBlocked
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -386,10 +401,12 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -410,7 +427,6 @@ func DecodeContactsBlocked(r *Reader) (*ContactsBlocked, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -469,6 +485,9 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 	if _ehdrBlocked != nil {
 		return nil, _ehdrBlocked
 	}
+	if _errBlocked := checkVectorConstructor(_vhdrBlocked); _errBlocked != nil {
+		return nil, _errBlocked
+	}
 	_cntBlocked, _ecntBlocked := r.ReadUint32()
 	if _ecntBlocked != nil {
 		return nil, _ecntBlocked
@@ -488,10 +507,12 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		}
 		v.Blocked[_iBlocked] = _cBlocked
 	}
-	_ = _vhdrBlocked
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -512,10 +533,12 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -536,7 +559,6 @@ func DecodeContactsBlockedSlice(r *Reader) (*ContactsBlockedSlice, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -597,6 +619,9 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 	if _ehdrMyResults != nil {
 		return nil, _ehdrMyResults
 	}
+	if _errMyResults := checkVectorConstructor(_vhdrMyResults); _errMyResults != nil {
+		return nil, _errMyResults
+	}
 	_cntMyResults, _ecntMyResults := r.ReadUint32()
 	if _ecntMyResults != nil {
 		return nil, _ecntMyResults
@@ -616,10 +641,12 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		}
 		v.MyResults[_iMyResults] = _cMyResults
 	}
-	_ = _vhdrMyResults
 	_vhdrResults, _ehdrResults := r.ReadUint32()
 	if _ehdrResults != nil {
 		return nil, _ehdrResults
+	}
+	if _errResults := checkVectorConstructor(_vhdrResults); _errResults != nil {
+		return nil, _errResults
 	}
 	_cntResults, _ecntResults := r.ReadUint32()
 	if _ecntResults != nil {
@@ -640,10 +667,12 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		}
 		v.Results[_iResults] = _cResults
 	}
-	_ = _vhdrResults
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -664,10 +693,12 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -688,7 +719,6 @@ func DecodeContactsFound(r *Reader) (*ContactsFound, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -748,6 +778,9 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
 	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
+	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
 		return nil, _ecntChats
@@ -767,10 +800,12 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -791,7 +826,6 @@ func DecodeContactsResolvedPeer(r *Reader) (*ContactsResolvedPeer, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -898,6 +932,9 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 	if _ehdrCategories != nil {
 		return nil, _ehdrCategories
 	}
+	if _errCategories := checkVectorConstructor(_vhdrCategories); _errCategories != nil {
+		return nil, _errCategories
+	}
 	_cntCategories, _ecntCategories := r.ReadUint32()
 	if _ecntCategories != nil {
 		return nil, _ecntCategories
@@ -917,10 +954,12 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		}
 		v.Categories[_iCategories] = _cCategories
 	}
-	_ = _vhdrCategories
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -941,10 +980,12 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -965,7 +1006,6 @@ func DecodeContactsTopPeers(r *Reader) (*ContactsTopPeers, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1043,6 +1083,9 @@ func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error
 	if _ehdrContacts != nil {
 		return nil, _ehdrContacts
 	}
+	if _errContacts := checkVectorConstructor(_vhdrContacts); _errContacts != nil {
+		return nil, _errContacts
+	}
 	_cntContacts, _ecntContacts := r.ReadUint32()
 	if _ecntContacts != nil {
 		return nil, _ecntContacts
@@ -1062,10 +1105,12 @@ func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error
 		}
 		v.Contacts[_iContacts] = _cContacts
 	}
-	_ = _vhdrContacts
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1086,7 +1131,6 @@ func DecodeContactsContactBirthdays(r *Reader) (*ContactsContactBirthdays, error
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 
@@ -1187,6 +1231,9 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -1206,10 +1253,12 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	_vhdrChats, _ehdrChats := r.ReadUint32()
 	if _ehdrChats != nil {
 		return nil, _ehdrChats
+	}
+	if _errChats := checkVectorConstructor(_vhdrChats); _errChats != nil {
+		return nil, _errChats
 	}
 	_cntChats, _ecntChats := r.ReadUint32()
 	if _ecntChats != nil {
@@ -1230,10 +1279,12 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		}
 		v.Chats[_iChats] = _cChats
 	}
-	_ = _vhdrChats
 	_vhdrUsers, _ehdrUsers := r.ReadUint32()
 	if _ehdrUsers != nil {
 		return nil, _ehdrUsers
+	}
+	if _errUsers := checkVectorConstructor(_vhdrUsers); _errUsers != nil {
+		return nil, _errUsers
 	}
 	_cntUsers, _ecntUsers := r.ReadUint32()
 	if _ecntUsers != nil {
@@ -1254,7 +1305,6 @@ func DecodeContactsSponsoredPeers(r *Reader) (*ContactsSponsoredPeers, error) {
 		}
 		v.Users[_iUsers] = _cUsers
 	}
-	_ = _vhdrUsers
 	return v, nil
 }
 

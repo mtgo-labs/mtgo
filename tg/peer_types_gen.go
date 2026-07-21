@@ -577,11 +577,11 @@ func (v *InputPhoneContact) Encode(b *bytes.Buffer) error {
 // DecodeInputPhoneContact deserializes a InputPhoneContact from a reader using the TL binary protocol.
 func DecodeInputPhoneContact(r *Reader) (*InputPhoneContact, error) {
 	v := &InputPhoneContact{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rClientID, _eClientID := r.ReadInt64()
 	if _eClientID != nil {
 		return nil, _eClientID
@@ -732,11 +732,11 @@ func (v *InputChatUploadedPhoto) Encode(b *bytes.Buffer) error {
 // DecodeInputChatUploadedPhoto deserializes a InputChatUploadedPhoto from a reader using the TL binary protocol.
 func DecodeInputChatUploadedPhoto(r *Reader) (*InputChatUploadedPhoto, error) {
 	v := &InputChatUploadedPhoto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objFile, _errFile := ReadTLObject(r)
 		if _errFile != nil {
@@ -1315,11 +1315,11 @@ func (v *User) Encode(b *bytes.Buffer) error {
 // DecodeUser deserializes a User from a reader using the TL binary protocol.
 func DecodeUser(r *Reader) (*User, error) {
 	v := &User{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Self = v.Flags.Has(10)
 	v.Contact = v.Flags.Has(11)
 	v.MutualContact = v.Flags.Has(12)
@@ -1338,11 +1338,11 @@ func DecodeUser(r *Reader) (*User, error) {
 	v.BotAttachMenu = v.Flags.Has(27)
 	v.Premium = v.Flags.Has(28)
 	v.AttachMenuEnabled = v.Flags.Has(29)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.BotCanEdit = v.Flags2.Has(1)
 	v.CloseFriend = v.Flags2.Has(2)
 	v.StoriesHidden = v.Flags2.Has(3)
@@ -1429,6 +1429,9 @@ func DecodeUser(r *Reader) (*User, error) {
 		if _ehdrRestrictionReason != nil {
 			return nil, _ehdrRestrictionReason
 		}
+		if _errRestrictionReason := checkVectorConstructor(_vhdrRestrictionReason); _errRestrictionReason != nil {
+			return nil, _errRestrictionReason
+		}
 		_cntRestrictionReason, _ecntRestrictionReason := r.ReadUint32()
 		if _ecntRestrictionReason != nil {
 			return nil, _ecntRestrictionReason
@@ -1448,7 +1451,6 @@ func DecodeUser(r *Reader) (*User, error) {
 			}
 			v.RestrictionReason[_iRestrictionReason] = _cRestrictionReason
 		}
-		_ = _vhdrRestrictionReason
 	}
 	if v.Flags.Has(19) {
 		_rBotInlinePlaceholder, _eBotInlinePlaceholder := r.ReadString()
@@ -1480,6 +1482,9 @@ func DecodeUser(r *Reader) (*User, error) {
 		if _ehdrUsernames != nil {
 			return nil, _ehdrUsernames
 		}
+		if _errUsernames := checkVectorConstructor(_vhdrUsernames); _errUsernames != nil {
+			return nil, _errUsernames
+		}
 		_cntUsernames, _ecntUsernames := r.ReadUint32()
 		if _ecntUsernames != nil {
 			return nil, _ecntUsernames
@@ -1499,7 +1504,6 @@ func DecodeUser(r *Reader) (*User, error) {
 			}
 			v.Usernames[_iUsernames] = _cUsernames
 		}
-		_ = _vhdrUsernames
 	}
 	if v.Flags2.Has(5) {
 		_objStoriesMaxID, _errStoriesMaxID := ReadTLObject(r)
@@ -1666,11 +1670,11 @@ func (v *UserProfilePhoto) Encode(b *bytes.Buffer) error {
 // DecodeUserProfilePhoto deserializes a UserProfilePhoto from a reader using the TL binary protocol.
 func DecodeUserProfilePhoto(r *Reader) (*UserProfilePhoto, error) {
 	v := &UserProfilePhoto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasVideo = v.Flags.Has(0)
 	v.Personal = v.Flags.Has(2)
 	_rPhotoID, _ePhotoID := r.ReadInt64()
@@ -1875,11 +1879,11 @@ func (v *UserStatusRecently) Encode(b *bytes.Buffer) error {
 // DecodeUserStatusRecently deserializes a UserStatusRecently from a reader using the TL binary protocol.
 func DecodeUserStatusRecently(r *Reader) (*UserStatusRecently, error) {
 	v := &UserStatusRecently{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ByMe = v.Flags.Has(0)
 	return v, nil
 }
@@ -1921,11 +1925,11 @@ func (v *UserStatusLastWeek) Encode(b *bytes.Buffer) error {
 // DecodeUserStatusLastWeek deserializes a UserStatusLastWeek from a reader using the TL binary protocol.
 func DecodeUserStatusLastWeek(r *Reader) (*UserStatusLastWeek, error) {
 	v := &UserStatusLastWeek{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ByMe = v.Flags.Has(0)
 	return v, nil
 }
@@ -1967,11 +1971,11 @@ func (v *UserStatusLastMonth) Encode(b *bytes.Buffer) error {
 // DecodeUserStatusLastMonth deserializes a UserStatusLastMonth from a reader using the TL binary protocol.
 func DecodeUserStatusLastMonth(r *Reader) (*UserStatusLastMonth, error) {
 	v := &UserStatusLastMonth{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ByMe = v.Flags.Has(0)
 	return v, nil
 }
@@ -2152,11 +2156,11 @@ func (v *Chat) Encode(b *bytes.Buffer) error {
 // DecodeChat deserializes a Chat from a reader using the TL binary protocol.
 func DecodeChat(r *Reader) (*Chat, error) {
 	v := &Chat{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	v.Left = v.Flags.Has(2)
 	v.Deactivated = v.Flags.Has(5)
@@ -2565,11 +2569,11 @@ func (v *Channel) Encode(b *bytes.Buffer) error {
 // DecodeChannel deserializes a Channel from a reader using the TL binary protocol.
 func DecodeChannel(r *Reader) (*Channel, error) {
 	v := &Channel{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	v.Left = v.Flags.Has(2)
 	v.Broadcast = v.Flags.Has(5)
@@ -2590,11 +2594,11 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 	v.JoinToSend = v.Flags.Has(28)
 	v.JoinRequest = v.Flags.Has(29)
 	v.Forum = v.Flags.Has(30)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.StoriesHidden = v.Flags2.Has(1)
 	v.StoriesHiddenMin = v.Flags2.Has(2)
 	v.StoriesUnavailable = v.Flags2.Has(3)
@@ -2646,6 +2650,9 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 		if _ehdrRestrictionReason != nil {
 			return nil, _ehdrRestrictionReason
 		}
+		if _errRestrictionReason := checkVectorConstructor(_vhdrRestrictionReason); _errRestrictionReason != nil {
+			return nil, _errRestrictionReason
+		}
 		_cntRestrictionReason, _ecntRestrictionReason := r.ReadUint32()
 		if _ecntRestrictionReason != nil {
 			return nil, _ecntRestrictionReason
@@ -2665,7 +2672,6 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			}
 			v.RestrictionReason[_iRestrictionReason] = _cRestrictionReason
 		}
-		_ = _vhdrRestrictionReason
 	}
 	if v.Flags.Has(14) {
 		_objAdminRights, _errAdminRights := ReadTLObject(r)
@@ -2712,6 +2718,9 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 		if _ehdrUsernames != nil {
 			return nil, _ehdrUsernames
 		}
+		if _errUsernames := checkVectorConstructor(_vhdrUsernames); _errUsernames != nil {
+			return nil, _errUsernames
+		}
 		_cntUsernames, _ecntUsernames := r.ReadUint32()
 		if _ecntUsernames != nil {
 			return nil, _ecntUsernames
@@ -2731,7 +2740,6 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			}
 			v.Usernames[_iUsernames] = _cUsernames
 		}
-		_ = _vhdrUsernames
 	}
 	if v.Flags2.Has(4) {
 		_objStoriesMaxID, _errStoriesMaxID := ReadTLObject(r)
@@ -2880,11 +2888,11 @@ func (v *ChannelForbidden) Encode(b *bytes.Buffer) error {
 // DecodeChannelForbidden deserializes a ChannelForbidden from a reader using the TL binary protocol.
 func DecodeChannelForbidden(r *Reader) (*ChannelForbidden, error) {
 	v := &ChannelForbidden{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Broadcast = v.Flags.Has(5)
 	v.Megagroup = v.Flags.Has(8)
 	v.Monoforum = v.Flags.Has(10)
@@ -2957,11 +2965,11 @@ func (v *CommunityForbidden) Encode(b *bytes.Buffer) error {
 // DecodeCommunityForbidden deserializes a CommunityForbidden from a reader using the TL binary protocol.
 func DecodeCommunityForbidden(r *Reader) (*CommunityForbidden, error) {
 	v := &CommunityForbidden{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -3062,19 +3070,19 @@ func (v *Community) Encode(b *bytes.Buffer) error {
 // DecodeCommunity deserializes a Community from a reader using the TL binary protocol.
 func DecodeCommunity(r *Reader) (*Community, error) {
 	v := &Community{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	v.Left = v.Flags.Has(2)
 	v.Min = v.Flags.Has(12)
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags2 = Fields(_f)
+	_rFlags2, _eFlags2 := r.ReadUint32()
+	if _eFlags2 != nil {
+		return nil, _eFlags2
 	}
+	v.Flags2 = Fields(_rFlags2)
 	v.CollapsedInDialogs = v.Flags2.Has(20)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
@@ -3204,11 +3212,11 @@ func (v *ChatParticipant) Encode(b *bytes.Buffer) error {
 // DecodeChatParticipant deserializes a ChatParticipant from a reader using the TL binary protocol.
 func DecodeChatParticipant(r *Reader) (*ChatParticipant, error) {
 	v := &ChatParticipant{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -3276,11 +3284,11 @@ func (v *ChatParticipantCreator) Encode(b *bytes.Buffer) error {
 // DecodeChatParticipantCreator deserializes a ChatParticipantCreator from a reader using the TL binary protocol.
 func DecodeChatParticipantCreator(r *Reader) (*ChatParticipantCreator, error) {
 	v := &ChatParticipantCreator{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -3342,11 +3350,11 @@ func (v *ChatParticipantAdmin) Encode(b *bytes.Buffer) error {
 // DecodeChatParticipantAdmin deserializes a ChatParticipantAdmin from a reader using the TL binary protocol.
 func DecodeChatParticipantAdmin(r *Reader) (*ChatParticipantAdmin, error) {
 	v := &ChatParticipantAdmin{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -3434,11 +3442,11 @@ func (v *ChatParticipantsForbidden) Encode(b *bytes.Buffer) error {
 // DecodeChatParticipantsForbidden deserializes a ChatParticipantsForbidden from a reader using the TL binary protocol.
 func DecodeChatParticipantsForbidden(r *Reader) (*ChatParticipantsForbidden, error) {
 	v := &ChatParticipantsForbidden{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rChatID, _eChatID := r.ReadInt64()
 	if _eChatID != nil {
 		return nil, _eChatID
@@ -3503,6 +3511,9 @@ func DecodeChatParticipants(r *Reader) (*ChatParticipants, error) {
 	if _ehdrParticipants != nil {
 		return nil, _ehdrParticipants
 	}
+	if _errParticipants := checkVectorConstructor(_vhdrParticipants); _errParticipants != nil {
+		return nil, _errParticipants
+	}
 	_cntParticipants, _ecntParticipants := r.ReadUint32()
 	if _ecntParticipants != nil {
 		return nil, _ecntParticipants
@@ -3522,7 +3533,6 @@ func DecodeChatParticipants(r *Reader) (*ChatParticipants, error) {
 		}
 		v.Participants[_iParticipants] = _cParticipants
 	}
-	_ = _vhdrParticipants
 	_rVersion, _eVersion := r.ReadInt32()
 	if _eVersion != nil {
 		return nil, _eVersion
@@ -3628,11 +3638,11 @@ func (v *ChatPhoto) Encode(b *bytes.Buffer) error {
 // DecodeChatPhoto deserializes a ChatPhoto from a reader using the TL binary protocol.
 func DecodeChatPhoto(r *Reader) (*ChatPhoto, error) {
 	v := &ChatPhoto{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HasVideo = v.Flags.Has(0)
 	_rPhotoID, _ePhotoID := r.ReadInt64()
 	if _ePhotoID != nil {
@@ -4069,11 +4079,11 @@ func (v *InputPeerNotifySettings) GetStoriesHideSender() (value bool, ok bool) {
 // DecodeInputPeerNotifySettings deserializes a InputPeerNotifySettings from a reader using the TL binary protocol.
 func DecodeInputPeerNotifySettings(r *Reader) (*InputPeerNotifySettings, error) {
 	v := &InputPeerNotifySettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rShowPreviews, _eShowPreviews := r.ReadBool()
 		if _eShowPreviews != nil {
@@ -4319,11 +4329,11 @@ func (v *PeerNotifySettings) GetStoriesHideSender() (value bool, ok bool) {
 // DecodePeerNotifySettings deserializes a PeerNotifySettings from a reader using the TL binary protocol.
 func DecodePeerNotifySettings(r *Reader) (*PeerNotifySettings, error) {
 	v := &PeerNotifySettings{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rShowPreviews, _eShowPreviews := r.ReadBool()
 		if _eShowPreviews != nil {
@@ -4760,11 +4770,11 @@ func (v *EncryptedChatRequested) Encode(b *bytes.Buffer) error {
 // DecodeEncryptedChatRequested deserializes a EncryptedChatRequested from a reader using the TL binary protocol.
 func DecodeEncryptedChatRequested(r *Reader) (*EncryptedChatRequested, error) {
 	v := &EncryptedChatRequested{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rFolderID, _eFolderID := r.ReadInt32()
 		if _eFolderID != nil {
@@ -4922,11 +4932,11 @@ func (v *EncryptedChatDiscarded) Encode(b *bytes.Buffer) error {
 // DecodeEncryptedChatDiscarded deserializes a EncryptedChatDiscarded from a reader using the TL binary protocol.
 func DecodeEncryptedChatDiscarded(r *Reader) (*EncryptedChatDiscarded, error) {
 	v := &EncryptedChatDiscarded{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.HistoryDeleted = v.Flags.Has(0)
 	_rID, _eID := r.ReadInt32()
 	if _eID != nil {
@@ -5418,11 +5428,11 @@ func (v *ChatInvite) Encode(b *bytes.Buffer) error {
 // DecodeChatInvite deserializes a ChatInvite from a reader using the TL binary protocol.
 func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 	v := &ChatInvite{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Channel = v.Flags.Has(0)
 	v.Broadcast = v.Flags.Has(1)
 	v.Public = v.Flags.Has(2)
@@ -5463,6 +5473,9 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 		if _ehdrParticipants != nil {
 			return nil, _ehdrParticipants
 		}
+		if _errParticipants := checkVectorConstructor(_vhdrParticipants); _errParticipants != nil {
+			return nil, _errParticipants
+		}
 		_cntParticipants, _ecntParticipants := r.ReadUint32()
 		if _ecntParticipants != nil {
 			return nil, _ecntParticipants
@@ -5482,7 +5495,6 @@ func DecodeChatInvite(r *Reader) (*ChatInvite, error) {
 			}
 			v.Participants[_iParticipants] = _cParticipants
 		}
-		_ = _vhdrParticipants
 	}
 	_rColor, _eColor := r.ReadInt32()
 	if _eColor != nil {
@@ -6054,11 +6066,11 @@ func (v *ChannelParticipantsMentions) Encode(b *bytes.Buffer) error {
 // DecodeChannelParticipantsMentions deserializes a ChannelParticipantsMentions from a reader using the TL binary protocol.
 func DecodeChannelParticipantsMentions(r *Reader) (*ChannelParticipantsMentions, error) {
 	v := &ChannelParticipantsMentions{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rQ, _eQ := r.ReadString()
 		if _eQ != nil {
@@ -6541,6 +6553,9 @@ func DecodeTopPeerCategoryPeers(r *Reader) (*TopPeerCategoryPeers, error) {
 	if _ehdrPeers != nil {
 		return nil, _ehdrPeers
 	}
+	if _errPeers := checkVectorConstructor(_vhdrPeers); _errPeers != nil {
+		return nil, _errPeers
+	}
 	_cntPeers, _ecntPeers := r.ReadUint32()
 	if _ecntPeers != nil {
 		return nil, _ecntPeers
@@ -6560,7 +6575,6 @@ func DecodeTopPeerCategoryPeers(r *Reader) (*TopPeerCategoryPeers, error) {
 		}
 		v.Peers[_iPeers] = _cPeers
 	}
-	_ = _vhdrPeers
 	return v, nil
 }
 
@@ -8017,11 +8031,11 @@ func (v *ChannelAdminLogEventActionParticipantJoinByInvite) Encode(b *bytes.Buff
 // DecodeChannelAdminLogEventActionParticipantJoinByInvite deserializes a ChannelAdminLogEventActionParticipantJoinByInvite from a reader using the TL binary protocol.
 func DecodeChannelAdminLogEventActionParticipantJoinByInvite(r *Reader) (*ChannelAdminLogEventActionParticipantJoinByInvite, error) {
 	v := &ChannelAdminLogEventActionParticipantJoinByInvite{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViaChatlist = v.Flags.Has(0)
 	_objInvite, _errInvite := ReadTLObject(r)
 	if _errInvite != nil {
@@ -8680,11 +8694,11 @@ func (v *ChannelAdminLogEventActionPinTopic) Encode(b *bytes.Buffer) error {
 // DecodeChannelAdminLogEventActionPinTopic deserializes a ChannelAdminLogEventActionPinTopic from a reader using the TL binary protocol.
 func DecodeChannelAdminLogEventActionPinTopic(r *Reader) (*ChannelAdminLogEventActionPinTopic, error) {
 	v := &ChannelAdminLogEventActionPinTopic{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_objPrevTopic, _errPrevTopic := ReadTLObject(r)
 		if _errPrevTopic != nil {
@@ -9354,11 +9368,11 @@ func (v *ChannelAdminLogEventsFilter) Encode(b *bytes.Buffer) error {
 // DecodeChannelAdminLogEventsFilter deserializes a ChannelAdminLogEventsFilter from a reader using the TL binary protocol.
 func DecodeChannelAdminLogEventsFilter(r *Reader) (*ChannelAdminLogEventsFilter, error) {
 	v := &ChannelAdminLogEventsFilter{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Join = v.Flags.Has(0)
 	v.Leave = v.Flags.Has(1)
 	v.Invite = v.Flags.Has(2)
@@ -9635,11 +9649,11 @@ func (v *ChatAdminRights) Encode(b *bytes.Buffer) error {
 // DecodeChatAdminRights deserializes a ChatAdminRights from a reader using the TL binary protocol.
 func DecodeChatAdminRights(r *Reader) (*ChatAdminRights, error) {
 	v := &ChatAdminRights{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ChangeInfo = v.Flags.Has(0)
 	v.PostMessages = v.Flags.Has(1)
 	v.EditMessages = v.Flags.Has(2)
@@ -9791,11 +9805,11 @@ func (v *ChatBannedRights) Encode(b *bytes.Buffer) error {
 // DecodeChatBannedRights deserializes a ChatBannedRights from a reader using the TL binary protocol.
 func DecodeChatBannedRights(r *Reader) (*ChatBannedRights, error) {
 	v := &ChatBannedRights{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.ViewMessages = v.Flags.Has(0)
 	v.SendMessages = v.Flags.Has(1)
 	v.SendMedia = v.Flags.Has(2)
@@ -10420,11 +10434,11 @@ func (v *GroupCallParticipant) Encode(b *bytes.Buffer) error {
 // DecodeGroupCallParticipant deserializes a GroupCallParticipant from a reader using the TL binary protocol.
 func DecodeGroupCallParticipant(r *Reader) (*GroupCallParticipant, error) {
 	v := &GroupCallParticipant{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Muted = v.Flags.Has(0)
 	v.Left = v.Flags.Has(1)
 	v.CanSelfUnmute = v.Flags.Has(2)
@@ -10794,11 +10808,11 @@ func (v *ChatInviteImporter) Encode(b *bytes.Buffer) error {
 // DecodeChatInviteImporter deserializes a ChatInviteImporter from a reader using the TL binary protocol.
 func DecodeChatInviteImporter(r *Reader) (*ChatInviteImporter, error) {
 	v := &ChatInviteImporter{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Requested = v.Flags.Has(0)
 	v.ViaChatlist = v.Flags.Has(3)
 	_rUserID, _eUserID := r.ReadInt64()
@@ -10982,11 +10996,11 @@ func (v *GroupCallParticipantVideo) Encode(b *bytes.Buffer) error {
 // DecodeGroupCallParticipantVideo deserializes a GroupCallParticipantVideo from a reader using the TL binary protocol.
 func DecodeGroupCallParticipantVideo(r *Reader) (*GroupCallParticipantVideo, error) {
 	v := &GroupCallParticipantVideo{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Paused = v.Flags.Has(0)
 	_rEndpoint, _eEndpoint := r.ReadString()
 	if _eEndpoint != nil {
@@ -10996,6 +11010,9 @@ func DecodeGroupCallParticipantVideo(r *Reader) (*GroupCallParticipantVideo, err
 	_vhdrSourceGroups, _ehdrSourceGroups := r.ReadUint32()
 	if _ehdrSourceGroups != nil {
 		return nil, _ehdrSourceGroups
+	}
+	if _errSourceGroups := checkVectorConstructor(_vhdrSourceGroups); _errSourceGroups != nil {
+		return nil, _errSourceGroups
 	}
 	_cntSourceGroups, _ecntSourceGroups := r.ReadUint32()
 	if _ecntSourceGroups != nil {
@@ -11016,7 +11033,6 @@ func DecodeGroupCallParticipantVideo(r *Reader) (*GroupCallParticipantVideo, err
 		}
 		v.SourceGroups[_iSourceGroups] = _cSourceGroups
 	}
-	_ = _vhdrSourceGroups
 	if v.Flags.Has(1) {
 		_rAudioSource, _eAudioSource := r.ReadInt32()
 		if _eAudioSource != nil {
@@ -11130,6 +11146,9 @@ func DecodeChatThemeUniqueGift(r *Reader) (*ChatThemeUniqueGift, error) {
 	if _ehdrThemeSettings != nil {
 		return nil, _ehdrThemeSettings
 	}
+	if _errThemeSettings := checkVectorConstructor(_vhdrThemeSettings); _errThemeSettings != nil {
+		return nil, _errThemeSettings
+	}
 	_cntThemeSettings, _ecntThemeSettings := r.ReadUint32()
 	if _ecntThemeSettings != nil {
 		return nil, _ecntThemeSettings
@@ -11149,7 +11168,6 @@ func DecodeChatThemeUniqueGift(r *Reader) (*ChatThemeUniqueGift, error) {
 		}
 		v.ThemeSettings[_iThemeSettings] = _cThemeSettings
 	}
-	_ = _vhdrThemeSettings
 	return v, nil
 }
 
@@ -11431,11 +11449,11 @@ func (v *SendAsPeer) Encode(b *bytes.Buffer) error {
 // DecodeSendAsPeer deserializes a SendAsPeer from a reader using the TL binary protocol.
 func DecodeSendAsPeer(r *Reader) (*SendAsPeer, error) {
 	v := &SendAsPeer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.PremiumRequired = v.Flags.Has(0)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
@@ -11495,11 +11513,11 @@ func (v *Username) Encode(b *bytes.Buffer) error {
 // DecodeUsername deserializes a Username from a reader using the TL binary protocol.
 func DecodeUsername(r *Reader) (*Username, error) {
 	v := &Username{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Editable = v.Flags.Has(0)
 	v.Active = v.Flags.Has(1)
 	_rUsername, _eUsername := r.ReadString()
@@ -11671,11 +11689,11 @@ func (v *RequestPeerTypeUser) GetPremium() (value bool, ok bool) {
 // DecodeRequestPeerTypeUser deserializes a RequestPeerTypeUser from a reader using the TL binary protocol.
 func DecodeRequestPeerTypeUser(r *Reader) (*RequestPeerTypeUser, error) {
 	v := &RequestPeerTypeUser{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rBot, _eBot := r.ReadBool()
 		if _eBot != nil {
@@ -11798,11 +11816,11 @@ func (v *RequestPeerTypeChat) GetForum() (value bool, ok bool) {
 // DecodeRequestPeerTypeChat deserializes a RequestPeerTypeChat from a reader using the TL binary protocol.
 func DecodeRequestPeerTypeChat(r *Reader) (*RequestPeerTypeChat, error) {
 	v := &RequestPeerTypeChat{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	v.BotParticipant = v.Flags.Has(5)
 	if v.Flags.Has(3) {
@@ -11920,11 +11938,11 @@ func (v *RequestPeerTypeBroadcast) GetHasUsername() (value bool, ok bool) {
 // DecodeRequestPeerTypeBroadcast deserializes a RequestPeerTypeBroadcast from a reader using the TL binary protocol.
 func DecodeRequestPeerTypeBroadcast(r *Reader) (*RequestPeerTypeBroadcast, error) {
 	v := &RequestPeerTypeBroadcast{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Creator = v.Flags.Has(0)
 	if v.Flags.Has(3) {
 		_rHasUsername, _eHasUsername := r.ReadBool()
@@ -12009,11 +12027,11 @@ func (v *RequestPeerTypeCreateBot) Encode(b *bytes.Buffer) error {
 // DecodeRequestPeerTypeCreateBot deserializes a RequestPeerTypeCreateBot from a reader using the TL binary protocol.
 func DecodeRequestPeerTypeCreateBot(r *Reader) (*RequestPeerTypeCreateBot, error) {
 	v := &RequestPeerTypeCreateBot{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.BotManaged = v.Flags.Has(0)
 	if v.Flags.Has(1) {
 		_rSuggestedName, _eSuggestedName := r.ReadString()
@@ -12190,11 +12208,11 @@ func (v *PeerColor) Encode(b *bytes.Buffer) error {
 // DecodePeerColor deserializes a PeerColor from a reader using the TL binary protocol.
 func DecodePeerColor(r *Reader) (*PeerColor, error) {
 	v := &PeerColor{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	if v.Flags.Has(0) {
 		_rColor, _eColor := r.ReadInt32()
 		if _eColor != nil {
@@ -12269,11 +12287,11 @@ func (v *PeerColorCollectible) Encode(b *bytes.Buffer) error {
 // DecodePeerColorCollectible deserializes a PeerColorCollectible from a reader using the TL binary protocol.
 func DecodePeerColorCollectible(r *Reader) (*PeerColorCollectible, error) {
 	v := &PeerColorCollectible{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rCollectibleID, _eCollectibleID := r.ReadInt64()
 	if _eCollectibleID != nil {
 		return nil, _eCollectibleID
@@ -12448,11 +12466,11 @@ func (v *MissingInvitee) Encode(b *bytes.Buffer) error {
 // DecodeMissingInvitee deserializes a MissingInvitee from a reader using the TL binary protocol.
 func DecodeMissingInvitee(r *Reader) (*MissingInvitee, error) {
 	v := &MissingInvitee{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.PremiumWouldAllowInvite = v.Flags.Has(0)
 	v.PremiumRequiredForPm = v.Flags.Has(1)
 	_rUserID, _eUserID := r.ReadInt64()
@@ -12519,11 +12537,11 @@ func (v *InputBusinessChatLink) Encode(b *bytes.Buffer) error {
 // DecodeInputBusinessChatLink deserializes a InputBusinessChatLink from a reader using the TL binary protocol.
 func DecodeInputBusinessChatLink(r *Reader) (*InputBusinessChatLink, error) {
 	v := &InputBusinessChatLink{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rMessage, _eMessage := r.ReadString()
 	if _eMessage != nil {
 		return nil, _eMessage
@@ -12533,6 +12551,9 @@ func DecodeInputBusinessChatLink(r *Reader) (*InputBusinessChatLink, error) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -12553,7 +12574,6 @@ func DecodeInputBusinessChatLink(r *Reader) (*InputBusinessChatLink, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(1) {
 		_rTitle, _eTitle := r.ReadString()
@@ -12625,11 +12645,11 @@ func (v *BusinessChatLink) Encode(b *bytes.Buffer) error {
 // DecodeBusinessChatLink deserializes a BusinessChatLink from a reader using the TL binary protocol.
 func DecodeBusinessChatLink(r *Reader) (*BusinessChatLink, error) {
 	v := &BusinessChatLink{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rLink, _eLink := r.ReadString()
 	if _eLink != nil {
 		return nil, _eLink
@@ -12644,6 +12664,9 @@ func DecodeBusinessChatLink(r *Reader) (*BusinessChatLink, error) {
 		_vhdrEntities, _ehdrEntities := r.ReadUint32()
 		if _ehdrEntities != nil {
 			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
 		}
 		_cntEntities, _ecntEntities := r.ReadUint32()
 		if _ecntEntities != nil {
@@ -12664,7 +12687,6 @@ func DecodeBusinessChatLink(r *Reader) (*BusinessChatLink, error) {
 			}
 			v.Entities[_iEntities] = _cEntities
 		}
-		_ = _vhdrEntities
 	}
 	if v.Flags.Has(1) {
 		_rTitle, _eTitle := r.ReadString()
@@ -12770,11 +12792,11 @@ func (v *RequestedPeerUser) Encode(b *bytes.Buffer) error {
 // DecodeRequestedPeerUser deserializes a RequestedPeerUser from a reader using the TL binary protocol.
 func DecodeRequestedPeerUser(r *Reader) (*RequestedPeerUser, error) {
 	v := &RequestedPeerUser{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rUserID, _eUserID := r.ReadInt64()
 	if _eUserID != nil {
 		return nil, _eUserID
@@ -12864,11 +12886,11 @@ func (v *RequestedPeerChat) Encode(b *bytes.Buffer) error {
 // DecodeRequestedPeerChat deserializes a RequestedPeerChat from a reader using the TL binary protocol.
 func DecodeRequestedPeerChat(r *Reader) (*RequestedPeerChat, error) {
 	v := &RequestedPeerChat{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rChatID, _eChatID := r.ReadInt64()
 	if _eChatID != nil {
 		return nil, _eChatID
@@ -12951,11 +12973,11 @@ func (v *RequestedPeerChannel) Encode(b *bytes.Buffer) error {
 // DecodeRequestedPeerChannel deserializes a RequestedPeerChannel from a reader using the TL binary protocol.
 func DecodeRequestedPeerChannel(r *Reader) (*RequestedPeerChannel, error) {
 	v := &RequestedPeerChannel{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	_rChannelID, _eChannelID := r.ReadInt64()
 	if _eChannelID != nil {
 		return nil, _eChannelID
@@ -13605,11 +13627,11 @@ func (v *StarGiftAuctionUserState) Encode(b *bytes.Buffer) error {
 // DecodeStarGiftAuctionUserState deserializes a StarGiftAuctionUserState from a reader using the TL binary protocol.
 func DecodeStarGiftAuctionUserState(r *Reader) (*StarGiftAuctionUserState, error) {
 	v := &StarGiftAuctionUserState{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Returned = v.Flags.Has(1)
 	if v.Flags.Has(0) {
 		_rBidAmount, _eBidAmount := r.ReadInt64()
@@ -13873,11 +13895,11 @@ func (v *CommunityPeer) GetVisible() (value bool, ok bool) {
 // DecodeCommunityPeer deserializes a CommunityPeer from a reader using the TL binary protocol.
 func DecodeCommunityPeer(r *Reader) (*CommunityPeer, error) {
 	v := &CommunityPeer{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.CanViewHistory = v.Flags.Has(2)
 	if v.Flags.Has(0) {
 		_rVisible, _eVisible := r.ReadBool()
@@ -13944,11 +13966,11 @@ func (v *CommunityPeerRequest) Encode(b *bytes.Buffer) error {
 // DecodeCommunityPeerRequest deserializes a CommunityPeerRequest from a reader using the TL binary protocol.
 func DecodeCommunityPeerRequest(r *Reader) (*CommunityPeerRequest, error) {
 	v := &CommunityPeerRequest{}
-	{
-		var _f uint32
-		_f, _ = r.ReadUint32()
-		v.Flags = Fields(_f)
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
 	}
+	v.Flags = Fields(_rFlags)
 	v.Visible = v.Flags.Has(0)
 	_objPeer, _errPeer := ReadTLObject(r)
 	if _errPeer != nil {
