@@ -367,6 +367,8 @@ func TestIsRecoverableDownloadError(t *testing.T) {
 		{"nil", nil, false},
 		{"unrelated", errors.New("io: unexpected EOF"), false},
 		{"not connected", ErrNotConnected, true},
+		{"send timeout", fmt.Errorf("invoke upload.getFile: %w", session.ErrSendTimeout), true},
+		{"auth key unregistered", fmt.Errorf("invoke upload.getFile: %w", tgerr.New(401, "AUTH_KEY_UNREGISTERED")), true},
 		{"bare session closed", errors.New("send: session: closed"), true},
 		{
 			"wrapped session closed",

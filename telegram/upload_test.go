@@ -11,9 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 type mockRPCInvoker struct {
@@ -98,6 +100,52 @@ func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 func (m *mockRPCInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
 	return nil, nil
+}
+
+func TestUploadPoolRepairsDeadTransferSession(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{"auth key unregistered", fmt.Errorf("invoke upload.saveFilePart: %w", tgerr.New(401, "AUTH_KEY_UNREGISTERED"))},
+		{"send timeout", fmt.Errorf("invoke upload.saveFilePart: %w", session.ErrSendTimeout)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client, err := NewClient(1, "hash", nil)
+			if err != nil {
+				t.Fatalf("NewClient() error: %v", err)
+			}
+
+			failed := newMockRPCInvoker()
+			failed.err = tt.err
+			stale := &sideSession{invoker: failed}
+
+			replacementInvoker := newMockRPCInvoker()
+			replacement := &sideSession{invoker: replacementInvoker}
+			client.uploadPool = []*sideSession{replacement}
+
+			pool := &uploadPoolInvoker{client: client, sessions: []*sideSession{stale}}
+			result, err := pool.RPCInvoke(context.Background(), &tg.UploadSaveFilePartRequest{
+				FileID:   1,
+				FilePart: 0,
+				Bytes:    []byte("part"),
+			}, nil)
+			if err != nil {
+				t.Fatalf("RPCInvoke() error: %v", err)
+			}
+			if result != tg.TLBool(true) {
+				t.Fatalf("RPCInvoke() result = %v, want true", result)
+			}
+			if !stale.dead.Load() {
+				t.Fatal("failed transfer session was not marked dead")
+			}
+			if replacementInvoker.invokes.Load() != 1 {
+				t.Fatalf("replacement invokes = %d, want 1", replacementInvoker.invokes.Load())
+			}
+		})
+	}
 }
 
 func TestUploadFile_SmallFile(t *testing.T) {

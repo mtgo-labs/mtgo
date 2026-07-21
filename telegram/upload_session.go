@@ -13,6 +13,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 // sideSession holds a session that shares the main session's permanent auth
@@ -35,8 +36,7 @@ const uploadPartTimeout = 2 * time.Minute
 const uploadPoolSize = defaultTransferWorkers
 
 // uploadPoolInvoker round-robins RPC calls across multiple upload sessions.
-// If a session dies, it is skipped; the client eventually recreates it on the
-// next uploadRPC() call.
+// If a session dies, it is replaced and the current RPC is retried once.
 type uploadPoolInvoker struct {
 	client   *Client
 	sessions []*sideSession
@@ -46,10 +46,12 @@ type uploadPoolInvoker struct {
 func (p *uploadPoolInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	n := uint64(len(p.sessions))
 	var lastErr error
+	needsRepair := n == 0
 	for i := uint64(0); i < n; i++ {
 		idx := p.idx.Add(1) % n
 		ss := p.sessions[idx]
-		if ss == nil || ss.dead.Load() {
+		if sideSessionUnavailable(ss) {
+			needsRepair = true
 			continue
 		}
 		result, err := ss.invoker.RPCInvoke(ctx, input, decode)
@@ -57,9 +59,20 @@ func (p *uploadPoolInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, de
 			return result, nil
 		}
 		lastErr = err
-		if isSessionClosedErr(err) {
+		if isTransferSessionDeadErr(err) {
 			ss.dead.Store(true)
+			needsRepair = true
 			continue
+		}
+		return nil, err
+	}
+	if needsRepair && p.client != nil {
+		pool, err := p.client.getUploadPool()
+		if err == nil {
+			return (&uploadPoolInvoker{sessions: pool}).RPCInvoke(ctx, input, decode)
+		}
+		if lastErr != nil {
+			return nil, errors.Join(lastErr, fmt.Errorf("upload pool: repair: %w", err))
 		}
 		return nil, err
 	}
@@ -72,10 +85,12 @@ func (p *uploadPoolInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, de
 func (p *uploadPoolInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	n := uint64(len(p.sessions))
 	var lastErr error
+	needsRepair := n == 0
 	for i := uint64(0); i < n; i++ {
 		idx := p.idx.Add(1) % n
 		ss := p.sessions[idx]
-		if ss == nil || ss.dead.Load() {
+		if sideSessionUnavailable(ss) {
+			needsRepair = true
 			continue
 		}
 		result, err := ss.invoker.RPCInvokeRaw(ctx, input)
@@ -83,9 +98,20 @@ func (p *uploadPoolInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject)
 			return result, nil
 		}
 		lastErr = err
-		if isSessionClosedErr(err) {
+		if isTransferSessionDeadErr(err) {
 			ss.dead.Store(true)
+			needsRepair = true
 			continue
+		}
+		return nil, err
+	}
+	if needsRepair && p.client != nil {
+		pool, err := p.client.getUploadPool()
+		if err == nil {
+			return (&uploadPoolInvoker{sessions: pool}).RPCInvokeRaw(ctx, input)
+		}
+		if lastErr != nil {
+			return nil, errors.Join(lastErr, fmt.Errorf("upload pool: repair: %w", err))
 		}
 		return nil, err
 	}
@@ -101,6 +127,19 @@ func isSessionClosedErr(err error) bool {
 		errors.Is(err, io.EOF) ||
 		errors.Is(err, syscall.ECONNRESET) ||
 		errors.Is(err, syscall.EPIPE)
+}
+
+func isTransferSessionDeadErr(err error) bool {
+	return isSessionClosedErr(err) ||
+		errors.Is(err, session.ErrSendTimeout) ||
+		tgerr.Is(err, tgerr.ErrAuthKeyUnregistered, tgerr.ErrAuthKeyPermEmpty)
+}
+
+func sideSessionUnavailable(ss *sideSession) bool {
+	if ss == nil || ss.dead.Load() {
+		return true
+	}
+	return ss.sess != nil && !ss.sess.IsConnected()
 }
 
 // uploadRPC returns an RPC client backed by a pool of dedicated upload
@@ -121,29 +160,51 @@ func (c *Client) uploadRPC() *tg.RPCClient {
 func (c *Client) getUploadPool() ([]*sideSession, error) {
 	// Fast path: pool exists and no dead sessions.
 	c.uploadSessionMu.Lock()
-	pool := c.uploadPool
+	pool := append([]*sideSession(nil), c.uploadPool...)
 	c.uploadSessionMu.Unlock()
 	if len(pool) > 0 && !hasDeadSession(pool) {
 		return pool, nil
 	}
 
-	// Slow path: create the pool.
+	// Slow path: repair or create the pool.
 	c.uploadSessionMu.Lock()
 	defer c.uploadSessionMu.Unlock()
 
 	if len(c.uploadPool) > 0 && !hasDeadSession(c.uploadPool) {
-		return c.uploadPool, nil
+		return append([]*sideSession(nil), c.uploadPool...), nil
 	}
 
-	// Clean up dead sessions.
-	for _, ss := range c.uploadPool {
-		if ss.dead.Load() {
-			if ss.sess != nil {
-				ss.sess.Stop()
+	if len(c.uploadPool) > 0 {
+		for i, ss := range c.uploadPool {
+			if !sideSessionUnavailable(ss) {
+				continue
 			}
-			if ss.closer != nil {
-				ss.closer.Close()
+			if ss != nil {
+				if ss.sess != nil {
+					ss.sess.Stop()
+				}
+				if ss.closer != nil {
+					_ = ss.closer.Close()
+				}
 			}
+			replacement, err := c.createUploadSession()
+			if err != nil {
+				c.Log.Warnf("upload session repair failed: %v", err)
+				c.uploadPool[i] = nil
+				continue
+			}
+			c.uploadPool[i] = replacement
+		}
+
+		compact := c.uploadPool[:0]
+		for _, ss := range c.uploadPool {
+			if ss != nil {
+				compact = append(compact, ss)
+			}
+		}
+		c.uploadPool = compact
+		if len(compact) > 0 {
+			return append([]*sideSession(nil), compact...), nil
 		}
 	}
 
@@ -155,7 +216,7 @@ func (c *Client) getUploadPool() ([]*sideSession, error) {
 
 	c.uploadPool = sessions
 	c.Log.Infof("upload pool ready: %d sessions on separate connections", len(sessions))
-	return sessions, nil
+	return append([]*sideSession(nil), sessions...), nil
 }
 
 func (c *Client) createUploadSessions(size int) []*sideSession {
@@ -200,7 +261,7 @@ func (c *Client) createUploadSessions(size int) []*sideSession {
 
 func hasDeadSession(pool []*sideSession) bool {
 	for _, ss := range pool {
-		if ss.dead.Load() {
+		if sideSessionUnavailable(ss) {
 			return true
 		}
 	}
@@ -293,7 +354,7 @@ type resilientUploadInvoker struct {
 
 func (r *resilientUploadInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	result, err := r.inner.RPCInvoke(ctx, input, decode)
-	if err != nil && isSessionClosedErr(err) {
+	if err != nil && isTransferSessionDeadErr(err) {
 		r.markDead()
 	}
 	return result, err
@@ -301,7 +362,7 @@ func (r *resilientUploadInvoker) RPCInvoke(ctx context.Context, input tg.TLObjec
 
 func (r *resilientUploadInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	result, err := r.inner.RPCInvokeRaw(ctx, input)
-	if err != nil && isSessionClosedErr(err) {
+	if err != nil && isTransferSessionDeadErr(err) {
 		r.markDead()
 	}
 	return result, err

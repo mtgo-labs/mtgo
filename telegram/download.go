@@ -890,7 +890,7 @@ func isRecoverableDownloadError(err error) bool {
 	if err == nil {
 		return false
 	}
-	if errors.Is(err, ErrNotConnected) || errors.Is(err, ErrReconnectFailed) {
+	if errors.Is(err, ErrNotConnected) || errors.Is(err, ErrReconnectFailed) || isTransferSessionDeadErr(err) {
 		return true
 	}
 	if strings.Contains(err.Error(), "session: closed") {
