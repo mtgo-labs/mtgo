@@ -69,6 +69,9 @@ func (s *Session) hasDecodedResults() bool {
 }
 
 func (s *Session) checkWrite() error {
+	if s.stopping.Load() {
+		return ErrSessionClosed
+	}
 	switch s.sm.State() {
 	case StateActive, StateConnecting:
 		return nil
@@ -85,6 +88,13 @@ func (s *Session) checkWrite() error {
 // the server using the provided transport. It returns an AuthResult containing
 // the established auth key, server salt, and server time.
 type AuthFunc func(transport Transport) (*AuthResult, error)
+
+type pfsRecoveryContextKey struct{}
+
+type messageIDBoundQuery interface {
+	tg.TLObject
+	prepareForMessageID(msgID int64) (tg.TLObject, error)
+}
 
 // sessionShutdownCause captures the first error that terminated a session
 // for diagnostic purposes. Stored atomically via Session.shutdownCause;
@@ -142,11 +152,23 @@ type Session struct {
 	// mu protects the mutable config fields below: authKey, authKeyID,
 	// transport, pingInterval, onUpdate, onPanic, onNewSession.
 	mu sync.RWMutex
+	// transportCloseMu serializes attachment with physical transport Close so a
+	// teardown caller cannot return while another shutdown path is still closing.
+	transportCloseMu sync.Mutex
+	// lifecycleMu serializes Run/Start/Connect setup. runMu protects cancellation
+	// state so Stop can cancel a startup ping without waiting behind setup.
+	lifecycleMu sync.Mutex
+	runMu       sync.Mutex
 
 	// transport is the underlying network transport for sending/receiving data.
 	transport Transport
 	// pfs manages the PFS temporary auth key lifecycle. nil when PFS is disabled.
 	pfs *TempKeyManager
+	// pfsRecoveryMu coalesces live rebinds; pfsWriteMu pauses application writes
+	// until the required initConnection rewrite succeeds.
+	pfsRecoveryMu sync.Mutex
+	pfsWriteMu    sync.RWMutex
+	pfsInit       func(context.Context) error
 	// writeMux serializes writes to the transport. Every outbound message
 	// (RPC, service, ack, ping) acquires this mutex, writes directly, and
 	// releases it. No goroutine hop, no channel, no silent drops.
@@ -180,6 +202,8 @@ type Session struct {
 	runCancel context.CancelFunc
 	// runDone is closed when the background run exits.
 	runDone chan struct{}
+	// setupDone covers ConnectWithAuth work before runDone is published.
+	setupDone chan struct{}
 	// group holds the errgroup created during runInit. runLoop adds remaining
 	// goroutines to it.
 	group *errGroup
@@ -204,6 +228,7 @@ type Session struct {
 	consecWriteFailures   atomic.Int32
 	writeBreakerThreshold atomic.Int32
 	writeBreakerOpen      atomic.Bool
+	stopping              atomic.Bool
 	shutdownCause         atomic.Pointer[sessionShutdownCause]
 
 	// Production-hardening fields (end of struct to keep hot-path fields in
@@ -243,8 +268,12 @@ func (s *Session) SetOnNewSession(fn func(firstMsgID int64, uniqueID int64, serv
 // default 10ms. Call before sending RPCs. To disable, call CloseOutboundBatching.
 func (s *Session) EnableOutboundBatching(maxContainerBytes int, coalesceWindow time.Duration) {
 	b := NewOutboundBatcher(s, maxContainerBytes, coalesceWindow)
-	b.Start()
 	s.mu.Lock()
+	if s.stopping.Load() || s.sm.State() != StateActive || s.outboundBatcher != nil {
+		s.mu.Unlock()
+		return
+	}
+	b.Start()
 	s.outboundBatcher = b
 	s.mu.Unlock()
 }
@@ -275,7 +304,10 @@ func (s *Session) BatcherSnapshot() OutboundSnapshot {
 // SessionDone returns a channel that is closed when the background Run loop
 // exits. Callers can use this to detect session termination.
 func (s *Session) SessionDone() <-chan struct{} {
-	return s.runDone
+	s.runMu.Lock()
+	done := s.runDone
+	s.runMu.Unlock()
+	return done
 }
 
 // ShutdownCause returns the first error that terminated the session, the
@@ -563,6 +595,54 @@ func (s *Session) SetPFS(mgr *TempKeyManager) {
 	s.mu.Unlock()
 }
 
+// SetPFSInitConnection sets the callback used to rewrite client metadata after
+// a live temporary-key rebind.
+func (s *Session) SetPFSInitConnection(fn func(context.Context) error) {
+	s.mu.Lock()
+	s.pfsInit = fn
+	s.mu.Unlock()
+}
+
+func (s *Session) recoverPFSBinding(ctx context.Context, pfs *TempKeyManager, observedEpoch uint64) (retErr error) {
+	s.pfsRecoveryMu.Lock()
+	defer s.pfsRecoveryMu.Unlock()
+
+	recoveryCtx := context.WithValue(ctx, pfsRecoveryContextKey{}, true)
+	s.pfsWriteMu.Lock()
+	recoveryFailed := true
+	defer func() {
+		if recoveryFailed {
+			s.stopping.Store(true)
+			s.recordShutdownCause(retErr, "pfsRecovery")
+		}
+		s.pfsWriteMu.Unlock()
+		if recoveryFailed {
+			s.RequestStop()
+		}
+	}()
+
+	_, retErr = pfs.Rebind(recoveryCtx, s.sessionID, observedEpoch, s.Invoke)
+	if retErr != nil {
+		return retErr
+	}
+	if !pfs.NeedsInitConnection() {
+		recoveryFailed = false
+		return nil
+	}
+	s.mu.RLock()
+	initConnection := s.pfsInit
+	s.mu.RUnlock()
+	if initConnection == nil {
+		return errors.New("session: PFS rebind requires initConnection callback")
+	}
+	if err := initConnection(recoveryCtx); err != nil {
+		return fmt.Errorf("session: PFS initConnection after rebind: %w", err)
+	}
+	pfs.MarkInitConnectionDone()
+	recoveryFailed = false
+	return nil
+}
+
 // SetServerSalt updates the server salt used for encrypting outgoing messages.
 func (s *Session) SetServerSalt(salt int64) {
 	s.saltMgr.StoreSimple(salt)
@@ -611,9 +691,35 @@ func (s *Session) IsConnected() bool {
 // SetTransport replaces the underlying transport used for sending and
 // receiving encrypted payloads.
 func (s *Session) SetTransport(t Transport) {
+	s.attachTransport(t)
+}
+
+func (s *Session) attachTransport(t Transport) bool {
+	s.transportCloseMu.Lock()
+	defer s.transportCloseMu.Unlock()
 	s.mu.Lock()
+	if s.stopping.Load() {
+		s.mu.Unlock()
+		if t != nil {
+			_ = t.Close()
+		}
+		return false
+	}
 	s.transport = t
 	s.mu.Unlock()
+	return true
+}
+
+func (s *Session) closeTransport() {
+	s.transportCloseMu.Lock()
+	defer s.transportCloseMu.Unlock()
+	s.mu.Lock()
+	tp := s.transport
+	s.transport = nil
+	s.mu.Unlock()
+	if tp != nil {
+		_ = tp.Close()
+	}
 }
 
 func (s *Session) sessionIDBytes() []byte {
@@ -701,7 +807,7 @@ func (s *Session) waitResponse(ctx context.Context, handle *CallHandle, msgID in
 		return obj, deliveryFailure(handle, err)
 	case <-ctx.Done():
 		s.pending.Cancel(msgID)
-		s.sendRPCDrop(msgID)
+		s.sendRPCDrop(ctx, msgID)
 		return nil, ctx.Err()
 	case <-s.done:
 		s.pending.Reject(msgID, ErrSessionClosed)
@@ -729,7 +835,7 @@ func deliveryFailure(handle *CallHandle, err error) error {
 	return &DeliveryError{State: state, Err: err}
 }
 
-func (s *Session) sendRPCDrop(reqMsgID int64) {
+func (s *Session) sendRPCDrop(ctx context.Context, reqMsgID int64) {
 	select {
 	case <-s.done:
 		return
@@ -751,7 +857,7 @@ func (s *Session) sendRPCDrop(reqMsgID int64) {
 	if err != nil {
 		return
 	}
-	_ = s.writeEncryptedDirect(encrypted, 5*time.Second)
+	_ = s.writeEncrypted(ctx, encrypted, 5*time.Second)
 }
 
 func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
@@ -1013,7 +1119,18 @@ func checkRawRPCErrorDepth(data []byte, depth int) error {
 // timeout. Returns the decoded response object or the last error encountered.
 func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
 	methodName := typeName(query)
+	boundQuery, messageIDBound := query.(messageIDBoundQuery)
+	_, bindingTempKey := unwrapSessionRPCQuery(query).(*tg.AuthBindTempAuthKeyRequest)
+	bindingTempKey = bindingTempKey || messageIDBound
+	pfs := s.PFS()
+	var pfsBindEpoch uint64
+	if pfs != nil {
+		pfsBindEpoch = pfs.BindEpoch()
+	}
 	chainID, hasChain := ChainIDFromContext(ctx) // G13: invokeAfterMsg chain
+	if bindingTempKey {
+		hasChain = false
+	}
 
 	var lastErr error
 	var backoff time.Duration
@@ -1028,6 +1145,13 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		seqNo := s.msgFactory.AllocateSeqNo(true)
 
 		sendQuery := query
+		if messageIDBound {
+			var err error
+			sendQuery, err = boundQuery.prepareForMessageID(msgID)
+			if err != nil {
+				return nil, fmt.Errorf("prepare %s: %w", methodName, err)
+			}
+		}
 		if hasChain {
 			sendQuery = s.wrapChain(chainID, query)
 		}
@@ -1081,6 +1205,9 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				return obj, nil
 			}
 			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+			if tgerr.Is(parsed, tgerr.ErrAuthKeyDuplicated) {
+				return nil, parsed
+			}
 			if rpcErr.ErrorCode == 420 {
 				return obj, nil
 			}
@@ -1135,15 +1262,16 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			// G12: AUTH_KEY_PERM_EMPTY (401) — in PFS mode the temp key may
 			// have been invalidated. Re-bind and retry. Without PFS this error
 			// should not occur; surface it to the caller.
-			if g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrAuthKeyPermEmpty) {
+			if !bindingTempKey && ctx.Value(pfsRecoveryContextKey{}) == nil && g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrAuthKeyPermEmpty) {
 				g12Retries++
-				if pfs := s.PFS(); pfs != nil && pfs.IsEnabled() {
+				if pfs != nil && pfs.IsEnabled() {
 					if s.log != nil {
 						s.log.Warnf("auth key perm empty method=%s, rebinding temp key", methodName)
 					}
-					if err := pfs.Bind(ctx, s.sessionID, s.Invoke); err != nil {
+					if err := s.recoverPFSBinding(ctx, pfs, pfsBindEpoch); err != nil {
 						return nil, fmt.Errorf("auth key perm empty: rebind failed: %w", err)
 					}
+					pfsBindEpoch = pfs.BindEpoch()
 					lastErr = fmt.Errorf("auth key perm empty, temp key rebound")
 					backoff = 0
 					maxAttempts++
@@ -1176,6 +1304,30 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		return nil, fmt.Errorf("retries exhausted (%d)", retries)
 	}
 	return nil, fmt.Errorf("retries exhausted (%d): %w", retries, lastErr)
+}
+
+func unwrapSessionRPCQuery(query tg.TLObject) tg.TLObject {
+	for query != nil {
+		switch wrapped := query.(type) {
+		case *tg.InvokeWithLayerRequest:
+			query = wrapped.Query
+		case *tg.InitConnectionRequest:
+			query = wrapped.Query
+		case *tg.InvokeAfterMsgRequest:
+			query = wrapped.Query
+		case *tg.InvokeAfterMsgsRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithoutUpdatesRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithTakeoutRequest:
+			query = wrapped.Query
+		case *tg.InvokeWithBusinessConnectionRequest:
+			query = wrapped.Query
+		default:
+			return query
+		}
+	}
+	return nil
 }
 
 // DropRPC sends rpc_drop_answer for the given msg_id, asking the server to
@@ -1249,7 +1401,13 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.consecWriteFailures.Store(0)
 	s.writeBreakerOpen.Store(false)
 	s.shutdownCause.Store(nil)
-	s.sm.transition(StateIdle, StateConnecting)
+	if !s.sm.transition(StateIdle, StateConnecting) {
+		state := s.sm.State()
+		if state == StateClosed {
+			return ErrSessionClosed
+		}
+		return fmt.Errorf("session: start: already connected (state=%s)", state)
+	}
 
 	// Start the errgroup so readLoop is running during the initial ping.
 	g := newErrGroup(groupCtx)
@@ -1259,13 +1417,15 @@ func (s *Session) runInitWithCtx(pingCtx, groupCtx context.Context) error {
 	s.group = g
 
 	initPingCtx, initPingCancel := context.WithTimeout(pingCtx, 60*time.Second)
+	stopGroupCancel := context.AfterFunc(groupCtx, initPingCancel)
 	_, err := s.Invoke(initPingCtx, &tg.PingRequest{PingID: time.Now().UnixNano()}, 3, timeoutFromContext(pingCtx))
+	stopGroupCancel()
 	initPingCancel()
 	if err != nil {
 		s.recordShutdownCause(fmt.Errorf("initial ping: %w", err), "runInit")
 		g.Cancel()
 		close(s.done)
-		_ = tp.Close()
+		s.closeTransport()
 		_ = g.Wait()
 		s.sm.transition(StateConnecting, StateClosed)
 		return fmt.Errorf("session: initial ping: %w", err)
@@ -1306,6 +1466,8 @@ func (s *Session) runLoop(ctx context.Context) error {
 	}
 
 	err := g.Wait()
+	s.stopping.Store(true)
+	s.CloseOutboundBatching()
 	s.sm.transitionTo(StateClosed)
 	return err
 }
@@ -1315,16 +1477,20 @@ func (s *Session) runLoop(ctx context.Context) error {
 // (pingLoop, saltLoop, handleClose) and blocks until the context is cancelled
 // or a fatal error occurs.
 func (s *Session) Run(ctx context.Context) error {
+	s.lifecycleMu.Lock()
 	if !s.sm.canConnect() {
 		state := s.sm.State()
+		s.lifecycleMu.Unlock()
 		if state == StateClosed {
 			return ErrSessionClosed
 		}
 		return fmt.Errorf("session: run: already connected (state=%s)", state)
 	}
 	if err := s.runInit(ctx); err != nil {
+		s.lifecycleMu.Unlock()
 		return err
 	}
+	s.lifecycleMu.Unlock()
 	return s.runLoop(ctx)
 }
 
@@ -1345,6 +1511,15 @@ func (s *Session) Start(timeout time.Duration) error {
 // after the initial ping succeeds. The ctx bounds the startup ping. Use Stop
 // to terminate the background session.
 func (s *Session) StartContext(ctx context.Context) error {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
+	return s.startContextLocked(ctx)
+}
+
+func (s *Session) startContextLocked(ctx context.Context) error {
+	if s.stopping.Load() {
+		return ErrSessionClosed
+	}
 	if !s.sm.canConnect() {
 		state := s.sm.State()
 		if state == StateClosed {
@@ -1353,18 +1528,26 @@ func (s *Session) StartContext(ctx context.Context) error {
 		return fmt.Errorf("session: start: already connected (state=%s)", state)
 	}
 	runCtx, runCancel := context.WithCancel(context.Background())
+	s.runMu.Lock()
+	if s.stopping.Load() {
+		s.runMu.Unlock()
+		runCancel()
+		return ErrSessionClosed
+	}
 	s.runCancel = runCancel
-	s.runDone = make(chan struct{})
+	runDone := make(chan struct{})
+	s.runDone = runDone
+	s.runMu.Unlock()
 
 	// Use the caller's context for ping timeout but runCtx for the errgroup
 	// so the goroutines survive after the caller's context expires.
 	if err := s.runInitWithCtx(ctx, runCtx); err != nil {
 		runCancel()
-		close(s.runDone)
+		close(runDone)
 		return err
 	}
 	go func() {
-		defer close(s.runDone)
+		defer close(runDone)
 		if err := s.runLoop(runCtx); err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 			s.recordShutdownCause(err, "runLoop")
 		}
@@ -1372,13 +1555,34 @@ func (s *Session) StartContext(ctx context.Context) error {
 	return nil
 }
 
+// RequestStop cancels the background context without waiting for the session
+// goroutines to exit. It is safe to call from an update handler running on the
+// session itself; use Stop when synchronous shutdown is required.
+func (s *Session) RequestStop() <-chan struct{} {
+	s.stopping.Store(true)
+	s.runMu.Lock()
+	cancel := s.runCancel
+	done := s.runDone
+	if done == nil {
+		done = s.setupDone
+	}
+	s.runMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	// Closing is the synchronous teardown boundary for both a running session
+	// and authentication before runCancel is published. Detach first so
+	// concurrent shutdown paths cannot close the same transport twice.
+	s.closeTransport()
+	s.CloseOutboundBatching()
+	return done
+}
+
 // Stop cancels the background context and waits for the session to exit.
 func (s *Session) Stop() {
-	if s.runCancel != nil {
-		s.runCancel()
-	}
-	if s.runDone != nil {
-		<-s.runDone
+	done := s.RequestStop()
+	if done != nil {
+		<-done
 	}
 }
 
@@ -1453,6 +1657,9 @@ func (s *Session) buildServiceMessage(body tg.TLObject) ([]byte, error) {
 // writeEncryptedDirect. It snapshots transport state, acquires writeMux, sets
 // the write deadline, writes the encrypted payload, and releases the mutex.
 func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error {
+	if s.stopping.Load() {
+		return ErrSessionClosed
+	}
 	if s.writeBreakerThreshold.Load() > 0 && s.writeBreakerOpen.Load() {
 		return ErrWriteCircuitOpen
 	}
@@ -1471,6 +1678,9 @@ func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error
 	}
 	defer s.writeMux.Unlock()
 
+	if s.stopping.Load() {
+		return ErrSessionClosed
+	}
 	if s.writeBreakerThreshold.Load() > 0 && s.writeBreakerOpen.Load() {
 		return ErrWriteCircuitOpen
 	}
@@ -1497,6 +1707,10 @@ func (s *Session) writeEncryptedImpl(deadline time.Time, encrypted []byte) error
 // payload, and releases the mutex. Returns the transport error, if any.
 // Lock ordering: mu is always acquired BEFORE writeMux, never inside it.
 func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout time.Duration) error {
+	if ctx == nil || ctx.Value(pfsRecoveryContextKey{}) == nil {
+		s.pfsWriteMu.RLock()
+		defer s.pfsWriteMu.RUnlock()
+	}
 	deadline := time.Now().Add(timeout)
 	if dl, ok := ctx.Deadline(); ok && dl.Before(deadline) {
 		deadline = dl
@@ -1507,6 +1721,8 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 // writeEncryptedDirect is the context-less variant used by service messages
 // and RPCDropAnswer where there is no caller context to respect.
 func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) error {
+	s.pfsWriteMu.RLock()
+	defer s.pfsWriteMu.RUnlock()
 	return s.writeEncryptedImpl(time.Now().Add(timeout), encrypted)
 }
 
@@ -1919,16 +2135,12 @@ func (s *Session) fetchSaltsWithRetry(ctx context.Context) {
 // done channel, and closes the transport.
 func (s *Session) handleClose(ctx context.Context) error {
 	<-ctx.Done()
+	s.stopping.Store(true)
 	s.sm.transitionTo(StateDraining)
 	s.pending.RejectAll(ErrSessionClosed)
 	s.containerTracker.Cleanup()
 	close(s.done)
-	s.mu.RLock()
-	tp := s.transport
-	s.mu.RUnlock()
-	if tp != nil {
-		tp.Close()
-	}
+	s.closeTransport()
 	return nil
 }
 
@@ -2384,6 +2596,8 @@ func (s *Session) Connect(transport Transport, timeout time.Duration) error {
 // ConnectContext sets the transport and starts the session. It requires that an
 // auth key has already been established. The context bounds the startup ping.
 func (s *Session) ConnectContext(ctx context.Context, transport Transport) error {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
 	if !s.sm.canConnect() {
 		state := s.sm.State()
 		if state == StateClosed {
@@ -2391,10 +2605,8 @@ func (s *Session) ConnectContext(ctx context.Context, transport Transport) error
 		}
 		return fmt.Errorf("session: connect: already connected (state=%s)", state)
 	}
-	if transport != nil {
-		s.mu.Lock()
-		s.transport = transport
-		s.mu.Unlock()
+	if transport != nil && !s.attachTransport(transport) {
+		return ErrSessionClosed
 	}
 	s.mu.RLock()
 	authKey := s.authKey
@@ -2402,7 +2614,7 @@ func (s *Session) ConnectContext(ctx context.Context, transport Transport) error
 	if len(authKey) == 0 {
 		return ErrConnectNoAuthKey
 	}
-	return s.StartContext(ctx)
+	return s.startContextLocked(ctx)
 }
 
 // ConnectWithAuth sets the transport and performs key generation via authFunc
@@ -2422,6 +2634,8 @@ func (s *Session) ConnectWithAuth(transport Transport, authFunc AuthFunc, timeou
 // authFunc if no auth key is currently set. The context bounds authentication
 // and the startup ping.
 func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transport, authFunc AuthFunc) error {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
 	if !s.sm.canConnect() {
 		state := s.sm.State()
 		if state == StateClosed {
@@ -2429,14 +2643,16 @@ func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transpor
 		}
 		return fmt.Errorf("session: connect: already connected (state=%s)", state)
 	}
-	if transport != nil {
-		s.mu.Lock()
-		s.transport = transport
-		s.mu.Unlock()
+	if transport != nil && !s.attachTransport(transport) {
+		return ErrSessionClosed
+	}
+	if s.stopping.Load() {
+		return ErrSessionClosed
 	}
 	s.mu.RLock()
 	authKey := s.authKey
 	s.mu.RUnlock()
+	generatedKey := false
 	if len(authKey) == 0 && authFunc != nil {
 		s.mu.RLock()
 		tp := s.transport
@@ -2445,19 +2661,59 @@ func (s *Session) ConnectWithAuthContext(ctx context.Context, transport Transpor
 		if err != nil {
 			return fmt.Errorf("session: connect with auth: %w", err)
 		}
-		s.mu.Lock()
-		s.authKey = result.AuthKey
-		s.authKeyID = computeAuthKeyID(result.AuthKey)
-		s.mu.Unlock()
-		s.saltMgr.StoreSimple(result.ServerSalt)
+		// AuthFunc does not accept a context, so Stop must not wait for it. Once
+		// authentication returns, publish the short setup window before writing
+		// the key so Stop can wait for persistence and its rollback to finish.
+		setupDone := make(chan struct{})
+		s.runMu.Lock()
+		if s.stopping.Load() {
+			s.runMu.Unlock()
+			return ErrSessionClosed
+		}
+		s.setupDone = setupDone
+		s.runMu.Unlock()
+		defer func() {
+			s.runMu.Lock()
+			close(setupDone)
+			if s.setupDone == setupDone {
+				s.setupDone = nil
+			}
+			s.runMu.Unlock()
+		}()
 		if s.storage != nil {
 			if err := s.storage.SetAuthKey(result.AuthKey); err != nil {
 				return fmt.Errorf("session: save auth key: %w", err)
 			}
 		}
+		if s.stopping.Load() {
+			if s.storage != nil {
+				if err := s.storage.SetAuthKey(nil); err != nil {
+					return errors.Join(ErrSessionClosed, fmt.Errorf("session: clear canceled auth key: %w", err))
+				}
+			}
+			return ErrSessionClosed
+		}
+		s.mu.Lock()
+		s.authKey = result.AuthKey
+		s.authKeyID = computeAuthKeyID(result.AuthKey)
+		s.mu.Unlock()
+		s.saltMgr.StoreSimple(result.ServerSalt)
 		s.msgFactory.UpdateServerTime(time.Unix(int64(result.ServerTime), 0))
+		generatedKey = true
 	}
-	return s.StartContext(ctx)
+	err := s.startContextLocked(ctx)
+	if generatedKey && errors.Is(err, ErrSessionClosed) {
+		s.mu.Lock()
+		s.authKey = nil
+		s.authKeyID = nil
+		s.mu.Unlock()
+		if s.storage != nil {
+			if clearErr := s.storage.SetAuthKey(nil); clearErr != nil {
+				return errors.Join(err, fmt.Errorf("session: clear canceled auth key: %w", clearErr))
+			}
+		}
+	}
+	return err
 }
 
 func unpackIncomingMessageEnvelope(data, sessionID, authKey, authKeyID []byte) (*tg.MTProtoMessageRaw, []byte, error) {

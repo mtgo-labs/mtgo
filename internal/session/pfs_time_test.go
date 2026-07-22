@@ -1,8 +1,10 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"testing"
 	"time"
@@ -207,6 +209,31 @@ func TestTempKeyRotationUsesQuarterLifetimeMargin(t *testing.T) {
 	}
 }
 
+func TestGeneratedTempKeyUsesServerTimeForBindExpiry(t *testing.T) {
+	mgr := NewTempKeyManager(2, false, make([]byte, 256), true, nil)
+	localNow := time.Unix(2_000_000_000, 0)
+	const (
+		serverTime = int32(1_700_000_000)
+		expiresIn  = int32(86_400)
+	)
+	mgr.installGeneratedKey(&AuthResult{
+		AuthKey:    make([]byte, 256),
+		ServerTime: serverTime,
+	}, expiresIn, localNow)
+
+	mgr.mu.Lock()
+	bindExpiresAt := mgr.bindExpiresAt
+	issuedAt := mgr.issuedAt
+	expiresAt := mgr.expiresAt
+	mgr.mu.Unlock()
+	if bindExpiresAt != serverTime+expiresIn {
+		t.Fatalf("bind expiry = %d, want server time + lifetime (%d)", bindExpiresAt, serverTime+expiresIn)
+	}
+	if !issuedAt.Equal(localNow) || !expiresAt.Equal(localNow.Add(time.Duration(expiresIn)*time.Second)) {
+		t.Fatalf("local rotation window = %v..%v, want %v + %v", issuedAt, expiresAt, localNow, time.Duration(expiresIn)*time.Second)
+	}
+}
+
 func TestPFSRenewalLoopUsesDeadlineTimer(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mgr := NewTempKeyManager(2, false, make([]byte, 256), true, nil)
@@ -245,5 +272,52 @@ func TestAuthKeyOwnershipIsIsolated(t *testing.T) {
 	perm[0] = 9
 	if got := mgr.PermKey()[0]; got == 9 {
 		t.Fatal("PermKey returned mutable internal key material")
+	}
+}
+
+func TestDeriveMsgAESKeyIVKnownVectorsDoesNotMutateAuthKey(t *testing.T) {
+	var msgKey [16]byte
+	for i := range msgKey {
+		msgKey[i] = byte(0xf0 + i)
+	}
+	tests := []struct {
+		name    string
+		x       int
+		wantKey string
+		wantIV  string
+	}{
+		{
+			name: "client_to_server",
+			x:    0,
+			wantKey: "e5f224b6de5d8a70" +
+				"8b1c97869df4df3b4a3a26bac26118f90ba06686d599442b",
+			wantIV: "8e3ead3b7ddc813131e5cbaa74b131070d0575855a64aa3954d4846ddefea770",
+		},
+		{
+			name: "server_to_client",
+			x:    8,
+			wantKey: "0e5c6bc61941f368" +
+				"ce854ae8380bd009bd7d7dbb5af346a1b9201b70ff5e9dde",
+			wantIV: "a3186439cf6b67ea724bad3b6b732354283da80f70df7a9f5dfd75c422c50bd4",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authKey := make([]byte, 256)
+			for i := range authKey {
+				authKey[i] = byte(i)
+			}
+			before := bytes.Clone(authKey)
+			key, iv := deriveMsgAESKeyIV(authKey, msgKey, tt.x)
+			if got := hex.EncodeToString(key[:]); got != tt.wantKey {
+				t.Fatalf("key = %s, want %s", got, tt.wantKey)
+			}
+			if got := hex.EncodeToString(iv[:]); got != tt.wantIV {
+				t.Fatalf("IV = %s, want %s", got, tt.wantIV)
+			}
+			if !bytes.Equal(authKey, before) {
+				t.Fatal("deriveMsgAESKeyIV mutated the auth key")
+			}
+		})
 	}
 }

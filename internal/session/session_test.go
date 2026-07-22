@@ -36,6 +36,20 @@ type testStorage struct {
 	apiID   int32
 }
 
+type blockingAuthStorage struct {
+	*testStorage
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (s *blockingAuthStorage) SetAuthKey(v []byte) error {
+	if len(v) != 0 {
+		close(s.entered)
+		<-s.release
+	}
+	return s.testStorage.SetAuthKey(v)
+}
+
 func newTestStorage() *testStorage {
 	return &testStorage{}
 }
@@ -341,6 +355,29 @@ func (m *mockTransport) SetWriteDeadline(t time.Time) error {
 
 func (m *mockTransport) SetReadDeadline(t time.Time) error {
 	return nil
+}
+
+type closeGateTransport struct {
+	*mockTransport
+	closeEntered chan struct{}
+	releaseClose chan struct{}
+	observeOnce  sync.Once
+}
+
+func newCloseGateTransport() *closeGateTransport {
+	return &closeGateTransport{
+		mockTransport: newMockTransport(),
+		closeEntered:  make(chan struct{}),
+		releaseClose:  make(chan struct{}),
+	}
+}
+
+func (t *closeGateTransport) Close() error {
+	t.observeOnce.Do(func() {
+		close(t.closeEntered)
+		<-t.releaseClose
+	})
+	return t.mockTransport.Close()
 }
 
 func makeAuthKey() []byte {
@@ -1120,6 +1157,126 @@ func TestSessionInvokeRawRetriesShortRPCResult(t *testing.T) {
 	}
 }
 
+func TestRequestStopSynchronouslyClosesAndDetachesTransport(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	tp := newCloseGateTransport()
+	s.SetTransport(tp)
+
+	runCtx, runCancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	s.runMu.Lock()
+	s.runCancel = runCancel
+	s.runDone = runDone
+	s.runMu.Unlock()
+
+	returned := make(chan struct{})
+	var gotDone <-chan struct{}
+	go func() {
+		gotDone = s.RequestStop()
+		close(returned)
+	}()
+	select {
+	case <-tp.closeEntered:
+	case <-time.After(time.Second):
+		t.Fatal("RequestStop did not close the transport")
+	}
+	select {
+	case <-runCtx.Done():
+	default:
+		t.Fatal("RequestStop closed the transport before cancelling the run context")
+	}
+	s.mu.RLock()
+	attached := s.transport
+	s.mu.RUnlock()
+	if attached != nil {
+		t.Fatal("RequestStop did not detach the transport before Close")
+	}
+	late := newMockTransport()
+	lateConnectDone := make(chan error, 1)
+	go func() { lateConnectDone <- s.ConnectContext(context.Background(), late) }()
+	select {
+	case <-returned:
+		t.Fatal("RequestStop returned before transport Close completed")
+	default:
+	}
+	close(tp.releaseClose)
+	select {
+	case <-returned:
+	case <-time.After(time.Second):
+		t.Fatal("RequestStop did not return after transport Close completed")
+	}
+	if gotDone != runDone {
+		t.Fatal("RequestStop returned the wrong lifecycle completion channel")
+	}
+	select {
+	case err := <-lateConnectDone:
+		if !errors.Is(err, ErrSessionClosed) {
+			t.Fatalf("ConnectContext during RequestStop = %v, want ErrSessionClosed", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("late ConnectContext did not return after transport Close")
+	}
+	if late.IsConnected() {
+		t.Fatal("ConnectContext left a late transport open during RequestStop")
+	}
+	close(runDone)
+	if second := s.RequestStop(); second != runDone {
+		t.Fatal("second RequestStop returned the wrong completion channel")
+	}
+	later := newMockTransport()
+	s.SetTransport(later)
+	if later.IsConnected() {
+		t.Fatal("SetTransport attached a transport after RequestStop")
+	}
+}
+
+func TestRequestStopWaitsForConcurrentHandleClose(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	tp := newCloseGateTransport()
+	s.SetTransport(tp)
+	s.done = make(chan struct{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	handleDone := make(chan error, 1)
+	go func() {
+		handleDone <- s.handleClose(ctx)
+	}()
+	cancel()
+	select {
+	case <-tp.closeEntered:
+	case <-time.After(time.Second):
+		t.Fatal("handleClose did not start transport Close")
+	}
+
+	requestEntered := make(chan struct{})
+	requestReturned := make(chan struct{})
+	go func() {
+		close(requestEntered)
+		s.RequestStop()
+		close(requestReturned)
+	}()
+	<-requestEntered
+	select {
+	case <-requestReturned:
+		t.Fatal("RequestStop returned while handleClose was still closing the transport")
+	case <-time.After(50 * time.Millisecond):
+	}
+	close(tp.releaseClose)
+	select {
+	case <-requestReturned:
+	case <-time.After(time.Second):
+		t.Fatal("RequestStop did not return after concurrent transport Close completed")
+	}
+	select {
+	case err := <-handleDone:
+		if err != nil {
+			t.Fatalf("handleClose() = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("handleClose did not return")
+	}
+}
+
 func TestSessionStartStop(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	mt := newMockTransport()
@@ -1190,6 +1347,180 @@ func TestSessionStopAfterStartFailure(t *testing.T) {
 	case <-mt.done:
 	default:
 		t.Fatal("transport was not closed after initial ping failure")
+	}
+}
+
+func TestConnectWithAuthContextSerializesAuthentication(t *testing.T) {
+	s, err := NewSession(DataCenter{ID: 2}, newTestStorage(), "test", "1", "en", "en")
+	if err != nil {
+		t.Fatalf("NewSession() = %v", err)
+	}
+	firstEntered := make(chan struct{})
+	firstRelease := make(chan struct{})
+	secondEntered := make(chan struct{})
+	firstDone := make(chan error, 1)
+	secondDone := make(chan error, 1)
+	go func() {
+		firstDone <- s.ConnectWithAuthContext(t.Context(), newMockTransport(), func(Transport) (*AuthResult, error) {
+			close(firstEntered)
+			<-firstRelease
+			return nil, errors.New("first auth failed")
+		})
+	}()
+	<-firstEntered
+	go func() {
+		secondDone <- s.ConnectWithAuthContext(t.Context(), newMockTransport(), func(Transport) (*AuthResult, error) {
+			close(secondEntered)
+			return nil, errors.New("second auth failed")
+		})
+	}()
+	select {
+	case <-secondEntered:
+		t.Fatal("concurrent ConnectWithAuthContext entered authFunc")
+	case <-time.After(50 * time.Millisecond):
+	}
+	close(firstRelease)
+	if err := <-firstDone; err == nil {
+		t.Fatal("first ConnectWithAuthContext unexpectedly succeeded")
+	}
+	select {
+	case <-secondEntered:
+	case <-time.After(time.Second):
+		t.Fatal("second ConnectWithAuthContext did not enter after first returned")
+	}
+	if err := <-secondDone; err == nil {
+		t.Fatal("second ConnectWithAuthContext unexpectedly succeeded")
+	}
+}
+
+func TestStopDuringConnectWithAuthPreventsStartupAndPersistence(t *testing.T) {
+	st := newTestStorage()
+	s, err := NewSession(DataCenter{ID: 2}, st, "test", "1", "en", "en")
+	if err != nil {
+		t.Fatalf("NewSession() = %v", err)
+	}
+	tp := newMockTransport()
+	authEntered := make(chan struct{})
+	authRelease := make(chan struct{})
+	connectDone := make(chan error, 1)
+	go func() {
+		connectDone <- s.ConnectWithAuthContext(context.Background(), tp, func(Transport) (*AuthResult, error) {
+			close(authEntered)
+			<-authRelease
+			return &AuthResult{AuthKey: make([]byte, 256), ServerTime: int32(time.Now().Unix())}, nil
+		})
+	}()
+	<-authEntered
+
+	stopDone := make(chan struct{})
+	go func() {
+		s.Stop()
+		close(stopDone)
+	}()
+	select {
+	case <-stopDone:
+	case <-time.After(time.Second):
+		t.Fatal("Stop blocked during authentication")
+	}
+	select {
+	case <-tp.done:
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not close authentication transport")
+	}
+	close(authRelease)
+	select {
+	case err := <-connectDone:
+		if !errors.Is(err, ErrSessionClosed) {
+			t.Fatalf("ConnectWithAuthContext() = %v, want ErrSessionClosed", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ConnectWithAuthContext did not return after Stop")
+	}
+	if len(st.authKey) != 0 {
+		t.Fatalf("persisted auth key length = %d, want 0", len(st.authKey))
+	}
+	if s.IsConnected() {
+		t.Fatal("session became active after Stop")
+	}
+}
+
+func TestStopWaitsForInFlightAuthKeyPersistence(t *testing.T) {
+	st := &blockingAuthStorage{
+		testStorage: newTestStorage(),
+		entered:     make(chan struct{}),
+		release:     make(chan struct{}),
+	}
+	s, err := NewSession(DataCenter{ID: 2}, st, "test", "1", "en", "en")
+	if err != nil {
+		t.Fatalf("NewSession() = %v", err)
+	}
+	tp := newMockTransport()
+	connectDone := make(chan error, 1)
+	go func() {
+		connectDone <- s.ConnectWithAuthContext(context.Background(), tp, func(Transport) (*AuthResult, error) {
+			return &AuthResult{AuthKey: make([]byte, 256), ServerTime: int32(time.Now().Unix())}, nil
+		})
+	}()
+	<-st.entered
+
+	stopDone := make(chan struct{})
+	go func() {
+		s.Stop()
+		close(stopDone)
+	}()
+	select {
+	case <-stopDone:
+		t.Fatal("Stop returned while auth key persistence was in flight")
+	case <-time.After(30 * time.Millisecond):
+	}
+	close(st.release)
+	select {
+	case err := <-connectDone:
+		if !errors.Is(err, ErrSessionClosed) {
+			t.Fatalf("ConnectWithAuthContext() = %v, want ErrSessionClosed", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ConnectWithAuthContext did not return")
+	}
+	select {
+	case <-stopDone:
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not finish after auth persistence completed")
+	}
+	if len(st.authKey) != 0 {
+		t.Fatalf("persisted auth key length = %d, want 0", len(st.authKey))
+	}
+}
+
+func TestStopCancelsStartupPing(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	connectDone := make(chan error, 1)
+	go func() {
+		connectDone <- s.ConnectContext(context.Background(), mt)
+	}()
+	select {
+	case <-mt.sendCh:
+	case <-time.After(time.Second):
+		t.Fatal("ConnectContext did not send startup ping")
+	}
+	stopDone := make(chan struct{})
+	go func() {
+		s.Stop()
+		close(stopDone)
+	}()
+	select {
+	case err := <-connectDone:
+		if err == nil {
+			t.Fatal("ConnectContext unexpectedly succeeded")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not cancel startup ping")
+	}
+	select {
+	case <-stopDone:
+	case <-time.After(time.Second):
+		t.Fatal("Stop did not return after startup cancellation")
 	}
 }
 
