@@ -23,6 +23,10 @@ var (
 	// ErrAlreadyConnected is returned when Connect is called on a client that is
 	// already connected to Telegram.
 	ErrAlreadyConnected = errors.New("client: already connected")
+	// ErrAuthKeyInvalidated indicates that Telegram permanently rejected or
+	// revoked the main authorization key. Automatic reconnect stays disabled
+	// until an explicit Connect starts recovery with cleared storage.
+	ErrAuthKeyInvalidated = errors.New("client: auth key invalidated")
 	// ErrPeerNotFound is returned when a peer (user, chat, or channel) cannot be
 	// resolved from the given identifier.
 	ErrPeerNotFound = errors.New("client: peer not found")
@@ -345,6 +349,38 @@ func (e *ReconnectError) Error() string {
 }
 
 func (e *ReconnectError) Unwrap() error { return e.Err }
+
+// AuthKeyInvalidatedError reports permanent loss of the main authorization
+// key. Cause is the server error; Cleanup is non-nil if persisted credentials
+// could not be fully removed. The client remains fail-closed in either case.
+type AuthKeyInvalidatedError struct {
+	Cause   error
+	Cleanup error
+}
+
+func (e *AuthKeyInvalidatedError) Error() string {
+	if e == nil {
+		return ErrAuthKeyInvalidated.Error()
+	}
+	if e.Cleanup != nil {
+		return fmt.Sprintf("%v: %v (cleanup: %v)", ErrAuthKeyInvalidated, e.Cause, e.Cleanup)
+	}
+	return fmt.Sprintf("%v: %v", ErrAuthKeyInvalidated, e.Cause)
+}
+
+func (e *AuthKeyInvalidatedError) Unwrap() []error {
+	if e == nil {
+		return []error{ErrAuthKeyInvalidated}
+	}
+	errs := []error{ErrAuthKeyInvalidated}
+	if e.Cause != nil {
+		errs = append(errs, e.Cause)
+	}
+	if e.Cleanup != nil {
+		errs = append(errs, e.Cleanup)
+	}
+	return errs
+}
 
 // MigrationError indicates a failure to migrate the connection to a different DC.
 //

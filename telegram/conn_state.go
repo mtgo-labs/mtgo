@@ -144,11 +144,22 @@ func (cs *connStateManager) SetConnecting(dcID int) error {
 }
 
 func (cs *connStateManager) SetConnected() {
+	cs.trySetConnected()
+}
+
+// trySetConnected publishes a successful connection unless Close has already
+// made the client terminal. It prevents an in-flight dial from reviving a
+// closed client after Close starts waiting for lifecycle ownership.
+func (cs *connStateManager) trySetConnected() bool {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
+	if cs.state == ConnStateClosed {
+		return false
+	}
 	cs.state = ConnStateConnected
 	cs.connectedSince = time.Now()
 	cs.lastErr = nil
+	return true
 }
 
 func (cs *connStateManager) SetReconnecting(err error) {

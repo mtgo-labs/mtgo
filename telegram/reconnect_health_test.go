@@ -72,6 +72,10 @@ func TestConnStateTransitions(t *testing.T) {
 	if cs.State() != ConnStateClosed {
 		t.Fatal("SetReconnecting on closed should be no-op")
 	}
+	cs.SetConnected()
+	if cs.State() != ConnStateClosed {
+		t.Fatal("SetConnected on closed should be no-op")
+	}
 }
 
 func TestConnStateRecordTimestamps(t *testing.T) {
@@ -261,6 +265,28 @@ func TestReconnectManagerMaxAttempts(t *testing.T) {
 	h := client.Health()
 	if h.State != ConnStateDisconnected {
 		t.Fatalf("state = %v, want disconnected", h.State)
+	}
+}
+
+func TestReconnectManagerStaleGenerationCannotOverwriteConnectedState(t *testing.T) {
+	client, _ := NewClient(12345, "hash", &Config{ReconnectEnabled: true})
+	rm := client.reconnectMgr
+	currentDone := make(chan struct{})
+	rm.mu.Lock()
+	rm.done = currentDone
+	rm.mu.Unlock()
+	client.state.SetConnecting(2)
+	client.state.SetConnected()
+	published := false
+
+	if rm.publishLifecycleError(currentDone, func() { published = true }) {
+		t.Fatal("connected replacement accepted stale reconnect publication")
+	}
+	if published {
+		t.Fatal("stale reconnect callback ran")
+	}
+	if got := client.state.State(); got != ConnStateConnected {
+		t.Fatalf("state = %v, want connected", got)
 	}
 }
 

@@ -46,7 +46,7 @@ type SearchResult struct {
 //	}
 //	fmt.Printf("Found %d users, %d chats\n", len(result.Users), len(result.Chats))
 func (c *Client) SearchContacts(ctx context.Context, query string, limit int) (*SearchResult, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +119,7 @@ func (c *Client) SearchContacts(ctx context.Context, query string, limit int) (*
 //	}
 //	fmt.Printf("User: %s %s\n", user.FirstName, user.LastName)
 func (c *Client) GetUser(ctx context.Context, userID int64) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 

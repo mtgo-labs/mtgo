@@ -292,7 +292,9 @@ func TestDownloadToWriterRetriesFileMigrate(t *testing.T) {
 
 	primary := &mockDownloadInvoker{err: tgerr.New(303, "FILE_MIGRATE_4")}
 	migrated := newMockDownloadInvoker(data)
-	c.dcSessions.put(4, &dcSessionEntry{rpc: tg.NewRPCClient(migrated)})
+	if !c.dcSessions.putIfGeneration(4, &dcSessionEntry{rpc: tg.NewRPCClient(migrated)}, 0) {
+		t.Fatal("failed to seed DC session")
+	}
 
 	var buf bytes.Buffer
 	written, err := c.downloadToWriter(
@@ -391,9 +393,11 @@ func TestRecoverDownloadRPC_EvictsDeadCrossDCSession(t *testing.T) {
 	c.state.SetDC(2) // home DC 2 → DC 4 is cross-DC
 
 	// Pre-seed a dead cross-DC session.
-	c.dcSessions.put(4, &dcSessionEntry{
+	if !c.dcSessions.putIfGeneration(4, &dcSessionEntry{
 		rpc: tg.NewRPCClient(&mockDownloadInvoker{err: errors.New("send: session: closed")}),
-	})
+	}, 0) {
+		t.Fatal("failed to seed DC session")
+	}
 	if _, ok := c.dcSessions.get(4); !ok {
 		t.Fatal("pre-seeded DC session not in cache")
 	}
@@ -530,7 +534,9 @@ func TestStreamFileRetriesFileMigrate(t *testing.T) {
 	c.state.setConnected(true)
 	c.state.SetDC(2)
 	c.testInvoker = &mockDownloadInvoker{err: tgerr.New(303, "FILE_MIGRATE_4")}
-	c.dcSessions.put(4, &dcSessionEntry{rpc: tg.NewRPCClient(newMockDownloadInvoker(data))})
+	if !c.dcSessions.putIfGeneration(4, &dcSessionEntry{rpc: tg.NewRPCClient(newMockDownloadInvoker(data))}, 0) {
+		t.Fatal("failed to seed DC session")
+	}
 
 	ch, err := c.StreamFile(context.Background(), &tg.InputDocumentFileLocation{
 		ID: 100, AccessHash: 200,

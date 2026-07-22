@@ -96,7 +96,7 @@ func (c *Client) NewBroadcastStream(chatID int64, cfg ...*BroadcastConfig) (*Bro
 // FetchRTMPURL retrieves the RTMP URL and stream key from Telegram without revoking
 // any previously issued credentials.
 func (s *BroadcastStream) FetchRTMPURL(ctx context.Context) error {
-	if err := s.client.ensureConnected(); err != nil {
+	if err := s.client.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -123,7 +123,7 @@ func (s *BroadcastStream) FetchRTMPURL(ctx context.Context) error {
 
 // RefreshRTMPURL revokes the existing RTMP credentials and fetches a new URL and key.
 func (s *BroadcastStream) RefreshRTMPURL(ctx context.Context) error {
-	if err := s.client.ensureConnected(); err != nil {
+	if err := s.client.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 

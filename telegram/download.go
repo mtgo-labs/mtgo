@@ -116,7 +116,7 @@ type FileChunk struct {
 //	}
 //	fmt.Printf("Downloaded %d bytes\n", len(data))
 func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -195,7 +195,7 @@ serialDownload:
 //	    log.Fatal(err)
 //	}
 func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -281,7 +281,7 @@ serialFileDownload:
 //	}
 //	fmt.Printf("Downloaded photo thumbnail: %d bytes\n", len(data))
 func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize string, opts *params.Download) ([]byte, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -329,7 +329,7 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 //	    log.Fatal(err)
 //	}
 func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thumbSize string, filePath string, fileSize int64, opts *params.Download) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -382,7 +382,7 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 //	    _, _ = os.Stdout.Write(chunk.Data)
 //	}
 func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -1634,7 +1634,7 @@ func sanitizeFileName(name string) string {
 }
 
 func (c *Client) downloadToPath(ctx context.Context, input any, filePath string, progress params.ProgressFunc) (string, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return "", err
 	}
 
@@ -1679,7 +1679,7 @@ func (c *Client) downloadToPath(ctx context.Context, input any, filePath string,
 }
 
 func (c *Client) downloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -1747,7 +1747,7 @@ type StreamChunk struct {
 //   - input: *types.Message or types.Media to stream
 //   - opts: optional download settings (chunk size). May be nil for defaults.
 func (c *Client) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 

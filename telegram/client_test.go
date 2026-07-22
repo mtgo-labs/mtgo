@@ -981,19 +981,28 @@ func TestInitialDCID(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
 	st := NewMemoryStorage()
 
-	if got := c.initialDCID(st); got != 2 {
+	if got, err := c.initialDCID(st); err != nil || got != 2 {
+		if err != nil {
+			t.Fatalf("initialDCID empty storage: %v", err)
+		}
 		t.Fatalf("initialDCID empty storage = %d, want 2", got)
 	}
 
 	if err := st.SetDCID(4); err != nil {
 		t.Fatalf("SetDCID error: %v", err)
 	}
-	if got := c.initialDCID(st); got != 4 {
+	if got, err := c.initialDCID(st); err != nil || got != 4 {
+		if err != nil {
+			t.Fatalf("initialDCID stored: %v", err)
+		}
 		t.Fatalf("initialDCID stored = %d, want 4", got)
 	}
 
 	c, _ = NewClient(1, "h", &Config{DC: 3})
-	if got := c.initialDCID(st); got != 3 {
+	if got, err := c.initialDCID(st); err != nil || got != 3 {
+		if err != nil {
+			t.Fatalf("initialDCID configured: %v", err)
+		}
 		t.Fatalf("initialDCID configured = %d, want 3", got)
 	}
 }
@@ -1055,6 +1064,20 @@ func TestGetSessionReturnsMainForCurrentDC(t *testing.T) {
 	}
 	if sess != mainSess {
 		t.Error("GetSession should return main session for current DC")
+	}
+	mediaSess, err := c.GetSession(context.Background(), 2, true, false)
+	if err != nil {
+		t.Fatalf("GetSession(2, media) = %v", err)
+	}
+	if mediaSess != mainSess {
+		t.Error("GetSession media request opened a second home-DC session")
+	}
+	cdnSess, err := c.GetSession(context.Background(), 2, false, true)
+	if err != nil {
+		t.Fatalf("GetSession(2, CDN) = %v", err)
+	}
+	if cdnSess == mainSess {
+		t.Error("GetSession routed a CDN request through the home API session")
 	}
 }
 

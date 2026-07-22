@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -10,6 +11,10 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
+
+type signOutContextKey struct{}
+
+var errExplicitSignOut = errors.New("telegram: explicit sign out")
 
 // SendCodeResult holds the outcome of an auth code request sent to a phone number.
 // Use the PhoneCodeHash when calling SignIn or SignUp to correlate the code with
@@ -58,7 +63,7 @@ type SendCodeResult struct {
 //	}
 //	fmt.Println("phone code hash:", result.PhoneCodeHash)
 func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	c.Log.Debug("auth: SendCode")
@@ -112,9 +117,10 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 //	}
 //	fmt.Println("signed in as:", user.FirstName)
 func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx, authAttempt := c.withAuthAttempt(ctx)
 	c.Log.Debug("auth: SignIn")
 	rpc := c.Raw()
 	result, err := rpc.AuthSignIn(ctx, &tg.AuthSignInRequest{
@@ -132,10 +138,11 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 	}
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
-		c.Log.Info("auth: SignIn successful")
 		user := types.ParseUser(v.User)
-		c.SetMe(user)
-		c.saveMeToStorage(user)
+		if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+			return nil, err
+		}
+		c.Log.Info("auth: SignIn successful")
 		return user, nil
 	case *tg.AuthAuthorizationSignUpRequired:
 		return nil, ErrSignUpRequired
@@ -163,9 +170,10 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 //	}
 //	fmt.Println("registered as:", user.FirstName, user.LastName)
 func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx, authAttempt := c.withAuthAttempt(ctx)
 	c.Log.Debug("auth: SignUp")
 	ln := ""
 	if len(lastName) > 0 {
@@ -184,10 +192,11 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 	}
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
-		c.Log.Info("auth: SignUp successful")
 		user := types.ParseUser(v.User)
-		c.SetMe(user)
-		c.saveMeToStorage(user)
+		if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+			return nil, err
+		}
+		c.Log.Info("auth: SignUp successful")
 		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected sign up result type %T", result)
@@ -212,35 +221,58 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 //	}
 //	fmt.Println("signed out:", ok)
 func (c *Client) SignOut(ctx context.Context) (bool, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return false, err
 	}
+
+	// Own the connection lifecycle before sending auth.logOut. A session-exit
+	// watcher may schedule reconnect as the server revokes the key, but it cannot
+	// publish or dial a replacement while this transition owns autoConnectMu.
+	c.autoConnectMu.Lock()
+	if err := c.authLossError(); err != nil {
+		c.autoConnectMu.Unlock()
+		return false, err
+	}
+	if err := c.state.requireConnected(); err != nil {
+		c.autoConnectMu.Unlock()
+		return false, err
+	}
+	c.explicitLogout.Store(true)
+
 	c.Log.Info("auth: SignOut")
 	rpc := c.Raw()
-	_, err := rpc.AuthLogOut(ctx)
+	logoutCtx := context.WithValue(ctx, signOutContextKey{}, true)
+	_, err := rpc.AuthLogOut(logoutCtx)
 	if err != nil {
+		if c.authLossError() == nil {
+			c.explicitLogout.Store(false)
+		}
+		c.autoConnectMu.Unlock()
 		return false, err
 	}
-	c.Log.Info("auth: signed out successfully")
-	// The server session is now invalid. Also purge the persisted credentials so
-	// a later reconnect does not silently re-import the (now server-rejected)
-	// auth key, and so the on-disk key/user identity cannot be exfiltrated after
-	// an explicit logout on a persistent storage backend.
-	if c.storage != nil {
-		if err := c.storage.SetAuthKey(nil); err != nil {
-			c.Log.Warnf("failed to clear auth key: %v", err)
-		}
-		if err := c.storage.SetUserID(0); err != nil {
-			c.Log.Warnf("failed to clear user ID: %v", err)
-		}
-		if err := c.storage.SetAPIHash(""); err != nil {
-			c.Log.Warnf("failed to clear API hash: %v", err)
-		}
-		if err := c.storage.SetIsBot(false); err != nil {
-			c.Log.Warnf("failed to clear bot flag: %v", err)
-		}
+
+	// Drain auth classifiers and successful auth commits, then stop every
+	// session before closing storage. Reuse the durable terminal-auth transition
+	// so key/identity cleanup and Sync failures remain latched and fail closed.
+	c.authDecisionMu.Lock()
+	loss, _ := c.latchMainAuthLoss(errExplicitSignOut)
+	c.finishMainAuthInvalidation(loss)
+	c.cleanupSessionsLocked(false)
+	result := c.authLossResult(loss)
+	c.closeStorageLocked()
+	c.authDecisionMu.Unlock()
+	c.autoConnectMu.Unlock()
+
+	if c.reconnectMgr != nil {
+		c.reconnectMgr.Stop()
 	}
-	_ = c.Disconnect()
+	c.stopPlugins(context.Background())
+	c.signalReconnect()
+	c.connMetrics.recordDisconnected(result.Cleanup)
+	if result.Cleanup != nil {
+		return false, fmt.Errorf("sign out credential cleanup: %w", result.Cleanup)
+	}
+	c.Log.Info("auth: signed out successfully")
 	return true, nil
 }
 
@@ -251,7 +283,7 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 // Returns an empty string when no hint has been set by the user.
 // Returns an error if the server request fails or the session is not authorized.
 func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return "", err
 	}
 	rpc := c.Raw()
@@ -281,9 +313,10 @@ func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
 //	}
 //	fmt.Println("authenticated as:", user.FirstName)
 func (c *Client) CheckPassword(ctx context.Context, password string) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx, authAttempt := c.withAuthAttempt(ctx)
 	c.Log.Debug("auth: CheckPassword")
 	srp, err := c.computeSRP(ctx, password)
 	if err != nil {
@@ -300,10 +333,11 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 	}
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
-		c.Log.Info("auth: CheckPassword successful")
 		user := types.ParseUser(v.User)
-		c.SetMe(user)
-		c.saveMeToStorage(user)
+		if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+			return nil, err
+		}
+		c.Log.Info("auth: CheckPassword successful")
 		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected check password result type %T", result)
@@ -321,9 +355,10 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 // Returns an error if the recovery code is invalid or expired, or if the
 // server rejects the request.
 func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx, authAttempt := c.withAuthAttempt(ctx)
 	c.Log.Debug("auth: RecoverPassword")
 	rpc := c.Raw()
 	result, err := rpc.AuthRecoverPassword(ctx, &tg.AuthRecoverPasswordRequest{
@@ -335,14 +370,39 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 	}
 	switch v := result.(type) {
 	case *tg.AuthAuthorization:
-		c.Log.Info("auth: RecoverPassword successful")
 		user := types.ParseUser(v.User)
-		c.SetMe(user)
-		c.saveMeToStorage(user)
+		if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+			return nil, err
+		}
+		c.Log.Info("auth: RecoverPassword successful")
 		return user, nil
 	default:
 		return nil, fmt.Errorf("unexpected recover password result type %T", result)
 	}
+}
+
+// commitAuthorizedUser serializes successful authorization with terminal auth
+// classification and cleanup. Holding authLossMu through persistence makes the
+// ordering explicit: a latched loss rejects the write, otherwise later cleanup
+// runs after this write and clears it.
+func (c *Client) commitAuthorizedUser(user *types.User, authGeneration uint64) error {
+	c.authDecisionMu.Lock()
+	defer c.authDecisionMu.Unlock()
+
+	c.authLossMu.Lock()
+	defer c.authLossMu.Unlock()
+	if c.authLoss != nil {
+		return c.authLoss.result
+	}
+	if c.explicitLogout.Load() || c.authGeneration.Load() != authGeneration {
+		return ErrNotConnected
+	}
+	if err := c.state.requireConnected(); err != nil {
+		return err
+	}
+	c.SetMe(user)
+	c.saveMeToStorage(user)
+	return nil
 }
 
 func (c *Client) computeSRP(ctx context.Context, password string) (tg.InputCheckPasswordSRPClass, error) {
@@ -431,7 +491,7 @@ type ActiveSessions struct {
 //	    fmt.Printf("%s (%s) - IP: %s\n", s.DeviceModel, s.Platform, s.IP)
 //	}
 func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	c.Log.Debug("GetActiveSessions")
@@ -481,7 +541,7 @@ func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error)
 //	    }
 //	}
 func (c *Client) ResetSession(ctx context.Context, hash int64) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 	c.Log.Debugf("ResetSession hash=%d", hash)

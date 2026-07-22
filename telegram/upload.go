@@ -103,7 +103,7 @@ type UploadResult struct {
 //	}
 //	fmt.Printf("Uploaded %d bytes\n", result.Size)
 func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (*UploadResult, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	c.Log.Debugf("UploadFile size=%d", fileSize)
@@ -567,7 +567,7 @@ func generateFileID() (int64, error) {
 //	}
 //	fmt.Printf("Photo sent, message ID: %d\n", msg.ID)
 func (c *Client) SendPhoto(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendPhoto) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendPhoto{}, opts...)
@@ -582,7 +582,7 @@ func (c *Client) SendPhoto(ctx context.Context, chatID int64, file *InputFile, c
 }
 
 func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendDocument) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendDocument{}, opts...)
@@ -605,7 +605,7 @@ func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile
 }
 
 func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVideo) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendVideo{}, opts...)
@@ -625,7 +625,7 @@ func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, c
 }
 
 func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAudio) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendAudio{}, opts...)
@@ -644,7 +644,7 @@ func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, c
 }
 
 func (c *Client) SendAnimation(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAnimation) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendAnimation{}, opts...)
@@ -659,7 +659,7 @@ func (c *Client) SendAnimation(ctx context.Context, chatID int64, file *InputFil
 }
 
 func (c *Client) SendVoice(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendVoice{}, opts...)
@@ -674,7 +674,7 @@ func (c *Client) SendVoice(ctx context.Context, chatID int64, file *InputFile, c
 }
 
 func (c *Client) SendVideoNote(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendVideoNote{}, opts...)
@@ -689,7 +689,7 @@ func (c *Client) SendVideoNote(ctx context.Context, chatID int64, file *InputFil
 }
 
 func (c *Client) SendSticker(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendSticker) (*types.Message, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	opt := params.GetOptDef(&params.SendSticker{}, opts...)

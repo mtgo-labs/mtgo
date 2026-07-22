@@ -11,11 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 
 	"github.com/mtgo-labs/mtgo/tg"
-	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 type mockRPCInvoker struct {
@@ -24,10 +22,8 @@ type mockRPCInvoker struct {
 	bigParts          map[int32][]byte
 	bigFileTotalParts int32
 	totalParts        int32
-	err               error
 	errPart           int32
 	fileID            int64
-	invokes           atomic.Int32
 	delay             time.Duration
 	active            atomic.Int32
 	maxActive         atomic.Int32
@@ -46,7 +42,6 @@ func newMockRPCInvoker() *mockRPCInvoker {
 }
 
 func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
-	m.invokes.Add(1)
 	switch input.(type) {
 	case *tg.UploadSaveFilePartRequest, *tg.UploadSaveBigFilePartRequest:
 		if m.delay > 0 {
@@ -64,10 +59,6 @@ func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	if m.err != nil {
-		return nil, m.err
-	}
 
 	switch req := input.(type) {
 	case *tg.UploadSaveFilePartRequest:
@@ -100,52 +91,6 @@ func (m *mockRPCInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 func (m *mockRPCInvoker) RPCInvokeRaw(_ context.Context, _ tg.TLObject) ([]byte, error) {
 	return nil, nil
-}
-
-func TestUploadPoolRepairsDeadTransferSession(t *testing.T) {
-	tests := []struct {
-		name string
-		err  error
-	}{
-		{"auth key unregistered", fmt.Errorf("invoke upload.saveFilePart: %w", tgerr.New(401, "AUTH_KEY_UNREGISTERED"))},
-		{"send timeout", fmt.Errorf("invoke upload.saveFilePart: %w", session.ErrSendTimeout)},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewClient(1, "hash", nil)
-			if err != nil {
-				t.Fatalf("NewClient() error: %v", err)
-			}
-
-			failed := newMockRPCInvoker()
-			failed.err = tt.err
-			stale := &sideSession{invoker: failed}
-
-			replacementInvoker := newMockRPCInvoker()
-			replacement := &sideSession{invoker: replacementInvoker}
-			client.uploadPool = []*sideSession{replacement}
-
-			pool := &uploadPoolInvoker{client: client, sessions: []*sideSession{stale}}
-			result, err := pool.RPCInvoke(context.Background(), &tg.UploadSaveFilePartRequest{
-				FileID:   1,
-				FilePart: 0,
-				Bytes:    []byte("part"),
-			}, nil)
-			if err != nil {
-				t.Fatalf("RPCInvoke() error: %v", err)
-			}
-			if result != tg.TLBool(true) {
-				t.Fatalf("RPCInvoke() result = %v, want true", result)
-			}
-			if !stale.dead.Load() {
-				t.Fatal("failed transfer session was not marked dead")
-			}
-			if replacementInvoker.invokes.Load() != 1 {
-				t.Fatalf("replacement invokes = %d, want 1", replacementInvoker.invokes.Load())
-			}
-		})
-	}
 }
 
 func TestUploadFile_SmallFile(t *testing.T) {

@@ -42,10 +42,23 @@ var updatePool = sync.Pool{
 	New: func() any { return &Update{} },
 }
 
+var errConnectionReplaced = errors.New("telegram: connection replaced during authentication")
+
 type sessionKey struct {
 	dcID    int
 	isMedia bool
+	isCDN   bool
 }
+
+type connectionReadiness struct {
+	sess         *session.Session
+	done         chan struct{}
+	err          error
+	closed       bool
+	requiresAuth bool
+}
+
+type authConnectContextKey struct{}
 
 // UpdatePacket wraps a raw Telegram update together with the resolved user and chat maps
 // extracted from the update, ready for dispatch to handlers.
@@ -92,6 +105,7 @@ type Client struct {
 
 	sessions            map[sessionKey]*session.Session
 	sessionsMu          sync.Mutex
+	sessionsGeneration  uint64
 	dispatcher          Dispatcher
 	handlerDispatcher   *HandlerDispatcher
 	plugins             map[string]Plugin
@@ -118,8 +132,19 @@ type Client struct {
 
 	reconnectMgr *reconnectManager
 
-	autoConnectMu sync.Mutex
-	migration     migrationCoordinator
+	autoConnectMu  sync.Mutex
+	migration      migrationCoordinator
+	authLossMu     sync.Mutex
+	authLoss       *authLossState
+	authDecisionMu sync.RWMutex
+	readyMu        sync.Mutex
+	ready          *connectionReadiness
+	postConnectMu  sync.Mutex
+
+	sessionStringInvalidated atomic.Bool
+	mainAuthKeyOrigin        atomic.Int32
+	authGeneration           atomic.Uint64
+	explicitLogout           atomic.Bool
 
 	sessionWg sync.WaitGroup
 
@@ -128,13 +153,6 @@ type Client struct {
 	secretChatReqHandlers []SecretChatRequestHandler
 
 	dcSessions *dcSessions
-
-	// uploadPool is a lazily-created pool of sessions for upload traffic
-	// isolation. Each session has its own TCP connection but shares the main
-	// session's auth key, so upload.saveBigFilePart traffic doesn't compete
-	// with API calls and updates on the main session.
-	uploadPool      []*sideSession
-	uploadSessionMu sync.Mutex
 
 	// dcOptionPool manages candidate endpoints per DC with health scoring.
 	// Ported from td/td/telegram/net/DcOptionsSet.h.
@@ -840,6 +858,11 @@ func configureSessionDispatch(sess *session.Session, c *Client) {
 	if c.Log != nil {
 		sess.SetLogger(c.Log)
 	}
+	sess.SetPFSInitConnection(func(ctx context.Context) error {
+		query := wrapInitConnection(c.config(), &tg.HelpGetConfigRequest{})
+		_, err := sess.Invoke(ctx, query, 3, 10*time.Second)
+		return err
+	})
 	// Wire the new_session_created callback: when the server tells us
 	// that the previous session was destroyed, fire reconnect hooks so
 	// that the updatesrecovery plugin can trigger getDifference and
@@ -905,9 +928,19 @@ func (c *Client) setTestDialer(d transport.Dialer) {
 //
 // When AutoConnect is false, this is equivalent to state.requireConnected().
 func (c *Client) ensureConnected() error {
+	return c.ensureConnectedContext(context.Background())
+}
+
+func (c *Client) ensureConnectedContext(ctx context.Context) error {
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	if c.explicitLogout.Load() && (ctx == nil || ctx.Value(signOutContextKey{}) == nil) {
+		return ErrNotConnected
+	}
 	stateErr := c.state.requireConnected()
 	if stateErr == nil {
-		return nil
+		return c.waitMainReadiness(ctx)
 	}
 	if !c.config().AutoConnect {
 		return stateErr
@@ -917,13 +950,14 @@ func (c *Client) ensureConnected() error {
 	}
 
 	c.autoConnectMu.Lock()
-	defer c.autoConnectMu.Unlock()
 
 	stateErr = c.state.requireConnected()
 	if stateErr == nil {
-		return nil
+		c.autoConnectMu.Unlock()
+		return c.waitMainReadiness(ctx)
 	}
 	if c.state.IsClosed() {
+		c.autoConnectMu.Unlock()
 		return stateErr
 	}
 
@@ -931,10 +965,130 @@ func (c *Client) ensureConnected() error {
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
-	if err := c.connectTransport(timeout); err != nil {
+	if err := c.connectTransportLocked(timeout); err != nil {
+		if c.shouldInvalidateMainAuth(err) {
+			err = c.invalidateMainAuthLocked(err)
+		}
+		c.autoConnectMu.Unlock()
 		return err
 	}
-	return nil
+	sess, ready := c.mainSessionReadiness()
+	c.autoConnectMu.Unlock()
+	return c.completeConnect(timeout, sess, ready)
+}
+
+func (c *Client) beginMainReadiness(sess *session.Session, requiresAuth bool) {
+	c.readyMu.Lock()
+	if current := c.ready; current != nil && !current.closed && current.sess == nil {
+		current.sess = sess
+		current.requiresAuth = current.requiresAuth || requiresAuth
+		c.readyMu.Unlock()
+		return
+	}
+	if current := c.ready; current != nil && !current.closed {
+		current.err = ErrNotConnected
+		current.closed = true
+		close(current.done)
+	}
+	c.ready = &connectionReadiness{sess: sess, done: make(chan struct{}), requiresAuth: requiresAuth}
+	c.readyMu.Unlock()
+}
+
+func (c *Client) finishMainReadiness(sess *session.Session, err error) {
+	c.readyMu.Lock()
+	c.finishMainReadinessLocked(c.ready, sess, err)
+	c.readyMu.Unlock()
+}
+
+func (c *Client) finishMainReadinessToken(ready *connectionReadiness, err error) {
+	c.readyMu.Lock()
+	if c.ready == ready {
+		c.finishMainReadinessLocked(ready, nil, err)
+	}
+	c.readyMu.Unlock()
+}
+
+func (c *Client) finishMainReadinessLocked(ready *connectionReadiness, sess *session.Session, err error) {
+	if ready == nil || ready.closed || (sess != nil && ready.sess != sess) {
+		return
+	}
+	ready.err = err
+	ready.closed = true
+	close(ready.done)
+}
+
+func (c *Client) finishCurrentMainReadiness(err error) {
+	c.readyMu.Lock()
+	c.finishMainReadinessLocked(c.ready, nil, err)
+	c.readyMu.Unlock()
+}
+
+func (c *Client) detachMainReadinessForReconnect(sess *session.Session) {
+	c.readyMu.Lock()
+	if current := c.ready; current != nil && !current.closed && current.sess == sess {
+		current.sess = nil
+	}
+	c.readyMu.Unlock()
+}
+
+func (c *Client) mainSessionReadiness() (*session.Session, *connectionReadiness) {
+	c.readyMu.Lock()
+	c.mu.RLock()
+	sess := c.session
+	ready := c.ready
+	if ready == nil || ready.closed || ready.sess != sess {
+		ready = nil
+	}
+	c.mu.RUnlock()
+	c.readyMu.Unlock()
+	return sess, ready
+}
+
+func (c *Client) mainReadinessRequiresAuth(sess *session.Session) bool {
+	c.readyMu.Lock()
+	requiresAuth := c.ready != nil && !c.ready.closed && c.ready.sess == sess && c.ready.requiresAuth
+	c.readyMu.Unlock()
+	return requiresAuth
+}
+
+func (c *Client) waitMainReadiness(ctx context.Context) error {
+	if ctx != nil && ctx.Value(authConnectContextKey{}) != nil {
+		return nil
+	}
+	c.readyMu.Lock()
+	ready := c.ready
+	if ready == nil {
+		c.readyMu.Unlock()
+		return nil
+	}
+	if ready.closed {
+		err := ready.err
+		c.readyMu.Unlock()
+		return err
+	}
+	done := ready.done
+	c.readyMu.Unlock()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+	}
+	c.readyMu.Lock()
+	err := ready.err
+	c.readyMu.Unlock()
+	return err
+}
+
+func (c *Client) retryRPCOnReconnect(ctx context.Context) bool {
+	if ctx != nil && ctx.Value(signOutContextKey{}) != nil {
+		return false
+	}
+	cfg := c.config()
+	return cfg.RetryRPCOnReconnect ||
+		(ctx != nil && ctx.Value(authConnectContextKey{}) != nil && cfg.ReconnectEnabled)
 }
 
 // Connect initializes storage, loads or creates a session, and marks the client as connected.
@@ -955,13 +1109,16 @@ func (c *Client) ensureConnected() error {
 //	}
 //	defer client.Disconnect()
 func (c *Client) Connect(timeout time.Duration) error {
+	if err := c.prepareExplicitAuthRecovery(); err != nil {
+		return err
+	}
 	if timeout <= 0 {
 		timeout = c.config().Timeout
 	}
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
-	return c.connectTransport(timeout)
+	return c.connectTransportExplicit(timeout)
 }
 
 // Start connects the client and then blocks until Stop is called. This is the
@@ -980,11 +1137,14 @@ func (c *Client) Connect(timeout time.Duration) error {
 //		    log.Fatal(err)
 //	}
 func (c *Client) Start() error {
+	if err := c.prepareExplicitAuthRecovery(); err != nil {
+		return err
+	}
 	timeout := c.config().Timeout
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
-	if err := c.connectTransport(timeout); err != nil {
+	if err := c.connectTransportExplicit(timeout); err != nil {
 		return fmt.Errorf("start: %w", err)
 	}
 
@@ -1022,35 +1182,183 @@ func (c *Client) Idle() {
 	<-stopCh
 }
 
-func (c *Client) connectToDC(dcID int, timeout time.Duration) error {
-	c.updateConfig(func(cfg *Config) { cfg.DC = dcID })
-	c.migratingDC.Store(true)
-	return c.connectTransport(timeout)
-}
-
-func (c *Client) initialDCID(st storage.Storage) int {
-	if c.config().DC != 0 {
-		return c.config().DC
+func (c *Client) initialDCID(st storage.Storage) (int, error) {
+	configuredDC := c.config().DC
+	if st == nil {
+		if configuredDC != 0 {
+			return configuredDC, nil
+		}
+		return 2, nil
 	}
-	if st != nil {
-		if dcID, err := st.DCID(); err == nil && dcID != 0 {
-			return dcID
+
+	storedDC, err := st.DCID()
+	if err != nil {
+		dcErr := fmt.Errorf("read dc_id: %w", err)
+		authKey, authErr := st.AuthKey()
+		if authErr != nil {
+			return 0, errors.Join(dcErr, fmt.Errorf("read auth key: %w", authErr))
+		}
+		if len(authKey) != 0 {
+			return 0, dcErr
+		}
+		if configuredDC != 0 {
+			return configuredDC, nil
+		}
+		return 2, nil
+	}
+	if configuredDC == 0 {
+		if storedDC != 0 {
+			return storedDC, nil
+		}
+		return 2, nil
+	}
+	if storedDC != 0 && storedDC != configuredDC && !c.migratingDC.Load() {
+		authKey, err := st.AuthKey()
+		if err != nil {
+			return 0, fmt.Errorf("read auth key for dc_id validation: %w", err)
+		}
+		if len(authKey) != 0 {
+			return 0, fmt.Errorf("telegram: configured dc_id %d does not match stored auth key dc_id %d", configuredDC, storedDC)
 		}
 	}
-	return 2
+	return configuredDC, nil
 }
 
-func (c *Client) connectTransport(timeout time.Duration) (retErr error) {
+func (c *Client) connectTransportExplicit(timeout time.Duration) error {
+	return c.connectTransportMode(timeout, true)
+}
+
+func (c *Client) connectTransportMode(timeout time.Duration, explicit bool) error {
+	c.autoConnectMu.Lock()
+	if explicit {
+		// Only public Connect/Start may reopen a client after SignOut. Clear the
+		// gate while holding lifecycle ownership so automatic reconnect cannot
+		// race the explicit recovery decision.
+		c.explicitLogout.Store(false)
+	}
+	err := c.connectTransportLocked(timeout)
+	if err != nil && c.shouldInvalidateMainAuth(err) {
+		err = c.invalidateMainAuthLocked(err)
+	}
+	if err != nil {
+		c.autoConnectMu.Unlock()
+		return err
+	}
+	sess, ready := c.mainSessionReadiness()
+	c.autoConnectMu.Unlock()
+	return c.completeConnect(timeout, sess, ready)
+}
+
+func (c *Client) completeConnect(
+	timeout time.Duration,
+	sess *session.Session,
+	ready *connectionReadiness,
+) (retErr error) {
+	c.mu.RLock()
+	st := c.storage
+	c.mu.RUnlock()
+	authGeneration := c.authGeneration.Load()
+	defer func() {
+		c.finishMainReadinessToken(ready, retErr)
+	}()
+	if st == nil {
+		return ErrNotConnected
+	}
+	if err := c.authenticateUser(st, timeout); err != nil {
+		if errors.Is(err, errConnectionReplaced) {
+			return nil
+		}
+		if authErr := c.authLossError(); authErr != nil {
+			return authErr
+		}
+		currentSess, currentReady := c.mainSessionReadiness()
+		if c.authGeneration.Load() != authGeneration ||
+			(ready != nil && currentReady != ready) ||
+			(ready == nil && sess != nil && currentSess != sess) {
+			return errConnectionReplaced
+		}
+		if c.shouldInvalidateMainAuthFrom(currentSess, err) {
+			loss, first, accepted := c.latchMainAuthLossFrom(currentSess, authGeneration, err)
+			if !accepted {
+				return errConnectionReplaced
+			}
+			return c.completeMainAuthInvalidation(loss, first)
+		}
+		if !c.cleanupFailedConnectIfCurrent(sess, ready, authGeneration) {
+			return errConnectionReplaced
+		}
+		if c.state.IsClosed() {
+			return ErrClientClosed
+		}
+		return err
+	}
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	if err := c.state.requireConnected(); err != nil {
+		return err
+	}
+	// Authentication RPCs can transparently reconnect after a temporary-key
+	// rejection. The pending readiness token follows that replacement, so run
+	// post-connect setup against the session that currently owns the token.
+	if ready != nil {
+		current, currentReady := c.mainSessionReadiness()
+		if current == nil || currentReady != ready {
+			return ErrNotConnected
+		}
+		sess = current
+	}
+	// Application RPCs may proceed once transport setup and authentication are
+	// complete. Post-connect hooks intentionally run against a usable client.
+	c.finishMainReadinessToken(ready, nil)
+	return c.postConnect(sess)
+}
+
+func (c *Client) cleanupFailedConnectIfCurrent(sess *session.Session, ready *connectionReadiness, authGeneration uint64) bool {
+	c.autoConnectMu.Lock()
+	defer c.autoConnectMu.Unlock()
+	currentSess, currentReady := c.mainSessionReadiness()
+	if c.authGeneration.Load() != authGeneration ||
+		(ready != nil && currentReady != ready) ||
+		(ready == nil && sess != nil && currentSess != sess) {
+		return false
+	}
+	c.cleanupSessionsLocked(false)
+	return true
+}
+
+// connectTransportLocked establishes and publishes the main session. The
+// caller must hold autoConnectMu. Post-connect hooks run after the lock is
+// released by connectTransport or ensureConnected.
+func (c *Client) connectTransportLocked(timeout time.Duration) (retErr error) {
+	if err := c.authLossError(); err != nil {
+		return err
+	}
 	st, migratingDC, err := c.initStorage()
 	if err != nil {
 		return err
+	}
+	// Every new main connection starts from exclusive ownership. If a stale
+	// session survived a prior failed transition, stop it before dialing so the
+	// replacement can never overlap on the same permanent key.
+	c.state.setConnected(false)
+	c.mu.Lock()
+	previous := c.session
+	c.session = nil
+	c.mu.Unlock()
+	if previous != nil {
+		c.finishMainReadiness(previous, ErrNotConnected)
+		previous.Stop()
+	}
+	c.detachAuxSessions(true)
+	if c.dcSessions != nil {
+		c.dcSessions.cleanup(true)
 	}
 	defer func() {
 		if retErr != nil {
 			c.state.SetDisconnected(retErr)
 		}
 	}()
-	defer c.migratingDC.Store(false)
 	testSession := c.testSession
 	testDialer := c.testDialer
 
@@ -1071,33 +1379,47 @@ func (c *Client) connectTransport(timeout time.Duration) (retErr error) {
 	}
 
 	if err := c.performDHExchange(sess, st, dc, sessionTp, migratingDC); err != nil {
+		sessionTp.Close()
 		return err
 	}
 
 	if err := c.performPFS(sess, st, dc, sessionTp); err != nil {
+		sessionTp.Close()
 		return err
 	}
+	usingPFS := sess.PFS() != nil
 
 	if err := c.startSession(sess, sessionTp, timeout); err != nil {
+		if usingPFS && isTemporaryAuthRejection(err) {
+			return fmt.Errorf("%w: %v", errTemporaryAuthKeyRejected, err)
+		}
 		return err
 	}
 
 	if err := c.bindPFS(sess); err != nil {
-		if errors.Is(err, session.ErrBindRequiresKeyRotation) {
-			if clearErr := st.SetAuthKey(nil); clearErr != nil {
-				err = errors.Join(err, fmt.Errorf("clear stale permanent auth key: %w", clearErr))
-			}
-		}
-		c.cleanupSessions(false)
+		sess.Stop()
+		sessionTp.Close()
+		c.cleanupSessionsLocked(false)
 		c.state.SetDisconnected(err)
+		if usingPFS && isTemporaryAuthRejection(err) {
+			return fmt.Errorf("%w: %v", errTemporaryAuthKeyRejected, err)
+		}
+		return err
+	}
+	if err := c.publishMainSession(sess, dc.ID, true); err != nil {
+		sess.Stop()
+		sessionTp.Close()
 		return err
 	}
 
-	if err := c.authenticateUser(st, timeout); err != nil {
+	if err := c.activateMainSession(sess); err != nil {
+		c.cleanupSessionsLocked(false)
+		if usingPFS && isTemporaryAuthRejection(err) {
+			return fmt.Errorf("%w: %v", errTemporaryAuthKeyRejected, err)
+		}
 		return err
 	}
 
-	c.postConnect()
 	return nil
 }
 
@@ -1105,7 +1427,11 @@ func (c *Client) connectTransport(timeout time.Duration) (retErr error) {
 // returns the storage, whether a DC migration is in progress, and any error.
 func (c *Client) initStorage() (st storage.Storage, migratingDC bool, retErr error) {
 	c.mu.Lock()
-	dcID := c.initialDCID(c.testStorage)
+	dcID, err := c.initialDCID(c.testStorage)
+	if err != nil {
+		c.mu.Unlock()
+		return nil, false, err
+	}
 	if err := c.state.SetConnecting(dcID); err != nil {
 		c.mu.Unlock()
 		return nil, false, err
@@ -1157,6 +1483,9 @@ func (c *Client) importSessionString(st storage.Storage) error {
 		}
 		return nil
 	}
+	if c.sessionStringInvalidated.Load() {
+		return nil
+	}
 	src, _, err := tgconv.Decode(c.config().SessionString)
 	if err != nil {
 		return fmt.Errorf("telegram: decode session string: %w", err)
@@ -1190,6 +1519,7 @@ func (c *Client) importSessionString(st storage.Storage) error {
 	if err := st.SetIsBot(src.IsBot); err != nil {
 		c.Log.Warnf("import session is_bot: %v", err)
 	}
+	c.mainAuthKeyOrigin.Store(authKeyOriginLoaded)
 	return nil
 }
 
@@ -1200,7 +1530,10 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 		configureSessionDispatch(testSession, c)
 		return testSession, nil
 	}
-	dcID := c.initialDCID(st)
+	dcID, err := c.initialDCID(st)
+	if err != nil {
+		return nil, err
+	}
 	dc := session.DataCenter{
 		ID:       dcID,
 		TestMode: c.config().TestMode,
@@ -1223,6 +1556,21 @@ func (c *Client) initSession(st storage.Storage, testSession *session.Session) (
 // dialTransport establishes the underlying transport connection (TCP,
 // WebSocket, or MTProxy) to the given data center.
 func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, testDialer transport.Dialer) (*sessionTransport, error) {
+	return c.dialTransportContext(context.Background(), dc, timeout, testDialer)
+}
+
+func (c *Client) dialTransportContext(
+	ctx context.Context,
+	dc session.DataCenter,
+	timeout time.Duration,
+	testDialer transport.Dialer,
+) (*sessionTransport, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	c.dcOptionPool.AddOption(dc)
 	if dc.Address() != "" {
 		c.dcOptionPool.AddOption(session.DataCenter{ID: dc.ID, TestMode: dc.TestMode, IPv6: !dc.IPv6})
@@ -1235,14 +1583,26 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 		if testDialer != nil {
 			dialer = testDialer
 		}
-		return c.newHTTPTransport(dc, timeout, cfg.HTTPTransport, dialer)
+		st, err := c.newHTTPTransport(dc, timeout, cfg.HTTPTransport, dialer)
+		if err != nil {
+			return nil, err
+		}
+		if err := ctx.Err(); err != nil {
+			_ = st.Close()
+			return nil, err
+		}
+		return st, nil
 	}
 
 	if useWebSocket(c.cfg) {
 		start := time.Now()
 		c.connMetrics.recordDialStart(1)
 		wsAddr := wsDCAddress(dc.ID, dc.TestMode, c.config().WebSocketTLS)
-		wsCtx, wsCancel := dialerCtx(timeout)
+		wsCtx, wsCancel := context.WithCancel(ctx)
+		if timeout > 0 {
+			wsCancel()
+			wsCtx, wsCancel = context.WithTimeout(ctx, timeout)
+		}
 		defer wsCancel()
 		var wsConn net.Conn
 		var err error
@@ -1277,6 +1637,10 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 			c.connMetrics.recordDialFailure(c.config().MTProxy.Addr, err)
 			return nil, fmt.Errorf("mtproxy dial: %w", err)
 		}
+		if err := ctx.Err(); err != nil {
+			mpConn.Close()
+			return nil, err
+		}
 		tp := transport.NewTCPIntermediateNoHeader(mpConn)
 		if err := tp.Connect(); err != nil {
 			mpConn.Close()
@@ -1291,7 +1655,7 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 	}
 
 	if _, ok := c.dialer.(transport.ContextDialer); c.config().ServerAddr == "" && testDialer == nil && ok {
-		return c.dialRacedTCPTransport(dc, timeout)
+		return c.dialRacedTCPTransportContext(ctx, dc, timeout)
 	}
 
 	addr := fmt.Sprintf("%s:%d", dc.Address(), dc.Port())
@@ -1304,11 +1668,21 @@ func (c *Client) dialTransport(dc session.DataCenter, timeout time.Duration, tes
 	}
 	start := time.Now()
 	c.connMetrics.recordDialStart(1)
-	conn, err := d.Dial("tcp", addr, timeout)
+	var conn net.Conn
+	var err error
+	if contextDialer, ok := d.(transport.ContextDialer); ok {
+		conn, err = contextDialer.DialContext(ctx, "tcp", addr, timeout)
+	} else {
+		conn, err = d.Dial("tcp", addr, timeout)
+	}
 	if err != nil {
 		c.dcOptionPool.RecordFailure(dc)
 		c.connMetrics.recordDialFailure(addr, err)
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
+	}
+	if err := ctx.Err(); err != nil {
+		conn.Close()
+		return nil, err
 	}
 	tp, err := c.createTransport(conn)
 	if err != nil {
@@ -1418,6 +1792,14 @@ type dialResult struct {
 }
 
 func (c *Client) dialRacedTCPTransport(dc session.DataCenter, timeout time.Duration) (*sessionTransport, error) {
+	return c.dialRacedTCPTransportContext(context.Background(), dc, timeout)
+}
+
+func (c *Client) dialRacedTCPTransportContext(
+	ctx context.Context,
+	dc session.DataCenter,
+	timeout time.Duration,
+) (*sessionTransport, error) {
 	candidates, err := c.dcOptionPool.CandidatesForDC(dc.ID, 0)
 	if err != nil {
 		candidates = []session.DataCenter{dc}
@@ -1435,12 +1817,16 @@ func (c *Client) dialRacedTCPTransport(dc session.DataCenter, timeout time.Durat
 		}
 		c.dcOptionPool.RecordSuccess(candidate)
 		c.Log.Debugf("reusing warm DC endpoint %s", candidate)
+		if err := ctx.Err(); err != nil {
+			_ = st.Close()
+			return nil, err
+		}
 		return st, nil
 	}
 	c.connMetrics.recordDialStart(len(candidates))
 	if len(candidates) == 1 {
 		start := time.Now()
-		st, err := c.dialTCPTransportContext(context.Background(), candidates[0], timeout)
+		st, err := c.dialTCPTransportContext(ctx, candidates[0], timeout)
 		if err != nil {
 			c.dcOptionPool.RecordFailure(candidates[0])
 			c.connMetrics.recordDialFailure(candidates[0].String(), err)
@@ -1451,7 +1837,7 @@ func (c *Client) dialRacedTCPTransport(dc session.DataCenter, timeout time.Durat
 		return st, nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	raceCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	results := make(chan dialResult, len(candidates))
@@ -1459,7 +1845,7 @@ func (c *Client) dialRacedTCPTransport(dc session.DataCenter, timeout time.Durat
 		candidate := candidate
 		go func() {
 			start := time.Now()
-			st, err := c.dialTCPTransportContext(ctx, candidate, timeout)
+			st, err := c.dialTCPTransportContext(raceCtx, candidate, timeout)
 			results <- dialResult{
 				endpoint: candidate,
 				st:       st,
@@ -1561,10 +1947,26 @@ func (c *Client) dialTCPTransportContext(ctx context.Context, endpoint session.D
 // a DC migration is in progress. On success the auth key and salt are saved to
 // storage.
 func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc session.DataCenter, sessionTp *sessionTransport, migratingDC bool) error {
-	authKey, _ := st.AuthKey()
-	if len(authKey) != 0 && !migratingDC {
-		c.Log.Debug("loaded auth key from session; auth_key=", len(authKey), " bytes")
-		return nil
+	if !migratingDC {
+		authKey := sess.AuthKey()
+		if len(authKey) == 0 {
+			var err error
+			authKey, err = st.AuthKey()
+			if err != nil {
+				return fmt.Errorf("load auth key: %w", err)
+			}
+			if len(authKey) != 0 {
+				if len(authKey) != 256 {
+					return fmt.Errorf("load auth key: invalid length %d, expected 256", len(authKey))
+				}
+				sess.SetAuthKey(authKey)
+			}
+		}
+		if len(authKey) != 0 {
+			c.mainAuthKeyOrigin.CompareAndSwap(authKeyOriginUnknown, authKeyOriginLoaded)
+			c.Log.Debug("loaded auth key from session; auth_key=", len(authKey), " bytes")
+			return nil
+		}
 	}
 
 	c.Log.Debug("auth key missing; starting DH exchange with DC ", dc.ID)
@@ -1580,7 +1982,11 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 		sessionTp.Close()
 		return fmt.Errorf("DH key exchange: %w", err)
 	}
+	if err := c.advanceAuthGeneration(); err != nil {
+		return err
+	}
 	sess.SetAuthKey(result.AuthKey)
+	c.mainAuthKeyOrigin.Store(authKeyOriginFresh)
 	sess.SetServerSalt(result.ServerSalt)
 	sess.SetServerTime(time.Unix(int64(result.ServerTime), 0))
 	if err := st.SetAuthKey(result.AuthKey); err != nil {
@@ -1600,6 +2006,11 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 	}
 	c.Log.Debug("DH exchange complete; auth_key=", len(result.AuthKey), " bytes")
 	c.syncStorage(st)
+	if migratingDC {
+		// A configured session string still contains the previous DC/key pair.
+		// Never let a later Connect overwrite the newly migrated permanent key.
+		c.sessionStringInvalidated.Store(true)
+	}
 	return nil
 }
 
@@ -1608,7 +2019,8 @@ func (c *Client) performDHExchange(sess *session.Session, st storage.Storage, dc
 //
 // On first connect: generates a new temp key via unencrypted DH exchange.
 // On reconnect: reuses the existing temp key if still valid (avoids DH overhead).
-// Falls back to permanent key on failure (non-fatal).
+// Generation or binding failure is fatal for the candidate; PFS never falls
+// back to direct permanent-key traffic.
 func (c *Client) performPFS(sess *session.Session, st storage.Storage, dc session.DataCenter, sessionTp *sessionTransport) error {
 	if !c.config().PFS {
 		return nil
@@ -1674,8 +2086,6 @@ func (c *Client) bindSessionPFS(ctx context.Context, sess *session.Session) erro
 	if err == nil {
 		return nil
 	}
-	sess.SwapAuthKey(pfs.PermKey())
-	sess.SetPFS(nil)
 	return fmt.Errorf("PFS: bind temporary auth key: %w", err)
 }
 
@@ -1684,7 +2094,8 @@ func (c *Client) bindSessionPFS(ctx context.Context, sess *session.Session) erro
 // request goes through the encrypted channel using the temp key).
 //
 // On success, sends initConnection to rewrite client info as required by the
-// PFS spec. On failure, falls back to the permanent key.
+// PFS spec. On failure, the caller stops the candidate; a live PFS session must
+// never fall back to sending traffic with the permanent key.
 func (c *Client) bindPFS(sess *session.Session) error {
 	pfs := sess.PFS()
 	if pfs == nil {
@@ -1702,20 +2113,26 @@ func (c *Client) bindPFS(sess *session.Session) error {
 
 	if pfs.NeedsInitConnection() {
 		c.Log.Debug("PFS: rewriting client info via initConnection")
-		rpc := c.Raw()
+		rpc := tg.NewRPCClient(&dcSessionInvoker{sess: sess, client: c})
 		_, icErr := rpc.HelpGetConfig(ctx)
 		if icErr != nil {
-			c.Log.Warnf("PFS: initConnection (help.getConfig) failed: %v", icErr)
+			return fmt.Errorf("PFS: initConnection after bind: %w", icErr)
 		}
+		pfs.MarkInitConnectionDone()
 	}
 
 	c.Log.Info("PFS: temp key bound successfully")
 	return nil
 }
 
-// startSession registers the update handler, starts the encrypted session, and
-// marks the client as connected.
+// startSession registers the update handler and starts the encrypted session.
+// Publication is deliberately separate so a PFS key can be bound before other
+// goroutines can use the candidate session.
 func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport, timeout time.Duration) error {
+	if err := c.authLossError(); err != nil {
+		sessionTp.Close()
+		return err
+	}
 	sess.SetUpdateHandler(func(obj tg.TLObject) {
 		c.processRawUpdate(obj)
 	})
@@ -1733,23 +2150,64 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 		return fmt.Errorf("session start: %w", err)
 	}
 	c.Log.Info("encrypted session started")
+	return nil
+}
 
-	c.sessionWg.Go(func() {
-		<-sess.SessionDone()
-		if c.state.IsConnected() {
-			if source, _, cause := sess.ShutdownCause(); cause != nil {
-				c.triggerReconnect(fmt.Errorf("session exited [%s]: %w", source, cause))
-			} else {
-				c.triggerReconnect(fmt.Errorf("session exited"))
-			}
-		}
-	})
-
+// publishMainSession atomically installs a fully initialized candidate. The
+// caller holds autoConnectMu. Activation is separate so startup auth can use
+// the candidate without its exit watcher starting reconnect inside that gate.
+func (c *Client) publishMainSession(sess *session.Session, dcID int, requiresAuth bool) error {
+	c.authLossMu.Lock()
+	if c.authLoss != nil {
+		err := c.authLoss.result
+		c.authLossMu.Unlock()
+		return err
+	}
+	// Install the pending readiness generation before publishing Connected so
+	// concurrent application RPCs cannot race startup authentication.
+	c.beginMainReadiness(sess, requiresAuth)
 	c.mu.Lock()
+	if !c.state.trySetConnected() {
+		c.mu.Unlock()
+		c.authLossMu.Unlock()
+		c.finishMainReadiness(sess, ErrClientClosed)
+		return ErrClientClosed
+	}
 	c.session = sess
-	c.state.SetConnected()
-	c.state.SetDC(c.initialDCID(c.storage))
+	c.state.SetDC(dcID)
 	c.mu.Unlock()
+	c.authLossMu.Unlock()
+	return nil
+}
+
+func (c *Client) activateMainSession(sess *session.Session) error {
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	if c.state.IsClosed() {
+		return ErrClientClosed
+	}
+	c.mu.RLock()
+	owned := c.session == sess
+	c.mu.RUnlock()
+	if !owned {
+		return ErrNotConnected
+	}
+	select {
+	case <-sess.SessionDone():
+		if source, _, cause := sess.ShutdownCause(); cause != nil {
+			return fmt.Errorf("session exited before activation [%s]: %w", source, cause)
+		}
+		return fmt.Errorf("session exited before activation")
+	default:
+	}
+	if c.config().OutboundBatchEnabled {
+		sess.EnableOutboundBatching(
+			c.config().OutboundMaxContainerBytes,
+			c.config().OutboundCoalesceWindow,
+		)
+	}
+	c.watchMainSession(sess)
 	c.connMetrics.recordConnected()
 	c.signalReconnect()
 	return nil
@@ -1759,6 +2217,8 @@ func (c *Client) startSession(sess *session.Session, sessionTp *sessionTransport
 // and phone login flow. Returns an error only for fatal failures that should
 // abort the connection.
 func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) error {
+	authCtx := context.WithValue(context.Background(), authConnectContextKey{}, true)
+	authGeneration := c.authGeneration.Load()
 	if botToken := c.config().BotToken; botToken != "" {
 		alreadyAuthorized := false
 		isUserAccount := false
@@ -1781,9 +2241,9 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 					LastName:  func() string { v, _ := st.LastName(); return v }(),
 					Username:  func() string { v, _ := st.Username(); return v }(),
 				}
-				c.mu.Lock()
-				c.me = me
-				c.mu.Unlock()
+				if err := c.commitAuthorizedUser(me, authGeneration); err != nil {
+					return err
+				}
 				c.Log.Debug("user account restored: id=", me.ID, " username=", me.Username)
 			}
 		}
@@ -1791,7 +2251,8 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 		if !alreadyAuthorized && !isUserAccount {
 			c.Log.Info("importing bot authorization")
 			rpc := c.Raw()
-			authResult, err := rpc.AuthImportBotAuthorization(context.Background(), &tg.AuthImportBotAuthorizationRequest{
+			botAuthCtx, authAttempt := c.withAuthAttempt(authCtx)
+			authResult, err := rpc.AuthImportBotAuthorization(botAuthCtx, &tg.AuthImportBotAuthorizationRequest{
 				Flags:        0,
 				APIID:        c.config().APIID,
 				APIHash:      c.config().APIHash,
@@ -1800,38 +2261,30 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 			if err != nil {
 				var rpcErr *tgerr.Error
 				if errors.As(err, &rpcErr) && rpcErr.Code == 303 && rpcErr.Type == "USER_MIGRATE" {
-					c.cleanupSessions(false)
 					c.Log.Debug("migrating to DC ", rpcErr.Argument)
-					return c.connectToDC(rpcErr.Argument, timeout)
+					migrationCtx, cancel := context.WithTimeout(authCtx, timeout)
+					defer cancel()
+					if err := c.migration.Do(migrationCtx, rpcErr.Argument, func(ctx context.Context) error {
+						if c.homeDC() == rpcErr.Argument && c.IsConnected() {
+							return nil
+						}
+						return c.switchPrimaryDC(ctx, rpcErr.Argument, st, nil)
+					}); err != nil {
+						return err
+					}
+					return errConnectionReplaced
 				}
-				c.cleanupSessions()
 				return fmt.Errorf("bot auth: %w", err)
 			}
 			if auth, ok := authResult.(*tg.AuthAuthorization); ok {
 				if auth.User != nil {
 					if u, ok := auth.User.(*tg.User); ok && u != nil {
 						me := types.ParseUser(u)
-						c.mu.Lock()
-						c.me = me
-						c.mu.Unlock()
-						c.Log.Info("bot user: id=", me.ID, " username=", me.Username)
-						if st != nil {
-							if err := st.SetUserID(me.ID); err != nil {
-								c.Log.Warnf("save user id: %v", err)
-							}
-							if err := st.SetIsBot(true); err != nil {
-								c.Log.Warnf("save is_bot: %v", err)
-							}
-							if err := st.SetFirstName(me.FirstName); err != nil {
-								c.Log.Warnf("save first_name: %v", err)
-							}
-							if err := st.SetLastName(me.LastName); err != nil {
-								c.Log.Warnf("save last_name: %v", err)
-							}
-							if err := st.SetUsername(me.Username); err != nil {
-								c.Log.Warnf("save username: %v", err)
-							}
+						me.IsBot = true
+						if err := c.commitAuthorizedUser(me, authAttempt.generation.Load()); err != nil {
+							return fmt.Errorf("bot auth result: %w", err)
 						}
+						c.Log.Info("bot user: id=", me.ID, " username=", me.Username)
 					} else {
 						c.Log.Warn("auth.User is not *tg.User or nil pointer: ", fmt.Sprintf("%T", auth.User))
 					}
@@ -1843,22 +2296,22 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 		}
 	}
 
-	if err := c.restoreAuthorizedUser(st); err != nil {
+	if err := c.restoreAuthorizedUser(authCtx, st, authGeneration); err != nil {
 		c.Log.Debugf("user restore skipped: %v", err)
 	}
 
-	needLogin := !c.isAuthorized() && c.config().PhoneNumber != "" && c.config().BotToken == "" && c.config().SessionString == "" && !c.migratingDC.Load()
+	needLogin := !c.isAuthorized() && c.config().PhoneNumber != "" && c.config().BotToken == "" &&
+		(c.config().SessionString == "" || c.sessionStringInvalidated.Load()) && !c.migratingDC.Load()
 	if needLogin {
 		c.Log.Info("session not authorized; starting phone login flow")
-		if err := c.loginUser(context.Background()); err != nil {
-			c.cleanupSessions()
+		if err := c.loginUser(authCtx); err != nil {
 			return fmt.Errorf("phone login: %w", err)
 		}
 	}
 	return nil
 }
 
-func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
+func (c *Client) restoreAuthorizedUser(parent context.Context, st storage.Storage, authGeneration uint64) error {
 	c.mu.RLock()
 	meSet := c.me != nil
 	c.mu.RUnlock()
@@ -1875,9 +2328,9 @@ func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
 			LastName:  func() string { v, _ := st.LastName(); return v }(),
 			Username:  func() string { v, _ := st.Username(); return v }(),
 		}
-		c.mu.Lock()
-		c.me = me
-		c.mu.Unlock()
+		if err := c.commitAuthorizedUser(me, authGeneration); err != nil {
+			return err
+		}
 		c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
 		return nil
 	}
@@ -1894,7 +2347,7 @@ func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
 	if timeout <= 0 {
 		timeout = 60 * time.Second
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	me, err := c.GetMe(ctx)
 	if err != nil {
@@ -1908,38 +2361,38 @@ func (c *Client) restoreAuthorizedUser(st storage.Storage) error {
 		}
 		return err
 	}
-	c.saveMeToStorage(me)
 	c.Log.Debug("user restored from auth key: id=", me.ID, " username=", me.Username)
 	return nil
 }
 
 // postConnect runs initialization steps after the session is connected:
 // RSA key watchdog, outbound batching, update state fetch, and plugin start.
-func (c *Client) postConnect() {
-	// Start the RSA key rotation watchdog if configured.
-	if c.keyWatchdog != nil {
-		ctx, cancel := context.WithCancel(context.Background())
-		c.keyWatchdogCancel = cancel
-		c.keyWatchdog.Start(ctx)
-		c.Log.Debug("rsa key rotation watchdog started")
+func (c *Client) postConnect(sess *session.Session) error {
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	if !c.ownsMainSession(sess) {
+		if err := c.state.requireConnected(); err != nil {
+			return err
+		}
+		return ErrNotConnected
+	}
+	if err := c.startKeyWatchdog(sess); err != nil {
+		return err
 	}
 
-	// Enable outbound container packing if configured.
-	if c.config().OutboundBatchEnabled {
-		c.mu.RLock()
-		sess := c.session
-		c.mu.RUnlock()
-		if sess != nil {
-			sess.EnableOutboundBatching(
-				c.config().OutboundMaxContainerBytes,
-				c.config().OutboundCoalesceWindow,
-			)
-			c.Log.Debug("outbound container packing enabled")
-		}
-	}
 	// Notify session-loaded hooks before any update processing.
 	c.fireSessionLoaded()
-	c.refreshDCOptions(context.Background())
+	refreshErr := c.refreshDCOptions(context.Background())
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	if errors.Is(refreshErr, errTemporaryAuthKeyRejected) {
+		return refreshErr
+	}
+	if err := c.state.requireConnected(); err != nil {
+		return err
+	}
 
 	if !c.config().NoUpdates {
 		c.Log.Debug("fetching updates state")
@@ -1957,10 +2410,27 @@ func (c *Client) postConnect() {
 		} else {
 			c.Log.Info("updates state fetched")
 		}
+		if err := c.authLossError(); err != nil {
+			return err
+		}
+		if err := c.state.requireConnected(); err != nil {
+			return err
+		}
 	}
 
 	if err := c.startPlugins(context.Background()); err != nil {
 		c.Log.Errorf("plugin start: %v", err)
+	}
+	if err := c.authLossError(); err != nil {
+		c.stopPlugins(context.Background())
+		return err
+	}
+	if !c.ownsMainSession(sess) {
+		c.stopPlugins(context.Background())
+		if err := c.state.requireConnected(); err != nil {
+			return err
+		}
+		return ErrNotConnected
 	}
 
 	// Update recovery is handled by the updatesrecovery plugin (opt-in via
@@ -1968,27 +2438,60 @@ func (c *Client) postConnect() {
 
 	// Notify connected hooks after all post-connect setup is done.
 	c.fireConnected()
+	if err := c.authLossError(); err != nil {
+		return err
+	}
+	return c.state.requireConnected()
 }
 
-func (c *Client) refreshDCOptions(ctx context.Context) {
+func (c *Client) startKeyWatchdog(sess *session.Session) error {
+	c.postConnectMu.Lock()
+	defer c.postConnectMu.Unlock()
+	if !c.ownsMainSession(sess) {
+		if err := c.state.requireConnected(); err != nil {
+			return err
+		}
+		return ErrNotConnected
+	}
+	if c.keyWatchdog == nil || c.keyWatchdogCancel != nil {
+		return nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	c.keyWatchdogCancel = cancel
+	c.keyWatchdog.Start(ctx)
+	c.Log.Debug("rsa key rotation watchdog started")
+	return nil
+}
+
+func (c *Client) refreshDCOptions(ctx context.Context) error {
+	return c.refreshDCOptionsRPC(ctx, c.Raw())
+}
+
+func (c *Client) refreshDCOptionsRPC(ctx context.Context, rpc *tg.RPCClient) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	cfg, err := c.Raw().HelpGetConfig(ctx)
+	cfg, err := rpc.HelpGetConfig(ctx)
 	if err != nil {
 		c.connMetrics.recordDCConfigRefresh(err)
 		c.Log.Warnf("help.getConfig: %v (continuing with existing DC options)", err)
-		return
+		return err
 	}
 
-	candidates := dcOptionsFromConfig(cfg, c.initialDCID(c.storage), c.config().TestMode)
+	dcID, err := c.initialDCID(c.storage)
+	if err != nil {
+		c.connMetrics.recordDCConfigRefresh(err)
+		return err
+	}
+	candidates := dcOptionsFromConfig(cfg, dcID, c.config().TestMode)
 	if len(candidates) == 0 {
 		c.connMetrics.recordDCConfigRefresh(nil)
-		return
+		return nil
 	}
 	c.dcOptionPool.UpdateOptions(candidates)
 	c.connMetrics.recordDCConfigRefresh(nil)
 	c.Log.Debugf("updated DC option pool from help.getConfig: %d endpoint(s)", len(candidates))
+	return nil
 }
 
 func dcOptionsFromConfig(cfg *tg.Config, dcID int, testMode bool) []session.DataCenter {
@@ -2037,52 +2540,139 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if len(closeStorage) > 0 {
 		shouldCloseStorage = closeStorage[0]
 	}
-
 	if c.reconnectMgr != nil {
 		c.reconnectMgr.Stop()
 	}
-
-	c.sessionsMu.Lock()
-	for key, sess := range c.sessions {
-		if sess != nil {
-			sess.Stop()
-		}
-		delete(c.sessions, key)
+	c.autoConnectMu.Lock()
+	sourceAuthGeneration := c.authGeneration.Load()
+	c.authLossMu.Lock()
+	loss := c.authLoss
+	c.authLossMu.Unlock()
+	disconnectErr := error(nil)
+	if loss != nil {
+		c.finishMainAuthInvalidation(loss)
+		disconnectErr = c.authLossResult(loss)
 	}
+	// Stop every session while storage remains available. Then exclude RPC
+	// error classification, recheck terminal auth loss, and only then close the
+	// backend. A late AUTH_KEY_* result can never lose the storage handle before
+	// its rejected key is durably cleared.
+	stoppedSession := c.cleanupSessionsLocked(false)
+	c.authDecisionMu.Lock()
+	if loss == nil {
+		_, _ = c.latchSessionShutdownAuthLoss(stoppedSession, sourceAuthGeneration)
+	}
+	c.authLossMu.Lock()
+	loss = c.authLoss
+	c.authLossMu.Unlock()
+	if loss != nil {
+		c.finishMainAuthInvalidation(loss)
+		disconnectErr = c.authLossResult(loss)
+	}
+	if shouldCloseStorage {
+		c.closeStorageLocked()
+	}
+	c.authDecisionMu.Unlock()
+	c.autoConnectMu.Unlock()
+	c.connMetrics.recordDisconnected(disconnectErr)
+	// A session-exit watcher may have raced the first Stop before teardown was
+	// advertised. Stop again after every watcher has observed the detached state.
+	if c.reconnectMgr != nil {
+		c.reconnectMgr.Stop()
+	}
+}
+
+// cleanupSessionsLocked tears down client-owned resources. The caller must
+// hold autoConnectMu and must stop reconnectMgr outside that mutex.
+func (c *Client) cleanupSessionsLocked(closeStorage ...bool) *session.Session {
+	return c.cleanupSessionsLockedMode(true, closeStorage...)
+}
+
+// abortSessionsLocked detaches and cancels sessions without waiting for their
+// update handlers. Terminal auth cleanup can be initiated by one of those
+// handlers, so waiting here would deadlock before the rejected key is cleared.
+func (c *Client) abortSessionsLocked() {
+	c.cleanupSessionsLockedMode(false, false)
+}
+
+func (c *Client) detachAuxSessions(wait bool) {
+	c.sessionsMu.Lock()
+	sessions := c.sessions
+	c.sessions = make(map[sessionKey]*session.Session)
+	c.sessionsGeneration++
 	c.sessionsMu.Unlock()
 
-	if c.dcSessions != nil {
-		c.dcSessions.cleanup()
+	for _, sess := range sessions {
+		if sess == nil {
+			continue
+		}
+		if wait {
+			sess.Stop()
+		} else {
+			sess.RequestStop()
+		}
+	}
+}
+
+func (c *Client) cleanupSessionsLockedMode(wait bool, closeStorage ...bool) *session.Session {
+	shouldCloseStorage := true
+	if len(closeStorage) > 0 {
+		shouldCloseStorage = closeStorage[0]
 	}
 
-	c.stopUploadSession()
+	// Advertise teardown before stopping the session so its exit watcher cannot
+	// restart the reconnect manager during intentional cleanup.
+	c.state.setConnected(false)
+
+	c.detachAuxSessions(wait)
+
+	if c.dcSessions != nil {
+		c.dcSessions.cleanup(wait)
+	}
 
 	c.mu.Lock()
 	sess := c.session
 	c.session = nil
 	c.me = nil
 	c.mu.Unlock()
+	readyErr := error(ErrNotConnected)
+	if authErr := c.authLossError(); authErr != nil {
+		readyErr = authErr
+	} else if c.state.IsClosed() {
+		readyErr = ErrClientClosed
+	}
+	c.finishCurrentMainReadiness(readyErr)
 
 	c.apiInit.Store(false)
 
 	if sess != nil {
 		sess.CloseOutboundBatching()
-		sess.Stop()
+		if wait {
+			sess.Stop()
+		} else {
+			sess.RequestStop()
+		}
 	}
-	c.sessionWg.Wait()
-	c.connMetrics.recordDisconnected(nil)
-	if shouldCloseStorage && c.connPool != nil {
+	if wait {
+		c.sessionWg.Wait()
+	}
+	if shouldCloseStorage {
+		c.closeStorageLocked()
+	}
+	return sess
+}
+
+func (c *Client) closeStorageLocked() {
+	if c.connPool != nil {
 		c.connPool.Clear()
 	}
-
-	if shouldCloseStorage && c.storage != nil {
-		c.storage.Close()
-		c.mu.Lock()
-		c.storage = nil
-		c.mu.Unlock()
+	c.mu.Lock()
+	st := c.storage
+	c.storage = nil
+	c.mu.Unlock()
+	if st != nil {
+		st.Close()
 	}
-
-	c.state.setConnected(false)
 }
 
 // Disconnect closes all sessions (main and exported), releases storage, and marks the client
@@ -2090,7 +2680,8 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 // Returns ErrNotConnected if the client was never connected.
 func (c *Client) Disconnect() error {
 	if err := c.state.requireConnected(); err != nil {
-		if !errors.Is(err, ErrNotConnected) || !c.hasActiveResources() {
+		reconnecting := c.reconnectMgr != nil && c.reconnectMgr.IsRunning()
+		if !c.hasActiveResources() && !reconnecting {
 			return err
 		}
 	}
@@ -2130,19 +2721,25 @@ func (c *Client) hasActiveResources() bool {
 // After Close, the client cannot be reconnected; create a new Client instead.
 // It is safe to call Close on an already-closed client.
 func (c *Client) Close() {
+	// Close is terminal. Publish it before teardown so concurrent Connect and
+	// session-exit watchers cannot start or publish another session.
+	c.state.SetClosed()
 	c.stopPlugins(context.Background())
 	c.cleanupSessions()
+	c.state.SetClosed()
 	if c.connPool != nil {
 		c.connPool.Close()
 	}
 	// Stop the RSA key rotation watchdog (no goroutine leak — Principle V).
+	c.postConnectMu.Lock()
 	if c.keyWatchdogCancel != nil {
 		c.keyWatchdogCancel()
+		c.keyWatchdogCancel = nil
 	}
 	if c.keyWatchdog != nil {
 		c.keyWatchdog.Wait()
 	}
-	c.state.SetClosed()
+	c.postConnectMu.Unlock()
 	c.mu.Lock()
 	select {
 	case <-c.connChanged:
@@ -2195,7 +2792,7 @@ func (c *Client) migrateAndRetry(ctx context.Context, targetDC int, query tg.TLO
 		if c.homeDC() == targetDC && c.IsConnected() {
 			return nil
 		}
-		return c.switchPrimaryDC(ctx, targetDC, st, c.connectTransport)
+		return c.switchPrimaryDC(ctx, targetDC, st, nil)
 	}); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
@@ -2258,7 +2855,7 @@ func (c *Client) migrateAndRetryRaw(ctx context.Context, targetDC int, query tg.
 		if c.homeDC() == targetDC && c.IsConnected() {
 			return nil
 		}
-		return c.switchPrimaryDC(ctx, targetDC, st, c.connectTransport)
+		return c.switchPrimaryDC(ctx, targetDC, st, nil)
 	}); err != nil {
 		return nil, &MigrationError{TargetDC: targetDC, Err: err}
 	}
@@ -2295,8 +2892,8 @@ func (c *Client) admitRPC(ctx context.Context, query tg.TLObject) (func(), error
 //
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		if !c.retryRPCOnReconnect(ctx) || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		// Wait for reconnection, then proceed.
@@ -2318,15 +2915,20 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result tg.TLObject
-	err = c.retrySessionErr(ctx, func() error {
-		c.mu.RLock()
-		sess := c.session
-		c.mu.RUnlock()
+	err = c.retrySessionErr(ctx, func(sess *session.Session) error {
 		if sess == nil {
 			return ErrNotConnected
 		}
 		var invokeErr error
 		result, invokeErr = sess.Invoke(ctx, query, retries, timeout)
+		if invokeErr == nil {
+			if rpcErr, ok := result.(*tg.RPCError); ok {
+				parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+				if isAuthLostError(parsed) {
+					return parsed
+				}
+			}
+		}
 		return invokeErr
 	}, query)
 	if err != nil {
@@ -2348,8 +2950,8 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject, retries int, tim
 //
 // Returns ErrNotConnected if the client is not connected.
 func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, timeout time.Duration) (tg.TLObject, error) {
-	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		if !c.retryRPCOnReconnect(ctx) || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
@@ -2360,10 +2962,7 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result tg.TLObject
-	err := c.retrySessionErr(ctx, func() error {
-		c.mu.RLock()
-		sess := c.session
-		c.mu.RUnlock()
+	err := c.retrySessionErr(ctx, func(sess *session.Session) error {
 		if sess == nil {
 			return ErrNotConnected
 		}
@@ -2385,8 +2984,8 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject, retries int, 
 // into a Go struct and are not gzip-unpacked; if the server returned
 // gzip_packed, the bytes start with the gzip_packed constructor.
 func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]byte, error) {
-	if err := c.ensureConnected(); err != nil {
-		if !c.config().RetryRPCOnReconnect || c.state.State() != ConnStateReconnecting {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		if !c.retryRPCOnReconnect(ctx) || c.state.State() != ConnStateReconnecting {
 			return nil, err
 		}
 		if waitErr := c.waitForConnect(ctx); waitErr != nil {
@@ -2419,10 +3018,7 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 	query, initializesAPI := prepareAPIQuery(c.config(), c.apiInit.Load(), query)
 
 	var result []byte
-	err = c.retrySessionErr(ctx, func() error {
-		c.mu.RLock()
-		sess := c.session
-		c.mu.RUnlock()
+	err = c.retrySessionErr(ctx, func(sess *session.Session) error {
 		if sess == nil {
 			return ErrNotConnected
 		}
@@ -2448,16 +3044,15 @@ func (c *Client) InvokeWithRawResult(ctx context.Context, query tg.TLObject) ([]
 // request. Returns an error if the client is not connected or the server
 // fails to respond.
 func (c *Client) DropRPC(ctx context.Context, msgID int64) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
-	c.mu.RLock()
-	sess := c.session
-	c.mu.RUnlock()
-	if sess == nil {
-		return ErrNotConnected
-	}
-	return sess.DropRPC(ctx, msgID)
+	return c.retrySessionErr(ctx, func(sess *session.Session) error {
+		if sess == nil {
+			return ErrNotConnected
+		}
+		return sess.DropRPC(ctx, msgID)
+	})
 }
 
 // HandleUpdates processes an incoming Telegram UpdatesClass by flattening it
@@ -2851,7 +3446,7 @@ func userClassesFromPeerMap(pm *types.PeerMap) map[int64]tg.UserClass {
 //
 //	fmt.Println(peer)
 func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 	var (
@@ -3172,32 +3767,31 @@ func messageDate(messages []tg.MessageClass, id int32) int32 {
 	return 0
 }
 
-// GetSession returns or creates a session for the specified data center. If isMedia or isCDN
-// is false and the requested dcID matches the main session's DC, the main session is returned.
+// GetSession returns or creates a session for the specified data center. When
+// dcID matches the main session's DC, ordinary and media requests use the main
+// session; CDN requests remain isolated because they require CDN auth handling.
 //
-// Sessions are cached by (dcID, isMedia) key; subsequent calls with the same parameters
+// Sessions are cached by (dcID, isMedia, isCDN) key; subsequent calls with the same parameters
 // return the cached session.
 //
 // Returns ErrNotConnected if the client is not connected, or an error if the dcID is unknown
 // or session creation fails.
 func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN bool) (*session.Session, error) {
-	if !isMedia && !isCDN {
-		c.mu.RLock()
-		st := c.storage
-		mainSess := c.session
-		c.mu.RUnlock()
-
-		if st != nil {
-			storedDC, err := st.DCID()
-			if err == nil && storedDC == dcID && mainSess != nil {
-				return mainSess, nil
-			}
+	c.mu.RLock()
+	mainStorage := c.storage
+	mainSess := c.session
+	c.mu.RUnlock()
+	if mainStorage != nil && !isCDN {
+		storedDC, err := mainStorage.DCID()
+		if err == nil && storedDC == dcID && mainSess != nil {
+			return mainSess, nil
 		}
 	}
 
-	key := sessionKey{dcID: dcID, isMedia: isMedia}
+	key := sessionKey{dcID: dcID, isMedia: isMedia, isCDN: isCDN}
 
 	c.sessionsMu.Lock()
+	generation := c.sessionsGeneration
 	if sess, ok := c.sessions[key]; ok {
 		c.sessionsMu.Unlock()
 		return sess, nil
@@ -3207,7 +3801,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	c.mu.RLock()
 	testFactory := c.testSessionF
 	c.mu.RUnlock()
-	if err := c.ensureConnected(); err != nil && testFactory == nil {
+	if err := c.ensureConnectedContext(ctx); err != nil && testFactory == nil {
 		return nil, err
 	}
 
@@ -3228,12 +3822,9 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 			TestMode: c.config().TestMode,
 			IPv6:     c.config().IPv6,
 		}
-		c.mu.RLock()
-		st := c.storage
-		c.mu.RUnlock()
-		if st == nil {
-			st = NewMemoryStorage()
-		}
+		// Never load the main DC's permanent key into an auxiliary session.
+		// Cross-DC authorization must be established independently.
+		st := NewMemoryStorage()
 		sess, err = session.NewSession(dc, st, c.config().Device.DeviceModel, c.config().Device.AppVersion, c.config().Device.SystemLangCode, c.config().Device.LangCode)
 	}
 	if err != nil {
@@ -3242,6 +3833,11 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 	configureSessionDispatch(sess, c)
 
 	c.sessionsMu.Lock()
+	if c.sessionsGeneration != generation {
+		c.sessionsMu.Unlock()
+		sess.Stop()
+		return nil, ErrNotConnected
+	}
 	if existing, ok := c.sessions[key]; ok {
 		c.sessionsMu.Unlock()
 		sess.Stop()
@@ -3284,6 +3880,11 @@ func (c *Client) SetMe(user *types.User) {
 	c.mu.Lock()
 	c.me = user
 	c.mu.Unlock()
+	if user != nil {
+		// Successful authorization makes subsequent AUTH_KEY_UNREGISTERED a
+		// terminal loss even if persisting UserID later fails.
+		c.mainAuthKeyOrigin.Store(authKeyOriginLoaded)
+	}
 }
 
 func (c *Client) saveMeToStorage(user *types.User) {
@@ -3318,12 +3919,17 @@ func (c *Client) saveMeToStorage(user *types.User) {
 // no-op for storage backends that do not implement a Sync method (e.g.
 // in-memory storage).
 func (c *Client) syncStorage(st storage.Storage) {
+	if err := syncStorage(st); err != nil {
+		c.Log.Warnf("failed to sync storage: %v", err)
+	}
+}
+
+func syncStorage(st storage.Storage) error {
 	type syncer interface{ Sync() error }
 	if s, ok := st.(syncer); ok {
-		if err := s.Sync(); err != nil {
-			c.Log.Warnf("failed to sync storage: %v", err)
-		}
+		return s.Sync()
 	}
+	return nil
 }
 
 // ServerTime returns the current estimated server time adjusted by the configured timezone offset.

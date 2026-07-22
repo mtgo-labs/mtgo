@@ -70,9 +70,10 @@ func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, 
 // Returns the authenticated types.User, or an error if the client is not
 // connected or the server response is unexpected.
 func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx, authAttempt := c.withAuthAttempt(ctx)
 
 	c.Log.Debug("GetMe")
 	c.mu.RLock()
@@ -95,8 +96,9 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 	}
 	if len(uf.Users) > 0 {
 		user := types.ParseUser(uf.Users[0])
-		c.SetMe(user)
-		c.saveMeToStorage(user)
+		if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+			return nil, err
+		}
 		return user, nil
 	}
 	if uf.FullUser != nil {
@@ -105,7 +107,9 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 				ID:    full.ID,
 				IsBot: true,
 			}
-			c.SetMe(user)
+			if err := c.commitAuthorizedUser(user, authAttempt.generation.Load()); err != nil {
+				return nil, err
+			}
 			return user, nil
 		}
 	}

@@ -12,7 +12,7 @@ import (
 // The photo parameter must be a valid InputFileClass (e.g. an uploaded file).
 // Returns an error if the client is not connected or the upload fails.
 func (c *Client) SetProfilePhoto(ctx context.Context, photo tg.InputFileClass) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -34,7 +34,7 @@ func (c *Client) SetProfilePhoto(ctx context.Context, photo tg.InputFileClass) e
 // with Telegram's naming rules. Returns an error if the client is not
 // connected or the update request fails.
 func (c *Client) SetUsername(ctx context.Context, username string) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (c *Client) SetUsername(ctx context.Context, username string) error {
 // Telegram's length limit. Returns an error if the client is not connected
 // or the update request fails.
 func (c *Client) SetBio(ctx context.Context, bio string) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -75,7 +75,7 @@ func (c *Client) SetBio(ctx context.Context, bio string) error {
 // DeleteProfilePhoto deletes a profile photo by its ID. Returns an error if
 // the client is not connected or the deletion request fails.
 func (c *Client) DeleteProfilePhoto(ctx context.Context, photoID int64) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -129,7 +129,7 @@ type GetProfilePhotosOption struct {
 //	}
 //	fmt.Printf("User has %d profile photos\n", len(photos))
 func (c *Client) GetProfilePhotos(ctx context.Context, userID int64, opts ...*GetProfilePhotosOption) ([]*types.ChatPhoto, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 

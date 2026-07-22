@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 type dcSessionStats struct {
@@ -87,6 +89,19 @@ func isDCConnectionFailure(err error) bool {
 	if err == nil {
 		return false
 	}
+	if transport.IsTransportError(err, transport.ErrCodeAuthKeyNotFound) || tgerr.Is(
+		err,
+		tgerr.ErrAuthKeyUnregistered,
+		tgerr.ErrAuthKeyInvalid,
+		tgerr.ErrAuthKeyDuplicated,
+		tgerr.ErrAuthKeyPermEmpty,
+		tgerr.ErrTempAuthKeyEmpty,
+		tgerr.ErrTempAuthKeyAlreadyBound,
+		tgerr.ErrSessionRevoked,
+		tgerr.ErrSessionExpired,
+	) {
+		return true
+	}
 	switch session.ClassifyError(err) {
 	case session.ClassTransient, session.ClassPermanent, session.ClassClosed:
 		return true
@@ -121,15 +136,6 @@ func (p *dcSessionPool) rpcClients(limit int) []*tg.RPCClient {
 		rpcs[i] = entry.rpc
 	}
 	return rpcs
-}
-
-func (p *dcSessionPool) replace(index int, entry *dcSessionEntry) *dcSessionEntry {
-	p.mu.Lock()
-	index %= len(p.entries)
-	old := p.entries[index]
-	p.entries[index] = entry
-	p.mu.Unlock()
-	return old
 }
 
 func (p *dcSessionPool) entry(index int) *dcSessionEntry {
@@ -181,6 +187,27 @@ func (p *dcSessionPool) selectEntry() (*dcSessionEntry, int) {
 	return best, bestIndex
 }
 
+func (p *dcSessionPool) repairCandidate(exclude *dcSessionEntry) (*dcSessionEntry, int) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if len(p.entries) == 0 {
+		return nil, -1
+	}
+
+	start := int(p.next.Load() % uint64(len(p.entries)))
+	for offset := range len(p.entries) {
+		index := (start + offset) % len(p.entries)
+		entry := p.entries[index]
+		if entry == nil || entry == exclude {
+			continue
+		}
+		if entry.retired.Load() || entry.sess == nil || !entry.sess.IsConnected() {
+			return entry, index
+		}
+	}
+	return nil, -1
+}
+
 func betterDCSession(candidate, current *dcSessionEntry) bool {
 	if current == nil {
 		return true
@@ -205,7 +232,7 @@ type dcPoolInvoker struct {
 }
 
 func (d *dcPoolInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
-	entry, index := d.pool.selectEntry()
+	entry, index := d.selectOrRepairEntry(ctx)
 	if entry == nil {
 		return nil, ErrNotConnected
 	}
@@ -215,7 +242,7 @@ func (d *dcPoolInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode
 }
 
 func (d *dcPoolInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
-	entry, index := d.pool.selectEntry()
+	entry, index := d.selectOrRepairEntry(ctx)
 	if entry == nil {
 		return nil, ErrNotConnected
 	}
@@ -224,12 +251,60 @@ func (d *dcPoolInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]
 	return result, err
 }
 
+func (d *dcPoolInvoker) selectOrRepairEntry(ctx context.Context) (*dcSessionEntry, int) {
+	entry, index := d.pool.selectEntry()
+	if entry != nil {
+		return entry, index
+	}
+
+	candidate, candidateIndex := d.pool.repairCandidate(nil)
+	if candidate == nil {
+		return nil, -1
+	}
+	d.repairEntry(ctx, candidate, candidateIndex)
+	return d.pool.selectEntry()
+}
+
 func (d *dcPoolInvoker) repair(ctx context.Context, entry *dcSessionEntry, index int, err error) {
-	if d.client == nil || !isDCConnectionFailure(err) {
+	if d.client == nil {
 		return
 	}
-	_, repairErr := d.client.replaceDCRPCPoolEntryIfCurrent(ctx, d.dcID, d.pool.len(), index, entry)
+	if isDCConnectionFailure(err) {
+		d.repairEntryAsync(ctx, entry, index)
+		return
+	}
+
+	candidate, candidateIndex := d.pool.repairCandidate(entry)
+	if candidate != nil {
+		d.repairEntryAsync(ctx, candidate, candidateIndex)
+	}
+}
+
+func (d *dcPoolInvoker) repairEntry(ctx context.Context, entry *dcSessionEntry, index int) {
+	if d.client == nil || entry == nil || index < 0 {
+		return
+	}
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	timeout := d.client.config().Timeout
+	if timeout <= 0 {
+		timeout = 60 * time.Second
+	}
+	repairCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	_, repairErr := d.client.replaceDCRPCPoolEntryIfCurrent(repairCtx, d.dcID, d.pool.len(), index, entry)
 	if repairErr != nil && d.client.Log != nil {
 		d.client.Log.Warnf("DC %d pool repair failed: %v", d.dcID, repairErr)
 	}
+}
+
+func (d *dcPoolInvoker) repairEntryAsync(ctx context.Context, entry *dcSessionEntry, index int) {
+	base := context.Background()
+	if ctx != nil {
+		base = context.WithoutCancel(ctx)
+	}
+	go d.repairEntry(base, entry, index)
 }

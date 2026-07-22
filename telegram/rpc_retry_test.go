@@ -76,7 +76,7 @@ func TestRetrySessionErrDisabled(t *testing.T) {
 	c.state.SetConnected()
 
 	calls := 0
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		calls++
 		return session.ErrSessionClosed
 	})
@@ -109,7 +109,7 @@ func TestRetrySessionErrRetriesAndSucceeds(t *testing.T) {
 		c.signalReconnect()
 	}()
 
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		n := calls.Add(1)
 		if n == 1 {
 			c.state.SetReconnecting(errors.New("session died"))
@@ -137,7 +137,7 @@ func TestRetrySessionErrNonSessionError(t *testing.T) {
 
 	otherErr := errors.New("some rpc error")
 	calls := 0
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		calls++
 		return otherErr
 	})
@@ -175,7 +175,7 @@ func TestRetrySessionErrExhaustsRetries(t *testing.T) {
 		}
 	}()
 
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		n := calls.Add(1)
 		// Every call fails with session-death error.
 		_ = n
@@ -210,7 +210,7 @@ func TestRetrySessionErrContextCancelled(t *testing.T) {
 		// Don't reconnect — let the context expire.
 	}()
 
-	err := c.retrySessionErr(ctx, func() error {
+	err := c.retrySessionErr(ctx, func(*session.Session) error {
 		n := calls.Add(1)
 		if n == 1 {
 			c.state.SetReconnecting(errors.New("session died"))
@@ -234,7 +234,7 @@ func TestRetrySessionErrRefusesUncertainMutation(t *testing.T) {
 	c.state.SetConnected()
 
 	calls := 0
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		calls++
 		return &session.DeliveryError{State: session.DeliveryReceived, Err: session.ErrSessionClosed}
 	}, &tg.MessagesSendMessageRequest{})
@@ -256,7 +256,7 @@ func TestRetrySessionErrReplaysSafeRead(t *testing.T) {
 	c.state.SetConnected()
 
 	calls := 0
-	err := c.retrySessionErr(context.Background(), func() error {
+	err := c.retrySessionErr(context.Background(), func(*session.Session) error {
 		calls++
 		if calls == 1 {
 			return &session.DeliveryError{State: session.DeliveryUnknown, Err: session.ErrSessionClosed}
@@ -286,6 +286,34 @@ func TestReplaySafeUnwrapsAndSupportsOverride(t *testing.T) {
 	})
 	if !c.replaySafe(mutation) {
 		t.Fatal("RPCReplaySafe override was ignored")
+	}
+}
+
+func TestReplaySafeCallbackMayCloseClientWithoutDeadlock(t *testing.T) {
+	var c *Client
+	cfg := &Config{InMemory: true, RetryRPCOnReconnect: true}
+	cfg.RPCReplaySafe = func(tg.TLObject) bool {
+		c.Close()
+		return false
+	}
+	c, _ = NewClient(1, "hash", cfg)
+	c.state.SetConnecting(2)
+	c.state.SetConnected()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- c.retrySessionErr(context.Background(), func(*session.Session) error {
+			return &session.DeliveryError{State: session.DeliveryReceived, Err: session.ErrSessionClosed}
+		}, &tg.MessagesSendMessageRequest{})
+	}()
+	select {
+	case err := <-done:
+		var deliveryErr *RPCDeliveryError
+		if !errors.As(err, &deliveryErr) {
+			t.Fatalf("error = %v, want RPCDeliveryError", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("RPCReplaySafe callback deadlocked in Close")
 	}
 }
 

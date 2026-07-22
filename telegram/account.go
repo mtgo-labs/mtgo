@@ -22,7 +22,7 @@ import (
 //	    log.Fatal(err)
 //	}
 func (c *Client) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, rules []tg.InputPrivacyRuleClass) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -53,7 +53,7 @@ func (c *Client) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, ru
 //	    fmt.Printf("Rule: %T\n", r)
 //	}
 func (c *Client) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([]tg.PrivacyRuleClass, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +82,7 @@ func (c *Client) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([
 //	    log.Fatal(err)
 //	}
 func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.GlobalPrivacySettings) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.Glob
 //	}
 //	fmt.Printf("Archive and mute: %v\n", settings.ArchiveAndMuteNewNoncontactPeers)
 func (c *Client) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivacySettings, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func (c *Client) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivac
 //	    log.Fatal(err)
 //	}
 func (c *Client) SetAccountTTL(ctx context.Context, days int32) error {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
 
@@ -167,7 +167,7 @@ func (c *Client) SetAccountTTL(ctx context.Context, days int32) error {
 //	}
 //	fmt.Printf("Account TTL: %d days\n", days)
 func (c *Client) GetAccountTTL(ctx context.Context) (int32, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return 0, err
 	}
 

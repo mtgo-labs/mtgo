@@ -6,12 +6,36 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
+
+type authAttemptContextKey struct{}
+
+// authAttemptGeneration follows transparent RPC retries/migrations and records
+// the permanent-key generation that produced the final successful result.
+type authAttemptGeneration struct {
+	generation atomic.Uint64
+}
+
+func (c *Client) withAuthAttempt(ctx context.Context) (context.Context, *authAttemptGeneration) {
+	attempt := &authAttemptGeneration{}
+	attempt.generation.Store(c.authGeneration.Load())
+	return context.WithValue(ctx, authAttemptContextKey{}, attempt), attempt
+}
+
+func recordAuthAttemptGeneration(ctx context.Context, generation uint64) {
+	if ctx == nil {
+		return
+	}
+	if attempt, ok := ctx.Value(authAttemptContextKey{}).(*authAttemptGeneration); ok && attempt != nil {
+		attempt.generation.Store(generation)
+	}
+}
 
 type clientInvoker struct {
 	client *Client
@@ -249,33 +273,46 @@ func isSessionDeadErr(err error) bool {
 // Uses a channel-based signal (connChanged) to wake immediately on reconnect
 // instead of polling, matching gotd/td's pattern.
 func (c *Client) waitForConnect(ctx context.Context) error {
-	if c.state.IsConnected() {
-		return nil
-	}
-	if c.state.IsClosed() {
-		return ErrClientClosed
-	}
-
-	c.mu.RLock()
-	ch := c.connChanged
-	c.mu.RUnlock()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-ch:
-		// connChanged was closed — connection transition happened.
-		// Check whether we became connected or closed.
-		switch {
-		case c.state.IsConnected():
-			return nil
-		case c.state.IsClosed():
-			return ErrClientClosed
-		default:
-			// State is neither connected nor closed after signal.
-			// The reconnect may have failed; the caller will see the
-			// error from the session and retry via retrySessionErr.
+	for {
+		if err := c.authLossError(); err != nil {
+			return err
+		}
+		if c.explicitLogout.Load() {
 			return ErrNotConnected
+		}
+		if c.state.IsConnected() {
+			return c.waitMainReadiness(ctx)
+		}
+		if c.state.IsClosed() {
+			return ErrClientClosed
+		}
+
+		c.mu.RLock()
+		ch := c.connChanged
+		c.mu.RUnlock()
+
+		// A transition can close and replace connChanged between the first
+		// state check and this snapshot. Recheck before blocking so that a
+		// connected or terminal client never waits on the replacement channel.
+		if err := c.authLossError(); err != nil {
+			return err
+		}
+		if c.explicitLogout.Load() {
+			return ErrNotConnected
+		}
+		if c.state.IsConnected() {
+			return c.waitMainReadiness(ctx)
+		}
+		if c.state.IsClosed() {
+			return ErrClientClosed
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ch:
+			// Re-evaluate the terminal/connected state and subscribe to the
+			// current generation if the signal represented another transition.
 		}
 	}
 }
@@ -283,11 +320,58 @@ func (c *Client) waitForConnect(ctx context.Context) error {
 // retrySessionErr retries fn when it returns a session-death error, waiting for
 // reconnection between attempts. When RetryRPCOnReconnect is disabled, fn is
 // called exactly once.
-func (c *Client) retrySessionErr(ctx context.Context, fn func() error, query ...tg.TLObject) error {
-	if !c.config().RetryRPCOnReconnect {
+func (c *Client) retrySessionErr(ctx context.Context, fn func(*session.Session) error, query ...tg.TLObject) error {
+	runAttempt := func(attempt int) (authLoss *authLossState, firstLoss bool, err error) {
 		started := time.Now()
-		err := fn()
-		c.observeRPC(ctx, firstQuery(query), 1, started, err)
+		var observedErr error
+		var sourceSession *session.Session
+		var sourceAuthGeneration uint64
+		var pfsRejected bool
+		func() {
+			c.authDecisionMu.RLock()
+			defer c.authDecisionMu.RUnlock()
+
+			c.mu.RLock()
+			sess := c.session
+			c.mu.RUnlock()
+			sourceSession = sess
+			sourceAuthGeneration = c.authGeneration.Load()
+			observedErr = fn(sess)
+			err = observedErr
+			if err == nil {
+				recordAuthAttemptGeneration(ctx, sourceAuthGeneration)
+			}
+			if c.activePFSAuthRejection(sess, err) {
+				pfsRejected = true
+				return
+			}
+			if err != nil && c.shouldInvalidateMainAuthFrom(sess, err) {
+				var accepted bool
+				authLoss, firstLoss, accepted = c.latchMainAuthLossFrom(sess, sourceAuthGeneration, err)
+				if accepted {
+					err = c.authLossResult(authLoss)
+				}
+			}
+		}()
+
+		if pfsRejected {
+			err = c.rejectActivePFSKey(sourceSession, err)
+		}
+		// Give terminal cleanup an independent completion path before invoking
+		// application telemetry. A callback may itself call Connect or Start and
+		// wait for this loss to finish.
+		if authLoss != nil {
+			err = c.completeMainAuthInvalidation(authLoss, firstLoss)
+		}
+		// Telemetry is application code and may call Close or Disconnect. It must
+		// run after authDecisionMu is released.
+		c.observeRPC(ctx, firstQuery(query), attempt, started, observedErr)
+		return authLoss, firstLoss, err
+	}
+
+	retryOnReconnect := c.retryRPCOnReconnect(ctx)
+	if !retryOnReconnect {
+		_, _, err := runAttempt(1)
 		return publicDeliveryError(err, firstQuery(query))
 	}
 
@@ -298,15 +382,28 @@ func (c *Client) retrySessionErr(ctx context.Context, fn func() error, query ...
 
 	var lastErr error
 	for attempt := 0; maxRetries < 0 || attempt <= maxRetries; attempt++ {
-		started := time.Now()
-		err := fn()
-		c.observeRPC(ctx, firstQuery(query), attempt+1, started, err)
+		authLoss, _, err := runAttempt(attempt + 1)
 		if err == nil {
 			return nil
+		}
+		if authLoss != nil {
+			return err
+		}
+		if errors.Is(err, errTemporaryAuthKeyRejected) {
+			if !c.config().ReconnectEnabled {
+				return err
+			}
+			lastErr = err
+			if waitErr := c.waitForConnect(ctx); waitErr != nil {
+				return fmt.Errorf("%w (last session error: %v)", waitErr, lastErr)
+			}
+			continue
 		}
 		if !isSessionDeadErr(err) {
 			return err
 		}
+		// RPCReplaySafe is application code and may call Close or Disconnect.
+		// Evaluate it only after authDecisionMu is released.
 		if _, ok := errors.AsType[*session.DeliveryError](err); ok && !c.replaySafe(firstQuery(query)) {
 			return publicDeliveryError(err, firstQuery(query))
 		}

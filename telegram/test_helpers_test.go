@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
@@ -20,6 +21,7 @@ type testServer struct {
 	listener net.Listener
 	authKey  []byte
 	done     chan struct{}
+	rpcError atomic.Pointer[tg.RPCError]
 }
 
 func newTestServer(authKey []byte) (*testServer, error) {
@@ -112,7 +114,11 @@ func (s *testServer) handleConn(conn net.Conn) {
 		} else {
 			// Respond to any non-Ping request (RPC calls, InvokeWithLayer, etc.)
 			// with an RPCError so the client doesn't hang waiting for a response.
-			body = &tg.RPCResult{ReqMsgID: origMsgID, Result: &tg.RPCError{ErrorCode: 500, ErrorMessage: "MOCK_SERVER"}}
+			rpcErr := s.rpcError.Load()
+			if rpcErr == nil {
+				rpcErr = &tg.RPCError{ErrorCode: 500, ErrorMessage: "MOCK_SERVER"}
+			}
+			body = &tg.RPCResult{ReqMsgID: origMsgID, Result: rpcErr}
 		}
 
 		respMsg := &tg.MTProtoMessage{MsgID: respMsgID, SeqNo: respSeqNo, Body: body}

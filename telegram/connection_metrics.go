@@ -10,6 +10,10 @@ import (
 type connectionMetrics struct {
 	observer Telemetry
 
+	observerMu      sync.Mutex
+	observerQueue   []ConnectionObservation
+	observerRunning bool
+
 	attempts          atomic.Int64
 	successes         atomic.Int64
 	failures          atomic.Int64
@@ -79,9 +83,40 @@ func (m *connectionMetrics) observe(kind, endpoint string, started time.Time, er
 	if m == nil || m.observer == nil {
 		return
 	}
-	m.observer.ObserveConnection(context.Background(), ConnectionObservation{
+	// Connection events originate inside lifecycle transitions. Queue them so
+	// user telemetry can reenter Disconnect or Close without taking a lock held
+	// by its own caller. One transient worker preserves event order and exits
+	// when the queue drains.
+	observation := ConnectionObservation{
 		Kind: kind, Endpoint: endpoint, StartedAt: started, EndedAt: time.Now(), Error: err,
-	})
+	}
+	m.observerMu.Lock()
+	m.observerQueue = append(m.observerQueue, observation)
+	if m.observerRunning {
+		m.observerMu.Unlock()
+		return
+	}
+	m.observerRunning = true
+	m.observerMu.Unlock()
+	go m.dispatchObservations()
+}
+
+func (m *connectionMetrics) dispatchObservations() {
+	for {
+		m.observerMu.Lock()
+		if len(m.observerQueue) == 0 {
+			m.observerQueue = nil
+			m.observerRunning = false
+			m.observerMu.Unlock()
+			return
+		}
+		observation := m.observerQueue[0]
+		m.observerQueue[0] = ConnectionObservation{}
+		m.observerQueue = m.observerQueue[1:]
+		m.observerMu.Unlock()
+
+		m.observer.ObserveConnection(context.Background(), observation)
+	}
 }
 
 func (m *connectionMetrics) recordDialStart(endpointCount int) {
@@ -141,15 +176,20 @@ func (m *connectionMetrics) recordDisconnected(reason error) {
 		return
 	}
 	m.mu.Lock()
+	shouldObserve := !m.currentConnectedSince.IsZero()
 	if !m.currentConnectedSince.IsZero() {
 		m.lastConnectionLifetime = time.Since(m.currentConnectedSince)
 		m.currentConnectedSince = time.Time{}
 	}
 	if reason != nil {
-		m.lastReconnectReason = reason.Error()
+		reasonText := reason.Error()
+		shouldObserve = shouldObserve || reasonText != m.lastReconnectReason
+		m.lastReconnectReason = reasonText
 	}
 	m.mu.Unlock()
-	m.observe("disconnected", "", time.Now(), reason)
+	if shouldObserve {
+		m.observe("disconnected", "", time.Now(), reason)
+	}
 }
 
 func (m *connectionMetrics) recordDCConfigRefresh(err error) {

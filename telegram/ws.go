@@ -1,10 +1,5 @@
 package telegram
 
-import (
-	"context"
-	"time"
-)
-
 var (
 	prodWSDomains = map[int]string{
 		1: "pluto.web.telegram.org",
@@ -40,8 +35,4 @@ func wsDCAddress(dcID int, testMode bool, tls bool) string {
 
 func useWebSocket(cfg Config) bool {
 	return cfg.WebSocket
-}
-
-func dialerCtx(timeout time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), timeout)
 }

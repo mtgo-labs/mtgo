@@ -70,8 +70,10 @@ func (c *Client) startPlugins(ctx context.Context) error {
 
 func (c *Client) stopPlugins(ctx context.Context) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-	for name, p := range c.plugins {
+	plugins := make(map[string]Plugin, len(c.plugins))
+	maps.Copy(plugins, c.plugins)
+	c.mu.RUnlock()
+	for name, p := range plugins {
 		if err := p.Stop(ctx); err != nil && c.Log != nil {
 			c.Log.Errorf("plugin %s stop: %v", name, err)
 		}

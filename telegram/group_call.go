@@ -22,7 +22,7 @@ import (
 //
 //	call, err := client.CreateCall(ctx, chatID, true)
 func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.PhoneCallClass, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -63,7 +63,7 @@ func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.P
 //	}
 //	fmt.Println("active call found:", call)
 func (c *Client) GetActiveCall(ctx context.Context, chatID int64) (tg.InputGroupCallClass, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -312,7 +312,7 @@ func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCD
 //	}
 //	fmt.Printf("got chunk: %d bytes\n", len(chunk))
 func (c *Client) NewCallReader(ctx context.Context, chatID int64) (*CallReader, error) {
-	if err := c.ensureConnected(); err != nil {
+	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
