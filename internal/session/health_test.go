@@ -29,14 +29,19 @@ func TestSessionRTTEstimatorAndAdaptiveTimeout(t *testing.T) {
 	if callbackRTT != snapshot.RTT || callbackVariation != snapshot.Variation {
 		t.Fatalf("callback = %v/%v, snapshot = %v/%v", callbackRTT, callbackVariation, snapshot.RTT, snapshot.Variation)
 	}
-	if got := s.adaptivePongTimeout(); got != time.Second {
-		t.Fatalf("adaptive timeout = %v, want 1s floor", got)
+	if got := s.adaptivePongTimeout(); got != 30*time.Second {
+		t.Fatalf("adaptive timeout = %v, want configured 30s floor", got)
 	}
 
 	s.recordPingRTT(200 * time.Millisecond)
 	snapshot = s.HealthSnapshot()
 	if snapshot.RTT != 112500*time.Microsecond || snapshot.Variation != 62500*time.Microsecond {
 		t.Fatalf("updated health snapshot = %+v", snapshot)
+	}
+
+	s.recordPingRTT(2 * time.Minute)
+	if got := s.adaptivePongTimeout(); got <= 30*time.Second {
+		t.Fatalf("adaptive timeout = %v, want RTT variation to extend configured floor", got)
 	}
 }
 

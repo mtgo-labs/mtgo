@@ -434,8 +434,8 @@ type Config struct {
 	// Shorter intervals detect failures faster but consume more bandwidth.
 	// Defaults to 60 seconds.
 	HealthPingInterval time.Duration
-	// HealthPongTimeout is the maximum time to wait for a pong response
-	// before treating the connection as dead and triggering a reconnect.
+	// HealthPongTimeout is the minimum time to wait for a pong response before
+	// treating the connection as dead. RTT variation may extend this timeout.
 	// Defaults to 30 seconds.
 	HealthPongTimeout time.Duration
 

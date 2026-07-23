@@ -1093,7 +1093,8 @@ func (c *Client) retryRPCOnReconnect(ctx context.Context) bool {
 	}
 	cfg := c.config()
 	return cfg.RetryRPCOnReconnect ||
-		(ctx != nil && ctx.Value(authConnectContextKey{}) != nil && cfg.ReconnectEnabled)
+		(ctx != nil && cfg.ReconnectEnabled &&
+			(ctx.Value(authConnectContextKey{}) != nil || ctx.Value(transferRetryContextKey{}) != nil))
 }
 
 // Connect initializes storage, loads or creates a session, and marks the client as connected.

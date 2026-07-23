@@ -106,6 +106,7 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
+	ctx = withTransferRetry(ctx)
 	c.Log.Debugf("UploadFile size=%d", fileSize)
 	rpc := c.uploadRPC()
 	inputFile, actualSize, err := uploadFileRPC(ctx, rpc, reader, fileName, fileSize, opts)

@@ -446,6 +446,13 @@ func (c *Client) replaySafe(query tg.TLObject) bool {
 	if query == nil {
 		return false
 	}
+	switch query.(type) {
+	case *tg.UploadSaveFilePartRequest, *tg.UploadSaveBigFilePartRequest:
+		// A file part is identified by file_id and part index. Replaying the
+		// exact request replaces the same part instead of duplicating an
+		// application-level mutation.
+		return true
+	}
 	if callback := c.config().RPCReplaySafe; callback != nil && callback(query) {
 		return true
 	}

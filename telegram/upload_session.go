@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -11,10 +12,16 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+type transferRetryContextKey struct{}
+
 // uploadPartTimeout is the per-part RPC timeout for uploads. Each upload part
 // gets its own deadline instead of inheriting the full upload context deadline,
 // so a single slow part can't consume the entire upload budget.
 const uploadPartTimeout = 2 * time.Minute
+
+func withTransferRetry(ctx context.Context) context.Context {
+	return context.WithValue(ctx, transferRetryContextKey{}, true)
+}
 
 func isSessionClosedErr(err error) bool {
 	return isSessionDeadErr(err) ||

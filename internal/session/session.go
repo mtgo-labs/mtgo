@@ -330,8 +330,9 @@ func (s *Session) SetPingInterval(d time.Duration) {
 	s.mu.Unlock()
 }
 
-// SetPongTimeout configures how long to wait for a pong before considering the
-// connection dead. Must be called before Connect/Start.
+// SetPongTimeout configures the minimum time to wait for a pong before
+// considering the connection dead. RTT variation may extend the timeout.
+// Must be called before Connect/Start.
 func (s *Session) SetPongTimeout(d time.Duration) {
 	s.mu.Lock()
 	s.pongTimeout = d
@@ -1976,7 +1977,7 @@ func (s *Session) adaptivePongTimeout() time.Duration {
 	variation := time.Duration(s.rttVariance.Load())
 	adaptive := rtt + 4*variation
 	adaptive = max(adaptive, time.Second)
-	return min(adaptive, configured)
+	return max(adaptive, configured)
 }
 
 // handlePong signals the pong channel for the given pingID.

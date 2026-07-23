@@ -40,6 +40,57 @@ func TestUploadRPCUsesMainInvoker(t *testing.T) {
 	}
 }
 
+func TestTransferRetryContextReplaysUploadPart(t *testing.T) {
+	client, err := NewClient(1, "hash", &Config{InMemory: true})
+	if err != nil {
+		t.Fatalf("NewClient() error: %v", err)
+	}
+	client.state.SetConnecting(2)
+	client.state.SetConnected()
+
+	calls := 0
+	query := &tg.UploadSaveBigFilePartRequest{
+		FileID:         1,
+		FilePart:       2,
+		FileTotalParts: 3,
+		Bytes:          []byte("part"),
+	}
+	err = client.retrySessionErr(withTransferRetry(context.Background()), func(*session.Session) error {
+		calls++
+		if calls == 1 {
+			return &session.DeliveryError{
+				State: session.DeliveryUnknown,
+				Err:   session.ErrSessionClosed,
+			}
+		}
+		return nil
+	}, query)
+	if err != nil {
+		t.Fatalf("retrySessionErr() error: %v", err)
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+}
+
+func TestUploadPartsAreReplaySafe(t *testing.T) {
+	client, err := NewClient(1, "hash", &Config{InMemory: true})
+	if err != nil {
+		t.Fatalf("NewClient() error: %v", err)
+	}
+	for _, query := range []tg.TLObject{
+		&tg.UploadSaveFilePartRequest{},
+		&tg.UploadSaveBigFilePartRequest{},
+	} {
+		if !client.replaySafe(query) {
+			t.Fatalf("%T should be replay-safe", query)
+		}
+	}
+	if client.replaySafe(&tg.MessagesSendMessageRequest{}) {
+		t.Fatal("messages.sendMessage should remain delivery-uncertain")
+	}
+}
+
 func TestIsSessionClosedErrUsesTypedErrors(t *testing.T) {
 	tests := []struct {
 		name string
