@@ -6,6 +6,7 @@ package params
 import (
 	"context"
 	"fmt"
+	"time"
 
 	tl "github.com/mtgo-labs/mtgo/tg"
 )
@@ -307,6 +308,14 @@ type Download struct {
 	// is called to fetch a new reference and the download retries. Nil
 	// disables automatic refresh.
 	FileRefresher FileRefresher
+
+	// RequestDelay sets a delay applied between consecutive chunk requests
+	// during download. This paces requests to avoid triggering Telegram's
+	// per-DC rate limiter, which forcefully disconnects sessions that request
+	// too aggressively. A value of 0 lets the client choose a sensible
+	// default based on whether the download is cross-DC. Set to a negative
+	// value to disable pacing entirely.
+	RequestDelay time.Duration
 }
 
 // FileRefresher refreshes expired file references by re-fetching the source

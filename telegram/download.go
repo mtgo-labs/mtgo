@@ -54,6 +54,25 @@ const maxDownloadRecoveries = 100
 // attempts during a single download to avoid infinite retry loops.
 const maxFileRefRetries = 3
 
+// defaultDownloadPacing is the inter-request delay applied to cross-DC
+// downloads when RequestDelay is unset. This prevents the download DC from
+// forcefully disconnecting sessions that request too aggressively.
+const defaultDownloadPacing = 25 * time.Millisecond
+
+func downloadPacingDelay(opts *params.Download, dcID, homeDC int) time.Duration {
+	if opts != nil && opts.RequestDelay != 0 {
+		if opts.RequestDelay < 0 {
+			return 0
+		}
+		return opts.RequestDelay
+	}
+	// Cross-DC downloads are rate-limited by the remote DC; pace them.
+	if dcID > 0 && homeDC > 0 && dcID != homeDC {
+		return defaultDownloadPacing
+	}
+	return 0
+}
+
 var errParallelDownloadUnsupported = errors.New("download: parallel download unsupported for response")
 
 // FileChunk represents a single chunk of data received during a streamed file download.
@@ -588,12 +607,6 @@ func shouldParallelDownload(fileSize int64, writer io.Writer, opts *params.Downl
 }
 
 func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int) int {
-	// Cross-DC downloads use a single worker to avoid DC session auth race
-	// conditions (AUTH_KEY_UNREGISTERED) when multiple sessions are created
-	// before auth export/import completes.
-	if dcID > 0 && homeDC > 0 && dcID != homeDC {
-		return 1
-	}
 	if opts != nil && opts.Workers == 1 {
 		return 1
 	}
@@ -714,6 +727,15 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 					})
 				}
 				results <- result{offset: j.offset, n: n}
+
+				// Pace requests to avoid triggering the DC's rate limiter.
+				if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(delay):
+					}
+				}
 			}
 		}(i)
 	}
@@ -876,9 +898,17 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 				IsUpload:        false,
 			})
 		}
-
 		if n < int(chunkSize) || fileSize > 0 && totalWritten >= fileSize {
 			return totalWritten, nil
+		}
+
+		// Pace requests to avoid triggering the DC's rate limiter.
+		if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
+			select {
+			case <-ctx.Done():
+				return totalWritten, ctx.Err()
+			case <-time.After(delay):
+			}
 		}
 	}
 }
