@@ -30,7 +30,7 @@ jobs:
   bump:
     name: ${{ matrix.repo }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -89,11 +89,24 @@ jobs:
           IS_WASM: ${{ matrix.wasm }}
         run: |
           set -euo pipefail
+          dependency="github.com/mtgo-labs/mtgo@$VERSION"
+          for attempt in 1 2 3 4 5; do
+            if go mod download "$dependency"; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::Go module proxy did not publish $dependency after $attempt attempts"
+              exit 1
+            fi
+            delay=$((attempt * 15))
+            echo "::warning::Go module proxy is not ready for $dependency; retrying in ${delay}s"
+            sleep "$delay"
+          done
           for mod in $MODULES; do
             echo "::group::Updating $mod"
             (
               cd "$mod"
-              go get "github.com/mtgo-labs/mtgo@$VERSION"
+              go get "$dependency"
               go mod tidy
               if [ "$IS_WASM" = "true" ]; then
                 GOOS=js GOARCH=wasm go build ./...
