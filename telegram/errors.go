@@ -351,8 +351,10 @@ func (e *ReconnectError) Error() string {
 func (e *ReconnectError) Unwrap() error { return e.Err }
 
 // AuthKeyInvalidatedError reports permanent loss of the main authorization
-// key. Cause is the server error; Cleanup is non-nil if persisted credentials
-// could not be fully removed. The client remains fail-closed in either case.
+// key. Cause is the server error; Cleanup is non-nil if credential removal had
+// already failed when this value was returned. If lifecycle ownership delays
+// cleanup, the first error can omit a later cleanup failure; subsequent client
+// operations still remain fail-closed until cleanup completes successfully.
 type AuthKeyInvalidatedError struct {
 	Cause   error
 	Cleanup error

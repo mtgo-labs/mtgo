@@ -222,6 +222,9 @@ func (c *Client) completeMainAuthInvalidation(loss *authLossState, first bool) e
 		c.autoConnectMu.Unlock()
 		c.connMetrics.recordDisconnected(c.authLossResult(loss))
 	}()
+	// The immutable error returned here reports terminal auth loss immediately.
+	// A cleanup failure discovered by the goroutine is stored as the client's
+	// later auth-loss result; explicit recovery waits on loss.done before acting.
 	return c.authLossResult(loss)
 }
 

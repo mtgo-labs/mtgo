@@ -132,6 +132,11 @@ type Client struct {
 
 	reconnectMgr *reconnectManager
 
+	// Lifecycle locks are acquired in this order when co-held:
+	// autoConnectMu -> authDecisionMu -> authLossMu -> readyMu -> mu.
+	// postConnectMu may acquire mu, but is not acquired while holding the
+	// lifecycle locks above. Other subsystem locks must not acquire lifecycle
+	// locks while held.
 	autoConnectMu  sync.Mutex
 	migration      migrationCoordinator
 	authLossMu     sync.Mutex

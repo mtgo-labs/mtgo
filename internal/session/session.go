@@ -807,7 +807,7 @@ func (s *Session) waitResponse(ctx context.Context, handle *CallHandle, msgID in
 		return obj, deliveryFailure(handle, err)
 	case <-ctx.Done():
 		s.pending.Cancel(msgID)
-		s.sendRPCDrop(ctx, msgID)
+		s.sendRPCDrop(msgID)
 		return nil, ctx.Err()
 	case <-s.done:
 		s.pending.Reject(msgID, ErrSessionClosed)
@@ -835,7 +835,7 @@ func deliveryFailure(handle *CallHandle, err error) error {
 	return &DeliveryError{State: state, Err: err}
 }
 
-func (s *Session) sendRPCDrop(ctx context.Context, reqMsgID int64) {
+func (s *Session) sendRPCDrop(reqMsgID int64) {
 	select {
 	case <-s.done:
 		return
@@ -857,7 +857,13 @@ func (s *Session) sendRPCDrop(ctx context.Context, reqMsgID int64) {
 	if err != nil {
 		return
 	}
-	_ = s.writeEncrypted(ctx, encrypted, 5*time.Second)
+	// Dropping a canceled RPC is best-effort. Never delay cancellation behind
+	// live PFS recovery, which exclusively gates writes while rebinding the key.
+	if !s.pfsWriteMu.TryRLock() {
+		return
+	}
+	defer s.pfsWriteMu.RUnlock()
+	_ = s.writeEncryptedImpl(time.Now().Add(5*time.Second), encrypted)
 }
 
 func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
@@ -1718,8 +1724,7 @@ func (s *Session) writeEncrypted(ctx context.Context, encrypted []byte, timeout 
 	return s.writeEncryptedImpl(deadline, encrypted)
 }
 
-// writeEncryptedDirect is the context-less variant used by service messages
-// and RPCDropAnswer where there is no caller context to respect.
+// writeEncryptedDirect is the context-less variant used by service messages.
 func (s *Session) writeEncryptedDirect(encrypted []byte, timeout time.Duration) error {
 	s.pfsWriteMu.RLock()
 	defer s.pfsWriteMu.RUnlock()

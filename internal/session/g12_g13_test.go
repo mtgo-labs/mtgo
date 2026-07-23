@@ -673,6 +673,36 @@ func startBlockedPFSWrite(t *testing.T, s *Session) <-chan error {
 	return done
 }
 
+func TestCancelledWaitResponseDoesNotBlockOnPFSRecovery(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	msgID := s.msgFactory.AllocateMsgID()
+	handle, err := s.pending.Register(msgID, false)
+	if err != nil {
+		t.Fatalf("Register() = %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	s.pfsWriteMu.Lock()
+	done := make(chan error, 1)
+	go func() {
+		_, err := s.waitResponse(ctx, handle, msgID, time.Second)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		s.pfsWriteMu.Unlock()
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("waitResponse() = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		s.pfsWriteMu.Unlock()
+		<-done
+		t.Fatal("canceled waitResponse blocked behind PFS recovery")
+	}
+}
+
 func assertPFSRecoveryFailureStopsWrites(t *testing.T, s *Session, mt *mockTransport, blockedWrite <-chan error) {
 	t.Helper()
 	if !s.stopping.Load() {
