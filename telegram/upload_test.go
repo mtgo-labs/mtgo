@@ -101,7 +101,7 @@ func TestUploadFile_SmallFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "test.bin", int64(len(data)), nil)
+	result, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "test.bin", int64(len(data)), nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestUploadFile_BigFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "big.bin", size, nil)
+	result, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "big.bin", size, nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestUploadFile_MultipleParts(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "multi.bin", size, nil)
+	result, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "multi.bin", size, nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestUploadFile_EmptyFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(nil), "empty.txt", 0, nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(nil), "empty.txt", 0, nil)
 	if err == nil {
 		t.Fatal("expected error for empty file")
 	}
@@ -212,7 +212,7 @@ func TestUploadFile_TooLarge(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(make([]byte, 100)), "big.txt", maxFileSize+1, nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(make([]byte, 100)), "big.txt", maxFileSize+1, nil)
 	if err == nil {
 		t.Fatal("expected error for file exceeding max size")
 	}
@@ -237,7 +237,7 @@ func TestUploadFile_ProgressCallback(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "progress.bin", int64(len(data)), &UploadOptions{Progress: progress})
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "progress.bin", int64(len(data)), &UploadOptions{Progress: progress})
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -255,7 +255,7 @@ func TestUploadFile_PartRetry(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "retry.bin", int64(len(data)), &UploadOptions{Workers: 1})
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "retry.bin", int64(len(data)), &UploadOptions{Workers: 1})
 	if err == nil {
 		t.Fatal("expected error when part 1 fails")
 	}
@@ -271,7 +271,7 @@ func TestUploadFile_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "cancel.bin", int64(len(data)), nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "cancel.bin", int64(len(data)), nil)
 	if err == nil {
 		t.Fatal("expected error for cancelled context")
 	}
@@ -286,7 +286,7 @@ func TestUploadFile_ConcurrentWorkers(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "concurrent.bin", size, &UploadOptions{Workers: 3})
+	result, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "concurrent.bin", size, &UploadOptions{Workers: 3})
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestUploadFile_DefaultWorkersParallelizeKnownFiles(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "default_parallel.bin", size, nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "default_parallel.bin", size, nil)
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestUploadFile_WorkersOneKeepsKnownFilesSerial(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "serial.bin", size, &UploadOptions{Workers: 1})
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "serial.bin", size, &UploadOptions{Workers: 1})
 	if err != nil {
 		t.Fatalf("UploadFile() error: %v", err)
 	}
@@ -362,7 +362,7 @@ func TestUploadFile_StreamSmallFile(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream.bin", 0, nil)
+	result, actualSize, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "stream.bin", 0, nil)
 	if err != nil {
 		t.Fatalf("streamed upload error: %v", err)
 	}
@@ -400,7 +400,7 @@ func TestUploadFile_StreamMultipleParts(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_multi.bin", 0, nil)
+	result, actualSize, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "stream_multi.bin", 0, nil)
 	if err != nil {
 		t.Fatalf("streamed upload error: %v", err)
 	}
@@ -445,7 +445,7 @@ func TestUploadFile_StreamExactPartBoundary(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	result, actualSize, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_exact.bin", 0, nil)
+	result, actualSize, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "stream_exact.bin", 0, nil)
 	if err != nil {
 		t.Fatalf("streamed upload error: %v", err)
 	}
@@ -478,7 +478,7 @@ func TestUploadFile_StreamEmptyReader(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(nil), "empty.bin", 0, nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(nil), "empty.bin", 0, nil)
 	if err == nil {
 		t.Fatal("expected error for empty streamed reader")
 	}
@@ -489,7 +489,7 @@ func TestUploadFile_StreamNegativeSize(t *testing.T) {
 	rpc := tg.NewRPCClient(mock)
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader([]byte{1}), "neg.bin", -1, nil)
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader([]byte{1}), "neg.bin", -1, nil)
 	if err == nil {
 		t.Fatal("expected error for negative file size")
 	}
@@ -513,7 +513,7 @@ func TestUploadFile_StreamProgressCallback(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, _, err := uploadFileRPC(ctx, rpc, bytes.NewReader(data), "stream_progress.bin", 0, &UploadOptions{Progress: progress})
+	_, _, err := uploadFileRPC(ctx, []*tg.RPCClient{rpc}, bytes.NewReader(data), "stream_progress.bin", 0, &UploadOptions{Progress: progress})
 	if err != nil {
 		t.Fatalf("streamed upload error: %v", err)
 	}

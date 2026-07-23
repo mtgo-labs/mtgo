@@ -15,14 +15,18 @@ import (
 )
 
 func TestUploadRPCUsesMainInvoker(t *testing.T) {
-	client, err := NewClient(1, "hash", nil)
+	client, err := NewClient(1, "hash", &Config{InMemory: true, UploadPoolSize: 1})
 	if err != nil {
 		t.Fatalf("NewClient() error: %v", err)
 	}
 	invoker := newMockRPCInvoker()
 	client.testInvoker = invoker
 
-	result, err := client.uploadRPC().UploadSaveFilePart(context.Background(), &tg.UploadSaveFilePartRequest{
+	rpcs, err := client.uploadRPCs(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("uploadRPCs() error: %v", err)
+	}
+	result, err := rpcs[0].UploadSaveFilePart(context.Background(), &tg.UploadSaveFilePartRequest{
 		FileID:   1,
 		FilePart: 0,
 		Bytes:    []byte("part"),

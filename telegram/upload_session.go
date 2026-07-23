@@ -37,9 +37,32 @@ func isTransferSessionDeadErr(err error) bool {
 		isDCConnectionFailure(err)
 }
 
-// uploadRPC uses the main MTProto session. Session.Invoke supports concurrent
-// RPCs; opening home-DC side sessions with the same permanent auth key can
-// invalidate that key when the main session reconnects.
-func (c *Client) uploadRPC() *tg.RPCClient {
-	return c.Raw()
+// uploadRPCs returns RPC clients for parallel upload. When UploadPoolSize > 1,
+// it lazily creates a pool of independent sessions on the home DC that share
+// the main session's permanent auth key (no DH exchange, no PFS — matching
+// mtcute's media-connection design). Each session has its own TCP connection,
+// so uploads survive individual connection deaths. Falls back to the main
+// session when the pool is disabled or unavailable.
+func (c *Client) uploadRPCs(ctx context.Context, fileSize int64) ([]*tg.RPCClient, error) {
+	poolSize := c.config().UploadPoolSize
+	if poolSize <= 1 {
+		return []*tg.RPCClient{c.Raw()}, nil
+	}
+
+	c.uploadPoolMu.Lock()
+	if c.uploadPool == nil {
+		sz := uploadPoolSize(fileSize, poolSize)
+		c.uploadPool = newUploadSessionPool(c, sz)
+	}
+	pool := c.uploadPool
+	c.uploadPoolMu.Unlock()
+
+	if err := pool.ensureCreated(ctx); err != nil {
+		return []*tg.RPCClient{c.Raw()}, nil
+	}
+
+	// Return the pool invoker as a single RPC client. It handles round-robin
+	// across pool entries, automatic dead-session replacement, and fallback
+	// to the main session — so workers don't need retry logic.
+	return []*tg.RPCClient{pool.rpcClient()}, nil
 }

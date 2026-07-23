@@ -402,13 +402,13 @@ func (c *Client) dcRPC(ctx context.Context, dcID int) (*tg.RPCClient, error) {
 	poolSize := min(max(c.config().DCPoolSize, 1), 16)
 	if poolSize > 1 {
 		pool, err := c.ensureDCRPCPool(ctx, dcID, poolSize)
-		if err != nil {
-			if errors.Is(err, errDCBecameHome) {
-				return c.Raw(), nil
-			}
-			return nil, err
+		if err == nil {
+			return pool.rpc, nil
 		}
-		return pool.rpc, nil
+		if errors.Is(err, errDCBecameHome) {
+			return c.Raw(), nil
+		}
+		// Fall back to single-session path on pool creation failure.
 	}
 	if c.dcAuthManager != nil {
 		c.dcAuthManager.UpdateMainDC(homeDC)
@@ -517,17 +517,39 @@ func (c *Client) ensureDCRPCPool(ctx context.Context, dcID int, size int) (*dcSe
 			release()
 		}
 	}()
-	for len(entries) < size {
-		entry, release, err := c.createDCSessionCandidate(ctx, dcID, generation)
-		if err != nil {
-			for _, newEntry := range created {
-				newEntry.close()
-			}
-			return nil, err
+	// First session: full DH + auth export/import. Captures the auth key
+	// for shared-key creation of remaining sessions (mtcute pattern).
+	firstEntry, release, err := c.createDCSessionCandidate(ctx, dcID, generation)
+	if err != nil {
+		for _, newEntry := range created {
+			newEntry.close()
 		}
-		entries = append(entries, entry)
-		created = append(created, entry)
-		releases = append(releases, release)
+		return nil, err
+	}
+	entries = append(entries, firstEntry)
+	created = append(created, firstEntry)
+	releases = append(releases, release)
+
+	// Sessions 2..N: share the first session's auth key (no DH, no auth export).
+	// ~0.5s per session instead of ~3s, and no FLOOD_WAIT on auth export.
+	if len(entries) > 0 && firstEntry.sess != nil {
+		cache := dcAuthCacheEntry{
+			authKey:    firstEntry.sess.AuthKey(),
+			serverSalt: firstEntry.sess.ServerSalt(),
+		}
+		for len(entries) < size {
+			entry, shareErr := c.createSharedKeySession(ctx, dcID, cache)
+			if shareErr != nil {
+				// Don't fall back to full DH+auth — that triggers auth export
+				// FLOOD_WAIT. Accept fewer sessions and proceed.
+				c.Log.Debugf("shared-key session %d/%d failed, continuing with %d: %v",
+					len(entries), size, len(entries), shareErr)
+				break
+			}
+			entries = append(entries, entry)
+			created = append(created, entry)
+			releases = append(releases, func() {})
+		}
 	}
 
 	if pool == nil {
@@ -609,12 +631,25 @@ func (c *Client) replaceDCRPCPoolEntryIfCurrent(
 		}
 	}
 
-	entry, release, err := c.createDCSessionCandidate(ctx, dcID, generation)
-	if err != nil {
-		if errors.Is(err, errDCBecameHome) {
-			return c.Raw(), nil
+	// Try shared-key creation first (~0.5s). Fall back to full DH+auth (~3s).
+	var entry *dcSessionEntry
+	var release func()
+	if cache, ok := pool.getAuthCache(); ok {
+		sharedEntry, shareErr := c.createSharedKeySession(ctx, dcID, cache)
+		if shareErr == nil {
+			entry = sharedEntry
+			release = func() {}
 		}
-		return nil, err
+	}
+	if entry == nil {
+		var candErr error
+		entry, release, candErr = c.createDCSessionCandidate(ctx, dcID, generation)
+		if candErr != nil {
+			if errors.Is(candErr, errDCBecameHome) {
+				return c.Raw(), nil
+			}
+			return nil, candErr
+		}
 	}
 	defer release()
 
@@ -772,6 +807,78 @@ func (c *Client) createDCSession(
 	c.Log.Infof("Auth transfer complete for DC %d", dcID)
 
 	return entry, nil
+}
+
+// dcAuthCache stores the auth key and server salt from the first DC session
+// created for each DC, enabling fast shared-key session creation for pool
+// entries 2..N without repeating DH exchange or auth export/import.
+// Matches mtcute's design: "All pools in a DC share one permanent auth key."
+type dcAuthCacheEntry struct {
+	authKey    []byte
+	serverSalt int64
+}
+
+// createSharedKeySession creates a new DC session that shares an existing
+// session's permanent auth key — no DH exchange, no PFS, no auth export/import.
+// Session creation takes ~0.5s (TCP + connect) instead of ~3s (DH + auth).
+func (c *Client) createSharedKeySession(ctx context.Context, dcID int, cache dcAuthCacheEntry) (*dcSessionEntry, error) {
+	dc := session.DataCenter{
+		ID:       dcID,
+		TestMode: c.config().TestMode,
+		IPv6:     c.config().IPv6,
+	}
+
+	sessionTp, err := c.dialTCPTransportContext(ctx, dc, 15*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("shared session: transport DC %d: %w", dcID, err)
+	}
+
+	dcStorage := NewMemoryStorage()
+	if err := dcStorage.SetAuthKey(cache.authKey); err != nil {
+		sessionTp.Close()
+		return nil, fmt.Errorf("shared session: set auth key: %w", err)
+	}
+
+	cfg := c.config()
+	sess, err := session.NewSession(dc, dcStorage, cfg.Device.DeviceModel,
+		cfg.Device.AppVersion, cfg.Device.SystemLangCode, cfg.Device.LangCode)
+	if err != nil {
+		sessionTp.Close()
+		return nil, fmt.Errorf("shared session: create DC %d: %w", dcID, err)
+	}
+
+	if c.Log != nil {
+		sess.SetLogger(c.Log)
+	}
+	sess.SetUpdateHandler(func(obj tg.TLObject) {})
+	sess.SetServerSalt(cache.serverSalt)
+	sess.SetServerTime(time.Now())
+
+	// No PFS — mtcute: "we do not set temp auth keys for media connections,
+	// as they are ephemeral and dc-bound."
+	if err := sess.Connect(sessionTp, 15*time.Second); err != nil {
+		sessionTp.Close()
+		return nil, fmt.Errorf("shared session: connect DC %d: %w", dcID, err)
+	}
+
+	c.Log.Debugf("shared DC session established for DC %d", dcID)
+	return newDCSessionEntry(sess, sessionTp, c), nil
+}
+
+// getPoolAuthCache extracts the auth key and salt from the first healthy
+// entry in a DC session pool, for use in shared-key session creation.
+func (p *dcSessionPool) getAuthCache() (dcAuthCacheEntry, bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	for _, e := range p.entries {
+		if !e.retired.Load() && e.sess != nil {
+			return dcAuthCacheEntry{
+				authKey:    e.sess.AuthKey(),
+				serverSalt: e.sess.ServerSalt(),
+			}, true
+		}
+	}
+	return dcAuthCacheEntry{}, false
 }
 
 func retryDCAuthorization(ctx context.Context, call func() error) error {

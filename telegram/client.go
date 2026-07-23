@@ -158,6 +158,8 @@ type Client struct {
 	secretChatReqHandlers []SecretChatRequestHandler
 
 	dcSessions *dcSessions
+	uploadPoolMu sync.Mutex
+	uploadPool  *uploadSessionPool
 
 	// dcOptionPool manages candidate endpoints per DC with health scoring.
 	// Ported from td/td/telegram/net/DcOptionsSet.h.
@@ -577,6 +579,9 @@ func (c *Config) mergeConfig(src *Config) {
 	}
 	if src.DCPoolSize != 0 {
 		c.DCPoolSize = min(max(src.DCPoolSize, 1), 16)
+	}
+	if src.UploadPoolSize != 0 {
+		c.UploadPoolSize = min(max(src.UploadPoolSize, 1), 16)
 	}
 	if src.EndpointCoolDown != 0 {
 		c.EndpointCoolDown = src.EndpointCoolDown
@@ -1360,6 +1365,12 @@ func (c *Client) connectTransportLocked(timeout time.Duration) (retErr error) {
 	if c.dcSessions != nil {
 		c.dcSessions.cleanup(true)
 	}
+	c.uploadPoolMu.Lock()
+	if c.uploadPool != nil {
+		c.uploadPool.close()
+		c.uploadPool = nil
+	}
+	c.uploadPoolMu.Unlock()
 	defer func() {
 		if retErr != nil {
 			c.state.SetDisconnected(retErr)
@@ -1904,7 +1915,7 @@ func (c *Client) dialTCPTransportContext(ctx context.Context, endpoint session.D
 	}
 	defer cancel()
 
-	addr := fmt.Sprintf("%s:%d", endpoint.Address(), endpoint.Port())
+	addr := net.JoinHostPort(endpoint.Address(), fmt.Sprintf("%d", endpoint.Port()))
 	d := c.dialer
 	var (
 		conn net.Conn
@@ -2635,6 +2646,12 @@ func (c *Client) cleanupSessionsLockedMode(wait bool, closeStorage ...bool) *ses
 	if c.dcSessions != nil {
 		c.dcSessions.cleanup(wait)
 	}
+	c.uploadPoolMu.Lock()
+	if c.uploadPool != nil {
+		c.uploadPool.close()
+		c.uploadPool = nil
+	}
+	c.uploadPoolMu.Unlock()
 
 	c.mu.Lock()
 	sess := c.session

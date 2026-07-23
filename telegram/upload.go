@@ -108,8 +108,12 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	}
 	ctx = withTransferRetry(ctx)
 	c.Log.Debugf("UploadFile size=%d", fileSize)
-	rpc := c.uploadRPC()
-	inputFile, actualSize, err := uploadFileRPC(ctx, rpc, reader, fileName, fileSize, opts)
+	rpcs, err := c.uploadRPCs(ctx, fileSize)
+	if err != nil {
+		return nil, err
+	}
+	c.Log.Debugf("UploadFile size=%d pool=%d", fileSize, len(rpcs))
+	inputFile, actualSize, err := uploadFileRPC(ctx, rpcs, reader, fileName, fileSize, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +131,7 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	}, nil
 }
 
-func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
+func uploadFileRPC(ctx context.Context, rpcs []*tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
 	if fileSize < 0 {
 		return nil, 0, fmt.Errorf("upload: file size must be non-negative, got %d", fileSize)
 	}
@@ -135,9 +139,9 @@ func uploadFileRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fil
 		return nil, 0, fmt.Errorf("upload: file size %d exceeds maximum %d", fileSize, maxFileSize)
 	}
 	if fileSize == 0 {
-		return uploadFileStreamRPC(ctx, rpc, reader, fileName, opts)
+		return uploadFileStreamRPC(ctx, rpcs[0], reader, fileName, opts)
 	}
-	return uploadFileKnownRPC(ctx, rpc, reader, fileName, fileSize, opts)
+	return uploadFileKnownRPC(ctx, rpcs, reader, fileName, fileSize, opts)
 }
 
 func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, opts *UploadOptions) (tg.InputFileClass, int64, error) {
@@ -307,7 +311,7 @@ func uploadFileStreamRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reade
 	}, totalStreamSize, nil
 }
 
-func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
+func uploadFileKnownRPC(ctx context.Context, rpcs []*tg.RPCClient, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (tg.InputFileClass, int64, error) {
 	workers := uploadKnownWorkers(opts, fileSize)
 
 	fileID, err := generateFileID()
@@ -342,8 +346,10 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 	var hasErr atomic.Bool
 	var uploadedBytes atomic.Int64
 	var progressMu sync.Mutex
+	limiter := newByteLimiter(defaultUploadByteLimit)
 
-	for w := 0; w < workers; w++ {
+	for range workers {
+		rpc := rpcs[0]
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -367,8 +373,18 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 					continue
 				default:
 				}
+				// Byte-based in-flight limiter: caps total concurrent upload
+				// data at 4MB (matching mtcute/TDLib), preventing server overload.
+				if err := limiter.acquire(ctx, int64(len(job.data))); err != nil {
+					uploadBufPool.Put(job.bufPtr)
+					results <- partResult{index: job.partIdx, err: err}
+					hasErr.Store(true)
+					continue
+				}
 
 				var uploadErr error
+				// The pool invoker handles round-robin, dead-session replacement,
+				// and fallback to main session. Workers just call the RPC.
 				partCtx, partCancel := context.WithTimeout(ctx, uploadPartTimeout)
 				if isBig {
 					_, uploadErr = rpc.UploadSaveBigFilePart(partCtx, &tg.UploadSaveBigFilePartRequest{
@@ -385,6 +401,8 @@ func uploadFileKnownRPC(ctx context.Context, rpc *tg.RPCClient, reader io.Reader
 					})
 				}
 				partCancel()
+
+				limiter.release(int64(len(job.data)))
 
 				uploadBufPool.Put(job.bufPtr)
 

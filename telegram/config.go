@@ -456,6 +456,11 @@ type Config struct {
 	// values above 16 are clamped. Defaults to 1 to avoid multiplying connection
 	// count in large multi-account deployments.
 	DCPoolSize int
+	// UploadPoolSize controls the number of parallel upload sessions created
+	// on the home DC for file uploads. Each session shares the main session's
+	// permanent auth key (no DH exchange) and runs its own TCP connection.
+	// Defaults to 4 for throughput; set to 1 to use the main session only.
+	UploadPoolSize int
 	// EndpointCoolDown is the time to wait before retrying a failed DC
 	// endpoint. Failed endpoints are skipped until the cool-down expires.
 	// Defaults to 16 seconds.
@@ -596,5 +601,6 @@ var DefaultConfig = Config{
 	HealthPongTimeout:  30 * time.Second,
 	ConnPoolTTL:        10 * time.Second,
 	DCPoolSize:         1,
+	UploadPoolSize:     4,
 	EndpointCoolDown:   16 * time.Second,
 }
