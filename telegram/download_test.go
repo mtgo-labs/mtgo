@@ -32,6 +32,21 @@ type mockDownloadInvoker struct {
 	maxActive   atomic.Int32
 }
 
+type transferRetryDownloadInvoker struct {
+	client *Client
+}
+
+func (m *transferRetryDownloadInvoker) RPCInvoke(ctx context.Context, _ tg.TLObject, _ func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
+	if !m.client.retryRPCOnReconnect(ctx) {
+		return nil, errors.New("download context does not enable reconnect retry")
+	}
+	return &tg.UploadFile{Bytes: []byte("ok")}, nil
+}
+
+func (m *transferRetryDownloadInvoker) RPCInvokeRaw(context.Context, tg.TLObject) ([]byte, error) {
+	return nil, errors.New("unexpected raw invoke")
+}
+
 func newMockDownloadInvoker(data []byte) *mockDownloadInvoker {
 	return &mockDownloadInvoker{
 		data:       data,
@@ -452,6 +467,72 @@ func TestRecoverDownloadWorkerRPCUsesSessionDCForSameDC(t *testing.T) {
 	}
 	if got := buf.String(); got != "ok" {
 		t.Fatalf("recovered RPC downloaded %q, want %q", got, "ok")
+	}
+}
+
+func TestDownloadFileEnablesReconnectRetry(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = &transferRetryDownloadInvoker{client: c}
+
+	got, err := c.DownloadFile(context.Background(), &tg.InputDocumentFileLocation{ID: 1, AccessHash: 2}, 2, nil)
+	if err != nil {
+		t.Fatalf("DownloadFile() error = %v", err)
+	}
+	if string(got) != "ok" {
+		t.Fatalf("DownloadFile() = %q, want %q", got, "ok")
+	}
+}
+
+func TestDownloadToFileEnablesReconnectRetry(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = &transferRetryDownloadInvoker{client: c}
+
+	err := c.DownloadToFile(
+		context.Background(),
+		&tg.InputDocumentFileLocation{ID: 1, AccessHash: 2},
+		t.TempDir()+"/download",
+		2,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("DownloadToFile() error = %v", err)
+	}
+}
+
+func TestRecoverDownloadWorkerRPCHonorsReconnectCancellation(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.cfg.ReconnectEnabled = true
+	c.state.SetDC(1)
+	c.state.SetReconnecting(errors.New("test reconnect"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, recovered, err := c.recoverDownloadWorkerRPC(ctx, 1, 6, 0, ErrNotConnected)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("recoverDownloadWorkerRPC() error = %v, want context.Canceled", err)
+	}
+	if recovered {
+		t.Fatal("recoverDownloadWorkerRPC() recovered = true after cancellation")
+	}
+}
+
+func TestRecoverDownloadRPCHonorsReconnectCancellation(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.cfg.ReconnectEnabled = true
+	c.state.SetReconnecting(errors.New("test reconnect"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, recovered, err := c.recoverDownloadRPC(ctx, 0, ErrNotConnected)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("recoverDownloadRPC() error = %v, want context.Canceled", err)
+	}
+	if recovered {
+		t.Fatal("recoverDownloadRPC() recovered = true after cancellation")
 	}
 }
 

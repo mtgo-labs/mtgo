@@ -117,6 +117,7 @@ type FileChunk struct {
 //	}
 //	fmt.Printf("Downloaded %d bytes\n", len(data))
 func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
+	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -196,6 +197,7 @@ serialDownload:
 //	    log.Fatal(err)
 //	}
 func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
+	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -383,6 +385,7 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 //	    _, _ = os.Stdout.Write(chunk.Data)
 //	}
 func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
+	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -860,6 +863,9 @@ func (c *Client) recoverDownloadRPC(ctx context.Context, dcID int, err error) (*
 	if err == nil || !isRecoverableDownloadError(err) {
 		return nil, false, nil
 	}
+	if waitErr := c.waitForDownloadReconnect(ctx); waitErr != nil {
+		return nil, false, fmt.Errorf("download: wait for reconnect: %w", waitErr)
+	}
 	if dcID > 0 {
 		c.dcSessions.remove(dcID)
 	}
@@ -876,6 +882,9 @@ func (c *Client) recoverDownloadWorkerRPC(ctx context.Context, dcID int, poolSiz
 	if err == nil || !isRecoverableDownloadError(err) {
 		return nil, false, nil
 	}
+	if waitErr := c.waitForDownloadReconnect(ctx); waitErr != nil {
+		return nil, false, fmt.Errorf("download: wait for reconnect: %w", waitErr)
+	}
 	// Same-DC (or unknown DC): the main session recovers independently.
 	// Return it directly instead of creating/replacing side sessions.
 	homeDC := c.homeDC()
@@ -889,6 +898,13 @@ func (c *Client) recoverDownloadWorkerRPC(ctx context.Context, dcID int, poolSiz
 		return nil, false, fmt.Errorf("download: reconnect dc %d: %w", dcID, dcErr)
 	}
 	return rpc, true, nil
+}
+
+func (c *Client) waitForDownloadReconnect(ctx context.Context) error {
+	if !c.config().ReconnectEnabled {
+		return nil
+	}
+	return c.waitForConnect(ctx)
 }
 
 func (c *Client) retryDownloadDCRepair(ctx context.Context, repair func() (*tg.RPCClient, error)) (*tg.RPCClient, error) {
