@@ -41,6 +41,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -862,7 +863,9 @@ func (c *Client) recoverDownloadRPC(ctx context.Context, dcID int, err error) (*
 	if dcID > 0 {
 		c.dcSessions.remove(dcID)
 	}
-	rpc, dcErr := c.dcRPC(ctx, dcID)
+	rpc, dcErr := c.retryDownloadDCRepair(ctx, func() (*tg.RPCClient, error) {
+		return c.dcRPC(ctx, dcID)
+	})
 	if dcErr != nil {
 		return nil, false, fmt.Errorf("download: reconnect dc %d: %w", dcID, dcErr)
 	}
@@ -879,11 +882,25 @@ func (c *Client) recoverDownloadWorkerRPC(ctx context.Context, dcID int, poolSiz
 	if dcID <= 0 || dcID == homeDC || homeDC == 0 {
 		return c.Raw(), true, nil
 	}
-	rpc, dcErr := c.replaceDCRPCPoolEntry(ctx, dcID, poolSize, workerIdx)
+	rpc, dcErr := c.retryDownloadDCRepair(ctx, func() (*tg.RPCClient, error) {
+		return c.replaceDCRPCPoolEntry(ctx, dcID, poolSize, workerIdx)
+	})
 	if dcErr != nil {
 		return nil, false, fmt.Errorf("download: reconnect dc %d: %w", dcID, dcErr)
 	}
 	return rpc, true, nil
+}
+
+func (c *Client) retryDownloadDCRepair(ctx context.Context, repair func() (*tg.RPCClient, error)) (*tg.RPCClient, error) {
+	rpc, err := repair()
+	if err == nil || !c.config().ReconnectEnabled ||
+		(!errors.Is(err, ErrNotConnected) && !errors.Is(err, session.ErrNotConnected)) {
+		return rpc, err
+	}
+	if waitErr := c.waitForConnect(ctx); waitErr != nil {
+		return nil, fmt.Errorf("wait for main reconnect: %w", waitErr)
+	}
+	return repair()
 }
 
 func isRecoverableDownloadError(err error) bool {

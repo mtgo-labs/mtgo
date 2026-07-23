@@ -455,6 +455,83 @@ func TestRecoverDownloadWorkerRPCUsesSessionDCForSameDC(t *testing.T) {
 	}
 }
 
+func TestRetryDownloadDCRepairWaitsForMainReconnect(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.cfg.ReconnectEnabled = true
+	c.state.SetReconnecting(errors.New("test reconnect"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	replacement := tg.NewRPCClient(newMockDownloadInvoker(nil))
+	firstAttempt := make(chan struct{})
+	var attempts atomic.Int32
+	type result struct {
+		rpc *tg.RPCClient
+		err error
+	}
+	done := make(chan result, 1)
+	go func() {
+		rpc, err := c.retryDownloadDCRepair(ctx, func() (*tg.RPCClient, error) {
+			if attempts.Add(1) == 1 {
+				close(firstAttempt)
+				return nil, ErrNotConnected
+			}
+			return replacement, nil
+		})
+		done <- result{rpc: rpc, err: err}
+	}()
+
+	select {
+	case <-firstAttempt:
+	case <-time.After(time.Second):
+		t.Fatal("repair did not make its first attempt")
+	}
+	select {
+	case got := <-done:
+		t.Fatalf("repair returned before reconnect: %v", got.err)
+	default:
+	}
+
+	c.state.setConnected(true)
+	c.signalReconnect()
+
+	select {
+	case got := <-done:
+		if got.err != nil {
+			t.Fatalf("retryDownloadDCRepair() error = %v", got.err)
+		}
+		if got.rpc != replacement {
+			t.Fatal("retryDownloadDCRepair() returned the wrong RPC client")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("repair did not resume after reconnect")
+	}
+	if got := attempts.Load(); got != 2 {
+		t.Fatalf("repair attempts = %d, want 2", got)
+	}
+}
+
+func TestRetryDownloadDCRepairHonorsContext(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.cfg.ReconnectEnabled = true
+	c.state.SetReconnecting(errors.New("test reconnect"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	var attempts atomic.Int32
+	_, err := c.retryDownloadDCRepair(ctx, func() (*tg.RPCClient, error) {
+		attempts.Add(1)
+		return nil, session.ErrNotConnected
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("retryDownloadDCRepair() error = %v, want context.Canceled", err)
+	}
+	if got := attempts.Load(); got != 1 {
+		t.Fatalf("repair attempts = %d, want 1", got)
+	}
+}
+
 func TestDownloadFile_CDNRedirect(t *testing.T) {
 	data := make([]byte, 1024)
 	_, _ = rand.Read(data)
