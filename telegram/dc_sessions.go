@@ -743,17 +743,25 @@ func (c *Client) createDCSession(
 		sessionTp.Close()
 		return nil, ErrNotConnected
 	}
-	exportResult, err := c.Raw().AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
-		DCID: int32(dcID),
+	var exportResult *tg.AuthExportedAuthorization
+	err = retryDCAuthorization(ctx, func() error {
+		var exportErr error
+		exportResult, exportErr = c.Raw().AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
+			DCID: int32(dcID),
+		})
+		return exportErr
 	})
 	if err != nil {
 		sess.Stop()
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: export auth for DC %d: %w", dcID, err)
 	}
-	_, err = rpc.AuthImportAuthorization(ctx, &tg.AuthImportAuthorizationRequest{
-		ID:    exportResult.ID,
-		Bytes: exportResult.Bytes,
+	err = retryDCAuthorization(ctx, func() error {
+		_, importErr := rpc.AuthImportAuthorization(ctx, &tg.AuthImportAuthorizationRequest{
+			ID:    exportResult.ID,
+			Bytes: exportResult.Bytes,
+		})
+		return importErr
 	})
 	if err != nil {
 		sess.Stop()
@@ -764,6 +772,10 @@ func (c *Client) createDCSession(
 	c.Log.Infof("Auth transfer complete for DC %d", dcID)
 
 	return entry, nil
+}
+
+func retryDCAuthorization(ctx context.Context, call func() error) error {
+	return retryFloodWait(ctx, call)
 }
 
 type dcSessionInvoker struct {
@@ -806,7 +818,24 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 
 	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
-	result, err = d.sess.Invoke(ctx, query, 2, timeout)
+	err = retryTransferFloodWait(ctx, func() error {
+		var invokeErr error
+		result, invokeErr = d.sess.Invoke(ctx, query, 2, timeout)
+		if invokeErr != nil {
+			return invokeErr
+		}
+		if transferFloodRetryEnabled(ctx) {
+			rpcErr, ok := result.(*tg.RPCError)
+			if !ok {
+				return nil
+			}
+			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+			if _, floodWait := tgerr.AsFloodWait(parsed); floodWait {
+				return parsed
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		d.retireOnFailure(err)
 		return nil, err
@@ -839,7 +868,11 @@ func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) 
 
 	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
-	data, err = d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)
+	err = retryTransferFloodWait(ctx, func() error {
+		var invokeErr error
+		data, invokeErr = d.sess.InvokeRaw(ctx, query, 2, 60*time.Second)
+		return invokeErr
+	})
 	if err != nil {
 		d.retireOnFailure(err)
 		return nil, err

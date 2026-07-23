@@ -48,7 +48,7 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-const maxDownloadRecoveries = 10
+const maxDownloadRecoveries = 100
 
 // maxFileRefRetries caps the number of automatic file-reference refresh
 // attempts during a single download to avoid infinite retry loops.
@@ -544,6 +544,9 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 }
 
 func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, error) {
+	// Route through downloadToWriterFromOffset from offset 0 for unified
+	// recovery handling. This ensures every chunk failure gets the full
+	// recovery loop (reconnect + retry) instead of only the first error.
 	written, cdnRedirect, err := downloadToFileRPC(ctx, rpc, location, fileSize, writer, opts)
 	if cdnRedirect != nil {
 		cdnWritten, cdnErr := c.downloadCDNToWriter(ctx, cdnRedirect, written, fileSize, writer, opts)
@@ -552,26 +555,28 @@ func (c *Client) downloadToWriter(ctx context.Context, rpc *tg.RPCClient, dcID i
 		}
 		return written + cdnWritten, nil
 	}
-	if err != nil {
-		migratedRPC, ok, migrateErr := c.fileMigrationRPC(ctx, dcID, written, err)
-		if migrateErr != nil {
-			return written, migrateErr
-		}
-		if !ok {
-			recoveredRPC, recovered, recoverErr := c.recoverDownloadRPC(ctx, dcID, err)
-			if recoverErr != nil {
-				return written, recoverErr
-			}
-			if !recovered {
-				return written, err
-			}
-			recoveredWritten, e := c.downloadToWriterFromOffset(ctx, recoveredRPC, dcID, location, fileSize, writer, opts, written)
-			return recoveredWritten, e
-		}
-		w, _, e := downloadToFileRPC(ctx, migratedRPC, location, fileSize, writer, opts)
-		return w, e
+	if err == nil {
+		return written, nil
 	}
-	return written, nil
+
+	// On first failure, attempt DC migration (only valid at offset 0).
+	if written == 0 {
+		migratedRPC, ok, migrateErr := c.fileMigrationRPC(ctx, dcID, 0, err)
+		if migrateErr != nil {
+			return 0, migrateErr
+		}
+		if ok {
+			w, e := c.downloadToWriterFromOffset(ctx, migratedRPC, dcID, location, fileSize, writer, opts, 0)
+			return w, e
+		}
+	}
+
+	// Delegate to downloadToWriterFromOffset which has the full recovery loop
+	// (reconnect + retry up to maxDownloadRecoveries times). Passing the
+	// initial RPC lets it attempt the first retry without reconnect if the
+	// error was transient (e.g., a single RPC timeout).
+	recoveredWritten, e := c.downloadToWriterFromOffset(ctx, rpc, dcID, location, fileSize, writer, opts, written)
+	return recoveredWritten, e
 }
 
 func shouldParallelDownload(fileSize int64, writer io.Writer, opts *params.Download, dcID int, homeDC int) bool {
@@ -630,6 +635,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 			defer wg.Done()
 			currentRPC := rpcs[workerIdx%len(rpcs)]
 			recoveries := 0
+			backoff := time.Duration(0)
 			for j := range jobs {
 				var file *tg.UploadFile
 				for {
@@ -654,12 +660,28 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 						if recovered && recoveries < maxDownloadRecoveries {
 							recoveries++
 							currentRPC = recoveredRPC
+							// Exponential backoff between recovery attempts.
+							if backoff == 0 {
+								backoff = time.Second
+							} else {
+								backoff *= 2
+								if backoff > 30*time.Second {
+									backoff = 30 * time.Second
+								}
+							}
+							select {
+							case <-ctx.Done():
+								results <- result{offset: j.offset, err: ctx.Err()}
+								return
+							case <-time.After(backoff):
+							}
 							continue
 						}
 						results <- result{offset: j.offset, err: fmt.Errorf("download: get file at offset %d: %w", j.offset, err)}
 						return
 					}
 					recoveries = 0
+					backoff = 0
 
 					var ok bool
 					file, ok = res.(*tg.UploadFile)
@@ -767,6 +789,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 	totalWritten := offset
 	recoveries := 0
 	refRetries := 0
+	backoff := time.Duration(0)
 	for {
 		select {
 		case <-ctx.Done():
@@ -798,9 +821,26 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 			}
 			recoveries++
 			rpc = recoveredRPC
+
+			// Exponential backoff between recovery attempts to give the
+			// network/DC time to stabilise. Starts at 1s, doubles up to 30s.
+			if backoff == 0 {
+				backoff = time.Second
+			} else {
+				backoff *= 2
+				if backoff > 30*time.Second {
+					backoff = 30 * time.Second
+				}
+			}
+			select {
+			case <-ctx.Done():
+				return totalWritten, ctx.Err()
+			case <-time.After(backoff):
+			}
 			continue
 		}
 		recoveries = 0
+		backoff = 0
 
 		file, ok := result.(*tg.UploadFile)
 		if !ok {
@@ -926,7 +966,12 @@ func isRecoverableDownloadError(err error) bool {
 	if errors.Is(err, ErrNotConnected) || errors.Is(err, ErrReconnectFailed) || isTransferSessionDeadErr(err) {
 		return true
 	}
-	if strings.Contains(err.Error(), "session: closed") {
+	// String-based fallback for errors that lose their sentinel chain
+	// through fmt.Errorf %w wrapping in session.Invoke or retrySessionErr.
+	msg := err.Error()
+	if strings.Contains(msg, "session: closed") ||
+		strings.Contains(msg, "not connected") ||
+		strings.Contains(msg, "session closed after") {
 		return true
 	}
 	return false

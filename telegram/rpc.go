@@ -62,7 +62,25 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 
 	ci.client.Log.Debugf("RPC invoke method=%T timeout=%s", input, timeout)
 
-	result, err := ci.client.Invoke(ctx, query, retries, timeout)
+	var result tg.TLObject
+	err := retryTransferFloodWait(ctx, func() error {
+		var invokeErr error
+		result, invokeErr = ci.client.Invoke(ctx, query, retries, timeout)
+		if invokeErr != nil {
+			return invokeErr
+		}
+		if transferFloodRetryEnabled(ctx) {
+			rpcErr, ok := result.(*tg.RPCError)
+			if !ok {
+				return nil
+			}
+			parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+			if _, floodWait := tgerr.AsFloodWait(parsed); floodWait {
+				return parsed
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +126,12 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 	cfg := ci.client.config()
 	query, initializesAPI := prepareAPIQuery(cfg, ci.client.apiInit.Load(), input)
 
-	data, err := ci.client.InvokeWithRawResult(ctx, query)
+	var data []byte
+	err := retryTransferFloodWait(ctx, func() error {
+		var invokeErr error
+		data, invokeErr = ci.client.InvokeWithRawResult(ctx, query)
+		return invokeErr
+	})
 	if err != nil {
 		// Auto-retry FLOOD_WAIT below SleepThreshold.
 		if wait, fwOk := tgerr.AsFloodWait(err); fwOk && cfg.SleepThreshold > 0 && wait <= cfg.SleepThreshold {
@@ -134,6 +157,30 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 		ci.client.apiInit.Store(true)
 	}
 	return data, nil
+}
+
+func retryFloodWait(ctx context.Context, call func() error) error {
+	for {
+		err := call()
+		if err == nil {
+			return nil
+		}
+		waited, waitErr := tgerr.FloodWait(ctx, err)
+		if !waited {
+			return waitErr
+		}
+	}
+}
+
+func retryTransferFloodWait(ctx context.Context, call func() error) error {
+	if !transferFloodRetryEnabled(ctx) {
+		return call()
+	}
+	return retryFloodWait(ctx, call)
+}
+
+func transferFloodRetryEnabled(ctx context.Context) bool {
+	return ctx != nil && ctx.Value(transferRetryContextKey{}) != nil
 }
 
 func shouldReturnMigrationToCaller(input tg.TLObject, err *tgerr.Error) bool {

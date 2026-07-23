@@ -392,6 +392,10 @@ func TestIsRecoverableDownloadError(t *testing.T) {
 			errors.New("download: get file at offset 0: retries exhausted (2): send: session: closed"),
 			true,
 		},
+		{"session not connected", fmt.Errorf("send: %w", session.ErrNotConnected), true},
+		{"wrapped client not connected", fmt.Errorf("download: get file at offset 727711744: %w", ErrNotConnected), true},
+		{"reconnect retries exhausted", errors.New("session closed after 3 reconnect retries: session: closed"), true},
+		{"delivery error not connected", &session.DeliveryError{State: session.DeliveryUnknown, Err: session.ErrNotConnected}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
