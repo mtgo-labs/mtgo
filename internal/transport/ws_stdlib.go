@@ -98,10 +98,11 @@ func (c *wsConn) Write(p []byte) (int, error) {
 }
 
 // Close sends a WebSocket close frame and closes the underlying TCP
-// connection. It writes the frame synchronously; any error is silently
-// swallowed because the caller wants to close regardless.
+// connection. It forces an RST (via SO_LINGER=0) to prevent the server
+// from seeing two connections with the same auth key (AUTH_KEY_DUPLICATED).
 func (c *wsConn) Close() error {
 	_ = c.writeCloseFrame(wsStatusNormalClosure, "client close")
+	_ = SetTCPLinger(c.conn, 0)
 	return c.conn.Close()
 }
 
