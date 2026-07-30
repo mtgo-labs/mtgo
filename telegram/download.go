@@ -75,6 +75,53 @@ func downloadPacingDelay(opts *params.Download, dcID, homeDC int) time.Duration 
 
 var errParallelDownloadUnsupported = errors.New("download: parallel download unsupported for response")
 
+// ErrDownloadStalled is returned when no data has been received within the
+// configured StallTimeout. Useful for bulk downloads where some files may be
+// unavailable server-side and would otherwise hang indefinitely.
+var ErrDownloadStalled = errors.New("download: stalled (no data received within timeout)")
+
+// stallTimer wraps a context with a resettable deadline. Each successful chunk
+// resets the timer; if no chunk arrives within timeout, the context is cancelled
+// with ErrDownloadStalled as the cause.
+type stallTimer struct {
+	timer  *time.Timer
+	cancel context.CancelCauseFunc
+	dur    time.Duration
+}
+
+func newStallTimer(ctx context.Context, timeout time.Duration) (*stallTimer, context.Context) {
+	ctx, cancel := context.WithCancelCause(ctx)
+	st := &stallTimer{
+		cancel: cancel,
+		dur:    timeout,
+	}
+	st.timer = time.AfterFunc(timeout, func() {
+		cancel(ErrDownloadStalled)
+	})
+	return st, ctx
+}
+
+func (st *stallTimer) reset() {
+	if st != nil {
+		st.timer.Reset(st.dur)
+	}
+}
+
+func (st *stallTimer) stop() {
+	if st != nil {
+		st.timer.Stop()
+		st.cancel(nil)
+	}
+}
+
+// downloadStallTimeout extracts the stall timeout from opts, returning 0 if disabled.
+func downloadStallTimeout(opts *params.Download) time.Duration {
+	if opts != nil && opts.StallTimeout > 0 {
+		return opts.StallTimeout
+	}
+	return 0
+}
+
 // FileChunk represents a single chunk of data received during a streamed file download.
 // It is delivered over the channel returned by StreamFile. Each chunk contains the raw
 // data bytes, cumulative download progress, and an optional terminal error.
@@ -485,6 +532,12 @@ func chunkSizeForDownload(opts *params.Download) int32 {
 func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download) (int64, *tg.UploadFileCDNRedirect, error) {
 	chunkSize := chunkSizeForDownload(opts)
 
+	var st *stallTimer
+	if d := downloadStallTimeout(opts); d > 0 {
+		st, ctx = newStallTimer(ctx, d)
+		defer st.stop()
+	}
+
 	var totalWritten int64
 	offset := int64(0)
 	refRetries := 0
@@ -492,7 +545,7 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 	for {
 		select {
 		case <-ctx.Done():
-			return totalWritten, nil, ctx.Err()
+			return totalWritten, nil, context.Cause(ctx)
 		default:
 		}
 
@@ -527,6 +580,7 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 				return totalWritten, nil, fmt.Errorf("download: write: %w", err)
 			}
 			totalWritten += int64(n)
+			st.reset()
 
 			// G10: verify SHA-256 hashes for this chunk if enabled.
 			if opts != nil && opts.VerifyHashes {
@@ -627,6 +681,12 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	var st *stallTimer
+	if d := downloadStallTimeout(opts); d > 0 {
+		st, ctx = newStallTimer(ctx, d)
+		defer st.stop()
+	}
+
 	type job struct {
 		offset int64
 		limit  int32
@@ -726,6 +786,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 						IsUpload:        false,
 					})
 				}
+				st.reset()
 				results <- result{offset: j.offset, n: n}
 
 				// Pace requests to avoid triggering the DC's rate limiter.
@@ -769,7 +830,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 			if firstErr != nil {
 				return done.Load(), firstErr
 			}
-			return done.Load(), ctx.Err()
+			return done.Load(), context.Cause(ctx)
 		case r, ok := <-results:
 			if !ok {
 				if firstErr != nil {
@@ -808,6 +869,12 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.Writer, opts *params.Download, offset int64) (int64, error) {
 	chunkSize := chunkSizeForDownload(opts)
 
+	var st *stallTimer
+	if d := downloadStallTimeout(opts); d > 0 {
+		st, ctx = newStallTimer(ctx, d)
+		defer st.stop()
+	}
+
 	totalWritten := offset
 	recoveries := 0
 	refRetries := 0
@@ -815,7 +882,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 	for {
 		select {
 		case <-ctx.Done():
-			return totalWritten, ctx.Err()
+			return totalWritten, context.Cause(ctx)
 		default:
 		}
 
@@ -856,7 +923,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 			}
 			select {
 			case <-ctx.Done():
-				return totalWritten, ctx.Err()
+				return totalWritten, context.Cause(ctx)
 			case <-time.After(backoff):
 			}
 			continue
@@ -883,6 +950,7 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 		}
 		chunkOffset := totalWritten
 		totalWritten += int64(n)
+		st.reset()
 
 		// G10: verify SHA-256 hashes for this chunk if enabled.
 		if opts != nil && opts.VerifyHashes {
@@ -904,9 +972,9 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 
 		// Pace requests to avoid triggering the DC's rate limiter.
 		if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
-			select {
-			case <-ctx.Done():
-				return totalWritten, ctx.Err()
+		select {
+		case <-ctx.Done():
+			return totalWritten, context.Cause(ctx)
 			case <-time.After(delay):
 			}
 		}

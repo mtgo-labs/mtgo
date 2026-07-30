@@ -316,6 +316,14 @@ type Download struct {
 	// default based on whether the download is cross-DC. Set to a negative
 	// value to disable pacing entirely.
 	RequestDelay time.Duration
+
+	// StallTimeout aborts the download if no data chunk is received within
+	// this duration. The timer resets on each successful chunk, so only
+	// genuine stalls (server hangs, repeated FLOOD_WAIT, -503 Timeout)
+	// trigger the abort. A value of 0 disables stall detection (default).
+	// Useful for bulk downloads where some files may be unavailable and
+	// would otherwise hang indefinitely.
+	StallTimeout time.Duration
 }
 
 // FileRefresher refreshes expired file references by re-fetching the source
