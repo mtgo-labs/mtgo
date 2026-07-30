@@ -182,6 +182,9 @@ type Client struct {
 	// Constructed when Config.MaxInFlightRPCs > 0.
 	overloadController *OverloadController
 	connMetrics        *connectionMetrics
+	// floodGate throttles connection attempts via sliding-window limits
+	// (ported from TDLib's FloodControlStrict / ConnectionCreator).
+	floodGate *connectionFloodGate
 
 	testStorage  storage.Storage
 	testSession  *session.Session
@@ -322,7 +325,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		})
 	}
 
-	client.initDeviceStorage()
+	client.floodGate = newConnectionFloodGate()
 	registerClient(client)
 
 	return client, nil

@@ -1144,11 +1144,21 @@ func (rm *reconnectManager) loop(ctx context.Context, immediate bool, done chan 
 		default:
 		}
 
-		if !rm.client.state.CanReconnect() {
+	if !rm.client.state.CanReconnect() {
+		return
+	}
+
+	// Flood-control the dial to avoid triggering server-side transport 429
+	// errors. The sliding-window limiter throttles bursts that the exponential
+	// backoff alone cannot prevent (e.g. multiple sessions reconnecting
+	// simultaneously after a network flap).
+	if fg := rm.client.floodGate; fg != nil {
+		if err := fg.wait(ctx); err != nil {
 			return
 		}
+	}
 
-		err := rm.client.reconnectOnce()
+	err := rm.client.reconnectOnce()
 		if err == nil {
 			if ctx.Err() != nil {
 				return
@@ -1196,6 +1206,12 @@ func (rm *reconnectManager) loop(ctx context.Context, immediate bool, done chan 
 				rm.client.signalReconnect()
 			})
 			return
+		}
+
+		// Record transport 429 errors in the MTProto error limiter so
+		// subsequent connection attempts are additionally throttled.
+		if fg := rm.client.floodGate; fg != nil && transport.IsTransportError(err, transport.ErrCodeFlood) {
+			fg.recordMtprotoError()
 		}
 
 		rm.client.Log.Warnf("reconnect attempt %d failed: %v", attempt, err)

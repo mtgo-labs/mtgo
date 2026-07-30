@@ -241,7 +241,7 @@ func TestReconnectManagerPreventDuplicates(t *testing.T) {
 
 func TestReconnectManagerMaxAttempts(t *testing.T) {
 	client, _ := NewClient(12345, "hash", &Config{InMemory: true})
-	client.state.SetConnecting(2)
+	client.floodGate = nil // disable flood throttle for rapid reconnect test
 	client.state.SetConnected()
 
 	cfg := backoffConfig{
