@@ -157,9 +157,9 @@ type Client struct {
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
 
-	dcSessions *dcSessions
+	dcSessions   *dcSessions
 	uploadPoolMu sync.Mutex
-	uploadPool  *uploadSessionPool
+	uploadPool   *uploadSessionPool
 
 	// dcOptionPool manages candidate endpoints per DC with health scoring.
 	// Ported from td/td/telegram/net/DcOptionsSet.h.
@@ -369,6 +369,9 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.PasswordFunc != nil {
 		c.PasswordFunc = src.PasswordFunc
 	}
+	if src.RecaptchaSolver != nil {
+		c.RecaptchaSolver = src.RecaptchaSolver
+	}
 	if src.WorkDir != "" {
 		c.WorkDir = src.WorkDir
 	}
@@ -447,7 +450,7 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.FetchStickers {
 		c.FetchStickers = true
 	}
-	if src.Device.DeviceModel != "" || src.Device.AppVersion != "" {
+	if src.Device.DeviceModel != "" || src.Device.AppVersion != "" || src.Device.PackageID != "" {
 		if src.Device.DeviceModel != "" {
 			c.Device.DeviceModel = src.Device.DeviceModel
 		}
@@ -471,6 +474,9 @@ func (c *Config) mergeConfig(src *Config) {
 		}
 		if src.Device.ClientPlatform != "" {
 			c.Device.ClientPlatform = src.Device.ClientPlatform
+		}
+		if src.Device.PackageID != "" {
+			c.Device.PackageID = src.Device.PackageID
 		}
 	}
 	// Deprecated top-level fields override Device for backwards compat.

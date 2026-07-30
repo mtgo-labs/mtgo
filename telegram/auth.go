@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -15,6 +16,12 @@ import (
 type signOutContextKey struct{}
 
 var errExplicitSignOut = errors.New("telegram: explicit sign out")
+
+// RecaptchaSolver obtains a token for a Telegram RECAPTCHA_CHECK challenge.
+// Implementations may use a native SDK, browser, or external solving service.
+type RecaptchaSolver interface {
+	SolveRecaptcha(ctx context.Context, packageID, action, key string) (string, error)
+}
 
 // SendCodeResult holds the outcome of an auth code request sent to a phone number.
 // Use the PhoneCodeHash when calling SignIn or SignUp to correlate the code with
@@ -68,15 +75,43 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 	}
 	c.Log.Debug("auth: SendCode")
 	rpc := c.Raw()
-	result, err := rpc.AuthSendCode(ctx, &tg.AuthSendCodeRequest{
+	cfg := c.config()
+	req := &tg.AuthSendCodeRequest{
 		PhoneNumber: phoneNumber,
-		APIID:       c.cfg.APIID,
-		APIHash:     c.cfg.APIHash,
+		APIID:       cfg.APIID,
+		APIHash:     cfg.APIHash,
 		Settings:    &tg.CodeSettings{},
-	})
+	}
+	result, err := rpc.AuthSendCode(ctx, req)
 	if err != nil {
-		c.Log.Errorf("auth: SendCode failed: %v", err)
-		return nil, err
+		action, key, challenge := parseRecaptchaChallenge(err)
+		solver := cfg.RecaptchaSolver
+		if challenge && solver != nil {
+			token, solveErr := solver.SolveRecaptcha(ctx, cfg.Device.PackageID, action, key)
+			if solveErr != nil {
+				return nil, fmt.Errorf("solve recaptcha: %w", solveErr)
+			}
+			token = strings.TrimSpace(token)
+			if token == "" {
+				return nil, fmt.Errorf("solve recaptcha: empty token")
+			}
+
+			wrapped, retryErr := rpc.InvokeWithReCaptcha(ctx, &tg.InvokeWithReCaptchaRequest{
+				Token: token,
+				Query: req,
+			})
+			if retryErr != nil {
+				return nil, fmt.Errorf("send code with recaptcha: %w", retryErr)
+			}
+			var ok bool
+			result, ok = wrapped.(tg.SentCodeClass)
+			if !ok {
+				return nil, fmt.Errorf("unexpected recaptcha send code result type %T", wrapped)
+			}
+		} else {
+			c.Log.Errorf("auth: SendCode failed: %v", err)
+			return nil, err
+		}
 	}
 	switch v := result.(type) {
 	case *tg.AuthSentCode:
@@ -96,6 +131,25 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 	default:
 		return nil, fmt.Errorf("unexpected send code result type %T", result)
 	}
+}
+
+func parseRecaptchaChallenge(err error) (action, key string, ok bool) {
+	message := err.Error()
+	if rpcErr, matched := tgerr.As(err); matched {
+		message = rpcErr.Message
+	}
+
+	const prefix = "RECAPTCHA_CHECK_"
+	start := strings.Index(message, prefix)
+	if start < 0 {
+		return "", "", false
+	}
+	payload := message[start+len(prefix):]
+	action, key, ok = strings.Cut(payload, "__")
+	if !ok || action == "" || key == "" {
+		return "", "", false
+	}
+	return action, key, true
 }
 
 // SignIn authenticates a user with the phone number, verification code, and the

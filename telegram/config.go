@@ -96,6 +96,9 @@ type DeviceConfig struct {
 	TZOffset int
 	// ClientPlatform identifies the simulated platform.
 	ClientPlatform types.ClientPlatform
+	// PackageID is the Android package, Apple bundle, or desktop application
+	// identifier used by platform-integrated authorization challenges.
+	PackageID string
 }
 
 // TransportMode selects the MTProto TCP framing mode for direct TCP connections.
@@ -183,6 +186,9 @@ type Config struct {
 	// the account has two-factor authentication enabled. If nil,
 	// TerminalPasswordFunc (stdin prompt) is used.
 	PasswordFunc PasswordFunc
+	// RecaptchaSolver automatically handles RECAPTCHA_CHECK challenges raised
+	// by auth.sendCode. If nil, the original Telegram RPC error is returned.
+	RecaptchaSolver RecaptchaSolver
 	// WorkDir is the filesystem directory where session files are stored.
 	// Defaults to the current working directory when empty.
 	WorkDir string
@@ -554,6 +560,7 @@ func DeviceTDesktopWindows() DeviceConfig {
 		LangCode:       "en",
 		SystemLangCode: "en-US",
 		ClientPlatform: types.ClientPlatformDesktop,
+		PackageID:      "org.telegram.desktop",
 	}
 }
 

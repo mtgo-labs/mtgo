@@ -3,6 +3,7 @@ package telegram
 import (
 	"testing"
 
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -16,6 +17,8 @@ func TestWrapInitConnection(t *testing.T) {
 			SystemLangCode: "en",
 			LangPack:       "android",
 			LangCode:       "en",
+			ClientPlatform: types.ClientPlatformAndroid,
+			PackageID:      "org.telegram.messenger",
 		},
 	}
 	query := &tg.PingRequest{PingID: 42}
@@ -52,6 +55,17 @@ func TestWrapInitConnection(t *testing.T) {
 	}
 	if init.LangCode != cfg.Device.LangCode {
 		t.Errorf("LangCode = %q, want %q", init.LangCode, cfg.Device.LangCode)
+	}
+	params, ok := init.Params.(*tg.JSONObject)
+	if !ok || len(params.Value) != 1 {
+		t.Fatalf("Params = %#v, want one package_id entry", init.Params)
+	}
+	if params.Value[0].Key != "package_id" {
+		t.Errorf("Params key = %q, want %q", params.Value[0].Key, "package_id")
+	}
+	value, ok := params.Value[0].Value.(*tg.JSONString)
+	if !ok || value.Value != cfg.Device.PackageID {
+		t.Errorf("Params value = %#v, want %q", params.Value[0].Value, cfg.Device.PackageID)
 	}
 	if init.Query != query {
 		t.Errorf("Query = %p, want %p", init.Query, query)

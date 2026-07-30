@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -212,6 +213,18 @@ func prepareAPIQuery(cfg Config, initialized bool, input tg.TLObject) (tg.TLObje
 }
 
 func wrapInitConnection(cfg Config, input tg.TLObject) tg.TLObject {
+	var params tg.JSONValueClass
+	if cfg.Device.PackageID != "" {
+		key := "package_id"
+		if cfg.Device.ClientPlatform == types.ClientPlatformIOS {
+			key = "bundle_id"
+		}
+		params = &tg.JSONObject{Value: []*tg.JSONObjectValue{{
+			Key:   key,
+			Value: &tg.JSONString{Value: cfg.Device.PackageID},
+		}}}
+	}
+
 	return &tg.InvokeWithLayerRequest{
 		Layer: tg.Layer,
 		Query: &tg.InitConnectionRequest{
@@ -222,6 +235,7 @@ func wrapInitConnection(cfg Config, input tg.TLObject) tg.TLObject {
 			SystemLangCode: cfg.Device.SystemLangCode,
 			LangPack:       cfg.Device.LangPack,
 			LangCode:       cfg.Device.LangCode,
+			Params:         params,
 			Query:          input,
 		},
 	}
