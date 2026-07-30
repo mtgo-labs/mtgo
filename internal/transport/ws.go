@@ -138,6 +138,7 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 		if err != nil {
 			return nil, fmt.Errorf("ws: tls dial: %w", err)
 		}
+		_ = SetTCPNoDelay(conn, true)
 		return conn, nil
 	}
 
@@ -146,6 +147,7 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	_ = SetTCPNoDelay(conn, true)
 	return conn, nil
 }
 

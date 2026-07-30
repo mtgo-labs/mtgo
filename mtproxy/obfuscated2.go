@@ -117,6 +117,13 @@ func DialSecret(addr string, secret Secret, dcID int, timeout time.Duration) (ne
 		return nil, fmt.Errorf("mtproxy: dial %s: %w", addr, err)
 	}
 
+	// Disable Nagle on the raw TCP connection before wrapping it in
+	// fake-TLS / obfuscated2 layers. The wrappers don't expose the
+	// underlying *net.TCPConn, so set it here.
+	if tcp, ok := conn.(*net.TCPConn); ok {
+		_ = tcp.SetNoDelay(true)
+	}
+
 	return Handshake(conn, secret, dcID)
 }
 

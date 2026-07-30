@@ -39,6 +39,9 @@ type httpWaitInnerTransport interface {
 }
 
 func newSessionTransport(t transport.Transport, conn net.Conn) *sessionTransport {
+	if conn != nil {
+		_ = transport.SetTCPNoDelay(conn, true)
+	}
 	return &sessionTransport{transport: t, conn: conn}
 }
 
