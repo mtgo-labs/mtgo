@@ -189,6 +189,10 @@ type Session struct {
 	rttEWMA     atomic.Int64
 	rttVariance atomic.Int64
 	lastPong    atomic.Int64
+	// lastActivityTime is updated on every inbound message, enabling
+	// adaptive read-timeout detection of dead connections for active
+	// sessions without waiting for the full ping cycle.
+	lastActivityTime atomic.Int64
 	onRTT       func(time.Duration, time.Duration)
 	// ackCh is a channel consumed by ackLoop to batch and send message
 	// acknowledgments.
@@ -526,6 +530,15 @@ func NewSession(dc DataCenter, st storage.Storage, deviceModel, appVersion, syst
 	}
 
 	s.writeBreakerThreshold.Store(10)
+
+	// Server salt validity windows (validSince/validUntil) are server
+	// timestamps. Compare them against server-adjusted time, not wall
+	// clock, so clock skew doesn't cause premature or delayed salt
+	// rotation.
+	s.saltMgr.SetNowFunc(func() time.Time {
+		offset := time.Duration(s.msgFactory.ServerTimeOffset()) * time.Second
+		return time.Now().Add(offset)
+	})
 
 	if len(authKey) > 0 {
 		s.authKeyID = computeAuthKeyID(authKey)
@@ -1745,11 +1758,6 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 		}
 	}()
 
-	readTimeout := s.pingInterval * 2
-	if readTimeout < 30*time.Second {
-		readTimeout = 30 * time.Second
-	}
-
 	var handlers sync.WaitGroup
 	defer handlers.Wait()
 
@@ -1764,10 +1772,10 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 		tp := s.transport
 		authKey := s.authKey
 		authKeyID := s.authKeyID
-		updateFn := s.onUpdate
-		s.mu.RUnlock()
+	updateFn := s.onUpdate
+	s.mu.RUnlock()
 
-		tp.SetReadDeadline(time.Now().Add(readTimeout))
+	tp.SetReadDeadline(time.Now().Add(s.adaptiveReadTimeout()))
 		data, err := tp.Recv()
 		if err != nil {
 			select {
@@ -1820,6 +1828,7 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 		// correction (tdlib's check_packet pattern). Cheap lock-free CAS; only
 		// ever moves the offset forward, so it cannot perturb msg_id ordering.
 		s.msgFactory.AdvanceServerTime(time.Unix(raw.MsgID>>32, 0))
+		s.lastActivityTime.Store(time.Now().UnixNano())
 
 		if requiresAck(raw.SeqNo) {
 			s.addAck(raw.MsgID)
@@ -1978,6 +1987,42 @@ func (s *Session) adaptivePongTimeout() time.Duration {
 	adaptive := rtt + 4*variation
 	adaptive = max(adaptive, time.Second)
 	return max(adaptive, configured)
+}
+
+// isActive reports whether the session has outstanding RPC calls that are
+// waiting for server responses. When true, the read deadline is tightened
+// so dead connections are detected much faster than the fixed idle timeout.
+func (s *Session) isActive() bool {
+	return s.pending.Count() > 0
+}
+
+// adaptiveReadTimeout returns the read deadline for the next Recv call.
+//
+// When the session is idle (no pending RPCs), the timeout is generous
+// (pingInterval * 2, min 30s) because the server may send nothing for long
+// stretches and the ping cycle keeps the connection alive.
+//
+// When the session is active (has pending RPCs), the timeout is RTT-based
+// with a 15s floor: if no data at all arrives within this window while we
+// are expecting responses, the connection is almost certainly dead. This
+// ports the liveness model from TDLib's SessionConnection: active timeouts
+// scale with RTT so the connection dies quickly under half-open failures
+// instead of waiting the full pingInterval * 2.
+func (s *Session) adaptiveReadTimeout() time.Duration {
+	idle := s.pingInterval * 2
+	if idle < 30*time.Second {
+		idle = 30 * time.Second
+	}
+	if !s.isActive() {
+		return idle
+	}
+	rtt := time.Duration(s.rttEWMA.Load())
+	if rtt <= 0 {
+		return idle
+	}
+	variation := time.Duration(s.rttVariance.Load())
+	active := max(rtt*4+4*variation, 15*time.Second)
+	return min(active, idle)
 }
 
 // handlePong signals the pong channel for the given pingID.

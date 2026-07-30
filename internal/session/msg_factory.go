@@ -49,3 +49,11 @@ func (f *MsgFactory) UpdateServerTime(t time.Time) {
 func (f *MsgFactory) AdvanceServerTime(t time.Time) {
 	f.msgIDGen.AdvanceOffset(t)
 }
+
+// ServerTimeOffset returns the current server-time offset in seconds
+// (server_time - local_time). Callers that need to compare server-provided
+// timestamps (e.g. salt validity windows) against the current time should add
+// this offset to time.Now() rather than using wall clock directly.
+func (f *MsgFactory) ServerTimeOffset() int64 {
+	return f.msgIDGen.timeOffset.Load()
+}

@@ -66,6 +66,17 @@ func newSaltManager(now nowFunc) *saltManager {
 	return sm
 }
 
+// SetNowFunc replaces the time source used for salt validity comparisons.
+// The default is time.Now (wall clock); callers that track a server-time
+// offset should install a function that returns server-adjusted time so
+// salt validity windows (which are server timestamps) are compared against
+// the correct reference.
+func (m *saltManager) SetNowFunc(now nowFunc) {
+	m.mu.Lock()
+	m.now = now
+	m.mu.Unlock()
+}
+
 func (m *saltManager) notifyWaitersLocked() {
 	close(m.notify)
 	m.notify = make(chan struct{})
