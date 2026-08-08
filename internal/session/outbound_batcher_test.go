@@ -233,7 +233,7 @@ func TestBatcher_ResendsChildAsEncryptedMessage(t *testing.T) {
 
 	var resendReq bytes.Buffer
 	tg.WriteVectorLong(&resendReq, []int64{msgID1})
-	s.handleRawMsgResendReq(resendReq.Bytes())
+	s.handleRawMsgResendReq(5000, resendReq.Bytes())
 
 	select {
 	case payload := <-mt.sendCh:

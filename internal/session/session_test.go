@@ -269,18 +269,35 @@ func TestSessionRawMsgResendReqNacksTrackedContainer(t *testing.T) {
 
 	var body bytes.Buffer
 	tg.WriteVectorLong(&body, []int64{1001})
-	s.handleRawMsgResendReq(body.Bytes())
+	s.handleRawMsgResendReq(5000, body.Bytes())
 
+	// The tracked container must be cleaned up (NACKed).
 	if got := s.containerTracker.AckContainer(1001); len(got) != 0 {
 		t.Fatalf("AckContainer() after raw resend req = %v, want empty", got)
 	}
+	// Per the MTProto spec, an un-resendable msg_resend_req must NOT be acked
+	// (the server does not ack its own outbound msg_ids); the client replies
+	// with msgs_state_info instead. So ackCh must be empty.
 	select {
 	case got := <-s.ackCh:
-		if got != 1001 {
-			t.Fatalf("ackCh got %d, want 1001", got)
-		}
+		t.Fatalf("ackCh got %d, want no ack for un-resendable msg_resend_req", got)
 	default:
-		t.Fatal("ackCh missing resend request ack")
+	}
+}
+
+func TestSessionRawMsgResendReqDoesNotAckUnknown(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	s.ackCh = make(chan int64, 1024)
+
+	var body bytes.Buffer
+	// 9999 is neither tracked nor a known pending msg_id.
+	tg.WriteVectorLong(&body, []int64{9999})
+	s.handleRawMsgResendReq(5001, body.Bytes())
+
+	select {
+	case got := <-s.ackCh:
+		t.Fatalf("ackCh got %d for unknown msg_id; expected no ack", got)
+	default:
 	}
 }
 

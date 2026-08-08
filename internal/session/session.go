@@ -2386,7 +2386,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 	case tg.MsgsStateInfoTypeID:
 		s.handleRawMsgsStateInfo(body[4:])
 	case tg.MsgResendReqTypeID:
-		s.handleRawMsgResendReq(body[4:])
+		s.handleRawMsgResendReq(msgID, body[4:])
 	case tg.MsgsAllInfoTypeID:
 		s.handleRawMsgsAllInfo(body[4:])
 	default:
@@ -2608,7 +2608,7 @@ func (s *Session) handleRawMsgsStateReq(msgID int64, body []byte) {
 	})
 }
 
-func (s *Session) handleRawMsgResendReq(body []byte) {
+func (s *Session) handleRawMsgResendReq(reqMsgID int64, body []byte) {
 	if len(body) < 8 {
 		return
 	}
@@ -2617,6 +2617,12 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 	if err != nil {
 		return
 	}
+	// Per the MTProto spec, msg_resend_req carries the IDs of messages
+	// previously sent by this client. For each we re-send the original
+	// payload; if a message has been forgotten (or the resend failed), the
+	// spec mandates replying with msgs_state_info — treating the request as a
+	// msgs_state_req — NOT acking our own msg_id.
+	var unknown []int64
 	for _, id := range msgIDs {
 		// Try to re-send the original encrypted payload.
 		if payload := s.pending.GetPayload(id); payload != nil {
@@ -2639,10 +2645,28 @@ func (s *Session) handleRawMsgResendReq(body []byte) {
 				s.log.Warnf("msg_resend_req: failed to resend msg_id=%d: %v", id, err)
 			}
 		}
-		// Payload not available — nack and ack as fallback.
+		// Payload not available — clean up any tracked container and record
+		// the id so we report its state below. Acking our own outbound msg_id
+		// here is wrong: the server does not ack itself, and it skips the
+		// msgs_state_info response the spec requires for forgotten messages.
 		s.containerTracker.NackContainer(id)
-		s.addAck(id)
+		unknown = append(unknown, id)
 	}
+	if len(unknown) == 0 {
+		return
+	}
+	info := make([]byte, len(unknown))
+	for i := range unknown {
+		if s.pending.Has(unknown[i]) {
+			info[i] = 0x80 | 0x04
+		} else {
+			info[i] = 0x01
+		}
+	}
+	s.sendServiceMessage(&tg.MsgsStateInfo{
+		ReqMsgID: reqMsgID,
+		Info:     string(info),
+	})
 }
 
 func isTimeoutError(err error) bool {
