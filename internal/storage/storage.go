@@ -464,11 +464,17 @@ func (a *adapterWrapper) SessionID() (string, error) {
 }
 
 func (a *adapterWrapper) SetSessionID(v string) error {
+	// SetSessionName must run under a.mu so the whole SetSessionName → load →
+	// save sequence is atomic. Calling it before the lock (as it was) let two
+	// concurrent SetSessionID calls interleave: one goroutine's SetSessionName
+	// could land between another's load and save, corrupting cross-session
+	// state. memoryAdapter.SetSessionName takes its own mutex, so nesting here
+	// does not deadlock.
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if sa, ok := a.ext.(SessionIDAware); ok {
 		sa.SetSessionName(v)
 	}
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	a.sess = nil
 	if err := a.load(); err != nil {
 		return fmt.Errorf("load after SetSessionName: %w", err)

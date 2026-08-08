@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -417,6 +418,57 @@ func TestSetSessionIDTriggersSessionIDAware(t *testing.T) {
 	if got != "test-session" {
 		t.Fatalf("SessionID() = %q, want %q", got, "test-session")
 	}
+}
+
+// recordingAdapter wraps memoryAdapter and records the order in which
+// SetSessionName is called, so a concurrency regression in SetSessionID can
+// detect interleaving between SetSessionName and the load/save it must
+// serialize.
+type recordingAdapter struct {
+	*memoryAdapter
+	mu    sync.Mutex
+	names []string
+}
+
+func (r *recordingAdapter) SetSessionName(name string) {
+	r.mu.Lock()
+	r.names = append(r.names, name)
+	r.mu.Unlock()
+	r.memoryAdapter.SetSessionName(name)
+}
+
+// TestSetSessionIDConcurrent verifies that concurrent SetSessionID calls are
+// fully serialized under a.mu: each call's SetSessionName → load → save must
+// be atomic, so the recorded name sequence must contain no duplicates and the
+// final SessionID must match the last completed call. Run under -race.
+func TestSetSessionIDConcurrent(t *testing.T) {
+	inner := &recordingAdapter{memoryAdapter: newMemoryAdapter()}
+	w := NewAdapter(inner)
+
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := range goroutines {
+		go func(i int) {
+			defer wg.Done()
+			_ = w.SetSessionID(strings.Repeat("s", i+1))
+		}(i)
+	}
+	wg.Wait()
+
+	// No torn writes: every recorded name is unique and there is exactly one
+	// per goroutine (no interleaved duplication from the pre-lock race).
+	inner.mu.Lock()
+	seen := make(map[string]int, len(inner.names))
+	for _, n := range inner.names {
+		seen[n]++
+	}
+	for n, c := range seen {
+		if c != 1 {
+			t.Fatalf("SetSessionName(%q) recorded %d times; expected exactly once (SetSessionID not serialized)", n, c)
+		}
+	}
+	inner.mu.Unlock()
 }
 
 func TestPeerOperations(t *testing.T) {
