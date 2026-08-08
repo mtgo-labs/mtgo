@@ -371,14 +371,6 @@ func (s *Session) HealthSnapshot() SessionHealthSnapshot {
 	return snapshot
 }
 
-func (s *Session) SetSaltRefreshRatio(r float64) {
-	s.saltMgr.SetRefreshRatio(r)
-}
-
-func (s *Session) SetSaltRefreshMin(d time.Duration) {
-	s.saltMgr.SetRefreshMin(d)
-}
-
 func (s *Session) SetLogger(l sessionLogger) {
 	s.mu.Lock()
 	s.log = l
