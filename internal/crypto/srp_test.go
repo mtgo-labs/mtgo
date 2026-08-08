@@ -58,14 +58,9 @@ func TestXorBytes(t *testing.T) {
 }
 
 func TestComputeSRP(t *testing.T) {
-	p := fromHex("C150023E2F70DB7985DED064759CFECF0AF328E69A41DAF4D6F01B538135A6F9" +
-		"1F8F8B2A0EC9BA9720CE352EFCF6C5680FFC424BD634864902DE0B4BD6D49F4E" +
-		"580230E3AE97D95C8B19442B3C0A10D8F5633FECEDD6926A7F6DAB0DDB7D457F" +
-		"9EA81B8465FCD6FFFEED114011DF91C059CAEDAF97625F6C96ECC74725556934" +
-		"EF781D866B34F011FCE4D835A090196E9A5F0E4449AF7EB697DDB9076494CA5F" +
-		"81104A305B6DD27665722C46B60E5DF680FB16B210607EF217652E60236C255F" +
-		"6A28315F4083A96791D7214BF64C1DF4FD0DB1944FB26A2A57031B32EEE64AD1" +
-		"5A8BA68885CDE74A5BFC920F6ABF59BA5C75506373E7130F9042DA922179251F")
+	// GetDHPrime is a verified 2048-bit safe prime; the SRP prime has the
+	// same structure. The previous inline fixture was not actually prime.
+	p := GetDHPrime()
 	g := big.NewInt(3)
 	salt1 := make([]byte, 32)
 	salt2 := make([]byte, 32)
@@ -96,14 +91,7 @@ func TestComputeSRP(t *testing.T) {
 }
 
 func TestComputeSRPDeterministic(t *testing.T) {
-	p := fromHex("C150023E2F70DB7985DED064759CFECF0AF328E69A41DAF4D6F01B538135A6F9" +
-		"1F8F8B2A0EC9BA9720CE352EFCF6C5680FFC424BD634864902DE0B4BD6D49F4E" +
-		"580230E3AE97D95C8B19442B3C0A10D8F5633FECEDD6926A7F6DAB0DDB7D457F" +
-		"9EA81B8465FCD6FFFEED114011DF91C059CAEDAF97625F6C96ECC74725556934" +
-		"EF781D866B34F011FCE4D835A090196E9A5F0E4449AF7EB697DDB9076494CA5F" +
-		"81104A305B6DD27665722C46B60E5DF680FB16B210607EF217652E60236C255F" +
-		"6A28315F4083A96791D7214BF64C1DF4FD0DB1944FB26A2A57031B32EEE64AD1" +
-		"5A8BA68885CDE74A5BFC920F6ABF59BA5C75506373E7130F9042DA922179251F")
+	p := GetDHPrime()
 	g := big.NewInt(3)
 	salt1 := make([]byte, 32)
 	salt2 := make([]byte, 32)
@@ -122,12 +110,48 @@ func TestComputeSRPDeterministic(t *testing.T) {
 	}
 }
 
-func fromHex(s string) *big.Int {
-	n, ok := new(big.Int).SetString(s, 16)
-	if !ok {
-		panic("invalid hex")
+// canonicalSRPPrime is a verified 2048-bit safe prime (the same structure the
+// Telegram SRP spec requires). Reused from the DH-exchange prime constant.
+var canonicalSRPPrime = GetDHPrime()
+
+func TestComputeSRPRejectsInvalidPrime(t *testing.T) {
+	g := big.NewInt(3)
+	salt1 := make([]byte, 32)
+	salt2 := make([]byte, 32)
+	srpB := pad256Big(new(big.Int).Exp(g, big.NewInt(12345), canonicalSRPPrime))
+
+	// A small composite is neither 2048-bit nor prime: must fail closed.
+	badP := big.NewInt(15)
+	if _, err := ComputeSRP(salt1, salt2, g, badP, srpB, 1, "password"); err == nil {
+		t.Fatal("ComputeSRP accepted a small composite prime; expected error")
 	}
-	return n
+
+	// A 2048-bit composite (canonical prime + 2) must also be rejected.
+	tampered := new(big.Int).Add(canonicalSRPPrime, big.NewInt(2))
+	if _, err := ComputeSRP(salt1, salt2, g, tampered, srpB, 1, "password"); err == nil {
+		t.Fatal("ComputeSRP accepted a non-prime 2048-bit value; expected error")
+	}
+}
+
+func TestComputeSRPRejectsInvalidGenerator(t *testing.T) {
+	salt1 := make([]byte, 32)
+	salt2 := make([]byte, 32)
+	srpB := pad256Big(new(big.Int).Exp(big.NewInt(3), big.NewInt(12345), canonicalSRPPrime))
+
+	for _, badG := range []int64{0, 1, 8, 100} {
+		if _, err := ComputeSRP(salt1, salt2, big.NewInt(badG), canonicalSRPPrime, srpB, 1, "password"); err == nil {
+			t.Fatalf("ComputeSRP accepted generator g=%d; expected error (must be in [2,7])", badG)
+		}
+	}
+}
+
+func TestValidateSRPPrime(t *testing.T) {
+	if !ValidateSRPPrime(canonicalSRPPrime) {
+		t.Fatal("ValidateSRPPrime rejected the canonical Telegram SRP prime")
+	}
+	if ValidateSRPPrime(big.NewInt(15)) {
+		t.Fatal("ValidateSRPPrime accepted a small composite")
+	}
 }
 
 func pad256Big(n *big.Int) []byte {
