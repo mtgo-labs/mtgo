@@ -127,14 +127,20 @@ func dialWebsocketTCP(ctx context.Context, addr string) (net.Conn, error) {
 	addrHost := net.JoinHostPort(host, port)
 
 	if u.Scheme == "wss" {
-		dialer := &net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
+		// Use tls.Dialer.DialContext so ctx governs both the TCP connect and the
+		// TLS handshake; tls.DialWithDialer ignores ctx and can block for up to
+		// the dialer's Timeout even after the session is closed.
+		d := &tls.Dialer{
+			NetDialer: &net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			},
+			Config: &tls.Config{
+				ServerName: host,
+				MinVersion: tls.VersionTLS12,
+			},
 		}
-		conn, err := tls.DialWithDialer(dialer, "tcp", addrHost, &tls.Config{
-			ServerName: host,
-			MinVersion: tls.VersionTLS12,
-		})
+		conn, err := d.DialContext(ctx, "tcp", addrHost)
 		if err != nil {
 			return nil, fmt.Errorf("ws: tls dial: %w", err)
 		}
