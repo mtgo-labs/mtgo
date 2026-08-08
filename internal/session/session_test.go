@@ -1174,6 +1174,98 @@ func TestSessionInvokeRawRetriesShortRPCResult(t *testing.T) {
 	}
 }
 
+// TestSessionInvokeRawBackoffCancellable verifies that cancelling the caller's
+// context during the retry backoff aborts InvokeRaw promptly, rather than
+// blocking for the full backoff duration.
+func TestSessionInvokeRawBackoffCancellable(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	resultCh := make(chan struct {
+		data []byte
+		err  error
+	}, 1)
+	go func() {
+		// retries=2 so a backoff is scheduled before the second attempt; a short
+		// timeout makes the first attempt fail fast and set backoff=100ms.
+		data, err := s.InvokeRaw(ctx, &tg.PingRequest{PingID: 123}, 2, 50*time.Millisecond)
+		resultCh <- struct {
+			data []byte
+			err  error
+		}{data, err}
+	}()
+
+	// Wait for the first attempt to be sent, then cancel during the backoff.
+	<-mt.sendCh
+	cancel()
+	start := time.Now()
+
+	select {
+	case result := <-resultCh:
+		elapsed := time.Since(start)
+		if result.err == nil {
+			t.Fatal("InvokeRaw() expected error after ctx cancel, got nil")
+		}
+		// The error must reflect cancellation, not a timeout/exhaustion.
+		if !errors.Is(result.err, context.Canceled) {
+			t.Fatalf("InvokeRaw() error = %v, want context.Canceled", result.err)
+		}
+		// The initial backoff is 100ms; with an uninterruptible time.Sleep the
+		// call would block ~100ms before re-checking ctx. A cancellable select
+		// returns near-instantly. Allow slack for scheduling but stay well under.
+		if elapsed > 50*time.Millisecond {
+			t.Fatalf("InvokeRaw() took %v to return after cancel; backoff not interruptible", elapsed)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("InvokeRaw() did not return promptly after ctx cancel (backoff not interruptible)")
+	}
+}
+
+// TestSessionInvokeBackoffCancellable is the Invoke counterpart.
+func TestSessionInvokeBackoffCancellable(t *testing.T) {
+	s := newSessionWithAuthKey(t)
+	mt := newMockTransport()
+	s.SetTransport(mt)
+
+	cleanup := startTestWorkers(s, mt)
+	defer cleanup()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	resultCh := make(chan struct {
+		obj tg.TLObject
+		err error
+	}, 1)
+	go func() {
+		obj, err := s.Invoke(ctx, &tg.PingRequest{PingID: 123}, 2, 50*time.Millisecond)
+		resultCh <- struct {
+			obj tg.TLObject
+			err error
+		}{obj, err}
+	}()
+
+	<-mt.sendCh
+	cancel()
+	start := time.Now()
+
+	select {
+	case result := <-resultCh:
+		elapsed := time.Since(start)
+		if !errors.Is(result.err, context.Canceled) {
+			t.Fatalf("Invoke() error = %v, want context.Canceled", result.err)
+		}
+		if elapsed > 50*time.Millisecond {
+			t.Fatalf("Invoke() took %v to return after cancel; backoff not interruptible", elapsed)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Invoke() did not return promptly after ctx cancel (backoff not interruptible)")
+	}
+}
+
 func TestRequestStopSynchronouslyClosesAndDetachesTransport(t *testing.T) {
 	s := newSessionWithAuthKey(t)
 	tp := newCloseGateTransport()

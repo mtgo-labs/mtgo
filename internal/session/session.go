@@ -1071,7 +1071,13 @@ func (s *Session) InvokeRaw(ctx context.Context, query tg.TLObject, retries int,
 	var backoff time.Duration
 	for i := 0; i < retries; i++ {
 		if i > 0 {
-			time.Sleep(backoff)
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-s.done:
+				return nil, ErrSessionClosed
+			case <-time.After(backoff):
+			}
 		}
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
@@ -1185,7 +1191,13 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 	g12Retries := 0 // G12: bound additional error-recovery retries
 	for i := 0; i < maxAttempts; i++ {
 		if i > 0 {
-			time.Sleep(backoff)
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-s.done:
+				return nil, ErrSessionClosed
+			case <-time.After(backoff):
+			}
 		}
 		msgID := s.msgFactory.AllocateMsgID()
 		seqNo := s.msgFactory.AllocateSeqNo(true)
