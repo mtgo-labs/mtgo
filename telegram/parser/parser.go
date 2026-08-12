@@ -1,12 +1,18 @@
-// Package parser converts Telegram HTML and Markdown markup into plain text
+// Package parser converts Telegram HTML and MarkdownV2 markup into plain text
 // accompanied by MessageEntity slices suitable for the MTProto API.
 //
 // Two parsers are provided:
 //
-//   - HTMLParser  — handles <b>, <i>, <u>, <s>, <code>, <pre>, <a href>, <tg-spoiler>,
-//     <blockquote>, and custom <emoji> tags.
-//   - MarkdownParser — handles **bold**, __italic__, ~~strike~~, `code`, ```pre```,
-//     ||spoiler||, and [text](url) links.
+//   - HTMLParser  — handles <b>, <strong>, <i>, <em>, <u>, <ins>, <s>, <strike>,
+//     <del>, <code>, <pre language="…">, <a href="…">, <tg-spoiler>, <spoiler>,
+//     <span class="tg-spoiler">, <blockquote collapsed/expandable>,
+//     <tg-emoji emoji-id="…">, and <emoji emoji-id="…"> tags. Dangerous URL
+//     protocols (javascript:, data:, vbscript:, file:) are rejected.
+//     mailto: links produce MessageEntityEmail.
+//   - MarkdownParser — handles **bold**, __underline__ (MarkdownV2), *italic*,
+//     _italic_, ~~strikethrough~~, ||spoiler||, `code`, ```pre```,
+//     [text](url) links, > blockquote / >>> expandable blockquote,
+//     and backslash escape sequences.
 //
 // Both parsers normalise Unicode and validate entity boundaries against UTF-8
 // rune positions required by the Telegram API.
