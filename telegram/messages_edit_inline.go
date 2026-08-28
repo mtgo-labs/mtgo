@@ -44,7 +44,10 @@ func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBot
 		Entities:    opt.Entities,
 	}
 
-	rpc := c.Raw()
+	rpc, err := c.inlineEditRPC(ctx, inlineMessageID)
+	if err != nil {
+		return false, err
+	}
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
 		return false, err
@@ -78,7 +81,10 @@ func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.Input
 		ReplyMarkup: opt.ReplyMarkup,
 	}
 
-	rpc := c.Raw()
+	rpc, err := c.inlineEditRPC(ctx, inlineMessageID)
+	if err != nil {
+		return false, err
+	}
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
 		return false, err
@@ -113,7 +119,10 @@ func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBo
 		ReplyMarkup: opt.ReplyMarkup,
 	}
 
-	rpc := c.Raw()
+	rpc, err := c.inlineEditRPC(ctx, inlineMessageID)
+	if err != nil {
+		return false, err
+	}
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
 		return false, err
@@ -139,7 +148,10 @@ func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.I
 		ReplyMarkup: replyMarkup,
 	}
 
-	rpc := c.Raw()
+	rpc, err := c.inlineEditRPC(ctx, inlineMessageID)
+	if err != nil {
+		return false, err
+	}
 	result, err := rpc.MessagesEditInlineBotMessage(ctx, req)
 	if err != nil {
 		return false, err
@@ -169,4 +181,30 @@ func getEditInlineOpts(opts ...*EditInlineOpts) *EditInlineOpts {
 		return &EditInlineOpts{}
 	}
 	return opts[0]
+}
+
+// inlineMessageDC extracts the origin DC encoded in an inline message ID.
+// Telegram requires messages.editInlineBotMessage to be invoked on that DC:
+// edits sent to any other DC fail with MESSAGE_ID_INVALID instead of a 303
+// migration error, so the routing cannot be recovered reactively.
+func inlineMessageDC(inlineMessageID tg.InputBotInlineMessageIDClass) (int32, bool) {
+	switch id := inlineMessageID.(type) {
+	case *tg.InputBotInlineMessageID:
+		return id.DCID, true
+	case *tg.InputBotInlineMessageID64:
+		return id.DCID, true
+	default:
+		return 0, false
+	}
+}
+
+// inlineEditRPC returns the RPC client for the DC hosting the inline message.
+// Foreign-DC edits use an auxiliary authorized session; same-DC edits (or IDs
+// without a usable DC) use the main invoker.
+func (c *Client) inlineEditRPC(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass) (*tg.RPCClient, error) {
+	dcID, ok := inlineMessageDC(inlineMessageID)
+	if !ok || dcID <= 0 {
+		return c.Raw(), nil
+	}
+	return c.dcRPC(ctx, int(dcID))
 }
