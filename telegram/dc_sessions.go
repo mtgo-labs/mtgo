@@ -746,9 +746,7 @@ func (c *Client) createDCSession(
 	var exportResult *tg.AuthExportedAuthorization
 	err = retryFloodWait(ctx, func() error {
 		var exportErr error
-		exportResult, exportErr = c.Raw().AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
-			DCID: int32(dcID),
-		})
+		exportResult, exportErr = c.exportAuthDirect(ctx, dcID)
 		return exportErr
 	})
 	if err != nil {
@@ -772,6 +770,32 @@ func (c *Client) createDCSession(
 	c.Log.Infof("Auth transfer complete for DC %d", dcID)
 
 	return entry, nil
+}
+
+// exportAuthDirect invokes auth.exportAuthorization on the home DC session
+// directly, bypassing the invoker middleware chain. Auxiliary-DC session
+// creation runs inside 303 migration handling; routing the export through
+// user middlewares there re-enters the chain mid-call and can deadlock
+// serializing middlewares (cf. gotd/td#1842).
+func (c *Client) exportAuthDirect(ctx context.Context, dcID int) (*tg.AuthExportedAuthorization, error) {
+	c.mu.RLock()
+	sess := c.session
+	c.mu.RUnlock()
+	if sess == nil {
+		return nil, ErrNotConnected
+	}
+	obj, err := sess.Invoke(ctx, &tg.AuthExportAuthorizationRequest{DCID: int32(dcID)}, c.invokeRetries(), c.invokeTimeout(ctx))
+	if err != nil {
+		return nil, err
+	}
+	if rpcErr, ok := obj.(*tg.RPCError); ok {
+		return nil, tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+	}
+	result, ok := obj.(*tg.AuthExportedAuthorization)
+	if !ok {
+		return nil, fmt.Errorf("export auth: unexpected result type %T", obj)
+	}
+	return result, nil
 }
 
 type dcSessionInvoker struct {
