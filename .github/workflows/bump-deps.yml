@@ -79,7 +79,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "1.26.5"
+          # Track the latest 1.26.x instead of a fixed patch: each downstream
+          # repo declares its own minimum Go version, and a pinned patch
+          # (e.g. 1.26.5) fails to build repos that require a newer one.
+          go-version: "1.26.x"
           cache: false # multi-module repos break the cache key
 
       - name: Bump mtgo dependency
