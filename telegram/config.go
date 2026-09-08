@@ -156,6 +156,10 @@ type Config struct {
 	// session-converter). The client decodes it internally during
 	// initialization; errors are returned from Connect/Start.
 	//
+	// The native MTGO1 format (MTGO1.<payload>) is self-contained: it also
+	// carries the API hash and phone number, so APIID/APIHash need not be
+	// passed alongside it.
+	//
 	// Set this field directly with the session string. Use the tgconv CLI
 	// or the session-converter Go package to convert between formats:
 	//

@@ -25,6 +25,6 @@ require (
 )
 
 require (
-	github.com/mtgo-labs/session-converter v0.5.0
+	github.com/mtgo-labs/session-converter v0.6.0
 	golang.org/x/sys v0.47.0 // indirect
 )

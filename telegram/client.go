@@ -408,15 +408,15 @@ func (c *Config) mergeConfig(src *Config) {
 	if src.ReqTimeout != 0 {
 		c.ReqTimeout = src.ReqTimeout
 	}
-		if src.Retries != 0 {
-			c.Retries = src.Retries
-		}
-		if src.RetryInterval != 0 {
-			c.RetryInterval = src.RetryInterval
-		}
-		if src.MaxConcurrentTrans != 0 {
-			c.MaxConcurrentTrans = src.MaxConcurrentTrans
-		}
+	if src.Retries != 0 {
+		c.Retries = src.Retries
+	}
+	if src.RetryInterval != 0 {
+		c.RetryInterval = src.RetryInterval
+	}
+	if src.MaxConcurrentTrans != 0 {
+		c.MaxConcurrentTrans = src.MaxConcurrentTrans
+	}
 	if src.DispatchWorkers != 0 {
 		c.DispatchWorkers = src.DispatchWorkers
 	}
@@ -1401,7 +1401,7 @@ func (c *Client) connectTransportLocked(timeout time.Duration) (retErr error) {
 	}
 
 	dc := sess.DC()
-	
+
 	// Flood-gate the initial connection just like the reconnect loop does
 	// (reconnect.go:1155). Without this, a burst of Connect() calls across
 	// many clients can trigger server-side transport 429 / connection drops
@@ -1553,6 +1553,14 @@ func (c *Client) importSessionString(st storage.Storage) error {
 	}
 	if err := st.SetAPIID(c.config().APIID); err != nil {
 		return fmt.Errorf("telegram: import session api_id: %w", err)
+	}
+	// The native MTGO1 format is self-contained: it also carries the API
+	// hash and phone number, so credentials need not be passed twice.
+	if c.config().APIHash == "" && src.APIHash != "" {
+		c.updateConfig(func(cfg *Config) { cfg.APIHash = src.APIHash })
+	}
+	if c.config().PhoneNumber == "" && src.PhoneNumber != "" {
+		c.updateConfig(func(cfg *Config) { cfg.PhoneNumber = src.PhoneNumber })
 	}
 	if src.UserID != 0 {
 		if err := st.SetUserID(src.UserID); err != nil {
@@ -3943,15 +3951,66 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 }
 
 // ExportSessionString exports the current session as an encoded string that can be stored
-// and later passed to WithSessionString to resume the session.
+// and later passed to Config.SessionString to resume the session.
 //
-// Returns ErrNotConnected if the client has no active storage.
+// The output uses the native mtgo MTGO1 format (MTGO1.<payload>) whenever the
+// session carries the fields it requires (API hash and user ID), making the
+// string fully self-contained. When those fields are missing — for example
+// right after connecting, before the account is loaded — it falls back to the
+// legacy Pyrogram string so export never fails on partial state.
+//
+// Returns ("", nil) when the session has no auth key yet (not authorized),
+// and ErrNotConnected if the client has no active storage.
 func (c *Client) ExportSessionString() (string, error) {
 	c.mu.RLock()
 	st := c.storage
 	c.mu.RUnlock()
 	if st == nil {
 		return "", ErrNotConnected
+	}
+	authKey, err := st.AuthKey()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session auth key: %w", err)
+	}
+	if len(authKey) == 0 {
+		return "", nil
+	}
+	apiID, err := st.APIID()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session api_id: %w", err)
+	}
+	dcID, err := st.DCID()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session dc_id: %w", err)
+	}
+	userID, err := st.UserID()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session user_id: %w", err)
+	}
+	isBot, err := st.IsBot()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session is_bot: %w", err)
+	}
+	apiHash, err := st.APIHash()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session api_hash: %w", err)
+	}
+	testMode, err := st.TestMode()
+	if err != nil {
+		return "", fmt.Errorf("telegram: export session test_mode: %w", err)
+	}
+	s := &tgconv.Session{
+		DCID:        dcID,
+		AuthKey:     authKey,
+		AppID:       apiID,
+		TestMode:    testMode,
+		UserID:      userID,
+		IsBot:       isBot,
+		APIHash:     apiHash,
+		PhoneNumber: c.config().PhoneNumber,
+	}
+	if encoded, encodeErr := tgconv.EncodeSession(s); encodeErr == nil {
+		return encoded, nil
 	}
 	return st.ExportSessionString()
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // export_session connects to Telegram and prints the session string
-// that can be used with Config.SessionString or the session-converter package.
+// (native MTGO1 format) that can be used with Config.SessionString.
 //
 // Required environment variables:
 //   - API_ID:     your Telegram API ID
