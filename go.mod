@@ -3,7 +3,7 @@ module github.com/mtgo-labs/mtgo
 go 1.26.2
 
 require (
-	github.com/klauspost/compress v1.19.2
+	github.com/klauspost/compress v1.20.0
 	github.com/mtgo-labs/storage v0.5.0
 	golang.org/x/crypto v0.55.0
 	golang.org/x/sync v0.22.0
