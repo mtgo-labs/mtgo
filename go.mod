@@ -5,9 +5,9 @@ go 1.26.2
 require (
 	github.com/klauspost/compress v1.20.0
 	github.com/mtgo-labs/storage v0.5.0
-	golang.org/x/crypto v0.55.0
-	golang.org/x/sync v0.22.0
-	golang.org/x/term v0.45.0
+	golang.org/x/crypto v0.57.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/term v0.46.0
 )
 
 require (
@@ -26,5 +26,5 @@ require (
 
 require (
 	github.com/mtgo-labs/session-converter v0.6.0
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
