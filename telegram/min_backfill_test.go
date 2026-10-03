@@ -21,7 +21,7 @@ func TestCachePeersMinChannelDoesNotOverwriteFullHash(t *testing.T) {
 	c := newMinBackfillClient(t)
 
 	fullHash := int64(9048563865316545949)
-	c.cachePeersFromUpdates(nil, []tg.ChatClass{
+	c.peersManager().Ingest(nil, []tg.ChatClass{
 		&tg.Channel{ID: 100, AccessHash: fullHash},
 	})
 
@@ -34,7 +34,7 @@ func TestCachePeersMinChannelDoesNotOverwriteFullHash(t *testing.T) {
 	}
 
 	minHash := int64(1111)
-	c.cachePeersFromUpdates(nil, []tg.ChatClass{
+	c.peersManager().Ingest(nil, []tg.ChatClass{
 		&tg.Channel{ID: 100, AccessHash: minHash, Min: true},
 	})
 
@@ -51,7 +51,7 @@ func TestCachePeersMinUserDoesNotOverwriteFullHash(t *testing.T) {
 	c := newMinBackfillClient(t)
 
 	fullHash := int64(555555)
-	c.cachePeersFromUpdates([]tg.UserClass{
+	c.peersManager().Ingest([]tg.UserClass{
 		&tg.User{ID: 50, AccessHash: fullHash},
 	}, nil)
 
@@ -64,7 +64,7 @@ func TestCachePeersMinUserDoesNotOverwriteFullHash(t *testing.T) {
 	}
 
 	minHash := int64(222)
-	c.cachePeersFromUpdates([]tg.UserClass{
+	c.peersManager().Ingest([]tg.UserClass{
 		&tg.User{ID: 50, AccessHash: minHash, Min: true},
 	}, nil)
 
@@ -81,7 +81,7 @@ func TestBackfillMinAccessHashesChannel(t *testing.T) {
 	c := newMinBackfillClient(t)
 
 	fullHash := int64(9048563865316545949)
-	c.cachePeersFromUpdates(nil, []tg.ChatClass{
+	c.peersManager().Ingest(nil, []tg.ChatClass{
 		&tg.Channel{ID: 200, AccessHash: fullHash},
 	})
 
@@ -116,7 +116,7 @@ func TestBackfillMinAccessHashesUser(t *testing.T) {
 	c := newMinBackfillClient(t)
 
 	fullHash := int64(555555)
-	c.cachePeersFromUpdates([]tg.UserClass{
+	c.peersManager().Ingest([]tg.UserClass{
 		&tg.User{ID: 60, AccessHash: fullHash},
 	}, nil)
 

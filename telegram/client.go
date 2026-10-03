@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
-	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/mtproxy"
@@ -34,6 +33,7 @@ import (
 
 	tgconv "github.com/mtgo-labs/session-converter"
 
+	"github.com/mtgo-labs/mtgo/telegram/peers"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
@@ -120,12 +120,8 @@ type Client struct {
 	connectedHooks      []ConnectedHook
 	reconnectHooks      []ReconnectHook
 
-	peerCache          map[int64]tg.InputPeerClass
-	peerCacheMu        sync.RWMutex
-	usernameCache      map[string]int64
-	peerCacheOrder     []int64
-	usernameCacheOrder []string
-	resolveCoalescer   resolveCoalescer
+	peerMgr     *peers.Manager
+	peerMgrOnce sync.Once
 
 	stopCh      chan struct{}
 	connChanged chan struct{} // closed on reconnect, wakes waitForConnect waiters
@@ -279,10 +275,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		state:             newConnectionState(),
 		sessions:          make(map[sessionKey]*session.Session),
 		dialer:            dialer,
-		peerCache:         make(map[int64]tg.InputPeerClass),
-		usernameCache:     make(map[string]int64),
 		dedup:             newDedupCache(),
-		resolveCoalescer:  resolveCoalescer{inFlight: make(map[string][]chan resolveResult)},
 		handlerDispatcher: NewHandlerDispatcher(),
 		connChanged:       make(chan struct{}),
 		dcSessions:        newDCSessions(),
@@ -1394,7 +1387,7 @@ func (c *Client) connectTransportLocked(timeout time.Duration) (retErr error) {
 	if err := c.importSessionString(st); err != nil {
 		return err
 	}
-	c.loadPeersFromStorage()
+	c.peersManager().LoadFromStore()
 
 	sess, err := c.initSession(st, testSession)
 	if err != nil {
@@ -3176,7 +3169,7 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 	c.mu.RUnlock()
 
 	parsedUsers, parsedChats, rawUpdates := c.flattenUpdates(updates)
-	c.cachePeersFromUpdates(parsedUsers, parsedChats)
+	c.peersManager().Ingest(parsedUsers, parsedChats)
 	userMap := buildUserMap(parsedUsers)
 	chatMap := buildChatMap(parsedChats)
 	pm := types.NewPeerMapFromClasses(parsedUsers, parsedChats)
@@ -3532,330 +3525,6 @@ func userClassesFromPeerMap(pm *types.PeerMap) map[int64]tg.UserClass {
 	return users
 }
 
-// ResolvePeer resolves a ChatRef (ID, username, or InputPeer) into an InputPeerClass
-// suitable for use in API calls.
-//
-// Returns ErrNotConnected if the client is not connected, or ErrPeerNotFound if the
-// peer cannot be resolved.
-//
-// Example:
-//
-//		ctx := context.Background()
-//		peer, err := client.ResolvePeer(ctx, "@durov")
-//		if err != nil {
-//		    log.Fatal(err)
-//	}
-//
-//	fmt.Println(peer)
-func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass, error) {
-	if err := c.ensureConnectedContext(ctx); err != nil {
-		return nil, err
-	}
-	var (
-		peer tg.InputPeerClass
-		err  error
-	)
-	switch p := peerID.(type) {
-	case tg.InputPeerClass:
-		peer = p
-	case int64:
-		peer, err = c.resolveNumericPeer(ctx, p)
-	case int:
-		peer, err = c.resolveNumericPeer(ctx, int64(p))
-	case string:
-		peer, err = ChatRefFrom(p).resolve(ctx, c)
-	case ChatRef:
-		peer, err = p.resolve(ctx, c)
-	default:
-		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrPeerNotFound, peerID)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if c.IsBot() {
-		return c.resolveBotPeerAccessHash(ctx, peer)
-	}
-	return peer, nil
-}
-
-func (c *Client) resolveNumericPeer(ctx context.Context, id int64) (tg.InputPeerClass, error) {
-	peer, err := ChatID(id).resolve(ctx, c)
-	if err == nil && hasAccessHash(peer) {
-		return peer, nil
-	}
-	if c.IsBot() {
-		return c.resolveNumericPeerForBot(ctx, id)
-	}
-	return c.resolveNumericPeerForAccount(ctx, id)
-}
-
-// hasAccessHash returns false when peer is a channel or user with a zero
-// access hash. Such peers (typically cached from min entities) are unusable
-// for API calls like channels.getFullChannel and must be re-resolved.
-func hasAccessHash(peer tg.InputPeerClass) bool {
-	switch p := peer.(type) {
-	case *tg.InputPeerChannel:
-		return p.AccessHash != 0
-	case *tg.InputPeerUser:
-		return p.AccessHash != 0
-	default:
-		return true
-	}
-}
-
-func (c *Client) resolveNumericPeerForBot(ctx context.Context, id int64) (tg.InputPeerClass, error) {
-	if peer, ok := inputPeerFromBareChatID(id); ok {
-		return peer, nil
-	}
-	if raw, ok := peerid.UnmarkChannel(id); ok {
-		peer, err := c.resolveBotPeerAccessHash(ctx, &tg.InputPeerChannel{ChannelID: raw})
-		if err != nil {
-			return nil, fmt.Errorf("could not resolve chat: %w", err)
-		}
-		return peer, nil
-	}
-	if id > 0 {
-		peer, err := c.resolveBotPeerAccessHash(ctx, &tg.InputPeerUser{UserID: id})
-		if err != nil {
-			return nil, fmt.Errorf("could not resolve chat: %w", err)
-		}
-		return peer, nil
-	}
-	return nil, fmt.Errorf("could not resolve chat: %w", ErrPeerNotFound)
-}
-
-func (c *Client) resolveBotPeerAccessHash(ctx context.Context, peer tg.InputPeerClass) (tg.InputPeerClass, error) {
-	switch p := peer.(type) {
-	case *tg.InputPeerUser:
-		if p.AccessHash != 0 {
-			return peer, nil
-		}
-		return c.resolveBotUserAccessHash(ctx, p.UserID)
-	case *tg.InputPeerChannel:
-		if p.AccessHash != 0 {
-			return peer, nil
-		}
-		return c.resolveBotChannelAccessHash(ctx, p.ChannelID)
-	default:
-		return peer, nil
-	}
-}
-
-func (c *Client) resolveBotUserAccessHash(ctx context.Context, userID int64) (tg.InputPeerClass, error) {
-	rpc := c.Raw()
-	result, err := rpc.UsersGetUsers(ctx, &tg.UsersGetUsersRequest{
-		ID: []tg.InputUserClass{
-			&tg.InputUser{UserID: userID, AccessHash: 0},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: get user %d: %w", ErrPeerNotFound, userID, err)
-	}
-	users := usersFromUsersGetUsers(result)
-	c.cachePeersFromUpdates(users, nil)
-	for _, u := range users {
-		user, ok := u.(*tg.User)
-		if ok && user.ID == userID && user.AccessHash != 0 {
-			peer := &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash}
-			c.CachePeer(user.ID, peer)
-			return peer, nil
-		}
-	}
-	return nil, ErrPeerNotFound
-}
-
-func (c *Client) resolveBotChannelAccessHash(ctx context.Context, channelID int64) (tg.InputPeerClass, error) {
-	rpc := c.Raw()
-	result, err := rpc.ChannelsGetChannels(ctx, &tg.ChannelsGetChannelsRequest{
-		ID: []tg.InputChannelClass{
-			&tg.InputChannel{ChannelID: channelID, AccessHash: 0},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: get channel %d: %w", ErrPeerNotFound, channelID, err)
-	}
-	chats := chatsFromChatsClass(result)
-	c.cachePeersFromUpdates(nil, chats)
-	for _, ch := range chats {
-		channel, ok := ch.(*tg.Channel)
-		if ok && channel.ID == channelID && channel.AccessHash != 0 {
-			peer := &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash}
-			c.CachePeer(channel.ID, peer)
-			return peer, nil
-		}
-	}
-	return nil, ErrPeerNotFound
-}
-
-func (c *Client) resolveNumericPeerForAccount(ctx context.Context, id int64) (tg.InputPeerClass, error) {
-	if peer, ok := inputPeerFromBareChatID(id); ok {
-		return peer, nil
-	}
-	if preloadErr := c.preloadDialogPeer(ctx, id); preloadErr != nil && !errors.Is(preloadErr, ErrPeerNotFound) {
-		return nil, preloadErr
-	}
-	peer, err := ChatID(id).resolve(ctx, c)
-	if err != nil {
-		return nil, err
-	}
-	// If dialog preload couldn't find a full hash, try username resolution
-	// as a last resort before returning a zero-hash peer.
-	if !hasAccessHash(peer) {
-		if resolved, err := c.resolvePeerByUsername(ctx, id); err == nil {
-			return resolved, nil
-		}
-	}
-	return peer, nil
-}
-
-// resolvePeerByUsername attempts to resolve a peer via its cached username
-// when the access hash is unknown (min entity). This is the fallback path
-// after dialog preload fails to find the peer.
-func (c *Client) resolvePeerByUsername(ctx context.Context, id int64) (tg.InputPeerClass, error) {
-	username := c.lookupUsername(id)
-	if username == "" {
-		return nil, ErrPeerNotFound
-	}
-	return c.ResolveUsername(ctx, username)
-}
-
-func (c *Client) lookupUsername(peerID int64) string {
-	c.peerCacheMu.RLock()
-	defer c.peerCacheMu.RUnlock()
-	for username, id := range c.usernameCache {
-		if id == peerID {
-			return username
-		}
-	}
-	return ""
-}
-
-func inputPeerFromBareChatID(id int64) (tg.InputPeerClass, bool) {
-	if id < 0 {
-		if _, ok := peerid.UnmarkChannel(id); !ok {
-			return &tg.InputPeerChat{ChatID: -id}, true
-		}
-	}
-	return nil, false
-}
-
-func (c *Client) preloadDialogPeer(ctx context.Context, id int64) error {
-	const (
-		dialogPageLimit = 100
-		maxDialogPages  = 20
-	)
-
-	rpc := c.Raw()
-	offsetPeer := tg.InputPeerClass(&tg.InputPeerEmpty{})
-	var offsetDate int32
-	var offsetID int32
-
-	for page := 0; page < maxDialogPages; page++ {
-		result, err := rpc.MessagesGetDialogs(ctx, &tg.MessagesGetDialogsRequest{
-			OffsetDate: offsetDate,
-			OffsetID:   offsetID,
-			OffsetPeer: offsetPeer,
-			Limit:      dialogPageLimit,
-		})
-		if err != nil {
-			return err
-		}
-
-		dialogs, messages, users, chats, ok := unpackDialogs(result)
-		if !ok {
-			return ErrPeerNotFound
-		}
-
-		c.cachePeersFromUpdates(users, chats)
-		if _, err := c.ResolvePeerCache(id); err == nil {
-			return nil
-		}
-		if len(dialogs) == 0 {
-			break
-		}
-
-		nextPeer, nextID, nextDate, ok := c.nextDialogOffset(dialogs, messages)
-		if !ok {
-			break
-		}
-		offsetPeer = nextPeer
-		offsetID = nextID
-		offsetDate = nextDate
-	}
-
-	return ErrPeerNotFound
-}
-
-func unpackDialogs(result tg.DialogsClass) ([]tg.DialogClass, []tg.MessageClass, []tg.UserClass, []tg.ChatClass, bool) {
-	switch v := result.(type) {
-	case *tg.MessagesDialogs:
-		return v.Dialogs, v.Messages, v.Users, v.Chats, true
-	case *tg.MessagesDialogsSlice:
-		return v.Dialogs, v.Messages, v.Users, v.Chats, true
-	case *tg.MessagesDialogsNotModified:
-		return nil, nil, nil, nil, false
-	default:
-		return nil, nil, nil, nil, false
-	}
-}
-
-func chatsFromChatsClass(result tg.ChatsClass) []tg.ChatClass {
-	switch v := result.(type) {
-	case *tg.MessagesChats:
-		return v.Chats
-	case *tg.MessagesChatsSlice:
-		return v.Chats
-	default:
-		return nil
-	}
-}
-
-func usersFromUsersGetUsers(result tg.TLObject) []tg.UserClass {
-	vector, ok := result.(*tg.GenericVector)
-	if !ok {
-		return nil
-	}
-	users := make([]tg.UserClass, 0, len(vector.Items))
-	for _, item := range vector.Items {
-		if user, ok := item.(tg.UserClass); ok {
-			users = append(users, user)
-		}
-	}
-	return users
-}
-
-func (c *Client) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.MessageClass) (tg.InputPeerClass, int32, int32, bool) {
-	last, ok := dialogs[len(dialogs)-1].(*tg.Dialog)
-	if !ok || last.Peer == nil {
-		return nil, 0, 0, false
-	}
-	peerID, ok := peerid.RawFromPeer(last.Peer)
-	if !ok {
-		return nil, 0, 0, false
-	}
-	peer, err := c.ResolvePeerCache(peerID)
-	if err != nil {
-		return nil, 0, 0, false
-	}
-	return peer, last.TopMessage, messageDate(messages, last.TopMessage), true
-}
-
-func messageDate(messages []tg.MessageClass, id int32) int32 {
-	for _, msg := range messages {
-		switch m := msg.(type) {
-		case *tg.Message:
-			if m.ID == id {
-				return m.Date
-			}
-		case *tg.MessageService:
-			if m.ID == id {
-				return m.Date
-			}
-		}
-	}
-	return 0
-}
-
 // GetSession returns or creates a session for the specified data center. When
 // dcID matches the main session's DC, ordinary and media requests use the main
 // session; CDN requests remain isolated because they require CDN auth handling.
@@ -4153,238 +3822,11 @@ func (c *Client) SetBotToken(token string) {
 	c.updateConfig(func(cfg *Config) { cfg.BotToken = token })
 }
 
-// ResolvePeerCache looks up a previously cached InputPeer by its numeric ID.
-// Returns the cached peer or ErrPeerNotFound if not present.
-func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
-	c.peerCacheMu.RLock()
-	for _, lookupID := range peerLookupIDs(id) {
-		if p, ok := c.peerCache[lookupID]; ok {
-			c.peerCacheMu.RUnlock()
-			return p, nil
-		}
-	}
-	c.peerCacheMu.RUnlock()
-
-	if c.config().SavePeers {
-		if ps := c.peerStore(); ps != nil {
-			for _, lookupID := range peerLookupIDs(id) {
-				p, err := ps.GetPeer(lookupID)
-				if err != nil || p == nil {
-					continue
-				}
-				var peer tg.InputPeerClass
-				switch p.Type {
-				case storage.PeerTypeUser:
-					peer = &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}
-				case storage.PeerTypeChat:
-					peer = &tg.InputPeerChat{ChatID: p.ID}
-				case storage.PeerTypeChannel:
-					channelID := p.ID
-					if raw, ok := peerid.UnmarkChannel(channelID); ok {
-						channelID = raw
-					}
-					peer = &tg.InputPeerChannel{ChannelID: channelID, AccessHash: p.AccessHash}
-				default:
-					return nil, ErrPeerNotFound
-				}
-				c.CachePeer(lookupID, peer)
-				if p.Username != "" {
-					c.cacheUsername(p.Username, p.ID)
-				}
-				return peer, nil
-			}
-		}
-	}
-	return nil, ErrPeerNotFound
-}
-
-func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
-	id = canonicalPeerID(id, peer)
-	c.peerCacheMu.Lock()
-	defer c.peerCacheMu.Unlock()
-
-	// Don't let a zero-hash min entity overwrite a known full hash.
-	if existing, ok := c.peerCache[id]; ok {
-		peer = preserveAccessHash(existing, peer)
-	}
-
-	if _, exists := c.peerCache[id]; !exists {
-		c.peerCacheOrder = append(c.peerCacheOrder, id)
-	}
-	c.peerCache[id] = peer
-	c.evictOldestPeerLocked()
-
-	if c.config().SavePeers {
-		if ps := c.peerStore(); ps != nil {
-			entry := &storage.Peer{ID: id}
-			switch p := peer.(type) {
-			case *tg.InputPeerUser:
-				entry.Type = storage.PeerTypeUser
-				entry.AccessHash = p.AccessHash
-			case *tg.InputPeerChat:
-				entry.Type = storage.PeerTypeChat
-			case *tg.InputPeerChannel:
-				entry.Type = storage.PeerTypeChannel
-				entry.ID = p.ChannelID
-				entry.AccessHash = p.AccessHash
-			default:
-				return
-			}
-			_ = ps.SavePeer(entry)
-		}
-	}
-}
-
-// preserveAccessHash copies a non-zero access hash from the existing cached
-// peer when the incoming peer has a zero hash. This prevents min entities
-// (which carry no usable access hash) from poisoning a previously-good cache
-// entry. The storage backend already merges correctly via mergePeer; this
-// brings the in-memory cache to the same guarantee.
-func preserveAccessHash(existing, incoming tg.InputPeerClass) tg.InputPeerClass {
-	switch e := existing.(type) {
-	case *tg.InputPeerChannel:
-		if c, ok := incoming.(*tg.InputPeerChannel); ok && c.AccessHash == 0 && e.AccessHash != 0 {
-			return &tg.InputPeerChannel{ChannelID: c.ChannelID, AccessHash: e.AccessHash}
-		}
-	case *tg.InputPeerUser:
-		if u, ok := incoming.(*tg.InputPeerUser); ok && u.AccessHash == 0 && e.AccessHash != 0 {
-			return &tg.InputPeerUser{UserID: u.UserID, AccessHash: e.AccessHash}
-		}
-	}
-	return incoming
-}
-
-func peerLookupIDs(id int64) []int64 {
-	if raw, ok := peerid.UnmarkChannel(id); ok {
-		return []int64{raw, id}
-	}
-	return []int64{id}
-}
-
-func canonicalPeerID(id int64, peer tg.InputPeerClass) int64 {
-	if p, ok := peer.(*tg.InputPeerChannel); ok && p.ChannelID != 0 {
-		return p.ChannelID
-	}
-	if raw, ok := peerid.UnmarkChannel(id); ok {
-		return raw
-	}
-	return id
-}
-
-func (c *Client) evictOldestPeerLocked() {
-	limit := c.config().PeerCacheSize
-	if limit <= 0 || len(c.peerCache) <= limit {
-		return
-	}
-	for len(c.peerCache) > limit && len(c.peerCacheOrder) > 0 {
-		oldest := c.peerCacheOrder[0]
-		delete(c.peerCache, oldest)
-		if cachedID, ok := c.reverseUsernameCache(oldest); ok {
-			delete(c.usernameCache, cachedID)
-		}
-		copy(c.peerCacheOrder, c.peerCacheOrder[1:])
-		c.peerCacheOrder[len(c.peerCacheOrder)-1] = 0
-		c.peerCacheOrder = c.peerCacheOrder[:len(c.peerCacheOrder)-1]
-	}
-}
-
-func (c *Client) reverseUsernameCache(peerID int64) (string, bool) {
-	for username, id := range c.usernameCache {
-		if id == peerID {
-			return username, true
-		}
-	}
-	return "", false
-}
-
-func (c *Client) cacheUsername(username string, userID int64) {
-	c.peerCacheMu.Lock()
-	defer c.peerCacheMu.Unlock()
-	if _, exists := c.usernameCache[username]; !exists {
-		c.usernameCacheOrder = append(c.usernameCacheOrder, username)
-	}
-	c.usernameCache[username] = userID
-	limit := c.config().PeerCacheSize
-	if limit <= 0 || len(c.usernameCache) <= limit {
-		return
-	}
-	for len(c.usernameCache) > limit && len(c.usernameCacheOrder) > 0 {
-		oldest := c.usernameCacheOrder[0]
-		delete(c.usernameCache, oldest)
-		copy(c.usernameCacheOrder, c.usernameCacheOrder[1:])
-		c.usernameCacheOrder[len(c.usernameCacheOrder)-1] = ""
-		c.usernameCacheOrder = c.usernameCacheOrder[:len(c.usernameCacheOrder)-1]
-	}
-}
-
 func (c *Client) clientPeerResolver() PeerResolver {
 	if c.testResolver != nil {
 		return c.testResolver
 	}
 	return c
-}
-
-func (c *Client) cachePeersFromUpdates(users []tg.UserClass, chats []tg.ChatClass) {
-	var entries []*storage.Peer
-	for _, u := range users {
-		user, ok := u.(*tg.User)
-		if !ok || user.AccessHash == 0 {
-			continue
-		}
-		hash := user.AccessHash
-		if user.Min {
-			hash = 0
-		}
-		c.CachePeer(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: hash})
-		username := user.Username
-		if username != "" {
-			c.cacheUsername(username, user.ID)
-		}
-		entries = append(entries, &storage.Peer{
-			ID:          user.ID,
-			Type:        storage.PeerTypeUser,
-			AccessHash:  hash,
-			Username:    username,
-			FirstName:   user.FirstName,
-			LastName:    user.LastName,
-			PhoneNumber: user.Phone,
-			IsBot:       user.Bot,
-			Language:    user.LangCode,
-		})
-	}
-	for _, ch := range chats {
-		switch v := ch.(type) {
-		case *tg.Chat:
-			c.CachePeer(v.ID, &tg.InputPeerChat{ChatID: v.ID})
-			entries = append(entries, &storage.Peer{
-				ID:   v.ID,
-				Type: storage.PeerTypeChat,
-			})
-		case *tg.Channel:
-			accessHash := v.AccessHash
-			if v.Min {
-				accessHash = 0
-			}
-			c.CachePeer(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: accessHash})
-			username := v.Username
-			if username != "" {
-				c.cacheUsername(username, v.ID)
-			}
-			entries = append(entries, &storage.Peer{
-				ID:         v.ID,
-				Type:       storage.PeerTypeChannel,
-				AccessHash: accessHash,
-				Username:   username,
-			})
-		}
-	}
-	if c.config().SavePeers && len(entries) > 0 {
-		if ps := c.peerStore(); ps != nil {
-			for _, entry := range entries {
-				_ = ps.SavePeer(entry)
-			}
-		}
-	}
 }
 
 // backfillMinAccessHashes replaces a min entity's access hash with the known
@@ -4414,37 +3856,6 @@ func (c *Client) backfillMinAccessHashes(chatMap map[int64]*types.Chat, userMap 
 		}
 		if p, err := ps.GetPeer(u.ID); err == nil && p != nil && p.AccessHash != 0 && p.AccessHash != u.AccessHash {
 			u.AccessHash = p.AccessHash
-		}
-	}
-}
-
-func (c *Client) loadPeersFromStorage() {
-	if !c.config().SavePeers {
-		return
-	}
-	ps := c.peerStore()
-	if ps == nil {
-		return
-	}
-	peers, err := ps.LoadPeers()
-	if err != nil {
-		return
-	}
-	for _, p := range peers {
-		var peer tg.InputPeerClass
-		switch p.Type {
-		case storage.PeerTypeUser:
-			peer = &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}
-		case storage.PeerTypeChat:
-			peer = &tg.InputPeerChat{ChatID: p.ID}
-		case storage.PeerTypeChannel:
-			peer = &tg.InputPeerChannel{ChannelID: p.ID, AccessHash: p.AccessHash}
-		default:
-			continue
-		}
-		c.CachePeer(p.ID, peer)
-		if p.Username != "" {
-			c.cacheUsername(p.Username, p.ID)
 		}
 	}
 }

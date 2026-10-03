@@ -39,6 +39,11 @@ const (
 	PeerTypeChannel PeerType = extstorage.PeerTypeChannel
 )
 
+// MergePeer merges an incoming peer entry into an existing one, filling
+// empty fields from the existing record (aliased from the shared storage
+// module).
+var MergePeer = extstorage.MergePeer
+
 // UpdateState holds the client's update sequence numbers.
 type UpdateState struct {
 	SessionID string `json:"session_id"`

@@ -1,8 +1,11 @@
-package telegram
+package peers
 
 import "github.com/mtgo-labs/mtgo/internal/storage"
 
-type peerStore interface {
+// Store is the persistent peer storage contract used by the Manager. It is
+// satisfied by storage backends implementing storage.PeerStore; see
+// [StoreFrom] for adaptation.
+type Store interface {
 	SavePeer(*storage.Peer) error
 	GetPeer(id int64) (*storage.Peer, error)
 	GetPeerByUsername(username string) (*storage.Peer, error)
@@ -10,12 +13,16 @@ type peerStore interface {
 	DeletePeer(id int64) error
 }
 
+// legacyPeerCache is the pre-pointer storage contract (value-based
+// SavePeer); implemented by older storage backends.
 type legacyPeerCache interface {
 	SavePeer(storage.Peer) error
 	LoadPeers() ([]storage.Peer, error)
 	DeletePeer(id int64) error
 }
 
+// legacyPeerStore adapts a legacyPeerCache to the Store interface with
+// read-modify-write merging.
 type legacyPeerStore struct {
 	cache legacyPeerCache
 }
@@ -28,7 +35,7 @@ func (s legacyPeerStore) SavePeer(peer *storage.Peer) error {
 	if err != nil {
 		return err
 	}
-	return s.cache.SavePeer(*mergePeer(existing, peer))
+	return s.cache.SavePeer(*storage.MergePeer(existing, peer))
 }
 
 func (s legacyPeerStore) GetPeer(id int64) (*storage.Peer, error) {
@@ -74,57 +81,19 @@ func (s legacyPeerStore) DeletePeer(id int64) error {
 	return s.cache.DeletePeer(id)
 }
 
-func (c *Client) peerStore() peerStore {
-	if c.storage == nil {
+// StoreFrom adapts a storage backend to the Store contract. Backends
+// implementing storage.PeerStore are used directly; older value-based
+// backends are wrapped in a merging adapter; anything else (including nil)
+// yields nil, disabling persistence.
+func StoreFrom(s storage.Storage) Store {
+	if s == nil {
 		return nil
 	}
-	if ps, ok := c.storage.(storage.PeerStore); ok {
+	if ps, ok := s.(Store); ok {
 		return ps
 	}
-	if ps, ok := c.storage.(legacyPeerCache); ok {
+	if ps, ok := s.(legacyPeerCache); ok {
 		return legacyPeerStore{cache: ps}
 	}
 	return nil
-}
-
-func mergePeer(existing, incoming *storage.Peer) *storage.Peer {
-	if incoming == nil {
-		return existing
-	}
-	if existing == nil {
-		cp := *incoming
-		return &cp
-	}
-	merged := *incoming
-	if merged.AccessHash == 0 {
-		merged.AccessHash = existing.AccessHash
-	}
-	if merged.Username == "" {
-		merged.Username = existing.Username
-	}
-	if merged.Usernames == "" {
-		merged.Usernames = existing.Usernames
-	}
-	if merged.FirstName == "" {
-		merged.FirstName = existing.FirstName
-	}
-	if merged.LastName == "" {
-		merged.LastName = existing.LastName
-	}
-	if merged.PhoneNumber == "" {
-		merged.PhoneNumber = existing.PhoneNumber
-	}
-	if !merged.IsBot {
-		merged.IsBot = existing.IsBot
-	}
-	if merged.PhotoID == 0 {
-		merged.PhotoID = existing.PhotoID
-	}
-	if merged.Language == "" {
-		merged.Language = existing.Language
-	}
-	if merged.LastUpdated == 0 {
-		merged.LastUpdated = existing.LastUpdated
-	}
-	return &merged
 }

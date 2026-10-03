@@ -121,7 +121,7 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
 	} else if c.IsBot() {
-		peer, err = c.resolveBotPeerAccessHash(ctx, peer)
+		peer, err = c.peersManager().EnsureUsable(ctx, peer)
 		if err != nil {
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
@@ -571,7 +571,7 @@ func (c *Client) SendMedia(ctx context.Context, chatID int64, media tg.InputMedi
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
 	} else if c.IsBot() {
-		peer, err = c.resolveBotPeerAccessHash(ctx, peer)
+		peer, err = c.peersManager().EnsureUsable(ctx, peer)
 		if err != nil {
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}

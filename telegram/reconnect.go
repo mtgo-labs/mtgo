@@ -330,12 +330,7 @@ func (c *Client) finishMainAuthInvalidation(loss *authLossState) {
 		)
 	}
 
-	c.peerCacheMu.Lock()
-	c.peerCache = make(map[int64]tg.InputPeerClass)
-	c.usernameCache = make(map[string]int64)
-	c.peerCacheOrder = nil
-	c.usernameCacheOrder = nil
-	c.peerCacheMu.Unlock()
+	c.peersManager().Reset()
 	c.apiInit.Store(false)
 	c.sessionStringInvalidated.Store(true)
 	c.mainAuthKeyOrigin.Store(authKeyOriginUnknown)
@@ -1144,21 +1139,21 @@ func (rm *reconnectManager) loop(ctx context.Context, immediate bool, done chan 
 		default:
 		}
 
-	if !rm.client.state.CanReconnect() {
-		return
-	}
-
-	// Flood-control the dial to avoid triggering server-side transport 429
-	// errors. The sliding-window limiter throttles bursts that the exponential
-	// backoff alone cannot prevent (e.g. multiple sessions reconnecting
-	// simultaneously after a network flap).
-	if fg := rm.client.floodGate; fg != nil {
-		if err := fg.wait(ctx); err != nil {
+		if !rm.client.state.CanReconnect() {
 			return
 		}
-	}
 
-	err := rm.client.reconnectOnce()
+		// Flood-control the dial to avoid triggering server-side transport 429
+		// errors. The sliding-window limiter throttles bursts that the exponential
+		// backoff alone cannot prevent (e.g. multiple sessions reconnecting
+		// simultaneously after a network flap).
+		if fg := rm.client.floodGate; fg != nil {
+			if err := fg.wait(ctx); err != nil {
+				return
+			}
+		}
+
+		err := rm.client.reconnectOnce()
 		if err == nil {
 			if ctx.Err() != nil {
 				return

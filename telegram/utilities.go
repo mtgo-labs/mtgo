@@ -42,7 +42,7 @@ func (c *Client) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([
 		return nil, fmt.Errorf("unexpected dialogs type %T", result)
 	}
 
-	c.cachePeersFromUpdates(users, chats)
+	c.peersManager().Ingest(users, chats)
 
 	dialogs := make([]*types.Chat, 0, len(chats))
 	for _, chat := range chats {

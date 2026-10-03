@@ -170,9 +170,8 @@ func TestClientPeerResolver_Override(t *testing.T) {
 }
 
 func TestClientPeerResolver_FallbackToSelf(t *testing.T) {
-	c := &Client{peerCache: map[int64]tg.InputPeerClass{
-		10: &tg.InputPeerChat{ChatID: 10},
-	}}
+	c := &Client{}
+	c.peersManager().Cache(10, &tg.InputPeerChat{ChatID: 10})
 	resolver := c.clientPeerResolver()
 	peer, err := resolvePeer(resolver, 10)
 	if err != nil {

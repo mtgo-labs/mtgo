@@ -1,0 +1,403 @@
+package peers
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/mtgo-labs/mtgo/internal/peerid"
+	"github.com/mtgo-labs/mtgo/tg"
+)
+
+// InputPeerByUsername resolves a Telegram username (with or without the
+// leading "@") to an input peer. The local username cache is checked first;
+// on a miss, contacts.resolveUsername is invoked under a single-flight
+// coalescer and every entity in the response is cached.
+func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.InputPeerClass, error) {
+	username = strings.TrimPrefix(username, "@")
+	m.debugf("ResolveUsername @%s", username)
+
+	if p, ok := m.cachedByUsername(username); ok {
+		m.debugf("ResolveUsername cache hit @%s", username)
+		return p, nil
+	}
+
+	return m.coalesce("username:"+username, func() (tg.InputPeerClass, error) {
+		// Double-check cache inside the coalescer — another goroutine
+		// may have resolved it while we were waiting for the lock.
+		if p, ok := m.cachedByUsername(username); ok {
+			return p, nil
+		}
+
+		result, err := m.invoker().ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+			Username: username,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%w: resolve @%s: %w", ErrNotFound, username, err)
+		}
+		m.ingestResolved(result)
+		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
+		if err != nil {
+			return nil, fmt.Errorf("%w: @%s: %w", ErrNotFound, username, err)
+		}
+		return inputPeer, nil
+	})
+}
+
+// InputPeerByPhone resolves a phone number to an input peer. The number is
+// normalized automatically (leading "+" and "00" prefixes are stripped) and
+// contacts.resolvePhone is invoked under a single-flight coalescer.
+func (m *Manager) InputPeerByPhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
+	phone = normalizePhone(phone)
+	m.debugf("ResolvePhone")
+	return m.coalesce("phone:"+phone, func() (tg.InputPeerClass, error) {
+		result, err := m.invoker().ContactsResolvePhone(ctx, &tg.ContactsResolvePhoneRequest{
+			Phone: phone,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%w: resolve phone %s: %w", ErrNotFound, phone, err)
+		}
+		m.ingestResolved(result)
+		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
+		if err != nil {
+			return nil, fmt.Errorf("%w: phone %s: %w", ErrNotFound, phone, err)
+		}
+		return inputPeer, nil
+	})
+}
+
+// numericForBot resolves a numeric ID when authorized as a bot: bare
+// negated IDs become input chats directly, channels are fetched with a zero
+// hash via channels.getChannels, and users via users.getUsers.
+func (m *Manager) numericForBot(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	if peer, ok := inputPeerFromBareChatID(id); ok {
+		return peer, nil
+	}
+	if raw, ok := m.rawChannelID(id); ok {
+		result, err := m.invoker().ChannelsGetChannels(ctx, &tg.ChannelsGetChannelsRequest{
+			ID: []tg.InputChannelClass{
+				&tg.InputChannel{ChannelID: raw, AccessHash: 0},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, raw, err)
+		}
+		chats := chatsFromChatsClass(result)
+		m.Ingest(nil, chats)
+		for _, ch := range chats {
+			channel, ok := ch.(*tg.Channel)
+			if ok && channel.ID == raw && channel.AccessHash != 0 {
+				peer := &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash}
+				m.Cache(channel.ID, peer)
+				return peer, nil
+			}
+		}
+		return nil, ErrNotFound
+	}
+	if id > 0 {
+		peer, err := m.EnsureUsable(ctx, &tg.InputPeerUser{UserID: id})
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve chat: %w", err)
+		}
+		return peer, nil
+	}
+	return nil, fmt.Errorf("could not resolve chat: %w", ErrNotFound)
+}
+
+func (m *Manager) botUserAccessHash(ctx context.Context, userID int64) (tg.InputPeerClass, error) {
+	result, err := m.invoker().UsersGetUsers(ctx, &tg.UsersGetUsersRequest{
+		ID: []tg.InputUserClass{
+			&tg.InputUser{UserID: userID, AccessHash: 0},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: get user %d: %w", ErrNotFound, userID, err)
+	}
+	users := usersFromUsersGetUsers(result)
+	m.Ingest(users, nil)
+	for _, u := range users {
+		user, ok := u.(*tg.User)
+		if ok && user.ID == userID && user.AccessHash != 0 {
+			peer := &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash}
+			m.Cache(user.ID, peer)
+			return peer, nil
+		}
+	}
+	return nil, ErrNotFound
+}
+
+func (m *Manager) botChannelAccessHash(ctx context.Context, channelID int64) (tg.InputPeerClass, error) {
+	result, err := m.invoker().ChannelsGetChannels(ctx, &tg.ChannelsGetChannelsRequest{
+		ID: []tg.InputChannelClass{
+			&tg.InputChannel{ChannelID: channelID, AccessHash: 0},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, channelID, err)
+	}
+	chats := chatsFromChatsClass(result)
+	m.Ingest(nil, chats)
+	for _, ch := range chats {
+		channel, ok := ch.(*tg.Channel)
+		if ok && channel.ID == channelID && channel.AccessHash != 0 {
+			peer := &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash}
+			m.Cache(channel.ID, peer)
+			return peer, nil
+		}
+	}
+	return nil, ErrNotFound
+}
+
+// numericForAccount resolves a numeric ID when authorized as a user account:
+// bare negated IDs become input chats, otherwise up to 20 pages of dialogs
+// are preloaded to find the peer's access hash, with a username-based
+// resolve as the last resort for min entities.
+func (m *Manager) numericForAccount(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	if peer, ok := inputPeerFromBareChatID(id); ok {
+		return peer, nil
+	}
+	if preloadErr := m.preloadDialogPeer(ctx, id); preloadErr != nil && preloadErr != ErrNotFound {
+		return nil, preloadErr
+	}
+	peer, err := m.Cached(id)
+	if err != nil {
+		return nil, fmt.Errorf("could not resolve chat: %w", ErrNotFound)
+	}
+	// If dialog preload couldn't find a full hash, try username resolution
+	// as a last resort before returning a zero-hash peer.
+	if !hasAccessHash(peer) {
+		if resolved, err := m.peerByUsername(ctx, id); err == nil {
+			return resolved, nil
+		}
+	}
+	return peer, nil
+}
+
+// peerByUsername attempts to resolve a peer via its cached username when the
+// access hash is unknown (min entity). This is the fallback path after
+// dialog preload fails to find the peer.
+func (m *Manager) peerByUsername(ctx context.Context, id int64) (tg.InputPeerClass, error) {
+	username := m.LookupUsername(id)
+	if username == "" {
+		return nil, ErrNotFound
+	}
+	return m.InputPeerByUsername(ctx, username)
+}
+
+func (m *Manager) rawChannelID(id int64) (int64, bool) {
+	if raw, ok := peerid.UnmarkChannel(id); ok {
+		return raw, true
+	}
+	return 0, false
+}
+
+func (m *Manager) preloadDialogPeer(ctx context.Context, id int64) error {
+	const (
+		dialogPageLimit = 100
+		maxDialogPages  = 20
+	)
+
+	offsetPeer := tg.InputPeerClass(&tg.InputPeerEmpty{})
+	var offsetDate int32
+	var offsetID int32
+
+	for page := 0; page < maxDialogPages; page++ {
+		result, err := m.invoker().MessagesGetDialogs(ctx, &tg.MessagesGetDialogsRequest{
+			OffsetDate: offsetDate,
+			OffsetID:   offsetID,
+			OffsetPeer: offsetPeer,
+			Limit:      dialogPageLimit,
+		})
+		if err != nil {
+			return err
+		}
+
+		dialogs, messages, users, chats, ok := unpackDialogs(result)
+		if !ok {
+			return ErrNotFound
+		}
+
+		m.Ingest(users, chats)
+		if _, err := m.Cached(id); err == nil {
+			return nil
+		}
+		if len(dialogs) == 0 {
+			break
+		}
+
+		nextPeer, nextID, nextDate, ok := m.nextDialogOffset(dialogs, messages)
+		if !ok {
+			break
+		}
+		offsetPeer = nextPeer
+		offsetID = nextID
+		offsetDate = nextDate
+	}
+
+	return ErrNotFound
+}
+
+func (m *Manager) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.MessageClass) (tg.InputPeerClass, int32, int32, bool) {
+	last, ok := dialogs[len(dialogs)-1].(*tg.Dialog)
+	if !ok || last.Peer == nil {
+		return nil, 0, 0, false
+	}
+	peerID, ok := peerid.RawFromPeer(last.Peer)
+	if !ok {
+		return nil, 0, 0, false
+	}
+	peer, err := m.Cached(peerID)
+	if err != nil {
+		return nil, 0, 0, false
+	}
+	return peer, last.TopMessage, messageDate(messages, last.TopMessage), true
+}
+
+func messageDate(messages []tg.MessageClass, id int32) int32 {
+	for _, msg := range messages {
+		switch m := msg.(type) {
+		case *tg.Message:
+			if m.ID == id {
+				return m.Date
+			}
+		case *tg.MessageService:
+			if m.ID == id {
+				return m.Date
+			}
+		}
+	}
+	return 0
+}
+
+func unpackDialogs(result tg.DialogsClass) ([]tg.DialogClass, []tg.MessageClass, []tg.UserClass, []tg.ChatClass, bool) {
+	switch v := result.(type) {
+	case *tg.MessagesDialogs:
+		return v.Dialogs, v.Messages, v.Users, v.Chats, true
+	case *tg.MessagesDialogsSlice:
+		return v.Dialogs, v.Messages, v.Users, v.Chats, true
+	case *tg.MessagesDialogsNotModified:
+		return nil, nil, nil, nil, false
+	default:
+		return nil, nil, nil, nil, false
+	}
+}
+
+func chatsFromChatsClass(result tg.TLObject) []tg.ChatClass {
+	switch v := result.(type) {
+	case *tg.MessagesChats:
+		return v.Chats
+	case *tg.MessagesChatsSlice:
+		return v.Chats
+	default:
+		return nil
+	}
+}
+
+func usersFromUsersGetUsers(result tg.TLObject) []tg.UserClass {
+	vector, ok := result.(*tg.GenericVector)
+	if !ok {
+		return nil
+	}
+	users := make([]tg.UserClass, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if user, ok := item.(tg.UserClass); ok {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
+func normalizePhone(phone string) string {
+	phone = strings.TrimSpace(phone)
+	phone = strings.TrimPrefix(phone, "+")
+	phone = strings.TrimPrefix(phone, "00")
+	return phone
+}
+
+// PeerToInputPeer converts a high-level tg.PeerClass (as returned by
+// Telegram updates or API responses) into a tg.InputPeerClass, using the
+// users and chats slices for access hashes and metadata.
+func PeerToInputPeer(peer tg.PeerClass, users []tg.UserClass, chats []tg.ChatClass) (tg.InputPeerClass, error) {
+	userMap := makeUserMap(users)
+	chatMap := makeChatMap(chats)
+	switch p := peer.(type) {
+	case *tg.PeerUser:
+		user, ok := userMap[p.UserID]
+		if !ok {
+			if p.UserID == 0 {
+				return &tg.InputPeerSelf{}, nil
+			}
+			return nil, fmt.Errorf("%w: user %d not found in resolved peers", ErrNotFound, p.UserID)
+		}
+		if user.AccessHash != 0 {
+			return &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash}, nil
+		}
+		return &tg.InputPeerSelf{}, nil
+	case *tg.PeerChat:
+		if chat, ok := chatMap[p.ChatID]; ok {
+			return &tg.InputPeerChat{ChatID: chat.id}, nil
+		}
+		return nil, fmt.Errorf("%w: chat %d not found in resolved peers", ErrNotFound, p.ChatID)
+	case *tg.PeerChannel:
+		ch, ok := chatMap[p.ChannelID]
+		if !ok {
+			return nil, fmt.Errorf("%w: channel %d not found in resolved peers", ErrNotFound, p.ChannelID)
+		}
+		return &tg.InputPeerChannel{ChannelID: ch.id, AccessHash: ch.accessHash}, nil
+	default:
+		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrNotFound, peer)
+	}
+}
+
+// InputPeerToUser converts an input peer into an input user.
+func InputPeerToUser(peer tg.InputPeerClass) (tg.InputUserClass, error) {
+	switch p := peer.(type) {
+	case *tg.InputPeerUser:
+		return &tg.InputUser{UserID: p.UserID, AccessHash: p.AccessHash}, nil
+	case *tg.InputPeerSelf:
+		return &tg.InputUserSelf{}, nil
+	default:
+		return nil, fmt.Errorf("peer %T is not a user", peer)
+	}
+}
+
+// InputPeerToChannel converts an input peer into an input channel.
+func InputPeerToChannel(peer tg.InputPeerClass) (tg.InputChannelClass, error) {
+	switch p := peer.(type) {
+	case *tg.InputPeerChannel:
+		return &tg.InputChannel{ChannelID: p.ChannelID, AccessHash: p.AccessHash}, nil
+	case *tg.InputPeerSelf:
+		return &tg.InputChannelEmpty{}, nil
+	default:
+		return nil, fmt.Errorf("peer %T is not a channel", peer)
+	}
+}
+
+func makeUserMap(users []tg.UserClass) map[int64]*tg.User {
+	m := make(map[int64]*tg.User, len(users))
+	for _, u := range users {
+		user, ok := u.(*tg.User)
+		if ok && user.ID != 0 {
+			m[user.ID] = user
+		}
+	}
+	return m
+}
+
+type chatInfo struct {
+	id         int64
+	accessHash int64
+}
+
+func makeChatMap(chats []tg.ChatClass) map[int64]chatInfo {
+	m := make(map[int64]chatInfo, len(chats))
+	for _, c := range chats {
+		switch v := c.(type) {
+		case *tg.Chat:
+			m[v.ID] = chatInfo{id: v.ID}
+		case *tg.Channel:
+			m[v.ID] = chatInfo{id: v.ID, accessHash: v.AccessHash}
+		}
+	}
+	return m
+}
