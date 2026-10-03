@@ -22,7 +22,7 @@ func (c *Client) GetDiscussionMessage(ctx context.Context, chatID int64, message
 		MsgID: messageID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get discussion message: %w", err)
 	}
 
 	if len(result.Messages) == 0 {
@@ -55,7 +55,7 @@ func (c *Client) GetDiscussionReplies(ctx context.Context, chatID int64, message
 		Limit:    int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get replies: %w", err)
 	}
 	return extractMessagesFromMessagesClass(result, c)
 }

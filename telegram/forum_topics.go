@@ -33,7 +33,7 @@ func (c *Client) CreateForumTopic(ctx context.Context, chatID int64, title strin
 		RandomID:    c.RandomID(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create forum topic: %w", err)
 	}
 
 	return extractForumTopicFromUpdates(result)
@@ -138,7 +138,7 @@ func (c *Client) GetForumTopics(ctx context.Context, chatID int64, query string,
 		Limit:       int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get forum topics: %w", err)
 	}
 
 	topics := make([]*types.ForumTopic, 0, len(result.Topics))

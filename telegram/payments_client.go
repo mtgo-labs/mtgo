@@ -51,7 +51,7 @@ func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int
 	rpc := c.Raw()
 	raw, err := rpc.PaymentsGetPaymentForm(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments get payment form: %w", err)
 	}
 	return types.ParsePaymentForm(raw), nil
 }
@@ -228,7 +228,7 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 		Limit:          limit,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments get stars transactions: %w", err)
 	}
 	return types.ParseStarsStatus(raw), nil
 }

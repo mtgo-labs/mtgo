@@ -19,7 +19,7 @@ func (c *Client) GetStarGiftOptions(ctx context.Context) ([]*types.Gift, error) 
 	c.Log.Debug("GetStarGiftOptions")
 	res, err := c.Raw().PaymentsGetStarGifts(ctx, &tg.PaymentsGetStarGiftsRequest{Hash: 0})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments get star gifts: %w", err)
 	}
 	starGifts, ok := res.(*tg.PaymentsStarGifts)
 	if !ok {
@@ -43,7 +43,7 @@ func (c *Client) ResolveGiftOffer(ctx context.Context, messageID int32, accept b
 		Decline:    !accept,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments resolve star gift offer: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -297,7 +297,7 @@ func (c *Client) SendGiftOffer(ctx context.Context, peerID int64, slug string, p
 		RandomID: c.RandomID(),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments send star gift offer: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }

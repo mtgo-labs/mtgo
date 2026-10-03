@@ -166,7 +166,7 @@ func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID in
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("forward messages: %w", err)
 	}
 	return extractMessages(result, c)
 }

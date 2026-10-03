@@ -10,7 +10,7 @@ import (
 func (c *Client) BoundGetFolders() ([]tg.DialogFilterClass, error) {
 	result, err := c.Raw().MessagesGetDialogFilters(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get dialog filters: %w", err)
 	}
 	return result.Filters, nil
 }

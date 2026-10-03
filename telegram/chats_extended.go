@@ -37,7 +37,7 @@ func (c *Client) GetSendAsChats(ctx context.Context, chatID int64) ([]*types.Cha
 		Peer: peer,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get send as: %w", err)
 	}
 
 	pm := types.NewPeerMapFromClasses(result.Users, result.Chats)
@@ -92,7 +92,7 @@ func (c *Client) TransferChatOwnership(ctx context.Context, chatID int64, userID
 		AdminRights: &tg.ChatAdminRights{},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("edit admin: %w", err)
 	}
 	return nil
 }
@@ -102,7 +102,7 @@ func (c *Client) GetSuitableDiscussionChats(ctx context.Context) ([]*types.Chat,
 	rpc := c.Raw()
 	result, err := rpc.ChannelsGetGroupsForDiscussion(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get groups for discussion: %w", err)
 	}
 
 	chats := make([]*types.Chat, 0)

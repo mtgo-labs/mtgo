@@ -64,7 +64,7 @@ func (c *Client) ApplyBoost(ctx context.Context, chatID int64, opts ...*ApplyBoo
 	rpc := c.Raw()
 	result, err := rpc.PremiumApplyBoost(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("premium apply boost: %w", err)
 	}
 	return result.MyBoosts, nil
 }
@@ -126,7 +126,7 @@ func (c *Client) GetBoosts(ctx context.Context, opts ...*GetBoostsOption) ([]*tg
 	rpc := c.Raw()
 	result, err := rpc.PremiumGetMyBoosts(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("premium get my boosts: %w", err)
 	}
 	return result.MyBoosts, nil
 }

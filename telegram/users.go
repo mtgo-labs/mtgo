@@ -87,7 +87,7 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 		ID: &tg.InputUserSelf{},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get full user: %w", err)
 	}
 
 	uf, ok := result.(*tg.UsersUserFull)
@@ -152,7 +152,7 @@ func (c *Client) GetCommonChats(ctx context.Context, userID int64, limit int) ([
 		Limit:  int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get common chats: %w", err)
 	}
 	chats := make([]*types.Chat, 0)
 	switch v := result.(type) {
@@ -204,7 +204,7 @@ func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, bio str
 		About:     b,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("update profile: %w", err)
 	}
 	return types.ParseUser(result), nil
 }

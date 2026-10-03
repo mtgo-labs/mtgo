@@ -9,12 +9,12 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-// staleHashErrors are server rejections of a cached access hash. They are
-// safe to retry: the server rejected the call without executing it.
-const (
-	errPeerIDInvalid  = "PEER_ID_INVALID"
-	errChannelInvalid = "CHANNEL_INVALID"
-)
+// isStaleHashErr reports a server rejection of a cached access hash. Such
+// rejections are safe to retry: the server dropped the call without
+// executing it.
+func isStaleHashErr(err error) bool {
+	return tgerr.IsPeerIDInvalid(err) || tgerr.IsChannelInvalid(err)
+}
 
 // InvalidateOnStaleHash returns an invoker middleware that watches for
 // PEER_ID_INVALID / CHANNEL_INVALID responses, drops the referenced peers
@@ -37,7 +37,7 @@ type staleHashInvoker struct {
 
 func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	res, err := s.next.RPCInvoke(ctx, input, decode)
-	if err == nil || !tgerr.Is(err, errPeerIDInvalid, errChannelInvalid) {
+	if err == nil || !isStaleHashErr(err) {
 		return res, err
 	}
 	ids := requestPeerIDs(input)
@@ -48,7 +48,7 @@ func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, deco
 		s.mgr.Invalidate(id)
 	}
 	retried, rerr := s.next.RPCInvoke(ctx, input, decode)
-	if tgerr.Is(rerr, errPeerIDInvalid, errChannelInvalid) {
+	if isStaleHashErr(rerr) {
 		// Still rejected after a fresh resolution attempt: this client can no
 		// longer address the peer.
 		return retried, fmt.Errorf("%w: peer %v rejected after re-resolution: %w", ErrInvalid, ids, rerr)
@@ -58,7 +58,7 @@ func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, deco
 
 func (s staleHashInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	res, err := s.next.RPCInvokeRaw(ctx, input)
-	if err == nil || !tgerr.Is(err, errPeerIDInvalid, errChannelInvalid) {
+	if err == nil || !isStaleHashErr(err) {
 		return res, err
 	}
 	ids := requestPeerIDs(input)
@@ -69,7 +69,7 @@ func (s staleHashInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) (
 		s.mgr.Invalidate(id)
 	}
 	retried, rerr := s.next.RPCInvokeRaw(ctx, input)
-	if tgerr.Is(rerr, errPeerIDInvalid, errChannelInvalid) {
+	if isStaleHashErr(rerr) {
 		return retried, fmt.Errorf("%w: peer %v rejected after re-resolution: %w", ErrInvalid, ids, rerr)
 	}
 	return retried, rerr

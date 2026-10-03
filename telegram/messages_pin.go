@@ -59,7 +59,7 @@ func (c *Client) PinMessage(ctx context.Context, chatID int64, messageID int32, 
 		ID:     messageID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("update pinned message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -103,7 +103,7 @@ func (c *Client) UnpinMessage(ctx context.Context, chatID int64, messageID int32
 		ID:    messageID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("update pinned message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }

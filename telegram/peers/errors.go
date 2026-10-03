@@ -66,24 +66,20 @@ func (e NotChannelError) Error() string {
 	return fmt.Sprintf("peers: input peer %T is not a channel", e.Peer)
 }
 
-// notFoundRPCErrors lists server errors meaning the referenced peer does not
-// exist or is inaccessible — as opposed to transport, flood, or auth trouble
-// that callers may want to retry.
-var notFoundRPCErrors = []string{
-	"USERNAME_NOT_OCCUPIED",
-	"USERNAME_INVALID",
-	"PHONE_NUMBER_INVALID",
-	"PHONE_NUMBER_UNPRIVACY",
-	"PHONE_NUMBER_BANNED",
-	"PEER_ID_INVALID",
-	"USER_ID_INVALID",
-	"CHANNEL_INVALID",
-	"CHANNEL_PRIVATE",
-}
-
 // isNotFoundRPC classifies an RPC error from a resolution call: true means
 // the peer genuinely cannot be resolved (wrap with [ErrNotFound]); false
 // means the error is transient or unrelated and must pass through unmasked.
+//
+// Classification uses the generated compile-time helpers; the single string
+// fallback covers an error type missing from the generated set.
 func isNotFoundRPC(err error) bool {
-	return tgerr.Is(err, notFoundRPCErrors...)
+	return tgerr.IsUsernameNotOccupied(err) ||
+		tgerr.IsUsernameInvalid(err) ||
+		tgerr.IsPhoneNumberInvalid(err) ||
+		tgerr.IsPhoneNumberBanned(err) ||
+		tgerr.Is(err, "PHONE_NUMBER_UNPRIVACY") || // not in the generated set
+		tgerr.IsPeerIDInvalid(err) ||
+		tgerr.IsUserIDInvalid(err) ||
+		tgerr.IsChannelInvalid(err) ||
+		tgerr.IsChannelPrivate(err)
 }

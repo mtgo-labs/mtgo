@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
@@ -323,7 +324,7 @@ func (c *Client) BoundEditLiveLocation(chatID int64, msgID int32, lat, lng float
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -343,7 +344,7 @@ func (c *Client) BoundStopLiveLocation(chatID int64, msgID int32) (*types.Messag
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -354,7 +355,7 @@ func (c *Client) BoundAcceptGiftPurchaseOffer(chatID int64, msgID int32) (*types
 		OfferMsgID: msgID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments resolve star gift offer: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -367,7 +368,7 @@ func (c *Client) BoundRejectGiftPurchaseOffer(chatID int64, msgID int32) (*types
 		OfferMsgID: msgID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("payments resolve star gift offer: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -383,7 +384,7 @@ func (c *Client) BoundSummarize(chatID int64, msgID int32) (*types.Message, erro
 		ID:   []int32{msgID},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get extended media: %w", err)
 	}
 	return nil, nil
 }

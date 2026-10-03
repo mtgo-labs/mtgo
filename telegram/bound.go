@@ -709,7 +709,7 @@ func (c *Client) BoundGetCommonChats(userID int64, limit int) ([]*types.Chat, er
 		Limit:  int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get common chats: %w", err)
 	}
 	return parseCommonChats(result), nil
 }
@@ -837,7 +837,7 @@ func (c *Client) BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*par
 		PrivacyRules: storyPrivacyRules(o),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit story: %w", err)
 	}
 	return extractStoryFromUpdates(result)
 }

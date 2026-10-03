@@ -51,7 +51,7 @@ func (c *Client) GetChatInviteLink(ctx context.Context, chatID int64, link strin
 		Link: link,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get exported chat invite: %w", err)
 	}
 	return extractInviteLink(result)
 }
@@ -105,7 +105,7 @@ func (c *Client) CreateChatInviteLink(ctx context.Context, chatID int64, opts ..
 		Title:      title,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("export chat invite: %w", err)
 	}
 	return extractInviteLink(result)
 }
@@ -160,7 +160,7 @@ func (c *Client) EditChatInviteLink(ctx context.Context, chatID int64, link stri
 		Title:      title,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit exported chat invite: %w", err)
 	}
 	return extractInviteLink(result)
 }
@@ -197,7 +197,7 @@ func (c *Client) RevokeChatInviteLink(ctx context.Context, chatID int64, link st
 		Link:    link,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit exported chat invite: %w", err)
 	}
 	return extractInviteLink(result)
 }
@@ -264,7 +264,7 @@ func (c *Client) GetChatInviteLinkJoiners(ctx context.Context, chatID int64, lin
 		Limit: int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chat invite importers: %w", err)
 	}
 	joiners := make([]*types.ChatInviteLinkJoiner, 0, len(result.Importers))
 	for _, imp := range result.Importers {
@@ -303,7 +303,7 @@ func (c *Client) GetChatAdminInviteLinks(ctx context.Context, chatID int64, admi
 		Limit:   int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get exported chat invites: %w", err)
 	}
 	links := make([]*types.ChatInviteLink, 0)
 	users := make(map[int64]tg.UserClass)

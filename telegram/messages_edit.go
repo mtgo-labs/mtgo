@@ -85,7 +85,7 @@ func (c *Client) EditMessageCaption(ctx context.Context, chatID int64, messageID
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -172,7 +172,7 @@ func (c *Client) EditMessageMedia(ctx context.Context, chatID int64, messageID i
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -224,7 +224,7 @@ func (c *Client) EditMessageReplyMarkup(ctx context.Context, chatID int64, messa
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }

@@ -131,7 +131,7 @@ func (c *Client) GetMessagesViews(ctx context.Context, chatID int64, messageIDs 
 		Increment: increment,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get messages views: %w", err)
 	}
 
 	viewsResult, ok := result.(*tg.MessagesMessageViews)
@@ -173,7 +173,7 @@ func (c *Client) GetMessageReactionsList(ctx context.Context, chatID int64, mess
 		Limit:    limit,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get message reactions list: %w", err)
 	}
 
 	out := &types.PeerReactionList{
@@ -209,7 +209,7 @@ func (c *Client) GetAvailableReactions(ctx context.Context, hash int32) (*types.
 		Hash: hash,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get available reactions: %w", err)
 	}
 	return types.ParseAvailableReactions(raw), nil
 }

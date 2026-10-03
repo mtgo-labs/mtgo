@@ -36,7 +36,7 @@ func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error)
 		rpc := c.Raw()
 		result, err := rpc.MessagesGetFullChat(ctx, &tg.MessagesGetFullChatRequest{ChatID: p.ChatID})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get full chat: %w", err)
 		}
 		return extractChatFromFull(result)
 	case *tg.InputPeerChannel:
@@ -47,7 +47,7 @@ func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error)
 		rpc := c.Raw()
 		result, err := rpc.ChannelsGetFullChannel(ctx, &tg.ChannelsGetFullChannelRequest{Channel: ch})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get full channel: %w", err)
 		}
 		return extractChatFromFull(result)
 	case *tg.InputPeerUser, *tg.InputPeerSelf:
@@ -173,7 +173,7 @@ func (c *Client) joinByUsername(ctx context.Context, username string) (*types.Ch
 		Channel: inputChannel,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("join channel: %w", err)
 	}
 
 	switch v := result.(type) {
@@ -199,7 +199,7 @@ func (c *Client) joinByInviteHash(ctx context.Context, inviteHash string) (*type
 	rpc := c.Raw()
 	result, err := rpc.MessagesImportChatInvite(ctx, &tg.MessagesImportChatInviteRequest{Hash: inviteHash})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("import chat invite: %w", err)
 	}
 
 	switch v := result.(type) {
@@ -298,7 +298,7 @@ func (c *Client) CreateChannel(ctx context.Context, title, about string, megagro
 		About: about,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create channel: %w", err)
 	}
 
 	switch v := result.(type) {
@@ -614,7 +614,7 @@ func (c *Client) GetChatMember(ctx context.Context, chatID int64, userID int64) 
 		Participant: userPeer,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get participant: %w", err)
 	}
 
 	usersMap := make(map[int64]tg.UserClass)
@@ -660,7 +660,7 @@ func (c *Client) GetChatMembers(ctx context.Context, chatID int64, limit int, of
 		Limit:   int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get participants: %w", err)
 	}
 
 	var participants []tg.ChannelParticipantClass
@@ -1002,7 +1002,7 @@ func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64)
 		Title: title,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create chat: %w", err)
 	}
 	upd, ok := result.Updates.(*tg.Updates)
 	if !ok {
@@ -1081,7 +1081,7 @@ func (c *Client) GetChatEventLog(ctx context.Context, chatID int64, query string
 		Limit:   int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get admin log: %w", err)
 	}
 	users := make(map[int64]tg.UserClass, len(result.Users))
 	for _, u := range result.Users {

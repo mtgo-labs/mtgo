@@ -202,7 +202,7 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMessage(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("send message: %w", err)
 	}
 
 	return extractSingleMessage(result, c)
@@ -286,7 +286,7 @@ func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID i
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("forward messages: %w", err)
 	}
 	return extractMessages(result, c)
 }
@@ -425,7 +425,7 @@ func (c *Client) EditMessageText(ctx context.Context, chatID int64, messageID in
 	rpc := c.Raw()
 	result, err := rpc.MessagesEditMessage(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit message: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -475,7 +475,7 @@ func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int
 		result, err = rpc.MessagesGetMessages(ctx, &tg.MessagesGetMessagesRequest{ID: ids})
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get messages: %w", err)
 	}
 	return extractMessagesFromMessagesClass(result, c)
 }
@@ -522,7 +522,7 @@ func (c *Client) GetChatHistory(ctx context.Context, chatID int64, limit int, of
 		Limit:    int32(limit),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get history: %w", err)
 	}
 	return extractMessagesFromMessagesClass(result, c)
 }
@@ -641,7 +641,7 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMedia(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("send media: %w", err)
 	}
 	return extractSingleMessage(result, c)
 }
@@ -939,7 +939,7 @@ func (c *Client) SendMediaGroup(ctx context.Context, chatID int64, items []*tg.I
 	}
 	result, err := rpc.MessagesSendMultiMedia(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("send multi media: %w", err)
 	}
 	return extractMessages(result, c)
 }

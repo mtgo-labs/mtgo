@@ -82,7 +82,7 @@ func (c *Client) SearchMessages(ctx context.Context, chatID int64, query string,
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearch(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search: %w", err)
 	}
 	return extractMessagesFromMessagesClass(result, c)
 }
@@ -159,7 +159,7 @@ func (c *Client) SearchGlobal(ctx context.Context, query string, opts ...*Search
 	rpc := c.Raw()
 	result, err := rpc.MessagesSearchGlobal(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search global: %w", err)
 	}
 	return extractMessagesFromMessagesClass(result, c)
 }

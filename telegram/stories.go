@@ -83,7 +83,7 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 	rpc := c.Raw()
 	result, err := rpc.StoriesSendStory(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("send story: %w", err)
 	}
 
 	return extractStoryFromUpdates(result)
@@ -127,7 +127,7 @@ func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int
 	rpc := c.Raw()
 	result, err := rpc.StoriesEditStory(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit story: %w", err)
 	}
 
 	return extractStoryFromUpdates(result)
@@ -162,7 +162,7 @@ func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32
 	rpc := c.Raw()
 	result, err := rpc.StoriesEditStory(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("edit story: %w", err)
 	}
 
 	return extractStoryFromUpdates(result)
@@ -243,7 +243,7 @@ func (c *Client) GetStories(ctx context.Context, userID int64, storyIDs []int32)
 	rpc := c.Raw()
 	result, err := rpc.StoriesGetStoriesByID(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get stories by id: %w", err)
 	}
 
 	stories := make([]*types.Story, 0, len(result.Stories))
@@ -282,7 +282,7 @@ func (c *Client) GetChatStories(ctx context.Context, chatID int64) ([]*types.Sto
 	rpc := c.Raw()
 	result, err := rpc.StoriesGetPeerStories(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get peer stories: %w", err)
 	}
 
 	var items []tg.StoryItemClass
@@ -327,7 +327,7 @@ func (c *Client) GetStoryViews(ctx context.Context, chatID int64, storyIDs []int
 	rpc := c.Raw()
 	result, err := rpc.StoriesGetStoriesViews(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get stories views: %w", err)
 	}
 
 	var rawViews []tg.StoryViewsClass
@@ -373,7 +373,7 @@ func (c *Client) ForwardStory(ctx context.Context, targetChatID int64, sourceCha
 	rpc := c.Raw()
 	result, err := rpc.MessagesSendMedia(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("send media: %w", err)
 	}
 
 	return extractSingleMessage(result, c)
