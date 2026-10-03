@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/telegram/peers"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -28,6 +29,7 @@ func (c *Client) peersManager() *peers.Manager {
 			SavePeers: func() bool { return c.config().SavePeers },
 			IsBot:     c.IsBot,
 			Debugf:    c.Log.Debugf,
+			IndexTTL:  func() time.Duration { return c.config().PeerIndexTTL },
 		})
 	})
 	return c.peerMgr

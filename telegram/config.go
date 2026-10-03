@@ -282,6 +282,11 @@ type Config struct {
 	// When the limit is exceeded, the oldest entries are evicted (FIFO).
 	// 0 disables the limit; the default is 5000.
 	PeerCacheSize int
+	// PeerIndexTTL bounds how long cached username→ID and phone→ID mappings
+	// stay fresh; older mappings are dropped on next use and re-resolved, so
+	// renamed peers recover without a restart. 0 applies the 24h default
+	// (matching mtcute/MTKruto); a negative value disables expiry.
+	PeerIndexTTL time.Duration
 	// ParseMode selects the default formatting mode for message text.
 	// Use params.ParseModeMarkdown, params.ParseModeHTML, or a raw string
 	// like "MarkdownV2". Zero value means no parsing.

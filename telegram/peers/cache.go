@@ -1,6 +1,8 @@
 package peers
 
 import (
+	"time"
+
 	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
@@ -120,9 +122,11 @@ func (m *Manager) cacheUsernameLocked(username string, id int64) {
 	// never goes stale (usernames can change).
 	if prev, ok := m.idToUsername[id]; ok && prev != username {
 		delete(m.usernameToID, prev)
+		delete(m.usernameSeen, prev)
 	}
 	m.usernameToID[username] = id
 	m.idToUsername[id] = username
+	m.usernameSeen[username] = time.Now()
 }
 
 func (m *Manager) deleteUsernameLocked(username string) {
@@ -130,6 +134,7 @@ func (m *Manager) deleteUsernameLocked(username string) {
 		delete(m.idToUsername, id)
 	}
 	delete(m.usernameToID, username)
+	delete(m.usernameSeen, username)
 }
 
 // CachePhone records a normalized phone→ID mapping for cache-only lookups.
@@ -151,6 +156,7 @@ func (m *Manager) CachePhone(phone string, id int64) {
 	}
 	m.phoneToID[phone] = id
 	m.idToPhone[id] = phone
+	m.phoneSeen[phone] = time.Now()
 	limit := m.cacheSize()
 	if limit <= 0 || len(m.phoneToID) <= limit {
 		return
@@ -172,26 +178,48 @@ func (m *Manager) LookupUsername(peerID int64) string {
 }
 
 func (m *Manager) cachedByUsername(username string) (tg.InputPeerClass, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if cachedID, ok := m.usernameToID[username]; ok {
-		if p, ok2 := m.byID[cachedID]; ok2 {
-			return p, true
+		if m.freshLocked(m.usernameSeen[username]) {
+			if p, ok2 := m.byID[cachedID]; ok2 {
+				return p, true
+			}
 		}
+		// Stale mapping (past TTL): drop it and re-resolve.
+		m.deleteUsernameLocked(username)
 	}
 	return nil, false
 }
 
 // cachedByPhone returns the cached peer for a normalized phone number.
 func (m *Manager) cachedByPhone(phone string) (tg.InputPeerClass, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if cachedID, ok := m.phoneToID[phone]; ok {
-		if p, ok2 := m.byID[cachedID]; ok2 {
-			return p, true
+		if m.freshLocked(m.phoneSeen[phone]) {
+			if p, ok2 := m.byID[cachedID]; ok2 {
+				return p, true
+			}
 		}
+		// Stale mapping (past TTL): drop it and re-resolve.
+		if id, ok := m.idToPhone[cachedID]; ok && id == phone {
+			delete(m.idToPhone, cachedID)
+		}
+		delete(m.phoneToID, phone)
+		delete(m.phoneSeen, phone)
 	}
 	return nil, false
+}
+
+// freshLocked reports whether an index entry stamped at is still within the
+// TTL window. A non-positive TTL disables expiry.
+func (m *Manager) freshLocked(at time.Time) bool {
+	ttl := m.indexTTL()
+	if ttl <= 0 {
+		return true
+	}
+	return time.Since(at) <= ttl
 }
 
 func (m *Manager) evictOldestLocked() {

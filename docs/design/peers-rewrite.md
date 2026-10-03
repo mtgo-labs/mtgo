@@ -29,6 +29,12 @@ Constraint: **no breaking changes to the existing public API** (additive only)
 - NotFoundError{Ref, Cause} is emitted at the primary classification sites
   (username/phone RPC misses); secondary wraps keep the simple %w form — both
   satisfy errors.Is(err, ErrNotFound) and keep the cause chain.
+- Cross-library survey (`docs/design/peers-cross-lib.md`, gotd/gogram/Pyrogram/
+  mtcute/MTKruto): adopted username/phone index TTL (24h default,
+  `Config.PeerIndexTTL`); deferred general RPC-response ingest, mtcute-style
+  min field-merge, MTKruto-style message-anchored min refs, and phone-based
+  min re-resolve. Survey confirmed the invalidate+replay middleware, typed
+  not-found errors, and coalescing are unique among surveyed clients.
 - P1 moved the unexported `resolvePeer`-family test seams with the helpers
   (helpers_test.go adapted); the phase gate "tests unmodified" holds for all
   exported-API tests.

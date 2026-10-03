@@ -2,6 +2,7 @@ package peers
 
 import (
 	"sync"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -41,6 +42,10 @@ type Deps struct {
 	IsBot func() bool
 	// Debugf receives debug-level log lines.
 	Debugf func(format string, args ...any)
+	// IndexTTL returns the freshness window for username→ID and phone→ID
+	// index entries; older mappings are treated as misses and re-resolved.
+	// Nil applies the 24h default; a non-positive value disables expiry.
+	IndexTTL func() time.Duration
 }
 
 // Manager resolves peer references into input peers, maintaining an
@@ -58,6 +63,8 @@ type Manager struct {
 	phoneToID     map[string]int64
 	idToPhone     map[int64]string
 	phoneOrder    []string
+	usernameSeen  map[string]time.Time
+	phoneSeen     map[string]time.Time
 	coalescer     coalescer
 }
 
@@ -70,6 +77,8 @@ func NewManager(deps Deps) *Manager {
 		idToUsername: make(map[int64]string),
 		phoneToID:    make(map[string]int64),
 		idToPhone:    make(map[int64]string),
+		usernameSeen: make(map[string]time.Time),
+		phoneSeen:    make(map[string]time.Time),
 	}
 }
 
@@ -98,6 +107,17 @@ func (m *Manager) savePeers() bool {
 	return m.deps.SavePeers != nil && m.deps.SavePeers()
 }
 
+// DefaultIndexTTL is the freshness window for username/phone index entries
+// when Deps.IndexTTL is nil. Matches mtcute/MTKruto (24h).
+const DefaultIndexTTL = 24 * time.Hour
+
+func (m *Manager) indexTTL() time.Duration {
+	if m.deps.IndexTTL == nil {
+		return DefaultIndexTTL
+	}
+	return m.deps.IndexTTL()
+}
+
 func (m *Manager) isBot() bool {
 	return m.deps.IsBot != nil && m.deps.IsBot()
 }
@@ -121,4 +141,6 @@ func (m *Manager) Reset() {
 	m.phoneToID = make(map[string]int64)
 	m.idToPhone = make(map[int64]string)
 	m.phoneOrder = nil
+	m.usernameSeen = make(map[string]time.Time)
+	m.phoneSeen = make(map[string]time.Time)
 }
