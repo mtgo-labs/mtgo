@@ -92,7 +92,7 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 
 	uf, ok := result.(*tg.UsersUserFull)
 	if !ok {
-		return nil, fmt.Errorf("GetMe: unexpected type %T", result)
+		return nil, fmt.Errorf("get me: unexpected type %T", result)
 	}
 	if len(uf.Users) > 0 {
 		user := types.ParseUser(uf.Users[0])

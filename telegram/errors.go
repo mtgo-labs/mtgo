@@ -279,7 +279,7 @@ var (
 	ErrBanSupergroupOnly = errors.New("BanChatMember: only channels/supergroups are supported")
 	// ErrUnbanSupergroupOnly is returned when UnbanChatMember is called on a
 	// peer that is not a channel or supergroup.
-	ErrUnbanSupergroupOnly = errors.New("UnbanChatMember: only channels/supergroups are supported")
+	ErrUnbanSupergroupOnly = errors.New("unban member: only channels/supergroups are supported")
 	// ErrRestrictSupergroupOnly is returned when RestrictChatMember is called
 	// on a peer that is not a channel or supergroup.
 	ErrRestrictSupergroupOnly = errors.New("RestrictChatMember: only channels/supergroups supported")

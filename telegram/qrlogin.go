@@ -56,7 +56,6 @@ func (c *Client) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error)
 		ExceptIds: nil,
 	})
 	if err != nil {
-		c.Log.Errorf("auth: QR login token request failed: %v", err)
 		return nil, fmt.Errorf("export login token: %w", err)
 	}
 
@@ -102,7 +101,6 @@ func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*type
 		Token: token,
 	})
 	if err != nil {
-		c.Log.Errorf("auth: QR login token check failed: %v", err)
 		return nil, fmt.Errorf("import login token: %w", err)
 	}
 

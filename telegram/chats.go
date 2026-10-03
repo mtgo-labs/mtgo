@@ -53,7 +53,7 @@ func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error)
 	case *tg.InputPeerUser, *tg.InputPeerSelf:
 		return nil, ErrGetChatNotChat
 	default:
-		return nil, fmt.Errorf("GetChat: unsupported peer type %T", peer)
+		return nil, fmt.Errorf("get chat: unsupported peer type %T", peer)
 	}
 }
 
@@ -261,7 +261,7 @@ func (c *Client) LeaveChat(ctx context.Context, chatID int64) error {
 		})
 		return err
 	default:
-		return fmt.Errorf("LeaveChat: unsupported peer type %T", p)
+		return fmt.Errorf("leave chat: unsupported peer type %T", p)
 	}
 }
 
@@ -347,7 +347,7 @@ func (c *Client) DeleteChat(ctx context.Context, chatID int64) error {
 		_, err = rpc.MessagesDeleteChat(ctx, &tg.MessagesDeleteChatRequest{ChatID: p.ChatID})
 		return err
 	default:
-		return fmt.Errorf("DeleteChat: unsupported peer type %T", p)
+		return fmt.Errorf("delete chat: unsupported peer type %T", p)
 	}
 }
 
@@ -379,7 +379,7 @@ func (c *Client) SetChatTitle(ctx context.Context, chatID int64, title string) e
 		_, err = rpc.MessagesEditChatTitle(ctx, &tg.MessagesEditChatTitleRequest{ChatID: p.ChatID, Title: title})
 		return err
 	default:
-		return fmt.Errorf("SetChatTitle: unsupported peer type %T", p)
+		return fmt.Errorf("set chat title: unsupported peer type %T", p)
 	}
 }
 
@@ -407,7 +407,7 @@ func (c *Client) SetChatDescription(ctx context.Context, chatID int64, about str
 		_, err = rpc.MessagesEditChatAbout(ctx, &tg.MessagesEditChatAboutRequest{Peer: p, About: about})
 		return err
 	default:
-		return fmt.Errorf("SetChatDescription: unsupported peer type %T", p)
+		return fmt.Errorf("set chat description: unsupported peer type %T", p)
 	}
 }
 
@@ -522,7 +522,7 @@ func (c *Client) UnbanChatMember(ctx context.Context, chatID int64, userID int64
 	case *tg.InputUserSelf:
 		userPeer = &tg.InputPeerSelf{}
 	default:
-		return fmt.Errorf("UnbanChatMember: unsupported user type %T", user)
+		return fmt.Errorf("unban member: unsupported user type %T", user)
 	}
 
 	rpc := c.Raw()
@@ -824,7 +824,7 @@ func (c *Client) SetChatPhoto(ctx context.Context, chatID int64, photo tg.InputC
 		_, err = rpc.MessagesEditChatPhoto(ctx, &tg.MessagesEditChatPhotoRequest{ChatID: p.ChatID, Photo: photo})
 		return err
 	default:
-		return fmt.Errorf("SetChatPhoto: unsupported peer type %T", p)
+		return fmt.Errorf("set chat photo: unsupported peer type %T", p)
 	}
 }
 

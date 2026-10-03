@@ -109,7 +109,6 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 				return nil, fmt.Errorf("unexpected recaptcha send code result type %T", wrapped)
 			}
 		} else {
-			c.Log.Errorf("auth: SendCode failed: %v", err)
 			return nil, err
 		}
 	}
@@ -187,7 +186,6 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 			c.Log.Debug("auth: 2FA required")
 			return nil, Err2FARequired
 		}
-		c.Log.Errorf("auth: SignIn failed for phone %s: %v", phoneNumber, err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -241,7 +239,6 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 		LastName:      ln,
 	})
 	if err != nil {
-		c.Log.Errorf("auth: SignUp failed for phone %s: %v", phoneNumber, err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -374,7 +371,6 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 	c.Log.Debug("auth: CheckPassword")
 	srp, err := c.computeSRP(ctx, password)
 	if err != nil {
-		c.Log.Errorf("auth: CheckPassword SRP computation failed: %v", err)
 		return nil, fmt.Errorf("compute SRP: %w", err)
 	}
 	rpc := c.Raw()
@@ -382,7 +378,6 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 		Password: srp,
 	})
 	if err != nil {
-		c.Log.Errorf("auth: CheckPassword failed: %v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
@@ -419,7 +414,6 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 		Code: code,
 	})
 	if err != nil {
-		c.Log.Errorf("auth: RecoverPassword failed: %v", err)
 		return nil, err
 	}
 	switch v := result.(type) {
