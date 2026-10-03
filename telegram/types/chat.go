@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -565,7 +566,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 		return c
 	case *tg.ChatForbidden:
 		return &Chat{
-			ID:       channelChatID(r.ID),
+			ID:       peerid.MarkChannel(r.ID),
 			Type:     ChatTypeGroup,
 			Title:    r.Title,
 			IsBanned: true,
@@ -580,7 +581,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 			chatType = ChatTypeForum
 		}
 		c := &Chat{
-			ID:                     channelChatID(r.ID),
+			ID:                     peerid.MarkChannel(r.ID),
 			Type:                   chatType,
 			Title:                  r.Title,
 			IsVerified:             r.Verified,
@@ -641,7 +642,7 @@ func ParseChatFromChat(raw tg.ChatClass) *Chat {
 			chatType = ChatTypeSupergroup
 		}
 		return &Chat{
-			ID:       channelChatID(r.ID),
+			ID:       peerid.MarkChannel(r.ID),
 			Type:     chatType,
 			Title:    r.Title,
 			IsBanned: true,
@@ -672,7 +673,7 @@ func ParseChatFromPeer(peer tg.PeerClass, pm *PeerMap) *Chat {
 		if ch, ok := pm.Channels[p.ChannelID]; ok {
 			return ParseChatFromChat(ch)
 		}
-		return &Chat{ID: channelChatID(p.ChannelID), Type: ChatTypeChannel}
+		return &Chat{ID: peerid.MarkChannel(p.ChannelID), Type: ChatTypeChannel}
 	}
 	return nil
 }

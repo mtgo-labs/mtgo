@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/mtproxy"
@@ -3606,7 +3607,7 @@ func (c *Client) resolveNumericPeerForBot(ctx context.Context, id int64) (tg.Inp
 	if peer, ok := inputPeerFromBareChatID(id); ok {
 		return peer, nil
 	}
-	if raw, ok := rawChannelID(id); ok {
+	if raw, ok := peerid.UnmarkChannel(id); ok {
 		peer, err := c.resolveBotPeerAccessHash(ctx, &tg.InputPeerChannel{ChannelID: raw})
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve chat: %w", err)
@@ -3731,7 +3732,7 @@ func (c *Client) lookupUsername(peerID int64) string {
 
 func inputPeerFromBareChatID(id int64) (tg.InputPeerClass, bool) {
 	if id < 0 {
-		if _, ok := rawChannelID(id); !ok {
+		if _, ok := peerid.UnmarkChannel(id); !ok {
 			return &tg.InputPeerChat{ChatID: -id}, true
 		}
 	}
@@ -3828,7 +3829,7 @@ func (c *Client) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.Messag
 	if !ok || last.Peer == nil {
 		return nil, 0, 0, false
 	}
-	peerID, ok := peerClassID(last.Peer)
+	peerID, ok := peerid.RawFromPeer(last.Peer)
 	if !ok {
 		return nil, 0, 0, false
 	}
@@ -3837,19 +3838,6 @@ func (c *Client) nextDialogOffset(dialogs []tg.DialogClass, messages []tg.Messag
 		return nil, 0, 0, false
 	}
 	return peer, last.TopMessage, messageDate(messages, last.TopMessage), true
-}
-
-func peerClassID(peer tg.PeerClass) (int64, bool) {
-	switch p := peer.(type) {
-	case *tg.PeerUser:
-		return p.UserID, true
-	case *tg.PeerChat:
-		return p.ChatID, true
-	case *tg.PeerChannel:
-		return p.ChannelID, true
-	default:
-		return 0, false
-	}
 }
 
 func messageDate(messages []tg.MessageClass, id int32) int32 {
@@ -4192,7 +4180,7 @@ func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
 					peer = &tg.InputPeerChat{ChatID: p.ID}
 				case storage.PeerTypeChannel:
 					channelID := p.ID
-					if raw, ok := rawChannelID(channelID); ok {
+					if raw, ok := peerid.UnmarkChannel(channelID); ok {
 						channelID = raw
 					}
 					peer = &tg.InputPeerChannel{ChannelID: channelID, AccessHash: p.AccessHash}
@@ -4267,7 +4255,7 @@ func preserveAccessHash(existing, incoming tg.InputPeerClass) tg.InputPeerClass 
 }
 
 func peerLookupIDs(id int64) []int64 {
-	if raw, ok := rawChannelID(id); ok {
+	if raw, ok := peerid.UnmarkChannel(id); ok {
 		return []int64{raw, id}
 	}
 	return []int64{id}
@@ -4277,18 +4265,10 @@ func canonicalPeerID(id int64, peer tg.InputPeerClass) int64 {
 	if p, ok := peer.(*tg.InputPeerChannel); ok && p.ChannelID != 0 {
 		return p.ChannelID
 	}
-	if raw, ok := rawChannelID(id); ok {
+	if raw, ok := peerid.UnmarkChannel(id); ok {
 		return raw
 	}
 	return id
-}
-
-func rawChannelID(id int64) (int64, bool) {
-	const channelChatIDPrefix int64 = -1000000000000
-	if id <= channelChatIDPrefix {
-		return channelChatIDPrefix - id, true
-	}
-	return 0, false
 }
 
 func (c *Client) evictOldestPeerLocked() {

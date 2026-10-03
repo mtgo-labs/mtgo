@@ -34,7 +34,7 @@ func ParseMessageReactionUpdate(raw *tg.UpdateBotMessageReaction) *MessageReacti
 		}
 	}
 	return &MessageReactionUpdate{
-		ChatID:       peerToChatID(raw.Peer),
+		ChatID:       GetPeerID(raw.Peer),
 		MessageID:    int64(raw.MsgID),
 		UserID:       peerToUserID(raw.Actor),
 		Date:         raw.Date,
@@ -58,7 +58,7 @@ func ParseMessageReactionCountUpdate(raw *tg.UpdateBotMessageReactions) *Message
 		return nil
 	}
 	out := &MessageReactionCountUpdate{
-		ChatID:    peerToChatID(raw.Peer),
+		ChatID:    GetPeerID(raw.Peer),
 		MessageID: int64(raw.MsgID),
 		Date:      raw.Date,
 	}
@@ -69,19 +69,6 @@ func ParseMessageReactionCountUpdate(raw *tg.UpdateBotMessageReactions) *Message
 		}
 	}
 	return out
-}
-
-// peerToChatID resolves a tg.PeerClass to a Bot API chat ID.
-func peerToChatID(p tg.PeerClass) int64 {
-	switch v := p.(type) {
-	case *tg.PeerUser:
-		return v.UserID
-	case *tg.PeerChat:
-		return -v.ChatID
-	case *tg.PeerChannel:
-		return -1_000_000_000_000 - v.ChannelID
-	}
-	return 0
 }
 
 // peerToUserID resolves a tg.PeerClass to a user ID (0 if not a user peer).

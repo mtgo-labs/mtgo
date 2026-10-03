@@ -20,7 +20,7 @@ func ParsePollUpdated(raw *tg.UpdateMessagePoll) *PollUpdated {
 	}
 	return &PollUpdated{
 		PollID:    raw.PollID,
-		ChatID:    peerToChatID(raw.Peer),
+		ChatID:    GetPeerID(raw.Peer),
 		MessageID: int64(raw.MsgID),
 		Poll:      raw.Poll,
 		Results:   raw.Results,
@@ -45,7 +45,7 @@ func ParsePollAnswerUpdate(raw *tg.UpdateMessagePollVote) *PollAnswerUpdate {
 	}
 	return &PollAnswerUpdate{
 		PollID:  raw.PollID,
-		ChatID:  peerToChatID(raw.Peer),
+		ChatID:  GetPeerID(raw.Peer),
 		UserID:  peerToUserID(raw.Peer),
 		Options: raw.Options,
 	}

@@ -1,6 +1,9 @@
 package types
 
-import "github.com/mtgo-labs/mtgo/tg"
+import (
+	"github.com/mtgo-labs/mtgo/internal/peerid"
+	"github.com/mtgo-labs/mtgo/tg"
+)
 
 // PeerMap stores indexed lookups for users, chats, and channels by their IDs.
 // It is used to resolve peer references in updates and messages without
@@ -96,18 +99,7 @@ func NewPeerMapFromClasses(users []tg.UserClass, chats []tg.ChatClass) *PeerMap 
 //	    fmt.Println("Group/channel peer:", id)
 //	}
 func GetPeerID(peer tg.PeerClass) int64 {
-	if peer == nil {
-		return 0
-	}
-	switch p := peer.(type) {
-	case *tg.PeerUser:
-		return p.UserID
-	case *tg.PeerChat:
-		return -p.ChatID
-	case *tg.PeerChannel:
-		return channelChatID(p.ChannelID)
-	}
-	return 0
+	return peerid.MarkFromPeer(peer)
 }
 
 func getUserFromPM(pm *PeerMap, id int64) *User {

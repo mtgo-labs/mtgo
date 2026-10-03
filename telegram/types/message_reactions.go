@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -186,7 +187,7 @@ func ExtractChatID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return int64(-v.ChatID)
 	case *tg.PeerChannel:
-		return channelChatID(v.ChannelID)
+		return peerid.MarkChannel(v.ChannelID)
 	}
 	return 0
 }

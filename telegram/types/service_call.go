@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -386,7 +387,7 @@ func ParsePaidMessageReactor(raw *tg.MessageReactor) *PaidMessageReactor {
 		case *tg.PeerChat:
 			r.PeerID = -p.ChatID
 		case *tg.PeerChannel:
-			r.PeerID = channelChatID(p.ChannelID)
+			r.PeerID = peerid.MarkChannel(p.ChannelID)
 		}
 	}
 	return r

@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -379,7 +380,7 @@ func chatFromInputPeer(peer tg.InputPeerClass) *Chat {
 	case *tg.InputPeerChat:
 		return &Chat{ID: -p.ChatID, Type: ChatTypeGroup}
 	case *tg.InputPeerChannel:
-		return &Chat{ID: channelChatID(p.ChannelID), Type: ChatTypeChannel, AccessHash: p.AccessHash}
+		return &Chat{ID: peerid.MarkChannel(p.ChannelID), Type: ChatTypeChannel, AccessHash: p.AccessHash}
 	}
 	return nil
 }

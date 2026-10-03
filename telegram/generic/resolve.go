@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/telegram"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -67,16 +68,15 @@ func resolveID[T PeerInput](ctx context.Context, c *telegram.Client, v T) (int64
 // library: positive for users, negative for basic groups, -100-prefixed for
 // channels and supergroups.
 func inputPeerToID(peer tg.InputPeerClass) int64 {
-	const channelPrefix int64 = -1000000000000
 	switch p := peer.(type) {
 	case *tg.InputPeerUser:
 		return p.UserID
 	case *tg.InputPeerSelf:
 		return 0
 	case *tg.InputPeerChat:
-		return -p.ChatID
+		return peerid.MarkChat(p.ChatID)
 	case *tg.InputPeerChannel:
-		return channelPrefix - p.ChannelID
+		return peerid.MarkChannel(p.ChannelID)
 	default:
 		return -1
 	}

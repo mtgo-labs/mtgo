@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -369,14 +370,6 @@ type RequestedPeerData struct {
 	UserIDs []int64
 	// ChatIDs contains the shared chat/channel IDs (negative, empty for user shares).
 	ChatIDs []int64
-}
-
-const zeroChannelID = -1000000000000
-
-type peerID int64
-
-func (id *peerID) Channel(p int64) {
-	*id = peerID(zeroChannelID - p)
 }
 
 // ServiceActionType enumerates the kinds of service actions that can appear in a message.
@@ -802,7 +795,7 @@ func (m *Message) setDirectServiceFields(raw tg.MessageActionClass, pm *PeerMap)
 		m.ChannelChatCreated = true
 		m.NewChatTitle = action.Title
 	case *tg.MessageActionChatMigrateTo:
-		m.MigrateToChatID = channelChatID(action.ChannelID)
+		m.MigrateToChatID = peerid.MarkChannel(action.ChannelID)
 	case *tg.MessageActionChannelMigrateFrom:
 		m.SupergroupChatCreated = true
 		m.MigrateFromChatID = -action.ChatID
@@ -1070,7 +1063,7 @@ func parseRequestedPeers(buttonID int32, peers []tg.PeerClass) *RequestedPeerDat
 		case *tg.PeerChat:
 			data.ChatIDs = append(data.ChatIDs, -peer.ChatID)
 		case *tg.PeerChannel:
-			data.ChatIDs = append(data.ChatIDs, channelChatID(peer.ChannelID))
+			data.ChatIDs = append(data.ChatIDs, peerid.MarkChannel(peer.ChannelID))
 		}
 	}
 	return data
@@ -1085,16 +1078,10 @@ func parseRequestedPeerSentMe(buttonID int32, peers []tg.RequestedPeerClass) *Re
 		case *tg.RequestedPeerChat:
 			data.ChatIDs = append(data.ChatIDs, -peer.ChatID)
 		case *tg.RequestedPeerChannel:
-			data.ChatIDs = append(data.ChatIDs, channelChatID(peer.ChannelID))
+			data.ChatIDs = append(data.ChatIDs, peerid.MarkChannel(peer.ChannelID))
 		}
 	}
 	return data
-}
-
-func channelChatID(channelID int64) int64 {
-	var id peerID
-	id.Channel(channelID)
-	return int64(id)
 }
 
 func parseForwardHeader(raw *tg.MessageFwdHeader) *ForwardHeader {
@@ -1158,7 +1145,7 @@ func parseMessageOrigin(raw *tg.MessageFwdHeader, pm *PeerMap) *MessageOrigin {
 		}
 	case *tg.PeerChannel:
 		origin.Type = MessageOriginTypeChannel
-		origin.ChatID = channelChatID(peer.ChannelID)
+		origin.ChatID = peerid.MarkChannel(peer.ChannelID)
 		origin.MessageID = raw.ChannelPost
 		origin.AuthorSignature = raw.PostAuthor
 		if pm != nil {
@@ -1178,7 +1165,7 @@ func getPeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return -p.ChatID
 	case *tg.PeerChannel:
-		return channelChatID(p.ChannelID)
+		return peerid.MarkChannel(p.ChannelID)
 	}
 	return 0
 }
@@ -1193,7 +1180,7 @@ func getBarePeerID(peer tg.PeerClass) int64 {
 	case *tg.PeerChat:
 		return -p.ChatID
 	case *tg.PeerChannel:
-		return channelChatID(p.ChannelID)
+		return peerid.MarkChannel(p.ChannelID)
 	}
 	return 0
 }
