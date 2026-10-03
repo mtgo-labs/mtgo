@@ -157,9 +157,13 @@ type Client struct {
 	secretMsgHandlers     []SecretMessageHandler
 	secretChatReqHandlers []SecretChatRequestHandler
 
-	dcSessions   *dcSessions
-	uploadPoolMu sync.Mutex
-	uploadPool   *uploadSessionPool
+	dcSessions *dcSessions
+	// transferPoolMu guards the home-DC transfer pools below. Both are pools
+	// of dedicated shared-auth-key sessions (tdesktop-style shifted sessions)
+	// used to spread parallel file transfers across multiple TCP connections.
+	transferPoolMu sync.Mutex
+	uploadPool     *uploadSessionPool
+	downloadPool   *uploadSessionPool
 
 	// dcOptionPool manages candidate endpoints per DC with health scoring.
 	// Ported from td/td/telegram/net/DcOptionsSet.h.
@@ -1380,12 +1384,16 @@ func (c *Client) connectTransportLocked(timeout time.Duration) (retErr error) {
 	if c.dcSessions != nil {
 		c.dcSessions.cleanup(true)
 	}
-	c.uploadPoolMu.Lock()
+	c.transferPoolMu.Lock()
 	if c.uploadPool != nil {
 		c.uploadPool.close()
 		c.uploadPool = nil
 	}
-	c.uploadPoolMu.Unlock()
+	if c.downloadPool != nil {
+		c.downloadPool.close()
+		c.downloadPool = nil
+	}
+	c.transferPoolMu.Unlock()
 	defer func() {
 		if retErr != nil {
 			c.state.SetDisconnected(retErr)
@@ -2684,12 +2692,16 @@ func (c *Client) cleanupSessionsLockedMode(wait bool, closeStorage ...bool) *ses
 	if c.dcSessions != nil {
 		c.dcSessions.cleanup(wait)
 	}
-	c.uploadPoolMu.Lock()
+	c.transferPoolMu.Lock()
 	if c.uploadPool != nil {
 		c.uploadPool.close()
 		c.uploadPool = nil
 	}
-	c.uploadPoolMu.Unlock()
+	if c.downloadPool != nil {
+		c.downloadPool.close()
+		c.downloadPool = nil
+	}
+	c.transferPoolMu.Unlock()
 
 	c.mu.Lock()
 	sess := c.session

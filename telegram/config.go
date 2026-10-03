@@ -480,7 +480,9 @@ type Config struct {
 	// UploadPoolSize controls the number of parallel upload sessions created
 	// on the home DC for file uploads. Each session shares the main session's
 	// permanent auth key (no DH exchange) and runs its own TCP connection.
-	// Defaults to 4 for throughput; set to 1 to use the main session only.
+	// The effective size never exceeds the file's part count or the upload
+	// worker count. Defaults to 8 for throughput (matching Telegram Desktop's
+	// media session cap); set to 1 to use the main session only.
 	UploadPoolSize int
 	// EndpointCoolDown is the time to wait before retrying a failed DC
 	// endpoint. Failed endpoints are skipped until the cool-down expires.
@@ -625,6 +627,6 @@ var DefaultConfig = Config{
 	HealthPongTimeout:  30 * time.Second,
 	ConnPoolTTL:        10 * time.Second,
 	DCPoolSize:         1,
-	UploadPoolSize:     4,
+	UploadPoolSize:     8,
 	EndpointCoolDown:   16 * time.Second,
 }

@@ -674,6 +674,12 @@ func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int
 	return min(defaultTransferWorkers, parts)
 }
 
+// downloadWorkerWindow is the number of chunk requests each parallel-download
+// worker keeps in flight on its connection. A window greater than 1 keeps the
+// TCP pipe full across round-trips (tdesktop grows per-session windows to 4-16
+// parts); 2 gives most of the benefit without unbounded buffering.
+const downloadWorkerWindow = 2
+
 func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.WriterAt, opts *params.Download) (int64, error) {
 	chunkSize := chunkSizeForDownload(opts)
 
@@ -698,7 +704,15 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 	}
 
 	jobs := make(chan job, workers)
-	results := make(chan result, workers)
+	results := make(chan result, workers*downloadWorkerWindow)
+	// send delivers a worker result, abandoning the send when the context is
+	// cancelled so in-flight workers cannot leak.
+	send := func(r result) {
+		select {
+		case results <- r:
+		case <-ctx.Done():
+		}
+	}
 	var done atomic.Int64
 	var wg sync.WaitGroup
 
@@ -706,97 +720,134 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 		wg.Add(1)
 		go func(workerIdx int) {
 			defer wg.Done()
+
+			var rpcMu sync.Mutex // guards currentRPC, recoveries, backoff
 			currentRPC := rpcs[workerIdx%len(rpcs)]
 			recoveries := 0
 			backoff := time.Duration(0)
-			for j := range jobs {
-				var file *tg.UploadFile
-				for {
-					select {
-					case <-ctx.Done():
-						results <- result{offset: j.offset, err: ctx.Err()}
-						return
-					default:
-					}
 
-					res, err := currentRPC.UploadGetFile(ctx, &tg.UploadGetFileRequest{
-						Location: location,
-						Offset:   j.offset,
-						Limit:    j.limit,
-					})
-					if err != nil {
-						recoveredRPC, recovered, recoverErr := c.recoverDownloadWorkerRPC(ctx, dcID, len(rpcs), workerIdx, err)
-						if recoverErr != nil {
-							results <- result{offset: j.offset, err: recoverErr}
-							return
+			// Pipelining window: keep up to downloadWorkerWindow chunk
+			// requests in flight per connection so throughput is not capped
+			// at one round-trip per chunk.
+			sem := make(chan struct{}, downloadWorkerWindow)
+			var inflight sync.WaitGroup
+			defer inflight.Wait()
+
+			for j := range jobs {
+				select {
+				case sem <- struct{}{}:
+				case <-ctx.Done():
+					return
+				}
+				inflight.Add(1)
+				go func(j job) {
+					defer inflight.Done()
+					defer func() { <-sem }()
+					defer func() {
+						if r := recover(); r != nil {
+							send(result{offset: j.offset, err: fmt.Errorf("download worker panic: %v", r)})
 						}
-						if recovered && recoveries < maxDownloadRecoveries {
-							recoveries++
-							currentRPC = recoveredRPC
-							// Exponential backoff between recovery attempts.
-							if backoff == 0 {
-								backoff = time.Second
-							} else {
-								backoff *= 2
-								if backoff > 30*time.Second {
-									backoff = 30 * time.Second
+					}()
+
+					var file *tg.UploadFile
+					for {
+						select {
+						case <-ctx.Done():
+							send(result{offset: j.offset, err: ctx.Err()})
+							return
+						default:
+						}
+
+						rpcMu.Lock()
+						rpc := currentRPC
+						rpcMu.Unlock()
+
+						res, err := rpc.UploadGetFile(ctx, &tg.UploadGetFileRequest{
+							Location: location,
+							Offset:   j.offset,
+							Limit:    j.limit,
+						})
+						if err != nil {
+							recoveredRPC, recovered, recoverErr := c.recoverDownloadWorkerRPC(ctx, dcID, len(rpcs), workerIdx, err)
+							if recoverErr != nil {
+								send(result{offset: j.offset, err: recoverErr})
+								return
+							}
+							rpcMu.Lock()
+							allowed := recovered && recoveries < maxDownloadRecoveries
+							var wait time.Duration
+							if allowed {
+								recoveries++
+								currentRPC = recoveredRPC
+								if backoff == 0 {
+									backoff = time.Second
+								} else {
+									backoff *= 2
+									if backoff > 30*time.Second {
+										backoff = 30 * time.Second
+									}
 								}
+								wait = backoff
+							}
+							rpcMu.Unlock()
+							if !allowed {
+								send(result{offset: j.offset, err: fmt.Errorf("download: get file at offset %d: %w", j.offset, err)})
+								return
 							}
 							select {
 							case <-ctx.Done():
-								results <- result{offset: j.offset, err: ctx.Err()}
+								send(result{offset: j.offset, err: ctx.Err()})
 								return
-							case <-time.After(backoff):
+							case <-time.After(wait):
 							}
 							continue
 						}
-						results <- result{offset: j.offset, err: fmt.Errorf("download: get file at offset %d: %w", j.offset, err)}
-						return
-					}
-					recoveries = 0
-					backoff = 0
+						rpcMu.Lock()
+						recoveries = 0
+						backoff = 0
+						rpcMu.Unlock()
 
-					var ok bool
-					file, ok = res.(*tg.UploadFile)
-					if !ok {
-						if _, ok := res.(*tg.UploadFileCDNRedirect); ok {
-							results <- result{offset: j.offset, err: errParallelDownloadUnsupported}
+						var ok bool
+						file, ok = res.(*tg.UploadFile)
+						if !ok {
+							if _, ok := res.(*tg.UploadFileCDNRedirect); ok {
+								send(result{offset: j.offset, err: errParallelDownloadUnsupported})
+								return
+							}
+							send(result{offset: j.offset, err: fmt.Errorf("download: unexpected result type %T", res)})
 							return
 						}
-						results <- result{offset: j.offset, err: fmt.Errorf("download: unexpected result type %T", res)}
+						break
+					}
+
+					if len(file.Bytes) == 0 {
+						send(result{offset: j.offset})
 						return
 					}
-					break
-				}
-
-				if len(file.Bytes) == 0 {
-					results <- result{offset: j.offset}
-					continue
-				}
-				n, err := writer.WriteAt(file.Bytes, j.offset)
-				if err != nil {
-					results <- result{offset: j.offset, n: n, err: fmt.Errorf("download: write at offset %d: %w", j.offset, err)}
-					return
-				}
-				written := done.Add(int64(n))
-				if opts != nil && opts.Progress != nil {
-					opts.Progress(params.ProgressInfo{
-						TotalBytes:      fileSize,
-						DownloadedBytes: written,
-						IsUpload:        false,
-					})
-				}
-				st.reset()
-				results <- result{offset: j.offset, n: n}
-
-				// Pace requests to avoid triggering the DC's rate limiter.
-				if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
-					select {
-					case <-ctx.Done():
+					n, err := writer.WriteAt(file.Bytes, j.offset)
+					if err != nil {
+						send(result{offset: j.offset, n: n, err: fmt.Errorf("download: write at offset %d: %w", j.offset, err)})
 						return
-					case <-time.After(delay):
 					}
-				}
+					written := done.Add(int64(n))
+					if opts != nil && opts.Progress != nil {
+						opts.Progress(params.ProgressInfo{
+							TotalBytes:      fileSize,
+							DownloadedBytes: written,
+							IsUpload:        false,
+						})
+					}
+					st.reset()
+					send(result{offset: j.offset, n: n})
+
+					// Pace requests to avoid triggering the DC's rate limiter.
+					if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
+						select {
+						case <-ctx.Done():
+						case <-time.After(delay):
+						}
+					}
+				}(j)
 			}
 		}(i)
 	}
@@ -1023,10 +1074,14 @@ func (c *Client) recoverDownloadWorkerRPC(ctx context.Context, dcID int, poolSiz
 	if waitErr := c.waitForDownloadReconnect(ctx); waitErr != nil {
 		return nil, false, fmt.Errorf("download: wait for reconnect: %w", waitErr)
 	}
-	// Same-DC (or unknown DC): the main session recovers independently.
-	// Return it directly instead of creating/replacing side sessions.
+	// Same-DC (or unknown DC): prefer replacing the worker's dead transfer-
+	// pool session with a fresh shared-key session; fall back to the main
+	// session, which recovers independently.
 	homeDC := c.homeDC()
 	if dcID <= 0 || dcID == homeDC || homeDC == 0 {
+		if rpc, ok := c.replaceTransferPoolEntry(ctx, workerIdx); ok {
+			return rpc, true, nil
+		}
 		return c.Raw(), true, nil
 	}
 	rpc, dcErr := c.retryDownloadDCRepair(ctx, func() (*tg.RPCClient, error) {

@@ -108,7 +108,7 @@ func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName stri
 	}
 	ctx = withTransferRetry(ctx)
 	c.Log.Debugf("UploadFile size=%d", fileSize)
-	rpcs, err := c.uploadRPCs(ctx, fileSize)
+	rpcs, err := c.uploadRPCs(ctx, fileSize, uploadKnownWorkers(opts, fileSize))
 	if err != nil {
 		return nil, err
 	}

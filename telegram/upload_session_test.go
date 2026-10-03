@@ -22,7 +22,7 @@ func TestUploadRPCUsesMainInvoker(t *testing.T) {
 	invoker := newMockRPCInvoker()
 	client.testInvoker = invoker
 
-	rpcs, err := client.uploadRPCs(context.Background(), 0)
+	rpcs, err := client.uploadRPCs(context.Background(), 0, 1)
 	if err != nil {
 		t.Fatalf("uploadRPCs() error: %v", err)
 	}
@@ -136,5 +136,57 @@ func TestIsTransferSessionDeadErr(t *testing.T) {
 				t.Fatalf("isTransferSessionDeadErr(%v) = %v, want %v", test.err, got, test.want)
 			}
 		})
+	}
+}
+
+func TestUploadPoolSizeSizing(t *testing.T) {
+	tests := []struct {
+		name     string
+		fileSize int64
+		cfgSize  int
+		workers  int
+		want     int
+	}{
+		{name: "config wins when set", fileSize: 100 << 20, cfgSize: 8, workers: 4, want: 8},
+		{name: "workers fallback when unset", fileSize: 100 << 20, cfgSize: 0, workers: 6, want: 6},
+		{name: "capped by part count", fileSize: 512 * 1024, cfgSize: 8, workers: 8, want: 1},
+		{name: "capped by part count multi", fileSize: 2 << 20, cfgSize: 0, workers: 8, want: 4},
+		{name: "clamped to max", fileSize: 100 << 20, cfgSize: 99, workers: 1, want: maxTransferWorkers},
+		{name: "clamped to min", fileSize: 100 << 20, cfgSize: 0, workers: 0, want: 1},
+		{name: "empty file single session", fileSize: 0, cfgSize: 8, workers: 8, want: 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := uploadPoolSize(tt.fileSize, tt.cfgSize, tt.workers); got != tt.want {
+				t.Fatalf("uploadPoolSize(%d, %d, %d) = %d, want %d", tt.fileSize, tt.cfgSize, tt.workers, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDCRPCPoolSameDEFallsBackToMainWhenPoolFails(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.state.SetDC(0)
+
+	rpcs, err := c.dcRPCPool(context.Background(), 2, 4)
+	if err != nil {
+		t.Fatalf("dcRPCPool() error: %v", err)
+	}
+	if len(rpcs) != 4 {
+		t.Fatalf("dcRPCPool() returned %d rpcs, want 4", len(rpcs))
+	}
+	main := c.Raw()
+	for i, rpc := range rpcs {
+		if rpc != main {
+			t.Fatalf("rpcs[%d] != main RPC, want main-session fallback copies", i)
+		}
+	}
+}
+
+func TestReplaceTransferPoolEntryWithoutPool(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	if rpc, ok := c.replaceTransferPoolEntry(context.Background(), 0); ok || rpc != nil {
+		t.Fatal("replaceTransferPoolEntry() with no pool should return nil, false")
 	}
 }

@@ -13,14 +13,15 @@ import (
 )
 
 // uploadSessionPool manages N independent MTProto sessions on the home DC for
-// parallel file uploads. Each session shares the main session's permanent auth
-// key (no DH exchange) but has its own TCP connection and session ID. PFS is
-// intentionally disabled, matching mtcute's design: "we do not set temp auth
-// keys for media connections, as they are ephemeral and dc-bound."
+// parallel file transfers (uploads and same-DC downloads). Each session shares
+// the main session's permanent auth key (no DH exchange) but has its own TCP
+// connection and unique session ID — the "shifted session" pattern used by
+// Telegram Desktop. PFS is intentionally disabled, matching mtcute's design:
+// "we do not set temp auth keys for media connections, as they are ephemeral
+// and dc-bound."
 type uploadSessionPool struct {
 	mu      sync.RWMutex
 	entries []*dcSessionEntry
-	next    atomic.Uint64
 	client  *Client
 	size    int
 }
@@ -228,9 +229,53 @@ func (p *uploadSessionPool) rpcClient() *tg.RPCClient {
 	return tg.NewRPCClient(&uploadPoolInvoker{pool: p, client: p.client})
 }
 
-// createUploadSession creates a single upload session on the home DC that
+// ensureHomeTransferPool returns a pool of size shared-auth-key sessions on
+// the home DC for parallel transfers. The pool is cached on the client and
+// grows on demand when a later transfer requests more workers. Creation is
+// serialized under transferPoolMu, so concurrent callers never duplicate
+// sessions.
+func (c *Client) ensureHomeTransferPool(ctx context.Context, size int) (*uploadSessionPool, error) {
+	size = clampTransferWorkers(size)
+	c.transferPoolMu.Lock()
+	defer c.transferPoolMu.Unlock()
+	if c.downloadPool == nil {
+		c.downloadPool = newUploadSessionPool(c, size)
+	}
+	if c.downloadPool.size < size {
+		c.downloadPool.size = size
+	}
+	if err := c.downloadPool.ensureCreated(ctx); err != nil {
+		return nil, err
+	}
+	return c.downloadPool, nil
+}
+
+// replaceTransferPoolEntry replaces a dead download-pool session at workerIdx
+// with a fresh shared-key session. Returns nil,false when no download pool
+// exists or the replacement could not be created; callers should fall back to
+// the main session.
+func (c *Client) replaceTransferPoolEntry(ctx context.Context, workerIdx int) (*tg.RPCClient, bool) {
+	c.transferPoolMu.Lock()
+	pool := c.downloadPool
+	c.transferPoolMu.Unlock()
+	if pool == nil {
+		return nil, false
+	}
+	if e := pool.entry(workerIdx); e == nil || !e.isAlive() {
+		pool.tryReplace(ctx, workerIdx)
+	}
+	if e := pool.entry(workerIdx); e != nil && e.isAlive() {
+		return e.rpc, true
+	}
+	return nil, false
+}
+
+// createUploadSession creates a single transfer session on the home DC that
 // shares the main session's permanent auth key. No DH exchange, no PFS,
-// no auth export — the key is copied directly from the main session.
+// no auth export — the key is copied directly from the main session. The
+// session ID is freshly random per session, so the server never sees the same
+// (auth key, session ID) pair on two connections and AUTH_KEY_DUPLICATED
+// cannot occur.
 func (c *Client) createUploadSession(ctx context.Context) (*dcSessionEntry, error) {
 	homeDC := c.homeDC()
 	if homeDC == 0 {
@@ -299,24 +344,19 @@ func (c *Client) createUploadSession(ctx context.Context) (*dcSessionEntry, erro
 	return entry, nil
 }
 
-// uploadPoolSize returns the number of upload sessions to create. It scales
-// with file size, matching gogram's countWorkers but more conservative to
-// avoid wasting resources: 4 for most files, up to 8 for very large ones.
-func uploadPoolSize(fileSize int64, cfgSize int) int {
-	if cfgSize > 0 {
-		return clampTransferWorkers(cfgSize)
+// uploadPoolSize returns the number of upload sessions to create. It never
+// exceeds the number of file parts (extra sessions cannot help a file with
+// fewer parts than workers) and never exceeds the clamped worker count. When
+// the config does not specify a size, the requested worker count is used.
+func uploadPoolSize(fileSize int64, cfgSize, workers int) int {
+	size := cfgSize
+	if size <= 0 {
+		size = workers
 	}
-	parts := fileSize / int64(uploadPartSize)
-	switch {
-	case parts <= 4:
-		return 1
-	case parts <= 100:
-		return 2
-	case parts <= 1000:
-		return 4
-	case parts <= 4000:
-		return 6
-	default:
-		return 8
+	size = clampTransferWorkers(size)
+	parts := int(fileSize / int64(uploadPartSize))
+	if parts < 1 {
+		parts = 1
 	}
+	return min(size, parts)
 }

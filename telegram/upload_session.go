@@ -43,19 +43,19 @@ func isTransferSessionDeadErr(err error) bool {
 // mtcute's media-connection design). Each session has its own TCP connection,
 // so uploads survive individual connection deaths. Falls back to the main
 // session when the pool is disabled or unavailable.
-func (c *Client) uploadRPCs(ctx context.Context, fileSize int64) ([]*tg.RPCClient, error) {
+func (c *Client) uploadRPCs(ctx context.Context, fileSize int64, workers int) ([]*tg.RPCClient, error) {
 	poolSize := c.config().UploadPoolSize
 	if poolSize <= 1 {
 		return []*tg.RPCClient{c.Raw()}, nil
 	}
 
-	c.uploadPoolMu.Lock()
+	c.transferPoolMu.Lock()
 	if c.uploadPool == nil {
-		sz := uploadPoolSize(fileSize, poolSize)
+		sz := uploadPoolSize(fileSize, poolSize, workers)
 		c.uploadPool = newUploadSessionPool(c, sz)
 	}
 	pool := c.uploadPool
-	c.uploadPoolMu.Unlock()
+	c.transferPoolMu.Unlock()
 
 	if err := pool.ensureCreated(ctx); err != nil {
 		return []*tg.RPCClient{c.Raw()}, nil
