@@ -10,7 +10,6 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-
 // withInstantSleep replaces the policy sleeper for the duration of f: sleeps
 // record their durations and return immediately.
 func withInstantSleep(t *testing.T, recorded *[]time.Duration, f func()) {
