@@ -191,6 +191,7 @@ var NamesMap = map[string]uint32{
 	"messageActionPollDeleteAnswer":                      0x399674dc,
 	"messageActionManagedBotCreated":                     0x16605e3e,
 	"messageActionChangeCommunity":                       0x5d20bae8,
+	"messageActionChatJoinedViaCommunity":                0x4a8bfe80,
 	"dialog":                                             0xfc89f7f3,
 	"dialogFolder":                                       0x71bd134c,
 	"dialogCommunity":                                    0xf78a0973,

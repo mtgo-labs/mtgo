@@ -4295,6 +4295,9 @@ const MessageActionManagedBotCreatedTypeID = 0x16605e3e
 // MessageActionChangeCommunityTypeID is the constructor ID for TL type messageActionChangeCommunity.
 const MessageActionChangeCommunityTypeID = 0x5d20bae8
 
+// MessageActionChatJoinedViaCommunityTypeID is the constructor ID for TL type messageActionChatJoinedViaCommunity.
+const MessageActionChatJoinedViaCommunityTypeID = 0x4a8bfe80
+
 // isMessageAction marks MessageActionEmpty as implementing the MessageActionClass interface.
 func (*MessageActionEmpty) isMessageAction() {}
 
@@ -4498,6 +4501,9 @@ func (*MessageActionManagedBotCreated) isMessageAction() {}
 
 // isMessageAction marks MessageActionChangeCommunity as implementing the MessageActionClass interface.
 func (*MessageActionChangeCommunity) isMessageAction() {}
+
+// isMessageAction marks MessageActionChatJoinedViaCommunity as implementing the MessageActionClass interface.
+func (*MessageActionChatJoinedViaCommunity) isMessageAction() {}
 
 // MessageActionEmpty represents the TL constructor messageActionEmpty (0xb6aef7b0).
 //
@@ -8826,6 +8832,42 @@ func DecodeMessageActionChangeCommunity(r *Reader) (*MessageActionChangeCommunit
 func init() {
 	Registry[MessageActionChangeCommunityTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessageActionChangeCommunity(r)
+	}
+}
+
+// MessageActionChatJoinedViaCommunity represents the TL constructor messageActionChatJoinedViaCommunity (0x4a8bfe80).
+//
+// See https://core.telegram.org/constructor/messageActionChatJoinedViaCommunity for reference.
+type MessageActionChatJoinedViaCommunity struct {
+	CommunityID int64 `json:"community_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x4a8bfe80.
+func (v *MessageActionChatJoinedViaCommunity) ConstructorID() uint32 {
+	return MessageActionChatJoinedViaCommunityTypeID
+}
+
+// Encode serializes MessageActionChatJoinedViaCommunity to a bytes.Buffer using the TL binary protocol.
+func (v *MessageActionChatJoinedViaCommunity) Encode(b *bytes.Buffer) error {
+	WriteInt(b, MessageActionChatJoinedViaCommunityTypeID)
+	WriteLong(b, v.CommunityID)
+	return nil
+}
+
+// DecodeMessageActionChatJoinedViaCommunity deserializes a MessageActionChatJoinedViaCommunity from a reader using the TL binary protocol.
+func DecodeMessageActionChatJoinedViaCommunity(r *Reader) (*MessageActionChatJoinedViaCommunity, error) {
+	v := &MessageActionChatJoinedViaCommunity{}
+	_rCommunityID, _eCommunityID := r.ReadInt64()
+	if _eCommunityID != nil {
+		return nil, _eCommunityID
+	}
+	v.CommunityID = _rCommunityID
+	return v, nil
+}
+
+func init() {
+	Registry[MessageActionChatJoinedViaCommunityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageActionChatJoinedViaCommunity(r)
 	}
 }
 

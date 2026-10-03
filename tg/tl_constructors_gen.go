@@ -150,6 +150,7 @@ var ConstructorMap = map[uint32]func() TLObject{
 	0x399674dc: func() TLObject { return &MessageActionPollDeleteAnswer{} },
 	0x16605e3e: func() TLObject { return &MessageActionManagedBotCreated{} },
 	0x5d20bae8: func() TLObject { return &MessageActionChangeCommunity{} },
+	0x4a8bfe80: func() TLObject { return &MessageActionChatJoinedViaCommunity{} },
 	0xfc89f7f3: func() TLObject { return &Dialog{} },
 	0x71bd134c: func() TLObject { return &DialogFolder{} },
 	0xf78a0973: func() TLObject { return &DialogCommunity{} },
