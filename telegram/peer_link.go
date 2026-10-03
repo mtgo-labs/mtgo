@@ -133,6 +133,11 @@ func parseTmePath(host, path string) (link, bool) {
 		}
 		return link{}, false
 	}
+	// Username: only the first path segment, without any query string
+	// (schemeless links are not pre-parsed by net/url).
+	if idx := strings.IndexAny(p, "/?"); idx >= 0 {
+		p = p[:idx]
+	}
 	return link{kind: linkUsername, username: strings.TrimPrefix(p, "@")}, true
 }
 

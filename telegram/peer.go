@@ -8,6 +8,14 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+// Peers returns the peer resolution engine backing this client's Resolve*,
+// CachePeer, and storage-facade methods. Use it for the richer surface
+// (Ingest, Invalidate, EnsureUsable, typed kind errors) that the frozen
+// Client API does not expose.
+func (c *Client) Peers() *peers.Manager {
+	return c.peersManager()
+}
+
 // peersManager lazily constructs the peer resolution engine. All peer
 // resolution, caching, and persistence flows through it; the exported
 // methods on Client are thin compatibility delegates.

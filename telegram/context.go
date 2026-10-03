@@ -212,6 +212,9 @@ func (c *Context) StopPropagation() {
 // update's peer cache. Returns the matching User or Chat object on success,
 // or nil when no peer with the given ID is available. Useful for resolving
 // forward-from or reply-to senders without an additional API call.
+//
+// Deprecated: ResolvePeer returns any, forcing callers to type-assert. Use
+// the typed [Context.User] and [Context.Chat] lookups instead.
 func (c *Context) ResolvePeer(id int64) any {
 	if c.Update == nil {
 		return nil
@@ -223,6 +226,24 @@ func (c *Context) ResolvePeer(id int64) any {
 		return ch
 	}
 	return nil
+}
+
+// User returns the update's user entity for the given ID, or nil when the
+// update carries no such user.
+func (c *Context) User(id int64) *types.User {
+	if c.Update == nil {
+		return nil
+	}
+	return c.Update.Users[id]
+}
+
+// Chat returns the update's chat entity for the given ID, or nil when the
+// update carries no such chat.
+func (c *Context) Chat(id int64) *types.Chat {
+	if c.Update == nil {
+		return nil
+	}
+	return c.Update.Chats[id]
 }
 
 func (c *Context) chatID() (int64, error) {

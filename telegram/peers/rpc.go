@@ -52,7 +52,11 @@ func (m *Manager) ResolveUsernameFull(ctx context.Context, username string) (*tg
 			Username: username,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%w: resolve @%s: %w", ErrNotFound, username, err)
+			if isNotFoundRPC(err) {
+				return nil, fmt.Errorf("%w: resolve @%s: %w", ErrNotFound, username, err)
+			}
+			// Transient failure (flood, network, auth): surface it unmasked.
+			return nil, fmt.Errorf("resolve @%s: %w", username, err)
 		}
 		m.ingestResolved(result)
 		return result, nil
@@ -106,7 +110,10 @@ func (m *Manager) InputPeerByPhone(ctx context.Context, phone string) (tg.InputP
 			Phone: phone,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%w: resolve phone %s: %w", ErrNotFound, phone, err)
+			if isNotFoundRPC(err) {
+				return nil, fmt.Errorf("%w: resolve phone %s: %w", ErrNotFound, phone, err)
+			}
+			return nil, fmt.Errorf("resolve phone %s: %w", phone, err)
 		}
 		m.ingestResolved(result)
 		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
@@ -131,7 +138,10 @@ func (m *Manager) numericForBot(ctx context.Context, id int64) (tg.InputPeerClas
 			},
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, raw, err)
+			if isNotFoundRPC(err) {
+				return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, raw, err)
+			}
+			return nil, fmt.Errorf("get channel %d: %w", raw, err)
 		}
 		chats := chatsFromChatsClass(result)
 		m.Ingest(nil, chats)
@@ -162,7 +172,10 @@ func (m *Manager) botUserAccessHash(ctx context.Context, userID int64) (tg.Input
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: get user %d: %w", ErrNotFound, userID, err)
+		if isNotFoundRPC(err) {
+			return nil, fmt.Errorf("%w: get user %d: %w", ErrNotFound, userID, err)
+		}
+		return nil, fmt.Errorf("get user %d: %w", userID, err)
 	}
 	users := usersFromUsersGetUsers(result)
 	m.Ingest(users, nil)
@@ -184,7 +197,10 @@ func (m *Manager) botChannelAccessHash(ctx context.Context, channelID int64) (tg
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, channelID, err)
+		if isNotFoundRPC(err) {
+			return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, channelID, err)
+		}
+		return nil, fmt.Errorf("get channel %d: %w", channelID, err)
 	}
 	chats := chatsFromChatsClass(result)
 	m.Ingest(nil, chats)
@@ -383,7 +399,7 @@ func PeerToInputPeer(peer tg.PeerClass, users []tg.UserClass, chats []tg.ChatCla
 		if user.AccessHash != 0 {
 			return &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash}, nil
 		}
-		return &tg.InputPeerSelf{}, nil
+		return nil, fmt.Errorf("%w: user %d carries no usable access hash", ErrNotFound, user.ID)
 	case *tg.PeerChat:
 		if chat, ok := chatMap[p.ChatID]; ok {
 			return &tg.InputPeerChat{ChatID: chat.id}, nil
@@ -408,7 +424,7 @@ func InputPeerToUser(peer tg.InputPeerClass) (tg.InputUserClass, error) {
 	case *tg.InputPeerSelf:
 		return &tg.InputUserSelf{}, nil
 	default:
-		return nil, fmt.Errorf("peer %T is not a user", peer)
+		return nil, NotUserError{Peer: peer}
 	}
 }
 
@@ -420,7 +436,7 @@ func InputPeerToChannel(peer tg.InputPeerClass) (tg.InputChannelClass, error) {
 	case *tg.InputPeerSelf:
 		return &tg.InputChannelEmpty{}, nil
 	default:
-		return nil, fmt.Errorf("peer %T is not a channel", peer)
+		return nil, NotChannelError{Peer: peer}
 	}
 }
 

@@ -972,9 +972,9 @@ func (c *Client) downloadToWriterFromOffset(ctx context.Context, rpc *tg.RPCClie
 
 		// Pace requests to avoid triggering the DC's rate limiter.
 		if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
-		select {
-		case <-ctx.Done():
-			return totalWritten, context.Cause(ctx)
+			select {
+			case <-ctx.Done():
+				return totalWritten, context.Cause(ctx)
 			case <-time.After(delay):
 			}
 		}

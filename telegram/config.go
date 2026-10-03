@@ -280,8 +280,7 @@ type Config struct {
 	MaxTopicCacheSize int
 	// PeerCacheSize caps the number of peer and username entries cached in memory.
 	// When the limit is exceeded, the oldest entries are evicted (FIFO).
-	// Setting to 0 (default) disables eviction — the cache grows without bound.
-	// Recommended: 5000.
+	// 0 disables the limit; the default is 5000.
 	PeerCacheSize int
 	// ParseMode selects the default formatting mode for message text.
 	// Use params.ParseModeMarkdown, params.ParseModeHTML, or a raw string
@@ -365,8 +364,9 @@ type Config struct {
 	// TransportModeIntermediate, TransportModePaddedIntermediate, and
 	// TransportModeFull.
 	TransportMode TransportMode
-	// SavePeers persists encountered peer identifiers to the session file so
-	// that they survive restarts without re-fetching.
+	// SavePeers persists encountered peer identifiers to the configured
+	// storage backend (Config.Storage) so that they survive restarts without
+	// re-fetching.
 	SavePeers bool
 	// Storage is an optional storage backend for persisting session data.
 	// When set, it takes precedence over InMemory and file-based session
@@ -584,8 +584,8 @@ func DeviceTDesktopWindows() DeviceConfig {
 var DefaultConfig = Config{
 	SleepThreshold:      10 * time.Second,
 	Timeout:             60 * time.Second,
-		ReqTimeout:          15 * time.Second,
-		RetryInterval:       5 * time.Second,
+	ReqTimeout:          15 * time.Second,
+	RetryInterval:       5 * time.Second,
 	MaxConcurrentTrans:  1,
 	DispatchQueueSize:   defaultDispatchQueueSize,
 	MaxMessageCacheSize: 1000,

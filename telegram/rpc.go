@@ -518,7 +518,6 @@ func (c *Client) replaySafe(query tg.TLObject) bool {
 	return false
 }
 
-
 func rpcQueryName(query tg.TLObject) string {
 	query = session.UnwrapRPCQuery(query)
 	if query == nil {

@@ -295,6 +295,9 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	client.initSecretChats()
 	client.reconnectMgr = newReconnectManager(client, client.backoffConfig())
 
+	// Peer resolution: stale access hashes self-heal via invalidate+replay.
+	client.invokerMiddlewares = append(client.invokerMiddlewares, client.peersManager().InvalidateOnStaleHash())
+
 	// Production hardening: enable RSA key rotation watchdog when configured.
 	if c.RSAKeyRotationInterval > 0 {
 		client.keySet = crypto.NewRSAKeySet()
