@@ -56,12 +56,11 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 			return invokeErr
 		}
 		if rpcErr, ok := result.(*tg.RPCError); ok {
-			ci.client.Log.Warnf("RPC error code=%d msg=%s", rpcErr.ErrorCode, rpcErr.ErrorMessage)
 			return tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
 		}
 		return nil
 	}
-	err := invokeWithFloodPolicy(ctx, floodThresholdFor(ctx, cfg), constructorOf(query), ci.client.floodReg(), attempt)
+	err := ci.client.invokeFlood(ctx, query, attempt)
 	if err != nil {
 		if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 303 {
 			if shouldReturnMigrationToCaller(input, rpcErr) {
@@ -72,7 +71,6 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 		return nil, err
 	}
 	if result == nil {
-		ci.client.Log.Warnf("RPC nil result method=%T", input)
 		return nil, fmt.Errorf("telegram: nil RPC result for %T", input)
 	}
 	if initializesAPI {
@@ -85,7 +83,7 @@ func (ci *clientInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decod
 // transfers opt in to accepting any server-mandated wait.
 func floodThresholdFor(ctx context.Context, cfg Config) time.Duration {
 	if transferFloodRetryEnabled(ctx) {
-		return max(cfg.SleepThreshold, 24*time.Hour)
+		return max(cfg.SleepThreshold, transferFloodThreshold)
 	}
 	return cfg.SleepThreshold
 }
@@ -100,7 +98,7 @@ func (ci *clientInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([
 		data, invokeErr = ci.client.InvokeWithRawResult(ctx, query)
 		return invokeErr
 	}
-	err := invokeWithFloodPolicy(ctx, floodThresholdFor(ctx, cfg), constructorOf(query), ci.client.floodReg(), attempt)
+	err := ci.client.invokeFlood(ctx, query, attempt)
 	if err != nil {
 		if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 303 {
 			if shouldReturnMigrationToCaller(input, rpcErr) {

@@ -744,7 +744,7 @@ func (c *Client) createDCSession(
 		return nil, ErrNotConnected
 	}
 	var exportResult *tg.AuthExportedAuthorization
-	err = invokeWithFloodPolicy(ctx, 24*time.Hour, 0, c.floodReg(), func() error {
+	err = invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthExportAuthorizationTypeID, c.floodReg(), func() error {
 		var exportErr error
 		exportResult, exportErr = c.exportAuthDirect(ctx, dcID)
 		return exportErr
@@ -754,7 +754,7 @@ func (c *Client) createDCSession(
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: export auth for DC %d: %w", dcID, err)
 	}
-	err = invokeWithFloodPolicy(ctx, 24*time.Hour, 0, c.floodReg(), func() error {
+	err = invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthImportAuthorizationTypeID, c.floodReg(), func() error {
 		_, importErr := rpc.AuthImportAuthorization(ctx, &tg.AuthImportAuthorizationRequest{
 			ID:    exportResult.ID,
 			Bytes: exportResult.Bytes,
@@ -833,7 +833,7 @@ func (d *dcSessionInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, dec
 
 	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
-	err = invokeWithFloodPolicy(ctx, floodThresholdFor(ctx, d.client.config()), constructorOf(query), d.client.floodReg(), func() error {
+	err = d.client.invokeFlood(ctx, query, func() error {
 		var invokeErr error
 		result, invokeErr = d.sess.Invoke(ctx, query, retries, timeout)
 		if invokeErr != nil {
@@ -883,7 +883,7 @@ func (d *dcSessionInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) 
 
 	query, initializesAPI := prepareAPIQuery(d.client.config(), d.apiInit.Load(), input)
 
-	err = invokeWithFloodPolicy(ctx, floodThresholdFor(ctx, d.client.config()), constructorOf(query), d.client.floodReg(), func() error {
+	err = d.client.invokeFlood(ctx, query, func() error {
 		var invokeErr error
 		data, invokeErr = d.sess.InvokeRaw(ctx, query, d.client.invokeRetries(), d.client.invokeTimeout(ctx))
 		return invokeErr

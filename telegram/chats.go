@@ -472,7 +472,7 @@ func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) 
 	case *tg.InputUserSelf:
 		userPeer = &tg.InputPeerSelf{}
 	default:
-		return fmt.Errorf("BanChatMember: unsupported user type %T", user)
+		return fmt.Errorf("ban member: unsupported user type %T", user)
 	}
 
 	rpc := c.Raw()
@@ -605,7 +605,7 @@ func (c *Client) GetChatMember(ctx context.Context, chatID int64, userID int64) 
 	case *tg.InputUserSelf:
 		userPeer = &tg.InputPeerSelf{}
 	default:
-		return nil, fmt.Errorf("GetChatMember: unsupported user type %T", user)
+		return nil, fmt.Errorf("get member: unsupported user type %T", user)
 	}
 
 	rpc := c.Raw()

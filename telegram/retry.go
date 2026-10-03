@@ -9,9 +9,13 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-// floodMaxRetries bounds how many times a single call may sleep through a
-// FLOOD_WAIT and replay within the configured threshold.
+// floodMaxRetries bounds total attempts (the initial call plus replays) a
+// single invocation may make under the flood policy.
 const floodMaxRetries = 5
+
+// transferFloodThreshold is the flood wait transfers accept: any duration
+// the server mandates.
+const transferFloodThreshold = 24 * time.Hour
 
 // floodRegistry remembers server-imposed per-method flood deadlines so new
 // calls to a still-waiting method sleep locally BEFORE wasting a round trip.
@@ -52,11 +56,23 @@ func (f *floodRegistry) waitIfFlooded(ctx context.Context, method uint32) error 
 		if d < 0 {
 			d = 0
 		}
-		select {
-		case <-time.After(d):
-		case <-ctx.Done():
-			return ctx.Err()
+		if err := sleepContext(ctx, d); err != nil {
+			return err
 		}
+	}
+}
+
+// sleepContext sleeps for d, stopping early and returning ctx.Err() when the
+// context is cancelled. Uses a stoppable timer so long gates do not pin
+// timer entries until expiry.
+func sleepContext(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-t.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
@@ -70,13 +86,15 @@ func (f *floodRegistry) waitIfFlooded(ctx context.Context, method uint32) error 
 //
 // A non-positive threshold disables auto-sleeping entirely.
 func invokeWithFloodPolicy(ctx context.Context, threshold time.Duration, method uint32, registry *floodRegistry, call func() error) error {
+	// A non-positive threshold disables auto-sleeping entirely, including
+	// the local early gate.
+	if threshold <= 0 {
+		return call()
+	}
 	if registry != nil {
 		if err := registry.waitIfFlooded(ctx, method); err != nil {
 			return err
 		}
-	}
-	if threshold <= 0 {
-		return call()
 	}
 	for attempt := 0; ; attempt++ {
 		err := call()
@@ -96,10 +114,8 @@ func invokeWithFloodPolicy(ctx context.Context, threshold time.Duration, method 
 		if registry != nil {
 			registry.record(method, time.Now().Add(wait))
 		}
-		select {
-		case <-time.After(wait):
-		case <-ctx.Done():
-			return ctx.Err()
+		if err := sleepContext(ctx, wait); err != nil {
+			return err
 		}
 		if registry != nil {
 			if err := registry.waitIfFlooded(ctx, method); err != nil {
@@ -110,9 +126,23 @@ func invokeWithFloodPolicy(ctx context.Context, threshold time.Duration, method 
 }
 
 // constructorOf returns the TL constructor ID of a query for registry keys.
+// Init-connection wrappers are unwrapped so first-call floods are recorded
+// under the real method the caller will use next time.
 func constructorOf(query tg.TLObject) uint32 {
 	if query == nil {
 		return 0
 	}
-	return query.ConstructorID()
+	for {
+		if wrapped, ok := query.(*tg.InvokeWithLayerRequest); ok && wrapped.Query != nil {
+			query = wrapped.Query
+			continue
+		}
+		return query.ConstructorID()
+	}
+}
+
+// invokeFlood is the Client-bound form of invokeWithFloodPolicy, deriving
+// the threshold, method key, and registry from the client and call context.
+func (c *Client) invokeFlood(ctx context.Context, query tg.TLObject, call func() error) error {
+	return invokeWithFloodPolicy(ctx, floodThresholdFor(ctx, c.config()), constructorOf(query), c.floodReg(), call)
 }

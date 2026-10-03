@@ -2,6 +2,7 @@ package peers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -44,7 +45,9 @@ type staleHashInvoker struct {
 
 func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, decode func(*tg.Reader) (tg.TLObject, error)) (tg.TLObject, error) {
 	res, err := s.next.RPCInvoke(ctx, input, decode)
-	if err == nil || !isStaleHashErr(err) {
+	// Errors already healed by the client's inline replay carry ErrInvalid;
+	// re-healing here would duplicate attempts and wrap twice.
+	if err == nil || !isStaleHashErr(err) || errors.Is(err, ErrInvalid) {
 		return res, err
 	}
 	ids := requestPeerIDs(input)
@@ -65,7 +68,7 @@ func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, deco
 
 func (s staleHashInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
 	res, err := s.next.RPCInvokeRaw(ctx, input)
-	if err == nil || !isStaleHashErr(err) {
+	if err == nil || !isStaleHashErr(err) || errors.Is(err, ErrInvalid) {
 		return res, err
 	}
 	ids := requestPeerIDs(input)

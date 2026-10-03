@@ -1,63 +1,50 @@
+
+AGENTS.specify.md
+ARCHITECTURE.md
+# Benchmark artifacts (bench_baseline.txt is committed — do NOT ignore)
+bench_result.txt
 # Binaries
+chatid_bot
+chatid_bot/
+.codegraph/
+# CodeGraph index
+CONNECTION_COMPARISON.md
+conversations
+*.dll
+*.dylib
+examples/conversations/**/conversations
 *.exe
 *.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary
-*.test
-
-# Output of go coverage
-*.out
-
-# Go workspace file
-go.work
-
-.idea
-
-# Session database artifacts
-*.session
-*.session-shm
-*.session-wal
-
-# Test DC binary
-testdc
-
-# OpenMP session dumps
-omp-session-*.html
-
-# CodeGraph index
-.codegraph/
-
-# Worktrees
-.worktrees/
-chatid_bot/
-chatid_bot
-conversations
-examples/conversations/**/conversations
-.serena/
-# GoScope MCP local data
 .goscope/
-
-# Spec-kit planning artifacts
-.specify/
-specs/
-AGENTS.specify.md
-
-# OpenCode dev tooling
-.opencode/
-
-# Benchmark artifacts (bench_baseline.txt is committed — do NOT ignore)
+# GoScope MCP local data
+go.work
+# Go workspace file
+.idea
+# Local architecture review artifacts
+.mimosa/
 new.txt
 old.txt
-bench_result.txt
-
-# Local architecture review artifacts
-ARCHITECTURE.md
-CONNECTION_COMPARISON.md
-
-.mimosa/
-
-# ZCode session artifacts
+omp-session-*.html
+.opencode/
+# OpenCode dev tooling
+# OpenMP session dumps
+*.out
+# Output of go coverage
+peers_resolution
+.serena/
+*.session
+# Session database artifacts
+*.session-shm
+*.session-wal
+*.so
+.specify/
+# Spec-kit planning artifacts
+specs/
+*.test
+# Test binary
+testdc
+# Test DC binary
+.worktrees/
+# Worktrees
 .zcode/
+# ZCode session artifacts
