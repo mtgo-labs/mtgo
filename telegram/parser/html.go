@@ -47,23 +47,30 @@ type htmlTag struct {
 
 // Parse parses the given HTML string, strips all tags, and returns the plain text
 // together with a slice of Telegram message entities representing the formatting.
-// It returns an error if surrogate decoding fails.
+// Entity offsets and lengths are measured in UTF-16 code units, as required by
+// the Telegram API.
 func (p *HTMLParser) Parse(html string) (string, []tg.MessageEntityClass, error) {
-	text := AddSurrogates(normalizePreCodeLanguage(html))
+	text := normalizePreCodeLanguage(html)
 	var entities []tg.MessageEntityClass
 	var stack []htmlTag
 
 	var result strings.Builder
+	// The result stays plain UTF-8 end to end; a running UTF-16 counter drives
+	// all entity offsets because Telegram positions entities in UTF-16 code
+	// units, which coincide with byte offsets only for pure-ASCII text.
+	utf16Len := 0
 	lastIdx := 0
 
 	matches := htmlTagRe.FindAllStringSubmatchIndex(text, -1)
 	for _, loc := range matches {
 		fullStart, fullEnd := loc[0], loc[1]
 		// Unescape each text fragment as it is emitted so that entity offsets
-		// (measured via result.Len()) refer to the final, unescaped text. Doing
+		// (measured via utf16Len) refer to the final, unescaped text. Doing
 		// the unescape after building the whole string would shift offsets
 		// wherever an HTML entity appears before a formatted region.
-		result.WriteString(htmlUnescape(text[lastIdx:fullStart]))
+		fragment := htmlUnescape(text[lastIdx:fullStart])
+		result.WriteString(fragment)
+		utf16Len += utf16Length(fragment)
 
 		closing := text[loc[2]:loc[3]] == "/"
 		tagName := strings.ToLower(text[loc[4]:loc[5]])
@@ -72,7 +79,7 @@ func (p *HTMLParser) Parse(html string) (string, []tg.MessageEntityClass, error)
 		if closing {
 			for i := len(stack) - 1; i >= 0; i-- {
 				if stack[i].tag == tagName {
-					ent := p.createEntity(stack[i], result.Len())
+					ent := p.createEntity(stack[i], utf16Len)
 					if ent != nil {
 						entities = append(entities, ent)
 					}
@@ -84,26 +91,19 @@ func (p *HTMLParser) Parse(html string) (string, []tg.MessageEntityClass, error)
 			attrs := parseAttrs(attrStr)
 			stack = append(stack, htmlTag{
 				tag:    tagName,
-				offset: result.Len(),
+				offset: utf16Len,
 				attrs:  attrs,
 			})
 		}
 
 		lastIdx = fullEnd
 	}
-	result.WriteString(htmlUnescape(text[lastIdx:]))
+	tail := htmlUnescape(text[lastIdx:])
+	result.WriteString(tail)
 
-	cleaned := result.String()
-
-	finalText, err := RemoveSurrogates(cleaned)
-	if err != nil {
-		return "", nil, err
-	}
-
-	entities = adjustEntityOffsets(entities)
 	entities = dropEmptyEntities(entities)
 
-	return finalText, entities, nil
+	return result.String(), entities, nil
 }
 
 // dropEmptyEntities removes zero-length entities. They carry no user-visible
@@ -334,13 +334,4 @@ func normalizePreCodeLanguage(s string) string {
 		return s
 	}
 	return preCodeCloseRe.ReplaceAllString(s, "</pre>")
-}
-
-// adjustEntityOffsets is intentionally a no-op. Astral code points are encoded
-// by AddSurrogates as exactly 4 bytes (two surrogate units), matching the 4-byte
-// UTF-8 encoding RemoveSurrogates emits, so byte offsets are length-preserving
-// across the surrogate round-trip. The text fragments are already unescaped as
-// they are written, so no further offset translation is needed.
-func adjustEntityOffsets(entities []tg.MessageEntityClass) []tg.MessageEntityClass {
-	return entities
 }

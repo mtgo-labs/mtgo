@@ -66,7 +66,8 @@ func TestMarkdownV2_CustomEmojiImageLink(t *testing.T) {
 	if !ok {
 		t.Fatalf("entity type = %T", entities[0])
 	}
-	if ce.DocumentID != 5368324170671202286 || ce.Offset != 0 || ce.Length != 4 {
+	// A single astral emoji is 2 UTF-16 code units.
+	if ce.DocumentID != 5368324170671202286 || ce.Offset != 0 || ce.Length != 2 {
 		t.Fatalf("custom emoji entity = %+v", ce)
 	}
 }

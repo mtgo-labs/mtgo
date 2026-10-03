@@ -9,6 +9,9 @@ import (
 
 // AddSurrogates encodes Unicode code points above U+FFFF as UTF-16 surrogate pairs,
 // so that entity offsets match Telegram's UTF-16-based positioning.
+//
+// The parsers no longer use this; it remains for callers that need the
+// round-trip with RemoveSurrogates.
 func AddSurrogates(text string) string {
 	var b strings.Builder
 	b.Grow(len(text) + len(text)/2)
@@ -26,10 +29,19 @@ func AddSurrogates(text string) string {
 	return b.String()
 }
 
-// RemoveSurrogates decodes UTF-16 surrogate pairs back into their original
-// Unicode code points, returning valid UTF-8 text.
-// It returns an error if an unmatched or invalid surrogate pair is found.
+// RemoveSurrogates decodes UTF-16 surrogate pairs encoded by AddSurrogates back
+// into their original Unicode code points, returning valid UTF-8 text.
+//
+// Valid UTF-8 text is returned unchanged: Arabic, Hebrew, and other multi-byte
+// scripts use lead bytes 0xD8–0xDF that collide with the UTF-16 surrogate
+// ranges when scanned as raw bytes, and AddSurrogates output (a lone 0xD8–0xDF
+// byte can never be a UTF-8 continuation) is invalid UTF-8 by construction, so
+// whole-string validity disambiguates the two. An error is returned only for
+// invalid UTF-8 that also contains an unmatched surrogate-looking window.
 func RemoveSurrogates(text string) (string, error) {
+	if utf8.ValidString(text) {
+		return text, nil
+	}
 	data := []byte(text)
 	var result strings.Builder
 	i := 0
@@ -57,6 +69,21 @@ func RemoveSurrogates(text string) (string, error) {
 		}
 	}
 	return result.String(), nil
+}
+
+// utf16Length returns the length of s in UTF-16 code units: one unit per code
+// point in the Basic Multilingual Plane, two per astral code point. Telegram
+// measures message entity offsets and lengths in these units.
+func utf16Length(s string) int {
+	units := 0
+	for _, r := range s {
+		if r > 0xFFFF {
+			units += 2
+		} else {
+			units++
+		}
+	}
+	return units
 }
 
 // ReplaceOnce replaces the first occurrence of old with newStr in the portion of

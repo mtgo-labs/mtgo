@@ -33,6 +33,125 @@ func TestRemoveSurrogates_RoundTrip(t *testing.T) {
 	}
 }
 
+// Regression tests for the surrogate misparse bug: Arabic (and other non-Latin)
+// UTF-8 text uses lead bytes 0xD8–0xDF that collide with the UTF-16 surrogate
+// ranges when scanned as raw bytes, and entity offsets must be counted in
+// UTF-16 code units, not bytes.
+func TestRemoveSurrogates_NonLatinPassthrough(t *testing.T) {
+	for _, s := range []string{
+		"اهلاً بك عزيزي", // Arabic: previously "invalid surrogate pair at position 10"
+		" اܐ",            // Arabic + Syriac: previously silently corrupted
+		"Привет мир 😀",
+		"שלום עולם",
+	} {
+		out, err := RemoveSurrogates(s)
+		if err != nil {
+			t.Errorf("RemoveSurrogates(%q): %v", s, err)
+			continue
+		}
+		if out != s {
+			t.Errorf("RemoveSurrogates(%q) = %q, want unchanged", s, out)
+		}
+	}
+}
+
+func TestHTMLParser_NonLatinTextUnchanged(t *testing.T) {
+	p := NewHTMLParser()
+	for _, in := range []string{
+		"اهلاً بك عزيزي", // previously: invalid surrogate pair at position 10
+		" اܐ",            // previously: 5 bytes silently merged into one bogus rune
+	} {
+		text, entities, err := p.Parse(in)
+		if err != nil {
+			t.Errorf("Parse(%q): %v", in, err)
+			continue
+		}
+		if text != in {
+			t.Errorf("Parse(%q) text = %q", in, text)
+		}
+		if len(entities) != 0 {
+			t.Errorf("Parse(%q) entities = %v, want none", in, entities)
+		}
+	}
+
+	// Arabic with markup previously failed with the same surrogate error.
+	text, entities, err := p.Parse("مرحبا <b>عالم</b>")
+	if err != nil {
+		t.Fatalf("Parse arabic markup: %v", err)
+	}
+	if text != "مرحبا عالم" {
+		t.Errorf("text = %q, want %q", text, "مرحبا عالم")
+	}
+	bold, ok := entities[0].(*tl.MessageEntityBold)
+	if !ok {
+		t.Fatalf("entity type = %T, want bold", entities[0])
+	}
+	if bold.Offset != 6 || bold.Length != 4 { // "مرحبا " is 6 UTF-16 units, "عالم" is 4
+		t.Errorf("bold = {Offset:%d, Length:%d}, want {6, 4}", bold.Offset, bold.Length)
+	}
+}
+
+func TestHTMLParser_EntityOffsetsInUTF16Units(t *testing.T) {
+	p := NewHTMLParser()
+	tests := []struct {
+		name   string
+		input  string
+		want   string
+		offset int32
+		length int32
+	}{
+		{
+			// Arabic word: 5 UTF-16 code units, 10 bytes. Previously length 10.
+			name: "arabic bold", input: "<b>مرحبا</b>!", want: "مرحبا!", offset: 0, length: 5,
+		},
+		{
+			// Astral emoji count as 2 UTF-16 units each, not 4 bytes.
+			name: "astral bold", input: "<b>🎉</b>", want: "🎉", offset: 0, length: 2,
+		},
+		{
+			// 1 ASCII + 2 + 2 + 5 units inside bold → offset 1, length 9.
+			name:   "mixed scripts",
+			input:  "x<b>🎉😀مرحبا</b>",
+			want:   "x🎉😀مرحبا",
+			offset: 1, length: 9,
+		},
+		{
+			// Numeric entities decode before counting: &#128077; is 👍 (2 units).
+			name:   "numeric entity",
+			input:  "&#128077;<i>ok</i>",
+			want:   "👍ok",
+			offset: 2, length: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			text, entities, err := p.Parse(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if text != tt.want {
+				t.Fatalf("text = %q, want %q", text, tt.want)
+			}
+			if len(entities) != 1 {
+				t.Fatalf("entities = %v, want exactly 1", entities)
+			}
+			var gotOffset, gotLength int32
+			switch v := entities[0].(type) {
+			case *tl.MessageEntityBold:
+				gotOffset, gotLength = v.Offset, v.Length
+			case *tl.MessageEntityItalic:
+				gotOffset, gotLength = v.Offset, v.Length
+			default:
+				t.Fatalf("unexpected entity type %T", entities[0])
+			}
+			if gotOffset != tt.offset || gotLength != tt.length {
+				t.Errorf("entity = (offset %d, length %d), want (offset %d, length %d)",
+					gotOffset, gotLength, tt.offset, tt.length)
+			}
+		})
+	}
+}
+
 func TestReplaceOnce(t *testing.T) {
 	got := ReplaceOnce("hello world hello", "hello", "HI", 0)
 	if got != "HI world hello" {
