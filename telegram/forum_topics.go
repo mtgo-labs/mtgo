@@ -11,7 +11,7 @@ import (
 
 func (c *Client) CreateForumTopic(ctx context.Context, chatID int64, title string, iconColor *int32, iconEmojiID *int64) (*types.ForumTopic, error) {
 	c.Log.Debugf("CreateForumTopic chat_id=%d title=%s", chatID, title)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -41,7 +41,7 @@ func (c *Client) CreateForumTopic(ctx context.Context, chatID int64, title strin
 
 func (c *Client) EditForumTopic(ctx context.Context, chatID int64, topicID int32, title *string, iconEmojiID *int64) error {
 	c.Log.Debugf("EditForumTopic chat_id=%d topic_id=%d", chatID, topicID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -66,7 +66,7 @@ func (c *Client) EditForumTopic(ctx context.Context, chatID int64, topicID int32
 
 func (c *Client) CloseForumTopic(ctx context.Context, chatID int64, topicID int32) error {
 	c.Log.Debugf("CloseForumTopic chat_id=%d topic_id=%d", chatID, topicID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -82,7 +82,7 @@ func (c *Client) CloseForumTopic(ctx context.Context, chatID int64, topicID int3
 
 func (c *Client) ReopenForumTopic(ctx context.Context, chatID int64, topicID int32) error {
 	c.Log.Debugf("ReopenForumTopic chat_id=%d topic_id=%d", chatID, topicID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -100,7 +100,7 @@ func (c *Client) ReopenForumTopic(ctx context.Context, chatID int64, topicID int
 
 func (c *Client) DeleteForumTopic(ctx context.Context, chatID int64, topicID int32) error {
 	c.Log.Debugf("DeleteForumTopic chat_id=%d topic_id=%d", chatID, topicID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -115,7 +115,7 @@ func (c *Client) DeleteForumTopic(ctx context.Context, chatID int64, topicID int
 
 func (c *Client) GetForumTopics(ctx context.Context, chatID int64, query string, limit int, offsetDate int32, offsetTopic int32) ([]*types.ForumTopic, error) {
 	c.Log.Debugf("GetForumTopics chat_id=%d limit=%d", chatID, limit)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

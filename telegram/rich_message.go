@@ -258,7 +258,7 @@ func (c *Client) StartMessageDraft(ctx context.Context, chatID int64, opts ...*D
 }
 
 func (c *Client) draftPeer(ctx context.Context, chatID int64) (tg.InputPeerClass, error) {
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		peer, err = c.ResolvePeer(ctx, chatID)
 		if err != nil {

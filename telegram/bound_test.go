@@ -43,7 +43,9 @@ func TestBoundArchive(t *testing.T) {
 }
 
 func TestBoundArchivePeerNotFound(t *testing.T) {
-	c, _ := newClientWithBotRPCMock(t)
+	c, mock := newClientWithBotRPCMock(t)
+	// Empty first dialogs page: the account cascade finds no such peer.
+	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
 	err := c.BoundArchive(999)
 	if err == nil {
@@ -106,7 +108,9 @@ func TestBoundSetTitleChatPeer(t *testing.T) {
 }
 
 func TestBoundSetTitlePeerNotFound(t *testing.T) {
-	c, _ := newClientWithBotRPCMock(t)
+	c, mock := newClientWithBotRPCMock(t)
+	// Empty first dialogs page: the account cascade finds no such peer.
+	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
 	err := c.BoundSetTitle(999, "test")
 	if err == nil {
@@ -212,7 +216,9 @@ func TestBoundBanMemberNonChannelPeer(t *testing.T) {
 }
 
 func TestBoundBanMemberPeerNotFound(t *testing.T) {
-	c, _ := newClientWithBotRPCMock(t)
+	c, mock := newClientWithBotRPCMock(t)
+	// Empty first dialogs page: the account cascade finds no such peer.
+	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
 	err := c.BoundBanMember(999, 42)
 	if err == nil {
@@ -433,7 +439,9 @@ func TestBoundLeaveChatPeer(t *testing.T) {
 }
 
 func TestBoundLeaveChatPeerNotFound(t *testing.T) {
-	c, _ := newClientWithBotRPCMock(t)
+	c, mock := newClientWithBotRPCMock(t)
+	// Empty first dialogs page: the account cascade finds no such peer.
+	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
 	err := c.BoundLeaveChat(999)
 	if err == nil {

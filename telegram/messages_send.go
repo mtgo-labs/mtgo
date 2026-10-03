@@ -37,7 +37,7 @@ import (
 //	fmt.Println(msg.ID)
 func (c *Client) SendContact(ctx context.Context, chatID int64, phoneNumber, firstName, lastName string, opts *params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendContact chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -83,7 +83,7 @@ func (c *Client) SendContact(ctx context.Context, chatID int64, phoneNumber, fir
 //	fmt.Println(msg.ID)
 func (c *Client) SendLocation(ctx context.Context, chatID int64, lat, lng float64, opts *params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendLocation chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -131,7 +131,7 @@ func (c *Client) SendLocation(ctx context.Context, chatID int64, lat, lng float6
 //	fmt.Println(msg.ID)
 func (c *Client) SendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, opts *params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendVenue chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -180,7 +180,7 @@ func (c *Client) SendVenue(ctx context.Context, chatID int64, lat, lng float64, 
 //	fmt.Println(msg.ID)
 func (c *Client) SendDice(ctx context.Context, chatID int64, opts *SendDiceOption) (*types.Message, error) {
 	c.Log.Debugf("SendDice chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -225,7 +225,7 @@ func (c *Client) SendDice(ctx context.Context, chatID int64, opts *SendDiceOptio
 //	fmt.Println(msg.ID)
 func (c *Client) SendPoll(ctx context.Context, chatID int64, question string, options []string, opts *params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendPoll chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -276,7 +276,7 @@ func (c *Client) SendPoll(ctx context.Context, chatID int64, question string, op
 //   - the RPC call fails
 func (c *Client) SendCachedMedia(ctx context.Context, chatID int64, fileID string, opts *params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendCachedMedia chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

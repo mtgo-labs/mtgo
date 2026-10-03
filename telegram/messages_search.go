@@ -39,7 +39,7 @@ import (
 //	}
 func (c *Client) SearchMessages(ctx context.Context, chatID int64, query string, opts ...*SearchMessagesOption) ([]*types.Message, error) {
 	c.Log.Debugf("SearchMessages chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -180,7 +180,7 @@ func (c *Client) SearchGlobal(ctx context.Context, query string, opts ...*Search
 //   - the RPC call fails
 func (c *Client) SearchMessagesCount(ctx context.Context, chatID int64, query string) (int32, error) {
 	c.Log.Debugf("SearchMessagesCount chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}

@@ -101,28 +101,19 @@ func (c *Client) parseText(text string, optParseMode params.ParseMode) (string, 
 //	fmt.Println(msg.ID)
 func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendMessage chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
-		// Cache miss — try RPC resolution via contacts/resolveUsername or
-		// InputPeerUserFromMessage when we have a reply context.
-		peer, err = c.ResolvePeer(ctx, chatID)
-		if err != nil && len(opts) > 0 {
+		// The cascade is exhausted. As a last resort for DM replies to
+		// never-seen users, inputPeerUserFromMessage lets the server derive
+		// the access hash from the replied-to message.
+		if len(opts) > 0 && opts[0].ReplyToMessageID != 0 && chatID > 0 {
 			opt := opts[0]
-			if opt.ReplyToMessageID != 0 && chatID > 0 {
-				peer = &tg.InputPeerUserFromMessage{
-					Peer:   &tg.InputPeerUser{UserID: chatID},
-					MsgID:  opt.ReplyToMessageID,
-					UserID: chatID,
-				}
-				err = nil
+			peer = &tg.InputPeerUserFromMessage{
+				Peer:   &tg.InputPeerUser{UserID: chatID},
+				MsgID:  opt.ReplyToMessageID,
+				UserID: chatID,
 			}
-		}
-		if err != nil {
-			return nil, fmt.Errorf("resolve peer: %w", err)
-		}
-	} else if c.IsBot() {
-		peer, err = c.peersManager().EnsureUsable(ctx, peer)
-		if err != nil {
+		} else {
 			return nil, fmt.Errorf("resolve peer: %w", err)
 		}
 	}
@@ -246,12 +237,12 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, opt
 //	}
 func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID int64, messageIDs []int32, opts ...*params.ForwardMessages) ([]*types.Message, error) {
 	c.Log.Debugf("ForwardMessages to=%d from=%d count=%d", chatID, fromChatID, len(messageIDs))
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	fromPeer, err := resolvePeer(c, fromChatID)
+	fromPeer, err := resolvePeer(ctx, c, fromChatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve from peer: %w", err)
 	}
@@ -329,7 +320,7 @@ func (c *Client) DeleteMessages(ctx context.Context, chatID int64, messageIDs []
 	c.Log.Debugf("DeleteMessages chat_id=%d count=%d", chatID, len(messageIDs))
 	opt := params.GetOptDef(&params.DeleteMessages{}, opts...)
 
-	_, err := resolvePeer(c, chatID)
+	_, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -372,7 +363,7 @@ func (c *Client) DeleteMessages(ctx context.Context, chatID int64, messageIDs []
 //	fmt.Println("edited message:", edited.ID)
 func (c *Client) EditMessageText(ctx context.Context, chatID int64, messageID int32, text string, opts ...*params.EditMessage) (*types.Message, error) {
 	c.Log.Debugf("EditMessageText chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -471,7 +462,7 @@ func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int
 	rpc := c.Raw()
 	var result tg.MessagesClass
 	var err error
-	peer, peerErr := resolvePeer(c, chatID)
+	peer, peerErr := resolvePeer(ctx, c, chatID)
 	if peerErr != nil {
 		peer, peerErr = c.ResolvePeer(ctx, chatID)
 	}
@@ -515,7 +506,7 @@ func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int
 //	    fmt.Println(m.ID, m.Text)
 //	}
 func (c *Client) GetChatHistory(ctx context.Context, chatID int64, limit int, offsetID int32) ([]*types.Message, error) {
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -564,7 +555,7 @@ func (c *Client) GetChatHistory(ctx context.Context, chatID int64, limit int, of
 //	fmt.Println(msg.ID)
 func (c *Client) SendMedia(ctx context.Context, chatID int64, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendMedia chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		peer, err = c.ResolvePeer(ctx, chatID)
 		if err != nil {
@@ -833,7 +824,7 @@ func (c *Client) GetMediaGroup(ctx context.Context, chatID int64, messageID int3
 //   - the peer cannot be resolved
 //   - the RPC call fails
 func (c *Client) GetChatHistoryCount(ctx context.Context, chatID int64) (int, error) {
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -889,7 +880,7 @@ func (c *Client) ForwardMediaGroup(ctx context.Context, chatID int64, fromChatID
 //   - the peer cannot be resolved
 //   - the RPC call fails
 func (c *Client) SendMediaGroup(ctx context.Context, chatID int64, items []*tg.InputSingleMedia, opts ...*params.SendMessage) ([]*types.Message, error) {
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -969,7 +960,7 @@ func (c *Client) SendMediaGroup(ctx context.Context, chatID int64, items []*tg.I
 //   - the RPC call fails (insufficient permissions, etc.)
 func (c *Client) DeleteChatHistory(ctx context.Context, chatID int64, maxID int32, revoke bool) (int, error) {
 	c.Log.Debugf("DeleteChatHistory chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}

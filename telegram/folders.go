@@ -25,7 +25,7 @@ import (
 //	}
 func (c *Client) ArchiveChat(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("ArchiveChat chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -57,7 +57,7 @@ func (c *Client) ArchiveChat(ctx context.Context, chatID int64) error {
 //	}
 func (c *Client) UnarchiveChat(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("UnarchiveChat chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}

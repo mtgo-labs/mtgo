@@ -697,7 +697,7 @@ func (c *Client) BoundUnblock(userID int64) error {
 // Returns a slice of Chat objects or an error if the request fails.
 func (c *Client) BoundGetCommonChats(userID int64, limit int) ([]*types.Chat, error) {
 	ctx := context.Background()
-	peer, err := resolveUserID(c, userID)
+	peer, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, err
 	}

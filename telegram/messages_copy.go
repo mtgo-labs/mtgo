@@ -37,12 +37,12 @@ import (
 //	fmt.Println("copied as:", newID)
 func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64, messageID int32, opts ...*params.CopyMessage) (int64, error) {
 	c.Log.Debugf("CopyMessage to=%d from=%d", chatID, fromChatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	fromPeer, err := resolvePeer(c, fromChatID)
+	fromPeer, err := resolvePeer(ctx, c, fromChatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve from peer: %w", err)
 	}
@@ -123,12 +123,12 @@ func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64
 //	}
 func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID int64, groupedID int64) ([]*types.Message, error) {
 	c.Log.Debugf("CopyMediaGroup to=%d from=%d", chatID, fromChatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	fromPeer, err := resolvePeer(c, fromChatID)
+	fromPeer, err := resolvePeer(ctx, c, fromChatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve from peer: %w", err)
 	}

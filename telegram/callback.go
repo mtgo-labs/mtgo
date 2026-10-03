@@ -60,7 +60,7 @@ func (c *Client) AnswerWebAppQuery(ctx context.Context, queryID string, result t
 // chat cannot be resolved or the RPC call fails.
 func (c *Client) RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
 	c.Log.Debugf("RequestCallbackAnswer chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}

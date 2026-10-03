@@ -128,30 +128,30 @@ func (m *Manager) EnsureUsable(ctx context.Context, peer tg.InputPeerClass) (tg.
 // in-flight RPC call and all receive the same result.
 type coalescer struct {
 	mu       sync.Mutex
-	inFlight map[string][]chan resolveResult
+	inFlight map[string][]chan boxedResult
 }
 
-type resolveResult struct {
-	peer tg.InputPeerClass
-	err  error
+type boxedResult struct {
+	val any
+	err error
 }
 
-func (r *coalescer) Do(key string, fn func() (tg.InputPeerClass, error)) (tg.InputPeerClass, error) {
+func (r *coalescer) Do(key string, fn func() (any, error)) (any, error) {
 	r.mu.Lock()
 	if r.inFlight == nil {
-		r.inFlight = make(map[string][]chan resolveResult)
+		r.inFlight = make(map[string][]chan boxedResult)
 	}
 	if waiters, ok := r.inFlight[key]; ok {
-		ch := make(chan resolveResult, 1)
+		ch := make(chan boxedResult, 1)
 		r.inFlight[key] = append(waiters, ch)
 		r.mu.Unlock()
 		res := <-ch
-		return res.peer, res.err
+		return res.val, res.err
 	}
 	r.inFlight[key] = nil
 	r.mu.Unlock()
 
-	peer, err := func() (peer tg.InputPeerClass, err error) {
+	val, err := func() (val any, err error) {
 		defer func() {
 			if rec := recover(); rec != nil {
 				err = fmt.Errorf("resolve coalescer panic: %v", rec)
@@ -165,15 +165,32 @@ func (r *coalescer) Do(key string, fn func() (tg.InputPeerClass, error)) (tg.Inp
 	delete(r.inFlight, key)
 	r.mu.Unlock()
 
-	res := resolveResult{peer: peer, err: err}
+	res := boxedResult{val: val, err: err}
 	for _, ch := range waiters {
 		ch <- res
 	}
-	return peer, err
+	return val, err
 }
 
-func (m *Manager) coalesce(key string, fn func() (tg.InputPeerClass, error)) (tg.InputPeerClass, error) {
-	return m.coalescer.Do(key, fn)
+// coalesce runs fn under the manager's coalescer, deduplicating concurrent
+// calls with the same key.
+func coalesce[T any](m *Manager, key string, fn func() (T, error)) (T, error) {
+	var zero T
+	val, err := m.coalescer.Do(key, func() (any, error) {
+		v, err := fn()
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	})
+	if err != nil {
+		return zero, err
+	}
+	typed, ok := val.(T)
+	if !ok {
+		return zero, fmt.Errorf("peers: coalescer type mismatch for %q", key)
+	}
+	return typed, nil
 }
 
 // inputPeerFromBareChatID converts a negated basic-group ID (without the

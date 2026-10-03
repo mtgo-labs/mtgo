@@ -46,6 +46,9 @@ func (m *Manager) Cached(id int64) (tg.InputPeerClass, error) {
 				if p.Username != "" {
 					m.CacheUsername(p.Username, p.ID)
 				}
+				if p.PhoneNumber != "" {
+					m.CachePhone(p.PhoneNumber, p.ID)
+				}
 				return peer, nil
 			}
 		}
@@ -97,23 +100,66 @@ func (m *Manager) Cache(id int64, peer tg.InputPeerClass) {
 }
 
 // CacheUsername records a username→ID mapping for cache-only lookups.
+// The reverse index is maintained so username lookup by ID stays O(1).
 func (m *Manager) CacheUsername(username string, id int64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if _, exists := m.usernameToID[username]; !exists {
-		m.usernameOrder = append(m.usernameOrder, username)
-	}
-	m.usernameToID[username] = id
+	m.cacheUsernameLocked(username, id)
 	limit := m.cacheSize()
 	if limit <= 0 || len(m.usernameToID) <= limit {
 		return
 	}
 	for len(m.usernameToID) > limit && len(m.usernameOrder) > 0 {
 		oldest := m.usernameOrder[0]
-		delete(m.usernameToID, oldest)
+		m.deleteUsernameLocked(oldest)
 		copy(m.usernameOrder, m.usernameOrder[1:])
 		m.usernameOrder[len(m.usernameOrder)-1] = ""
 		m.usernameOrder = m.usernameOrder[:len(m.usernameOrder)-1]
+	}
+}
+
+func (m *Manager) cacheUsernameLocked(username string, id int64) {
+	if _, exists := m.usernameToID[username]; !exists {
+		m.usernameOrder = append(m.usernameOrder, username)
+	}
+	// Drop any username previously bound to this ID so the reverse index
+	// never goes stale (usernames can change).
+	if prev, ok := m.idToUsername[id]; ok && prev != username {
+		delete(m.usernameToID, prev)
+	}
+	m.usernameToID[username] = id
+	m.idToUsername[id] = username
+}
+
+func (m *Manager) deleteUsernameLocked(username string) {
+	if id, ok := m.usernameToID[username]; ok {
+		delete(m.idToUsername, id)
+	}
+	delete(m.usernameToID, username)
+}
+
+// CachePhone records a normalized phone→ID mapping for cache-only lookups.
+func (m *Manager) CachePhone(phone string, id int64) {
+	phone = normalizePhone(phone)
+	if phone == "" {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.phoneToID[phone]; !exists {
+		m.phoneOrder = append(m.phoneOrder, phone)
+	}
+	m.phoneToID[phone] = id
+	limit := m.cacheSize()
+	if limit <= 0 || len(m.phoneToID) <= limit {
+		return
+	}
+	for len(m.phoneToID) > limit && len(m.phoneOrder) > 0 {
+		oldest := m.phoneOrder[0]
+		delete(m.phoneToID, oldest)
+		copy(m.phoneOrder, m.phoneOrder[1:])
+		m.phoneOrder[len(m.phoneOrder)-1] = ""
+		m.phoneOrder = m.phoneOrder[:len(m.phoneOrder)-1]
 	}
 }
 
@@ -121,18 +167,25 @@ func (m *Manager) CacheUsername(username string, id int64) {
 func (m *Manager) LookupUsername(peerID int64) string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	for username, id := range m.usernameToID {
-		if id == peerID {
-			return username
-		}
-	}
-	return ""
+	return m.idToUsername[peerID]
 }
 
 func (m *Manager) cachedByUsername(username string) (tg.InputPeerClass, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if cachedID, ok := m.usernameToID[username]; ok {
+		if p, ok2 := m.byID[cachedID]; ok2 {
+			return p, true
+		}
+	}
+	return nil, false
+}
+
+// cachedByPhone returns the cached peer for a normalized phone number.
+func (m *Manager) cachedByPhone(phone string) (tg.InputPeerClass, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if cachedID, ok := m.phoneToID[phone]; ok {
 		if p, ok2 := m.byID[cachedID]; ok2 {
 			return p, true
 		}
@@ -149,7 +202,7 @@ func (m *Manager) evictOldestLocked() {
 		oldest := m.idOrder[0]
 		delete(m.byID, oldest)
 		if cachedUsername, ok := m.reverseUsernameLocked(oldest); ok {
-			delete(m.usernameToID, cachedUsername)
+			m.deleteUsernameLocked(cachedUsername)
 		}
 		copy(m.idOrder, m.idOrder[1:])
 		m.idOrder[len(m.idOrder)-1] = 0
@@ -158,12 +211,8 @@ func (m *Manager) evictOldestLocked() {
 }
 
 func (m *Manager) reverseUsernameLocked(peerID int64) (string, bool) {
-	for username, id := range m.usernameToID {
-		if id == peerID {
-			return username, true
-		}
-	}
-	return "", false
+	username, ok := m.idToUsername[peerID]
+	return username, ok
 }
 
 // preserveAccessHash copies a non-zero access hash from the existing cached

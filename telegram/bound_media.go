@@ -270,7 +270,7 @@ func (c *Client) BoundForwardMediaGroup(chatID int64, fromChatID int64, msgIDs [
 
 func (c *Client) BoundClick(chatID int64, msgID int32, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
 	ctx := context.Background()
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +311,7 @@ func (c *Client) BoundView(chatID int64, msgID int32) error {
 
 func (c *Client) BoundEditLiveLocation(chatID int64, msgID int32, lat, lng float64) (*types.Message, error) {
 	ctx := context.Background()
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func (c *Client) BoundEditLiveLocation(chatID int64, msgID int32, lat, lng float
 
 func (c *Client) BoundStopLiveLocation(chatID int64, msgID int32) (*types.Message, error) {
 	ctx := context.Background()
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +374,7 @@ func (c *Client) BoundRejectGiftPurchaseOffer(chatID int64, msgID int32) (*types
 
 func (c *Client) BoundSummarize(chatID int64, msgID int32) (*types.Message, error) {
 	ctx := context.Background()
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, err
 	}

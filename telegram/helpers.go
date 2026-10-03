@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/peers"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -28,38 +29,45 @@ type PeerResolver interface {
 // receives updates.
 type RemoveFunc func()
 
-func resolvePeer(r PeerResolver, chatID int64) (tg.InputPeerClass, error) {
+// resolvePeer resolves a numeric chat ID through the full cascade: memory
+// cache, persistent store, then the bot/account RPC fallbacks (hash
+// completion, dialog preload). An injected test resolver (c.testResolver) is
+// honored with cache-only semantics instead.
+func resolvePeer(ctx context.Context, c *Client, chatID int64) (tg.InputPeerClass, error) {
 	if chatID == 0 {
 		return &tg.InputPeerSelf{}, nil
 	}
-	if p, err := r.ResolvePeerCache(chatID); err == nil {
-		return p, nil
+	if r := c.testResolver; r != nil {
+		if p, err := r.ResolvePeerCache(chatID); err == nil {
+			return p, nil
+		}
+		return nil, fmt.Errorf("could not resolve peer %d: %w", chatID, ErrPeerNotFound)
 	}
-	return nil, fmt.Errorf("could not resolve peer %d: %w", chatID, ErrPeerNotFound)
+	return c.peersManager().InputPeer(ctx, peers.Ref{ID: chatID})
 }
 
-func resolveUserID(r PeerResolver, userID int64) (tg.InputUserClass, error) {
+// resolveUserID resolves a numeric user ID to an input user through the full
+// cascade. See resolvePeer for the lookup order.
+func resolveUserID(ctx context.Context, c *Client, userID int64) (tg.InputUserClass, error) {
 	if userID == 0 {
 		return &tg.InputUserSelf{}, nil
 	}
-	peer, err := r.ResolvePeerCache(userID)
-	if err != nil {
-		return nil, fmt.Errorf("could not resolve user ID %d: %w", userID, err)
+	if r := c.testResolver; r != nil {
+		peer, err := r.ResolvePeerCache(userID)
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve user ID %d: %w", userID, err)
+		}
+		return inputPeerToUser(peer)
 	}
-	return inputPeerToUser(peer)
+	return c.peersManager().InputUser(ctx, peers.Ref{ID: userID})
 }
 
-func resolveChannelID(r PeerResolver, chatID int64) (tg.InputChannelClass, error) {
-	peer, err := resolvePeer(r, chatID)
+// resolveChannelID resolves a numeric channel ID to an input channel through
+// the full cascade. See resolvePeer for the lookup order.
+func resolveChannelID(ctx context.Context, c *Client, channelID int64) (tg.InputChannelClass, error) {
+	peer, err := resolvePeer(ctx, c, channelID)
 	if err != nil {
 		return nil, err
 	}
-	switch p := peer.(type) {
-	case *tg.InputPeerChannel:
-		return &tg.InputChannel{ChannelID: p.ChannelID, AccessHash: p.AccessHash}, nil
-	case *tg.InputPeerSelf:
-		return &tg.InputChannelEmpty{}, nil
-	default:
-		return nil, fmt.Errorf("peer %T is not a channel", peer)
-	}
+	return peers.InputPeerToChannel(peer)
 }

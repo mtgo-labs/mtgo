@@ -11,7 +11,7 @@ import (
 
 func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32, reactions []types.Reaction, opts ...*params.SendReactionOption) error {
 	c.Log.Debugf("SendReaction chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -31,7 +31,7 @@ func (c *Client) SendReaction(ctx context.Context, chatID int64, messageID int32
 
 func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID int32, amount int64, opts ...*params.SendPaidReactionOption) error {
 	c.Log.Debugf("SendPaidReaction chat_id=%d msg_id=%d amount=%d", chatID, messageID, amount)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -55,7 +55,7 @@ func (c *Client) SendPaidReaction(ctx context.Context, chatID int64, messageID i
 
 func (c *Client) VotePoll(ctx context.Context, chatID int64, messageID int32, options [][]byte) error {
 	c.Log.Debugf("VotePoll chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -83,7 +83,7 @@ func (c *Client) StopPoll(ctx context.Context, chatID int64, messageID int32) er
 	}
 	pollID := msgs[0].Poll.ID
 
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -104,7 +104,7 @@ func (c *Client) StopPoll(ctx context.Context, chatID int64, messageID int32) er
 
 func (c *Client) RetractVote(ctx context.Context, chatID int64, messageID int32) error {
 	c.Log.Debugf("RetractVote chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -119,7 +119,7 @@ func (c *Client) RetractVote(ctx context.Context, chatID int64, messageID int32)
 
 func (c *Client) GetMessagesViews(ctx context.Context, chatID int64, messageIDs []int32, increment bool) ([]int32, error) {
 	c.Log.Debugf("GetMessagesViews chat_id=%d count=%d increment=%v", chatID, len(messageIDs), increment)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -150,7 +150,7 @@ func (c *Client) GetMessagesViews(ctx context.Context, chatID int64, messageIDs 
 
 func (c *Client) GetMessageReactionsList(ctx context.Context, chatID int64, messageID int32, reaction *types.Reaction, offset string, limit int32) (*types.PeerReactionList, error) {
 	c.Log.Debugf("GetMessageReactionsList chat_id=%d msg_id=%d limit=%d", chatID, messageID, limit)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

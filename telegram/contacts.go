@@ -20,7 +20,7 @@ import (
 //	fmt.Println("Contact added")
 func (c *Client) AddContact(ctx context.Context, userID int64, firstName, lastName, phone string, share bool) error {
 	c.Log.Debugf("AddContact user_id=%d", userID)
-	_, err := resolveUserID(c, userID)
+	_, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -53,7 +53,7 @@ func (c *Client) DeleteContacts(ctx context.Context, userIDs []int64) error {
 	c.Log.Debugf("DeleteContacts count=%d", len(userIDs))
 	inputs := make([]tg.InputUserClass, len(userIDs))
 	for i, id := range userIDs {
-		u, err := resolveUserID(c, id)
+		u, err := resolveUserID(ctx, c, id)
 		if err != nil {
 			return fmt.Errorf("resolve user %v: %w", id, err)
 		}
@@ -93,7 +93,7 @@ func (c *Client) GetContacts(ctx context.Context, hash int64) (tg.ContactsClass,
 //	fmt.Println("User blocked")
 func (c *Client) BlockUser(ctx context.Context, userID int64) error {
 	c.Log.Debugf("BlockUser user_id=%d", userID)
-	peer, err := resolvePeer(c, userID)
+	peer, err := resolvePeer(ctx, c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -108,7 +108,7 @@ func (c *Client) BlockUser(ctx context.Context, userID int64) error {
 // resolved or the RPC call fails.
 func (c *Client) UnblockUser(ctx context.Context, userID int64) error {
 	c.Log.Debugf("UnblockUser user_id=%d", userID)
-	peer, err := resolvePeer(c, userID)
+	peer, err := resolvePeer(ctx, c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}

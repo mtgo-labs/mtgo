@@ -155,11 +155,11 @@ func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, resu
 //	}
 func (c *Client) GetInlineBotResults(ctx context.Context, bot int64, chatID int64, query, offset string) (*tg.MessagesBotResults, error) {
 	c.Log.Debug("GetInlineBotResults")
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}
-	user, err := resolveUserID(c, bot)
+	user, err := resolveUserID(ctx, c, bot)
 	if err != nil {
 		return nil, fmt.Errorf("resolve bot: %w", err)
 	}
@@ -203,7 +203,7 @@ func (c *Client) SendInlineBotResult(ctx context.Context, chatID int64, queryID 
 	c.Log.Debugf("SendInlineBotResult chat_id=%d", chatID)
 	opt := getOptDef(&SendInlineBotResultOption{}, opts...)
 
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}

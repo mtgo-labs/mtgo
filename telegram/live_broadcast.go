@@ -100,7 +100,7 @@ func (s *BroadcastStream) FetchRTMPURL(ctx context.Context) error {
 		return err
 	}
 
-	peer, err := resolvePeer(s.client, s.chatID)
+	peer, err := resolvePeer(ctx, s.client, s.chatID)
 	if err != nil {
 		return fmt.Errorf("fetch rtmp: resolve peer: %w", err)
 	}
@@ -127,7 +127,7 @@ func (s *BroadcastStream) RefreshRTMPURL(ctx context.Context) error {
 		return err
 	}
 
-	peer, err := resolvePeer(s.client, s.chatID)
+	peer, err := resolvePeer(ctx, s.client, s.chatID)
 	if err != nil {
 		return fmt.Errorf("refresh rtmp: resolve peer: %w", err)
 	}

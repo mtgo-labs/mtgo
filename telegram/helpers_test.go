@@ -37,9 +37,15 @@ func (m *mockPeerResolver) ResolvePhone(_ context.Context, phone string) (tg.Inp
 	return nil, ErrPeerNotFound
 }
 
+// testClient wraps a PeerResolver in a Client whose test override makes the
+// resolution helpers use it with cache-only semantics.
+func testClient(r PeerResolver) *Client {
+	return &Client{testResolver: r}
+}
+
 func TestResolvePeer_Self(t *testing.T) {
 	r := &mockPeerResolver{}
-	peer, err := resolvePeer(r, 0)
+	peer, err := resolvePeer(t.Context(), testClient(r), 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -54,7 +60,7 @@ func TestResolvePeer_Cached(t *testing.T) {
 			123: &tg.InputPeerUser{UserID: 123, AccessHash: 456},
 		},
 	}
-	peer, err := resolvePeer(r, 123)
+	peer, err := resolvePeer(t.Context(), testClient(r), 123)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -69,7 +75,7 @@ func TestResolvePeer_Cached(t *testing.T) {
 
 func TestResolvePeer_NotFound(t *testing.T) {
 	r := &mockPeerResolver{}
-	_, err := resolvePeer(r, 999)
+	_, err := resolvePeer(t.Context(), testClient(r), 999)
 	if err == nil {
 		t.Fatal("expected error for unresolvable peer")
 	}
@@ -77,7 +83,7 @@ func TestResolvePeer_NotFound(t *testing.T) {
 
 func TestResolveUserID_Self(t *testing.T) {
 	r := &mockPeerResolver{}
-	user, err := resolveUserID(r, 0)
+	user, err := resolveUserID(t.Context(), testClient(r), 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -92,7 +98,7 @@ func TestResolveUserID_FromPeer(t *testing.T) {
 			77: &tg.InputPeerUser{UserID: 77, AccessHash: 88},
 		},
 	}
-	user, err := resolveUserID(r, 77)
+	user, err := resolveUserID(t.Context(), testClient(r), 77)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -111,7 +117,7 @@ func TestResolveUserID_NotUser(t *testing.T) {
 			100: &tg.InputPeerChat{ChatID: 100},
 		},
 	}
-	_, err := resolveUserID(r, 100)
+	_, err := resolveUserID(t.Context(), testClient(r), 100)
 	if err == nil {
 		t.Fatal("expected error when peer is not a user")
 	}
@@ -123,7 +129,7 @@ func TestResolveChannelID(t *testing.T) {
 			5: &tg.InputPeerChannel{ChannelID: 5, AccessHash: 6},
 		},
 	}
-	ch, err := resolveChannelID(r, 5)
+	ch, err := resolveChannelID(t.Context(), testClient(r), 5)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -142,7 +148,7 @@ func TestResolveChannelID_NotChannel(t *testing.T) {
 			100: &tg.InputPeerUser{UserID: 100, AccessHash: 200},
 		},
 	}
-	_, err := resolveChannelID(r, 100)
+	_, err := resolveChannelID(t.Context(), testClient(r), 100)
 	if err == nil {
 		t.Fatal("expected error when peer is not a channel")
 	}
@@ -156,7 +162,7 @@ func TestClientPeerResolver_Override(t *testing.T) {
 	}
 	c := &Client{testResolver: inner}
 	resolver := c.clientPeerResolver()
-	peer, err := resolvePeer(resolver, 42)
+	peer, err := resolvePeer(t.Context(), testClient(resolver), 42)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -173,7 +179,7 @@ func TestClientPeerResolver_FallbackToSelf(t *testing.T) {
 	c := &Client{}
 	c.peersManager().Cache(10, &tg.InputPeerChat{ChatID: 10})
 	resolver := c.clientPeerResolver()
-	peer, err := resolvePeer(resolver, 10)
+	peer, err := resolvePeer(t.Context(), testClient(resolver), 10)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -271,23 +277,35 @@ func TestChatPhone(t *testing.T) {
 	}
 }
 
-func TestExtractUsernameFromURL(t *testing.T) {
+func TestParseLink(t *testing.T) {
 	tests := []struct {
 		input string
-		want  string
+		want  link
 	}{
-		{"https://t.me/username", "username"},
-		{"http://t.me/username", "username"},
-		{"t.me/username", "username"},
-		{"https://telegram.me/username", "username"},
-		{"telegram.dog/username", "username"},
-		{"https://t.me/username/something", "username"},
-		{"https://t.me/username?param=1", "username"},
+		{"https://t.me/username", link{kind: linkUsername, username: "username"}},
+		{"http://t.me/username", link{kind: linkUsername, username: "username"}},
+		{"t.me/username", link{kind: linkUsername, username: "username"}},
+		{"https://telegram.me/username", link{kind: linkUsername, username: "username"}},
+		{"telegram.dog/username", link{kind: linkUsername, username: "username"}},
+		{"https://t.me/username/something", link{kind: linkUsername, username: "username"}},
+		{"https://t.me/username?param=1", link{kind: linkUsername, username: "username"}},
+		{"https://t.me/@username", link{kind: linkUsername, username: "username"}},
+		{"https://t.me/+AbCdEf123", link{kind: linkInviteHash, hash: "AbCdEf123"}},
+		{"https://t.me/joinchat/AbCdEf123", link{kind: linkInviteHash, hash: "AbCdEf123"}},
+		{"tg://join?invite=AbCdEf123", link{kind: linkInviteHash, hash: "AbCdEf123"}},
+		{"tg://resolve?domain=username", link{kind: linkUsername, username: "username"}},
+		{"https://t.me/c/123456/42", link{kind: linkID, id: 123456}},
+		{"+1234567890", link{kind: linkPhone, phone: "1234567890"}},
+		{"001234567890", link{kind: linkPhone, phone: "1234567890"}},
+		{"-1000000001234", link{kind: linkID, id: -1000000001234}},
+		{"@durov", link{kind: linkUsername, username: "durov"}},
+		{"durov", link{kind: linkUsername, username: "durov"}},
+		{"https://example.com/username", link{kind: linkInvalid}},
 	}
 	for _, tt := range tests {
-		got := extractUsernameFromURL(tt.input)
+		got := parseLink(tt.input)
 		if got != tt.want {
-			t.Errorf("extractUsernameFromURL(%q) = %q, want %q", tt.input, got, tt.want)
+			t.Errorf("parseLink(%q) = %+v, want %+v", tt.input, got, tt.want)
 		}
 	}
 }

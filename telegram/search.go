@@ -125,7 +125,7 @@ func (c *Client) GetUser(ctx context.Context, userID int64) (*types.User, error)
 
 	c.Log.Debugf("GetUser user_id=%d", userID)
 
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

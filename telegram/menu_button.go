@@ -20,7 +20,7 @@ import (
 //	}
 func (c *Client) SetChatMenuButton(ctx context.Context, userID int64, button tg.BotMenuButtonClass) error {
 	c.Log.Debugf("SetChatMenuButton user_id=%d", userID)
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -47,7 +47,7 @@ func (c *Client) SetChatMenuButton(ctx context.Context, userID int64, button tg.
 //	fmt.Printf("Menu button type: %T\n", button)
 func (c *Client) GetChatMenuButton(ctx context.Context, userID int64) (tg.BotMenuButtonClass, error) {
 	c.Log.Debugf("GetChatMenuButton user_id=%d", userID)
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

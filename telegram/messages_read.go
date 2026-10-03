@@ -21,7 +21,7 @@ import (
 //   - the RPC call fails
 func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) error {
 	c.Log.Debugf("ReadHistory chat_id=%d max_id=%d", chatID, maxID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -56,7 +56,7 @@ func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) err
 //   - the RPC call fails
 func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("ReadMentions chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -80,7 +80,7 @@ func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
 //   - the RPC call fails
 func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("ReadReactions chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -107,7 +107,7 @@ func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 //   - the RPC call fails
 func (c *Client) ReadChannelHistory(ctx context.Context, chatID int64, maxID int32) error {
 	c.Log.Debugf("ReadChannelHistory chat_id=%d max_id=%d", chatID, maxID)
-	channel, err := resolveChannelID(c, chatID)
+	channel, err := resolveChannelID(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve channel: %w", err)
 	}

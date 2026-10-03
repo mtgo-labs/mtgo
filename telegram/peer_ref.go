@@ -3,9 +3,9 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
+	"github.com/mtgo-labs/mtgo/telegram/peers"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -20,10 +20,11 @@ import (
 //	ref := telegram.ChatID(12345678)
 //	peer, err := ref.Resolve(ctx, client)
 type ChatRef struct {
-	id       int64
-	username string
-	phone    string
-	peer     tg.InputPeerClass
+	id         int64
+	username   string
+	phone      string
+	peer       tg.InputPeerClass
+	inviteHash string
 }
 
 // ChatID creates a ChatRef that resolves to the chat with the given numeric
@@ -59,19 +60,24 @@ func ChatPeer(peer tg.InputPeerClass) ChatRef {
 }
 
 // ChatRefFrom parses a string and creates the appropriate ChatRef. It
-// recognizes phone numbers (starting with "+" or "00"), numeric IDs, t.me URLs,
-// and plain usernames.
+// recognizes phone numbers (starting with "+" or "00"), numeric IDs, t.me
+// URLs (usernames, "+hash" invite links, joinchat links, and c/<id> private
+// channel links), tg:// deep links, and plain usernames. Invite links become
+// refs that only JoinChat can consume; resolving them directly fails with
+// [ErrPeerNotFound].
 func ChatRefFrom(peer string) ChatRef {
-	if strings.HasPrefix(peer, "+") || strings.HasPrefix(peer, "00") {
-		return ChatPhone(peer)
+	switch l := parseLink(peer); l.kind {
+	case linkUsername:
+		return Username(l.username)
+	case linkPhone:
+		return ChatPhone(l.phone)
+	case linkID:
+		return ChatID(l.id)
+	case linkInviteHash:
+		return ChatRef{inviteHash: l.hash}
+	default:
+		return Username(strings.TrimPrefix(peer, "@"))
 	}
-	if id, err := strconv.ParseInt(peer, 10, 64); err == nil {
-		return ChatID(id)
-	}
-	if isPeerURL(peer) {
-		return ChatRef{username: extractUsernameFromURL(peer)}
-	}
-	return Username(peer)
 }
 
 func (r ChatRef) resolve(ctx context.Context, res PeerResolver) (tg.InputPeerClass, error) {
@@ -84,13 +90,16 @@ func (r ChatRef) resolve(ctx context.Context, res PeerResolver) (tg.InputPeerCla
 	if r.username != "" {
 		return res.ResolveUsername(ctx, r.username)
 	}
+	if r.inviteHash != "" {
+		return nil, fmt.Errorf("could not resolve chat: invite link hash cannot be resolved directly, use JoinChat: %w", ErrPeerNotFound)
+	}
 	if r.id == 0 {
 		return &tg.InputPeerSelf{}, nil
 	}
 	if p, err := res.ResolvePeerCache(r.id); err == nil {
 		return p, nil
 	}
-	return nil, fmt.Errorf("could not resolve chat: %w", ErrPeerNotFound)
+	return nil, fmt.Errorf("could not resolve chat %d: %w", r.id, ErrPeerNotFound)
 }
 
 // UserRef is an opaque reference to a user that can be resolved to a
@@ -158,36 +167,17 @@ func (r UserRef) resolve(ctx context.Context, res PeerResolver) (tg.InputUserCla
 }
 
 func inputPeerToUser(peer tg.InputPeerClass) (tg.InputUserClass, error) {
-	switch p := peer.(type) {
-	case *tg.InputPeerUser:
-		return &tg.InputUser{UserID: p.UserID, AccessHash: p.AccessHash}, nil
-	case *tg.InputPeerSelf:
-		return &tg.InputUserSelf{}, nil
+	return peers.InputPeerToUser(peer)
+}
+
+// inputUserToPeer converts an input user into an input peer.
+func inputUserToPeer(user tg.InputUserClass) (tg.InputPeerClass, error) {
+	switch u := user.(type) {
+	case *tg.InputUser:
+		return &tg.InputPeerUser{UserID: u.UserID, AccessHash: u.AccessHash}, nil
+	case *tg.InputUserSelf:
+		return &tg.InputPeerSelf{}, nil
 	default:
-		return nil, fmt.Errorf("peer %T is not a user", peer)
+		return nil, fmt.Errorf("user %T cannot be used as a peer", user)
 	}
-}
-
-func isPeerURL(s string) bool {
-	return strings.HasPrefix(s, "http://") ||
-		strings.HasPrefix(s, "https://") ||
-		strings.HasPrefix(s, "t.me/") ||
-		strings.HasPrefix(s, "telegram.me/") ||
-		strings.HasPrefix(s, "telegram.dog/")
-}
-
-func extractUsernameFromURL(raw string) string {
-	s := raw
-	s = strings.TrimPrefix(s, "https://")
-	s = strings.TrimPrefix(s, "http://")
-	s = strings.TrimPrefix(s, "t.me/")
-	s = strings.TrimPrefix(s, "telegram.me/")
-	s = strings.TrimPrefix(s, "telegram.dog/")
-	if idx := strings.Index(s, "/"); idx >= 0 {
-		s = s[:idx]
-	}
-	if idx := strings.Index(s, "?"); idx >= 0 {
-		s = s[:idx]
-	}
-	return strings.TrimPrefix(s, "@")
 }

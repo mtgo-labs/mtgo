@@ -16,12 +16,12 @@ import (
 // message won't be forwarded. Returns the edited Message or an error.
 func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64, userID int64, score int, force, noForward bool) (*types.Message, error) {
 	c.Log.Debugf("SetGameScore chat_id=%d user_id=%d score=%d", chatID, userID, score)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -57,12 +57,12 @@ func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64
 // entries or an error if the peer or user cannot be resolved.
 func (c *Client) GetGameHighScores(ctx context.Context, chatID int64, messageID int64, userID int64) ([]*tg.HighScore, error) {
 	c.Log.Debugf("GetGameHighScores chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -100,7 +100,7 @@ func (c *Client) GetGameHighScores(ctx context.Context, chatID int64, messageID 
 //	fmt.Printf("Game sent, message ID: %d\n", msg.ID)
 func (c *Client) SendGame(ctx context.Context, chatID int64, gameShortName string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendGame chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

@@ -140,7 +140,7 @@ func (c *Client) GetProfilePhotos(ctx context.Context, userID int64, opts ...*Ge
 		opt.Limit = 100
 	}
 
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

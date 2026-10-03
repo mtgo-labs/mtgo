@@ -58,7 +58,7 @@ func (c *Client) GetStarGiftUpgradeOptions(ctx context.Context, giftID int64) (*
 func (c *Client) GetSavedGifts(ctx context.Context, peerID int64, opts ...*params.GetGifts) (*tg.PaymentsSavedStarGifts, error) {
 	c.Log.Debugf("GetSavedGifts peer_id=%d", peerID)
 	opt := params.GetOptDef(&params.GetGifts{Limit: 100}, opts...)
-	peer, err := resolvePeer(c, peerID)
+	peer, err := resolvePeer(ctx, c, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -113,7 +113,7 @@ func (c *Client) GetResaleGifts(ctx context.Context, giftID int64, opts ...*para
 func (c *Client) SendGift(ctx context.Context, userID int64, giftID int64, message string, opts ...*params.GiftSend) (*types.Message, error) {
 	c.Log.Debugf("SendGift user_id=%d gift_id=%d", userID, giftID)
 	opt := params.GetOptDef(&params.GiftSend{}, opts...)
-	peer, err := resolvePeer(c, userID)
+	peer, err := resolvePeer(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -141,7 +141,7 @@ func (c *Client) SendGift(ctx context.Context, userID int64, giftID int64, messa
 
 func (c *Client) TransferGift(ctx context.Context, gift tg.InputSavedStarGiftClass, recipientID int64) (*types.Message, error) {
 	c.Log.Debugf("TransferGift recipient_id=%d", recipientID)
-	peer, err := resolvePeer(c, recipientID)
+	peer, err := resolvePeer(ctx, c, recipientID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -191,7 +191,7 @@ func (c *Client) UpgradeGift(ctx context.Context, gift tg.InputSavedStarGiftClas
 
 func (c *Client) PrepayGiftUpgrade(ctx context.Context, peerID int64, hash string) (*types.Message, error) {
 	c.Log.Debugf("PrepayGiftUpgrade peer_id=%d", peerID)
-	peer, err := resolvePeer(c, peerID)
+	peer, err := resolvePeer(ctx, c, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -211,7 +211,7 @@ func (c *Client) PrepayGiftUpgrade(ctx context.Context, peerID int64, hash strin
 func (c *Client) BuyResaleGift(ctx context.Context, slug string, recipientID int64, opts ...*params.BuyGift) (*types.Message, error) {
 	c.Log.Debugf("BuyResaleGift slug=%s", slug)
 	opt := params.GetOptDef(&params.BuyGift{}, opts...)
-	peer, err := resolvePeer(c, recipientID)
+	peer, err := resolvePeer(ctx, c, recipientID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -272,7 +272,7 @@ func (c *Client) ConvertGift(ctx context.Context, gift tg.InputSavedStarGiftClas
 
 func (c *Client) PinGifts(ctx context.Context, gifts []tg.InputSavedStarGiftClass, peerID int64) error {
 	c.Log.Debugf("PinGifts peer_id=%d count=%d", peerID, len(gifts))
-	peer, err := resolvePeer(c, peerID)
+	peer, err := resolvePeer(ctx, c, peerID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -285,7 +285,7 @@ func (c *Client) PinGifts(ctx context.Context, gifts []tg.InputSavedStarGiftClas
 
 func (c *Client) SendGiftOffer(ctx context.Context, peerID int64, slug string, price int64, duration int32) (*types.Message, error) {
 	c.Log.Debugf("SendGiftOffer peer_id=%d slug=%s", peerID, slug)
-	peer, err := resolvePeer(c, peerID)
+	peer, err := resolvePeer(ctx, c, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

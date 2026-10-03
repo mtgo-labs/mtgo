@@ -70,6 +70,12 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass
 		peer, err = ChatRefFrom(p).resolve(ctx, c)
 	case ChatRef:
 		peer, err = p.resolve(ctx, c)
+	case UserRef:
+		user, uerr := p.resolve(ctx, c)
+		if uerr != nil {
+			return nil, uerr
+		}
+		peer, err = inputUserToPeer(user)
 	default:
 		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrPeerNotFound, peerID)
 	}

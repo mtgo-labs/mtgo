@@ -36,7 +36,7 @@ func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int
 	c.Log.Debugf("GetPaymentForm chat_id=%d msg_id=%d", chatID, messageID)
 	opt := params.GetOptDef(&GetPaymentFormOption{}, opts...)
 
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -75,7 +75,7 @@ func (c *Client) SendPaymentForm(ctx context.Context, formID int64, chatID int64
 	}
 	opt := params.GetOptDef(&SendPaymentFormOption{}, opts...)
 
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -111,7 +111,7 @@ func (c *Client) SendPaymentForm(ctx context.Context, formID int64, chatID int64
 //	fmt.Printf("Stars balance: %d\n", balance)
 func (c *Client) GetStarsBalance(ctx context.Context, chatID int64) (int64, error) {
 	c.Log.Debugf("GetStarsBalance chat_id=%d", chatID)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -205,7 +205,7 @@ func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool
 //   - the RPC call fails
 func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
 	c.Log.Debugf("GetStarsTransactions chat_id=%d inbound=%v outbound=%v limit=%d", chatID, inbound, outbound, limit)
-	peer, err := resolvePeer(c, chatID)
+	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -248,7 +248,7 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 //   - the RPC call fails
 func (c *Client) RefundStarsCharge(ctx context.Context, userID int64, chargeID string) error {
 	c.Log.Debugf("RefundStarsCharge user_id=%d charge_id=%s", userID, chargeID)
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}

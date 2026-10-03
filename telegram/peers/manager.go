@@ -53,7 +53,10 @@ type Manager struct {
 	byID          map[int64]tg.InputPeerClass
 	idOrder       []int64
 	usernameToID  map[string]int64
+	idToUsername  map[int64]string
 	usernameOrder []string
+	phoneToID     map[string]int64
+	phoneOrder    []string
 	coalescer     coalescer
 }
 
@@ -63,6 +66,8 @@ func NewManager(deps Deps) *Manager {
 		deps:         deps,
 		byID:         make(map[int64]tg.InputPeerClass),
 		usernameToID: make(map[string]int64),
+		idToUsername: make(map[int64]string),
+		phoneToID:    make(map[string]int64),
 	}
 }
 
@@ -109,5 +114,8 @@ func (m *Manager) Reset() {
 	m.byID = make(map[int64]tg.InputPeerClass)
 	m.idOrder = nil
 	m.usernameToID = make(map[string]int64)
+	m.idToUsername = make(map[int64]string)
 	m.usernameOrder = nil
+	m.phoneToID = make(map[string]int64)
+	m.phoneOrder = nil
 }

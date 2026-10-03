@@ -37,7 +37,7 @@ func (c *Context) Reply(text string, opts ...*params.SendMessage) (*types.Messag
 	// Pre-resolve the peer from the update's Users/Chats maps so the
 	// access hash is available even on first interaction with a user.
 	if opt.ReplyTo == nil && chatID > 0 {
-		if _, cacheErr := resolvePeer(c.Client, chatID); cacheErr != nil {
+		if _, cacheErr := c.Client.ResolvePeerCache(chatID); cacheErr != nil {
 			if u, ok := c.Update.Users[chatID]; ok && u.AccessHash != 0 {
 				c.Client.CachePeer(chatID, &tg.InputPeerUser{UserID: chatID, AccessHash: u.AccessHash})
 			}

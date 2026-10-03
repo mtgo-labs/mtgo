@@ -116,6 +116,38 @@ func TestIngestChannelAndUsername(t *testing.T) {
 	}
 }
 
+func TestPhoneIndex(t *testing.T) {
+	m := newTestManager(0, false, nil)
+	m.CachePhone("+7900123", 77) // normalized automatically
+	m.Cache(77, &tg.InputPeerUser{UserID: 77, AccessHash: 3})
+
+	peer, err := m.InputPeerByPhone(t.Context(), "+7900123")
+	if err != nil {
+		t.Fatalf("InputPeerByPhone: %v", err)
+	}
+	if p, ok := peer.(*tg.InputPeerUser); !ok || p.UserID != 77 {
+		t.Fatalf("phone resolve = %v, want user 77", peer)
+	}
+
+	m.IngestUsers([]tg.UserClass{&tg.User{ID: 8, AccessHash: 1, Phone: "7900555"}})
+	if _, err := m.InputPeerByPhone(t.Context(), "7900555"); err != nil {
+		t.Errorf("ingested phone not indexed: %v", err)
+	}
+}
+
+func TestUsernameReverseIndex(t *testing.T) {
+	m := newTestManager(0, false, nil)
+	m.CacheUsername("alice", 1)
+	if got := m.LookupUsername(1); got != "alice" {
+		t.Fatalf("LookupUsername(1) = %q, want alice", got)
+	}
+	// Re-binding the ID to a new username drops the old one.
+	m.CacheUsername("alice_new", 1)
+	if got := m.LookupUsername(1); got != "alice_new" {
+		t.Fatalf("LookupUsername(1) = %q, want alice_new", got)
+	}
+}
+
 func TestReset(t *testing.T) {
 	m := newTestManager(0, false, nil)
 	m.Cache(1, &tg.InputPeerChat{ChatID: 1})
@@ -178,7 +210,7 @@ func TestCoalescerSingleManagerDedup(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, _ = m.coalesce("phone:+7", func() (tg.InputPeerClass, error) {
+			_, _ = coalesce(m, "phone:+7", func() (tg.InputPeerClass, error) {
 				calls.Add(1)
 				<-release
 				return &tg.InputPeerSelf{}, nil

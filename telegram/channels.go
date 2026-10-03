@@ -10,7 +10,7 @@ import (
 
 func (c *Client) GetFullChannel(ctx context.Context, chatID int64) (*types.Chat, error) {
 	c.Log.Debugf("GetFullChannel chat_id=%d", chatID)
-	channel, err := resolveChannelID(c, chatID)
+	channel, err := resolveChannelID(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve channel: %w", err)
 	}

@@ -32,7 +32,7 @@ func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, 
 	c.Log.Debugf("GetUsers count=%d", len(userIDs))
 	inputs := make([]tg.InputUserClass, len(userIDs))
 	for i, id := range userIDs {
-		u, err := resolveUserID(c, id)
+		u, err := resolveUserID(ctx, c, id)
 		if err != nil {
 			return nil, fmt.Errorf("resolve user %v: %w", id, err)
 		}
@@ -138,7 +138,7 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 //	}
 func (c *Client) GetCommonChats(ctx context.Context, userID int64, limit int) ([]*types.Chat, error) {
 	c.Log.Debugf("GetCommonChats user_id=%d", userID)
-	user, err := resolveUserID(c, userID)
+	user, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

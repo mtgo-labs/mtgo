@@ -28,6 +28,9 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 		if username != "" {
 			m.CacheUsername(username, user.ID)
 		}
+		if user.Phone != "" {
+			m.CachePhone(user.Phone, user.ID)
+		}
 		entries = append(entries, &storage.Peer{
 			ID:          user.ID,
 			Type:        storage.PeerTypeUser,
@@ -95,6 +98,9 @@ func (m *Manager) ingestResolved(result *tg.ContactsResolvedPeer) {
 			m.Cache(user.ID, &tg.InputPeerUser{UserID: user.ID, AccessHash: user.AccessHash})
 			if user.Username != "" {
 				m.CacheUsername(user.Username, user.ID)
+			}
+			if user.Phone != "" {
+				m.CachePhone(user.Phone, user.ID)
 			}
 			entries = append(entries, &storage.Peer{
 				ID:          user.ID,

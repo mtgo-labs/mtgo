@@ -26,7 +26,7 @@ func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.P
 		return nil, err
 	}
 
-	resolved, err := resolvePeer(c, peer)
+	resolved, err := resolvePeer(ctx, c, peer)
 	if err != nil {
 		return nil, fmt.Errorf("create call: resolve peer: %w", err)
 	}
@@ -67,7 +67,7 @@ func (c *Client) GetActiveCall(ctx context.Context, chatID int64) (tg.InputGroup
 		return nil, err
 	}
 
-	resolved, err := resolvePeer(c, chatID)
+	resolved, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("get active call: resolve peer: %w", err)
 	}

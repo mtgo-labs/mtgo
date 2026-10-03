@@ -22,13 +22,32 @@ func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.
 		return p, nil
 	}
 
-	return m.coalesce("username:"+username, func() (tg.InputPeerClass, error) {
+	result, err := m.ResolveUsernameFull(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
+	if err != nil {
+		return nil, fmt.Errorf("%w: @%s: %w", ErrNotFound, username, err)
+	}
+	return inputPeer, nil
+}
+
+// ResolveUsernameFull resolves a username through the coalesced cascade and
+// returns the complete contacts.resolveUsername response (including the
+// users and chats slices) after caching every entity. Use it where callers
+// need rich entity data, not just the input peer.
+func (m *Manager) ResolveUsernameFull(ctx context.Context, username string) (*tg.ContactsResolvedPeer, error) {
+	username = strings.TrimPrefix(username, "@")
+	if p, ok := m.cachedByUsername(username); ok {
+		return resolvedFromCached(p), nil
+	}
+	result, err := coalesce(m, "username:"+username, func() (*tg.ContactsResolvedPeer, error) {
 		// Double-check cache inside the coalescer — another goroutine
 		// may have resolved it while we were waiting for the lock.
 		if p, ok := m.cachedByUsername(username); ok {
-			return p, nil
+			return resolvedFromCached(p), nil
 		}
-
 		result, err := m.invoker().ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
 			Username: username,
 		})
@@ -36,12 +55,41 @@ func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.
 			return nil, fmt.Errorf("%w: resolve @%s: %w", ErrNotFound, username, err)
 		}
 		m.ingestResolved(result)
-		inputPeer, err := PeerToInputPeer(result.Peer, result.Users, result.Chats)
-		if err != nil {
-			return nil, fmt.Errorf("%w: @%s: %w", ErrNotFound, username, err)
-		}
-		return inputPeer, nil
+		return result, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// resolvedFromCached wraps a cached input peer as a minimal resolve result.
+// Rich entity data is unavailable on cache hits; callers that need it should
+// use the store.
+func resolvedFromCached(p tg.InputPeerClass) *tg.ContactsResolvedPeer {
+	res := &tg.ContactsResolvedPeer{Peer: peerClassFromInput(p)}
+	switch v := p.(type) {
+	case *tg.InputPeerUser:
+		res.Users = []tg.UserClass{&tg.User{ID: v.UserID, AccessHash: v.AccessHash}}
+	case *tg.InputPeerChat:
+		res.Chats = []tg.ChatClass{&tg.Chat{ID: v.ChatID}}
+	case *tg.InputPeerChannel:
+		res.Chats = []tg.ChatClass{&tg.Channel{ID: v.ChannelID, AccessHash: v.AccessHash}}
+	}
+	return res
+}
+
+func peerClassFromInput(p tg.InputPeerClass) tg.PeerClass {
+	switch v := p.(type) {
+	case *tg.InputPeerUser:
+		return &tg.PeerUser{UserID: v.UserID}
+	case *tg.InputPeerChat:
+		return &tg.PeerChat{ChatID: v.ChatID}
+	case *tg.InputPeerChannel:
+		return &tg.PeerChannel{ChannelID: v.ChannelID}
+	default:
+		return &tg.PeerUser{UserID: 0}
+	}
 }
 
 // InputPeerByPhone resolves a phone number to an input peer. The number is
@@ -50,7 +98,10 @@ func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.
 func (m *Manager) InputPeerByPhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
 	phone = normalizePhone(phone)
 	m.debugf("ResolvePhone")
-	return m.coalesce("phone:"+phone, func() (tg.InputPeerClass, error) {
+	if p, ok := m.cachedByPhone(phone); ok {
+		return p, nil
+	}
+	return coalesce(m, "phone:"+phone, func() (tg.InputPeerClass, error) {
 		result, err := m.invoker().ContactsResolvePhone(ctx, &tg.ContactsResolvePhoneRequest{
 			Phone: phone,
 		})
