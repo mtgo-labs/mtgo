@@ -145,3 +145,17 @@ Previous features (completed):
 - `specs/002-mtproto-stability/` — MTProto protocol stability (31 tasks, all complete)
 - `specs/001-connection-overhaul/` — Connection architecture overhaul (37 tasks, all complete)
 <!-- SPECKIT END -->
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (github.com/mtgo-labs/mtgo) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` at repo root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.
