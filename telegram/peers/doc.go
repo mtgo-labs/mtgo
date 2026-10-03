@@ -34,4 +34,23 @@
 // CachePeer). The Manager reads its dependencies through the function fields
 // of [Deps] at call time, so lazily-created storage and runtime configuration
 // changes are honored without re-construction.
+//
+// # Provenance
+//
+// The design is grounded in a source-level survey of the other MTProto
+// clients (see docs/design/peers-cross-lib.md in the repository):
+//
+//   - gotd/td: the opt-in peers.Manager shape and strict min-exclusion; its
+//     singleflight dedup is the precedent for the coalescer.
+//   - mtcute: one PeersService owning ingest, persistence and TTL; the 24h
+//     username freshness window; typed not-found errors.
+//   - Pyrogram: write-through caching of entities from updates and RPC
+//     responses; the 8h username TTL.
+//   - MTKruto: persisted username/phone indexes with 24h TTLs;
+//     message-anchored references for min peers (a recorded follow-up here).
+//   - gogram: the single persistent id→access-hash store with write-through.
+//
+// Behaviors not found in any of the five as of the survey: invalidate-and-
+// replay on PEER_ID_INVALID ([Manager.InvalidateOnStaleHash]), context-aware
+// request coalescing, and typed kind errors ([NotUserError]/[NotChannelError]).
 package peers
