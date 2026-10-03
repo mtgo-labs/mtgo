@@ -120,8 +120,10 @@ type Client struct {
 	connectedHooks      []ConnectedHook
 	reconnectHooks      []ReconnectHook
 
-	peerMgr     *peers.Manager
-	peerMgrOnce sync.Once
+	peerMgr      *peers.Manager
+	peerMgrOnce  sync.Once
+	floodRegVal  *floodRegistry
+	floodRegOnce sync.Once
 
 	stopCh      chan struct{}
 	connChanged chan struct{} // closed on reconnect, wakes waitForConnect waiters

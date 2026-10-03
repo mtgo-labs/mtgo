@@ -250,13 +250,16 @@ type Config struct {
 	// ReqTimeout is the default timeout applied to RPC requests when no deadline
 	// is set on the context. Defaults to 60 seconds. Enforced minimum of 1 second.
 	ReqTimeout time.Duration
-	// RetryInterval is the initial delay between RPC retry attempts. The delay
-	// doubles on each subsequent retry up to a cap. Defaults to 5 seconds.
+	// RetryInterval is a legacy knob that no code path reads (the session
+	// transport retry uses its own 100ms→2s exponential backoff). Retained
+	// for configuration compatibility; do not set it in new code.
 	RetryInterval time.Duration
-	// Retries is the number of retries for RPC calls on transient errors
-	// (timeouts, connection resets, 500s). Non-retryable errors (401, 400, 403)
-	// fail immediately regardless of this setting. Defaults to 5.
-	// The send timeout per attempt is controlled by ReqTimeout.
+	// Retries is the number of transport-level attempts per RPC call inside
+	// the session (timeouts, connection resets). Non-retryable server errors
+	// fail immediately regardless of this setting. The backoff between
+	// attempts is exponential (100ms doubling, capped at 2s) and honors the
+	// context. Flood waits and reconnect retries are governed separately by
+	// SleepThreshold and MaxRPCReconnectRetries. Defaults to 3.
 	Retries int
 	// MaxConcurrentTrans limits how many file transfers may run in parallel.
 	// Keep low on bandwidth-constrained networks to avoid throttling.
@@ -587,6 +590,7 @@ func DeviceTDesktopWindows() DeviceConfig {
 //	cfg.InMemory = true
 //	client, err := telegram.NewClient(apiID, apiHash, &cfg)
 var DefaultConfig = Config{
+	Retries:             3,
 	SleepThreshold:      10 * time.Second,
 	Timeout:             60 * time.Second,
 	ReqTimeout:          15 * time.Second,

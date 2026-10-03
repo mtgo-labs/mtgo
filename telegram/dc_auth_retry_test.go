@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 func TestRetryFloodWaitRetriesFloodWait(t *testing.T) {
 	attempts := 0
-	err := retryFloodWait(context.Background(), func() error {
+	err := invokeWithFloodPolicy(context.Background(), 24*time.Hour, 0, nil, func() error {
 		attempts++
 		if attempts == 1 {
 			return tgerr.New(420, "FLOOD_WAIT_0")
@@ -30,7 +31,7 @@ func TestRetryFloodWaitHonorsCancellation(t *testing.T) {
 	cancel()
 
 	attempts := 0
-	err := retryFloodWait(ctx, func() error {
+	err := invokeWithFloodPolicy(ctx, 24*time.Hour, 0, nil, func() error {
 		attempts++
 		return tgerr.New(420, "FLOOD_WAIT_75")
 	})
@@ -45,7 +46,7 @@ func TestRetryFloodWaitHonorsCancellation(t *testing.T) {
 func TestRetryFloodWaitReturnsNonFloodError(t *testing.T) {
 	want := errors.New("authorization failed")
 	attempts := 0
-	err := retryFloodWait(context.Background(), func() error {
+	err := invokeWithFloodPolicy(context.Background(), 24*time.Hour, 0, nil, func() error {
 		attempts++
 		return want
 	})
@@ -59,7 +60,7 @@ func TestRetryFloodWaitReturnsNonFloodError(t *testing.T) {
 
 func TestRetryTransferFloodWaitRetriesUntilSuccess(t *testing.T) {
 	attempts := 0
-	err := retryTransferFloodWait(withTransferRetry(context.Background()), func() error {
+	err := invokeWithFloodPolicy(withTransferRetry(context.Background()), 24*time.Hour, 0, nil, func() error {
 		attempts++
 		if attempts == 1 {
 			return tgerr.New(420, "FLOOD_WAIT_0")
@@ -77,7 +78,9 @@ func TestRetryTransferFloodWaitRetriesUntilSuccess(t *testing.T) {
 func TestRetryTransferFloodWaitPreservesNonTransferPolicy(t *testing.T) {
 	flood := tgerr.New(420, "FLOOD_WAIT_75")
 	attempts := 0
-	err := retryTransferFloodWait(context.Background(), func() error {
+	// Without the transfer marker the threshold stays at SleepThreshold (0
+	// here), so the flood surfaces after exactly one attempt.
+	err := invokeWithFloodPolicy(context.Background(), 0, 0, nil, func() error {
 		attempts++
 		return flood
 	})

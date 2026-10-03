@@ -17,6 +17,15 @@ func (c *Client) Peers() *peers.Manager {
 	return c.peersManager()
 }
 
+// floodReg lazily constructs the per-method flood deadline registry shared
+// by all invoke paths.
+func (c *Client) floodReg() *floodRegistry {
+	c.floodRegOnce.Do(func() {
+		c.floodRegVal = newFloodRegistry()
+	})
+	return c.floodRegVal
+}
+
 // peersManager lazily constructs the peer resolution engine. All peer
 // resolution, caching, and persistence flows through it; the exported
 // methods on Client are thin compatibility delegates.
