@@ -1,8 +1,25 @@
 # Peer Subsystem Rewrite — Design & Plan
 
-Status: proposed
+Status: implemented (P0–P3) on branch `feat/peers-rewrite`
 Decisions: exported `telegram/peers` package · full resolution cascade at every call site
 Constraint: **no breaking changes to the existing public API** (additive only)
+
+## Implementation notes & deviations
+
+- `peers.NewManager(peers.Deps{...})` replaces the planned `New(invoker, opts...)`:
+  dependencies are call-time functions because client storage is created lazily at
+  connect and config is runtime-mutable. Same testability, no constructor churn.
+- Additive surface beyond §2.2: `Manager.Invalidate`, `Manager.InvalidateOnStaleHash`
+  (invoker middleware, registered by `NewClient`), `Manager.ResolveUsernameFull`,
+  `Manager.LookupUsername`, `Manager.CachePhone`, and `Client.Peers()`.
+- Phone→ID persistence is memory-only: the external storage contract has no
+  `GetPeerByPhone`, so store promotion cannot read phones back (would need a
+  storage-module change).
+- Generic RPC-response ingest (§3.5) is implemented for the high-traffic paths
+  (updates, dialogs, resolve\*, bot hash completion, search) but not as a global
+  response middleware — deferred as invasive; revisit if cold-cache misses persist.
+- Hot-path benchmarks (`telegram/peers/bench_test.go`): Cache 24 ns/op, Cached hit
+  4 ns/op, marked-channel lookup 4 ns/op, CacheUsername 25 ns/op — all 0 allocs.
 
 ## 1. Problem
 
