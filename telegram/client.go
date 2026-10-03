@@ -3036,26 +3036,49 @@ func (c *Client) Invoke(ctx context.Context, query tg.TLObject) (tg.TLObject, er
 	}
 
 	var result tg.TLObject
-	err = c.retrySessionErr(ctx, func(sess *session.Session) error {
-		if sess == nil {
-			return ErrNotConnected
-		}
-		var invokeErr error
-		result, invokeErr = sess.Invoke(ctx, prep.query, c.invokeRetries(), c.invokeTimeout(ctx))
-		if invokeErr == nil {
-			if rpcErr, ok := result.(*tg.RPCError); ok {
-				parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
-				if isAuthLostError(parsed) {
-					return parsed
+	run := func() error {
+		return c.retrySessionErr(ctx, func(sess *session.Session) error {
+			if sess == nil {
+				return ErrNotConnected
+			}
+			var invokeErr error
+			result, invokeErr = sess.Invoke(ctx, prep.query, c.invokeRetries(), c.invokeTimeout(ctx))
+			if invokeErr == nil {
+				if rpcErr, ok := result.(*tg.RPCError); ok {
+					parsed := tgerr.New(int(rpcErr.ErrorCode), rpcErr.ErrorMessage)
+					if isAuthLostError(parsed) {
+						return parsed
+					}
 				}
 			}
-		}
-		return invokeErr
-	}, prep.query)
+			return invokeErr
+		}, prep.query)
+	}
+	err = run()
 	if err != nil {
 		var rpcErr *tgerr.Error
 		if errors.As(err, &rpcErr) && rpcErr.Code == 303 {
 			return c.handleMigrationError(ctx, rpcErr, prep.query)
+		}
+		// A rejected access hash is safe to replay (the server dropped the
+		// call without executing it): drop the referenced cache entries and
+		// retry once, mirroring the invoker middleware for Raw() callers.
+		if peers.IsStaleHashError(err) {
+			if ids := peers.RequestPeerIDs(prep.query); len(ids) > 0 {
+				for _, id := range ids {
+					c.peersManager().Invalidate(id)
+				}
+				if rerr := run(); rerr == nil {
+					if prep.initializes {
+						c.apiInit.Store(true)
+					}
+					return result, nil
+				} else if peers.IsStaleHashError(rerr) {
+					return nil, fmt.Errorf("%w: peer %v rejected after re-resolution: %w", peers.ErrInvalid, ids, rerr)
+				} else {
+					err = rerr
+				}
+			}
 		}
 		return nil, err
 	}
@@ -3082,15 +3105,36 @@ func (c *Client) InvokeRaw(ctx context.Context, query tg.TLObject) (tg.TLObject,
 	}
 
 	var result tg.TLObject
-	err = c.retrySessionErr(ctx, func(sess *session.Session) error {
-		if sess == nil {
-			return ErrNotConnected
-		}
-		var invokeErr error
-		result, invokeErr = sess.Invoke(ctx, prep.query, c.invokeRetries(), c.invokeTimeout(ctx))
-		return invokeErr
-	}, prep.query)
+	run := func() error {
+		return c.retrySessionErr(ctx, func(sess *session.Session) error {
+			if sess == nil {
+				return ErrNotConnected
+			}
+			var invokeErr error
+			result, invokeErr = sess.Invoke(ctx, prep.query, c.invokeRetries(), c.invokeTimeout(ctx))
+			return invokeErr
+		}, prep.query)
+	}
+	err = run()
 	if err != nil {
+		// Heal rejected access hashes exactly like Invoke, but keep this
+		// method's contract of returning unwrapped RPC errors: on a replay
+		// that still fails, the raw server error passes through unchanged.
+		if peers.IsStaleHashError(err) {
+			if ids := peers.RequestPeerIDs(prep.query); len(ids) > 0 {
+				for _, id := range ids {
+					c.peersManager().Invalidate(id)
+				}
+				if rerr := run(); rerr == nil {
+					if prep.initializes {
+						c.apiInit.Store(true)
+					}
+					return result, nil
+				} else {
+					err = rerr
+				}
+			}
+		}
 		return nil, err
 	}
 	if prep.initializes {

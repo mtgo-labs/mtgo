@@ -9,12 +9,19 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-// isStaleHashErr reports a server rejection of a cached access hash. Such
+// IsStaleHashError reports a server rejection of a cached access hash. Such
 // rejections are safe to retry: the server dropped the call without
 // executing it.
-func isStaleHashErr(err error) bool {
+func IsStaleHashError(err error) bool {
 	return tgerr.IsPeerIDInvalid(err) || tgerr.IsChannelInvalid(err)
 }
+
+// RequestPeerIDs extracts every peer ID referenced by an RPC request, so
+// callers can drop the right cache entries when the server rejects an
+// access hash.
+func RequestPeerIDs(input tg.TLObject) []int64 { return requestPeerIDs(input) }
+
+func isStaleHashErr(err error) bool { return IsStaleHashError(err) }
 
 // InvalidateOnStaleHash returns an invoker middleware that watches for
 // PEER_ID_INVALID / CHANNEL_INVALID responses, drops the referenced peers
