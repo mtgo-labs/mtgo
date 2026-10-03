@@ -63,8 +63,16 @@ func RemoveSurrogates(text string) (string, error) {
 			result.WriteByte(data[i])
 			i++
 		} else {
-			_, size := utf8.DecodeRune(data[i:])
-			result.Write(data[i : i+size])
+			r, size := utf8.DecodeRune(data[i:])
+			if r == utf8.RuneError && size == 1 {
+				// Stray invalid bytes (e.g. an unmatched surrogate half from
+				// truncated AddSurrogates output) must not leak into the
+				// result: the function promises valid UTF-8, so replace them
+				// with U+FFFD like the standard decoder does.
+				result.WriteRune(utf8.RuneError)
+			} else {
+				result.Write(data[i : i+size])
+			}
 			i += size
 		}
 	}

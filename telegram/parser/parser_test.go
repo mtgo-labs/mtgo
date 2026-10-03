@@ -3,6 +3,7 @@ package parser
 import (
 	"reflect"
 	"testing"
+	"unicode/utf8"
 
 	tl "github.com/mtgo-labs/mtgo/tg"
 )
@@ -1074,4 +1075,67 @@ func TestMarkdownParser_EscapedBoldInsideCode(t *testing.T) {
 			t.Error("escaped asterisks inside code should not become bold")
 		}
 	}
+}
+
+func TestRemoveSurrogates_EdgeCases(t *testing.T) {
+	t.Run("ascii unchanged", func(t *testing.T) {
+		out, err := RemoveSurrogates("plain ascii text")
+		if err != nil || out != "plain ascii text" {
+			t.Errorf("got (%q, %v)", out, err)
+		}
+	})
+
+	t.Run("unmatched high surrogate replaced", func(t *testing.T) {
+		// 0xD800 little-endian (00 D8) with no low half: the NUL is valid
+		// UTF-8 and passes through; the stray lead byte becomes U+FFFD so
+		// the output stays valid UTF-8.
+		in := "a\x00\xd8z"
+		out, err := RemoveSurrogates(in)
+		if err != nil {
+			t.Fatalf("err = %v, want nil (replacement, not error)", err)
+		}
+		if !utf8.ValidString(out) {
+			t.Fatalf("out=%q is not valid UTF-8", out)
+		}
+		want := "a\x00\ufffdz"
+		if out != want {
+			t.Errorf("out = %q, want %q", out, want)
+		}
+	})
+
+	t.Run("unmatched low surrogate replaced", func(t *testing.T) {
+		in := "a\x00\xdcz" // 0xDC00 little-endian
+		out, err := RemoveSurrogates(in)
+		if err != nil {
+			t.Fatalf("err = %v, want nil", err)
+		}
+		if !utf8.ValidString(out) {
+			t.Fatalf("out=%q is not valid UTF-8", out)
+		}
+		if want := "a\x00\ufffdz"; out != want {
+			t.Errorf("out = %q, want %q", out, want)
+		}
+	})
+
+	t.Run("high followed by non-low errors", func(t *testing.T) {
+		// Complete 4-byte window: high surrogate value then a non-low value.
+		in := "\x3d\xd8\x00A" // 0xD83D then 0x4100
+		_, err := RemoveSurrogates(in)
+		if err == nil {
+			t.Fatal("want error for unmatched surrogate window")
+		}
+	})
+
+	t.Run("pair adjacent to multibyte text", func(t *testing.T) {
+		// Astral emoji between Arabic words; offsets must not desync.
+		in := "مرحبا😀عالم"
+		enc := AddSurrogates(in)
+		out, err := RemoveSurrogates(enc)
+		if err != nil {
+			t.Fatalf("err = %v", err)
+		}
+		if out != in {
+			t.Errorf("round-trip = %q, want %q", out, in)
+		}
+	})
 }
