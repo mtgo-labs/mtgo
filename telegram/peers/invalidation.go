@@ -74,7 +74,7 @@ func collectPeerIDs(v reflect.Value, ids *[]int64, depth int) {
 		return
 	}
 	switch v.Kind() {
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Interface, reflect.Pointer:
 		if v.IsNil() {
 			return
 		}
