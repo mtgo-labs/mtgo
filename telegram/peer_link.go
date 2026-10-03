@@ -4,6 +4,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/mtgo-labs/mtgo/telegram/peers"
 )
 
 // linkKind classifies a parsed peer reference string.
@@ -86,7 +88,7 @@ func parseLink(s string) link {
 
 	// Phone numbers: "+..." or "00..." prefixes.
 	if strings.HasPrefix(s, "+") || strings.HasPrefix(s, "00") {
-		return link{kind: linkPhone, phone: normalizePhoneLocal(s)}
+		return link{kind: linkPhone, phone: peers.NormalizePhone(s)}
 	}
 
 	// Numeric IDs (raw or marked).
@@ -139,11 +141,4 @@ func parseTmePath(host, path string) (link, bool) {
 		p = p[:idx]
 	}
 	return link{kind: linkUsername, username: strings.TrimPrefix(p, "@")}, true
-}
-
-// normalizePhoneLocal strips the leading "+" or "00" from a phone string.
-func normalizePhoneLocal(s string) string {
-	s = strings.TrimPrefix(s, "+")
-	s = strings.TrimPrefix(s, "00")
-	return s
 }

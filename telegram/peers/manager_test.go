@@ -210,7 +210,7 @@ func TestCoalescerSingleManagerDedup(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, _ = coalesce(m, "phone:+7", func() (tg.InputPeerClass, error) {
+			_, _ = coalesce(m, t.Context(), "phone:+7", func() (tg.InputPeerClass, error) {
 				calls.Add(1)
 				<-release
 				return &tg.InputPeerSelf{}, nil

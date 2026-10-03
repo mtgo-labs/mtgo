@@ -42,7 +42,7 @@ func (m *Manager) ResolveUsernameFull(ctx context.Context, username string) (*tg
 	if p, ok := m.cachedByUsername(username); ok {
 		return resolvedFromCached(p), nil
 	}
-	result, err := coalesce(m, "username:"+username, func() (*tg.ContactsResolvedPeer, error) {
+	result, err := coalesce(m, ctx, "username:"+username, func() (*tg.ContactsResolvedPeer, error) {
 		// Double-check cache inside the coalescer — another goroutine
 		// may have resolved it while we were waiting for the lock.
 		if p, ok := m.cachedByUsername(username); ok {
@@ -53,7 +53,7 @@ func (m *Manager) ResolveUsernameFull(ctx context.Context, username string) (*tg
 		})
 		if err != nil {
 			if isNotFoundRPC(err) {
-				return nil, fmt.Errorf("%w: resolve @%s: %w", ErrNotFound, username, err)
+				return nil, &NotFoundError{Ref: "@" + username, Cause: err}
 			}
 			// Transient failure (flood, network, auth): surface it unmasked.
 			return nil, fmt.Errorf("resolve @%s: %w", username, err)
@@ -92,7 +92,7 @@ func peerClassFromInput(p tg.InputPeerClass) tg.PeerClass {
 	case *tg.InputPeerChannel:
 		return &tg.PeerChannel{ChannelID: v.ChannelID}
 	default:
-		return &tg.PeerUser{UserID: 0}
+		return nil
 	}
 }
 
@@ -100,18 +100,18 @@ func peerClassFromInput(p tg.InputPeerClass) tg.PeerClass {
 // normalized automatically (leading "+" and "00" prefixes are stripped) and
 // contacts.resolvePhone is invoked under a single-flight coalescer.
 func (m *Manager) InputPeerByPhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
-	phone = normalizePhone(phone)
+	phone = NormalizePhone(phone)
 	m.debugf("ResolvePhone")
 	if p, ok := m.cachedByPhone(phone); ok {
 		return p, nil
 	}
-	return coalesce(m, "phone:"+phone, func() (tg.InputPeerClass, error) {
+	return coalesce(m, ctx, "phone:"+phone, func() (tg.InputPeerClass, error) {
 		result, err := m.invoker().ContactsResolvePhone(ctx, &tg.ContactsResolvePhoneRequest{
 			Phone: phone,
 		})
 		if err != nil {
 			if isNotFoundRPC(err) {
-				return nil, fmt.Errorf("%w: resolve phone %s: %w", ErrNotFound, phone, err)
+				return nil, &NotFoundError{Ref: "phone " + phone, Cause: err}
 			}
 			return nil, fmt.Errorf("resolve phone %s: %w", phone, err)
 		}
@@ -131,29 +131,8 @@ func (m *Manager) numericForBot(ctx context.Context, id int64) (tg.InputPeerClas
 	if peer, ok := inputPeerFromBareChatID(id); ok {
 		return peer, nil
 	}
-	if raw, ok := m.rawChannelID(id); ok {
-		result, err := m.invoker().ChannelsGetChannels(ctx, &tg.ChannelsGetChannelsRequest{
-			ID: []tg.InputChannelClass{
-				&tg.InputChannel{ChannelID: raw, AccessHash: 0},
-			},
-		})
-		if err != nil {
-			if isNotFoundRPC(err) {
-				return nil, fmt.Errorf("%w: get channel %d: %w", ErrNotFound, raw, err)
-			}
-			return nil, fmt.Errorf("get channel %d: %w", raw, err)
-		}
-		chats := chatsFromChatsClass(result)
-		m.Ingest(nil, chats)
-		for _, ch := range chats {
-			channel, ok := ch.(*tg.Channel)
-			if ok && channel.ID == raw && channel.AccessHash != 0 {
-				peer := &tg.InputPeerChannel{ChannelID: channel.ID, AccessHash: channel.AccessHash}
-				m.Cache(channel.ID, peer)
-				return peer, nil
-			}
-		}
-		return nil, ErrNotFound
+	if raw, ok := peerid.UnmarkChannel(id); ok {
+		return m.botChannelAccessHash(ctx, raw)
 	}
 	if id > 0 {
 		peer, err := m.EnsureUsable(ctx, &tg.InputPeerUser{UserID: id})
@@ -249,13 +228,6 @@ func (m *Manager) peerByUsername(ctx context.Context, id int64) (tg.InputPeerCla
 		return nil, ErrNotFound
 	}
 	return m.InputPeerByUsername(ctx, username)
-}
-
-func (m *Manager) rawChannelID(id int64) (int64, bool) {
-	if raw, ok := peerid.UnmarkChannel(id); ok {
-		return raw, true
-	}
-	return 0, false
 }
 
 func (m *Manager) preloadDialogPeer(ctx context.Context, id int64) error {
@@ -374,7 +346,9 @@ func usersFromUsersGetUsers(result tg.TLObject) []tg.UserClass {
 	return users
 }
 
-func normalizePhone(phone string) string {
+// NormalizePhone strips whitespace and the leading "+"/"00" prefixes
+// from a phone number.
+func NormalizePhone(phone string) string {
 	phone = strings.TrimSpace(phone)
 	phone = strings.TrimPrefix(phone, "+")
 	phone = strings.TrimPrefix(phone, "00")

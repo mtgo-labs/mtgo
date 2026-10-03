@@ -56,6 +56,7 @@ type Manager struct {
 	idToUsername  map[int64]string
 	usernameOrder []string
 	phoneToID     map[string]int64
+	idToPhone     map[int64]string
 	phoneOrder    []string
 	coalescer     coalescer
 }
@@ -68,6 +69,7 @@ func NewManager(deps Deps) *Manager {
 		usernameToID: make(map[string]int64),
 		idToUsername: make(map[int64]string),
 		phoneToID:    make(map[string]int64),
+		idToPhone:    make(map[int64]string),
 	}
 }
 
@@ -117,5 +119,6 @@ func (m *Manager) Reset() {
 	m.idToUsername = make(map[int64]string)
 	m.usernameOrder = nil
 	m.phoneToID = make(map[string]int64)
+	m.idToPhone = make(map[int64]string)
 	m.phoneOrder = nil
 }

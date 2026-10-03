@@ -354,7 +354,15 @@ func (c *Client) ExportSessionString() (string, error)
 
 #### Peer Resolution
 
-Peer resolution converts a user, chat, or channel identifier into a `tg.InputPeerClass` that can be used in API calls. The client maintains an in-memory peer cache that is populated automatically from incoming updates and explicit resolution calls.
+Peer resolution converts a user, chat, or channel identifier into a `tg.InputPeerClass` that can be used in API calls. Resolution is owned by the `telegram/peers.Manager` (exposed via `Client.Peers()`): every entry point runs the same cascade — in-memory cache (IDs, usernames, phone numbers), persistent store, then RPC fallbacks (username/phone resolve, bot hash completion, dialog preload) — and entities observed in updates, dialogs, and resolve responses are ingested automatically. Transient RPC failures (flood, network, auth) are never masked as `ErrPeerNotFound`; only genuine not-found server errors satisfy it. Cached access hashes rejected by the server (`PEER_ID_INVALID`) are invalidated and the call replayed once before failing with `peers.ErrInvalid`.
+
+```go
+// Typed resolution errors
+peers.ErrNotFound   // aliased by telegram.ErrPeerNotFound
+peers.ErrInvalid    // stale hash, unresolvable after invalidate+replay
+peers.NotUserError  // resolved peer is not a user
+peers.NotChannelError
+```
 
 ##### PeerResolver Interface
 
@@ -1968,12 +1976,17 @@ type ChatRef struct { /* unexported */ }
 type UserRef struct { /* unexported */ }
 
 func ChatID(id int64) ChatRef
-func ChatUsername(username string) ChatRef
+func Username(username string) ChatRef
+func ChatPhone(phone string) ChatRef
 func ChatPeer(peer tg.InputPeerClass) ChatRef
+func ChatRefFrom(peer string) ChatRef // usernames, phones, numeric IDs, t.me/+hash, t.me/c/<id>, tg:// links
 func UserID(id int64) UserRef
 func UserUsername(username string) UserRef
+func UserPhone(phone string) UserRef
 func UserInput(user tg.InputUserClass) UserRef
 ```
+
+Both `ChatRef` and `UserRef` values can be passed to `Client.ResolvePeer`.
 
 ### Resolver Helpers
 
@@ -1981,6 +1994,7 @@ func UserInput(user tg.InputUserClass) UserRef
 type PeerResolver interface {
     ResolvePeerCache(id int64) (tg.InputPeerClass, error)
     ResolveUsername(ctx context.Context, username string) (tg.InputPeerClass, error)
+    ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error)
 }
 
 func PeerToInputPeer(peer tg.PeerClass, users []tg.UserClass, chats []tg.ChatClass) (tg.InputPeerClass, error)

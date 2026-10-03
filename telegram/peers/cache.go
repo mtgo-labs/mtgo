@@ -27,20 +27,14 @@ func (m *Manager) Cached(id int64) (tg.InputPeerClass, error) {
 				if err != nil || p == nil {
 					continue
 				}
-				var peer tg.InputPeerClass
-				switch p.Type {
-				case storage.PeerTypeUser:
-					peer = &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}
-				case storage.PeerTypeChat:
-					peer = &tg.InputPeerChat{ChatID: p.ID}
-				case storage.PeerTypeChannel:
-					channelID := p.ID
-					if raw, ok := peerid.UnmarkChannel(channelID); ok {
-						channelID = raw
+				peer, convErr := peerFromStorageEntry(p)
+				if convErr != nil {
+					return nil, convErr
+				}
+				if ch, ok := peer.(*tg.InputPeerChannel); ok {
+					if raw, ok2 := peerid.UnmarkChannel(ch.ChannelID); ok2 {
+						ch.ChannelID = raw
 					}
-					peer = &tg.InputPeerChannel{ChannelID: channelID, AccessHash: p.AccessHash}
-				default:
-					return nil, ErrNotFound
 				}
 				m.Cache(lookupID, peer)
 				if p.Username != "" {
@@ -139,8 +133,9 @@ func (m *Manager) deleteUsernameLocked(username string) {
 }
 
 // CachePhone records a normalized phone→ID mapping for cache-only lookups.
+// A reverse index is maintained so invalidation by ID stays O(1).
 func (m *Manager) CachePhone(phone string, id int64) {
-	phone = normalizePhone(phone)
+	phone = NormalizePhone(phone)
 	if phone == "" {
 		return
 	}
@@ -149,7 +144,13 @@ func (m *Manager) CachePhone(phone string, id int64) {
 	if _, exists := m.phoneToID[phone]; !exists {
 		m.phoneOrder = append(m.phoneOrder, phone)
 	}
+	// Drop any phone previously bound to this ID so the reverse index never
+	// goes stale.
+	if prev, ok := m.idToPhone[id]; ok && prev != phone {
+		delete(m.phoneToID, prev)
+	}
 	m.phoneToID[phone] = id
+	m.idToPhone[id] = phone
 	limit := m.cacheSize()
 	if limit <= 0 || len(m.phoneToID) <= limit {
 		return
@@ -201,18 +202,13 @@ func (m *Manager) evictOldestLocked() {
 	for len(m.byID) > limit && len(m.idOrder) > 0 {
 		oldest := m.idOrder[0]
 		delete(m.byID, oldest)
-		if cachedUsername, ok := m.reverseUsernameLocked(oldest); ok {
+		if cachedUsername, ok := m.idToUsername[oldest]; ok {
 			m.deleteUsernameLocked(cachedUsername)
 		}
 		copy(m.idOrder, m.idOrder[1:])
 		m.idOrder[len(m.idOrder)-1] = 0
 		m.idOrder = m.idOrder[:len(m.idOrder)-1]
 	}
-}
-
-func (m *Manager) reverseUsernameLocked(peerID int64) (string, bool) {
-	username, ok := m.idToUsername[peerID]
-	return username, ok
 }
 
 // preserveAccessHash copies a non-zero access hash from the existing cached

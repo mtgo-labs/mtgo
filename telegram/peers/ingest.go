@@ -69,13 +69,7 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 			})
 		}
 	}
-	if m.savePeers() && len(entries) > 0 {
-		if ps := m.store(); ps != nil {
-			for _, entry := range entries {
-				_ = ps.SavePeer(entry)
-			}
-		}
-	}
+	m.persist(entries)
 }
 
 // IngestUsers is Ingest for a users-only batch.
@@ -138,13 +132,7 @@ func (m *Manager) ingestResolved(result *tg.ContactsResolvedPeer) {
 			}
 		}
 	}
-	if m.savePeers() && len(entries) > 0 {
-		if ps := m.store(); ps != nil {
-			for _, entry := range entries {
-				_ = ps.SavePeer(entry)
-			}
-		}
-	}
+	m.persist(entries)
 }
 
 // LoadFromStore promotes every persisted peer into the in-memory cache.
@@ -163,20 +151,40 @@ func (m *Manager) LoadFromStore() {
 		return
 	}
 	for _, p := range peers {
-		var peer tg.InputPeerClass
-		switch p.Type {
-		case storage.PeerTypeUser:
-			peer = &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}
-		case storage.PeerTypeChat:
-			peer = &tg.InputPeerChat{ChatID: p.ID}
-		case storage.PeerTypeChannel:
-			peer = &tg.InputPeerChannel{ChannelID: p.ID, AccessHash: p.AccessHash}
-		default:
+		peer, err := peerFromStorageEntry(p)
+		if err != nil {
 			continue
 		}
 		m.Cache(p.ID, peer)
 		if p.Username != "" {
 			m.CacheUsername(p.Username, p.ID)
 		}
+	}
+}
+
+// persist writes storage entries when persistence is enabled. Failures are
+// deliberately ignored: the cache is the source of truth for this session.
+func (m *Manager) persist(entries []*storage.Peer) {
+	if !m.savePeers() || len(entries) == 0 {
+		return
+	}
+	if ps := m.store(); ps != nil {
+		for _, entry := range entries {
+			_ = ps.SavePeer(entry)
+		}
+	}
+}
+
+// peerFromStorageEntry rebuilds an input peer from a persisted record.
+func peerFromStorageEntry(p *storage.Peer) (tg.InputPeerClass, error) {
+	switch p.Type {
+	case storage.PeerTypeUser:
+		return &tg.InputPeerUser{UserID: p.ID, AccessHash: p.AccessHash}, nil
+	case storage.PeerTypeChat:
+		return &tg.InputPeerChat{ChatID: p.ID}, nil
+	case storage.PeerTypeChannel:
+		return &tg.InputPeerChannel{ChannelID: p.ID, AccessHash: p.AccessHash}, nil
+	default:
+		return nil, ErrNotFound
 	}
 }

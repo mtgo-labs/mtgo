@@ -63,10 +63,6 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
-	var (
-		peer tg.InputPeerClass
-		err  error
-	)
 	switch p := peerID.(type) {
 	case tg.InputPeerClass:
 		return c.peersManager().InputPeer(ctx, peers.Ref{Peer: p})
@@ -75,25 +71,36 @@ func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass
 	case int:
 		return c.peersManager().InputPeer(ctx, peers.Ref{ID: int64(p)})
 	case string:
-		peer, err = ChatRefFrom(p).resolve(ctx, c)
+		return c.resolveChatRefFull(ctx, ChatRefFrom(p))
 	case ChatRef:
-		peer, err = p.resolve(ctx, c)
+		return c.resolveChatRefFull(ctx, p)
 	case UserRef:
-		user, uerr := p.resolve(ctx, c)
-		if uerr != nil {
-			return nil, uerr
+		user, err := c.peersManager().InputUser(ctx, peers.Ref{
+			ID:       p.id,
+			Username: p.username,
+			Phone:    p.phone,
+		})
+		if err != nil {
+			return nil, err
 		}
-		peer, err = inputUserToPeer(user)
+		return inputUserToPeer(user)
 	default:
 		return nil, fmt.Errorf("%w: unsupported peer type %T", ErrPeerNotFound, peerID)
 	}
-	if err != nil {
-		return nil, err
+}
+
+// resolveChatRefFull routes a ChatRef through the manager cascade so that
+// numeric ChatRefs enjoy the same RPC fallbacks as bare numeric IDs.
+func (c *Client) resolveChatRefFull(ctx context.Context, r ChatRef) (tg.InputPeerClass, error) {
+	if r.inviteHash != "" {
+		return nil, fmt.Errorf("could not resolve chat: invite link hash cannot be resolved directly, use JoinChat: %w", ErrPeerNotFound)
 	}
-	if c.IsBot() {
-		return c.peersManager().EnsureUsable(ctx, peer)
-	}
-	return peer, nil
+	return c.peersManager().InputPeer(ctx, peers.Ref{
+		ID:       r.id,
+		Username: r.username,
+		Phone:    r.phone,
+		Peer:     r.peer,
+	})
 }
 
 // ResolveUsername resolves a Telegram username (with or without the leading "@")

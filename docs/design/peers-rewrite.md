@@ -20,6 +20,18 @@ Constraint: **no breaking changes to the existing public API** (additive only)
   response middleware — deferred as invasive; revisit if cold-cache misses persist.
 - Hot-path benchmarks (`telegram/peers/bench_test.go`): Cache 24 ns/op, Cached hit
   4 ns/op, marked-channel lookup 4 ns/op, CacheUsername 25 ns/op — all 0 allocs.
+- `Context.User(id)`/`Context.Chat(id)` replace the planned `Context.Peer(id)`:
+  Go has no union return, so two typed accessors beat one `any`-returning method.
+- §2.3's ErrInvalid became an RPC-level signal (stale-hash middleware, replay
+  still rejected) rather than a resolution-path error: resolution paths classify
+  such peers as not-found; ErrInvalid surfaces from direct RPC calls that
+  referenced an unaddressable cached peer.
+- NotFoundError{Ref, Cause} is emitted at the primary classification sites
+  (username/phone RPC misses); secondary wraps keep the simple %w form — both
+  satisfy errors.Is(err, ErrNotFound) and keep the cause chain.
+- P1 moved the unexported `resolvePeer`-family test seams with the helpers
+  (helpers_test.go adapted); the phase gate "tests unmodified" holds for all
+  exported-API tests.
 
 ## 1. Problem
 

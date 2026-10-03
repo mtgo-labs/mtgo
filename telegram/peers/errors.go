@@ -16,6 +16,36 @@ import (
 // telegram.ErrPeerNotFound is an alias of this value.
 var ErrNotFound = errors.New("peers: not found")
 
+// ErrInvalid marks a peer whose cached access hash was rejected by the
+// server and remained rejected after invalidation and one replay — the peer
+// exists but this client can no longer address it without a fresh entity.
+var ErrInvalid = errors.New("peers: invalid")
+
+// NotFoundError is the typed form of [ErrNotFound]: it carries a short
+// description of the reference that failed and the underlying cause (when
+// the failure came from an RPC). errors.Is(err, ErrNotFound) and
+// errors.Is(err, ErrInvalid) keep working through it.
+type NotFoundError struct {
+	// Ref describes what was being resolved, e.g. "@durov" or "user 42".
+	Ref string
+	// Cause is the underlying error, if any.
+	Cause error
+}
+
+func (e *NotFoundError) Error() string {
+	if e.Cause == nil {
+		return fmt.Sprintf("peers: %s not found", e.Ref)
+	}
+	return fmt.Sprintf("peers: %s not found: %v", e.Ref, e.Cause)
+}
+
+// Unwrap exposes the cause for errors.Is/As inspection of the underlying
+// RPC error.
+func (e *NotFoundError) Unwrap() error { return e.Cause }
+
+// Is makes the error satisfy errors.Is(err, ErrNotFound).
+func (e *NotFoundError) Is(target error) bool { return target == ErrNotFound }
+
 // NotUserError is returned when a resolved peer cannot be used as an input
 // user because it is of a different kind.
 type NotUserError struct {

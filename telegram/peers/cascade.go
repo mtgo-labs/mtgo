@@ -136,7 +136,7 @@ type boxedResult struct {
 	err error
 }
 
-func (r *coalescer) Do(key string, fn func() (any, error)) (any, error) {
+func (r *coalescer) Do(ctx context.Context, key string, fn func() (any, error)) (any, error) {
 	r.mu.Lock()
 	if r.inFlight == nil {
 		r.inFlight = make(map[string][]chan boxedResult)
@@ -145,8 +145,13 @@ func (r *coalescer) Do(key string, fn func() (any, error)) (any, error) {
 		ch := make(chan boxedResult, 1)
 		r.inFlight[key] = append(waiters, ch)
 		r.mu.Unlock()
-		res := <-ch
-		return res.val, res.err
+		var res boxedResult
+		select {
+		case res = <-ch:
+			return res.val, res.err
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
 	}
 	r.inFlight[key] = nil
 	r.mu.Unlock()
@@ -173,10 +178,10 @@ func (r *coalescer) Do(key string, fn func() (any, error)) (any, error) {
 }
 
 // coalesce runs fn under the manager's coalescer, deduplicating concurrent
-// calls with the same key.
-func coalesce[T any](m *Manager, key string, fn func() (T, error)) (T, error) {
+// calls with the same key. Waiters honor ctx cancellation.
+func coalesce[T any](m *Manager, ctx context.Context, key string, fn func() (T, error)) (T, error) {
 	var zero T
-	val, err := m.coalescer.Do(key, func() (any, error) {
+	val, err := m.coalescer.Do(ctx, key, func() (any, error) {
 		v, err := fn()
 		if err != nil {
 			return nil, err

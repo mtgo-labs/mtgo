@@ -2,6 +2,7 @@ package peers
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -46,11 +47,32 @@ func (s staleHashInvoker) RPCInvoke(ctx context.Context, input tg.TLObject, deco
 	for _, id := range ids {
 		s.mgr.Invalidate(id)
 	}
-	return s.next.RPCInvoke(ctx, input, decode)
+	retried, rerr := s.next.RPCInvoke(ctx, input, decode)
+	if tgerr.Is(rerr, errPeerIDInvalid, errChannelInvalid) {
+		// Still rejected after a fresh resolution attempt: this client can no
+		// longer address the peer.
+		return retried, fmt.Errorf("%w: peer %v rejected after re-resolution: %w", ErrInvalid, ids, rerr)
+	}
+	return retried, rerr
 }
 
 func (s staleHashInvoker) RPCInvokeRaw(ctx context.Context, input tg.TLObject) ([]byte, error) {
-	return s.next.RPCInvokeRaw(ctx, input)
+	res, err := s.next.RPCInvokeRaw(ctx, input)
+	if err == nil || !tgerr.Is(err, errPeerIDInvalid, errChannelInvalid) {
+		return res, err
+	}
+	ids := requestPeerIDs(input)
+	if len(ids) == 0 {
+		return res, err
+	}
+	for _, id := range ids {
+		s.mgr.Invalidate(id)
+	}
+	retried, rerr := s.next.RPCInvokeRaw(ctx, input)
+	if tgerr.Is(rerr, errPeerIDInvalid, errChannelInvalid) {
+		return retried, fmt.Errorf("%w: peer %v rejected after re-resolution: %w", ErrInvalid, ids, rerr)
+	}
+	return retried, rerr
 }
 
 // requestPeerIDs extracts every peer ID referenced by an RPC request by
@@ -147,10 +169,9 @@ func (m *Manager) Invalidate(id int64) {
 			delete(m.usernameToID, username)
 			delete(m.idToUsername, key)
 		}
-		for phone, pid := range m.phoneToID {
-			if pid == key {
-				delete(m.phoneToID, phone)
-			}
+		if phone, ok := m.idToPhone[key]; ok {
+			delete(m.phoneToID, phone)
+			delete(m.idToPhone, key)
 		}
 		delete(m.byID, key)
 	}
