@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/internal/session"
 	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/mtproxy"
@@ -297,8 +298,12 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	client.initSecretChats()
 	client.reconnectMgr = newReconnectManager(client, client.backoffConfig())
 
-	// Peer resolution: stale access hashes self-heal via invalidate+replay.
-	client.invokerMiddlewares = append(client.invokerMiddlewares, client.peersManager().InvalidateOnStaleHash())
+	// Peer resolution: stale access hashes self-heal via invalidate+replay,
+	// and entities from every RPC response feed the cache.
+	client.invokerMiddlewares = append(client.invokerMiddlewares,
+		client.peersManager().InvalidateOnStaleHash(),
+		client.peersManager().IngestResponses(),
+	)
 
 	// Production hardening: enable RSA key rotation watchdog when configured.
 	if c.RSAKeyRotationInterval > 0 {
@@ -3219,6 +3224,7 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 
 	parsedUsers, parsedChats, rawUpdates := c.flattenUpdates(updates)
 	c.peersManager().Ingest(parsedUsers, parsedChats)
+	c.recordMessageAnchors(updates, parsedUsers)
 	userMap := buildUserMap(parsedUsers)
 	chatMap := buildChatMap(parsedChats)
 	pm := types.NewPeerMapFromClasses(parsedUsers, parsedChats)
@@ -3269,6 +3275,77 @@ func (c *Client) HandleUpdates(updates tg.UpdatesClass) {
 		}
 		upd.reset()
 		updatePool.Put(upd)
+	}
+}
+
+// recordMessageAnchors stores message-anchored references for users seen in
+// updates without a usable access hash, so later numeric resolution can
+// address them via inputPeerUserFromMessage instead of failing.
+func (c *Client) recordMessageAnchors(updates tg.UpdatesClass, users []tg.UserClass) {
+	hashed := make(map[int64]struct{}, len(users))
+	present := make(map[int64]struct{}, len(users))
+	for _, u := range users {
+		user, ok := u.(*tg.User)
+		if !ok {
+			continue
+		}
+		present[user.ID] = struct{}{}
+		if user.AccessHash != 0 && !user.Min {
+			hashed[user.ID] = struct{}{}
+		}
+	}
+	type ref struct {
+		from, chat int64
+		msg        int32
+	}
+	var refs []ref
+	add := func(mc tg.MessageClass) {
+		msg, ok := mc.(*tg.Message)
+		if !ok {
+			return
+		}
+		from, okFrom := peerid.RawFromPeer(msg.FromID)
+		chat, okChat := peerid.RawFromPeer(msg.PeerID)
+		if okFrom && okChat && from > 0 && chat != 0 {
+			refs = append(refs, ref{from: from, chat: chat, msg: msg.ID})
+		}
+	}
+	addFromUpdates := func(list []tg.UpdateClass) {
+		for _, u := range list {
+			switch v := u.(type) {
+			case *tg.UpdateNewMessage:
+				add(v.Message)
+			case *tg.UpdateNewChannelMessage:
+				add(v.Message)
+			case *tg.UpdateEditMessage:
+				add(v.Message)
+			case *tg.UpdateEditChannelMessage:
+				add(v.Message)
+			}
+		}
+	}
+	switch v := updates.(type) {
+	case *tg.Updates:
+		addFromUpdates(v.Updates)
+	case *tg.UpdatesCombined:
+		addFromUpdates(v.Updates)
+	case *tg.UpdateShortMessage:
+		refs = append(refs, ref{from: v.UserID, chat: v.UserID, msg: v.ID})
+	case *tg.UpdateShortChatMessage:
+		refs = append(refs, ref{from: v.FromID, chat: v.ChatID, msg: v.ID})
+	}
+	if len(refs) == 0 {
+		return
+	}
+	mgr := c.peersManager()
+	for _, r := range refs {
+		if _, seen := present[r.from]; !seen {
+			continue
+		}
+		if _, ok := hashed[r.from]; ok {
+			continue // full hash known; no anchor needed
+		}
+		mgr.CacheAnchor(r.from, r.chat, r.msg)
 	}
 }
 

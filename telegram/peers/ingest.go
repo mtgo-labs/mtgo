@@ -16,9 +16,13 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 	var entries []*storage.Peer
 	for _, u := range users {
 		user, ok := u.(*tg.User)
-		if !ok || user.AccessHash == 0 {
+		if !ok {
 			continue
 		}
+		// Min (or hashless) users are still ingested: the cache's
+		// preserve-hash guard keeps any known full hash, the username/phone
+		// indexes stay fresh across renames, and storage merges only into
+		// empty fields. cachedForUse rejects zero-hash entries for RPC use.
 		hash := user.AccessHash
 		if user.Min {
 			hash = 0

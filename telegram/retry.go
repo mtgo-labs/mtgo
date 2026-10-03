@@ -56,11 +56,14 @@ func (f *floodRegistry) waitIfFlooded(ctx context.Context, method uint32) error 
 		if d < 0 {
 			d = 0
 		}
-		if err := sleepContext(ctx, d); err != nil {
+		if err := sleepCtx(ctx, d); err != nil {
 			return err
 		}
 	}
 }
+
+// sleepCtx is the policy sleeper; tests may substitute an instant recorder.
+var sleepCtx = sleepContext
 
 // sleepContext sleeps for d, stopping early and returning ctx.Err() when the
 // context is cancelled. Uses a stoppable timer so long gates do not pin
@@ -114,7 +117,7 @@ func invokeWithFloodPolicy(ctx context.Context, threshold time.Duration, method 
 		if registry != nil {
 			registry.record(method, time.Now().Add(wait))
 		}
-		if err := sleepContext(ctx, wait); err != nil {
+		if err := sleepCtx(ctx, wait); err != nil {
 			return err
 		}
 		if registry != nil {

@@ -80,12 +80,21 @@ func TestCacheUsernameEviction(t *testing.T) {
 	}
 }
 
-func TestIngestSkipsZeroHashUsers(t *testing.T) {
+func TestIngestZeroHashUserCachedButUnusable(t *testing.T) {
 	m := newTestManager(0, false, nil)
 	m.IngestUsers([]tg.UserClass{&tg.User{ID: 10, AccessHash: 0}})
 
-	if _, err := m.Cached(10); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("zero-hash user cached: err = %v, want ErrNotFound", err)
+	// The entry exists (indexes stay fresh)...
+	peer, err := m.Cached(10)
+	if err != nil {
+		t.Fatalf("Cached(10): %v", err)
+	}
+	if p, ok := peer.(*tg.InputPeerUser); !ok || p.AccessHash != 0 {
+		t.Fatalf("cached zero-hash user = %v", peer)
+	}
+	// ...but is rejected for RPC use by the cascade.
+	if _, err := m.cachedForUse(10); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("cachedForUse(10) err = %v, want ErrNotFound", err)
 	}
 }
 

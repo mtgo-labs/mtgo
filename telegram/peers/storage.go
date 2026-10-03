@@ -97,3 +97,21 @@ func StoreFrom(s storage.Storage) Store {
 	}
 	return nil
 }
+
+// PhoneStore is an optional extension Store backends may implement to make
+// persisted phone numbers queryable; when absent, phone lookups rely on the
+// in-memory index only.
+type PhoneStore interface {
+	GetPeerByPhone(phone string) (*storage.Peer, error)
+}
+
+// phoneStoreFrom returns the store's phone-query extension, or nil.
+func phoneStoreFrom(s Store) PhoneStore {
+	if s == nil {
+		return nil
+	}
+	if ps, ok := s.(PhoneStore); ok {
+		return ps
+	}
+	return nil
+}

@@ -352,6 +352,22 @@ func (m *MemoryStorage) GetPeerByUsername(username string) (*storage.Peer, error
 	return &p, nil
 }
 
+// GetPeerByPhone returns the persisted peer with the given phone number
+// (normalized: digits only), implementing the optional peers phone-store
+// extension.
+func (m *MemoryStorage) GetPeerByPhone(phone string) (*storage.Peer, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	needle := strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(phone), "+"), "00")
+	for _, peer := range m.peers {
+		if peer.PhoneNumber == needle {
+			cp := peer
+			return &cp, nil
+		}
+	}
+	return nil, nil
+}
+
 func (m *MemoryStorage) LoadPeers() ([]*storage.Peer, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

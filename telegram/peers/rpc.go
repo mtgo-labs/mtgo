@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mtgo-labs/mtgo/internal/storage"
+
 	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -104,6 +106,14 @@ func (m *Manager) InputPeerByPhone(ctx context.Context, phone string) (tg.InputP
 	m.debugf("ResolvePhone")
 	if p, ok := m.cachedByPhone(phone); ok {
 		return p, nil
+	}
+	if ps := phoneStoreFrom(m.store()); ps != nil {
+		if entry, err := ps.GetPeerByPhone(phone); err == nil && entry != nil && entry.Type == storage.PeerTypeUser {
+			peer := &tg.InputPeerUser{UserID: entry.ID, AccessHash: entry.AccessHash}
+			m.Cache(entry.ID, peer)
+			m.CachePhone(phone, entry.ID)
+			return peer, nil
+		}
 	}
 	return coalesce(m, ctx, "phone:"+phone, func() (tg.InputPeerClass, error) {
 		result, err := m.invoker().ContactsResolvePhone(ctx, &tg.ContactsResolvePhoneRequest{
@@ -209,10 +219,19 @@ func (m *Manager) numericForAccount(ctx context.Context, id int64) (tg.InputPeer
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve chat: %w", ErrNotFound)
 	}
-	// If dialog preload couldn't find a full hash, try username resolution
-	// as a last resort before returning a zero-hash peer.
+	// If dialog preload couldn't find a full hash, try cached-credential
+	// re-resolution (username, then phone) before returning a zero-hash
+	// peer.
 	if !hasAccessHash(peer) {
 		if resolved, err := m.peerByUsername(ctx, id); err == nil {
+			return resolved, nil
+		}
+		if phone := m.LookupPhone(id); phone != "" {
+			if resolved, err := m.InputPeerByPhone(ctx, phone); err == nil {
+				return resolved, nil
+			}
+		}
+		if resolved, ok := m.anchorInputPeer(id); ok {
 			return resolved, nil
 		}
 	}

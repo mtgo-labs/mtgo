@@ -66,6 +66,7 @@ type Manager struct {
 	usernameSeen  map[string]time.Time
 	phoneSeen     map[string]time.Time
 	coalescer     coalescer
+	anchors       anchorsField
 }
 
 // NewManager creates a Manager from the given dependencies.

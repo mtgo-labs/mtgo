@@ -177,6 +177,13 @@ func (m *Manager) LookupUsername(peerID int64) string {
 	return m.idToUsername[peerID]
 }
 
+// LookupPhone returns the cached phone number for a peer ID, or "".
+func (m *Manager) LookupPhone(peerID int64) string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.idToPhone[peerID]
+}
+
 func (m *Manager) cachedByUsername(username string) (tg.InputPeerClass, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
