@@ -24,6 +24,9 @@ func (v *SmsjobsIsEligibleToJoinRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsIsEligibleToJoinRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsIsEligibleToJoinRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsIsEligibleToJoinTypeID)
 	return nil
 }
@@ -64,6 +67,9 @@ func (v *SmsjobsJoinRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsJoinRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsJoinRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsJoinTypeID)
 	return nil
 }
@@ -102,6 +108,9 @@ func (v *SmsjobsLeaveRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsLeaveRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsLeaveRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsLeaveTypeID)
 	return nil
 }
@@ -149,6 +158,9 @@ func (v *SmsjobsUpdateSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsUpdateSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsUpdateSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsUpdateSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -189,6 +201,9 @@ func (v *SmsjobsGetStatusRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsGetStatusRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsGetStatusRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsGetStatusTypeID)
 	return nil
 }
@@ -230,6 +245,9 @@ func (v *SmsjobsGetSmsJobRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsGetSmsJobRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsGetSmsJobRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsGetSmsJobTypeID)
 	WriteString(b, v.JobID)
 	return nil
@@ -281,6 +299,9 @@ func (v *SmsjobsFinishJobRequest) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsFinishJobRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsFinishJobRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsFinishJobTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))

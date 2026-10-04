@@ -76,13 +76,20 @@ func (v *EphemeralSendMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralSendMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralSendMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralSendMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(8) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.ReceiverID)
+	if _err := EncodeTLObject(b, v.ReceiverID); _err != nil {
+		return fmt.Errorf("encode field receiver_id: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.QueryID)
 	}
@@ -91,21 +98,31 @@ func (v *EphemeralSendMessageRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	WriteLong(b, v.RandomID)
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	return nil
 }
@@ -157,13 +174,20 @@ func (v *EphemeralDeleteMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralDeleteMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralDeleteMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralDeleteMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.ReceiverID)
+	if _err := EncodeTLObject(b, v.ReceiverID); _err != nil {
+		return fmt.Errorf("encode field receiver_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -206,8 +230,13 @@ func (v *EphemeralReportMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralReportMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralReportMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralReportMessageTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	WriteBytes(b, v.Option)
 	WriteString(b, v.Message)
@@ -261,10 +290,15 @@ func (v *EphemeralGetCallbackAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralGetCallbackAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralGetCallbackAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralGetCallbackAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(1) {
 		WriteBytes(b, v.Data)
@@ -347,32 +381,47 @@ func (v *EphemeralEditMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralEditMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralEditMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralEditMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(7) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.ReceiverID)
+	if _err := EncodeTLObject(b, v.ReceiverID); _err != nil {
+		return fmt.Errorf("encode field receiver_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
 		WriteString(b, v.Message)
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -415,8 +464,13 @@ func (v *EphemeralDeleteWelcomeMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralDeleteWelcomeMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralDeleteWelcomeMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralDeleteWelcomeMessageTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -456,8 +510,13 @@ func (v *EphemeralDeleteAllWelcomeMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralDeleteAllWelcomeMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralDeleteAllWelcomeMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralDeleteAllWelcomeMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -497,8 +556,13 @@ func (v *EphemeralGetWelcomeMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes EphemeralGetWelcomeMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralGetWelcomeMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralGetWelcomeMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.Hash)
 	return nil
 }

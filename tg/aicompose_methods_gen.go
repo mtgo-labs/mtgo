@@ -36,6 +36,9 @@ func (v *AicomposeCreateToneRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeCreateToneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeCreateToneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeCreateToneTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -103,10 +106,15 @@ func (v *AicomposeUpdateToneRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeUpdateToneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeUpdateToneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeUpdateToneTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Tone)
+	if _err := EncodeTLObject(b, v.Tone); _err != nil {
+		return fmt.Errorf("encode field tone: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteBool(b, v.DisplayAuthor)
 	}
@@ -178,8 +186,13 @@ func (v *AicomposeSaveToneRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeSaveToneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeSaveToneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeSaveToneTypeID)
-	EncodeTLObject(b, v.Tone)
+	if _err := EncodeTLObject(b, v.Tone); _err != nil {
+		return fmt.Errorf("encode field tone: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
 	return nil
 }
@@ -219,8 +232,13 @@ func (v *AicomposeDeleteToneRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeDeleteToneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeDeleteToneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeDeleteToneTypeID)
-	EncodeTLObject(b, v.Tone)
+	if _err := EncodeTLObject(b, v.Tone); _err != nil {
+		return fmt.Errorf("encode field tone: %w", _err)
+	}
 	return nil
 }
 
@@ -259,8 +277,13 @@ func (v *AicomposeGetToneRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeGetToneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeGetToneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeGetToneTypeID)
-	EncodeTLObject(b, v.Tone)
+	if _err := EncodeTLObject(b, v.Tone); _err != nil {
+		return fmt.Errorf("encode field tone: %w", _err)
+	}
 	return nil
 }
 
@@ -301,6 +324,9 @@ func (v *AicomposeGetTonesRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeGetTonesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeGetTonesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeGetTonesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -344,8 +370,13 @@ func (v *AicomposeGetToneExampleRequest) ConstructorID() uint32 {
 
 // Encode serializes AicomposeGetToneExampleRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeGetToneExampleRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeGetToneExampleTypeID)
-	EncodeTLObject(b, v.Tone)
+	if _err := EncodeTLObject(b, v.Tone); _err != nil {
+		return fmt.Errorf("encode field tone: %w", _err)
+	}
 	WriteInt(b, uint32(v.Num))
 	return nil
 }

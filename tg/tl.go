@@ -2,6 +2,7 @@ package tg
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -15,8 +16,18 @@ type TLObject interface {
 	ConstructorID() uint32
 }
 
+// ErrNilTLObject is returned when encoding a nil TLObject, typically a
+// required object field that was never set (for example PageCaption.Credit).
+// It replaces the process-killing nil-pointer dereference that nil values
+// previously caused inside generated encoders.
+var ErrNilTLObject = errors.New("tg: cannot encode nil TLObject")
+
 // EncodeTLObject encodes obj into b using the TLObject.Encode method.
+// A nil obj yields [ErrNilTLObject] instead of a panic.
 func EncodeTLObject(b *bytes.Buffer, obj TLObject) error {
+	if obj == nil {
+		return ErrNilTLObject
+	}
 	return obj.Encode(b)
 }
 

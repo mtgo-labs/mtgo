@@ -38,6 +38,9 @@ func (v *AccountRegisterDeviceRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountRegisterDeviceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountRegisterDeviceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountRegisterDeviceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -86,6 +89,9 @@ func (v *AccountUnregisterDeviceRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUnregisterDeviceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUnregisterDeviceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUnregisterDeviceTypeID)
 	WriteInt(b, uint32(v.TokenType))
 	WriteString(b, v.Token)
@@ -129,9 +135,16 @@ func (v *AccountUpdateNotifySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateNotifySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateNotifySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateNotifySettingsTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -170,8 +183,13 @@ func (v *AccountGetNotifySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetNotifySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetNotifySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetNotifySettingsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -211,6 +229,9 @@ func (v *AccountResetNotifySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetNotifySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetNotifySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetNotifySettingsTypeID)
 	return nil
 }
@@ -266,6 +287,9 @@ func (v *AccountUpdateProfileRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateProfileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateProfileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateProfileTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -318,6 +342,9 @@ func (v *AccountUpdateStatusRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateStatusRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateStatusRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateStatusTypeID)
 	WriteBool(b, v.Offline)
 	return nil
@@ -358,6 +385,9 @@ func (v *AccountGetWallPapersRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetWallPapersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetWallPapersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetWallPapersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -402,9 +432,16 @@ func (v *AccountReportPeerRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountReportPeerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountReportPeerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountReportPeerTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Reason)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Reason); _err != nil {
+		return fmt.Errorf("encode field reason: %w", _err)
+	}
 	WriteString(b, v.Message)
 	return nil
 }
@@ -444,6 +481,9 @@ func (v *AccountCheckUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountCheckUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountCheckUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountCheckUsernameTypeID)
 	WriteString(b, v.Username)
 	return nil
@@ -484,6 +524,9 @@ func (v *AccountUpdateUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateUsernameTypeID)
 	WriteString(b, v.Username)
 	return nil
@@ -526,8 +569,13 @@ func (v *AccountGetPrivacyRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetPrivacyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetPrivacyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetPrivacyTypeID)
-	EncodeTLObject(b, v.Key)
+	if _err := EncodeTLObject(b, v.Key); _err != nil {
+		return fmt.Errorf("encode field key: %w", _err)
+	}
 	return nil
 }
 
@@ -569,12 +617,19 @@ func (v *AccountSetPrivacyRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetPrivacyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetPrivacyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetPrivacyTypeID)
-	EncodeTLObject(b, v.Key)
+	if _err := EncodeTLObject(b, v.Key); _err != nil {
+		return fmt.Errorf("encode field key: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rules)))
 	for _, _item := range v.Rules {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field rules: %w", _err)
+		}
 	}
 	return nil
 }
@@ -625,12 +680,17 @@ func (v *AccountDeleteAccountRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeleteAccountRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeleteAccountRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeleteAccountTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Reason)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Password)
+		if _err := EncodeTLObject(b, v.Password); _err != nil {
+			return fmt.Errorf("encode field password: %w", _err)
+		}
 	}
 	return nil
 }
@@ -669,6 +729,9 @@ func (v *AccountGetAccountTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAccountTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAccountTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAccountTTLTypeID)
 	return nil
 }
@@ -710,8 +773,13 @@ func (v *AccountSetAccountTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetAccountTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetAccountTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetAccountTTLTypeID)
-	EncodeTLObject(b, v.TTL)
+	if _err := EncodeTLObject(b, v.TTL); _err != nil {
+		return fmt.Errorf("encode field ttl: %w", _err)
+	}
 	return nil
 }
 
@@ -751,9 +819,14 @@ func (v *AccountSendChangePhoneCodeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSendChangePhoneCodeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSendChangePhoneCodeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSendChangePhoneCodeTypeID)
 	WriteString(b, v.PhoneNumber)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -796,6 +869,9 @@ func (v *AccountChangePhoneRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountChangePhoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountChangePhoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountChangePhoneTypeID)
 	WriteString(b, v.PhoneNumber)
 	WriteString(b, v.PhoneCodeHash)
@@ -840,6 +916,9 @@ func (v *AccountUpdateDeviceLockedRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateDeviceLockedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateDeviceLockedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateDeviceLockedTypeID)
 	WriteInt(b, uint32(v.Period))
 	return nil
@@ -879,6 +958,9 @@ func (v *AccountGetAuthorizationsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAuthorizationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAuthorizationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAuthorizationsTypeID)
 	return nil
 }
@@ -920,6 +1002,9 @@ func (v *AccountResetAuthorizationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetAuthorizationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetAuthorizationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetAuthorizationTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -959,6 +1044,9 @@ func (v *AccountGetPasswordRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetPasswordRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetPasswordRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetPasswordTypeID)
 	return nil
 }
@@ -1000,8 +1088,13 @@ func (v *AccountGetPasswordSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetPasswordSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetPasswordSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetPasswordSettingsTypeID)
-	EncodeTLObject(b, v.Password)
+	if _err := EncodeTLObject(b, v.Password); _err != nil {
+		return fmt.Errorf("encode field password: %w", _err)
+	}
 	return nil
 }
 
@@ -1043,9 +1136,16 @@ func (v *AccountUpdatePasswordSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdatePasswordSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdatePasswordSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdatePasswordSettingsTypeID)
-	EncodeTLObject(b, v.Password)
-	EncodeTLObject(b, v.NewSettings)
+	if _err := EncodeTLObject(b, v.Password); _err != nil {
+		return fmt.Errorf("encode field password: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.NewSettings); _err != nil {
+		return fmt.Errorf("encode field new_settings: %w", _err)
+	}
 	return nil
 }
 
@@ -1085,9 +1185,14 @@ func (v *AccountSendConfirmPhoneCodeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSendConfirmPhoneCodeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSendConfirmPhoneCodeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSendConfirmPhoneCodeTypeID)
 	WriteString(b, v.Hash)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -1129,6 +1234,9 @@ func (v *AccountConfirmPhoneRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountConfirmPhoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountConfirmPhoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountConfirmPhoneTypeID)
 	WriteString(b, v.PhoneCodeHash)
 	WriteString(b, v.PhoneCode)
@@ -1171,8 +1279,13 @@ func (v *AccountGetTmpPasswordRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetTmpPasswordRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetTmpPasswordRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetTmpPasswordTypeID)
-	EncodeTLObject(b, v.Password)
+	if _err := EncodeTLObject(b, v.Password); _err != nil {
+		return fmt.Errorf("encode field password: %w", _err)
+	}
 	WriteInt(b, uint32(v.Period))
 	return nil
 }
@@ -1213,6 +1326,9 @@ func (v *AccountGetWebAuthorizationsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetWebAuthorizationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetWebAuthorizationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetWebAuthorizationsTypeID)
 	return nil
 }
@@ -1254,6 +1370,9 @@ func (v *AccountResetWebAuthorizationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetWebAuthorizationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetWebAuthorizationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetWebAuthorizationTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -1293,6 +1412,9 @@ func (v *AccountResetWebAuthorizationsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetWebAuthorizationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetWebAuthorizationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetWebAuthorizationsTypeID)
 	return nil
 }
@@ -1331,6 +1453,9 @@ func (v *AccountGetAllSecureValuesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAllSecureValuesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAllSecureValuesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAllSecureValuesTypeID)
 	return nil
 }
@@ -1369,11 +1494,16 @@ func (v *AccountGetSecureValueRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetSecureValueRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetSecureValueRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetSecureValueTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Types)))
 	for _, _item := range v.Types {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field types: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1413,8 +1543,13 @@ func (v *AccountSaveSecureValueRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveSecureValueRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveSecureValueRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveSecureValueTypeID)
-	EncodeTLObject(b, v.Value)
+	if _err := EncodeTLObject(b, v.Value); _err != nil {
+		return fmt.Errorf("encode field value: %w", _err)
+	}
 	WriteLong(b, v.SecureSecretID)
 	return nil
 }
@@ -1456,11 +1591,16 @@ func (v *AccountDeleteSecureValueRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeleteSecureValueRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeleteSecureValueRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeleteSecureValueTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Types)))
 	for _, _item := range v.Types {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field types: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1502,6 +1642,9 @@ func (v *AccountGetAuthorizationFormRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAuthorizationFormRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAuthorizationFormRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAuthorizationFormTypeID)
 	WriteLong(b, v.BotID)
 	WriteString(b, v.Scope)
@@ -1550,6 +1693,9 @@ func (v *AccountAcceptAuthorizationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountAcceptAuthorizationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountAcceptAuthorizationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountAcceptAuthorizationTypeID)
 	WriteLong(b, v.BotID)
 	WriteString(b, v.Scope)
@@ -1557,9 +1703,13 @@ func (v *AccountAcceptAuthorizationRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ValueHashes)))
 	for _, _item := range v.ValueHashes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field value_hashes: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Credentials)
+	if _err := EncodeTLObject(b, v.Credentials); _err != nil {
+		return fmt.Errorf("encode field credentials: %w", _err)
+	}
 	return nil
 }
 
@@ -1599,9 +1749,14 @@ func (v *AccountSendVerifyPhoneCodeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSendVerifyPhoneCodeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSendVerifyPhoneCodeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSendVerifyPhoneCodeTypeID)
 	WriteString(b, v.PhoneNumber)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -1644,6 +1799,9 @@ func (v *AccountVerifyPhoneRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountVerifyPhoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountVerifyPhoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountVerifyPhoneTypeID)
 	WriteString(b, v.PhoneNumber)
 	WriteString(b, v.PhoneCodeHash)
@@ -1687,8 +1845,13 @@ func (v *AccountSendVerifyEmailCodeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSendVerifyEmailCodeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSendVerifyEmailCodeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSendVerifyEmailCodeTypeID)
-	EncodeTLObject(b, v.Purpose)
+	if _err := EncodeTLObject(b, v.Purpose); _err != nil {
+		return fmt.Errorf("encode field purpose: %w", _err)
+	}
 	WriteString(b, v.Email)
 	return nil
 }
@@ -1731,9 +1894,16 @@ func (v *AccountVerifyEmailRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountVerifyEmailRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountVerifyEmailRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountVerifyEmailTypeID)
-	EncodeTLObject(b, v.Purpose)
-	EncodeTLObject(b, v.Verification)
+	if _err := EncodeTLObject(b, v.Purpose); _err != nil {
+		return fmt.Errorf("encode field purpose: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Verification); _err != nil {
+		return fmt.Errorf("encode field verification: %w", _err)
+	}
 	return nil
 }
 
@@ -1806,6 +1976,9 @@ func (v *AccountInitTakeoutSessionRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountInitTakeoutSessionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountInitTakeoutSessionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountInitTakeoutSessionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1860,6 +2033,9 @@ func (v *AccountFinishTakeoutSessionRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountFinishTakeoutSessionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountFinishTakeoutSessionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountFinishTakeoutSessionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1901,6 +2077,9 @@ func (v *AccountConfirmPasswordEmailRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountConfirmPasswordEmailRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountConfirmPasswordEmailRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountConfirmPasswordEmailTypeID)
 	WriteString(b, v.Code)
 	return nil
@@ -1940,6 +2119,9 @@ func (v *AccountResendPasswordEmailRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResendPasswordEmailRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResendPasswordEmailRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResendPasswordEmailTypeID)
 	return nil
 }
@@ -1978,6 +2160,9 @@ func (v *AccountCancelPasswordEmailRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountCancelPasswordEmailRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountCancelPasswordEmailRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountCancelPasswordEmailTypeID)
 	return nil
 }
@@ -2016,6 +2201,9 @@ func (v *AccountGetContactSignUpNotificationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetContactSignUpNotificationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetContactSignUpNotificationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetContactSignUpNotificationTypeID)
 	return nil
 }
@@ -2055,6 +2243,9 @@ func (v *AccountSetContactSignUpNotificationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetContactSignUpNotificationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetContactSignUpNotificationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetContactSignUpNotificationTypeID)
 	WriteBool(b, v.Silent)
 	return nil
@@ -2111,11 +2302,16 @@ func (v *AccountGetNotifyExceptionsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetNotifyExceptionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetNotifyExceptionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetNotifyExceptionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2157,8 +2353,13 @@ func (v *AccountGetWallPaperRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetWallPaperRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetWallPaperRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetWallPaperTypeID)
-	EncodeTLObject(b, v.Wallpaper)
+	if _err := EncodeTLObject(b, v.Wallpaper); _err != nil {
+		return fmt.Errorf("encode field wallpaper: %w", _err)
+	}
 	return nil
 }
 
@@ -2210,12 +2411,19 @@ func (v *AccountUploadWallPaperRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUploadWallPaperRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUploadWallPaperRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUploadWallPaperTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	WriteString(b, v.MimeType)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -2258,10 +2466,17 @@ func (v *AccountSaveWallPaperRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveWallPaperRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveWallPaperRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveWallPaperTypeID)
-	EncodeTLObject(b, v.Wallpaper)
+	if _err := EncodeTLObject(b, v.Wallpaper); _err != nil {
+		return fmt.Errorf("encode field wallpaper: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -2301,9 +2516,16 @@ func (v *AccountInstallWallPaperRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountInstallWallPaperRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountInstallWallPaperRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountInstallWallPaperTypeID)
-	EncodeTLObject(b, v.Wallpaper)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Wallpaper); _err != nil {
+		return fmt.Errorf("encode field wallpaper: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -2341,6 +2563,9 @@ func (v *AccountResetWallPapersRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetWallPapersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetWallPapersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetWallPapersTypeID)
 	return nil
 }
@@ -2379,6 +2604,9 @@ func (v *AccountGetAutoDownloadSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAutoDownloadSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAutoDownloadSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAutoDownloadSettingsTypeID)
 	return nil
 }
@@ -2433,10 +2661,15 @@ func (v *AccountSaveAutoDownloadSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveAutoDownloadSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveAutoDownloadSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveAutoDownloadSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -2486,12 +2719,19 @@ func (v *AccountUploadThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUploadThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUploadThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUploadThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Thumb)
+		if _err := EncodeTLObject(b, v.Thumb); _err != nil {
+			return fmt.Errorf("encode field thumb: %w", _err)
+		}
 	}
 	WriteString(b, v.FileName)
 	WriteString(b, v.MimeType)
@@ -2549,19 +2789,26 @@ func (v *AccountCreateThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountCreateThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountCreateThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountCreateThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Slug)
 	WriteString(b, v.Title)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Document)
+		if _err := EncodeTLObject(b, v.Document); _err != nil {
+			return fmt.Errorf("encode field document: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Settings)))
 		for _, _item := range v.Settings {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field settings: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -2626,11 +2873,16 @@ func (v *AccountUpdateThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Format)
-	EncodeTLObject(b, v.Theme)
+	if _err := EncodeTLObject(b, v.Theme); _err != nil {
+		return fmt.Errorf("encode field theme: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Slug)
 	}
@@ -2638,13 +2890,17 @@ func (v *AccountUpdateThemeRequest) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Title)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Document)
+		if _err := EncodeTLObject(b, v.Document); _err != nil {
+			return fmt.Errorf("encode field document: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Settings)))
 		for _, _item := range v.Settings {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field settings: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -2688,8 +2944,13 @@ func (v *AccountSaveThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveThemeTypeID)
-	EncodeTLObject(b, v.Theme)
+	if _err := EncodeTLObject(b, v.Theme); _err != nil {
+		return fmt.Errorf("encode field theme: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
 	return nil
 }
@@ -2749,17 +3010,24 @@ func (v *AccountInstallThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountInstallThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountInstallThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountInstallThemeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Theme)
+		if _err := EncodeTLObject(b, v.Theme); _err != nil {
+			return fmt.Errorf("encode field theme: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteString(b, v.Format)
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.BaseTheme)
+		if _err := EncodeTLObject(b, v.BaseTheme); _err != nil {
+			return fmt.Errorf("encode field base_theme: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2800,9 +3068,14 @@ func (v *AccountGetThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetThemeTypeID)
 	WriteString(b, v.Format)
-	EncodeTLObject(b, v.Theme)
+	if _err := EncodeTLObject(b, v.Theme); _err != nil {
+		return fmt.Errorf("encode field theme: %w", _err)
+	}
 	return nil
 }
 
@@ -2844,6 +3117,9 @@ func (v *AccountGetThemesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetThemesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetThemesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetThemesTypeID)
 	WriteString(b, v.Format)
 	WriteLong(b, v.Hash)
@@ -2895,6 +3171,9 @@ func (v *AccountSetContentSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetContentSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetContentSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetContentSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2935,6 +3214,9 @@ func (v *AccountGetContentSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetContentSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetContentSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetContentSettingsTypeID)
 	return nil
 }
@@ -2976,11 +3258,16 @@ func (v *AccountGetMultiWallPapersRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetMultiWallPapersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetMultiWallPapersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetMultiWallPapersTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Wallpapers)))
 	for _, _item := range v.Wallpapers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field wallpapers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3018,6 +3305,9 @@ func (v *AccountGetGlobalPrivacySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetGlobalPrivacySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetGlobalPrivacySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetGlobalPrivacySettingsTypeID)
 	return nil
 }
@@ -3059,8 +3349,13 @@ func (v *AccountSetGlobalPrivacySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetGlobalPrivacySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetGlobalPrivacySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetGlobalPrivacySettingsTypeID)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -3104,10 +3399,19 @@ func (v *AccountReportProfilePhotoRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountReportProfilePhotoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountReportProfilePhotoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountReportProfilePhotoTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.PhotoID)
-	EncodeTLObject(b, v.Reason)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.PhotoID); _err != nil {
+		return fmt.Errorf("encode field photo_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Reason); _err != nil {
+		return fmt.Errorf("encode field reason: %w", _err)
+	}
 	WriteString(b, v.Message)
 	return nil
 }
@@ -3146,6 +3450,9 @@ func (v *AccountResetPasswordRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResetPasswordRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResetPasswordRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResetPasswordTypeID)
 	return nil
 }
@@ -3186,6 +3493,9 @@ func (v *AccountDeclinePasswordResetRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeclinePasswordResetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeclinePasswordResetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeclinePasswordResetTypeID)
 	return nil
 }
@@ -3225,6 +3535,9 @@ func (v *AccountGetChatThemesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetChatThemesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetChatThemesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetChatThemesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3267,6 +3580,9 @@ func (v *AccountSetAuthorizationTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetAuthorizationTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetAuthorizationTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetAuthorizationTTLTypeID)
 	WriteInt(b, uint32(v.AuthorizationTTLDays))
 	return nil
@@ -3324,6 +3640,9 @@ func (v *AccountChangeAuthorizationSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountChangeAuthorizationSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountChangeAuthorizationSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountChangeAuthorizationSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3408,6 +3727,9 @@ func (v *AccountGetSavedRingtonesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetSavedRingtonesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetSavedRingtonesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetSavedRingtonesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3451,8 +3773,13 @@ func (v *AccountSaveRingtoneRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveRingtoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveRingtoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveRingtoneTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
 	return nil
 }
@@ -3496,8 +3823,13 @@ func (v *AccountUploadRingtoneRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUploadRingtoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUploadRingtoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUploadRingtoneTypeID)
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	WriteString(b, v.FileName)
 	WriteString(b, v.MimeType)
 	return nil
@@ -3540,8 +3872,13 @@ func (v *AccountUpdateEmojiStatusRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateEmojiStatusRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateEmojiStatusRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateEmojiStatusTypeID)
-	EncodeTLObject(b, v.EmojiStatus)
+	if _err := EncodeTLObject(b, v.EmojiStatus); _err != nil {
+		return fmt.Errorf("encode field emoji_status: %w", _err)
+	}
 	return nil
 }
 
@@ -3580,6 +3917,9 @@ func (v *AccountGetDefaultEmojiStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetDefaultEmojiStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetDefaultEmojiStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetDefaultEmojiStatusesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3622,6 +3962,9 @@ func (v *AccountGetRecentEmojiStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetRecentEmojiStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetRecentEmojiStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetRecentEmojiStatusesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3663,6 +4006,9 @@ func (v *AccountClearRecentEmojiStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountClearRecentEmojiStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountClearRecentEmojiStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountClearRecentEmojiStatusesTypeID)
 	return nil
 }
@@ -3702,6 +4048,9 @@ func (v *AccountReorderUsernamesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountReorderUsernamesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountReorderUsernamesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountReorderUsernamesTypeID)
 	WriteVectorString(b, v.Order)
 	return nil
@@ -3743,6 +4092,9 @@ func (v *AccountToggleUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountToggleUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountToggleUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountToggleUsernameTypeID)
 	WriteString(b, v.Username)
 	WriteBool(b, v.Active)
@@ -3784,6 +4136,9 @@ func (v *AccountGetDefaultProfilePhotoEmojisRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetDefaultProfilePhotoEmojisRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetDefaultProfilePhotoEmojisRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetDefaultProfilePhotoEmojisTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3826,6 +4181,9 @@ func (v *AccountGetDefaultGroupPhotoEmojisRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetDefaultGroupPhotoEmojisRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetDefaultGroupPhotoEmojisRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetDefaultGroupPhotoEmojisTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3867,6 +4225,9 @@ func (v *AccountGetAutoSaveSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetAutoSaveSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetAutoSaveSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetAutoSaveSettingsTypeID)
 	return nil
 }
@@ -3929,13 +4290,20 @@ func (v *AccountSaveAutoSaveSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveAutoSaveSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveAutoSaveSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveAutoSaveSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -3973,6 +4341,9 @@ func (v *AccountDeleteAutoSaveExceptionsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeleteAutoSaveExceptionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeleteAutoSaveExceptionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeleteAutoSaveExceptionsTypeID)
 	return nil
 }
@@ -4012,6 +4383,9 @@ func (v *AccountInvalidateSignInCodesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountInvalidateSignInCodesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountInvalidateSignInCodesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountInvalidateSignInCodesTypeID)
 	WriteVectorString(b, v.Codes)
 	return nil
@@ -4064,11 +4438,16 @@ func (v *AccountUpdateColorRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateColorRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateColorRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateColorTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Color)
+		if _err := EncodeTLObject(b, v.Color); _err != nil {
+			return fmt.Errorf("encode field color: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4108,6 +4487,9 @@ func (v *AccountGetDefaultBackgroundEmojisRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetDefaultBackgroundEmojisRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetDefaultBackgroundEmojisRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetDefaultBackgroundEmojisTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -4150,6 +4532,9 @@ func (v *AccountGetChannelDefaultEmojiStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetChannelDefaultEmojiStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetChannelDefaultEmojiStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetChannelDefaultEmojiStatusesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -4192,6 +4577,9 @@ func (v *AccountGetChannelRestrictedStatusEmojisRequest) ConstructorID() uint32 
 
 // Encode serializes AccountGetChannelRestrictedStatusEmojisRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetChannelRestrictedStatusEmojisRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetChannelRestrictedStatusEmojisTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -4242,11 +4630,16 @@ func (v *AccountUpdateBusinessWorkHoursRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBusinessWorkHoursRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBusinessWorkHoursRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBusinessWorkHoursTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.BusinessWorkHours)
+		if _err := EncodeTLObject(b, v.BusinessWorkHours); _err != nil {
+			return fmt.Errorf("encode field business_work_hours: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4298,11 +4691,16 @@ func (v *AccountUpdateBusinessLocationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBusinessLocationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBusinessLocationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBusinessLocationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.GeoPoint)
+		if _err := EncodeTLObject(b, v.GeoPoint); _err != nil {
+			return fmt.Errorf("encode field geo_point: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Address)
@@ -4353,11 +4751,16 @@ func (v *AccountUpdateBusinessGreetingMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBusinessGreetingMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBusinessGreetingMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBusinessGreetingMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4405,11 +4808,16 @@ func (v *AccountUpdateBusinessAwayMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBusinessAwayMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBusinessAwayMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBusinessAwayMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4463,14 +4871,23 @@ func (v *AccountUpdateConnectedBotRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateConnectedBotRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateConnectedBotRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateConnectedBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Rights)
+		if _err := EncodeTLObject(b, v.Rights); _err != nil {
+			return fmt.Errorf("encode field rights: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Bot)
-	EncodeTLObject(b, v.Recipients)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Recipients); _err != nil {
+		return fmt.Errorf("encode field recipients: %w", _err)
+	}
 	return nil
 }
 
@@ -4510,6 +4927,9 @@ func (v *AccountGetConnectedBotsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetConnectedBotsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetConnectedBotsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetConnectedBotsTypeID)
 	return nil
 }
@@ -4551,6 +4971,9 @@ func (v *AccountGetBotBusinessConnectionRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetBotBusinessConnectionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetBotBusinessConnectionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetBotBusinessConnectionTypeID)
 	WriteString(b, v.ConnectionID)
 	return nil
@@ -4601,11 +5024,16 @@ func (v *AccountUpdateBusinessIntroRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBusinessIntroRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBusinessIntroRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBusinessIntroTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Intro)
+		if _err := EncodeTLObject(b, v.Intro); _err != nil {
+			return fmt.Errorf("encode field intro: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4646,8 +5074,13 @@ func (v *AccountToggleConnectedBotPausedRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountToggleConnectedBotPausedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountToggleConnectedBotPausedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountToggleConnectedBotPausedTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBool(b, v.Paused)
 	return nil
 }
@@ -4687,8 +5120,13 @@ func (v *AccountDisablePeerConnectedBotRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDisablePeerConnectedBotRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDisablePeerConnectedBotRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDisablePeerConnectedBotTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -4735,11 +5173,16 @@ func (v *AccountUpdateBirthdayRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateBirthdayRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateBirthdayRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateBirthdayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Birthday)
+		if _err := EncodeTLObject(b, v.Birthday); _err != nil {
+			return fmt.Errorf("encode field birthday: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4779,8 +5222,13 @@ func (v *AccountCreateBusinessChatLinkRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountCreateBusinessChatLinkRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountCreateBusinessChatLinkRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountCreateBusinessChatLinkTypeID)
-	EncodeTLObject(b, v.Link)
+	if _err := EncodeTLObject(b, v.Link); _err != nil {
+		return fmt.Errorf("encode field link: %w", _err)
+	}
 	return nil
 }
 
@@ -4822,9 +5270,14 @@ func (v *AccountEditBusinessChatLinkRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountEditBusinessChatLinkRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountEditBusinessChatLinkRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountEditBusinessChatLinkTypeID)
 	WriteString(b, v.Slug)
-	EncodeTLObject(b, v.Link)
+	if _err := EncodeTLObject(b, v.Link); _err != nil {
+		return fmt.Errorf("encode field link: %w", _err)
+	}
 	return nil
 }
 
@@ -4865,6 +5318,9 @@ func (v *AccountDeleteBusinessChatLinkRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeleteBusinessChatLinkRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeleteBusinessChatLinkRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeleteBusinessChatLinkTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -4904,6 +5360,9 @@ func (v *AccountGetBusinessChatLinksRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetBusinessChatLinksRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetBusinessChatLinksRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetBusinessChatLinksTypeID)
 	return nil
 }
@@ -4945,6 +5404,9 @@ func (v *AccountResolveBusinessChatLinkRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountResolveBusinessChatLinkRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountResolveBusinessChatLinkRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountResolveBusinessChatLinkTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -4987,8 +5449,13 @@ func (v *AccountUpdatePersonalChannelRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdatePersonalChannelRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdatePersonalChannelRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdatePersonalChannelTypeID)
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	return nil
 }
 
@@ -5027,6 +5494,9 @@ func (v *AccountToggleSponsoredMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountToggleSponsoredMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountToggleSponsoredMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountToggleSponsoredMessagesTypeID)
 	WriteBool(b, v.Enabled)
 	return nil
@@ -5066,6 +5536,9 @@ func (v *AccountGetReactionsNotifySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetReactionsNotifySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetReactionsNotifySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetReactionsNotifySettingsTypeID)
 	return nil
 }
@@ -5107,8 +5580,13 @@ func (v *AccountSetReactionsNotifySettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetReactionsNotifySettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetReactionsNotifySettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetReactionsNotifySettingsTypeID)
-	EncodeTLObject(b, v.Settings)
+	if _err := EncodeTLObject(b, v.Settings); _err != nil {
+		return fmt.Errorf("encode field settings: %w", _err)
+	}
 	return nil
 }
 
@@ -5149,6 +5627,9 @@ func (v *AccountGetCollectibleEmojiStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetCollectibleEmojiStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetCollectibleEmojiStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetCollectibleEmojiStatusesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -5200,13 +5681,20 @@ func (v *AccountGetPaidMessagesRevenueRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetPaidMessagesRevenueRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetPaidMessagesRevenueRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetPaidMessagesRevenueTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -5264,13 +5752,20 @@ func (v *AccountToggleNoPaidMessagesExceptionRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountToggleNoPaidMessagesExceptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountToggleNoPaidMessagesExceptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountToggleNoPaidMessagesExceptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -5309,8 +5804,13 @@ func (v *AccountSetMainProfileTabRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSetMainProfileTabRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSetMainProfileTabRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSetMainProfileTabTypeID)
-	EncodeTLObject(b, v.Tab)
+	if _err := EncodeTLObject(b, v.Tab); _err != nil {
+		return fmt.Errorf("encode field tab: %w", _err)
+	}
 	return nil
 }
 
@@ -5362,12 +5862,19 @@ func (v *AccountSaveMusicRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountSaveMusicRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountSaveMusicRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountSaveMusicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.AfterID)
+		if _err := EncodeTLObject(b, v.AfterID); _err != nil {
+			return fmt.Errorf("encode field after_id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -5407,6 +5914,9 @@ func (v *AccountGetSavedMusicIdsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetSavedMusicIdsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetSavedMusicIdsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetSavedMusicIdsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -5451,6 +5961,9 @@ func (v *AccountGetUniqueGiftChatThemesRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetUniqueGiftChatThemesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetUniqueGiftChatThemesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetUniqueGiftChatThemesTypeID)
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
@@ -5494,6 +6007,9 @@ func (v *AccountInitPasskeyRegistrationRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountInitPasskeyRegistrationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountInitPasskeyRegistrationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountInitPasskeyRegistrationTypeID)
 	return nil
 }
@@ -5535,8 +6051,13 @@ func (v *AccountRegisterPasskeyRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountRegisterPasskeyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountRegisterPasskeyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountRegisterPasskeyTypeID)
-	EncodeTLObject(b, v.Credential)
+	if _err := EncodeTLObject(b, v.Credential); _err != nil {
+		return fmt.Errorf("encode field credential: %w", _err)
+	}
 	return nil
 }
 
@@ -5576,6 +6097,9 @@ func (v *AccountGetPasskeysRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetPasskeysRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetPasskeysRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetPasskeysTypeID)
 	return nil
 }
@@ -5617,6 +6141,9 @@ func (v *AccountDeletePasskeyRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountDeletePasskeyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeletePasskeyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeletePasskeyTypeID)
 	WriteString(b, v.ID)
 	return nil
@@ -5657,8 +6184,13 @@ func (v *AccountConfirmBotConnectionRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountConfirmBotConnectionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountConfirmBotConnectionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountConfirmBotConnectionTypeID)
-	EncodeTLObject(b, v.BotID)
+	if _err := EncodeTLObject(b, v.BotID); _err != nil {
+		return fmt.Errorf("encode field bot_id: %w", _err)
+	}
 	return nil
 }
 
@@ -5697,6 +6229,9 @@ func (v *AccountGetWebBrowserSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountGetWebBrowserSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountGetWebBrowserSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountGetWebBrowserSettingsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -5751,6 +6286,9 @@ func (v *AccountUpdateWebBrowserSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes AccountUpdateWebBrowserSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountUpdateWebBrowserSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountUpdateWebBrowserSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5807,6 +6345,9 @@ func (v *AccountToggleWebBrowserSettingsExceptionRequest) ConstructorID() uint32
 
 // Encode serializes AccountToggleWebBrowserSettingsExceptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountToggleWebBrowserSettingsExceptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountToggleWebBrowserSettingsExceptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5871,6 +6412,9 @@ func (v *AccountDeleteWebBrowserSettingsExceptionsRequest) ConstructorID() uint3
 
 // Encode serializes AccountDeleteWebBrowserSettingsExceptionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *AccountDeleteWebBrowserSettingsExceptionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AccountDeleteWebBrowserSettingsExceptionsTypeID)
 	return nil
 }

@@ -39,6 +39,9 @@ func (v *CommunitiesCreateRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesCreateRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesCreateRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesCreateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -46,7 +49,9 @@ func (v *CommunitiesCreateRequest) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(0) {
 		WriteString(b, v.About)
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -105,11 +110,18 @@ func (v *CommunitiesTogglePeerLinkRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesTogglePeerLinkRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesTogglePeerLinkRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesTogglePeerLinkTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Community)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -147,6 +159,9 @@ func (v *CommunitiesGetJoinedCommunitiesRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesGetJoinedCommunitiesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesGetJoinedCommunitiesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesGetJoinedCommunitiesTypeID)
 	return nil
 }
@@ -197,10 +212,15 @@ func (v *CommunitiesToggleCommunityCollapsedInDialogsRequest) ConstructorID() ui
 
 // Encode serializes CommunitiesToggleCommunityCollapsedInDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesToggleCommunityCollapsedInDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesToggleCommunityCollapsedInDialogsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Community)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
 	return nil
 }
 
@@ -243,8 +263,13 @@ func (v *CommunitiesGetPeerLinkRequestsRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesGetPeerLinkRequestsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesGetPeerLinkRequestsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesGetPeerLinkRequestsTypeID)
-	EncodeTLObject(b, v.Community)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -297,11 +322,18 @@ func (v *CommunitiesTogglePeerLinkRequestApprovalRequest) ConstructorID() uint32
 
 // Encode serializes CommunitiesTogglePeerLinkRequestApprovalRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesTogglePeerLinkRequestApprovalRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesTogglePeerLinkRequestApprovalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Community)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -349,10 +381,15 @@ func (v *CommunitiesToggleAllPeerLinkRequestApprovalRequest) ConstructorID() uin
 
 // Encode serializes CommunitiesToggleAllPeerLinkRequestApprovalRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesToggleAllPeerLinkRequestApprovalRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesToggleAllPeerLinkRequestApprovalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Community)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
 	return nil
 }
 
@@ -401,11 +438,18 @@ func (v *CommunitiesToggleParticipantBannedRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesToggleParticipantBannedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesToggleParticipantBannedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesToggleParticipantBannedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Community)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	return nil
 }
 
@@ -445,9 +489,16 @@ func (v *CommunitiesGetParticipantJoinedChatsRequest) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesGetParticipantJoinedChatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesGetParticipantJoinedChatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesGetParticipantJoinedChatsTypeID)
-	EncodeTLObject(b, v.Community)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Community); _err != nil {
+		return fmt.Errorf("encode field community: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	return nil
 }
 

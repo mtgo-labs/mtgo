@@ -53,6 +53,9 @@ func (v *InputAiComposeToneDefault) ConstructorID() uint32 {
 
 // Encode serializes InputAiComposeToneDefault to a bytes.Buffer using the TL binary protocol.
 func (v *InputAiComposeToneDefault) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputAiComposeToneDefaultTypeID)
 	WriteString(b, v.Tone)
 	return nil
@@ -90,6 +93,9 @@ func (v *InputAiComposeToneID) ConstructorID() uint32 {
 
 // Encode serializes InputAiComposeToneID to a bytes.Buffer using the TL binary protocol.
 func (v *InputAiComposeToneID) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputAiComposeToneIDTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -132,6 +138,9 @@ func (v *InputAiComposeToneSlug) ConstructorID() uint32 {
 
 // Encode serializes InputAiComposeToneSlug to a bytes.Buffer using the TL binary protocol.
 func (v *InputAiComposeToneSlug) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputAiComposeToneSlugTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -168,6 +177,9 @@ func (v *InputAiComposeToneSingleUse) ConstructorID() uint32 {
 
 // Encode serializes InputAiComposeToneSingleUse to a bytes.Buffer using the TL binary protocol.
 func (v *InputAiComposeToneSingleUse) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputAiComposeToneSingleUseTypeID)
 	WriteString(b, v.CustomPrompt)
 	return nil
@@ -256,6 +268,9 @@ func (v *AiComposeTone) ConstructorID() uint32 {
 
 // Encode serializes AiComposeTone to a bytes.Buffer using the TL binary protocol.
 func (v *AiComposeTone) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AiComposeToneTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -276,7 +291,9 @@ func (v *AiComposeTone) Encode(b *bytes.Buffer) error {
 		WriteLong(b, v.AuthorID)
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.ExampleEnglish)
+		if _err := EncodeTLObject(b, v.ExampleEnglish); _err != nil {
+			return fmt.Errorf("encode field example_english: %w", _err)
+		}
 	}
 	return nil
 }
@@ -374,6 +391,9 @@ func (v *AiComposeToneDefault) ConstructorID() uint32 {
 
 // Encode serializes AiComposeToneDefault to a bytes.Buffer using the TL binary protocol.
 func (v *AiComposeToneDefault) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AiComposeToneDefaultTypeID)
 	WriteString(b, v.Tone)
 	WriteLong(b, v.EmojiID)
@@ -441,6 +461,9 @@ func (v *AicomposeTonesNotModified) ConstructorID() uint32 {
 
 // Encode serializes AicomposeTonesNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeTonesNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeTonesNotModifiedTypeID)
 	return nil
 }
@@ -473,17 +496,24 @@ func (v *AicomposeTones) ConstructorID() uint32 {
 
 // Encode serializes AicomposeTones to a bytes.Buffer using the TL binary protocol.
 func (v *AicomposeTones) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AicomposeTonesTypeID)
 	WriteLong(b, v.Hash)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Tones)))
 	for _, _item := range v.Tones {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field tones: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -575,9 +605,16 @@ func (v *AiComposeToneExample) ConstructorID() uint32 {
 
 // Encode serializes AiComposeToneExample to a bytes.Buffer using the TL binary protocol.
 func (v *AiComposeToneExample) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AiComposeToneExampleTypeID)
-	EncodeTLObject(b, v.From)
-	EncodeTLObject(b, v.To)
+	if _err := EncodeTLObject(b, v.From); _err != nil {
+		return fmt.Errorf("encode field from: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.To); _err != nil {
+		return fmt.Errorf("encode field to: %w", _err)
+	}
 	return nil
 }
 

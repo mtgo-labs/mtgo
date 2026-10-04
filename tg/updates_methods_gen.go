@@ -24,6 +24,9 @@ func (v *UpdatesGetStateRequest) ConstructorID() uint32 {
 
 // Encode serializes UpdatesGetStateRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UpdatesGetStateRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UpdatesGetStateTypeID)
 	return nil
 }
@@ -84,6 +87,9 @@ func (v *UpdatesGetDifferenceRequest) ConstructorID() uint32 {
 
 // Encode serializes UpdatesGetDifferenceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UpdatesGetDifferenceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UpdatesGetDifferenceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -151,11 +157,18 @@ func (v *UpdatesGetChannelDifferenceRequest) ConstructorID() uint32 {
 
 // Encode serializes UpdatesGetChannelDifferenceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UpdatesGetChannelDifferenceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UpdatesGetChannelDifferenceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Channel)
-	EncodeTLObject(b, v.Filter)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.PTS))
 	WriteInt(b, uint32(v.Limit))
 	return nil

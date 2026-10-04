@@ -25,11 +25,16 @@ func (v *FoldersEditPeerFoldersRequest) ConstructorID() uint32 {
 
 // Encode serializes FoldersEditPeerFoldersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *FoldersEditPeerFoldersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, FoldersEditPeerFoldersTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.FolderPeers)))
 	for _, _item := range v.FolderPeers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field folder_peers: %w", _err)
+		}
 	}
 	return nil
 }

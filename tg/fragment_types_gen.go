@@ -28,6 +28,9 @@ func (v *FragmentCollectibleInfo) ConstructorID() uint32 {
 
 // Encode serializes FragmentCollectibleInfo to a bytes.Buffer using the TL binary protocol.
 func (v *FragmentCollectibleInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, FragmentCollectibleInfoTypeID)
 	WriteInt(b, uint32(v.PurchaseDate))
 	WriteString(b, v.Currency)

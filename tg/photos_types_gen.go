@@ -47,6 +47,9 @@ func (v *PhotoEmpty) ConstructorID() uint32 {
 
 // Encode serializes PhotoEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *PhotoEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotoEmptyTypeID)
 	WriteLong(b, v.ID)
 	return nil
@@ -101,6 +104,9 @@ func (v *Photo) ConstructorID() uint32 {
 
 // Encode serializes Photo to a bytes.Buffer using the TL binary protocol.
 func (v *Photo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -111,13 +117,17 @@ func (v *Photo) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Sizes)))
 	for _, _item := range v.Sizes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field sizes: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.VideoSizes)))
 		for _, _item := range v.VideoSizes {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field video_sizes: %w", _err)
+			}
 		}
 	}
 	WriteInt(b, uint32(v.DCID))
@@ -236,12 +246,19 @@ func (v *PhotosPhoto) ConstructorID() uint32 {
 
 // Encode serializes PhotosPhoto to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosPhoto) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosPhotoTypeID)
-	EncodeTLObject(b, v.Photo)
+	if _err := EncodeTLObject(b, v.Photo); _err != nil {
+		return fmt.Errorf("encode field photo: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -328,16 +345,23 @@ func (v *PhotosPhotos) ConstructorID() uint32 {
 
 // Encode serializes PhotosPhotos to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosPhotos) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosPhotosTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Photos)))
 	for _, _item := range v.Photos {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field photos: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -422,17 +446,24 @@ func (v *PhotosPhotosSlice) ConstructorID() uint32 {
 
 // Encode serializes PhotosPhotosSlice to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosPhotosSlice) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosPhotosSliceTypeID)
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Photos)))
 	for _, _item := range v.Photos {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field photos: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }

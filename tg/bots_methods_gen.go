@@ -26,9 +26,14 @@ func (v *BotsSendCustomRequestRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSendCustomRequestRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSendCustomRequestRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSendCustomRequestTypeID)
 	WriteString(b, v.CustomMethod)
-	EncodeTLObject(b, v.Params)
+	if _err := EncodeTLObject(b, v.Params); _err != nil {
+		return fmt.Errorf("encode field params: %w", _err)
+	}
 	return nil
 }
 
@@ -70,9 +75,14 @@ func (v *BotsAnswerWebhookJSONQueryRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsAnswerWebhookJSONQueryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsAnswerWebhookJSONQueryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsAnswerWebhookJSONQueryTypeID)
 	WriteLong(b, v.QueryID)
-	EncodeTLObject(b, v.Data)
+	if _err := EncodeTLObject(b, v.Data); _err != nil {
+		return fmt.Errorf("encode field data: %w", _err)
+	}
 	return nil
 }
 
@@ -113,13 +123,20 @@ func (v *BotsSetBotCommandsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetBotCommandsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetBotCommandsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetBotCommandsTypeID)
-	EncodeTLObject(b, v.Scope)
+	if _err := EncodeTLObject(b, v.Scope); _err != nil {
+		return fmt.Errorf("encode field scope: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Commands)))
 	for _, _item := range v.Commands {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field commands: %w", _err)
+		}
 	}
 	return nil
 }
@@ -160,8 +177,13 @@ func (v *BotsResetBotCommandsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsResetBotCommandsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsResetBotCommandsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsResetBotCommandsTypeID)
-	EncodeTLObject(b, v.Scope)
+	if _err := EncodeTLObject(b, v.Scope); _err != nil {
+		return fmt.Errorf("encode field scope: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	return nil
 }
@@ -202,8 +224,13 @@ func (v *BotsGetBotCommandsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetBotCommandsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetBotCommandsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetBotCommandsTypeID)
-	EncodeTLObject(b, v.Scope)
+	if _err := EncodeTLObject(b, v.Scope); _err != nil {
+		return fmt.Errorf("encode field scope: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	return nil
 }
@@ -243,9 +270,16 @@ func (v *BotsSetBotMenuButtonRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetBotMenuButtonRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetBotMenuButtonRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetBotMenuButtonTypeID)
-	EncodeTLObject(b, v.UserID)
-	EncodeTLObject(b, v.Button)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Button); _err != nil {
+		return fmt.Errorf("encode field button: %w", _err)
+	}
 	return nil
 }
 
@@ -284,8 +318,13 @@ func (v *BotsGetBotMenuButtonRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetBotMenuButtonRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetBotMenuButtonRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetBotMenuButtonTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -326,8 +365,13 @@ func (v *BotsSetBotBroadcastDefaultAdminRightsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetBotBroadcastDefaultAdminRightsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetBotBroadcastDefaultAdminRightsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetBotBroadcastDefaultAdminRightsTypeID)
-	EncodeTLObject(b, v.AdminRights)
+	if _err := EncodeTLObject(b, v.AdminRights); _err != nil {
+		return fmt.Errorf("encode field admin_rights: %w", _err)
+	}
 	return nil
 }
 
@@ -366,8 +410,13 @@ func (v *BotsSetBotGroupDefaultAdminRightsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetBotGroupDefaultAdminRightsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetBotGroupDefaultAdminRightsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetBotGroupDefaultAdminRightsTypeID)
-	EncodeTLObject(b, v.AdminRights)
+	if _err := EncodeTLObject(b, v.AdminRights); _err != nil {
+		return fmt.Errorf("encode field admin_rights: %w", _err)
+	}
 	return nil
 }
 
@@ -427,11 +476,16 @@ func (v *BotsSetBotInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetBotInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetBotInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetBotInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Bot)
+		if _err := EncodeTLObject(b, v.Bot); _err != nil {
+			return fmt.Errorf("encode field bot: %w", _err)
+		}
 	}
 	WriteString(b, v.LangCode)
 	if v.Flags.Has(3) {
@@ -490,11 +544,16 @@ func (v *BotsGetBotInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetBotInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetBotInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetBotInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Bot)
+		if _err := EncodeTLObject(b, v.Bot); _err != nil {
+			return fmt.Errorf("encode field bot: %w", _err)
+		}
 	}
 	WriteString(b, v.LangCode)
 	return nil
@@ -538,8 +597,13 @@ func (v *BotsReorderUsernamesRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsReorderUsernamesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsReorderUsernamesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsReorderUsernamesTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteVectorString(b, v.Order)
 	return nil
 }
@@ -581,8 +645,13 @@ func (v *BotsToggleUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsToggleUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsToggleUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsToggleUsernameTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.Username)
 	WriteBool(b, v.Active)
 	return nil
@@ -623,8 +692,13 @@ func (v *BotsCanSendMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsCanSendMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsCanSendMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsCanSendMessageTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -663,8 +737,13 @@ func (v *BotsAllowSendMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsAllowSendMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsAllowSendMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsAllowSendMessageTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -707,10 +786,17 @@ func (v *BotsInvokeWebViewCustomMethodRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsInvokeWebViewCustomMethodRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsInvokeWebViewCustomMethodRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsInvokeWebViewCustomMethodTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.CustomMethod)
-	EncodeTLObject(b, v.Params)
+	if _err := EncodeTLObject(b, v.Params); _err != nil {
+		return fmt.Errorf("encode field params: %w", _err)
+	}
 	return nil
 }
 
@@ -752,6 +838,9 @@ func (v *BotsGetPopularAppBotsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetPopularAppBotsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetPopularAppBotsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetPopularAppBotsTypeID)
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
@@ -797,10 +886,17 @@ func (v *BotsAddPreviewMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsAddPreviewMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsAddPreviewMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsAddPreviewMediaTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.LangCode)
-	EncodeTLObject(b, v.Media)
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -844,11 +940,20 @@ func (v *BotsEditPreviewMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsEditPreviewMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsEditPreviewMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsEditPreviewMediaTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.LangCode)
-	EncodeTLObject(b, v.Media)
-	EncodeTLObject(b, v.NewMedia)
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.NewMedia); _err != nil {
+		return fmt.Errorf("encode field new_media: %w", _err)
+	}
 	return nil
 }
 
@@ -891,13 +996,20 @@ func (v *BotsDeletePreviewMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsDeletePreviewMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsDeletePreviewMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsDeletePreviewMediaTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Media)))
 	for _, _item := range v.Media {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	return nil
 }
@@ -939,13 +1051,20 @@ func (v *BotsReorderPreviewMediasRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsReorderPreviewMediasRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsReorderPreviewMediasRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsReorderPreviewMediasTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Order)))
 	for _, _item := range v.Order {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field order: %w", _err)
+		}
 	}
 	return nil
 }
@@ -986,8 +1105,13 @@ func (v *BotsGetPreviewInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetPreviewInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetPreviewInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetPreviewInfoTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.LangCode)
 	return nil
 }
@@ -1029,8 +1153,13 @@ func (v *BotsGetPreviewMediasRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetPreviewMediasRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetPreviewMediasRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetPreviewMediasTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -1069,9 +1198,16 @@ func (v *BotsUpdateUserEmojiStatusRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsUpdateUserEmojiStatusRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsUpdateUserEmojiStatusRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsUpdateUserEmojiStatusTypeID)
-	EncodeTLObject(b, v.UserID)
-	EncodeTLObject(b, v.EmojiStatus)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.EmojiStatus); _err != nil {
+		return fmt.Errorf("encode field emoji_status: %w", _err)
+	}
 	return nil
 }
 
@@ -1111,8 +1247,13 @@ func (v *BotsToggleUserEmojiStatusPermissionRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsToggleUserEmojiStatusPermissionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsToggleUserEmojiStatusPermissionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsToggleUserEmojiStatusPermissionTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteBool(b, v.Enabled)
 	return nil
 }
@@ -1154,8 +1295,13 @@ func (v *BotsCheckDownloadFileParamsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsCheckDownloadFileParamsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsCheckDownloadFileParamsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsCheckDownloadFileParamsTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.FileName)
 	WriteString(b, v.URL)
 	return nil
@@ -1195,6 +1341,9 @@ func (v *BotsGetAdminedBotsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetAdminedBotsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetAdminedBotsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetAdminedBotsTypeID)
 	return nil
 }
@@ -1243,10 +1392,15 @@ func (v *BotsUpdateStarRefProgramRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsUpdateStarRefProgramRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsUpdateStarRefProgramRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsUpdateStarRefProgramTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteInt(b, uint32(v.CommissionPermille))
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.DurationMonths))
@@ -1308,13 +1462,20 @@ func (v *BotsSetCustomVerificationRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetCustomVerificationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetCustomVerificationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetCustomVerificationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Bot)
+		if _err := EncodeTLObject(b, v.Bot); _err != nil {
+			return fmt.Errorf("encode field bot: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(2) {
 		WriteString(b, v.CustomDescription)
 	}
@@ -1356,8 +1517,13 @@ func (v *BotsGetBotRecommendationsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetBotRecommendationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetBotRecommendationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetBotRecommendationsTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -1398,6 +1564,9 @@ func (v *BotsCheckUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsCheckUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsCheckUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsCheckUsernameTypeID)
 	WriteString(b, v.Username)
 	return nil
@@ -1449,12 +1618,17 @@ func (v *BotsCreateBotRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsCreateBotRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsCreateBotRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsCreateBotTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Name)
 	WriteString(b, v.Username)
-	EncodeTLObject(b, v.ManagerID)
+	if _err := EncodeTLObject(b, v.ManagerID); _err != nil {
+		return fmt.Errorf("encode field manager_id: %w", _err)
+	}
 	return nil
 }
 
@@ -1496,8 +1670,13 @@ func (v *BotsExportBotTokenRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsExportBotTokenRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsExportBotTokenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsExportBotTokenTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteBool(b, v.Revoke)
 	return nil
 }
@@ -1540,9 +1719,16 @@ func (v *BotsRequestWebViewButtonRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsRequestWebViewButtonRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsRequestWebViewButtonRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsRequestWebViewButtonTypeID)
-	EncodeTLObject(b, v.UserID)
-	EncodeTLObject(b, v.Button)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Button); _err != nil {
+		return fmt.Errorf("encode field button: %w", _err)
+	}
 	return nil
 }
 
@@ -1584,8 +1770,13 @@ func (v *BotsGetRequestedWebViewButtonRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetRequestedWebViewButtonRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetRequestedWebViewButtonRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetRequestedWebViewButtonTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.WebappReqID)
 	return nil
 }
@@ -1627,8 +1818,13 @@ func (v *BotsGetAccessSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsGetAccessSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsGetAccessSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsGetAccessSettingsTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -1682,15 +1878,22 @@ func (v *BotsEditAccessSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsEditAccessSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsEditAccessSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsEditAccessSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.AddUsers)))
 		for _, _item := range v.AddUsers {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field add_users: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -1732,9 +1935,14 @@ func (v *BotsSetJoinChatResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes BotsSetJoinChatResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *BotsSetJoinChatResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BotsSetJoinChatResultsTypeID)
 	WriteLong(b, v.QueryID)
-	EncodeTLObject(b, v.Result)
+	if _err := EncodeTLObject(b, v.Result); _err != nil {
+		return fmt.Errorf("encode field result: %w", _err)
+	}
 	return nil
 }
 

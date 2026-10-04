@@ -40,6 +40,9 @@ func (v *ContactsContactsNotModified) ConstructorID() uint32 {
 
 // Encode serializes ContactsContactsNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsContactsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsContactsNotModifiedTypeID)
 	return nil
 }
@@ -72,17 +75,24 @@ func (v *ContactsContacts) ConstructorID() uint32 {
 
 // Encode serializes ContactsContacts to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsContacts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsContactsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Contacts)))
 	for _, _item := range v.Contacts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field contacts: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.SavedCount))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -176,22 +186,31 @@ func (v *ContactsImportedContacts) ConstructorID() uint32 {
 
 // Encode serializes ContactsImportedContacts to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsImportedContacts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsImportedContactsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Imported)))
 	for _, _item := range v.Imported {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field imported: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.PopularInvites)))
 	for _, _item := range v.PopularInvites {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field popular_invites: %w", _err)
+		}
 	}
 	WriteVectorLong(b, v.RetryContacts)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -327,21 +346,30 @@ func (v *ContactsBlocked) ConstructorID() uint32 {
 
 // Encode serializes ContactsBlocked to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsBlocked) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsBlockedTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocked)))
 	for _, _item := range v.Blocked {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocked: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -453,22 +481,31 @@ func (v *ContactsBlockedSlice) ConstructorID() uint32 {
 
 // Encode serializes ContactsBlockedSlice to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsBlockedSlice) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsBlockedSliceTypeID)
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocked)))
 	for _, _item := range v.Blocked {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocked: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -588,26 +625,37 @@ func (v *ContactsFound) ConstructorID() uint32 {
 
 // Encode serializes ContactsFound to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsFound) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsFoundTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.MyResults)))
 	for _, _item := range v.MyResults {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field my_results: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Results)))
 	for _, _item := range v.Results {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field results: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -747,17 +795,26 @@ func (v *ContactsResolvedPeer) ConstructorID() uint32 {
 
 // Encode serializes ContactsResolvedPeer to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsResolvedPeer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsResolvedPeerTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -874,6 +931,9 @@ func (v *ContactsTopPeersNotModified) ConstructorID() uint32 {
 
 // Encode serializes ContactsTopPeersNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsTopPeersNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsTopPeersNotModifiedTypeID)
 	return nil
 }
@@ -906,21 +966,30 @@ func (v *ContactsTopPeers) ConstructorID() uint32 {
 
 // Encode serializes ContactsTopPeers to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsTopPeers) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsTopPeersTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Categories)))
 	for _, _item := range v.Categories {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field categories: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1028,6 +1097,9 @@ func (v *ContactsTopPeersDisabled) ConstructorID() uint32 {
 
 // Encode serializes ContactsTopPeersDisabled to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsTopPeersDisabled) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsTopPeersDisabledTypeID)
 	return nil
 }
@@ -1062,16 +1134,23 @@ func (v *ContactsContactBirthdays) ConstructorID() uint32 {
 
 // Encode serializes ContactsContactBirthdays to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsContactBirthdays) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsContactBirthdaysTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Contacts)))
 	for _, _item := range v.Contacts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field contacts: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1173,6 +1252,9 @@ func (v *ContactsSponsoredPeersEmpty) ConstructorID() uint32 {
 
 // Encode serializes ContactsSponsoredPeersEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsSponsoredPeersEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsSponsoredPeersEmptyTypeID)
 	return nil
 }
@@ -1205,21 +1287,30 @@ func (v *ContactsSponsoredPeers) ConstructorID() uint32 {
 
 // Encode serializes ContactsSponsoredPeers to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsSponsoredPeers) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsSponsoredPeersTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }

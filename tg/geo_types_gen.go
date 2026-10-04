@@ -40,6 +40,9 @@ func (v *InputGeoPointEmpty) ConstructorID() uint32 {
 
 // Encode serializes InputGeoPointEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *InputGeoPointEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputGeoPointEmptyTypeID)
 	return nil
 }
@@ -80,6 +83,9 @@ func (v *InputGeoPoint) ConstructorID() uint32 {
 
 // Encode serializes InputGeoPoint to a bytes.Buffer using the TL binary protocol.
 func (v *InputGeoPoint) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputGeoPointTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -210,6 +216,9 @@ func (v *InputFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputFileLocationTypeID)
 	WriteLong(b, v.VolumeID)
 	WriteInt(b, uint32(v.LocalID))
@@ -265,6 +274,9 @@ func (v *InputEncryptedFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputEncryptedFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputEncryptedFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputEncryptedFileLocationTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -310,6 +322,9 @@ func (v *InputDocumentFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputDocumentFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputDocumentFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputDocumentFileLocationTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -365,6 +380,9 @@ func (v *InputSecureFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputSecureFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputSecureFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputSecureFileLocationTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -406,6 +424,9 @@ func (v *InputTakeoutFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputTakeoutFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputTakeoutFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputTakeoutFileLocationTypeID)
 	return nil
 }
@@ -439,6 +460,9 @@ func (v *InputPhotoFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputPhotoFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputPhotoFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPhotoFileLocationTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -498,6 +522,9 @@ func (v *InputPhotoLegacyFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputPhotoLegacyFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputPhotoLegacyFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPhotoLegacyFileLocationTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -574,10 +601,15 @@ func (v *InputPeerPhotoFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputPeerPhotoFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputPeerPhotoFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPeerPhotoFileLocationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.PhotoID)
 	return nil
 }
@@ -629,8 +661,13 @@ func (v *InputStickerSetThumb) ConstructorID() uint32 {
 
 // Encode serializes InputStickerSetThumb to a bytes.Buffer using the TL binary protocol.
 func (v *InputStickerSetThumb) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStickerSetThumbTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	WriteInt(b, uint32(v.ThumbVersion))
 	return nil
 }
@@ -690,10 +727,15 @@ func (v *InputGroupCallStream) ConstructorID() uint32 {
 
 // Encode serializes InputGroupCallStream to a bytes.Buffer using the TL binary protocol.
 func (v *InputGroupCallStream) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputGroupCallStreamTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteLong(b, v.TimeMs)
 	WriteInt(b, uint32(v.Scale))
 	if v.Flags.Has(0) {
@@ -788,6 +830,9 @@ func (v *GeoPointEmpty) ConstructorID() uint32 {
 
 // Encode serializes GeoPointEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *GeoPointEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, GeoPointEmptyTypeID)
 	return nil
 }
@@ -829,6 +874,9 @@ func (v *GeoPoint) ConstructorID() uint32 {
 
 // Encode serializes GeoPoint to a bytes.Buffer using the TL binary protocol.
 func (v *GeoPoint) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, GeoPointTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -921,6 +969,9 @@ func (v *InputWebFileLocation) ConstructorID() uint32 {
 
 // Encode serializes InputWebFileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputWebFileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputWebFileLocationTypeID)
 	WriteString(b, v.URL)
 	WriteLong(b, v.AccessHash)
@@ -968,8 +1019,13 @@ func (v *InputWebFileGeoPointLocation) ConstructorID() uint32 {
 
 // Encode serializes InputWebFileGeoPointLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputWebFileGeoPointLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputWebFileGeoPointLocationTypeID)
-	EncodeTLObject(b, v.GeoPoint)
+	if _err := EncodeTLObject(b, v.GeoPoint); _err != nil {
+		return fmt.Errorf("encode field geo_point: %w", _err)
+	}
 	WriteLong(b, v.AccessHash)
 	WriteInt(b, uint32(v.W))
 	WriteInt(b, uint32(v.H))
@@ -1058,11 +1114,16 @@ func (v *InputWebFileAudioAlbumThumbLocation) ConstructorID() uint32 {
 
 // Encode serializes InputWebFileAudioAlbumThumbLocation to a bytes.Buffer using the TL binary protocol.
 func (v *InputWebFileAudioAlbumThumbLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputWebFileAudioAlbumThumbLocationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Document)
+		if _err := EncodeTLObject(b, v.Document); _err != nil {
+			return fmt.Errorf("encode field document: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Title)
@@ -1150,6 +1211,9 @@ func (v *GeoPointAddress) ConstructorID() uint32 {
 
 // Encode serializes GeoPointAddress to a bytes.Buffer using the TL binary protocol.
 func (v *GeoPointAddress) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, GeoPointAddressTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))

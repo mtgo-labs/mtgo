@@ -23,6 +23,9 @@ func (v *StickersSuggestedShortName) ConstructorID() uint32 {
 
 // Encode serializes StickersSuggestedShortName to a bytes.Buffer using the TL binary protocol.
 func (v *StickersSuggestedShortName) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersSuggestedShortNameTypeID)
 	WriteString(b, v.ShortName)
 	return nil

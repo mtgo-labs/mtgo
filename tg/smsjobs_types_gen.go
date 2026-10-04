@@ -24,6 +24,9 @@ func (v *SmsjobsEligibleToJoin) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsEligibleToJoin to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsEligibleToJoin) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsEligibleToJoinTypeID)
 	WriteString(b, v.TermsURL)
 	WriteInt(b, uint32(v.MonthlySentSms))
@@ -87,6 +90,9 @@ func (v *SmsjobsStatus) ConstructorID() uint32 {
 
 // Encode serializes SmsjobsStatus to a bytes.Buffer using the TL binary protocol.
 func (v *SmsjobsStatus) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsjobsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -176,6 +182,9 @@ func (v *SmsJob) ConstructorID() uint32 {
 
 // Encode serializes SmsJob to a bytes.Buffer using the TL binary protocol.
 func (v *SmsJob) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SmsJobTypeID)
 	WriteString(b, v.JobID)
 	WriteString(b, v.PhoneNumber)

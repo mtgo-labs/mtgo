@@ -556,7 +556,7 @@ func constructorByQualName(name string, typeToConstructor map[string][]Combinato
 	return Combinator{}, false
 }
 
-func writeBareVectorExpr(inner, access string, typeToConstructor map[string][]Combinator) string {
+func writeBareVectorExpr(inner, access, fieldName string, typeToConstructor map[string][]Combinator) string {
 	switch stripNamespace(inner) {
 	case "int":
 		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { WriteInt(b, uint32(_item)) }", access, access)
@@ -585,7 +585,7 @@ func writeBareVectorExpr(inner, access string, typeToConstructor map[string][]Co
 		return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s {\n%s}", access, access, indentCode(strings.TrimRight(body.String(), "\n"), "\t"))
 	}
 
-	return fmt.Sprintf("WriteInt(b, uint32(len(%s))); for _, _item := range %s { EncodeTLObject(b, _item) }", access, access)
+	return fmt.Sprintf("WriteInt(b, uint32(len(%s)))\nfor _, _item := range %s {\n\tif _err := EncodeTLObject(b, _item); _err != nil {\n\t\treturn fmt.Errorf(\"encode field %s: %%w\", _err)\n\t}\n}", access, access, fieldName)
 }
 
 func readBareVectorExpr(inner, assign, fname, goType string, typeToConstructor map[string][]Combinator) string {
@@ -657,7 +657,7 @@ func writeExpr(arg Arg, goType string, receiver string, typeMaps ...map[string][
 		typeToConstructor = typeMaps[0]
 	}
 	if inner, ok := bareVectorInner(arg.Type); ok {
-		return writeBareVectorExpr(inner, access, typeToConstructor)
+		return writeBareVectorExpr(inner, access, arg.Name, typeToConstructor)
 	}
 
 	argType := normalizeVectorType(arg.Type)
@@ -695,11 +695,11 @@ func writeExpr(arg Arg, goType string, receiver string, typeMaps ...map[string][
 		case "bytes":
 			return fmt.Sprintf("WriteVectorBytes(b, %s)", access)
 		default:
-			return fmt.Sprintf("WriteInt(b, 0x1cb5c415); WriteInt(b, uint32(len(%s))); for _, _item := range %s { EncodeTLObject(b, _item) }", access, access)
+			return fmt.Sprintf("WriteInt(b, 0x1cb5c415)\nWriteInt(b, uint32(len(%s)))\nfor _, _item := range %s {\n\tif _err := EncodeTLObject(b, _item); _err != nil {\n\t\treturn fmt.Errorf(\"encode field %s: %%w\", _err)\n\t}\n}", access, access, arg.Name)
 		}
 	}
 
-	return fmt.Sprintf("EncodeTLObject(b, %s)", access)
+	return fmt.Sprintf("if _err := EncodeTLObject(b, %s); _err != nil {\n\treturn fmt.Errorf(\"encode field %s: %%w\", _err)\n}", access, arg.Name)
 }
 
 func buildReadLine(arg Arg, fd fieldData, section string, baseTypes map[string]bool, typeToConstructor map[string][]Combinator) readLine {

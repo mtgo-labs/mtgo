@@ -67,11 +67,16 @@ func (v *DecryptedMessage8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessage8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessage8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessage8TypeID)
 	tg.WriteLong(b, v.RandomID)
 	tg.WriteBytes(b, v.RandomBytes)
 	tg.WriteString(b, v.Message)
-	tg.EncodeTLObject(b, v.Media)
+	if _err := tg.EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -125,10 +130,15 @@ func (v *DecryptedMessageService8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageService8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageService8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageService8TypeID)
 	tg.WriteLong(b, v.RandomID)
 	tg.WriteBytes(b, v.RandomBytes)
-	tg.EncodeTLObject(b, v.Action)
+	if _err := tg.EncodeTLObject(b, v.Action); _err != nil {
+		return fmt.Errorf("encode field action: %w", _err)
+	}
 	return nil
 }
 
@@ -178,11 +188,16 @@ func (v *DecryptedMessage23) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessage23 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessage23) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessage23TypeID)
 	tg.WriteLong(b, v.RandomID)
 	tg.WriteInt(b, uint32(v.TTL))
 	tg.WriteString(b, v.Message)
-	tg.EncodeTLObject(b, v.Media)
+	if _err := tg.EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -235,9 +250,14 @@ func (v *DecryptedMessageService) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageService to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageService) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageServiceTypeID)
 	tg.WriteLong(b, v.RandomID)
-	tg.EncodeTLObject(b, v.Action)
+	if _err := tg.EncodeTLObject(b, v.Action); _err != nil {
+		return fmt.Errorf("encode field action: %w", _err)
+	}
 	return nil
 }
 
@@ -302,6 +322,9 @@ func (v *DecryptedMessage46) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessage46 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessage46TypeID)
 	v.SetFlags()
 	tg.WriteInt(b, uint32(v.Flags))
@@ -309,13 +332,17 @@ func (v *DecryptedMessage46) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, uint32(v.TTL))
 	tg.WriteString(b, v.Message)
 	if v.Flags.Has(9) {
-		tg.EncodeTLObject(b, v.Media)
+		if _err := tg.EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(7) {
 		tg.WriteInt(b, 0x1cb5c415)
 		tg.WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			tg.EncodeTLObject(b, _item)
+			if _err := tg.EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(11) {
@@ -455,6 +482,9 @@ func (v *DecryptedMessage) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessage to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessage) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageTypeID)
 	v.SetFlags()
 	tg.WriteInt(b, uint32(v.Flags))
@@ -462,13 +492,17 @@ func (v *DecryptedMessage) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, uint32(v.TTL))
 	tg.WriteString(b, v.Message)
 	if v.Flags.Has(9) {
-		tg.EncodeTLObject(b, v.Media)
+		if _err := tg.EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(7) {
 		tg.WriteInt(b, 0x1cb5c415)
 		tg.WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			tg.EncodeTLObject(b, _item)
+			if _err := tg.EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(11) {
@@ -691,6 +725,9 @@ func (v *DecryptedMessageMediaEmpty) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaEmptyTypeID)
 	return nil
 }
@@ -726,6 +763,9 @@ func (v *DecryptedMessageMediaPhoto8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaPhoto8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaPhoto8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaPhoto8TypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -810,6 +850,9 @@ func (v *DecryptedMessageMediaVideo8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaVideo8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaVideo8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaVideo8TypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -893,6 +936,9 @@ func (v *DecryptedMessageMediaGeoPoint) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaGeoPoint to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaGeoPoint) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaGeoPointTypeID)
 	tg.WriteDouble(b, v.Lat)
 	tg.WriteDouble(b, v.Long)
@@ -936,6 +982,9 @@ func (v *DecryptedMessageMediaContact) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaContact to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaContact) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaContactTypeID)
 	tg.WriteString(b, v.PhoneNumber)
 	tg.WriteString(b, v.FirstName)
@@ -995,6 +1044,9 @@ func (v *DecryptedMessageMediaDocument8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaDocument8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaDocument8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaDocument8TypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1074,6 +1126,9 @@ func (v *DecryptedMessageMediaAudio8) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaAudio8 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaAudio8) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaAudio8TypeID)
 	tg.WriteInt(b, uint32(v.Duration))
 	tg.WriteInt(b, uint32(v.Size))
@@ -1135,6 +1190,9 @@ func (v *DecryptedMessageMediaVideo23) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaVideo23 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaVideo23) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaVideo23TypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1227,6 +1285,9 @@ func (v *DecryptedMessageMediaAudio) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaAudio to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaAudio) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaAudioTypeID)
 	tg.WriteInt(b, uint32(v.Duration))
 	tg.WriteString(b, v.MimeType)
@@ -1292,18 +1353,25 @@ func (v *DecryptedMessageMediaExternalDocument) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaExternalDocument to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaExternalDocument) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaExternalDocumentTypeID)
 	tg.WriteLong(b, v.ID)
 	tg.WriteLong(b, v.AccessHash)
 	tg.WriteInt(b, uint32(v.Date))
 	tg.WriteString(b, v.MimeType)
 	tg.WriteInt(b, uint32(v.Size))
-	tg.EncodeTLObject(b, v.Thumb)
+	if _err := tg.EncodeTLObject(b, v.Thumb); _err != nil {
+		return fmt.Errorf("encode field thumb: %w", _err)
+	}
 	tg.WriteInt(b, uint32(v.DCID))
 	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
 	for _, _item := range v.Attributes {
-		tg.EncodeTLObject(b, _item)
+		if _err := tg.EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field attributes: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1405,6 +1473,9 @@ func (v *DecryptedMessageMediaPhoto) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaPhoto to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaPhoto) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaPhotoTypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1497,6 +1568,9 @@ func (v *DecryptedMessageMediaVideo) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaVideo to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaVideo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaVideoTypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1599,6 +1673,9 @@ func (v *DecryptedMessageMediaDocument46) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaDocument46 to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaDocument46) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaDocument46TypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1610,7 +1687,9 @@ func (v *DecryptedMessageMediaDocument46) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
 	for _, _item := range v.Attributes {
-		tg.EncodeTLObject(b, _item)
+		if _err := tg.EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field attributes: %w", _err)
+		}
 	}
 	tg.WriteString(b, v.Caption)
 	return nil
@@ -1711,6 +1790,9 @@ func (v *DecryptedMessageMediaVenue) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaVenue to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaVenue) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaVenueTypeID)
 	tg.WriteDouble(b, v.Lat)
 	tg.WriteDouble(b, v.Long)
@@ -1775,6 +1857,9 @@ func (v *DecryptedMessageMediaWebPage) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaWebPage to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaWebPage) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaWebPageTypeID)
 	tg.WriteString(b, v.URL)
 	return nil
@@ -1817,6 +1902,9 @@ func (v *DecryptedMessageMediaDocument) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageMediaDocument to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageMediaDocument) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageMediaDocumentTypeID)
 	tg.WriteBytes(b, v.Thumb)
 	tg.WriteInt(b, uint32(v.ThumbW))
@@ -1828,7 +1916,9 @@ func (v *DecryptedMessageMediaDocument) Encode(b *bytes.Buffer) error {
 	tg.WriteInt(b, 0x1cb5c415)
 	tg.WriteInt(b, uint32(len(v.Attributes)))
 	for _, _item := range v.Attributes {
-		tg.EncodeTLObject(b, _item)
+		if _err := tg.EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field attributes: %w", _err)
+		}
 	}
 	tg.WriteString(b, v.Caption)
 	return nil
@@ -2010,6 +2100,9 @@ func (v *DecryptedMessageActionSetMessageTTL) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionSetMessageTTL to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionSetMessageTTL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionSetMessageTTLTypeID)
 	tg.WriteInt(b, uint32(v.TTLSeconds))
 	return nil
@@ -2044,6 +2137,9 @@ func (v *DecryptedMessageActionReadMessages) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionReadMessages to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionReadMessages) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionReadMessagesTypeID)
 	tg.WriteVectorLong(b, v.RandomIds)
 	return nil
@@ -2078,6 +2174,9 @@ func (v *DecryptedMessageActionDeleteMessages) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionDeleteMessages to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionDeleteMessages) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionDeleteMessagesTypeID)
 	tg.WriteVectorLong(b, v.RandomIds)
 	return nil
@@ -2112,6 +2211,9 @@ func (v *DecryptedMessageActionScreenshotMessages) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionScreenshotMessages to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionScreenshotMessages) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionScreenshotMessagesTypeID)
 	tg.WriteVectorLong(b, v.RandomIds)
 	return nil
@@ -2145,6 +2247,9 @@ func (v *DecryptedMessageActionFlushHistory) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionFlushHistory to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionFlushHistory) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionFlushHistoryTypeID)
 	return nil
 }
@@ -2174,6 +2279,9 @@ func (v *DecryptedMessageActionResend) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionResend to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionResend) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionResendTypeID)
 	tg.WriteInt(b, uint32(v.StartSeqNo))
 	tg.WriteInt(b, uint32(v.EndSeqNo))
@@ -2214,6 +2322,9 @@ func (v *DecryptedMessageActionNotifyLayer) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionNotifyLayer to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionNotifyLayer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionNotifyLayerTypeID)
 	tg.WriteInt(b, uint32(v.Layer))
 	return nil
@@ -2248,8 +2359,13 @@ func (v *DecryptedMessageActionTyping) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionTyping to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionTyping) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionTypingTypeID)
-	tg.EncodeTLObject(b, v.Action)
+	if _err := tg.EncodeTLObject(b, v.Action); _err != nil {
+		return fmt.Errorf("encode field action: %w", _err)
+	}
 	return nil
 }
 
@@ -2287,6 +2403,9 @@ func (v *DecryptedMessageActionRequestKey) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionRequestKey to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionRequestKey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionRequestKeyTypeID)
 	tg.WriteLong(b, v.ExchangeID)
 	tg.WriteBytes(b, v.GA)
@@ -2329,6 +2448,9 @@ func (v *DecryptedMessageActionAcceptKey) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionAcceptKey to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionAcceptKey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionAcceptKeyTypeID)
 	tg.WriteLong(b, v.ExchangeID)
 	tg.WriteBytes(b, v.GB)
@@ -2375,6 +2497,9 @@ func (v *DecryptedMessageActionAbortKey) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionAbortKey to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionAbortKey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionAbortKeyTypeID)
 	tg.WriteLong(b, v.ExchangeID)
 	return nil
@@ -2410,6 +2535,9 @@ func (v *DecryptedMessageActionCommitKey) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionCommitKey to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionCommitKey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionCommitKeyTypeID)
 	tg.WriteLong(b, v.ExchangeID)
 	tg.WriteLong(b, v.KeyFingerprint)
@@ -2449,6 +2577,9 @@ func (v *DecryptedMessageActionNoop) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageActionNoop to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageActionNoop) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageActionNoopTypeID)
 	return nil
 }
@@ -2484,12 +2615,17 @@ func (v *DecryptedMessageLayer) ConstructorID() uint32 {
 
 // Encode serializes DecryptedMessageLayer to a bytes.Buffer using the TL binary protocol.
 func (v *DecryptedMessageLayer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DecryptedMessageLayerTypeID)
 	tg.WriteBytes(b, v.RandomBytes)
 	tg.WriteInt(b, uint32(v.Layer))
 	tg.WriteInt(b, uint32(v.InSeqNo))
 	tg.WriteInt(b, uint32(v.OutSeqNo))
-	tg.EncodeTLObject(b, v.Message)
+	if _err := tg.EncodeTLObject(b, v.Message); _err != nil {
+		return fmt.Errorf("encode field message: %w", _err)
+	}
 	return nil
 }
 
@@ -2625,6 +2761,9 @@ func (v *SendMessageTypingAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageTypingAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageTypingAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageTypingActionTypeID)
 	return nil
 }
@@ -2652,6 +2791,9 @@ func (v *SendMessageCancelAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageCancelAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageCancelAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageCancelActionTypeID)
 	return nil
 }
@@ -2679,6 +2821,9 @@ func (v *SendMessageRecordVideoAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageRecordVideoAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageRecordVideoAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageRecordVideoActionTypeID)
 	return nil
 }
@@ -2706,6 +2851,9 @@ func (v *SendMessageUploadVideoAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageUploadVideoAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageUploadVideoAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageUploadVideoActionTypeID)
 	return nil
 }
@@ -2733,6 +2881,9 @@ func (v *SendMessageRecordAudioAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageRecordAudioAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageRecordAudioAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageRecordAudioActionTypeID)
 	return nil
 }
@@ -2760,6 +2911,9 @@ func (v *SendMessageUploadAudioAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageUploadAudioAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageUploadAudioAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageUploadAudioActionTypeID)
 	return nil
 }
@@ -2787,6 +2941,9 @@ func (v *SendMessageUploadPhotoAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageUploadPhotoAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageUploadPhotoAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageUploadPhotoActionTypeID)
 	return nil
 }
@@ -2814,6 +2971,9 @@ func (v *SendMessageUploadDocumentAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageUploadDocumentAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageUploadDocumentAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageUploadDocumentActionTypeID)
 	return nil
 }
@@ -2841,6 +3001,9 @@ func (v *SendMessageGeoLocationAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageGeoLocationAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageGeoLocationAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageGeoLocationActionTypeID)
 	return nil
 }
@@ -2868,6 +3031,9 @@ func (v *SendMessageChooseContactAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageChooseContactAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageChooseContactAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageChooseContactActionTypeID)
 	return nil
 }
@@ -2895,6 +3061,9 @@ func (v *SendMessageRecordRoundAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageRecordRoundAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageRecordRoundAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageRecordRoundActionTypeID)
 	return nil
 }
@@ -2922,6 +3091,9 @@ func (v *SendMessageUploadRoundAction) ConstructorID() uint32 {
 
 // Encode serializes SendMessageUploadRoundAction to a bytes.Buffer using the TL binary protocol.
 func (v *SendMessageUploadRoundAction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, SendMessageUploadRoundActionTypeID)
 	return nil
 }
@@ -3079,6 +3251,9 @@ func (v *MessageEntityUnknown) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityUnknown to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityUnknown) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityUnknownTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3120,6 +3295,9 @@ func (v *MessageEntityMention) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityMention to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityMention) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityMentionTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3161,6 +3339,9 @@ func (v *MessageEntityHashtag) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityHashtag to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityHashtag) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityHashtagTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3202,6 +3383,9 @@ func (v *MessageEntityBotCommand) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityBotCommand to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityBotCommand) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityBotCommandTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3243,6 +3427,9 @@ func (v *MessageEntityURL) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityURL to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityURLTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3284,6 +3471,9 @@ func (v *MessageEntityEmail) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityEmail to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityEmail) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityEmailTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3325,6 +3515,9 @@ func (v *MessageEntityBold) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityBold to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityBold) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityBoldTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3366,6 +3559,9 @@ func (v *MessageEntityItalic) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityItalic to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityItalic) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityItalicTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3407,6 +3603,9 @@ func (v *MessageEntityCode) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityCode to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityCodeTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3449,6 +3648,9 @@ func (v *MessageEntityPre) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityPre to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityPre) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityPreTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3497,6 +3699,9 @@ func (v *MessageEntityTextURL) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityTextURL to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityTextURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityTextURLTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3545,6 +3750,9 @@ func (v *MessageEntityMentionName) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityMentionName to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityMentionName) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityMentionNameTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3592,6 +3800,9 @@ func (v *MessageEntityPhone) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityPhone to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityPhone) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityPhoneTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3633,6 +3844,9 @@ func (v *MessageEntityCashtag) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityCashtag to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityCashtag) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityCashtagTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3674,6 +3888,9 @@ func (v *MessageEntityBankCard) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityBankCard to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityBankCard) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityBankCardTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3715,6 +3932,9 @@ func (v *MessageEntityUnderline) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityUnderline to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityUnderline) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityUnderlineTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3756,6 +3976,9 @@ func (v *MessageEntityStrike) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityStrike to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityStrike) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityStrikeTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3797,6 +4020,9 @@ func (v *MessageEntityBlockquote) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityBlockquote to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityBlockquote) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityBlockquoteTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3838,6 +4064,9 @@ func (v *MessageEntitySpoiler) ConstructorID() uint32 {
 
 // Encode serializes MessageEntitySpoiler to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntitySpoiler) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntitySpoilerTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3880,6 +4109,9 @@ func (v *MessageEntityCustomEmoji) ConstructorID() uint32 {
 
 // Encode serializes MessageEntityCustomEmoji to a bytes.Buffer using the TL binary protocol.
 func (v *MessageEntityCustomEmoji) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, MessageEntityCustomEmojiTypeID)
 	tg.WriteInt(b, uint32(v.Offset))
 	tg.WriteInt(b, uint32(v.Length))
@@ -3946,6 +4178,9 @@ func (v *InputStickerSetShortName) ConstructorID() uint32 {
 
 // Encode serializes InputStickerSetShortName to a bytes.Buffer using the TL binary protocol.
 func (v *InputStickerSetShortName) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, InputStickerSetShortNameTypeID)
 	tg.WriteString(b, v.ShortName)
 	return nil
@@ -3979,6 +4214,9 @@ func (v *InputStickerSetEmpty) ConstructorID() uint32 {
 
 // Encode serializes InputStickerSetEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *InputStickerSetEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, InputStickerSetEmptyTypeID)
 	return nil
 }

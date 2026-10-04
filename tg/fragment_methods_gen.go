@@ -25,8 +25,13 @@ func (v *FragmentGetCollectibleInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes FragmentGetCollectibleInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *FragmentGetCollectibleInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, FragmentGetCollectibleInfoTypeID)
-	EncodeTLObject(b, v.Collectible)
+	if _err := EncodeTLObject(b, v.Collectible); _err != nil {
+		return fmt.Errorf("encode field collectible: %w", _err)
+	}
 	return nil
 }
 

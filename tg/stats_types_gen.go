@@ -45,32 +45,79 @@ func (v *StatsBroadcastStats) ConstructorID() uint32 {
 
 // Encode serializes StatsBroadcastStats to a bytes.Buffer using the TL binary protocol.
 func (v *StatsBroadcastStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsBroadcastStatsTypeID)
-	EncodeTLObject(b, v.Period)
-	EncodeTLObject(b, v.Followers)
-	EncodeTLObject(b, v.ViewsPerPost)
-	EncodeTLObject(b, v.SharesPerPost)
-	EncodeTLObject(b, v.ReactionsPerPost)
-	EncodeTLObject(b, v.ViewsPerStory)
-	EncodeTLObject(b, v.SharesPerStory)
-	EncodeTLObject(b, v.ReactionsPerStory)
-	EncodeTLObject(b, v.EnabledNotifications)
-	EncodeTLObject(b, v.GrowthGraph)
-	EncodeTLObject(b, v.FollowersGraph)
-	EncodeTLObject(b, v.MuteGraph)
-	EncodeTLObject(b, v.TopHoursGraph)
-	EncodeTLObject(b, v.InteractionsGraph)
-	EncodeTLObject(b, v.IvInteractionsGraph)
-	EncodeTLObject(b, v.ViewsBySourceGraph)
-	EncodeTLObject(b, v.NewFollowersBySourceGraph)
-	EncodeTLObject(b, v.LanguagesGraph)
-	EncodeTLObject(b, v.ReactionsByEmotionGraph)
-	EncodeTLObject(b, v.StoryInteractionsGraph)
-	EncodeTLObject(b, v.StoryReactionsByEmotionGraph)
+	if _err := EncodeTLObject(b, v.Period); _err != nil {
+		return fmt.Errorf("encode field period: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Followers); _err != nil {
+		return fmt.Errorf("encode field followers: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ViewsPerPost); _err != nil {
+		return fmt.Errorf("encode field views_per_post: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.SharesPerPost); _err != nil {
+		return fmt.Errorf("encode field shares_per_post: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReactionsPerPost); _err != nil {
+		return fmt.Errorf("encode field reactions_per_post: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ViewsPerStory); _err != nil {
+		return fmt.Errorf("encode field views_per_story: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.SharesPerStory); _err != nil {
+		return fmt.Errorf("encode field shares_per_story: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReactionsPerStory); _err != nil {
+		return fmt.Errorf("encode field reactions_per_story: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.EnabledNotifications); _err != nil {
+		return fmt.Errorf("encode field enabled_notifications: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.GrowthGraph); _err != nil {
+		return fmt.Errorf("encode field growth_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.FollowersGraph); _err != nil {
+		return fmt.Errorf("encode field followers_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.MuteGraph); _err != nil {
+		return fmt.Errorf("encode field mute_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.TopHoursGraph); _err != nil {
+		return fmt.Errorf("encode field top_hours_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.InteractionsGraph); _err != nil {
+		return fmt.Errorf("encode field interactions_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.IvInteractionsGraph); _err != nil {
+		return fmt.Errorf("encode field iv_interactions_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ViewsBySourceGraph); _err != nil {
+		return fmt.Errorf("encode field views_by_source_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.NewFollowersBySourceGraph); _err != nil {
+		return fmt.Errorf("encode field new_followers_by_source_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.LanguagesGraph); _err != nil {
+		return fmt.Errorf("encode field languages_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReactionsByEmotionGraph); _err != nil {
+		return fmt.Errorf("encode field reactions_by_emotion_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.StoryInteractionsGraph); _err != nil {
+		return fmt.Errorf("encode field story_interactions_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.StoryReactionsByEmotionGraph); _err != nil {
+		return fmt.Errorf("encode field story_reactions_by_emotion_graph: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.RecentPostsInteractions)))
 	for _, _item := range v.RecentPostsInteractions {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field recent_posts_interactions: %w", _err)
+		}
 	}
 	return nil
 }
@@ -335,39 +382,76 @@ func (v *StatsMegagroupStats) ConstructorID() uint32 {
 
 // Encode serializes StatsMegagroupStats to a bytes.Buffer using the TL binary protocol.
 func (v *StatsMegagroupStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsMegagroupStatsTypeID)
-	EncodeTLObject(b, v.Period)
-	EncodeTLObject(b, v.Members)
-	EncodeTLObject(b, v.Messages)
-	EncodeTLObject(b, v.Viewers)
-	EncodeTLObject(b, v.Posters)
-	EncodeTLObject(b, v.GrowthGraph)
-	EncodeTLObject(b, v.MembersGraph)
-	EncodeTLObject(b, v.NewMembersBySourceGraph)
-	EncodeTLObject(b, v.LanguagesGraph)
-	EncodeTLObject(b, v.MessagesGraph)
-	EncodeTLObject(b, v.ActionsGraph)
-	EncodeTLObject(b, v.TopHoursGraph)
-	EncodeTLObject(b, v.WeekdaysGraph)
+	if _err := EncodeTLObject(b, v.Period); _err != nil {
+		return fmt.Errorf("encode field period: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Members); _err != nil {
+		return fmt.Errorf("encode field members: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Messages); _err != nil {
+		return fmt.Errorf("encode field messages: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Viewers); _err != nil {
+		return fmt.Errorf("encode field viewers: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Posters); _err != nil {
+		return fmt.Errorf("encode field posters: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.GrowthGraph); _err != nil {
+		return fmt.Errorf("encode field growth_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.MembersGraph); _err != nil {
+		return fmt.Errorf("encode field members_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.NewMembersBySourceGraph); _err != nil {
+		return fmt.Errorf("encode field new_members_by_source_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.LanguagesGraph); _err != nil {
+		return fmt.Errorf("encode field languages_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.MessagesGraph); _err != nil {
+		return fmt.Errorf("encode field messages_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ActionsGraph); _err != nil {
+		return fmt.Errorf("encode field actions_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.TopHoursGraph); _err != nil {
+		return fmt.Errorf("encode field top_hours_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.WeekdaysGraph); _err != nil {
+		return fmt.Errorf("encode field weekdays_graph: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.TopPosters)))
 	for _, _item := range v.TopPosters {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field top_posters: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.TopAdmins)))
 	for _, _item := range v.TopAdmins {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field top_admins: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.TopInviters)))
 	for _, _item := range v.TopInviters {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field top_inviters: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -623,9 +707,16 @@ func (v *StatsMessageStats) ConstructorID() uint32 {
 
 // Encode serializes StatsMessageStats to a bytes.Buffer using the TL binary protocol.
 func (v *StatsMessageStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsMessageStatsTypeID)
-	EncodeTLObject(b, v.ViewsGraph)
-	EncodeTLObject(b, v.ReactionsByEmotionGraph)
+	if _err := EncodeTLObject(b, v.ViewsGraph); _err != nil {
+		return fmt.Errorf("encode field views_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReactionsByEmotionGraph); _err != nil {
+		return fmt.Errorf("encode field reactions_by_emotion_graph: %w", _err)
+	}
 	return nil
 }
 
@@ -677,9 +768,16 @@ func (v *StatsStoryStats) ConstructorID() uint32 {
 
 // Encode serializes StatsStoryStats to a bytes.Buffer using the TL binary protocol.
 func (v *StatsStoryStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsStoryStatsTypeID)
-	EncodeTLObject(b, v.ViewsGraph)
-	EncodeTLObject(b, v.ReactionsByEmotionGraph)
+	if _err := EncodeTLObject(b, v.ViewsGraph); _err != nil {
+		return fmt.Errorf("encode field views_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReactionsByEmotionGraph); _err != nil {
+		return fmt.Errorf("encode field reactions_by_emotion_graph: %w", _err)
+	}
 	return nil
 }
 
@@ -742,6 +840,9 @@ func (v *StatsPublicForwards) ConstructorID() uint32 {
 
 // Encode serializes StatsPublicForwards to a bytes.Buffer using the TL binary protocol.
 func (v *StatsPublicForwards) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsPublicForwardsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -749,7 +850,9 @@ func (v *StatsPublicForwards) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Forwards)))
 	for _, _item := range v.Forwards {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field forwards: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -757,12 +860,16 @@ func (v *StatsPublicForwards) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -891,8 +998,13 @@ func (v *StatsPollStats) ConstructorID() uint32 {
 
 // Encode serializes StatsPollStats to a bytes.Buffer using the TL binary protocol.
 func (v *StatsPollStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsPollStatsTypeID)
-	EncodeTLObject(b, v.VotesGraph)
+	if _err := EncodeTLObject(b, v.VotesGraph); _err != nil {
+		return fmt.Errorf("encode field votes_graph: %w", _err)
+	}
 	return nil
 }
 

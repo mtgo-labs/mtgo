@@ -43,8 +43,13 @@ func (v *UploadFile) ConstructorID() uint32 {
 
 // Encode serializes UploadFile to a bytes.Buffer using the TL binary protocol.
 func (v *UploadFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadFileTypeID)
-	EncodeTLObject(b, v.Type)
+	if _err := EncodeTLObject(b, v.Type); _err != nil {
+		return fmt.Errorf("encode field type: %w", _err)
+	}
 	WriteInt(b, uint32(v.Mtime))
 	WriteBytes(b, v.Bytes)
 	return nil
@@ -99,6 +104,9 @@ func (v *UploadFileCDNRedirect) ConstructorID() uint32 {
 
 // Encode serializes UploadFileCDNRedirect to a bytes.Buffer using the TL binary protocol.
 func (v *UploadFileCDNRedirect) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadFileCDNRedirectTypeID)
 	WriteInt(b, uint32(v.DCID))
 	WriteBytes(b, v.FileToken)
@@ -107,7 +115,9 @@ func (v *UploadFileCDNRedirect) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.FileHashes)))
 	for _, _item := range v.FileHashes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field file_hashes: %w", _err)
+		}
 	}
 	return nil
 }
@@ -191,10 +201,15 @@ func (v *UploadWebFile) ConstructorID() uint32 {
 
 // Encode serializes UploadWebFile to a bytes.Buffer using the TL binary protocol.
 func (v *UploadWebFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadWebFileTypeID)
 	WriteInt(b, uint32(v.Size))
 	WriteString(b, v.MimeType)
-	EncodeTLObject(b, v.FileType)
+	if _err := EncodeTLObject(b, v.FileType); _err != nil {
+		return fmt.Errorf("encode field file_type: %w", _err)
+	}
 	WriteInt(b, uint32(v.Mtime))
 	WriteBytes(b, v.Bytes)
 	return nil
@@ -275,6 +290,9 @@ func (v *UploadCDNFileReuploadNeeded) ConstructorID() uint32 {
 
 // Encode serializes UploadCDNFileReuploadNeeded to a bytes.Buffer using the TL binary protocol.
 func (v *UploadCDNFileReuploadNeeded) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadCDNFileReuploadNeededTypeID)
 	WriteBytes(b, v.RequestToken)
 	return nil
@@ -311,6 +329,9 @@ func (v *UploadCDNFile) ConstructorID() uint32 {
 
 // Encode serializes UploadCDNFile to a bytes.Buffer using the TL binary protocol.
 func (v *UploadCDNFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadCDNFileTypeID)
 	WriteBytes(b, v.Bytes)
 	return nil

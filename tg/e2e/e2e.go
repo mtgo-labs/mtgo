@@ -25,5 +25,5 @@ func ReadE2ETLObject(r *tg.Reader) (tg.TLObject, error) {
 
 // EncodeTLObject encodes any TLObject to the buffer.
 func EncodeTLObject(b *bytes.Buffer, obj tg.TLObject) error {
-	return obj.Encode(b)
+	return tg.EncodeTLObject(b, obj)
 }

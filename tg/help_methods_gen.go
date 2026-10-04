@@ -24,6 +24,9 @@ func (v *HelpGetConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetConfigTypeID)
 	return nil
 }
@@ -64,6 +67,9 @@ func (v *HelpGetNearestDCRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetNearestDCRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetNearestDCRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetNearestDCTypeID)
 	return nil
 }
@@ -105,6 +111,9 @@ func (v *HelpGetAppUpdateRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetAppUpdateRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetAppUpdateRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetAppUpdateTypeID)
 	WriteString(b, v.Source)
 	return nil
@@ -146,6 +155,9 @@ func (v *HelpGetInviteTextRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetInviteTextRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetInviteTextRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetInviteTextTypeID)
 	return nil
 }
@@ -186,6 +198,9 @@ func (v *HelpGetSupportRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetSupportRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetSupportRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetSupportTypeID)
 	return nil
 }
@@ -228,6 +243,9 @@ func (v *HelpSetBotUpdatesStatusRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpSetBotUpdatesStatusRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpSetBotUpdatesStatusRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpSetBotUpdatesStatusTypeID)
 	WriteInt(b, uint32(v.PendingUpdatesCount))
 	WriteString(b, v.Message)
@@ -268,6 +286,9 @@ func (v *HelpGetCDNConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetCDNConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetCDNConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetCDNConfigTypeID)
 	return nil
 }
@@ -309,6 +330,9 @@ func (v *HelpGetRecentMeUrlsRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetRecentMeUrlsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetRecentMeUrlsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetRecentMeUrlsTypeID)
 	WriteString(b, v.Referer)
 	return nil
@@ -350,6 +374,9 @@ func (v *HelpGetTermsOfServiceUpdateRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetTermsOfServiceUpdateRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetTermsOfServiceUpdateRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetTermsOfServiceUpdateTypeID)
 	return nil
 }
@@ -391,8 +418,13 @@ func (v *HelpAcceptTermsOfServiceRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpAcceptTermsOfServiceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpAcceptTermsOfServiceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpAcceptTermsOfServiceTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -431,6 +463,9 @@ func (v *HelpGetDeepLinkInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetDeepLinkInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetDeepLinkInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetDeepLinkInfoTypeID)
 	WriteString(b, v.Path)
 	return nil
@@ -473,6 +508,9 @@ func (v *HelpGetAppConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetAppConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetAppConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetAppConfigTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -515,11 +553,16 @@ func (v *HelpSaveAppLogRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpSaveAppLogRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpSaveAppLogRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpSaveAppLogTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Events)))
 	for _, _item := range v.Events {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field events: %w", _err)
+		}
 	}
 	return nil
 }
@@ -559,6 +602,9 @@ func (v *HelpGetPassportConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetPassportConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetPassportConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetPassportConfigTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -600,6 +646,9 @@ func (v *HelpGetSupportNameRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetSupportNameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetSupportNameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetSupportNameTypeID)
 	return nil
 }
@@ -641,8 +690,13 @@ func (v *HelpGetUserInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetUserInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetUserInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetUserInfoTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -685,13 +739,20 @@ func (v *HelpEditUserInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpEditUserInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpEditUserInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpEditUserInfoTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteString(b, v.Message)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Entities)))
 	for _, _item := range v.Entities {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field entities: %w", _err)
+		}
 	}
 	return nil
 }
@@ -732,6 +793,9 @@ func (v *HelpGetPromoDataRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetPromoDataRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetPromoDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetPromoDataTypeID)
 	return nil
 }
@@ -773,8 +837,13 @@ func (v *HelpHidePromoDataRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpHidePromoDataRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpHidePromoDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpHidePromoDataTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -814,8 +883,13 @@ func (v *HelpDismissSuggestionRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpDismissSuggestionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpDismissSuggestionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpDismissSuggestionTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Suggestion)
 	return nil
 }
@@ -856,6 +930,9 @@ func (v *HelpGetCountriesListRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetCountriesListRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetCountriesListRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetCountriesListTypeID)
 	WriteString(b, v.LangCode)
 	WriteInt(b, uint32(v.Hash))
@@ -898,6 +975,9 @@ func (v *HelpGetPremiumPromoRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetPremiumPromoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetPremiumPromoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetPremiumPromoTypeID)
 	return nil
 }
@@ -939,6 +1019,9 @@ func (v *HelpGetPeerColorsRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetPeerColorsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetPeerColorsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetPeerColorsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -981,6 +1064,9 @@ func (v *HelpGetPeerProfileColorsRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetPeerProfileColorsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetPeerProfileColorsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetPeerProfileColorsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -1023,6 +1109,9 @@ func (v *HelpGetTimezonesListRequest) ConstructorID() uint32 {
 
 // Encode serializes HelpGetTimezonesListRequest to a bytes.Buffer using the TL binary protocol.
 func (v *HelpGetTimezonesListRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, HelpGetTimezonesListTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil

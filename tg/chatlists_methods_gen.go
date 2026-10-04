@@ -27,13 +27,20 @@ func (v *ChatlistsExportChatlistInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsExportChatlistInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsExportChatlistInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsExportChatlistInviteTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	WriteString(b, v.Title)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -76,8 +83,13 @@ func (v *ChatlistsDeleteExportedInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsDeleteExportedInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsDeleteExportedInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsDeleteExportedInviteTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	WriteString(b, v.Slug)
 	return nil
 }
@@ -131,10 +143,15 @@ func (v *ChatlistsEditExportedInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsEditExportedInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsEditExportedInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsEditExportedInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	WriteString(b, v.Slug)
 	if v.Flags.Has(1) {
 		WriteString(b, v.Title)
@@ -143,7 +160,9 @@ func (v *ChatlistsEditExportedInviteRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Peers)))
 		for _, _item := range v.Peers {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field peers: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -186,8 +205,13 @@ func (v *ChatlistsGetExportedInvitesRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsGetExportedInvitesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsGetExportedInvitesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsGetExportedInvitesTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	return nil
 }
 
@@ -228,6 +252,9 @@ func (v *ChatlistsCheckChatlistInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsCheckChatlistInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsCheckChatlistInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsCheckChatlistInviteTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -271,12 +298,17 @@ func (v *ChatlistsJoinChatlistInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsJoinChatlistInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsJoinChatlistInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsJoinChatlistInviteTypeID)
 	WriteString(b, v.Slug)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -318,8 +350,13 @@ func (v *ChatlistsGetChatlistUpdatesRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsGetChatlistUpdatesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsGetChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsGetChatlistUpdatesTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	return nil
 }
 
@@ -361,12 +398,19 @@ func (v *ChatlistsJoinChatlistUpdatesRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsJoinChatlistUpdatesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsJoinChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsJoinChatlistUpdatesTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -408,8 +452,13 @@ func (v *ChatlistsHideChatlistUpdatesRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsHideChatlistUpdatesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsHideChatlistUpdatesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsHideChatlistUpdatesTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	return nil
 }
 
@@ -448,8 +497,13 @@ func (v *ChatlistsGetLeaveChatlistSuggestionsRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsGetLeaveChatlistSuggestionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsGetLeaveChatlistSuggestionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsGetLeaveChatlistSuggestionsTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	return nil
 }
 
@@ -488,12 +542,19 @@ func (v *ChatlistsLeaveChatlistRequest) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsLeaveChatlistRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsLeaveChatlistRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsLeaveChatlistTypeID)
-	EncodeTLObject(b, v.Chatlist)
+	if _err := EncodeTLObject(b, v.Chatlist); _err != nil {
+		return fmt.Errorf("encode field chatlist: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }

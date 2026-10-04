@@ -40,6 +40,9 @@ func (v *EphemeralWelcomeMessagesNotModified) ConstructorID() uint32 {
 
 // Encode serializes EphemeralWelcomeMessagesNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralWelcomeMessagesNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralWelcomeMessagesNotModifiedTypeID)
 	return nil
 }
@@ -71,12 +74,17 @@ func (v *EphemeralWelcomeMessages) ConstructorID() uint32 {
 
 // Encode serializes EphemeralWelcomeMessages to a bytes.Buffer using the TL binary protocol.
 func (v *EphemeralWelcomeMessages) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EphemeralWelcomeMessagesTypeID)
 	WriteLong(b, v.Hash)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Messages)))
 	for _, _item := range v.Messages {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field messages: %w", _err)
+		}
 	}
 	return nil
 }

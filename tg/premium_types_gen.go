@@ -35,6 +35,9 @@ func (v *PremiumBoostsList) ConstructorID() uint32 {
 
 // Encode serializes PremiumBoostsList to a bytes.Buffer using the TL binary protocol.
 func (v *PremiumBoostsList) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PremiumBoostsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -42,7 +45,9 @@ func (v *PremiumBoostsList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Boosts)))
 	for _, _item := range v.Boosts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field boosts: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -50,7 +55,9 @@ func (v *PremiumBoostsList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -155,21 +162,30 @@ func (v *PremiumMyBoosts) ConstructorID() uint32 {
 
 // Encode serializes PremiumMyBoosts to a bytes.Buffer using the TL binary protocol.
 func (v *PremiumMyBoosts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PremiumMyBoostsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.MyBoosts)))
 	for _, _item := range v.MyBoosts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field my_boosts: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -313,6 +329,9 @@ func (v *PremiumBoostsStatus) ConstructorID() uint32 {
 
 // Encode serializes PremiumBoostsStatus to a bytes.Buffer using the TL binary protocol.
 func (v *PremiumBoostsStatus) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PremiumBoostsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -326,14 +345,18 @@ func (v *PremiumBoostsStatus) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.NextLevelBoosts))
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.PremiumAudience)
+		if _err := EncodeTLObject(b, v.PremiumAudience); _err != nil {
+			return fmt.Errorf("encode field premium_audience: %w", _err)
+		}
 	}
 	WriteString(b, v.BoostURL)
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.PrepaidGiveaways)))
 		for _, _item := range v.PrepaidGiveaways {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field prepaid_giveaways: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {

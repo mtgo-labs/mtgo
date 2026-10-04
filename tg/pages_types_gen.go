@@ -214,6 +214,9 @@ func (v *TextEmpty) ConstructorID() uint32 {
 
 // Encode serializes TextEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *TextEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextEmptyTypeID)
 	return nil
 }
@@ -244,6 +247,9 @@ func (v *TextPlain) ConstructorID() uint32 {
 
 // Encode serializes TextPlain to a bytes.Buffer using the TL binary protocol.
 func (v *TextPlain) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextPlainTypeID)
 	WriteString(b, v.Text)
 	return nil
@@ -280,8 +286,13 @@ func (v *TextBold) ConstructorID() uint32 {
 
 // Encode serializes TextBold to a bytes.Buffer using the TL binary protocol.
 func (v *TextBold) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextBoldTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -320,8 +331,13 @@ func (v *TextItalic) ConstructorID() uint32 {
 
 // Encode serializes TextItalic to a bytes.Buffer using the TL binary protocol.
 func (v *TextItalic) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextItalicTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -360,8 +376,13 @@ func (v *TextUnderline) ConstructorID() uint32 {
 
 // Encode serializes TextUnderline to a bytes.Buffer using the TL binary protocol.
 func (v *TextUnderline) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextUnderlineTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -400,8 +421,13 @@ func (v *TextStrike) ConstructorID() uint32 {
 
 // Encode serializes TextStrike to a bytes.Buffer using the TL binary protocol.
 func (v *TextStrike) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextStrikeTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -440,8 +466,13 @@ func (v *TextFixed) ConstructorID() uint32 {
 
 // Encode serializes TextFixed to a bytes.Buffer using the TL binary protocol.
 func (v *TextFixed) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextFixedTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -482,8 +513,13 @@ func (v *TextURL) ConstructorID() uint32 {
 
 // Encode serializes TextURL to a bytes.Buffer using the TL binary protocol.
 func (v *TextURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextURLTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteString(b, v.URL)
 	WriteLong(b, v.WebpageID)
 	return nil
@@ -535,8 +571,13 @@ func (v *TextEmail) ConstructorID() uint32 {
 
 // Encode serializes TextEmail to a bytes.Buffer using the TL binary protocol.
 func (v *TextEmail) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextEmailTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteString(b, v.Email)
 	return nil
 }
@@ -581,11 +622,16 @@ func (v *TextConcat) ConstructorID() uint32 {
 
 // Encode serializes TextConcat to a bytes.Buffer using the TL binary protocol.
 func (v *TextConcat) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextConcatTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Texts)))
 	for _, _item := range v.Texts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field texts: %w", _err)
+		}
 	}
 	return nil
 }
@@ -642,8 +688,13 @@ func (v *TextSubscript) ConstructorID() uint32 {
 
 // Encode serializes TextSubscript to a bytes.Buffer using the TL binary protocol.
 func (v *TextSubscript) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextSubscriptTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -682,8 +733,13 @@ func (v *TextSuperscript) ConstructorID() uint32 {
 
 // Encode serializes TextSuperscript to a bytes.Buffer using the TL binary protocol.
 func (v *TextSuperscript) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextSuperscriptTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -722,8 +778,13 @@ func (v *TextMarked) ConstructorID() uint32 {
 
 // Encode serializes TextMarked to a bytes.Buffer using the TL binary protocol.
 func (v *TextMarked) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextMarkedTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -763,8 +824,13 @@ func (v *TextPhone) ConstructorID() uint32 {
 
 // Encode serializes TextPhone to a bytes.Buffer using the TL binary protocol.
 func (v *TextPhone) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextPhoneTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteString(b, v.Phone)
 	return nil
 }
@@ -811,6 +877,9 @@ func (v *TextImage) ConstructorID() uint32 {
 
 // Encode serializes TextImage to a bytes.Buffer using the TL binary protocol.
 func (v *TextImage) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextImageTypeID)
 	WriteLong(b, v.DocumentID)
 	WriteInt(b, uint32(v.W))
@@ -860,8 +929,13 @@ func (v *TextAnchor) ConstructorID() uint32 {
 
 // Encode serializes TextAnchor to a bytes.Buffer using the TL binary protocol.
 func (v *TextAnchor) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextAnchorTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteString(b, v.Name)
 	return nil
 }
@@ -906,6 +980,9 @@ func (v *TextMath) ConstructorID() uint32 {
 
 // Encode serializes TextMath to a bytes.Buffer using the TL binary protocol.
 func (v *TextMath) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextMathTypeID)
 	WriteString(b, v.Source)
 	return nil
@@ -943,6 +1020,9 @@ func (v *TextCustomEmoji) ConstructorID() uint32 {
 
 // Encode serializes TextCustomEmoji to a bytes.Buffer using the TL binary protocol.
 func (v *TextCustomEmoji) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextCustomEmojiTypeID)
 	WriteLong(b, v.DocumentID)
 	WriteString(b, v.Alt)
@@ -985,8 +1065,13 @@ func (v *TextSpoiler) ConstructorID() uint32 {
 
 // Encode serializes TextSpoiler to a bytes.Buffer using the TL binary protocol.
 func (v *TextSpoiler) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextSpoilerTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1025,8 +1110,13 @@ func (v *TextMention) ConstructorID() uint32 {
 
 // Encode serializes TextMention to a bytes.Buffer using the TL binary protocol.
 func (v *TextMention) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextMentionTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1065,8 +1155,13 @@ func (v *TextHashtag) ConstructorID() uint32 {
 
 // Encode serializes TextHashtag to a bytes.Buffer using the TL binary protocol.
 func (v *TextHashtag) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextHashtagTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1105,8 +1200,13 @@ func (v *TextBotCommand) ConstructorID() uint32 {
 
 // Encode serializes TextBotCommand to a bytes.Buffer using the TL binary protocol.
 func (v *TextBotCommand) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextBotCommandTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1145,8 +1245,13 @@ func (v *TextCashtag) ConstructorID() uint32 {
 
 // Encode serializes TextCashtag to a bytes.Buffer using the TL binary protocol.
 func (v *TextCashtag) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextCashtagTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1185,8 +1290,13 @@ func (v *TextAutoURL) ConstructorID() uint32 {
 
 // Encode serializes TextAutoURL to a bytes.Buffer using the TL binary protocol.
 func (v *TextAutoURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextAutoURLTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1225,8 +1335,13 @@ func (v *TextAutoEmail) ConstructorID() uint32 {
 
 // Encode serializes TextAutoEmail to a bytes.Buffer using the TL binary protocol.
 func (v *TextAutoEmail) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextAutoEmailTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1265,8 +1380,13 @@ func (v *TextAutoPhone) ConstructorID() uint32 {
 
 // Encode serializes TextAutoPhone to a bytes.Buffer using the TL binary protocol.
 func (v *TextAutoPhone) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextAutoPhoneTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1305,8 +1425,13 @@ func (v *TextBankCard) ConstructorID() uint32 {
 
 // Encode serializes TextBankCard to a bytes.Buffer using the TL binary protocol.
 func (v *TextBankCard) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextBankCardTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1346,8 +1471,13 @@ func (v *TextMentionName) ConstructorID() uint32 {
 
 // Encode serializes TextMentionName to a bytes.Buffer using the TL binary protocol.
 func (v *TextMentionName) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextMentionNameTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteLong(b, v.UserID)
 	return nil
 }
@@ -1422,10 +1552,15 @@ func (v *TextDate) ConstructorID() uint32 {
 
 // Encode serializes TextDate to a bytes.Buffer using the TL binary protocol.
 func (v *TextDate) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextDateTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteInt(b, uint32(v.Date))
 	return nil
 }
@@ -1482,9 +1617,16 @@ func (v *TextDiff) ConstructorID() uint32 {
 
 // Encode serializes TextDiff to a bytes.Buffer using the TL binary protocol.
 func (v *TextDiff) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextDiffTypeID)
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.OldText)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.OldText); _err != nil {
+		return fmt.Errorf("encode field old_text: %w", _err)
+	}
 	return nil
 }
 
@@ -1542,13 +1684,22 @@ func (v *TextButton) ConstructorID() uint32 {
 
 // Encode serializes TextButton to a bytes.Buffer using the TL binary protocol.
 func (v *TextButton) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, TextButtonTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.Type)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Type); _err != nil {
+		return fmt.Errorf("encode field type: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Style)
+		if _err := EncodeTLObject(b, v.Style); _err != nil {
+			return fmt.Errorf("encode field style: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1866,6 +2017,9 @@ func (v *PageBlockUnsupported) ConstructorID() uint32 {
 
 // Encode serializes PageBlockUnsupported to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockUnsupported) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockUnsupportedTypeID)
 	return nil
 }
@@ -1896,8 +2050,13 @@ func (v *PageBlockTitle) ConstructorID() uint32 {
 
 // Encode serializes PageBlockTitle to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockTitle) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockTitleTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1936,8 +2095,13 @@ func (v *PageBlockSubtitle) ConstructorID() uint32 {
 
 // Encode serializes PageBlockSubtitle to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockSubtitle) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockSubtitleTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -1977,8 +2141,13 @@ func (v *PageBlockAuthorDate) ConstructorID() uint32 {
 
 // Encode serializes PageBlockAuthorDate to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockAuthorDate) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockAuthorDateTypeID)
-	EncodeTLObject(b, v.Author)
+	if _err := EncodeTLObject(b, v.Author); _err != nil {
+		return fmt.Errorf("encode field author: %w", _err)
+	}
 	WriteInt(b, uint32(v.PublishedDate))
 	return nil
 }
@@ -2023,8 +2192,13 @@ func (v *PageBlockHeader) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeader to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeader) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeaderTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -2063,8 +2237,13 @@ func (v *PageBlockSubheader) ConstructorID() uint32 {
 
 // Encode serializes PageBlockSubheader to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockSubheader) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockSubheaderTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -2103,8 +2282,13 @@ func (v *PageBlockParagraph) ConstructorID() uint32 {
 
 // Encode serializes PageBlockParagraph to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockParagraph) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockParagraphTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -2144,8 +2328,13 @@ func (v *PageBlockPreformatted) ConstructorID() uint32 {
 
 // Encode serializes PageBlockPreformatted to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockPreformatted) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockPreformattedTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteString(b, v.Language)
 	return nil
 }
@@ -2190,8 +2379,13 @@ func (v *PageBlockFooter) ConstructorID() uint32 {
 
 // Encode serializes PageBlockFooter to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockFooter) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockFooterTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -2229,6 +2423,9 @@ func (v *PageBlockDivider) ConstructorID() uint32 {
 
 // Encode serializes PageBlockDivider to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockDivider) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockDividerTypeID)
 	return nil
 }
@@ -2259,6 +2456,9 @@ func (v *PageBlockAnchor) ConstructorID() uint32 {
 
 // Encode serializes PageBlockAnchor to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockAnchor) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockAnchorTypeID)
 	WriteString(b, v.Name)
 	return nil
@@ -2295,11 +2495,16 @@ func (v *PageBlockList) ConstructorID() uint32 {
 
 // Encode serializes PageBlockList to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockList) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockListTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Items)))
 	for _, _item := range v.Items {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field items: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2366,11 +2571,18 @@ func (v *PageBlockBlockquote) ConstructorID() uint32 {
 
 // Encode serializes PageBlockBlockquote to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockBlockquote) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockBlockquoteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2425,9 +2637,16 @@ func (v *PageBlockPullquote) ConstructorID() uint32 {
 
 // Encode serializes PageBlockPullquote to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockPullquote) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockPullquoteTypeID)
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2493,11 +2712,16 @@ func (v *PageBlockPhoto) ConstructorID() uint32 {
 
 // Encode serializes PageBlockPhoto to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockPhoto) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockPhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.PhotoID)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.URL)
 	}
@@ -2585,11 +2809,16 @@ func (v *PageBlockVideo) ConstructorID() uint32 {
 
 // Encode serializes PageBlockVideo to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockVideo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockVideoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.VideoID)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2641,8 +2870,13 @@ func (v *PageBlockCover) ConstructorID() uint32 {
 
 // Encode serializes PageBlockCover to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockCover) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockCoverTypeID)
-	EncodeTLObject(b, v.Cover)
+	if _err := EncodeTLObject(b, v.Cover); _err != nil {
+		return fmt.Errorf("encode field cover: %w", _err)
+	}
 	return nil
 }
 
@@ -2714,6 +2948,9 @@ func (v *PageBlockEmbed) ConstructorID() uint32 {
 
 // Encode serializes PageBlockEmbed to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockEmbed) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockEmbedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2732,7 +2969,9 @@ func (v *PageBlockEmbed) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(5) {
 		WriteInt(b, uint32(v.H))
 	}
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2819,6 +3058,9 @@ func (v *PageBlockEmbedPost) ConstructorID() uint32 {
 
 // Encode serializes PageBlockEmbedPost to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockEmbedPost) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockEmbedPostTypeID)
 	WriteString(b, v.URL)
 	WriteLong(b, v.WebpageID)
@@ -2828,9 +3070,13 @@ func (v *PageBlockEmbedPost) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2921,13 +3167,20 @@ func (v *PageBlockCollage) ConstructorID() uint32 {
 
 // Encode serializes PageBlockCollage to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockCollage) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockCollageTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Items)))
 	for _, _item := range v.Items {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field items: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -2993,13 +3246,20 @@ func (v *PageBlockSlideshow) ConstructorID() uint32 {
 
 // Encode serializes PageBlockSlideshow to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockSlideshow) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockSlideshowTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Items)))
 	for _, _item := range v.Items {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field items: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -3064,8 +3324,13 @@ func (v *PageBlockChannel) ConstructorID() uint32 {
 
 // Encode serializes PageBlockChannel to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockChannel) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockChannelTypeID)
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	return nil
 }
 
@@ -3105,9 +3370,14 @@ func (v *PageBlockAudio) ConstructorID() uint32 {
 
 // Encode serializes PageBlockAudio to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockAudio) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockAudioTypeID)
 	WriteLong(b, v.AudioID)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -3151,8 +3421,13 @@ func (v *PageBlockKicker) ConstructorID() uint32 {
 
 // Encode serializes PageBlockKicker to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockKicker) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockKickerTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3209,14 +3484,21 @@ func (v *PageBlockTable) ConstructorID() uint32 {
 
 // Encode serializes PageBlockTable to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockTable) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockTableTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Title)
+	if _err := EncodeTLObject(b, v.Title); _err != nil {
+		return fmt.Errorf("encode field title: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rows)))
 	for _, _item := range v.Rows {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field rows: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3307,13 +3589,18 @@ func (v *PageBlockOrderedList) ConstructorID() uint32 {
 
 // Encode serializes PageBlockOrderedList to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockOrderedList) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockOrderedListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Items)))
 	for _, _item := range v.Items {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field items: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.Start))
@@ -3406,15 +3693,22 @@ func (v *PageBlockDetails) ConstructorID() uint32 {
 
 // Encode serializes PageBlockDetails to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockDetails) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockDetailsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Title)
+	if _err := EncodeTLObject(b, v.Title); _err != nil {
+		return fmt.Errorf("encode field title: %w", _err)
+	}
 	return nil
 }
 
@@ -3486,12 +3780,19 @@ func (v *PageBlockRelatedArticles) ConstructorID() uint32 {
 
 // Encode serializes PageBlockRelatedArticles to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockRelatedArticles) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockRelatedArticlesTypeID)
-	EncodeTLObject(b, v.Title)
+	if _err := EncodeTLObject(b, v.Title); _err != nil {
+		return fmt.Errorf("encode field title: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Articles)))
 	for _, _item := range v.Articles {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field articles: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3561,12 +3862,19 @@ func (v *PageBlockMap) ConstructorID() uint32 {
 
 // Encode serializes PageBlockMap to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockMap) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockMapTypeID)
-	EncodeTLObject(b, v.Geo)
+	if _err := EncodeTLObject(b, v.Geo); _err != nil {
+		return fmt.Errorf("encode field geo: %w", _err)
+	}
 	WriteInt(b, uint32(v.Zoom))
 	WriteInt(b, uint32(v.W))
 	WriteInt(b, uint32(v.H))
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -3629,8 +3937,13 @@ func (v *PageBlockHeading1) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading1 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading1) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading1TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3669,8 +3982,13 @@ func (v *PageBlockHeading2) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading2 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading2) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading2TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3709,8 +4027,13 @@ func (v *PageBlockHeading3) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading3 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading3) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading3TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3749,8 +4072,13 @@ func (v *PageBlockHeading4) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading4 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading4) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading4TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3789,8 +4117,13 @@ func (v *PageBlockHeading5) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading5 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading5) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading5TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3829,8 +4162,13 @@ func (v *PageBlockHeading6) ConstructorID() uint32 {
 
 // Encode serializes PageBlockHeading6 to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockHeading6) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockHeading6TypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3869,6 +4207,9 @@ func (v *PageBlockMath) ConstructorID() uint32 {
 
 // Encode serializes PageBlockMath to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockMath) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockMathTypeID)
 	WriteString(b, v.Source)
 	return nil
@@ -3905,8 +4246,13 @@ func (v *PageBlockThinking) ConstructorID() uint32 {
 
 // Encode serializes PageBlockThinking to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockThinking) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockThinkingTypeID)
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -3949,12 +4295,19 @@ func (v *InputPageBlockMap) ConstructorID() uint32 {
 
 // Encode serializes InputPageBlockMap to a bytes.Buffer using the TL binary protocol.
 func (v *InputPageBlockMap) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPageBlockMapTypeID)
-	EncodeTLObject(b, v.Geo)
+	if _err := EncodeTLObject(b, v.Geo); _err != nil {
+		return fmt.Errorf("encode field geo: %w", _err)
+	}
 	WriteInt(b, uint32(v.Zoom))
 	WriteInt(b, uint32(v.W))
 	WriteInt(b, uint32(v.H))
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -4018,13 +4371,20 @@ func (v *PageBlockBlockquoteBlocks) ConstructorID() uint32 {
 
 // Encode serializes PageBlockBlockquoteBlocks to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockBlockquoteBlocks) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockBlockquoteBlocksTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -4106,13 +4466,18 @@ func (v *PageBlockButtonRow) ConstructorID() uint32 {
 
 // Encode serializes PageBlockButtonRow to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockButtonRow) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockButtonRowTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Buttons)))
 	for _, _item := range v.Buttons {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field buttons: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4178,9 +4543,14 @@ func (v *PageBlockDocument) ConstructorID() uint32 {
 
 // Encode serializes PageBlockDocument to a bytes.Buffer using the TL binary protocol.
 func (v *PageBlockDocument) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageBlockDocumentTypeID)
 	WriteLong(b, v.DocumentID)
-	EncodeTLObject(b, v.Caption)
+	if _err := EncodeTLObject(b, v.Caption); _err != nil {
+		return fmt.Errorf("encode field caption: %w", _err)
+	}
 	return nil
 }
 
@@ -4263,11 +4633,16 @@ func (v *PageTableCell) ConstructorID() uint32 {
 
 // Encode serializes PageTableCell to a bytes.Buffer using the TL binary protocol.
 func (v *PageTableCell) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageTableCellTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(7) {
-		EncodeTLObject(b, v.Text)
+		if _err := EncodeTLObject(b, v.Text); _err != nil {
+			return fmt.Errorf("encode field text: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.Colspan))
@@ -4342,11 +4717,16 @@ func (v *PageTableRow) ConstructorID() uint32 {
 
 // Encode serializes PageTableRow to a bytes.Buffer using the TL binary protocol.
 func (v *PageTableRow) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageTableRowTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Cells)))
 	for _, _item := range v.Cells {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field cells: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4407,9 +4787,16 @@ func (v *PageCaption) ConstructorID() uint32 {
 
 // Encode serializes PageCaption to a bytes.Buffer using the TL binary protocol.
 func (v *PageCaption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageCaptionTypeID)
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.Credit)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Credit); _err != nil {
+		return fmt.Errorf("encode field credit: %w", _err)
+	}
 	return nil
 }
 
@@ -4490,10 +4877,15 @@ func (v *PageListItemText) ConstructorID() uint32 {
 
 // Encode serializes PageListItemText to a bytes.Buffer using the TL binary protocol.
 func (v *PageListItemText) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageListItemTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -4552,13 +4944,18 @@ func (v *PageListItemBlocks) ConstructorID() uint32 {
 
 // Encode serializes PageListItemBlocks to a bytes.Buffer using the TL binary protocol.
 func (v *PageListItemBlocks) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageListItemBlocksTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4667,13 +5064,18 @@ func (v *PageListOrderedItemText) ConstructorID() uint32 {
 
 // Encode serializes PageListOrderedItemText to a bytes.Buffer using the TL binary protocol.
 func (v *PageListOrderedItemText) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageListOrderedItemTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(2) {
 		WriteString(b, v.Num)
 	}
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.Value))
 	}
@@ -4771,6 +5173,9 @@ func (v *PageListOrderedItemBlocks) ConstructorID() uint32 {
 
 // Encode serializes PageListOrderedItemBlocks to a bytes.Buffer using the TL binary protocol.
 func (v *PageListOrderedItemBlocks) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageListOrderedItemBlocksTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4780,7 +5185,9 @@ func (v *PageListOrderedItemBlocks) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.Value))
@@ -4900,6 +5307,9 @@ func (v *PageRelatedArticle) ConstructorID() uint32 {
 
 // Encode serializes PageRelatedArticle to a bytes.Buffer using the TL binary protocol.
 func (v *PageRelatedArticle) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageRelatedArticleTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5026,6 +5436,9 @@ func (v *Page) ConstructorID() uint32 {
 
 // Encode serializes Page to a bytes.Buffer using the TL binary protocol.
 func (v *Page) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5033,17 +5446,23 @@ func (v *Page) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Blocks)))
 	for _, _item := range v.Blocks {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field blocks: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Photos)))
 	for _, _item := range v.Photos {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field photos: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Documents)))
 	for _, _item := range v.Documents {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field documents: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.Views))
@@ -5188,13 +5607,22 @@ func (v *PageButton) ConstructorID() uint32 {
 
 // Encode serializes PageButton to a bytes.Buffer using the TL binary protocol.
 func (v *PageButton) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PageButtonTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
-	EncodeTLObject(b, v.Type)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Type); _err != nil {
+		return fmt.Errorf("encode field type: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Style)
+		if _err := EncodeTLObject(b, v.Style); _err != nil {
+			return fmt.Errorf("encode field style: %w", _err)
+		}
 	}
 	return nil
 }

@@ -89,6 +89,9 @@ func (v *DocumentAttributeImageSize) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeImageSize to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeImageSize) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeImageSizeTypeID)
 	tg.WriteInt(b, uint32(v.W))
 	tg.WriteInt(b, uint32(v.H))
@@ -128,6 +131,9 @@ func (v *DocumentAttributeAnimated) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeAnimated to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeAnimated) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeAnimatedTypeID)
 	return nil
 }
@@ -155,6 +161,9 @@ func (v *DocumentAttributeSticker23) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeSticker23 to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeSticker23) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeSticker23TypeID)
 	return nil
 }
@@ -185,6 +194,9 @@ func (v *DocumentAttributeVideo23) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeVideo23 to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeVideo23) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeVideo23TypeID)
 	tg.WriteInt(b, uint32(v.Duration))
 	tg.WriteInt(b, uint32(v.W))
@@ -231,6 +243,9 @@ func (v *DocumentAttributeAudio23) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeAudio23 to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeAudio23) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeAudio23TypeID)
 	tg.WriteInt(b, uint32(v.Duration))
 	return nil
@@ -265,6 +280,9 @@ func (v *DocumentAttributeFilename) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeFilename to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeFilename) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeFilenameTypeID)
 	tg.WriteString(b, v.FileName)
 	return nil
@@ -301,6 +319,9 @@ func (v *DocumentAttributeAudio45) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeAudio45 to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeAudio45) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeAudio45TypeID)
 	tg.WriteInt(b, uint32(v.Duration))
 	tg.WriteString(b, v.Title)
@@ -348,9 +369,14 @@ func (v *DocumentAttributeSticker) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeSticker to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeSticker) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeStickerTypeID)
 	tg.WriteString(b, v.Alt)
-	tg.EncodeTLObject(b, v.Stickerset)
+	if _err := tg.EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	return nil
 }
 
@@ -413,6 +439,9 @@ func (v *DocumentAttributeAudio) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeAudio to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeAudio) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeAudioTypeID)
 	v.SetFlags()
 	tg.WriteInt(b, uint32(v.Flags))
@@ -496,6 +525,9 @@ func (v *DocumentAttributeVideo) ConstructorID() uint32 {
 
 // Encode serializes DocumentAttributeVideo to a bytes.Buffer using the TL binary protocol.
 func (v *DocumentAttributeVideo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, DocumentAttributeVideoTypeID)
 	v.SetFlags()
 	tg.WriteInt(b, uint32(v.Flags))
@@ -576,6 +608,9 @@ func (v *PhotoSizeEmpty) ConstructorID() uint32 {
 
 // Encode serializes PhotoSizeEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *PhotoSizeEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, PhotoSizeEmptyTypeID)
 	tg.WriteString(b, v.Type)
 	return nil
@@ -614,9 +649,14 @@ func (v *PhotoSize) ConstructorID() uint32 {
 
 // Encode serializes PhotoSize to a bytes.Buffer using the TL binary protocol.
 func (v *PhotoSize) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, PhotoSizeTypeID)
 	tg.WriteString(b, v.Type)
-	tg.EncodeTLObject(b, v.Location)
+	if _err := tg.EncodeTLObject(b, v.Location); _err != nil {
+		return fmt.Errorf("encode field location: %w", _err)
+	}
 	tg.WriteInt(b, uint32(v.W))
 	tg.WriteInt(b, uint32(v.H))
 	tg.WriteInt(b, uint32(v.Size))
@@ -680,9 +720,14 @@ func (v *PhotoCachedSize) ConstructorID() uint32 {
 
 // Encode serializes PhotoCachedSize to a bytes.Buffer using the TL binary protocol.
 func (v *PhotoCachedSize) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, PhotoCachedSizeTypeID)
 	tg.WriteString(b, v.Type)
-	tg.EncodeTLObject(b, v.Location)
+	if _err := tg.EncodeTLObject(b, v.Location); _err != nil {
+		return fmt.Errorf("encode field location: %w", _err)
+	}
 	tg.WriteInt(b, uint32(v.W))
 	tg.WriteInt(b, uint32(v.H))
 	tg.WriteBytes(b, v.Bytes)

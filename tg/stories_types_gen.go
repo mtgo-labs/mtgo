@@ -24,6 +24,9 @@ func (v *DefaultHistoryTTL) ConstructorID() uint32 {
 
 // Encode serializes DefaultHistoryTTL to a bytes.Buffer using the TL binary protocol.
 func (v *DefaultHistoryTTL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DefaultHistoryTTLTypeID)
 	WriteInt(b, uint32(v.Period))
 	return nil
@@ -105,6 +108,9 @@ func (v *StoryViews) ConstructorID() uint32 {
 
 // Encode serializes StoryViews to a bytes.Buffer using the TL binary protocol.
 func (v *StoryViews) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryViewsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -116,7 +122,9 @@ func (v *StoryViews) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Reactions)))
 		for _, _item := range v.Reactions {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field reactions: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(4) {
@@ -215,16 +223,23 @@ func (v *StoriesStoryViews) ConstructorID() uint32 {
 
 // Encode serializes StoriesStoryViews to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesStoryViews) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesStoryViewsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Views)))
 	for _, _item := range v.Views {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field views: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -333,6 +348,9 @@ func (v *StoryItemDeleted) ConstructorID() uint32 {
 
 // Encode serializes StoryItemDeleted to a bytes.Buffer using the TL binary protocol.
 func (v *StoryItemDeleted) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryItemDeletedTypeID)
 	WriteInt(b, uint32(v.ID))
 	return nil
@@ -384,6 +402,9 @@ func (v *StoryItemSkipped) ConstructorID() uint32 {
 
 // Encode serializes StoryItemSkipped to a bytes.Buffer using the TL binary protocol.
 func (v *StoryItemSkipped) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryItemSkippedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -525,16 +546,23 @@ func (v *StoryItem) ConstructorID() uint32 {
 
 // Encode serializes StoryItem to a bytes.Buffer using the TL binary protocol.
 func (v *StoryItem) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryItemTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.ID))
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(18) {
-		EncodeTLObject(b, v.FromID)
+		if _err := EncodeTLObject(b, v.FromID); _err != nil {
+			return fmt.Errorf("encode field from_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.FwdFrom)
+		if _err := EncodeTLObject(b, v.FwdFrom); _err != nil {
+			return fmt.Errorf("encode field fwd_from: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.ExpireDate))
 	if v.Flags.Has(0) {
@@ -544,35 +572,49 @@ func (v *StoryItem) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
-	EncodeTLObject(b, v.Media)
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	if v.Flags.Has(14) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.MediaAreas)))
 		for _, _item := range v.MediaAreas {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field media_areas: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Privacy)))
 		for _, _item := range v.Privacy {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field privacy: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Views)
+		if _err := EncodeTLObject(b, v.Views); _err != nil {
+			return fmt.Errorf("encode field views: %w", _err)
+		}
 	}
 	if v.Flags.Has(15) {
-		EncodeTLObject(b, v.SentReaction)
+		if _err := EncodeTLObject(b, v.SentReaction); _err != nil {
+			return fmt.Errorf("encode field sent_reaction: %w", _err)
+		}
 	}
 	if v.Flags.Has(19) {
 		WriteVectorInt(b, v.Albums)
 	}
 	if v.Flags.Has(20) {
-		EncodeTLObject(b, v.Music)
+		if _err := EncodeTLObject(b, v.Music); _err != nil {
+			return fmt.Errorf("encode field music: %w", _err)
+		}
 	}
 	return nil
 }
@@ -820,11 +862,16 @@ func (v *StoriesAllStoriesNotModified) ConstructorID() uint32 {
 
 // Encode serializes StoriesAllStoriesNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesAllStoriesNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesAllStoriesNotModifiedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.State)
-	EncodeTLObject(b, v.StealthMode)
+	if _err := EncodeTLObject(b, v.StealthMode); _err != nil {
+		return fmt.Errorf("encode field stealth_mode: %w", _err)
+	}
 	return nil
 }
 
@@ -887,6 +934,9 @@ func (v *StoriesAllStories) ConstructorID() uint32 {
 
 // Encode serializes StoriesAllStories to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesAllStories) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesAllStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -895,19 +945,27 @@ func (v *StoriesAllStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.PeerStories)))
 	for _, _item := range v.PeerStories {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peer_stories: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.StealthMode)
+	if _err := EncodeTLObject(b, v.StealthMode); _err != nil {
+		return fmt.Errorf("encode field stealth_mode: %w", _err)
+	}
 	return nil
 }
 
@@ -1055,6 +1113,9 @@ func (v *StoriesStories) ConstructorID() uint32 {
 
 // Encode serializes StoriesStories to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesStories) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1062,7 +1123,9 @@ func (v *StoriesStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stories)))
 	for _, _item := range v.Stories {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stories: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteVectorInt(b, v.PinnedToTop)
@@ -1070,12 +1133,16 @@ func (v *StoriesStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1245,13 +1312,18 @@ func (v *StoryView) ConstructorID() uint32 {
 
 // Encode serializes StoryView to a bytes.Buffer using the TL binary protocol.
 func (v *StoryView) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.UserID)
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Reaction)
+		if _err := EncodeTLObject(b, v.Reaction); _err != nil {
+			return fmt.Errorf("encode field reaction: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1323,10 +1395,15 @@ func (v *StoryViewPublicForward) ConstructorID() uint32 {
 
 // Encode serializes StoryViewPublicForward to a bytes.Buffer using the TL binary protocol.
 func (v *StoryViewPublicForward) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryViewPublicForwardTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Message)
+	if _err := EncodeTLObject(b, v.Message); _err != nil {
+		return fmt.Errorf("encode field message: %w", _err)
+	}
 	return nil
 }
 
@@ -1386,11 +1463,18 @@ func (v *StoryViewPublicRepost) ConstructorID() uint32 {
 
 // Encode serializes StoryViewPublicRepost to a bytes.Buffer using the TL binary protocol.
 func (v *StoryViewPublicRepost) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryViewPublicRepostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.PeerID)
-	EncodeTLObject(b, v.Story)
+	if _err := EncodeTLObject(b, v.PeerID); _err != nil {
+		return fmt.Errorf("encode field peer_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Story); _err != nil {
+		return fmt.Errorf("encode field story: %w", _err)
+	}
 	return nil
 }
 
@@ -1463,6 +1547,9 @@ func (v *StoriesStoryViewsList) ConstructorID() uint32 {
 
 // Encode serializes StoriesStoryViewsList to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesStoryViewsList) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesStoryViewsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1473,17 +1560,23 @@ func (v *StoriesStoryViewsList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Views)))
 	for _, _item := range v.Views {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field views: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -1630,6 +1723,9 @@ func (v *ExportedStoryLink) ConstructorID() uint32 {
 
 // Encode serializes ExportedStoryLink to a bytes.Buffer using the TL binary protocol.
 func (v *ExportedStoryLink) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ExportedStoryLinkTypeID)
 	WriteString(b, v.Link)
 	return nil
@@ -1681,6 +1777,9 @@ func (v *StoriesStealthMode) ConstructorID() uint32 {
 
 // Encode serializes StoriesStealthMode to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesStealthMode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesStealthModeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1768,17 +1867,24 @@ func (v *PeerStories) ConstructorID() uint32 {
 
 // Encode serializes PeerStories to a bytes.Buffer using the TL binary protocol.
 func (v *PeerStories) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PeerStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.MaxReadID))
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stories)))
 	for _, _item := range v.Stories {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stories: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1858,17 +1964,26 @@ func (v *StoriesPeerStories) ConstructorID() uint32 {
 
 // Encode serializes StoriesPeerStories to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesPeerStories) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesPeerStoriesTypeID)
-	EncodeTLObject(b, v.Stories)
+	if _err := EncodeTLObject(b, v.Stories); _err != nil {
+		return fmt.Errorf("encode field stories: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1983,11 +2098,16 @@ func (v *StoryFwdHeader) ConstructorID() uint32 {
 
 // Encode serializes StoryFwdHeader to a bytes.Buffer using the TL binary protocol.
 func (v *StoryFwdHeader) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryFwdHeaderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.From)
+		if _err := EncodeTLObject(b, v.From); _err != nil {
+			return fmt.Errorf("encode field from: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.FromName)
@@ -2070,6 +2190,9 @@ func (v *StoriesStoryReactionsList) ConstructorID() uint32 {
 
 // Encode serializes StoriesStoryReactionsList to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesStoryReactionsList) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesStoryReactionsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2077,17 +2200,23 @@ func (v *StoriesStoryReactionsList) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Reactions)))
 	for _, _item := range v.Reactions {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field reactions: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -2220,9 +2349,16 @@ func (v *FoundStory) ConstructorID() uint32 {
 
 // Encode serializes FoundStory to a bytes.Buffer using the TL binary protocol.
 func (v *FoundStory) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, FoundStoryTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Story)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Story); _err != nil {
+		return fmt.Errorf("encode field story: %w", _err)
+	}
 	return nil
 }
 
@@ -2285,6 +2421,9 @@ func (v *StoriesFoundStories) ConstructorID() uint32 {
 
 // Encode serializes StoriesFoundStories to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesFoundStories) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesFoundStoriesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2292,7 +2431,9 @@ func (v *StoriesFoundStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stories)))
 	for _, _item := range v.Stories {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stories: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -2300,12 +2441,16 @@ func (v *StoriesFoundStories) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2434,6 +2579,9 @@ func (v *StoriesCanSendStoryCount) ConstructorID() uint32 {
 
 // Encode serializes StoriesCanSendStoryCount to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesCanSendStoryCount) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesCanSendStoryCountTypeID)
 	WriteInt(b, uint32(v.CountRemains))
 	return nil
@@ -2487,16 +2635,23 @@ func (v *StoryAlbum) ConstructorID() uint32 {
 
 // Encode serializes StoryAlbum to a bytes.Buffer using the TL binary protocol.
 func (v *StoryAlbum) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoryAlbumTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.AlbumID))
 	WriteString(b, v.Title)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.IconPhoto)
+		if _err := EncodeTLObject(b, v.IconPhoto); _err != nil {
+			return fmt.Errorf("encode field icon_photo: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.IconVideo)
+		if _err := EncodeTLObject(b, v.IconVideo); _err != nil {
+			return fmt.Errorf("encode field icon_video: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2583,6 +2738,9 @@ func (v *StoriesAlbumsNotModified) ConstructorID() uint32 {
 
 // Encode serializes StoriesAlbumsNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesAlbumsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesAlbumsNotModifiedTypeID)
 	return nil
 }
@@ -2614,12 +2772,17 @@ func (v *StoriesAlbums) ConstructorID() uint32 {
 
 // Encode serializes StoriesAlbums to a bytes.Buffer using the TL binary protocol.
 func (v *StoriesAlbums) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StoriesAlbumsTypeID)
 	WriteLong(b, v.Hash)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Albums)))
 	for _, _item := range v.Albums {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field albums: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2696,6 +2859,9 @@ func (v *RecentStory) ConstructorID() uint32 {
 
 // Encode serializes RecentStory to a bytes.Buffer using the TL binary protocol.
 func (v *RecentStory) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, RecentStoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))

@@ -26,6 +26,9 @@ func (v *LangpackGetLangPackRequest) ConstructorID() uint32 {
 
 // Encode serializes LangpackGetLangPackRequest to a bytes.Buffer using the TL binary protocol.
 func (v *LangpackGetLangPackRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, LangpackGetLangPackTypeID)
 	WriteString(b, v.LangPack)
 	WriteString(b, v.LangCode)
@@ -71,6 +74,9 @@ func (v *LangpackGetStringsRequest) ConstructorID() uint32 {
 
 // Encode serializes LangpackGetStringsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *LangpackGetStringsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, LangpackGetStringsTypeID)
 	WriteString(b, v.LangPack)
 	WriteString(b, v.LangCode)
@@ -114,6 +120,9 @@ func (v *LangpackGetDifferenceRequest) ConstructorID() uint32 {
 
 // Encode serializes LangpackGetDifferenceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *LangpackGetDifferenceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, LangpackGetDifferenceTypeID)
 	WriteString(b, v.LangPack)
 	WriteString(b, v.LangCode)
@@ -158,6 +167,9 @@ func (v *LangpackGetLanguagesRequest) ConstructorID() uint32 {
 
 // Encode serializes LangpackGetLanguagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *LangpackGetLanguagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, LangpackGetLanguagesTypeID)
 	WriteString(b, v.LangPack)
 	return nil
@@ -198,6 +210,9 @@ func (v *LangpackGetLanguageRequest) ConstructorID() uint32 {
 
 // Encode serializes LangpackGetLanguageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *LangpackGetLanguageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, LangpackGetLanguageTypeID)
 	WriteString(b, v.LangPack)
 	WriteString(b, v.LangCode)

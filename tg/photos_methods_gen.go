@@ -38,13 +38,20 @@ func (v *PhotosUpdateProfilePhotoRequest) ConstructorID() uint32 {
 
 // Encode serializes PhotosUpdateProfilePhotoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosUpdateProfilePhotoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosUpdateProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Bot)
+		if _err := EncodeTLObject(b, v.Bot); _err != nil {
+			return fmt.Errorf("encode field bot: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -113,23 +120,34 @@ func (v *PhotosUploadProfilePhotoRequest) ConstructorID() uint32 {
 
 // Encode serializes PhotosUploadProfilePhotoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosUploadProfilePhotoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosUploadProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.Bot)
+		if _err := EncodeTLObject(b, v.Bot); _err != nil {
+			return fmt.Errorf("encode field bot: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.File)
+		if _err := EncodeTLObject(b, v.File); _err != nil {
+			return fmt.Errorf("encode field file: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Video)
+		if _err := EncodeTLObject(b, v.Video); _err != nil {
+			return fmt.Errorf("encode field video: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteDouble(b, v.VideoStartTs)
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.VideoEmojiMarkup)
+		if _err := EncodeTLObject(b, v.VideoEmojiMarkup); _err != nil {
+			return fmt.Errorf("encode field video_emoji_markup: %w", _err)
+		}
 	}
 	return nil
 }
@@ -171,11 +189,16 @@ func (v *PhotosDeletePhotosRequest) ConstructorID() uint32 {
 
 // Encode serializes PhotosDeletePhotosRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosDeletePhotosRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosDeletePhotosTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -217,8 +240,13 @@ func (v *PhotosGetUserPhotosRequest) ConstructorID() uint32 {
 
 // Encode serializes PhotosGetUserPhotosRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosGetUserPhotosRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosGetUserPhotosTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Offset))
 	WriteLong(b, v.MaxID)
 	WriteInt(b, uint32(v.Limit))
@@ -291,21 +319,32 @@ func (v *PhotosUploadContactProfilePhotoRequest) ConstructorID() uint32 {
 
 // Encode serializes PhotosUploadContactProfilePhotoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhotosUploadContactProfilePhotoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhotosUploadContactProfilePhotoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.File)
+		if _err := EncodeTLObject(b, v.File); _err != nil {
+			return fmt.Errorf("encode field file: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Video)
+		if _err := EncodeTLObject(b, v.Video); _err != nil {
+			return fmt.Errorf("encode field video: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteDouble(b, v.VideoStartTs)
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.VideoEmojiMarkup)
+		if _err := EncodeTLObject(b, v.VideoEmojiMarkup); _err != nil {
+			return fmt.Errorf("encode field video_emoji_markup: %w", _err)
+		}
 	}
 	return nil
 }

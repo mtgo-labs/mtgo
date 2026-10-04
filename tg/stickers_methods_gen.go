@@ -53,19 +53,28 @@ func (v *StickersCreateStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersCreateStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersCreateStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersCreateStickerSetTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteString(b, v.Title)
 	WriteString(b, v.ShortName)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Thumb)
+		if _err := EncodeTLObject(b, v.Thumb); _err != nil {
+			return fmt.Errorf("encode field thumb: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stickers)))
 	for _, _item := range v.Stickers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stickers: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.Software)
@@ -110,8 +119,13 @@ func (v *StickersRemoveStickerFromSetRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersRemoveStickerFromSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersRemoveStickerFromSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersRemoveStickerFromSetTypeID)
-	EncodeTLObject(b, v.Sticker)
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
 	return nil
 }
 
@@ -153,8 +167,13 @@ func (v *StickersChangeStickerPositionRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersChangeStickerPositionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersChangeStickerPositionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersChangeStickerPositionTypeID)
-	EncodeTLObject(b, v.Sticker)
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
 	WriteInt(b, uint32(v.Position))
 	return nil
 }
@@ -197,9 +216,16 @@ func (v *StickersAddStickerToSetRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersAddStickerToSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersAddStickerToSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersAddStickerToSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
-	EncodeTLObject(b, v.Sticker)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
 	return nil
 }
 
@@ -253,12 +279,19 @@ func (v *StickersSetStickerSetThumbRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersSetStickerSetThumbRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersSetStickerSetThumbRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersSetStickerSetThumbTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Thumb)
+		if _err := EncodeTLObject(b, v.Thumb); _err != nil {
+			return fmt.Errorf("encode field thumb: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteLong(b, v.ThumbDocumentID)
@@ -303,6 +336,9 @@ func (v *StickersCheckShortNameRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersCheckShortNameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersCheckShortNameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersCheckShortNameTypeID)
 	WriteString(b, v.ShortName)
 	return nil
@@ -343,6 +379,9 @@ func (v *StickersSuggestShortNameRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersSuggestShortNameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersSuggestShortNameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersSuggestShortNameTypeID)
 	WriteString(b, v.Title)
 	return nil
@@ -402,15 +441,22 @@ func (v *StickersChangeStickerRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersChangeStickerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersChangeStickerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersChangeStickerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Sticker)
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Emoji)
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.MaskCoords)
+		if _err := EncodeTLObject(b, v.MaskCoords); _err != nil {
+			return fmt.Errorf("encode field mask_coords: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteString(b, v.Keywords)
@@ -456,8 +502,13 @@ func (v *StickersRenameStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersRenameStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersRenameStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersRenameStickerSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	WriteString(b, v.Title)
 	return nil
 }
@@ -499,8 +550,13 @@ func (v *StickersDeleteStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersDeleteStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersDeleteStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersDeleteStickerSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	return nil
 }
 
@@ -540,9 +596,16 @@ func (v *StickersReplaceStickerRequest) ConstructorID() uint32 {
 
 // Encode serializes StickersReplaceStickerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StickersReplaceStickerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StickersReplaceStickerTypeID)
-	EncodeTLObject(b, v.Sticker)
-	EncodeTLObject(b, v.NewSticker)
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.NewSticker); _err != nil {
+		return fmt.Errorf("encode field new_sticker: %w", _err)
+	}
 	return nil
 }
 

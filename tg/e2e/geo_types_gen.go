@@ -41,6 +41,9 @@ func (v *FileLocationUnavailable) ConstructorID() uint32 {
 
 // Encode serializes FileLocationUnavailable to a bytes.Buffer using the TL binary protocol.
 func (v *FileLocationUnavailable) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, FileLocationUnavailableTypeID)
 	tg.WriteLong(b, v.VolumeID)
 	tg.WriteInt(b, uint32(v.LocalID))
@@ -90,6 +93,9 @@ func (v *FileLocation) ConstructorID() uint32 {
 
 // Encode serializes FileLocation to a bytes.Buffer using the TL binary protocol.
 func (v *FileLocation) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, FileLocationTypeID)
 	tg.WriteInt(b, uint32(v.DCID))
 	tg.WriteLong(b, v.VolumeID)

@@ -46,13 +46,18 @@ func (v *Folder) ConstructorID() uint32 {
 
 // Encode serializes Folder to a bytes.Buffer using the TL binary protocol.
 func (v *Folder) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, FolderTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.ID))
 	WriteString(b, v.Title)
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
 	return nil
 }
@@ -139,6 +144,9 @@ func (v *ExportedChatlistInvite) ConstructorID() uint32 {
 
 // Encode serializes ExportedChatlistInvite to a bytes.Buffer using the TL binary protocol.
 func (v *ExportedChatlistInvite) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ExportedChatlistInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -147,7 +155,9 @@ func (v *ExportedChatlistInvite) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -220,9 +230,16 @@ func (v *ChatlistsExportedChatlistInvite) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsExportedChatlistInvite to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsExportedChatlistInvite) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsExportedChatlistInviteTypeID)
-	EncodeTLObject(b, v.Filter)
-	EncodeTLObject(b, v.Invite)
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Invite); _err != nil {
+		return fmt.Errorf("encode field invite: %w", _err)
+	}
 	return nil
 }
 
@@ -275,21 +292,30 @@ func (v *ChatlistsExportedInvites) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsExportedInvites to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsExportedInvites) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsExportedInvitesTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Invites)))
 	for _, _item := range v.Invites {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field invites: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -422,27 +448,38 @@ func (v *ChatlistsChatlistInviteAlready) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsChatlistInviteAlready to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsChatlistInviteAlready) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsChatlistInviteAlreadyTypeID)
 	WriteInt(b, uint32(v.FilterID))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.MissingPeers)))
 	for _, _item := range v.MissingPeers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field missing_peers: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.AlreadyPeers)))
 	for _, _item := range v.AlreadyPeers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field already_peers: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -598,27 +635,38 @@ func (v *ChatlistsChatlistInvite) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsChatlistInvite to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsChatlistInvite) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsChatlistInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Title)
+	if _err := EncodeTLObject(b, v.Title); _err != nil {
+		return fmt.Errorf("encode field title: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Emoticon)
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -754,21 +802,30 @@ func (v *ChatlistsChatlistUpdates) ConstructorID() uint32 {
 
 // Encode serializes ChatlistsChatlistUpdates to a bytes.Buffer using the TL binary protocol.
 func (v *ChatlistsChatlistUpdates) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ChatlistsChatlistUpdatesTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.MissingPeers)))
 	for _, _item := range v.MissingPeers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field missing_peers: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }

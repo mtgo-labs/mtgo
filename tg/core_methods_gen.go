@@ -26,9 +26,14 @@ func (v *InvokeAfterMsgRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeAfterMsgRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeAfterMsgRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeAfterMsgTypeID)
 	WriteLong(b, v.MsgID)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -67,9 +72,14 @@ func (v *InvokeAfterMsgsRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeAfterMsgsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeAfterMsgsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeAfterMsgsTypeID)
 	WriteVectorLong(b, v.MsgIds)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -127,6 +137,9 @@ func (v *InitConnectionRequest) ConstructorID() uint32 {
 
 // Encode serializes InitConnectionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InitConnectionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InitConnectionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -138,12 +151,18 @@ func (v *InitConnectionRequest) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.LangPack)
 	WriteString(b, v.LangCode)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Proxy)
+		if _err := EncodeTLObject(b, v.Proxy); _err != nil {
+			return fmt.Errorf("encode field proxy: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Params)
+		if _err := EncodeTLObject(b, v.Params); _err != nil {
+			return fmt.Errorf("encode field params: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -182,9 +201,14 @@ func (v *InvokeWithLayerRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithLayerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithLayerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithLayerTypeID)
 	WriteInt(b, uint32(v.Layer))
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -222,8 +246,13 @@ func (v *InvokeWithoutUpdatesRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithoutUpdatesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithoutUpdatesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithoutUpdatesTypeID)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -262,9 +291,16 @@ func (v *InvokeWithMessagesRangeRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithMessagesRangeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithMessagesRangeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithMessagesRangeTypeID)
-	EncodeTLObject(b, v.Range)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Range); _err != nil {
+		return fmt.Errorf("encode field range: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -303,9 +339,14 @@ func (v *InvokeWithTakeoutRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithTakeoutRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithTakeoutRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithTakeoutTypeID)
 	WriteLong(b, v.TakeoutID)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -344,9 +385,14 @@ func (v *InvokeWithBusinessConnectionRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithBusinessConnectionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithBusinessConnectionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithBusinessConnectionTypeID)
 	WriteString(b, v.ConnectionID)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -386,10 +432,15 @@ func (v *InvokeWithGooglePlayIntegrityRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithGooglePlayIntegrityRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithGooglePlayIntegrityRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithGooglePlayIntegrityTypeID)
 	WriteString(b, v.Nonce)
 	WriteString(b, v.Token)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -429,10 +480,15 @@ func (v *InvokeWithApnsSecretRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithApnsSecretRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithApnsSecretRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithApnsSecretTypeID)
 	WriteString(b, v.Nonce)
 	WriteString(b, v.Secret)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -471,9 +527,14 @@ func (v *InvokeWithReCaptchaRequest) ConstructorID() uint32 {
 
 // Encode serializes InvokeWithReCaptchaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *InvokeWithReCaptchaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvokeWithReCaptchaTypeID)
 	WriteString(b, v.Token)
-	EncodeTLObject(b, v.Query)
+	if _err := EncodeTLObject(b, v.Query); _err != nil {
+		return fmt.Errorf("encode field query: %w", _err)
+	}
 	return nil
 }
 
@@ -511,6 +572,9 @@ func (v *ReqPQRequest) ConstructorID() uint32 {
 
 // Encode serializes ReqPQRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ReqPQRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ReqPQTypeID)
 	WriteInt128(b, v.Nonce)
 	return nil
@@ -553,6 +617,9 @@ func (v *ReqPQMultiRequest) ConstructorID() uint32 {
 
 // Encode serializes ReqPQMultiRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ReqPQMultiRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ReqPQMultiTypeID)
 	WriteInt128(b, v.Nonce)
 	return nil
@@ -600,6 +667,9 @@ func (v *ReqDHParamsRequest) ConstructorID() uint32 {
 
 // Encode serializes ReqDHParamsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ReqDHParamsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ReqDHParamsTypeID)
 	WriteInt128(b, v.Nonce)
 	WriteInt128(b, v.ServerNonce)
@@ -649,6 +719,9 @@ func (v *SetClientDHParamsRequest) ConstructorID() uint32 {
 
 // Encode serializes SetClientDHParamsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *SetClientDHParamsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SetClientDHParamsTypeID)
 	WriteInt128(b, v.Nonce)
 	WriteInt128(b, v.ServerNonce)
@@ -692,6 +765,9 @@ func (v *DestroyAuthKeyRequest) ConstructorID() uint32 {
 
 // Encode serializes DestroyAuthKeyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *DestroyAuthKeyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DestroyAuthKeyTypeID)
 	return nil
 }
@@ -733,6 +809,9 @@ func (v *RPCDropAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes RPCDropAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *RPCDropAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, RPCDropAnswerTypeID)
 	WriteLong(b, v.ReqMsgID)
 	return nil
@@ -775,6 +854,9 @@ func (v *GetFutureSaltsRequest) ConstructorID() uint32 {
 
 // Encode serializes GetFutureSaltsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *GetFutureSaltsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, GetFutureSaltsTypeID)
 	WriteInt(b, uint32(v.Num))
 	return nil
@@ -817,6 +899,9 @@ func (v *PingRequest) ConstructorID() uint32 {
 
 // Encode serializes PingRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PingRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PingTypeID)
 	WriteLong(b, v.PingID)
 	return nil
@@ -860,6 +945,9 @@ func (v *PingDelayDisconnectRequest) ConstructorID() uint32 {
 
 // Encode serializes PingDelayDisconnectRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PingDelayDisconnectRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PingDelayDisconnectTypeID)
 	WriteLong(b, v.PingID)
 	WriteInt(b, uint32(v.DisconnectDelay))
@@ -903,6 +991,9 @@ func (v *DestroySessionRequest) ConstructorID() uint32 {
 
 // Encode serializes DestroySessionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *DestroySessionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DestroySessionTypeID)
 	WriteLong(b, v.SessionID)
 	return nil

@@ -59,16 +59,25 @@ func (v *PollAnswer) ConstructorID() uint32 {
 
 // Encode serializes PollAnswer to a bytes.Buffer using the TL binary protocol.
 func (v *PollAnswer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PollAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	WriteBytes(b, v.Option)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.AddedBy)
+		if _err := EncodeTLObject(b, v.AddedBy); _err != nil {
+			return fmt.Errorf("encode field added_by: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.Date))
@@ -159,12 +168,19 @@ func (v *InputPollAnswer) ConstructorID() uint32 {
 
 // Encode serializes InputPollAnswer to a bytes.Buffer using the TL binary protocol.
 func (v *InputPollAnswer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPollAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	return nil
 }
@@ -283,15 +299,22 @@ func (v *Poll) ConstructorID() uint32 {
 
 // Encode serializes Poll to a bytes.Buffer using the TL binary protocol.
 func (v *Poll) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PollTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ID)
-	EncodeTLObject(b, v.Question)
+	if _err := EncodeTLObject(b, v.Question); _err != nil {
+		return fmt.Errorf("encode field question: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Answers)))
 	for _, _item := range v.Answers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field answers: %w", _err)
+		}
 	}
 	if v.Flags.Has(4) {
 		WriteInt(b, uint32(v.ClosePeriod))
@@ -437,6 +460,9 @@ func (v *PollAnswerVoters) ConstructorID() uint32 {
 
 // Encode serializes PollAnswerVoters to a bytes.Buffer using the TL binary protocol.
 func (v *PollAnswerVoters) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PollAnswerVotersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -448,7 +474,9 @@ func (v *PollAnswerVoters) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.RecentVoters)))
 		for _, _item := range v.RecentVoters {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field recent_voters: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -570,6 +598,9 @@ func (v *PollResults) ConstructorID() uint32 {
 
 // Encode serializes PollResults to a bytes.Buffer using the TL binary protocol.
 func (v *PollResults) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PollResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -577,7 +608,9 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Results)))
 		for _, _item := range v.Results {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field results: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
@@ -587,7 +620,9 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.RecentVoters)))
 		for _, _item := range v.RecentVoters {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field recent_voters: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(4) {
@@ -597,11 +632,15 @@ func (v *PollResults) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.SolutionEntities)))
 		for _, _item := range v.SolutionEntities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field solution_entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.SolutionMedia)
+		if _err := EncodeTLObject(b, v.SolutionMedia); _err != nil {
+			return fmt.Errorf("encode field solution_media: %w", _err)
+		}
 	}
 	return nil
 }

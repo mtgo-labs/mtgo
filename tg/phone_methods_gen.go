@@ -24,6 +24,9 @@ func (v *PhoneGetCallConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetCallConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetCallConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetCallConfigTypeID)
 	return nil
 }
@@ -77,13 +80,20 @@ func (v *PhoneRequestCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneRequestCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneRequestCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneRequestCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.RandomID))
 	WriteBytes(b, v.GAHash)
-	EncodeTLObject(b, v.Protocol)
+	if _err := EncodeTLObject(b, v.Protocol); _err != nil {
+		return fmt.Errorf("encode field protocol: %w", _err)
+	}
 	return nil
 }
 
@@ -126,10 +136,17 @@ func (v *PhoneAcceptCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneAcceptCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneAcceptCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneAcceptCallTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBytes(b, v.GB)
-	EncodeTLObject(b, v.Protocol)
+	if _err := EncodeTLObject(b, v.Protocol); _err != nil {
+		return fmt.Errorf("encode field protocol: %w", _err)
+	}
 	return nil
 }
 
@@ -173,11 +190,18 @@ func (v *PhoneConfirmCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneConfirmCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneConfirmCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneConfirmCallTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBytes(b, v.GA)
 	WriteLong(b, v.KeyFingerprint)
-	EncodeTLObject(b, v.Protocol)
+	if _err := EncodeTLObject(b, v.Protocol); _err != nil {
+		return fmt.Errorf("encode field protocol: %w", _err)
+	}
 	return nil
 }
 
@@ -218,8 +242,13 @@ func (v *PhoneReceivedCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneReceivedCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneReceivedCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneReceivedCallTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -270,12 +299,19 @@ func (v *PhoneDiscardCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneDiscardCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDiscardCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDiscardCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Duration))
-	EncodeTLObject(b, v.Reason)
+	if _err := EncodeTLObject(b, v.Reason); _err != nil {
+		return fmt.Errorf("encode field reason: %w", _err)
+	}
 	WriteLong(b, v.ConnectionID)
 	return nil
 }
@@ -328,10 +364,15 @@ func (v *PhoneSetCallRatingRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSetCallRatingRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSetCallRatingRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSetCallRatingTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Rating))
 	WriteString(b, v.Comment)
 	return nil
@@ -375,9 +416,16 @@ func (v *PhoneSaveCallDebugRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSaveCallDebugRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSaveCallDebugRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSaveCallDebugTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Debug)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Debug); _err != nil {
+		return fmt.Errorf("encode field debug: %w", _err)
+	}
 	return nil
 }
 
@@ -417,8 +465,13 @@ func (v *PhoneSendSignalingDataRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSendSignalingDataRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSendSignalingDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSendSignalingDataTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBytes(b, v.Data)
 	return nil
 }
@@ -476,10 +529,15 @@ func (v *PhoneCreateGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneCreateGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneCreateGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneCreateGroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.RandomID))
 	if v.Flags.Has(0) {
 		WriteString(b, v.Title)
@@ -554,11 +612,18 @@ func (v *PhoneJoinGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneJoinGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneJoinGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneJoinGroupCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.JoinAs)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.JoinAs); _err != nil {
+		return fmt.Errorf("encode field join_as: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.InviteHash)
 	}
@@ -568,7 +633,9 @@ func (v *PhoneJoinGroupCallRequest) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(3) {
 		WriteBytes(b, v.Block)
 	}
-	EncodeTLObject(b, v.Params)
+	if _err := EncodeTLObject(b, v.Params); _err != nil {
+		return fmt.Errorf("encode field params: %w", _err)
+	}
 	return nil
 }
 
@@ -610,8 +677,13 @@ func (v *PhoneLeaveGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneLeaveGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneLeaveGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneLeaveGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteInt(b, uint32(v.Source))
 	return nil
 }
@@ -654,12 +726,19 @@ func (v *PhoneInviteToGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneInviteToGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneInviteToGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneInviteToGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -701,8 +780,13 @@ func (v *PhoneDiscardGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneDiscardGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDiscardGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDiscardGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -764,10 +848,15 @@ func (v *PhoneToggleGroupCallSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneToggleGroupCallSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneToggleGroupCallSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneToggleGroupCallSettingsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteBool(b, v.JoinMuted)
 	}
@@ -854,8 +943,13 @@ func (v *PhoneGetGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	return nil
 }
@@ -901,12 +995,19 @@ func (v *PhoneGetGroupParticipantsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupParticipantsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupParticipantsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupParticipantsTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Ids)))
 	for _, _item := range v.Ids {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field ids: %w", _err)
+		}
 	}
 	WriteVectorInt(b, v.Sources)
 	WriteString(b, v.Offset)
@@ -952,8 +1053,13 @@ func (v *PhoneCheckGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneCheckGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneCheckGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneCheckGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteVectorInt(b, v.Sources)
 	return nil
 }
@@ -1013,10 +1119,15 @@ func (v *PhoneToggleGroupCallRecordRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneToggleGroupCallRecordRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneToggleGroupCallRecordRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneToggleGroupCallRecordTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Title)
 	}
@@ -1111,11 +1222,18 @@ func (v *PhoneEditGroupCallParticipantRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneEditGroupCallParticipantRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneEditGroupCallParticipantRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneEditGroupCallParticipantTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteBool(b, v.Muted)
 	}
@@ -1265,8 +1383,13 @@ func (v *PhoneEditGroupCallTitleRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneEditGroupCallTitleRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneEditGroupCallTitleRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneEditGroupCallTitleTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteString(b, v.Title)
 	return nil
 }
@@ -1308,8 +1431,13 @@ func (v *PhoneGetGroupCallJoinAsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallJoinAsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallJoinAsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallJoinAsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -1359,10 +1487,15 @@ func (v *PhoneExportGroupCallInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneExportGroupCallInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneExportGroupCallInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneExportGroupCallInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -1404,8 +1537,13 @@ func (v *PhoneToggleGroupCallStartSubscriptionRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneToggleGroupCallStartSubscriptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneToggleGroupCallStartSubscriptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneToggleGroupCallStartSubscriptionTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteBool(b, v.Subscribed)
 	return nil
 }
@@ -1447,8 +1585,13 @@ func (v *PhoneStartScheduledGroupCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneStartScheduledGroupCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneStartScheduledGroupCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneStartScheduledGroupCallTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -1490,9 +1633,16 @@ func (v *PhoneSaveDefaultGroupCallJoinAsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSaveDefaultGroupCallJoinAsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSaveDefaultGroupCallJoinAsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSaveDefaultGroupCallJoinAsTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.JoinAs)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.JoinAs); _err != nil {
+		return fmt.Errorf("encode field join_as: %w", _err)
+	}
 	return nil
 }
 
@@ -1532,9 +1682,16 @@ func (v *PhoneJoinGroupCallPresentationRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneJoinGroupCallPresentationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneJoinGroupCallPresentationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneJoinGroupCallPresentationTypeID)
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.Params)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Params); _err != nil {
+		return fmt.Errorf("encode field params: %w", _err)
+	}
 	return nil
 }
 
@@ -1575,8 +1732,13 @@ func (v *PhoneLeaveGroupCallPresentationRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneLeaveGroupCallPresentationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneLeaveGroupCallPresentationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneLeaveGroupCallPresentationTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -1617,8 +1779,13 @@ func (v *PhoneGetGroupCallStreamChannelsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallStreamChannelsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallStreamChannelsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallStreamChannelsTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -1669,10 +1836,15 @@ func (v *PhoneGetGroupCallStreamRtmpURLRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallStreamRtmpURLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallStreamRtmpURLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallStreamRtmpURLTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBool(b, v.Revoke)
 	return nil
 }
@@ -1715,9 +1887,16 @@ func (v *PhoneSaveCallLogRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSaveCallLogRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSaveCallLogRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSaveCallLogTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	return nil
 }
 
@@ -1785,6 +1964,9 @@ func (v *PhoneCreateConferenceCallRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneCreateConferenceCallRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneCreateConferenceCallRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneCreateConferenceCallTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1796,7 +1978,9 @@ func (v *PhoneCreateConferenceCallRequest) Encode(b *bytes.Buffer) error {
 		WriteBytes(b, v.Block)
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Params)
+		if _err := EncodeTLObject(b, v.Params); _err != nil {
+			return fmt.Errorf("encode field params: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1853,10 +2037,15 @@ func (v *PhoneDeleteConferenceCallParticipantsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneDeleteConferenceCallParticipantsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDeleteConferenceCallParticipantsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDeleteConferenceCallParticipantsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteVectorLong(b, v.Ids)
 	WriteBytes(b, v.Block)
 	return nil
@@ -1900,8 +2089,13 @@ func (v *PhoneSendConferenceCallBroadcastRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSendConferenceCallBroadcastRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSendConferenceCallBroadcastRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSendConferenceCallBroadcastTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteBytes(b, v.Block)
 	return nil
 }
@@ -1953,11 +2147,18 @@ func (v *PhoneInviteConferenceCallParticipantRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneInviteConferenceCallParticipantRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneInviteConferenceCallParticipantRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneInviteConferenceCallParticipantTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -1998,6 +2199,9 @@ func (v *PhoneDeclineConferenceCallInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneDeclineConferenceCallInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDeclineConferenceCallInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDeclineConferenceCallInviteTypeID)
 	WriteInt(b, uint32(v.MsgID))
 	return nil
@@ -2043,8 +2247,13 @@ func (v *PhoneGetGroupCallChainBlocksRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallChainBlocksRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallChainBlocksRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallChainBlocksTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteInt(b, uint32(v.SubChainID))
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
@@ -2103,17 +2312,26 @@ func (v *PhoneSendGroupCallMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSendGroupCallMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSendGroupCallMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSendGroupCallMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
-	EncodeTLObject(b, v.Message)
+	if _err := EncodeTLObject(b, v.Message); _err != nil {
+		return fmt.Errorf("encode field message: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteLong(b, v.AllowPaidStars)
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2156,8 +2374,13 @@ func (v *PhoneSendGroupCallEncryptedMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSendGroupCallEncryptedMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSendGroupCallEncryptedMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSendGroupCallEncryptedMessageTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteBytes(b, v.EncryptedMessage)
 	return nil
 }
@@ -2207,10 +2430,15 @@ func (v *PhoneDeleteGroupCallMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneDeleteGroupCallMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDeleteGroupCallMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDeleteGroupCallMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	WriteVectorInt(b, v.Messages)
 	return nil
 }
@@ -2262,11 +2490,18 @@ func (v *PhoneDeleteGroupCallParticipantMessagesRequest) ConstructorID() uint32 
 
 // Encode serializes PhoneDeleteGroupCallParticipantMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneDeleteGroupCallParticipantMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneDeleteGroupCallParticipantMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	return nil
 }
 
@@ -2307,8 +2542,13 @@ func (v *PhoneGetGroupCallStarsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneGetGroupCallStarsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneGetGroupCallStarsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneGetGroupCallStarsTypeID)
-	EncodeTLObject(b, v.Call)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
 	return nil
 }
 
@@ -2350,9 +2590,16 @@ func (v *PhoneSaveDefaultSendAsRequest) ConstructorID() uint32 {
 
 // Encode serializes PhoneSaveDefaultSendAsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *PhoneSaveDefaultSendAsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PhoneSaveDefaultSendAsTypeID)
-	EncodeTLObject(b, v.Call)
-	EncodeTLObject(b, v.SendAs)
+	if _err := EncodeTLObject(b, v.Call); _err != nil {
+		return fmt.Errorf("encode field call: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+		return fmt.Errorf("encode field send_as: %w", _err)
+	}
 	return nil
 }
 

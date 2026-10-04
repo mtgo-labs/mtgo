@@ -27,6 +27,9 @@ func (v *UploadSaveFilePartRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadSaveFilePartRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadSaveFilePartRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadSaveFilePartTypeID)
 	WriteLong(b, v.FileID)
 	WriteInt(b, uint32(v.FilePart))
@@ -84,10 +87,15 @@ func (v *UploadGetFileRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadGetFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadGetFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadGetFileTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Location)
+	if _err := EncodeTLObject(b, v.Location); _err != nil {
+		return fmt.Errorf("encode field location: %w", _err)
+	}
 	WriteLong(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -133,6 +141,9 @@ func (v *UploadSaveBigFilePartRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadSaveBigFilePartRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadSaveBigFilePartRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadSaveBigFilePartTypeID)
 	WriteLong(b, v.FileID)
 	WriteInt(b, uint32(v.FilePart))
@@ -178,8 +189,13 @@ func (v *UploadGetWebFileRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadGetWebFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadGetWebFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadGetWebFileTypeID)
-	EncodeTLObject(b, v.Location)
+	if _err := EncodeTLObject(b, v.Location); _err != nil {
+		return fmt.Errorf("encode field location: %w", _err)
+	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -224,6 +240,9 @@ func (v *UploadGetCDNFileRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadGetCDNFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadGetCDNFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadGetCDNFileTypeID)
 	WriteBytes(b, v.FileToken)
 	WriteLong(b, v.Offset)
@@ -269,6 +288,9 @@ func (v *UploadReuploadCDNFileRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadReuploadCDNFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadReuploadCDNFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadReuploadCDNFileTypeID)
 	WriteBytes(b, v.FileToken)
 	WriteBytes(b, v.RequestToken)
@@ -310,6 +332,9 @@ func (v *UploadGetCDNFileHashesRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadGetCDNFileHashesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadGetCDNFileHashesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadGetCDNFileHashesTypeID)
 	WriteBytes(b, v.FileToken)
 	WriteLong(b, v.Offset)
@@ -351,8 +376,13 @@ func (v *UploadGetFileHashesRequest) ConstructorID() uint32 {
 
 // Encode serializes UploadGetFileHashesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UploadGetFileHashesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UploadGetFileHashesTypeID)
-	EncodeTLObject(b, v.Location)
+	if _err := EncodeTLObject(b, v.Location); _err != nil {
+		return fmt.Errorf("encode field location: %w", _err)
+	}
 	WriteLong(b, v.Offset)
 	return nil
 }

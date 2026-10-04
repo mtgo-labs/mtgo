@@ -25,6 +25,9 @@ func (v *ContactsGetContactIDsRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetContactIDsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetContactIDsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetContactIDsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -63,6 +66,9 @@ func (v *ContactsGetStatusesRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetStatusesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetStatusesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetStatusesTypeID)
 	return nil
 }
@@ -101,6 +107,9 @@ func (v *ContactsGetContactsRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetContactsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetContactsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetContactsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -143,11 +152,16 @@ func (v *ContactsImportContactsRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsImportContactsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsImportContactsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsImportContactsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Contacts)))
 	for _, _item := range v.Contacts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field contacts: %w", _err)
+		}
 	}
 	return nil
 }
@@ -189,11 +203,16 @@ func (v *ContactsDeleteContactsRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsDeleteContactsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsDeleteContactsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsDeleteContactsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -235,6 +254,9 @@ func (v *ContactsDeleteByPhonesRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsDeleteByPhonesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsDeleteByPhonesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsDeleteByPhonesTypeID)
 	WriteVectorString(b, v.Phones)
 	return nil
@@ -284,10 +306,15 @@ func (v *ContactsBlockRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsBlockRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsBlockRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsBlockTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -335,10 +362,15 @@ func (v *ContactsUnblockRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsUnblockRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsUnblockRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsUnblockTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -387,6 +419,9 @@ func (v *ContactsGetBlockedRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetBlockedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetBlockedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetBlockedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -446,6 +481,9 @@ func (v *ContactsSearchRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsSearchRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsSearchRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsSearchTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -500,6 +538,9 @@ func (v *ContactsResolveUsernameRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsResolveUsernameRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsResolveUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsResolveUsernameTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -594,6 +635,9 @@ func (v *ContactsGetTopPeersRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetTopPeersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetTopPeersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetTopPeersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -641,9 +685,16 @@ func (v *ContactsResetTopPeerRatingRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsResetTopPeerRatingRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsResetTopPeerRatingRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsResetTopPeerRatingTypeID)
-	EncodeTLObject(b, v.Category)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Category); _err != nil {
+		return fmt.Errorf("encode field category: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -681,6 +732,9 @@ func (v *ContactsResetSavedRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsResetSavedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsResetSavedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsResetSavedTypeID)
 	return nil
 }
@@ -719,6 +773,9 @@ func (v *ContactsGetSavedRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetSavedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetSavedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetSavedTypeID)
 	return nil
 }
@@ -757,6 +814,9 @@ func (v *ContactsToggleTopPeersRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsToggleTopPeersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsToggleTopPeersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsToggleTopPeersTypeID)
 	WriteBool(b, v.Enabled)
 	return nil
@@ -813,15 +873,22 @@ func (v *ContactsAddContactRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsAddContactRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsAddContactRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsAddContactTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteString(b, v.FirstName)
 	WriteString(b, v.LastName)
 	WriteString(b, v.Phone)
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Note)
+		if _err := EncodeTLObject(b, v.Note); _err != nil {
+			return fmt.Errorf("encode field note: %w", _err)
+		}
 	}
 	return nil
 }
@@ -863,8 +930,13 @@ func (v *ContactsAcceptContactRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsAcceptContactRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsAcceptContactRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsAcceptContactTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -918,10 +990,15 @@ func (v *ContactsGetLocatedRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetLocatedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetLocatedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetLocatedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.GeoPoint)
+	if _err := EncodeTLObject(b, v.GeoPoint); _err != nil {
+		return fmt.Errorf("encode field geo_point: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.SelfExpires))
 	}
@@ -982,6 +1059,9 @@ func (v *ContactsBlockFromRepliesRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsBlockFromRepliesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsBlockFromRepliesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsBlockFromRepliesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1026,6 +1106,9 @@ func (v *ContactsResolvePhoneRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsResolvePhoneRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsResolvePhoneRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsResolvePhoneTypeID)
 	WriteString(b, v.Phone)
 	return nil
@@ -1067,6 +1150,9 @@ func (v *ContactsExportContactTokenRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsExportContactTokenRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsExportContactTokenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsExportContactTokenTypeID)
 	return nil
 }
@@ -1108,6 +1194,9 @@ func (v *ContactsImportContactTokenRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsImportContactTokenRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsImportContactTokenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsImportContactTokenTypeID)
 	WriteString(b, v.Token)
 	return nil
@@ -1150,6 +1239,9 @@ func (v *ContactsEditCloseFriendsRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsEditCloseFriendsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsEditCloseFriendsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsEditCloseFriendsTypeID)
 	WriteVectorLong(b, v.ID)
 	return nil
@@ -1200,13 +1292,18 @@ func (v *ContactsSetBlockedRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsSetBlockedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsSetBlockedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsSetBlockedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -1246,6 +1343,9 @@ func (v *ContactsGetBirthdaysRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetBirthdaysRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetBirthdaysRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetBirthdaysTypeID)
 	return nil
 }
@@ -1287,6 +1387,9 @@ func (v *ContactsGetSponsoredPeersRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsGetSponsoredPeersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsGetSponsoredPeersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsGetSponsoredPeersTypeID)
 	WriteString(b, v.Q)
 	return nil
@@ -1330,9 +1433,16 @@ func (v *ContactsUpdateContactNoteRequest) ConstructorID() uint32 {
 
 // Encode serializes ContactsUpdateContactNoteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *ContactsUpdateContactNoteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ContactsUpdateContactNoteTypeID)
-	EncodeTLObject(b, v.ID)
-	EncodeTLObject(b, v.Note)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Note); _err != nil {
+		return fmt.Errorf("encode field note: %w", _err)
+	}
 	return nil
 }
 

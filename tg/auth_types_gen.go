@@ -61,13 +61,20 @@ func (v *AuthSentCode) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCode to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Type)
+	if _err := EncodeTLObject(b, v.Type); _err != nil {
+		return fmt.Errorf("encode field type: %w", _err)
+	}
 	WriteString(b, v.PhoneCodeHash)
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.NextType)
+		if _err := EncodeTLObject(b, v.NextType); _err != nil {
+			return fmt.Errorf("encode field next_type: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.Timeout))
@@ -138,8 +145,13 @@ func (v *AuthSentCodeSuccess) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeSuccess to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeSuccess) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeSuccessTypeID)
-	EncodeTLObject(b, v.Authorization)
+	if _err := EncodeTLObject(b, v.Authorization); _err != nil {
+		return fmt.Errorf("encode field authorization: %w", _err)
+	}
 	return nil
 }
 
@@ -184,6 +196,9 @@ func (v *AuthSentCodePaymentRequired) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodePaymentRequired to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodePaymentRequired) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodePaymentRequiredTypeID)
 	WriteString(b, v.StoreProduct)
 	WriteString(b, v.PhoneCodeHash)
@@ -303,6 +318,9 @@ func (v *AuthAuthorization) ConstructorID() uint32 {
 
 // Encode serializes AuthAuthorization to a bytes.Buffer using the TL binary protocol.
 func (v *AuthAuthorization) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthAuthorizationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -315,7 +333,9 @@ func (v *AuthAuthorization) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(2) {
 		WriteBytes(b, v.FutureAuthToken)
 	}
-	EncodeTLObject(b, v.User)
+	if _err := EncodeTLObject(b, v.User); _err != nil {
+		return fmt.Errorf("encode field user: %w", _err)
+	}
 	return nil
 }
 
@@ -389,11 +409,16 @@ func (v *AuthAuthorizationSignUpRequired) ConstructorID() uint32 {
 
 // Encode serializes AuthAuthorizationSignUpRequired to a bytes.Buffer using the TL binary protocol.
 func (v *AuthAuthorizationSignUpRequired) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthAuthorizationSignUpRequiredTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.TermsOfService)
+		if _err := EncodeTLObject(b, v.TermsOfService); _err != nil {
+			return fmt.Errorf("encode field terms_of_service: %w", _err)
+		}
 	}
 	return nil
 }
@@ -480,6 +505,9 @@ func (v *Authorization) ConstructorID() uint32 {
 
 // Encode serializes Authorization to a bytes.Buffer using the TL binary protocol.
 func (v *Authorization) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthorizationTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -599,6 +627,9 @@ func (v *AuthExportedAuthorization) ConstructorID() uint32 {
 
 // Encode serializes AuthExportedAuthorization to a bytes.Buffer using the TL binary protocol.
 func (v *AuthExportedAuthorization) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthExportedAuthorizationTypeID)
 	WriteLong(b, v.ID)
 	WriteBytes(b, v.Bytes)
@@ -644,6 +675,9 @@ func (v *AuthPasswordRecovery) ConstructorID() uint32 {
 
 // Encode serializes AuthPasswordRecovery to a bytes.Buffer using the TL binary protocol.
 func (v *AuthPasswordRecovery) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthPasswordRecoveryTypeID)
 	WriteString(b, v.EmailPattern)
 	return nil
@@ -717,6 +751,9 @@ func (v *AuthCodeTypeSms) ConstructorID() uint32 {
 
 // Encode serializes AuthCodeTypeSms to a bytes.Buffer using the TL binary protocol.
 func (v *AuthCodeTypeSms) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthCodeTypeSmsTypeID)
 	return nil
 }
@@ -746,6 +783,9 @@ func (v *AuthCodeTypeCall) ConstructorID() uint32 {
 
 // Encode serializes AuthCodeTypeCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthCodeTypeCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthCodeTypeCallTypeID)
 	return nil
 }
@@ -775,6 +815,9 @@ func (v *AuthCodeTypeFlashCall) ConstructorID() uint32 {
 
 // Encode serializes AuthCodeTypeFlashCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthCodeTypeFlashCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthCodeTypeFlashCallTypeID)
 	return nil
 }
@@ -804,6 +847,9 @@ func (v *AuthCodeTypeMissedCall) ConstructorID() uint32 {
 
 // Encode serializes AuthCodeTypeMissedCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthCodeTypeMissedCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthCodeTypeMissedCallTypeID)
 	return nil
 }
@@ -833,6 +879,9 @@ func (v *AuthCodeTypeFragmentSms) ConstructorID() uint32 {
 
 // Encode serializes AuthCodeTypeFragmentSms to a bytes.Buffer using the TL binary protocol.
 func (v *AuthCodeTypeFragmentSms) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthCodeTypeFragmentSmsTypeID)
 	return nil
 }
@@ -937,6 +986,9 @@ func (v *AuthSentCodeTypeApp) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeApp to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeApp) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeAppTypeID)
 	WriteInt(b, uint32(v.Length))
 	return nil
@@ -973,6 +1025,9 @@ func (v *AuthSentCodeTypeSms) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeSms to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeSms) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeSmsTypeID)
 	WriteInt(b, uint32(v.Length))
 	return nil
@@ -1009,6 +1064,9 @@ func (v *AuthSentCodeTypeCall) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeCallTypeID)
 	WriteInt(b, uint32(v.Length))
 	return nil
@@ -1045,6 +1103,9 @@ func (v *AuthSentCodeTypeFlashCall) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeFlashCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeFlashCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeFlashCallTypeID)
 	WriteString(b, v.Pattern)
 	return nil
@@ -1082,6 +1143,9 @@ func (v *AuthSentCodeTypeMissedCall) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeMissedCall to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeMissedCall) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeMissedCallTypeID)
 	WriteString(b, v.Prefix)
 	WriteInt(b, uint32(v.Length))
@@ -1146,6 +1210,9 @@ func (v *AuthSentCodeTypeEmailCode) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeEmailCode to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeEmailCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeEmailCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1229,6 +1296,9 @@ func (v *AuthSentCodeTypeSetUpEmailRequired) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeSetUpEmailRequired to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeSetUpEmailRequired) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeSetUpEmailRequiredTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1269,6 +1339,9 @@ func (v *AuthSentCodeTypeFragmentSms) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeFragmentSms to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeFragmentSms) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeFragmentSmsTypeID)
 	WriteString(b, v.URL)
 	WriteInt(b, uint32(v.Length))
@@ -1336,6 +1409,9 @@ func (v *AuthSentCodeTypeFirebaseSms) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeFirebaseSms to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeFirebaseSms) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeFirebaseSmsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1437,6 +1513,9 @@ func (v *AuthSentCodeTypeSmsWord) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeSmsWord to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeSmsWord) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeSmsWordTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1492,6 +1571,9 @@ func (v *AuthSentCodeTypeSmsPhrase) ConstructorID() uint32 {
 
 // Encode serializes AuthSentCodeTypeSmsPhrase to a bytes.Buffer using the TL binary protocol.
 func (v *AuthSentCodeTypeSmsPhrase) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthSentCodeTypeSmsPhraseTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1550,6 +1632,9 @@ func (v *WebAuthorization) ConstructorID() uint32 {
 
 // Encode serializes WebAuthorization to a bytes.Buffer using the TL binary protocol.
 func (v *WebAuthorization) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, WebAuthorizationTypeID)
 	WriteLong(b, v.Hash)
 	WriteLong(b, v.BotID)
@@ -1653,6 +1738,9 @@ func (v *PasswordKdfAlgoUnknown) ConstructorID() uint32 {
 
 // Encode serializes PasswordKdfAlgoUnknown to a bytes.Buffer using the TL binary protocol.
 func (v *PasswordKdfAlgoUnknown) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PasswordKdfAlgoUnknownTypeID)
 	return nil
 }
@@ -1686,6 +1774,9 @@ func (v *PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow) Cons
 
 // Encode serializes PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow to a bytes.Buffer using the TL binary protocol.
 func (v *PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPow) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PasswordKdfAlgoSha256sha256pbkdf2hmacsha512iter100000sha256modPowTypeID)
 	WriteBytes(b, v.Salt1)
 	WriteBytes(b, v.Salt2)
@@ -1765,6 +1856,9 @@ func (v *SecurePasswordKdfAlgoUnknown) ConstructorID() uint32 {
 
 // Encode serializes SecurePasswordKdfAlgoUnknown to a bytes.Buffer using the TL binary protocol.
 func (v *SecurePasswordKdfAlgoUnknown) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SecurePasswordKdfAlgoUnknownTypeID)
 	return nil
 }
@@ -1795,6 +1889,9 @@ func (v *SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000) ConstructorID() uint32
 
 // Encode serializes SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000 to a bytes.Buffer using the TL binary protocol.
 func (v *SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SecurePasswordKdfAlgoPbkdf2hmacsha512iter100000TypeID)
 	WriteBytes(b, v.Salt)
 	return nil
@@ -1831,6 +1928,9 @@ func (v *SecurePasswordKdfAlgoSha512) ConstructorID() uint32 {
 
 // Encode serializes SecurePasswordKdfAlgoSha512 to a bytes.Buffer using the TL binary protocol.
 func (v *SecurePasswordKdfAlgoSha512) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SecurePasswordKdfAlgoSha512TypeID)
 	WriteBytes(b, v.Salt)
 	return nil
@@ -1886,6 +1986,9 @@ func (v *InputCheckPasswordEmpty) ConstructorID() uint32 {
 
 // Encode serializes InputCheckPasswordEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *InputCheckPasswordEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputCheckPasswordEmptyTypeID)
 	return nil
 }
@@ -1918,6 +2021,9 @@ func (v *InputCheckPasswordSRP) ConstructorID() uint32 {
 
 // Encode serializes InputCheckPasswordSRP to a bytes.Buffer using the TL binary protocol.
 func (v *InputCheckPasswordSRP) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputCheckPasswordSRPTypeID)
 	WriteLong(b, v.SRPID)
 	WriteBytes(b, v.A)
@@ -2042,10 +2148,15 @@ func (v *URLAuthResultRequest) ConstructorID() uint32 {
 
 // Encode serializes URLAuthResultRequest to a bytes.Buffer using the TL binary protocol.
 func (v *URLAuthResultRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, URLAuthResultRequestTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.Domain)
 	if v.Flags.Has(2) {
 		WriteString(b, v.Browser)
@@ -2177,6 +2288,9 @@ func (v *URLAuthResultAccepted) ConstructorID() uint32 {
 
 // Encode serializes URLAuthResultAccepted to a bytes.Buffer using the TL binary protocol.
 func (v *URLAuthResultAccepted) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, URLAuthResultAcceptedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2223,6 +2337,9 @@ func (v *URLAuthResultDefault) ConstructorID() uint32 {
 
 // Encode serializes URLAuthResultDefault to a bytes.Buffer using the TL binary protocol.
 func (v *URLAuthResultDefault) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, URLAuthResultDefaultTypeID)
 	return nil
 }
@@ -2280,6 +2397,9 @@ func (v *AuthLoginToken) ConstructorID() uint32 {
 
 // Encode serializes AuthLoginToken to a bytes.Buffer using the TL binary protocol.
 func (v *AuthLoginToken) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthLoginTokenTypeID)
 	WriteInt(b, uint32(v.Expires))
 	WriteBytes(b, v.Token)
@@ -2323,6 +2443,9 @@ func (v *AuthLoginTokenMigrateTo) ConstructorID() uint32 {
 
 // Encode serializes AuthLoginTokenMigrateTo to a bytes.Buffer using the TL binary protocol.
 func (v *AuthLoginTokenMigrateTo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthLoginTokenMigrateToTypeID)
 	WriteInt(b, uint32(v.DCID))
 	WriteBytes(b, v.Token)
@@ -2365,8 +2488,13 @@ func (v *AuthLoginTokenSuccess) ConstructorID() uint32 {
 
 // Encode serializes AuthLoginTokenSuccess to a bytes.Buffer using the TL binary protocol.
 func (v *AuthLoginTokenSuccess) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthLoginTokenSuccessTypeID)
-	EncodeTLObject(b, v.Authorization)
+	if _err := EncodeTLObject(b, v.Authorization); _err != nil {
+		return fmt.Errorf("encode field authorization: %w", _err)
+	}
 	return nil
 }
 
@@ -2416,6 +2544,9 @@ func (v *AuthLoggedOut) ConstructorID() uint32 {
 
 // Encode serializes AuthLoggedOut to a bytes.Buffer using the TL binary protocol.
 func (v *AuthLoggedOut) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthLoggedOutTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2481,6 +2612,9 @@ func (v *Passkey) ConstructorID() uint32 {
 
 // Encode serializes Passkey to a bytes.Buffer using the TL binary protocol.
 func (v *Passkey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PasskeyTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2559,8 +2693,13 @@ func (v *AuthPasskeyLoginOptions) ConstructorID() uint32 {
 
 // Encode serializes AuthPasskeyLoginOptions to a bytes.Buffer using the TL binary protocol.
 func (v *AuthPasskeyLoginOptions) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthPasskeyLoginOptionsTypeID)
-	EncodeTLObject(b, v.Options)
+	if _err := EncodeTLObject(b, v.Options); _err != nil {
+		return fmt.Errorf("encode field options: %w", _err)
+	}
 	return nil
 }
 
@@ -2620,8 +2759,13 @@ func (v *InputPasskeyResponseRegister) ConstructorID() uint32 {
 
 // Encode serializes InputPasskeyResponseRegister to a bytes.Buffer using the TL binary protocol.
 func (v *InputPasskeyResponseRegister) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPasskeyResponseRegisterTypeID)
-	EncodeTLObject(b, v.ClientData)
+	if _err := EncodeTLObject(b, v.ClientData); _err != nil {
+		return fmt.Errorf("encode field client_data: %w", _err)
+	}
 	WriteBytes(b, v.AttestationData)
 	return nil
 }
@@ -2669,8 +2813,13 @@ func (v *InputPasskeyResponseLogin) ConstructorID() uint32 {
 
 // Encode serializes InputPasskeyResponseLogin to a bytes.Buffer using the TL binary protocol.
 func (v *InputPasskeyResponseLogin) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPasskeyResponseLoginTypeID)
-	EncodeTLObject(b, v.ClientData)
+	if _err := EncodeTLObject(b, v.ClientData); _err != nil {
+		return fmt.Errorf("encode field client_data: %w", _err)
+	}
 	WriteBytes(b, v.AuthenticatorData)
 	WriteBytes(b, v.Signature)
 	WriteString(b, v.UserHandle)
@@ -2749,10 +2898,15 @@ func (v *InputPasskeyCredentialPublicKey) ConstructorID() uint32 {
 
 // Encode serializes InputPasskeyCredentialPublicKey to a bytes.Buffer using the TL binary protocol.
 func (v *InputPasskeyCredentialPublicKey) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPasskeyCredentialPublicKeyTypeID)
 	WriteString(b, v.ID)
 	WriteString(b, v.RawID)
-	EncodeTLObject(b, v.Response)
+	if _err := EncodeTLObject(b, v.Response); _err != nil {
+		return fmt.Errorf("encode field response: %w", _err)
+	}
 	return nil
 }
 
@@ -2801,6 +2955,9 @@ func (v *InputPasskeyCredentialFirebasePnv) ConstructorID() uint32 {
 
 // Encode serializes InputPasskeyCredentialFirebasePnv to a bytes.Buffer using the TL binary protocol.
 func (v *InputPasskeyCredentialFirebasePnv) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPasskeyCredentialFirebasePnvTypeID)
 	WriteString(b, v.PnvToken)
 	return nil
@@ -2841,6 +2998,9 @@ func (v *AuthFirebasePnvIntent) ConstructorID() uint32 {
 
 // Encode serializes AuthFirebasePnvIntent to a bytes.Buffer using the TL binary protocol.
 func (v *AuthFirebasePnvIntent) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, AuthFirebasePnvIntentTypeID)
 	WriteString(b, v.Nonce)
 	WriteString(b, v.DigitalCredentialPayload)
@@ -2890,6 +3050,9 @@ func (v *BindAuthKeyInner) ConstructorID() uint32 {
 
 // Encode serializes BindAuthKeyInner to a bytes.Buffer using the TL binary protocol.
 func (v *BindAuthKeyInner) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BindAuthKeyInnerTypeID)
 	WriteLong(b, v.Nonce)
 	WriteLong(b, v.TempAuthKeyID)
@@ -2975,6 +3138,9 @@ func (v *DestroyAuthKeyOk) ConstructorID() uint32 {
 
 // Encode serializes DestroyAuthKeyOk to a bytes.Buffer using the TL binary protocol.
 func (v *DestroyAuthKeyOk) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DestroyAuthKeyOkTypeID)
 	return nil
 }
@@ -3004,6 +3170,9 @@ func (v *DestroyAuthKeyNone) ConstructorID() uint32 {
 
 // Encode serializes DestroyAuthKeyNone to a bytes.Buffer using the TL binary protocol.
 func (v *DestroyAuthKeyNone) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DestroyAuthKeyNoneTypeID)
 	return nil
 }
@@ -3033,6 +3202,9 @@ func (v *DestroyAuthKeyFail) ConstructorID() uint32 {
 
 // Encode serializes DestroyAuthKeyFail to a bytes.Buffer using the TL binary protocol.
 func (v *DestroyAuthKeyFail) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, DestroyAuthKeyFailTypeID)
 	return nil
 }

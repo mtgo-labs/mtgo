@@ -39,6 +39,9 @@ func (v *EncryptedFileEmpty) ConstructorID() uint32 {
 
 // Encode serializes EncryptedFileEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *EncryptedFileEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EncryptedFileEmptyTypeID)
 	return nil
 }
@@ -73,6 +76,9 @@ func (v *EncryptedFile) ConstructorID() uint32 {
 
 // Encode serializes EncryptedFile to a bytes.Buffer using the TL binary protocol.
 func (v *EncryptedFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, EncryptedFileTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -164,6 +170,9 @@ func (v *InputEncryptedFileEmpty) ConstructorID() uint32 {
 
 // Encode serializes InputEncryptedFileEmpty to a bytes.Buffer using the TL binary protocol.
 func (v *InputEncryptedFileEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputEncryptedFileEmptyTypeID)
 	return nil
 }
@@ -197,6 +206,9 @@ func (v *InputEncryptedFileUploaded) ConstructorID() uint32 {
 
 // Encode serializes InputEncryptedFileUploaded to a bytes.Buffer using the TL binary protocol.
 func (v *InputEncryptedFileUploaded) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputEncryptedFileUploadedTypeID)
 	WriteLong(b, v.ID)
 	WriteInt(b, uint32(v.Parts))
@@ -252,6 +264,9 @@ func (v *InputEncryptedFile) ConstructorID() uint32 {
 
 // Encode serializes InputEncryptedFile to a bytes.Buffer using the TL binary protocol.
 func (v *InputEncryptedFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputEncryptedFileTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.AccessHash)
@@ -296,6 +311,9 @@ func (v *InputEncryptedFileBigUploaded) ConstructorID() uint32 {
 
 // Encode serializes InputEncryptedFileBigUploaded to a bytes.Buffer using the TL binary protocol.
 func (v *InputEncryptedFileBigUploaded) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputEncryptedFileBigUploadedTypeID)
 	WriteLong(b, v.ID)
 	WriteInt(b, uint32(v.Parts))
@@ -349,6 +367,9 @@ func (v *SecureCredentialsEncrypted) ConstructorID() uint32 {
 
 // Encode serializes SecureCredentialsEncrypted to a bytes.Buffer using the TL binary protocol.
 func (v *SecureCredentialsEncrypted) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SecureCredentialsEncryptedTypeID)
 	WriteBytes(b, v.Data)
 	WriteBytes(b, v.Hash)

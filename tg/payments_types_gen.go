@@ -82,6 +82,9 @@ func (v *Invoice) ConstructorID() uint32 {
 
 // Encode serializes Invoice to a bytes.Buffer using the TL binary protocol.
 func (v *Invoice) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InvoiceTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -89,7 +92,9 @@ func (v *Invoice) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Prices)))
 	for _, _item := range v.Prices {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field prices: %w", _err)
+		}
 	}
 	if v.Flags.Has(8) {
 		WriteLong(b, v.MaxTipAmount)
@@ -209,6 +214,9 @@ func (v *PaymentCharge) ConstructorID() uint32 {
 
 // Encode serializes PaymentCharge to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentCharge) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentChargeTypeID)
 	WriteString(b, v.ID)
 	WriteString(b, v.ProviderChargeID)
@@ -274,6 +282,9 @@ func (v *PaymentRequestedInfo) ConstructorID() uint32 {
 
 // Encode serializes PaymentRequestedInfo to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentRequestedInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentRequestedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -287,7 +298,9 @@ func (v *PaymentRequestedInfo) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Email)
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.ShippingAddress)
+		if _err := EncodeTLObject(b, v.ShippingAddress); _err != nil {
+			return fmt.Errorf("encode field shipping_address: %w", _err)
+		}
 	}
 	return nil
 }
@@ -359,6 +372,9 @@ func (v *PaymentSavedCredentialsCard) ConstructorID() uint32 {
 
 // Encode serializes PaymentSavedCredentialsCard to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentSavedCredentialsCard) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentSavedCredentialsCardTypeID)
 	WriteString(b, v.ID)
 	WriteString(b, v.Title)
@@ -471,6 +487,9 @@ func (v *PaymentsPaymentForm) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentForm to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentForm) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentFormTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -479,38 +498,52 @@ func (v *PaymentsPaymentForm) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Invoice)
+	if _err := EncodeTLObject(b, v.Invoice); _err != nil {
+		return fmt.Errorf("encode field invoice: %w", _err)
+	}
 	WriteLong(b, v.ProviderID)
 	WriteString(b, v.URL)
 	if v.Flags.Has(4) {
 		WriteString(b, v.NativeProvider)
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.NativeParams)
+		if _err := EncodeTLObject(b, v.NativeParams); _err != nil {
+			return fmt.Errorf("encode field native_params: %w", _err)
+		}
 	}
 	if v.Flags.Has(6) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.AdditionalMethods)))
 		for _, _item := range v.AdditionalMethods {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field additional_methods: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.SavedInfo)
+		if _err := EncodeTLObject(b, v.SavedInfo); _err != nil {
+			return fmt.Errorf("encode field saved_info: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.SavedCredentials)))
 		for _, _item := range v.SavedCredentials {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field saved_credentials: %w", _err)
+			}
 		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -723,6 +756,9 @@ func (v *PaymentsPaymentFormStars) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentFormStars to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentFormStars) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentFormStarsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -731,13 +767,19 @@ func (v *PaymentsPaymentFormStars) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Invoice)
+	if _err := EncodeTLObject(b, v.Invoice); _err != nil {
+		return fmt.Errorf("encode field invoice: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -840,9 +882,14 @@ func (v *PaymentsPaymentFormStarGift) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentFormStarGift to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentFormStarGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentFormStarGiftTypeID)
 	WriteLong(b, v.FormID)
-	EncodeTLObject(b, v.Invoice)
+	if _err := EncodeTLObject(b, v.Invoice); _err != nil {
+		return fmt.Errorf("encode field invoice: %w", _err)
+	}
 	return nil
 }
 
@@ -901,6 +948,9 @@ func (v *PaymentsValidatedRequestedInfo) ConstructorID() uint32 {
 
 // Encode serializes PaymentsValidatedRequestedInfo to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsValidatedRequestedInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsValidatedRequestedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -911,7 +961,9 @@ func (v *PaymentsValidatedRequestedInfo) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.ShippingOptions)))
 		for _, _item := range v.ShippingOptions {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field shipping_options: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -1003,8 +1055,13 @@ func (v *PaymentsPaymentResult) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentResult to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentResult) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentResultTypeID)
-	EncodeTLObject(b, v.Updates)
+	if _err := EncodeTLObject(b, v.Updates); _err != nil {
+		return fmt.Errorf("encode field updates: %w", _err)
+	}
 	return nil
 }
 
@@ -1043,6 +1100,9 @@ func (v *PaymentsPaymentVerificationNeeded) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentVerificationNeeded to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentVerificationNeeded) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentVerificationNeededTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -1129,6 +1189,9 @@ func (v *PaymentsPaymentReceipt) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentReceipt to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentReceipt) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentReceiptTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1138,14 +1201,22 @@ func (v *PaymentsPaymentReceipt) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Invoice)
+	if _err := EncodeTLObject(b, v.Invoice); _err != nil {
+		return fmt.Errorf("encode field invoice: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Info)
+		if _err := EncodeTLObject(b, v.Info); _err != nil {
+			return fmt.Errorf("encode field info: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Shipping)
+		if _err := EncodeTLObject(b, v.Shipping); _err != nil {
+			return fmt.Errorf("encode field shipping: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteLong(b, v.TipAmount)
@@ -1156,7 +1227,9 @@ func (v *PaymentsPaymentReceipt) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1324,6 +1397,9 @@ func (v *PaymentsPaymentReceiptStars) ConstructorID() uint32 {
 
 // Encode serializes PaymentsPaymentReceiptStars to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsPaymentReceiptStars) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsPaymentReceiptStarsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1332,16 +1408,22 @@ func (v *PaymentsPaymentReceiptStars) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Title)
 	WriteString(b, v.Description)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Invoice)
+	if _err := EncodeTLObject(b, v.Invoice); _err != nil {
+		return fmt.Errorf("encode field invoice: %w", _err)
+	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.TotalAmount)
 	WriteString(b, v.TransactionID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1473,11 +1555,16 @@ func (v *PaymentsSavedInfo) ConstructorID() uint32 {
 
 // Encode serializes PaymentsSavedInfo to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsSavedInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsSavedInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.SavedInfo)
+		if _err := EncodeTLObject(b, v.SavedInfo); _err != nil {
+			return fmt.Errorf("encode field saved_info: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1558,6 +1645,9 @@ func (v *InputPaymentCredentialsSaved) ConstructorID() uint32 {
 
 // Encode serializes InputPaymentCredentialsSaved to a bytes.Buffer using the TL binary protocol.
 func (v *InputPaymentCredentialsSaved) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPaymentCredentialsSavedTypeID)
 	WriteString(b, v.ID)
 	WriteBytes(b, v.TmpPassword)
@@ -1609,10 +1699,15 @@ func (v *InputPaymentCredentials) ConstructorID() uint32 {
 
 // Encode serializes InputPaymentCredentials to a bytes.Buffer using the TL binary protocol.
 func (v *InputPaymentCredentials) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPaymentCredentialsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Data)
+	if _err := EncodeTLObject(b, v.Data); _err != nil {
+		return fmt.Errorf("encode field data: %w", _err)
+	}
 	return nil
 }
 
@@ -1657,8 +1752,13 @@ func (v *InputPaymentCredentialsApplePay) ConstructorID() uint32 {
 
 // Encode serializes InputPaymentCredentialsApplePay to a bytes.Buffer using the TL binary protocol.
 func (v *InputPaymentCredentialsApplePay) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPaymentCredentialsApplePayTypeID)
-	EncodeTLObject(b, v.PaymentData)
+	if _err := EncodeTLObject(b, v.PaymentData); _err != nil {
+		return fmt.Errorf("encode field payment_data: %w", _err)
+	}
 	return nil
 }
 
@@ -1697,8 +1797,13 @@ func (v *InputPaymentCredentialsGooglePay) ConstructorID() uint32 {
 
 // Encode serializes InputPaymentCredentialsGooglePay to a bytes.Buffer using the TL binary protocol.
 func (v *InputPaymentCredentialsGooglePay) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputPaymentCredentialsGooglePayTypeID)
-	EncodeTLObject(b, v.PaymentToken)
+	if _err := EncodeTLObject(b, v.PaymentToken); _err != nil {
+		return fmt.Errorf("encode field payment_token: %w", _err)
+	}
 	return nil
 }
 
@@ -1742,13 +1847,18 @@ func (v *ShippingOption) ConstructorID() uint32 {
 
 // Encode serializes ShippingOption to a bytes.Buffer using the TL binary protocol.
 func (v *ShippingOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, ShippingOptionTypeID)
 	WriteString(b, v.ID)
 	WriteString(b, v.Title)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Prices)))
 	for _, _item := range v.Prices {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field prices: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1819,6 +1929,9 @@ func (v *BankCardOpenURL) ConstructorID() uint32 {
 
 // Encode serializes BankCardOpenURL to a bytes.Buffer using the TL binary protocol.
 func (v *BankCardOpenURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BankCardOpenURLTypeID)
 	WriteString(b, v.URL)
 	WriteString(b, v.Name)
@@ -1865,12 +1978,17 @@ func (v *PaymentsBankCardData) ConstructorID() uint32 {
 
 // Encode serializes PaymentsBankCardData to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsBankCardData) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsBankCardDataTypeID)
 	WriteString(b, v.Title)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.OpenUrls)))
 	for _, _item := range v.OpenUrls {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field open_urls: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2031,8 +2149,13 @@ func (v *InputInvoiceMessage) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceMessage to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceMessage) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceMessageTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -2077,6 +2200,9 @@ func (v *InputInvoiceSlug) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceSlug to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceSlug) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceSlugTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -2114,9 +2240,16 @@ func (v *InputInvoicePremiumGiftCode) ConstructorID() uint32 {
 
 // Encode serializes InputInvoicePremiumGiftCode to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoicePremiumGiftCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoicePremiumGiftCodeTypeID)
-	EncodeTLObject(b, v.Purpose)
-	EncodeTLObject(b, v.Option)
+	if _err := EncodeTLObject(b, v.Purpose); _err != nil {
+		return fmt.Errorf("encode field purpose: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Option); _err != nil {
+		return fmt.Errorf("encode field option: %w", _err)
+	}
 	return nil
 }
 
@@ -2164,8 +2297,13 @@ func (v *InputInvoiceStars) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStars to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStars) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarsTypeID)
-	EncodeTLObject(b, v.Purpose)
+	if _err := EncodeTLObject(b, v.Purpose); _err != nil {
+		return fmt.Errorf("encode field purpose: %w", _err)
+	}
 	return nil
 }
 
@@ -2204,6 +2342,9 @@ func (v *InputInvoiceChatInviteSubscription) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceChatInviteSubscription to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceChatInviteSubscription) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceChatInviteSubscriptionTypeID)
 	WriteString(b, v.Hash)
 	return nil
@@ -2258,13 +2399,20 @@ func (v *InputInvoiceStarGift) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGift to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.GiftID)
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2336,10 +2484,15 @@ func (v *InputInvoiceStarGiftUpgrade) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftUpgrade to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftUpgrade) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftUpgradeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Stargift)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
 	return nil
 }
 
@@ -2385,9 +2538,16 @@ func (v *InputInvoiceStarGiftTransfer) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftTransfer to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftTransfer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftTransferTypeID)
-	EncodeTLObject(b, v.Stargift)
-	EncodeTLObject(b, v.ToID)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ToID); _err != nil {
+		return fmt.Errorf("encode field to_id: %w", _err)
+	}
 	return nil
 }
 
@@ -2445,13 +2605,20 @@ func (v *InputInvoicePremiumGiftStars) ConstructorID() uint32 {
 
 // Encode serializes InputInvoicePremiumGiftStars to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoicePremiumGiftStars) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoicePremiumGiftStarsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Months))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2513,8 +2680,13 @@ func (v *InputInvoiceBusinessBotTransferStars) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceBusinessBotTransferStars to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceBusinessBotTransferStars) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceBusinessBotTransferStarsTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteLong(b, v.Stars)
 	return nil
 }
@@ -2577,13 +2749,20 @@ func (v *InputInvoiceStarGiftResale) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftResale to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftResale) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftResaleTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Slug)
-	EncodeTLObject(b, v.ToID)
+	if _err := EncodeTLObject(b, v.ToID); _err != nil {
+		return fmt.Errorf("encode field to_id: %w", _err)
+	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2647,8 +2826,13 @@ func (v *InputInvoiceStarGiftPrepaidUpgrade) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftPrepaidUpgrade to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftPrepaidUpgrade) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftPrepaidUpgradeTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Hash)
 	return nil
 }
@@ -2693,8 +2877,13 @@ func (v *InputInvoicePremiumAuthCode) ConstructorID() uint32 {
 
 // Encode serializes InputInvoicePremiumAuthCode to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoicePremiumAuthCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoicePremiumAuthCodeTypeID)
-	EncodeTLObject(b, v.Purpose)
+	if _err := EncodeTLObject(b, v.Purpose); _err != nil {
+		return fmt.Errorf("encode field purpose: %w", _err)
+	}
 	return nil
 }
 
@@ -2733,8 +2922,13 @@ func (v *InputInvoiceStarGiftDropOriginalDetails) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftDropOriginalDetails to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftDropOriginalDetails) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftDropOriginalDetailsTypeID)
-	EncodeTLObject(b, v.Stargift)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
 	return nil
 }
 
@@ -2795,16 +2989,23 @@ func (v *InputInvoiceStarGiftAuctionBid) ConstructorID() uint32 {
 
 // Encode serializes InputInvoiceStarGiftAuctionBid to a bytes.Buffer using the TL binary protocol.
 func (v *InputInvoiceStarGiftAuctionBid) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputInvoiceStarGiftAuctionBidTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	WriteLong(b, v.GiftID)
 	WriteLong(b, v.BidAmount)
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2877,6 +3078,9 @@ func (v *PaymentsExportedInvoice) ConstructorID() uint32 {
 
 // Encode serializes PaymentsExportedInvoice to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsExportedInvoice) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsExportedInvoiceTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -2981,6 +3185,9 @@ func (v *InputStorePaymentPremiumSubscription) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentPremiumSubscription to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentPremiumSubscription) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentPremiumSubscriptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3022,8 +3229,13 @@ func (v *InputStorePaymentGiftPremium) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentGiftPremium to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentGiftPremium) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentGiftPremiumTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.Amount)
 	return nil
@@ -3089,21 +3301,30 @@ func (v *InputStorePaymentPremiumGiftCode) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentPremiumGiftCode to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentPremiumGiftCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentPremiumGiftCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.BoostPeer)
+		if _err := EncodeTLObject(b, v.BoostPeer); _err != nil {
+			return fmt.Errorf("encode field boost_peer: %w", _err)
+		}
 	}
 	WriteString(b, v.Currency)
 	WriteLong(b, v.Amount)
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3226,15 +3447,22 @@ func (v *InputStorePaymentPremiumGiveaway) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentPremiumGiveaway to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentPremiumGiveaway) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentPremiumGiveawayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.BoostPeer)
+	if _err := EncodeTLObject(b, v.BoostPeer); _err != nil {
+		return fmt.Errorf("encode field boost_peer: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.AdditionalPeers)))
 		for _, _item := range v.AdditionalPeers {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field additional_peers: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
@@ -3365,6 +3593,9 @@ func (v *InputStorePaymentStarsTopup) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentStarsTopup to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentStarsTopup) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentStarsTopupTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3372,7 +3603,9 @@ func (v *InputStorePaymentStarsTopup) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Currency)
 	WriteLong(b, v.Amount)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.SpendPurposePeer)
+		if _err := EncodeTLObject(b, v.SpendPurposePeer); _err != nil {
+			return fmt.Errorf("encode field spend_purpose_peer: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3437,8 +3670,13 @@ func (v *InputStorePaymentStarsGift) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentStarsGift to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentStarsGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentStarsGiftTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteLong(b, v.Stars)
 	WriteString(b, v.Currency)
 	WriteLong(b, v.Amount)
@@ -3526,16 +3764,23 @@ func (v *InputStorePaymentStarsGiveaway) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentStarsGiveaway to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentStarsGiveaway) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentStarsGiveawayTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.Stars)
-	EncodeTLObject(b, v.BoostPeer)
+	if _err := EncodeTLObject(b, v.BoostPeer); _err != nil {
+		return fmt.Errorf("encode field boost_peer: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.AdditionalPeers)))
 		for _, _item := range v.AdditionalPeers {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field additional_peers: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
@@ -3679,6 +3924,9 @@ func (v *InputStorePaymentAuthCode) ConstructorID() uint32 {
 
 // Encode serializes InputStorePaymentAuthCode to a bytes.Buffer using the TL binary protocol.
 func (v *InputStorePaymentAuthCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStorePaymentAuthCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3751,6 +3999,9 @@ func (v *PaymentFormMethod) ConstructorID() uint32 {
 
 // Encode serializes PaymentFormMethod to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentFormMethod) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentFormMethodTypeID)
 	WriteString(b, v.URL)
 	WriteString(b, v.Title)
@@ -3820,6 +4071,9 @@ func (v *PremiumSubscriptionOption) ConstructorID() uint32 {
 
 // Encode serializes PremiumSubscriptionOption to a bytes.Buffer using the TL binary protocol.
 func (v *PremiumSubscriptionOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PremiumSubscriptionOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3922,6 +4176,9 @@ func (v *PremiumGiftCodeOption) ConstructorID() uint32 {
 
 // Encode serializes PremiumGiftCodeOption to a bytes.Buffer using the TL binary protocol.
 func (v *PremiumGiftCodeOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PremiumGiftCodeOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4034,11 +4291,16 @@ func (v *PaymentsCheckedGiftCode) ConstructorID() uint32 {
 
 // Encode serializes PaymentsCheckedGiftCode to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsCheckedGiftCode) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsCheckedGiftCodeTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.FromID)
+		if _err := EncodeTLObject(b, v.FromID); _err != nil {
+			return fmt.Errorf("encode field from_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.GiveawayMsgID))
@@ -4054,12 +4316,16 @@ func (v *PaymentsCheckedGiftCode) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4235,6 +4501,9 @@ func (v *PaymentsGiveawayInfo) ConstructorID() uint32 {
 
 // Encode serializes PaymentsGiveawayInfo to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsGiveawayInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsGiveawayInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4337,6 +4606,9 @@ func (v *PaymentsGiveawayInfoResults) ConstructorID() uint32 {
 
 // Encode serializes PaymentsGiveawayInfoResults to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsGiveawayInfoResults) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsGiveawayInfoResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4447,6 +4719,9 @@ func (v *PrepaidGiveaway) ConstructorID() uint32 {
 
 // Encode serializes PrepaidGiveaway to a bytes.Buffer using the TL binary protocol.
 func (v *PrepaidGiveaway) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PrepaidGiveawayTypeID)
 	WriteLong(b, v.ID)
 	WriteInt(b, uint32(v.Months))
@@ -4505,6 +4780,9 @@ func (v *PrepaidStarsGiveaway) ConstructorID() uint32 {
 
 // Encode serializes PrepaidStarsGiveaway to a bytes.Buffer using the TL binary protocol.
 func (v *PrepaidStarsGiveaway) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PrepaidStarsGiveawayTypeID)
 	WriteLong(b, v.ID)
 	WriteLong(b, v.Stars)
@@ -4607,6 +4885,9 @@ func (v *Boost) ConstructorID() uint32 {
 
 // Encode serializes Boost to a bytes.Buffer using the TL binary protocol.
 func (v *Boost) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, BoostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4733,12 +5014,17 @@ func (v *MyBoost) ConstructorID() uint32 {
 
 // Encode serializes MyBoost to a bytes.Buffer using the TL binary protocol.
 func (v *MyBoost) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MyBoostTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.Slot))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.Date))
 	WriteInt(b, uint32(v.Expires))
@@ -4830,6 +5116,9 @@ func (v *StarsTopupOption) ConstructorID() uint32 {
 
 // Encode serializes StarsTopupOption to a bytes.Buffer using the TL binary protocol.
 func (v *StarsTopupOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsTopupOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5039,13 +5328,20 @@ func (v *StarsTransaction) ConstructorID() uint32 {
 
 // Encode serializes StarsTransaction to a bytes.Buffer using the TL binary protocol.
 func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsTransactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.ID)
-	EncodeTLObject(b, v.Amount)
+	if _err := EncodeTLObject(b, v.Amount); _err != nil {
+		return fmt.Errorf("encode field amount: %w", _err)
+	}
 	WriteInt(b, uint32(v.Date))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Title)
 	}
@@ -5053,7 +5349,9 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Description)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
 	if v.Flags.Has(5) {
 		WriteInt(b, uint32(v.TransactionDate))
@@ -5071,7 +5369,9 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.ExtendedMedia)))
 		for _, _item := range v.ExtendedMedia {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field extended_media: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(12) {
@@ -5081,7 +5381,9 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.GiveawayPostID))
 	}
 	if v.Flags.Has(14) {
-		EncodeTLObject(b, v.Stargift)
+		if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+			return fmt.Errorf("encode field stargift: %w", _err)
+		}
 	}
 	if v.Flags.Has(15) {
 		WriteInt(b, uint32(v.FloodskipNumber))
@@ -5090,10 +5392,14 @@ func (v *StarsTransaction) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.StarrefCommissionPermille))
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.StarrefPeer)
+		if _err := EncodeTLObject(b, v.StarrefPeer); _err != nil {
+			return fmt.Errorf("encode field starref_peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.StarrefAmount)
+		if _err := EncodeTLObject(b, v.StarrefAmount); _err != nil {
+			return fmt.Errorf("encode field starref_amount: %w", _err)
+		}
 	}
 	if v.Flags.Has(19) {
 		WriteInt(b, uint32(v.PaidMessages))
@@ -5383,15 +5689,22 @@ func (v *PaymentsStarsStatus) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarsStatus to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarsStatus) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarsStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Balance)
+	if _err := EncodeTLObject(b, v.Balance); _err != nil {
+		return fmt.Errorf("encode field balance: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Subscriptions)))
 		for _, _item := range v.Subscriptions {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field subscriptions: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(2) {
@@ -5404,7 +5717,9 @@ func (v *PaymentsStarsStatus) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.History)))
 		for _, _item := range v.History {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field history: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(0) {
@@ -5413,12 +5728,16 @@ func (v *PaymentsStarsStatus) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -5610,12 +5929,21 @@ func (v *StarsRevenueStatus) ConstructorID() uint32 {
 
 // Encode serializes StarsRevenueStatus to a bytes.Buffer using the TL binary protocol.
 func (v *StarsRevenueStatus) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsRevenueStatusTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.CurrentBalance)
-	EncodeTLObject(b, v.AvailableBalance)
-	EncodeTLObject(b, v.OverallRevenue)
+	if _err := EncodeTLObject(b, v.CurrentBalance); _err != nil {
+		return fmt.Errorf("encode field current_balance: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.AvailableBalance); _err != nil {
+		return fmt.Errorf("encode field available_balance: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.OverallRevenue); _err != nil {
+		return fmt.Errorf("encode field overall_revenue: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.NextWithdrawalAt))
 	}
@@ -5702,14 +6030,23 @@ func (v *PaymentsStarsRevenueStats) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarsRevenueStats to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarsRevenueStats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarsRevenueStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.TopHoursGraph)
+		if _err := EncodeTLObject(b, v.TopHoursGraph); _err != nil {
+			return fmt.Errorf("encode field top_hours_graph: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.RevenueGraph)
-	EncodeTLObject(b, v.Status)
+	if _err := EncodeTLObject(b, v.RevenueGraph); _err != nil {
+		return fmt.Errorf("encode field revenue_graph: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Status); _err != nil {
+		return fmt.Errorf("encode field status: %w", _err)
+	}
 	WriteDouble(b, v.UsdRate)
 	return nil
 }
@@ -5782,6 +6119,9 @@ func (v *PaymentsStarsRevenueWithdrawalURL) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarsRevenueWithdrawalURL to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarsRevenueWithdrawalURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarsRevenueWithdrawalURLTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -5821,6 +6161,9 @@ func (v *PaymentsStarsRevenueAdsAccountURL) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarsRevenueAdsAccountURL to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarsRevenueAdsAccountURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarsRevenueAdsAccountURLTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -5869,6 +6212,9 @@ func (v *InputStarsTransaction) ConstructorID() uint32 {
 
 // Encode serializes InputStarsTransaction to a bytes.Buffer using the TL binary protocol.
 func (v *InputStarsTransaction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStarsTransactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5931,6 +6277,9 @@ func (v *StarsGiftOption) ConstructorID() uint32 {
 
 // Encode serializes StarsGiftOption to a bytes.Buffer using the TL binary protocol.
 func (v *StarsGiftOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsGiftOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -6001,6 +6350,9 @@ func (v *StarsSubscriptionPricing) ConstructorID() uint32 {
 
 // Encode serializes StarsSubscriptionPricing to a bytes.Buffer using the TL binary protocol.
 func (v *StarsSubscriptionPricing) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsSubscriptionPricingTypeID)
 	WriteInt(b, uint32(v.Period))
 	WriteLong(b, v.Amount)
@@ -6086,13 +6438,20 @@ func (v *StarsSubscription) ConstructorID() uint32 {
 
 // Encode serializes StarsSubscription to a bytes.Buffer using the TL binary protocol.
 func (v *StarsSubscription) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsSubscriptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.ID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.UntilDate))
-	EncodeTLObject(b, v.Pricing)
+	if _err := EncodeTLObject(b, v.Pricing); _err != nil {
+		return fmt.Errorf("encode field pricing: %w", _err)
+	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.ChatInviteHash)
 	}
@@ -6100,7 +6459,9 @@ func (v *StarsSubscription) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Title)
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.Photo)
+		if _err := EncodeTLObject(b, v.Photo); _err != nil {
+			return fmt.Errorf("encode field photo: %w", _err)
+		}
 	}
 	if v.Flags.Has(6) {
 		WriteString(b, v.InvoiceSlug)
@@ -6227,6 +6588,9 @@ func (v *StarsGiveawayOption) ConstructorID() uint32 {
 
 // Encode serializes StarsGiveawayOption to a bytes.Buffer using the TL binary protocol.
 func (v *StarsGiveawayOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsGiveawayOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -6240,7 +6604,9 @@ func (v *StarsGiveawayOption) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Winners)))
 	for _, _item := range v.Winners {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field winners: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6344,6 +6710,9 @@ func (v *StarsGiveawayWinnersOption) ConstructorID() uint32 {
 
 // Encode serializes StarsGiveawayWinnersOption to a bytes.Buffer using the TL binary protocol.
 func (v *StarsGiveawayWinnersOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsGiveawayWinnersOptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -6518,11 +6887,16 @@ func (v *StarGift) ConstructorID() uint32 {
 
 // Encode serializes StarGift to a bytes.Buffer using the TL binary protocol.
 func (v *StarGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ID)
-	EncodeTLObject(b, v.Sticker)
+	if _err := EncodeTLObject(b, v.Sticker); _err != nil {
+		return fmt.Errorf("encode field sticker: %w", _err)
+	}
 	WriteLong(b, v.Stars)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.AvailabilityRemains))
@@ -6550,7 +6924,9 @@ func (v *StarGift) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Title)
 	}
 	if v.Flags.Has(6) {
-		EncodeTLObject(b, v.ReleasedBy)
+		if _err := EncodeTLObject(b, v.ReleasedBy); _err != nil {
+			return fmt.Errorf("encode field released_by: %w", _err)
+		}
 	}
 	if v.Flags.Has(8) {
 		WriteInt(b, uint32(v.PerUserTotal))
@@ -6574,7 +6950,9 @@ func (v *StarGift) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.UpgradeVariants))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.Background)
+		if _err := EncodeTLObject(b, v.Background); _err != nil {
+			return fmt.Errorf("encode field background: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6856,6 +7234,9 @@ func (v *StarGiftUnique) ConstructorID() uint32 {
 
 // Encode serializes StarGiftUnique to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftUniqueTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -6865,7 +7246,9 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 	WriteString(b, v.Slug)
 	WriteInt(b, uint32(v.Num))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.OwnerID)
+		if _err := EncodeTLObject(b, v.OwnerID); _err != nil {
+			return fmt.Errorf("encode field owner_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.OwnerName)
@@ -6876,7 +7259,9 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Attributes)))
 	for _, _item := range v.Attributes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field attributes: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.AvailabilityIssued))
 	WriteInt(b, uint32(v.AvailabilityTotal))
@@ -6887,11 +7272,15 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.ResellAmount)))
 		for _, _item := range v.ResellAmount {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field resell_amount: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.ReleasedBy)
+		if _err := EncodeTLObject(b, v.ReleasedBy); _err != nil {
+			return fmt.Errorf("encode field released_by: %w", _err)
+		}
 	}
 	if v.Flags.Has(8) {
 		WriteLong(b, v.ValueAmount)
@@ -6903,13 +7292,19 @@ func (v *StarGiftUnique) Encode(b *bytes.Buffer) error {
 		WriteLong(b, v.ValueUsdAmount)
 	}
 	if v.Flags.Has(10) {
-		EncodeTLObject(b, v.ThemePeer)
+		if _err := EncodeTLObject(b, v.ThemePeer); _err != nil {
+			return fmt.Errorf("encode field theme_peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(11) {
-		EncodeTLObject(b, v.PeerColor)
+		if _err := EncodeTLObject(b, v.PeerColor); _err != nil {
+			return fmt.Errorf("encode field peer_color: %w", _err)
+		}
 	}
 	if v.Flags.Has(12) {
-		EncodeTLObject(b, v.HostID)
+		if _err := EncodeTLObject(b, v.HostID); _err != nil {
+			return fmt.Errorf("encode field host_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(13) {
 		WriteInt(b, uint32(v.OfferMinStars))
@@ -7175,6 +7570,9 @@ func (v *PaymentsStarGiftsNotModified) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftsNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftsNotModifiedTypeID)
 	return nil
 }
@@ -7208,22 +7606,31 @@ func (v *PaymentsStarGifts) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGifts to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGifts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Gifts)))
 	for _, _item := range v.Gifts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field gifts: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -7358,6 +7765,9 @@ func (v *StarRefProgram) ConstructorID() uint32 {
 
 // Encode serializes StarRefProgram to a bytes.Buffer using the TL binary protocol.
 func (v *StarRefProgram) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarRefProgramTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -7370,7 +7780,9 @@ func (v *StarRefProgram) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.EndDate))
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.DailyRevenuePerUser)
+		if _err := EncodeTLObject(b, v.DailyRevenuePerUser); _err != nil {
+			return fmt.Errorf("encode field daily_revenue_per_user: %w", _err)
+		}
 	}
 	return nil
 }
@@ -7446,17 +7858,24 @@ func (v *PaymentsConnectedStarRefBots) ConstructorID() uint32 {
 
 // Encode serializes PaymentsConnectedStarRefBots to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsConnectedStarRefBots) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsConnectedStarRefBotsTypeID)
 	WriteInt(b, uint32(v.Count))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ConnectedBots)))
 	for _, _item := range v.ConnectedBots {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field connected_bots: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -7558,6 +7977,9 @@ func (v *PaymentsSuggestedStarRefBots) ConstructorID() uint32 {
 
 // Encode serializes PaymentsSuggestedStarRefBots to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsSuggestedStarRefBots) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsSuggestedStarRefBotsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -7565,12 +7987,16 @@ func (v *PaymentsSuggestedStarRefBots) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.SuggestedBots)))
 	for _, _item := range v.SuggestedBots {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field suggested_bots: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -7694,6 +8120,9 @@ func (v *StarsAmount) ConstructorID() uint32 {
 
 // Encode serializes StarsAmount to a bytes.Buffer using the TL binary protocol.
 func (v *StarsAmount) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsAmountTypeID)
 	WriteLong(b, v.Amount)
 	WriteInt(b, uint32(v.Nanos))
@@ -7736,6 +8165,9 @@ func (v *StarsTonAmount) ConstructorID() uint32 {
 
 // Encode serializes StarsTonAmount to a bytes.Buffer using the TL binary protocol.
 func (v *StarsTonAmount) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsTonAmountTypeID)
 	WriteLong(b, v.Amount)
 	return nil
@@ -7815,12 +8247,19 @@ func (v *StarGiftAttributeModel) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeModel to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeModel) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeModelTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Name)
-	EncodeTLObject(b, v.Document)
-	EncodeTLObject(b, v.Rarity)
+	if _err := EncodeTLObject(b, v.Document); _err != nil {
+		return fmt.Errorf("encode field document: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Rarity); _err != nil {
+		return fmt.Errorf("encode field rarity: %w", _err)
+	}
 	return nil
 }
 
@@ -7881,10 +8320,17 @@ func (v *StarGiftAttributePattern) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributePattern to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributePattern) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributePatternTypeID)
 	WriteString(b, v.Name)
-	EncodeTLObject(b, v.Document)
-	EncodeTLObject(b, v.Rarity)
+	if _err := EncodeTLObject(b, v.Document); _err != nil {
+		return fmt.Errorf("encode field document: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Rarity); _err != nil {
+		return fmt.Errorf("encode field rarity: %w", _err)
+	}
 	return nil
 }
 
@@ -7943,6 +8389,9 @@ func (v *StarGiftAttributeBackdrop) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeBackdrop to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeBackdrop) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeBackdropTypeID)
 	WriteString(b, v.Name)
 	WriteInt(b, uint32(v.BackdropID))
@@ -7950,7 +8399,9 @@ func (v *StarGiftAttributeBackdrop) Encode(b *bytes.Buffer) error {
 	WriteInt(b, uint32(v.EdgeColor))
 	WriteInt(b, uint32(v.PatternColor))
 	WriteInt(b, uint32(v.TextColor))
-	EncodeTLObject(b, v.Rarity)
+	if _err := EncodeTLObject(b, v.Rarity); _err != nil {
+		return fmt.Errorf("encode field rarity: %w", _err)
+	}
 	return nil
 }
 
@@ -8033,16 +8484,25 @@ func (v *StarGiftAttributeOriginalDetails) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeOriginalDetails to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeOriginalDetails) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeOriginalDetailsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.SenderID)
+		if _err := EncodeTLObject(b, v.SenderID); _err != nil {
+			return fmt.Errorf("encode field sender_id: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.RecipientID)
+	if _err := EncodeTLObject(b, v.RecipientID); _err != nil {
+		return fmt.Errorf("encode field recipient_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Date))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -8119,21 +8579,30 @@ func (v *PaymentsStarGiftUpgradePreview) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftUpgradePreview to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftUpgradePreview) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftUpgradePreviewTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.SampleAttributes)))
 	for _, _item := range v.SampleAttributes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field sample_attributes: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Prices)))
 	for _, _item := range v.Prices {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field prices: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.NextPrices)))
 	for _, _item := range v.NextPrices {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field next_prices: %w", _err)
+		}
 	}
 	return nil
 }
@@ -8247,17 +8716,26 @@ func (v *PaymentsUniqueStarGift) ConstructorID() uint32 {
 
 // Encode serializes PaymentsUniqueStarGift to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsUniqueStarGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsUniqueStarGiftTypeID)
-	EncodeTLObject(b, v.Gift)
+	if _err := EncodeTLObject(b, v.Gift); _err != nil {
+		return fmt.Errorf("encode field gift: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -8442,16 +8920,25 @@ func (v *SavedStarGift) ConstructorID() uint32 {
 
 // Encode serializes SavedStarGift to a bytes.Buffer using the TL binary protocol.
 func (v *SavedStarGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, SavedStarGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.FromID)
+		if _err := EncodeTLObject(b, v.FromID); _err != nil {
+			return fmt.Errorf("encode field from_id: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.Date))
-	EncodeTLObject(b, v.Gift)
+	if _err := EncodeTLObject(b, v.Gift); _err != nil {
+		return fmt.Errorf("encode field gift: %w", _err)
+	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, uint32(v.MsgID))
@@ -8678,6 +9165,9 @@ func (v *PaymentsSavedStarGifts) ConstructorID() uint32 {
 
 // Encode serializes PaymentsSavedStarGifts to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsSavedStarGifts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsSavedStarGiftsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -8688,7 +9178,9 @@ func (v *PaymentsSavedStarGifts) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Gifts)))
 	for _, _item := range v.Gifts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field gifts: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -8696,12 +9188,16 @@ func (v *PaymentsSavedStarGifts) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -8878,6 +9374,9 @@ func (v *InputSavedStarGiftUser) ConstructorID() uint32 {
 
 // Encode serializes InputSavedStarGiftUser to a bytes.Buffer using the TL binary protocol.
 func (v *InputSavedStarGiftUser) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputSavedStarGiftUserTypeID)
 	WriteInt(b, uint32(v.MsgID))
 	return nil
@@ -8915,8 +9414,13 @@ func (v *InputSavedStarGiftChat) ConstructorID() uint32 {
 
 // Encode serializes InputSavedStarGiftChat to a bytes.Buffer using the TL binary protocol.
 func (v *InputSavedStarGiftChat) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputSavedStarGiftChatTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.SavedID)
 	return nil
 }
@@ -8961,6 +9465,9 @@ func (v *InputSavedStarGiftSlug) ConstructorID() uint32 {
 
 // Encode serializes InputSavedStarGiftSlug to a bytes.Buffer using the TL binary protocol.
 func (v *InputSavedStarGiftSlug) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputSavedStarGiftSlugTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -9000,6 +9507,9 @@ func (v *PaymentsStarGiftWithdrawalURL) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftWithdrawalURL to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftWithdrawalURL) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftWithdrawalURLTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -9062,6 +9572,9 @@ func (v *StarGiftAttributeIDModel) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeIDModel to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeIDModel) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeIDModelTypeID)
 	WriteLong(b, v.DocumentID)
 	return nil
@@ -9098,6 +9611,9 @@ func (v *StarGiftAttributeIDPattern) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeIDPattern to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeIDPattern) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeIDPatternTypeID)
 	WriteLong(b, v.DocumentID)
 	return nil
@@ -9134,6 +9650,9 @@ func (v *StarGiftAttributeIDBackdrop) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeIDBackdrop to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeIDBackdrop) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeIDBackdropTypeID)
 	WriteInt(b, uint32(v.BackdropID))
 	return nil
@@ -9174,8 +9693,13 @@ func (v *StarGiftAttributeCounter) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeCounter to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeCounter) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeCounterTypeID)
-	EncodeTLObject(b, v.Attribute)
+	if _err := EncodeTLObject(b, v.Attribute); _err != nil {
+		return fmt.Errorf("encode field attribute: %w", _err)
+	}
 	WriteInt(b, uint32(v.Count))
 	return nil
 }
@@ -9247,6 +9771,9 @@ func (v *PaymentsResaleStarGifts) ConstructorID() uint32 {
 
 // Encode serializes PaymentsResaleStarGifts to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsResaleStarGiftsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -9254,7 +9781,9 @@ func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Gifts)))
 	for _, _item := range v.Gifts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field gifts: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -9263,7 +9792,9 @@ func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Attributes)))
 		for _, _item := range v.Attributes {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field attributes: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(1) {
@@ -9272,19 +9803,25 @@ func (v *PaymentsResaleStarGifts) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Counters)))
 		for _, _item := range v.Counters {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field counters: %w", _err)
+			}
 		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -9487,6 +10024,9 @@ func (v *StarsRating) ConstructorID() uint32 {
 
 // Encode serializes StarsRating to a bytes.Buffer using the TL binary protocol.
 func (v *StarsRating) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarsRatingTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -9567,13 +10107,18 @@ func (v *StarGiftCollection) ConstructorID() uint32 {
 
 // Encode serializes StarGiftCollection to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftCollection) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftCollectionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.CollectionID))
 	WriteString(b, v.Title)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Icon)
+		if _err := EncodeTLObject(b, v.Icon); _err != nil {
+			return fmt.Errorf("encode field icon: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.GiftsCount))
 	WriteLong(b, v.Hash)
@@ -9661,6 +10206,9 @@ func (v *PaymentsStarGiftCollectionsNotModified) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftCollectionsNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftCollectionsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftCollectionsNotModifiedTypeID)
 	return nil
 }
@@ -9691,11 +10239,16 @@ func (v *PaymentsStarGiftCollections) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftCollections to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftCollections) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftCollectionsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Collections)))
 	for _, _item := range v.Collections {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field collections: %w", _err)
+		}
 	}
 	return nil
 }
@@ -9800,6 +10353,9 @@ func (v *PaymentsUniqueStarGiftValueInfo) ConstructorID() uint32 {
 
 // Encode serializes PaymentsUniqueStarGiftValueInfo to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsUniqueStarGiftValueInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsUniqueStarGiftValueInfoTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -9958,6 +10514,9 @@ func (v *PaymentsCheckCanSendGiftResultOk) ConstructorID() uint32 {
 
 // Encode serializes PaymentsCheckCanSendGiftResultOk to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsCheckCanSendGiftResultOk) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsCheckCanSendGiftResultOkTypeID)
 	return nil
 }
@@ -9988,8 +10547,13 @@ func (v *PaymentsCheckCanSendGiftResultFail) ConstructorID() uint32 {
 
 // Encode serializes PaymentsCheckCanSendGiftResultFail to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsCheckCanSendGiftResultFail) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsCheckCanSendGiftResultFailTypeID)
-	EncodeTLObject(b, v.Reason)
+	if _err := EncodeTLObject(b, v.Reason); _err != nil {
+		return fmt.Errorf("encode field reason: %w", _err)
+	}
 	return nil
 }
 
@@ -10032,6 +10596,9 @@ func (v *StarGiftUpgradePrice) ConstructorID() uint32 {
 
 // Encode serializes StarGiftUpgradePrice to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftUpgradePrice) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftUpgradePriceTypeID)
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.UpgradeStars)
@@ -10105,6 +10672,9 @@ func (v *StarGiftAuctionStateNotModified) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionStateNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionStateNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionStateNotModifiedTypeID)
 	return nil
 }
@@ -10146,6 +10716,9 @@ func (v *StarGiftAuctionState) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionState to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionState) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionStateTypeID)
 	WriteInt(b, uint32(v.Version))
 	WriteInt(b, uint32(v.StartDate))
@@ -10154,7 +10727,9 @@ func (v *StarGiftAuctionState) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.BidLevels)))
 	for _, _item := range v.BidLevels {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field bid_levels: %w", _err)
+		}
 	}
 	WriteVectorLong(b, v.TopBidders)
 	WriteInt(b, uint32(v.NextRoundAt))
@@ -10165,7 +10740,9 @@ func (v *StarGiftAuctionState) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Rounds)))
 	for _, _item := range v.Rounds {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field rounds: %w", _err)
+		}
 	}
 	return nil
 }
@@ -10317,6 +10894,9 @@ func (v *StarGiftAuctionStateFinished) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionStateFinished to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionStateFinished) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionStateFinishedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -10407,20 +10987,33 @@ func (v *PaymentsStarGiftAuctionState) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftAuctionState to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftAuctionState) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftAuctionStateTypeID)
-	EncodeTLObject(b, v.Gift)
-	EncodeTLObject(b, v.State)
-	EncodeTLObject(b, v.UserState)
+	if _err := EncodeTLObject(b, v.Gift); _err != nil {
+		return fmt.Errorf("encode field gift: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.State); _err != nil {
+		return fmt.Errorf("encode field state: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserState); _err != nil {
+		return fmt.Errorf("encode field user_state: %w", _err)
+	}
 	WriteInt(b, uint32(v.Timeout))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	return nil
 }
@@ -10559,16 +11152,23 @@ func (v *StarGiftAuctionAcquiredGift) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionAcquiredGift to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionAcquiredGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionAcquiredGiftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Date))
 	WriteLong(b, v.BidAmount)
 	WriteInt(b, uint32(v.Round))
 	WriteInt(b, uint32(v.Pos))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Message)
+		if _err := EncodeTLObject(b, v.Message); _err != nil {
+			return fmt.Errorf("encode field message: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.GiftNum))
@@ -10660,21 +11260,30 @@ func (v *PaymentsStarGiftAuctionAcquiredGifts) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftAuctionAcquiredGifts to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftAuctionAcquiredGifts) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftAuctionAcquiredGiftsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Gifts)))
 	for _, _item := range v.Gifts {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field gifts: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	return nil
 }
@@ -10788,10 +11397,19 @@ func (v *StarGiftActiveAuctionState) ConstructorID() uint32 {
 
 // Encode serializes StarGiftActiveAuctionState to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftActiveAuctionState) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftActiveAuctionStateTypeID)
-	EncodeTLObject(b, v.Gift)
-	EncodeTLObject(b, v.State)
-	EncodeTLObject(b, v.UserState)
+	if _err := EncodeTLObject(b, v.Gift); _err != nil {
+		return fmt.Errorf("encode field gift: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.State); _err != nil {
+		return fmt.Errorf("encode field state: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserState); _err != nil {
+		return fmt.Errorf("encode field user_state: %w", _err)
+	}
 	return nil
 }
 
@@ -10867,6 +11485,9 @@ func (v *PaymentsStarGiftActiveAuctionsNotModified) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftActiveAuctionsNotModified to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftActiveAuctionsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftActiveAuctionsNotModifiedTypeID)
 	return nil
 }
@@ -10899,21 +11520,30 @@ func (v *PaymentsStarGiftActiveAuctions) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftActiveAuctions to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftActiveAuctions) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftActiveAuctionsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Auctions)))
 	for _, _item := range v.Auctions {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field auctions: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	return nil
 }
@@ -11042,6 +11672,9 @@ func (v *InputStarGiftAuction) ConstructorID() uint32 {
 
 // Encode serializes InputStarGiftAuction to a bytes.Buffer using the TL binary protocol.
 func (v *InputStarGiftAuction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStarGiftAuctionTypeID)
 	WriteLong(b, v.GiftID)
 	return nil
@@ -11078,6 +11711,9 @@ func (v *InputStarGiftAuctionSlug) ConstructorID() uint32 {
 
 // Encode serializes InputStarGiftAuctionSlug to a bytes.Buffer using the TL binary protocol.
 func (v *InputStarGiftAuctionSlug) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, InputStarGiftAuctionSlugTypeID)
 	WriteString(b, v.Slug)
 	return nil
@@ -11119,6 +11755,9 @@ func (v *StarGiftBackground) ConstructorID() uint32 {
 
 // Encode serializes StarGiftBackground to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftBackground) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftBackgroundTypeID)
 	WriteInt(b, uint32(v.CenterColor))
 	WriteInt(b, uint32(v.EdgeColor))
@@ -11188,6 +11827,9 @@ func (v *StarGiftAuctionRound) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionRound to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionRound) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionRoundTypeID)
 	WriteInt(b, uint32(v.Num))
 	WriteInt(b, uint32(v.Duration))
@@ -11233,6 +11875,9 @@ func (v *StarGiftAuctionRoundExtendable) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAuctionRoundExtendable to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAuctionRoundExtendable) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAuctionRoundExtendableTypeID)
 	WriteInt(b, uint32(v.Num))
 	WriteInt(b, uint32(v.Duration))
@@ -11290,11 +11935,16 @@ func (v *PaymentsStarGiftUpgradeAttributes) ConstructorID() uint32 {
 
 // Encode serializes PaymentsStarGiftUpgradeAttributes to a bytes.Buffer using the TL binary protocol.
 func (v *PaymentsStarGiftUpgradeAttributes) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, PaymentsStarGiftUpgradeAttributesTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Attributes)))
 	for _, _item := range v.Attributes {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field attributes: %w", _err)
+		}
 	}
 	return nil
 }
@@ -11389,6 +12039,9 @@ func (v *StarGiftAttributeRarity) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeRarity to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeRarity) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeRarityTypeID)
 	WriteInt(b, uint32(v.Permille))
 	return nil
@@ -11424,6 +12077,9 @@ func (v *StarGiftAttributeRarityUncommon) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeRarityUncommon to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeRarityUncommon) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeRarityUncommonTypeID)
 	return nil
 }
@@ -11453,6 +12109,9 @@ func (v *StarGiftAttributeRarityRare) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeRarityRare to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeRarityRare) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeRarityRareTypeID)
 	return nil
 }
@@ -11482,6 +12141,9 @@ func (v *StarGiftAttributeRarityEpic) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeRarityEpic to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeRarityEpic) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeRarityEpicTypeID)
 	return nil
 }
@@ -11511,6 +12173,9 @@ func (v *StarGiftAttributeRarityLegendary) ConstructorID() uint32 {
 
 // Encode serializes StarGiftAttributeRarityLegendary to a bytes.Buffer using the TL binary protocol.
 func (v *StarGiftAttributeRarityLegendary) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StarGiftAttributeRarityLegendaryTypeID)
 	return nil
 }

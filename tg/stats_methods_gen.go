@@ -34,10 +34,15 @@ func (v *StatsGetBroadcastStatsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetBroadcastStatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetBroadcastStatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetBroadcastStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	return nil
 }
 
@@ -87,6 +92,9 @@ func (v *StatsLoadAsyncGraphRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsLoadAsyncGraphRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsLoadAsyncGraphRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsLoadAsyncGraphTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -143,10 +151,15 @@ func (v *StatsGetMegagroupStatsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetMegagroupStatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetMegagroupStatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetMegagroupStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	return nil
 }
 
@@ -190,8 +203,13 @@ func (v *StatsGetMessagePublicForwardsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetMessagePublicForwardsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetMessagePublicForwardsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetMessagePublicForwardsTypeID)
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
@@ -245,10 +263,15 @@ func (v *StatsGetMessageStatsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetMessageStatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetMessageStatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetMessageStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Channel)
+	if _err := EncodeTLObject(b, v.Channel); _err != nil {
+		return fmt.Errorf("encode field channel: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -300,10 +323,15 @@ func (v *StatsGetStoryStatsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetStoryStatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetStoryStatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetStoryStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -348,8 +376,13 @@ func (v *StatsGetStoryPublicForwardsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetStoryPublicForwardsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetStoryPublicForwardsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetStoryPublicForwardsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	WriteString(b, v.Offset)
 	WriteInt(b, uint32(v.Limit))
@@ -403,10 +436,15 @@ func (v *StatsGetPollStatsRequest) ConstructorID() uint32 {
 
 // Encode serializes StatsGetPollStatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *StatsGetPollStatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StatsGetPollStatsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }

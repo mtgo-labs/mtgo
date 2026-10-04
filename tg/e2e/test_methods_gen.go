@@ -24,6 +24,9 @@ func (v *TestDummyFunctionRequest) ConstructorID() uint32 {
 
 // Encode serializes TestDummyFunctionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *TestDummyFunctionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return tg.ErrNilTLObject
+	}
 	tg.WriteInt(b, TestDummyFunctionTypeID)
 	return nil
 }

@@ -87,6 +87,9 @@ func (v *StorageFileUnknown) ConstructorID() uint32 {
 
 // Encode serializes StorageFileUnknown to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileUnknown) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileUnknownTypeID)
 	return nil
 }
@@ -116,6 +119,9 @@ func (v *StorageFilePartial) ConstructorID() uint32 {
 
 // Encode serializes StorageFilePartial to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFilePartial) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFilePartialTypeID)
 	return nil
 }
@@ -145,6 +151,9 @@ func (v *StorageFileJPEG) ConstructorID() uint32 {
 
 // Encode serializes StorageFileJPEG to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileJPEG) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileJPEGTypeID)
 	return nil
 }
@@ -174,6 +183,9 @@ func (v *StorageFileGIF) ConstructorID() uint32 {
 
 // Encode serializes StorageFileGIF to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileGIF) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileGIFTypeID)
 	return nil
 }
@@ -203,6 +215,9 @@ func (v *StorageFilePNG) ConstructorID() uint32 {
 
 // Encode serializes StorageFilePNG to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFilePNG) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFilePNGTypeID)
 	return nil
 }
@@ -232,6 +247,9 @@ func (v *StorageFilePDF) ConstructorID() uint32 {
 
 // Encode serializes StorageFilePDF to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFilePDF) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFilePDFTypeID)
 	return nil
 }
@@ -261,6 +279,9 @@ func (v *StorageFileMp3) ConstructorID() uint32 {
 
 // Encode serializes StorageFileMp3 to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileMp3) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileMp3TypeID)
 	return nil
 }
@@ -290,6 +311,9 @@ func (v *StorageFileMov) ConstructorID() uint32 {
 
 // Encode serializes StorageFileMov to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileMov) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileMovTypeID)
 	return nil
 }
@@ -319,6 +343,9 @@ func (v *StorageFileMP4) ConstructorID() uint32 {
 
 // Encode serializes StorageFileMP4 to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileMP4) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileMP4TypeID)
 	return nil
 }
@@ -348,6 +375,9 @@ func (v *StorageFileWebp) ConstructorID() uint32 {
 
 // Encode serializes StorageFileWebp to a bytes.Buffer using the TL binary protocol.
 func (v *StorageFileWebp) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, StorageFileWebpTypeID)
 	return nil
 }

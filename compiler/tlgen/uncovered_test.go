@@ -448,6 +448,7 @@ func TestE2EPrefixWriteCode(t *testing.T) {
 		{"WriteString(b, v.Data)", "tg.WriteString(b, v.Data)"},
 		{"WriteVectorInt(b, v.Items)", "tg.WriteVectorInt(b, v.Items)"},
 		{"EncodeTLObject(b, v.Obj)", "tg.EncodeTLObject(b, v.Obj)"},
+		{"return ErrNilTLObject", "return tg.ErrNilTLObject"},
 		{"something else", "something else"},
 	}
 	for _, tt := range tests {

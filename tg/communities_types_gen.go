@@ -36,6 +36,9 @@ func (v *CommunitiesPeerLinkRequests) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesPeerLinkRequests to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesPeerLinkRequests) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesPeerLinkRequestsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -43,7 +46,9 @@ func (v *CommunitiesPeerLinkRequests) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Requests)))
 	for _, _item := range v.Requests {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field requests: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.NextOffset)
@@ -51,12 +56,16 @@ func (v *CommunitiesPeerLinkRequests) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }
@@ -188,18 +197,25 @@ func (v *CommunitiesParticipantJoinedChats) ConstructorID() uint32 {
 
 // Encode serializes CommunitiesParticipantJoinedChats to a bytes.Buffer using the TL binary protocol.
 func (v *CommunitiesParticipantJoinedChats) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, CommunitiesParticipantJoinedChatsTypeID)
 	WriteVectorLong(b, v.CreatorChatIds)
 	WriteVectorLong(b, v.JoinedChatIds)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Chats)))
 	for _, _item := range v.Chats {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field chats: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	return nil
 }

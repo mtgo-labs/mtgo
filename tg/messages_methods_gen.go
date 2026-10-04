@@ -25,11 +25,16 @@ func (v *MessagesGetMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessagesTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -88,6 +93,9 @@ func (v *MessagesGetDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDialogsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -96,7 +104,9 @@ func (v *MessagesGetDialogsRequest) Encode(b *bytes.Buffer) error {
 	}
 	WriteInt(b, uint32(v.OffsetDate))
 	WriteInt(b, uint32(v.OffsetID))
-	EncodeTLObject(b, v.OffsetPeer)
+	if _err := EncodeTLObject(b, v.OffsetPeer); _err != nil {
+		return fmt.Errorf("encode field offset_peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
 	return nil
@@ -146,8 +156,13 @@ func (v *MessagesGetHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetHistoryTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.OffsetDate))
 	WriteInt(b, uint32(v.AddOffset))
@@ -226,28 +241,41 @@ func (v *MessagesSearchRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Q)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.FromID)
+		if _err := EncodeTLObject(b, v.FromID); _err != nil {
+			return fmt.Errorf("encode field from_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.SavedPeerID)
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.SavedReaction)))
 		for _, _item := range v.SavedReaction {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field saved_reaction: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
-	EncodeTLObject(b, v.Filter)
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.MinDate))
 	WriteInt(b, uint32(v.MaxDate))
 	WriteInt(b, uint32(v.OffsetID))
@@ -297,8 +325,13 @@ func (v *MessagesReadHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadHistoryTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MaxID))
 	return nil
 }
@@ -362,10 +395,15 @@ func (v *MessagesDeleteHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteHistoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MaxID))
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.MinDate))
@@ -422,6 +460,9 @@ func (v *MessagesDeleteMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -466,6 +507,9 @@ func (v *MessagesReceivedMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReceivedMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReceivedMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReceivedMessagesTypeID)
 	WriteInt(b, uint32(v.MaxID))
 	return nil
@@ -515,14 +559,21 @@ func (v *MessagesSetTypingRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetTypingRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetTypingRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetTypingTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
-	EncodeTLObject(b, v.Action)
+	if _err := EncodeTLObject(b, v.Action); _err != nil {
+		return fmt.Errorf("encode field action: %w", _err)
+	}
 	return nil
 }
 
@@ -644,23 +695,34 @@ func (v *MessagesSendMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	WriteString(b, v.Message)
 	WriteLong(b, v.RandomID)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(10) {
@@ -670,10 +732,14 @@ func (v *MessagesSendMessageRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.ScheduleRepeatPeriod))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.QuickReplyShortcut)
+		if _err := EncodeTLObject(b, v.QuickReplyShortcut); _err != nil {
+			return fmt.Errorf("encode field quick_reply_shortcut: %w", _err)
+		}
 	}
 	if v.Flags.Has(18) {
 		WriteLong(b, v.Effect)
@@ -682,10 +748,14 @@ func (v *MessagesSendMessageRequest) Encode(b *bytes.Buffer) error {
 		WriteLong(b, v.AllowPaidStars)
 	}
 	if v.Flags.Has(22) {
-		EncodeTLObject(b, v.SuggestedPost)
+		if _err := EncodeTLObject(b, v.SuggestedPost); _err != nil {
+			return fmt.Errorf("encode field suggested_post: %w", _err)
+		}
 	}
 	if v.Flags.Has(23) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -803,24 +873,37 @@ func (v *MessagesSendMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendMediaTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
 	}
-	EncodeTLObject(b, v.Media)
+	if v.Flags.Has(0) {
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
+	}
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	WriteString(b, v.Message)
 	WriteLong(b, v.RandomID)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(10) {
@@ -830,10 +913,14 @@ func (v *MessagesSendMediaRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.ScheduleRepeatPeriod))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.QuickReplyShortcut)
+		if _err := EncodeTLObject(b, v.QuickReplyShortcut); _err != nil {
+			return fmt.Errorf("encode field quick_reply_shortcut: %w", _err)
+		}
 	}
 	if v.Flags.Has(18) {
 		WriteLong(b, v.Effect)
@@ -842,7 +929,9 @@ func (v *MessagesSendMediaRequest) Encode(b *bytes.Buffer) error {
 		WriteLong(b, v.AllowPaidStars)
 	}
 	if v.Flags.Has(22) {
-		EncodeTLObject(b, v.SuggestedPost)
+		if _err := EncodeTLObject(b, v.SuggestedPost); _err != nil {
+			return fmt.Errorf("encode field suggested_post: %w", _err)
+		}
 	}
 	return nil
 }
@@ -964,18 +1053,27 @@ func (v *MessagesForwardMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesForwardMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesForwardMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesForwardMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.FromPeer)
+	if _err := EncodeTLObject(b, v.FromPeer); _err != nil {
+		return fmt.Errorf("encode field from_peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	WriteVectorLong(b, v.RandomID)
-	EncodeTLObject(b, v.ToPeer)
+	if _err := EncodeTLObject(b, v.ToPeer); _err != nil {
+		return fmt.Errorf("encode field to_peer: %w", _err)
+	}
 	if v.Flags.Has(9) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
 	if v.Flags.Has(22) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	if v.Flags.Has(10) {
 		WriteInt(b, uint32(v.ScheduleDate))
@@ -984,10 +1082,14 @@ func (v *MessagesForwardMessagesRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.ScheduleRepeatPeriod))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.QuickReplyShortcut)
+		if _err := EncodeTLObject(b, v.QuickReplyShortcut); _err != nil {
+			return fmt.Errorf("encode field quick_reply_shortcut: %w", _err)
+		}
 	}
 	if v.Flags.Has(18) {
 		WriteLong(b, v.Effect)
@@ -999,7 +1101,9 @@ func (v *MessagesForwardMessagesRequest) Encode(b *bytes.Buffer) error {
 		WriteLong(b, v.AllowPaidStars)
 	}
 	if v.Flags.Has(23) {
-		EncodeTLObject(b, v.SuggestedPost)
+		if _err := EncodeTLObject(b, v.SuggestedPost); _err != nil {
+			return fmt.Errorf("encode field suggested_post: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1041,8 +1145,13 @@ func (v *MessagesReportSpamRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportSpamRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportSpamRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportSpamTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -1081,8 +1190,13 @@ func (v *MessagesGetPeerSettingsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPeerSettingsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPeerSettingsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPeerSettingsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -1126,8 +1240,13 @@ func (v *MessagesReportRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	WriteBytes(b, v.Option)
 	WriteString(b, v.Message)
@@ -1171,6 +1290,9 @@ func (v *MessagesGetChatsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetChatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetChatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetChatsTypeID)
 	WriteVectorLong(b, v.ID)
 	return nil
@@ -1213,6 +1335,9 @@ func (v *MessagesGetFullChatRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFullChatRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFullChatRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFullChatTypeID)
 	WriteLong(b, v.ChatID)
 	return nil
@@ -1256,6 +1381,9 @@ func (v *MessagesEditChatTitleRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatTitleRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatTitleRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatTitleTypeID)
 	WriteLong(b, v.ChatID)
 	WriteString(b, v.Title)
@@ -1300,9 +1428,14 @@ func (v *MessagesEditChatPhotoRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatPhotoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatPhotoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatPhotoTypeID)
 	WriteLong(b, v.ChatID)
-	EncodeTLObject(b, v.Photo)
+	if _err := EncodeTLObject(b, v.Photo); _err != nil {
+		return fmt.Errorf("encode field photo: %w", _err)
+	}
 	return nil
 }
 
@@ -1345,9 +1478,14 @@ func (v *MessagesAddChatUserRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesAddChatUserRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesAddChatUserRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesAddChatUserTypeID)
 	WriteLong(b, v.ChatID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.FwdLimit))
 	return nil
 }
@@ -1399,11 +1537,16 @@ func (v *MessagesDeleteChatUserRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteChatUserRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteChatUserRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteChatUserTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.ChatID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -1454,13 +1597,18 @@ func (v *MessagesCreateChatRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCreateChatRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCreateChatRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCreateChatTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Users)))
 	for _, _item := range v.Users {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field users: %w", _err)
+		}
 	}
 	WriteString(b, v.Title)
 	if v.Flags.Has(0) {
@@ -1507,6 +1655,9 @@ func (v *MessagesGetDHConfigRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDHConfigRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDHConfigRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDHConfigTypeID)
 	WriteInt(b, uint32(v.Version))
 	WriteInt(b, uint32(v.RandomLength))
@@ -1552,8 +1703,13 @@ func (v *MessagesRequestEncryptionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestEncryptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestEncryptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestEncryptionTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.RandomID))
 	WriteBytes(b, v.GA)
 	return nil
@@ -1598,8 +1754,13 @@ func (v *MessagesAcceptEncryptionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesAcceptEncryptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesAcceptEncryptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesAcceptEncryptionTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBytes(b, v.GB)
 	WriteLong(b, v.KeyFingerprint)
 	return nil
@@ -1651,6 +1812,9 @@ func (v *MessagesDiscardEncryptionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDiscardEncryptionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDiscardEncryptionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDiscardEncryptionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -1694,8 +1858,13 @@ func (v *MessagesSetEncryptedTypingRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetEncryptedTypingRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetEncryptedTypingRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetEncryptedTypingTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBool(b, v.Typing)
 	return nil
 }
@@ -1736,8 +1905,13 @@ func (v *MessagesReadEncryptedHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadEncryptedHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadEncryptedHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadEncryptedHistoryTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MaxDate))
 	return nil
 }
@@ -1788,10 +1962,15 @@ func (v *MessagesSendEncryptedRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendEncryptedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendEncryptedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendEncryptedTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	WriteBytes(b, v.Data)
 	return nil
@@ -1846,13 +2025,20 @@ func (v *MessagesSendEncryptedFileRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendEncryptedFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendEncryptedFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendEncryptedFileTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	WriteBytes(b, v.Data)
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	return nil
 }
 
@@ -1895,8 +2081,13 @@ func (v *MessagesSendEncryptedServiceRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendEncryptedServiceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendEncryptedServiceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendEncryptedServiceTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	WriteBytes(b, v.Data)
 	return nil
@@ -1939,6 +2130,9 @@ func (v *MessagesReceivedQueueRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReceivedQueueRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReceivedQueueRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReceivedQueueTypeID)
 	WriteInt(b, uint32(v.MaxQts))
 	return nil
@@ -1978,8 +2172,13 @@ func (v *MessagesReportEncryptedSpamRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportEncryptedSpamRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportEncryptedSpamRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportEncryptedSpamTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -2018,6 +2217,9 @@ func (v *MessagesReadMessageContentsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadMessageContentsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadMessageContentsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadMessageContentsTypeID)
 	WriteVectorInt(b, v.ID)
 	return nil
@@ -2061,6 +2263,9 @@ func (v *MessagesGetStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetStickersTypeID)
 	WriteString(b, v.Emoticon)
 	WriteLong(b, v.Hash)
@@ -2104,6 +2309,9 @@ func (v *MessagesGetAllStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAllStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAllStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAllStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -2155,6 +2363,9 @@ func (v *MessagesGetWebPagePreviewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetWebPagePreviewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetWebPagePreviewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetWebPagePreviewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2163,7 +2374,9 @@ func (v *MessagesGetWebPagePreviewRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -2235,10 +2448,15 @@ func (v *MessagesExportChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesExportChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesExportChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesExportChatInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.ExpireDate))
 	}
@@ -2249,7 +2467,9 @@ func (v *MessagesExportChatInviteRequest) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Title)
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.SubscriptionPricing)
+		if _err := EncodeTLObject(b, v.SubscriptionPricing); _err != nil {
+			return fmt.Errorf("encode field subscription_pricing: %w", _err)
+		}
 	}
 	return nil
 }
@@ -2291,6 +2511,9 @@ func (v *MessagesCheckChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCheckChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCheckChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCheckChatInviteTypeID)
 	WriteString(b, v.Hash)
 	return nil
@@ -2333,6 +2556,9 @@ func (v *MessagesImportChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesImportChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesImportChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesImportChatInviteTypeID)
 	WriteString(b, v.Hash)
 	return nil
@@ -2376,8 +2602,13 @@ func (v *MessagesGetStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetStickerSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	WriteInt(b, uint32(v.Hash))
 	return nil
 }
@@ -2420,8 +2651,13 @@ func (v *MessagesInstallStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesInstallStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesInstallStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesInstallStickerSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	WriteBool(b, v.Archived)
 	return nil
 }
@@ -2463,8 +2699,13 @@ func (v *MessagesUninstallStickerSetRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUninstallStickerSetRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUninstallStickerSetRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUninstallStickerSetTypeID)
-	EncodeTLObject(b, v.Stickerset)
+	if _err := EncodeTLObject(b, v.Stickerset); _err != nil {
+		return fmt.Errorf("encode field stickerset: %w", _err)
+	}
 	return nil
 }
 
@@ -2506,9 +2747,16 @@ func (v *MessagesStartBotRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesStartBotRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesStartBotRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesStartBotTypeID)
-	EncodeTLObject(b, v.Bot)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	WriteString(b, v.StartParam)
 	return nil
@@ -2553,8 +2801,13 @@ func (v *MessagesGetMessagesViewsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessagesViewsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessagesViewsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessagesViewsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	WriteBool(b, v.Increment)
 	return nil
@@ -2599,9 +2852,14 @@ func (v *MessagesEditChatAdminRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatAdminRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatAdminRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatAdminTypeID)
 	WriteLong(b, v.ChatID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteBool(b, v.IsAdmin)
 	return nil
 }
@@ -2641,6 +2899,9 @@ func (v *MessagesMigrateChatRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesMigrateChatRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesMigrateChatRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesMigrateChatTypeID)
 	WriteLong(b, v.ChatID)
 	return nil
@@ -2715,6 +2976,9 @@ func (v *MessagesSearchGlobalRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchGlobalRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchGlobalRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchGlobalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2722,14 +2986,20 @@ func (v *MessagesSearchGlobalRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.FolderID))
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.Community)
+		if _err := EncodeTLObject(b, v.Community); _err != nil {
+			return fmt.Errorf("encode field community: %w", _err)
+		}
 	}
 	WriteString(b, v.Q)
-	EncodeTLObject(b, v.Filter)
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.MinDate))
 	WriteInt(b, uint32(v.MaxDate))
 	WriteInt(b, uint32(v.OffsetRate))
-	EncodeTLObject(b, v.OffsetPeer)
+	if _err := EncodeTLObject(b, v.OffsetPeer); _err != nil {
+		return fmt.Errorf("encode field offset_peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -2785,6 +3055,9 @@ func (v *MessagesReorderStickerSetsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReorderStickerSetsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReorderStickerSetsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReorderStickerSetsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -2829,6 +3102,9 @@ func (v *MessagesGetDocumentByHashRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDocumentByHashRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDocumentByHashRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDocumentByHashTypeID)
 	WriteBytes(b, v.SHA256)
 	WriteLong(b, v.Size)
@@ -2873,6 +3149,9 @@ func (v *MessagesGetSavedGifsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSavedGifsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSavedGifsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSavedGifsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -2916,8 +3195,13 @@ func (v *MessagesSaveGIFRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSaveGIFRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSaveGIFRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSaveGIFTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
 	return nil
 }
@@ -2969,13 +3253,22 @@ func (v *MessagesGetInlineBotResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetInlineBotResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetInlineBotResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetInlineBotResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.GeoPoint)
+		if _err := EncodeTLObject(b, v.GeoPoint); _err != nil {
+			return fmt.Errorf("encode field geo_point: %w", _err)
+		}
 	}
 	WriteString(b, v.Query)
 	WriteString(b, v.Offset)
@@ -3046,6 +3339,9 @@ func (v *MessagesSetInlineBotResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetInlineBotResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetInlineBotResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetInlineBotResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3053,17 +3349,23 @@ func (v *MessagesSetInlineBotResultsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Results)))
 	for _, _item := range v.Results {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field results: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.CacheTime))
 	if v.Flags.Has(2) {
 		WriteString(b, v.NextOffset)
 	}
 	if v.Flags.Has(3) {
-		EncodeTLObject(b, v.SwitchPm)
+		if _err := EncodeTLObject(b, v.SwitchPm); _err != nil {
+			return fmt.Errorf("encode field switch_pm: %w", _err)
+		}
 	}
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.SwitchWebview)
+		if _err := EncodeTLObject(b, v.SwitchWebview); _err != nil {
+			return fmt.Errorf("encode field switch_webview: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3147,12 +3449,19 @@ func (v *MessagesSendInlineBotResultRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendInlineBotResultRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendInlineBotResultRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendInlineBotResultTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	WriteLong(b, v.RandomID)
 	WriteLong(b, v.QueryID)
@@ -3161,10 +3470,14 @@ func (v *MessagesSendInlineBotResultRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.ScheduleDate))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.QuickReplyShortcut)
+		if _err := EncodeTLObject(b, v.QuickReplyShortcut); _err != nil {
+			return fmt.Errorf("encode field quick_reply_shortcut: %w", _err)
+		}
 	}
 	if v.Flags.Has(21) {
 		WriteLong(b, v.AllowPaidStars)
@@ -3210,8 +3523,13 @@ func (v *MessagesGetMessageEditDataRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessageEditDataRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessageEditDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessageEditDataTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -3299,25 +3617,36 @@ func (v *MessagesEditMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(11) {
 		WriteString(b, v.Message)
 	}
 	if v.Flags.Has(14) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(15) {
@@ -3330,7 +3659,9 @@ func (v *MessagesEditMessageRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, uint32(v.QuickReplyShortcutID))
 	}
 	if v.Flags.Has(23) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3405,28 +3736,41 @@ func (v *MessagesEditInlineBotMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditInlineBotMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditInlineBotMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditInlineBotMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	if v.Flags.Has(11) {
 		WriteString(b, v.Message)
 	}
 	if v.Flags.Has(14) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ReplyMarkup)
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
 	}
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(23) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3484,16 +3828,23 @@ func (v *MessagesGetBotCallbackAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetBotCallbackAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetBotCallbackAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetBotCallbackAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	if v.Flags.Has(0) {
 		WriteBytes(b, v.Data)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Password)
+		if _err := EncodeTLObject(b, v.Password); _err != nil {
+			return fmt.Errorf("encode field password: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3553,6 +3904,9 @@ func (v *MessagesSetBotCallbackAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetBotCallbackAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetBotCallbackAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetBotCallbackAnswerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3602,11 +3956,16 @@ func (v *MessagesGetPeerDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPeerDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPeerDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPeerDialogsTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Peers)))
 	for _, _item := range v.Peers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3686,32 +4045,47 @@ func (v *MessagesSaveDraftRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSaveDraftRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSaveDraftRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSaveDraftTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Message)
 	if v.Flags.Has(3) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Entities)))
 		for _, _item := range v.Entities {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
 		}
 	}
 	if v.Flags.Has(5) {
-		EncodeTLObject(b, v.Media)
+		if _err := EncodeTLObject(b, v.Media); _err != nil {
+			return fmt.Errorf("encode field media: %w", _err)
+		}
 	}
 	if v.Flags.Has(7) {
 		WriteLong(b, v.Effect)
 	}
 	if v.Flags.Has(8) {
-		EncodeTLObject(b, v.SuggestedPost)
+		if _err := EncodeTLObject(b, v.SuggestedPost); _err != nil {
+			return fmt.Errorf("encode field suggested_post: %w", _err)
+		}
 	}
 	if v.Flags.Has(9) {
-		EncodeTLObject(b, v.RichMessage)
+		if _err := EncodeTLObject(b, v.RichMessage); _err != nil {
+			return fmt.Errorf("encode field rich_message: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3750,6 +4124,9 @@ func (v *MessagesGetAllDraftsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAllDraftsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAllDraftsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAllDraftsTypeID)
 	return nil
 }
@@ -3791,6 +4168,9 @@ func (v *MessagesGetFeaturedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFeaturedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFeaturedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFeaturedStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -3833,6 +4213,9 @@ func (v *MessagesReadFeaturedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadFeaturedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadFeaturedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadFeaturedStickersTypeID)
 	WriteVectorLong(b, v.ID)
 	return nil
@@ -3882,6 +4265,9 @@ func (v *MessagesGetRecentStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetRecentStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetRecentStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetRecentStickersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -3936,10 +4322,15 @@ func (v *MessagesSaveRecentStickerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSaveRecentStickerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSaveRecentStickerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSaveRecentStickerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteBool(b, v.Unsave)
 	return nil
 }
@@ -3987,6 +4378,9 @@ func (v *MessagesClearRecentStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesClearRecentStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesClearRecentStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesClearRecentStickersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4042,6 +4436,9 @@ func (v *MessagesGetArchivedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetArchivedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetArchivedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetArchivedStickersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4087,6 +4484,9 @@ func (v *MessagesGetMaskStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMaskStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMaskStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMaskStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -4129,8 +4529,13 @@ func (v *MessagesGetAttachedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAttachedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAttachedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAttachedStickersTypeID)
-	EncodeTLObject(b, v.Media)
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -4184,12 +4589,19 @@ func (v *MessagesSetGameScoreRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetGameScoreRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetGameScoreRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetGameScoreTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Score))
 	return nil
 }
@@ -4246,11 +4658,18 @@ func (v *MessagesSetInlineGameScoreRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetInlineGameScoreRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetInlineGameScoreRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetInlineGameScoreTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.ID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Score))
 	return nil
 }
@@ -4292,10 +4711,17 @@ func (v *MessagesGetGameHighScoresRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetGameHighScoresRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetGameHighScoresRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetGameHighScoresTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -4337,9 +4763,16 @@ func (v *MessagesGetInlineGameHighScoresRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetInlineGameHighScoresRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetInlineGameHighScoresRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetInlineGameHighScoresTypeID)
-	EncodeTLObject(b, v.ID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -4382,8 +4815,13 @@ func (v *MessagesGetCommonChatsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetCommonChatsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetCommonChatsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetCommonChatsTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteLong(b, v.MaxID)
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -4427,6 +4865,9 @@ func (v *MessagesGetWebPageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetWebPageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetWebPageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetWebPageTypeID)
 	WriteString(b, v.URL)
 	WriteInt(b, uint32(v.Hash))
@@ -4479,10 +4920,15 @@ func (v *MessagesToggleDialogPinRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleDialogPinRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleDialogPinRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleDialogPinTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -4531,6 +4977,9 @@ func (v *MessagesReorderPinnedDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReorderPinnedDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReorderPinnedDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReorderPinnedDialogsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4538,7 +4987,9 @@ func (v *MessagesReorderPinnedDialogsRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Order)))
 	for _, _item := range v.Order {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field order: %w", _err)
+		}
 	}
 	return nil
 }
@@ -4578,6 +5029,9 @@ func (v *MessagesGetPinnedDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPinnedDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPinnedDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPinnedDialogsTypeID)
 	WriteInt(b, uint32(v.FolderID))
 	return nil
@@ -4633,6 +5087,9 @@ func (v *MessagesSetBotShippingResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetBotShippingResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetBotShippingResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetBotShippingResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4644,7 +5101,9 @@ func (v *MessagesSetBotShippingResultsRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.ShippingOptions)))
 		for _, _item := range v.ShippingOptions {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field shipping_options: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -4698,6 +5157,9 @@ func (v *MessagesSetBotPrecheckoutResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetBotPrecheckoutResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetBotPrecheckoutResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetBotPrecheckoutResultsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -4753,14 +5215,21 @@ func (v *MessagesUploadMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUploadMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUploadMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUploadMediaTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
 		WriteString(b, v.BusinessConnectionID)
 	}
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Media)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -4803,9 +5272,16 @@ func (v *MessagesSendScreenshotNotificationRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendScreenshotNotificationRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendScreenshotNotificationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendScreenshotNotificationTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.ReplyTo)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+		return fmt.Errorf("encode field reply_to: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	return nil
 }
@@ -4847,6 +5323,9 @@ func (v *MessagesGetFavedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFavedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFavedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFavedStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -4890,8 +5369,13 @@ func (v *MessagesFaveStickerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesFaveStickerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesFaveStickerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesFaveStickerTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteBool(b, v.Unfave)
 	return nil
 }
@@ -4945,10 +5429,15 @@ func (v *MessagesGetUnreadMentionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetUnreadMentionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetUnreadMentionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetUnreadMentionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
@@ -5006,10 +5495,15 @@ func (v *MessagesReadMentionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadMentionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadMentionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadMentionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
@@ -5055,8 +5549,13 @@ func (v *MessagesGetRecentLocationsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetRecentLocationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetRecentLocationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetRecentLocationsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
 	return nil
@@ -5157,26 +5656,39 @@ func (v *MessagesSendMultiMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendMultiMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendMultiMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendMultiMediaTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.MultiMedia)))
 	for _, _item := range v.MultiMedia {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field multi_media: %w", _err)
+		}
 	}
 	if v.Flags.Has(10) {
 		WriteInt(b, uint32(v.ScheduleDate))
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	if v.Flags.Has(17) {
-		EncodeTLObject(b, v.QuickReplyShortcut)
+		if _err := EncodeTLObject(b, v.QuickReplyShortcut); _err != nil {
+			return fmt.Errorf("encode field quick_reply_shortcut: %w", _err)
+		}
 	}
 	if v.Flags.Has(18) {
 		WriteLong(b, v.Effect)
@@ -5225,9 +5737,16 @@ func (v *MessagesUploadEncryptedFileRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUploadEncryptedFileRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUploadEncryptedFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUploadEncryptedFileTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	return nil
 }
 
@@ -5278,6 +5797,9 @@ func (v *MessagesSearchStickerSetsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchStickerSetsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchStickerSetsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchStickerSetsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -5322,6 +5844,9 @@ func (v *MessagesGetSplitRangesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSplitRangesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSplitRangesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSplitRangesTypeID)
 	return nil
 }
@@ -5373,13 +5898,20 @@ func (v *MessagesMarkDialogUnreadRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesMarkDialogUnreadRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesMarkDialogUnreadRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesMarkDialogUnreadTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -5426,11 +5958,16 @@ func (v *MessagesGetDialogUnreadMarksRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDialogUnreadMarksRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDialogUnreadMarksRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDialogUnreadMarksTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
 	return nil
 }
@@ -5468,6 +6005,9 @@ func (v *MessagesClearAllDraftsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesClearAllDraftsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesClearAllDraftsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesClearAllDraftsTypeID)
 	return nil
 }
@@ -5525,10 +6065,15 @@ func (v *MessagesUpdatePinnedMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUpdatePinnedMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUpdatePinnedMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUpdatePinnedMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -5572,8 +6117,13 @@ func (v *MessagesSendVoteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendVoteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendVoteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendVoteTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteVectorBytes(b, v.Options)
 	return nil
@@ -5618,8 +6168,13 @@ func (v *MessagesGetPollResultsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPollResultsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPollResultsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPollResultsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteLong(b, v.PollHash)
 	return nil
@@ -5662,8 +6217,13 @@ func (v *MessagesGetOnlinesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetOnlinesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetOnlinesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetOnlinesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -5705,8 +6265,13 @@ func (v *MessagesEditChatAboutRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatAboutRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatAboutRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatAboutTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.About)
 	return nil
 }
@@ -5747,9 +6312,16 @@ func (v *MessagesEditChatDefaultBannedRightsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatDefaultBannedRightsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatDefaultBannedRightsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatDefaultBannedRightsTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.BannedRights)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.BannedRights); _err != nil {
+		return fmt.Errorf("encode field banned_rights: %w", _err)
+	}
 	return nil
 }
 
@@ -5790,6 +6362,9 @@ func (v *MessagesGetEmojiKeywordsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiKeywordsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiKeywordsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiKeywordsTypeID)
 	WriteString(b, v.LangCode)
 	return nil
@@ -5833,6 +6408,9 @@ func (v *MessagesGetEmojiKeywordsDifferenceRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiKeywordsDifferenceRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiKeywordsDifferenceRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiKeywordsDifferenceTypeID)
 	WriteString(b, v.LangCode)
 	WriteInt(b, uint32(v.FromVersion))
@@ -5876,6 +6454,9 @@ func (v *MessagesGetEmojiKeywordsLanguagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiKeywordsLanguagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiKeywordsLanguagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiKeywordsLanguagesTypeID)
 	WriteVectorString(b, v.LangCodes)
 	return nil
@@ -5915,6 +6496,9 @@ func (v *MessagesGetEmojiURLRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiURLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiURLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiURLTypeID)
 	WriteString(b, v.LangCode)
 	return nil
@@ -5971,12 +6555,19 @@ func (v *MessagesGetSearchCountersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSearchCountersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSearchCountersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSearchCountersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.SavedPeerID)
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
@@ -5984,7 +6575,9 @@ func (v *MessagesGetSearchCountersRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Filters)))
 	for _, _item := range v.Filters {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field filters: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6047,11 +6640,16 @@ func (v *MessagesRequestURLAuthRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestURLAuthRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestURLAuthRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestURLAuthTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.MsgID))
@@ -6137,11 +6735,16 @@ func (v *MessagesAcceptURLAuthRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesAcceptURLAuthRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesAcceptURLAuthRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesAcceptURLAuthTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.MsgID))
@@ -6195,8 +6798,13 @@ func (v *MessagesHidePeerSettingsBarRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesHidePeerSettingsBarRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesHidePeerSettingsBarRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesHidePeerSettingsBarTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -6236,8 +6844,13 @@ func (v *MessagesGetScheduledHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetScheduledHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetScheduledHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetScheduledHistoryTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.Hash)
 	return nil
 }
@@ -6280,8 +6893,13 @@ func (v *MessagesGetScheduledMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetScheduledMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetScheduledMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetScheduledMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -6324,8 +6942,13 @@ func (v *MessagesSendScheduledMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendScheduledMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendScheduledMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendScheduledMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -6368,8 +6991,13 @@ func (v *MessagesDeleteScheduledMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteScheduledMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteScheduledMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteScheduledMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -6426,10 +7054,15 @@ func (v *MessagesGetPollVotesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPollVotesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPollVotesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPollVotesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
 		WriteBytes(b, v.Option)
@@ -6495,13 +7128,18 @@ func (v *MessagesToggleStickerSetsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleStickerSetsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleStickerSetsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleStickerSetsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Stickersets)))
 	for _, _item := range v.Stickersets {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stickersets: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6540,6 +7178,9 @@ func (v *MessagesGetDialogFiltersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDialogFiltersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDialogFiltersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDialogFiltersTypeID)
 	return nil
 }
@@ -6580,6 +7221,9 @@ func (v *MessagesGetSuggestedDialogFiltersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSuggestedDialogFiltersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSuggestedDialogFiltersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSuggestedDialogFiltersTypeID)
 	return nil
 }
@@ -6627,12 +7271,17 @@ func (v *MessagesUpdateDialogFilterRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUpdateDialogFilterRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUpdateDialogFilterRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUpdateDialogFilterTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Filter)
+		if _err := EncodeTLObject(b, v.Filter); _err != nil {
+			return fmt.Errorf("encode field filter: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6672,6 +7321,9 @@ func (v *MessagesUpdateDialogFiltersOrderRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUpdateDialogFiltersOrderRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUpdateDialogFiltersOrderRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUpdateDialogFiltersOrderTypeID)
 	WriteVectorInt(b, v.Order)
 	return nil
@@ -6714,6 +7366,9 @@ func (v *MessagesGetOldFeaturedStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetOldFeaturedStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetOldFeaturedStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetOldFeaturedStickersTypeID)
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
@@ -6766,8 +7421,13 @@ func (v *MessagesGetRepliesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetRepliesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetRepliesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetRepliesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.OffsetDate))
@@ -6817,8 +7477,13 @@ func (v *MessagesGetDiscussionMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDiscussionMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDiscussionMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDiscussionMessageTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -6862,8 +7527,13 @@ func (v *MessagesReadDiscussionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadDiscussionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadDiscussionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadDiscussionTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteInt(b, uint32(v.ReadMaxID))
 	return nil
@@ -6917,15 +7587,22 @@ func (v *MessagesUnpinAllMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUnpinAllMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUnpinAllMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUnpinAllMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.SavedPeerID)
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -6967,6 +7644,9 @@ func (v *MessagesDeleteChatRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteChatRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteChatRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteChatTypeID)
 	WriteLong(b, v.ChatID)
 	return nil
@@ -7015,6 +7695,9 @@ func (v *MessagesDeletePhoneCallHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeletePhoneCallHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeletePhoneCallHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeletePhoneCallHistoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -7058,6 +7741,9 @@ func (v *MessagesCheckHistoryImportRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCheckHistoryImportRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCheckHistoryImportRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCheckHistoryImportTypeID)
 	WriteString(b, v.ImportHead)
 	return nil
@@ -7102,9 +7788,16 @@ func (v *MessagesInitHistoryImportRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesInitHistoryImportRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesInitHistoryImportRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesInitHistoryImportTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.File)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
 	WriteInt(b, uint32(v.MediaCount))
 	return nil
 }
@@ -7149,11 +7842,18 @@ func (v *MessagesUploadImportedMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUploadImportedMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUploadImportedMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUploadImportedMediaTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.ImportID)
 	WriteString(b, v.FileName)
-	EncodeTLObject(b, v.Media)
+	if _err := EncodeTLObject(b, v.Media); _err != nil {
+		return fmt.Errorf("encode field media: %w", _err)
+	}
 	return nil
 }
 
@@ -7195,8 +7895,13 @@ func (v *MessagesStartHistoryImportRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesStartHistoryImportRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesStartHistoryImportRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesStartHistoryImportTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteLong(b, v.ImportID)
 	return nil
 }
@@ -7255,11 +7960,18 @@ func (v *MessagesGetExportedChatInvitesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetExportedChatInvitesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetExportedChatInvitesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetExportedChatInvitesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.AdminID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.AdminID); _err != nil {
+		return fmt.Errorf("encode field admin_id: %w", _err)
+	}
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.OffsetDate))
 	}
@@ -7308,8 +8020,13 @@ func (v *MessagesGetExportedChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetExportedChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetExportedChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetExportedChatInviteTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Link)
 	return nil
 }
@@ -7377,10 +8094,15 @@ func (v *MessagesEditExportedChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditExportedChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditExportedChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditExportedChatInviteTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Link)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.ExpireDate))
@@ -7453,9 +8175,16 @@ func (v *MessagesDeleteRevokedExportedChatInvitesRequest) ConstructorID() uint32
 
 // Encode serializes MessagesDeleteRevokedExportedChatInvitesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteRevokedExportedChatInvitesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteRevokedExportedChatInvitesTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.AdminID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.AdminID); _err != nil {
+		return fmt.Errorf("encode field admin_id: %w", _err)
+	}
 	return nil
 }
 
@@ -7495,8 +8224,13 @@ func (v *MessagesDeleteExportedChatInviteRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteExportedChatInviteRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteExportedChatInviteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteExportedChatInviteTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Link)
 	return nil
 }
@@ -7536,8 +8270,13 @@ func (v *MessagesGetAdminsWithInvitesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAdminsWithInvitesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAdminsWithInvitesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAdminsWithInvitesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -7602,10 +8341,15 @@ func (v *MessagesGetChatInviteImportersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetChatInviteImportersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetChatInviteImportersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetChatInviteImportersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Link)
 	}
@@ -7613,7 +8357,9 @@ func (v *MessagesGetChatInviteImportersRequest) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.Q)
 	}
 	WriteInt(b, uint32(v.OffsetDate))
-	EncodeTLObject(b, v.OffsetUser)
+	if _err := EncodeTLObject(b, v.OffsetUser); _err != nil {
+		return fmt.Errorf("encode field offset_user: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	return nil
 }
@@ -7656,8 +8402,13 @@ func (v *MessagesSetHistoryTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetHistoryTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetHistoryTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetHistoryTTLTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Period))
 	return nil
 }
@@ -7699,8 +8450,13 @@ func (v *MessagesCheckHistoryImportPeerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCheckHistoryImportPeerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCheckHistoryImportPeerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCheckHistoryImportPeerTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -7742,9 +8498,16 @@ func (v *MessagesSetChatThemeRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetChatThemeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetChatThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetChatThemeTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Theme)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Theme); _err != nil {
+		return fmt.Errorf("encode field theme: %w", _err)
+	}
 	return nil
 }
 
@@ -7786,8 +8549,13 @@ func (v *MessagesGetMessageReadParticipantsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessageReadParticipantsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessageReadParticipantsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessageReadParticipantsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -7838,14 +8606,23 @@ func (v *MessagesGetSearchResultsCalendarRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSearchResultsCalendarRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSearchResultsCalendarRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSearchResultsCalendarTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.SavedPeerID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
 	}
-	EncodeTLObject(b, v.Filter)
+	if v.Flags.Has(2) {
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
+	}
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.OffsetDate))
 	return nil
@@ -7900,14 +8677,23 @@ func (v *MessagesGetSearchResultsPositionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSearchResultsPositionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSearchResultsPositionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSearchResultsPositionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.SavedPeerID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
 	}
-	EncodeTLObject(b, v.Filter)
+	if v.Flags.Has(2) {
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
+	}
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.Limit))
 	return nil
@@ -7960,11 +8746,18 @@ func (v *MessagesHideChatJoinRequestRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesHideChatJoinRequestRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesHideChatJoinRequestRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesHideChatJoinRequestTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	return nil
 }
 
@@ -8018,10 +8811,15 @@ func (v *MessagesHideAllChatJoinRequestsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesHideAllChatJoinRequestsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesHideAllChatJoinRequestsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesHideAllChatJoinRequestsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Link)
 	}
@@ -8075,10 +8873,15 @@ func (v *MessagesToggleNoForwardsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleNoForwardsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleNoForwardsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleNoForwardsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteBool(b, v.Enabled)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.RequestMsgID))
@@ -8124,9 +8927,16 @@ func (v *MessagesSaveDefaultSendAsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSaveDefaultSendAsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSaveDefaultSendAsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSaveDefaultSendAsTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.SendAs)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+		return fmt.Errorf("encode field send_as: %w", _err)
+	}
 	return nil
 }
 
@@ -8183,16 +8993,23 @@ func (v *MessagesSendReactionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendReactionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendReactionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	if v.Flags.Has(0) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Reaction)))
 		for _, _item := range v.Reaction {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field reaction: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -8236,8 +9053,13 @@ func (v *MessagesGetMessagesReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessagesReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessagesReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessagesReactionsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -8294,13 +9116,20 @@ func (v *MessagesGetMessageReactionsListRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMessageReactionsListRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMessageReactionsListRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMessageReactionsListTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Reaction)
+		if _err := EncodeTLObject(b, v.Reaction); _err != nil {
+			return fmt.Errorf("encode field reaction: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.Offset)
@@ -8360,11 +9189,18 @@ func (v *MessagesSetChatAvailableReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetChatAvailableReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetChatAvailableReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetChatAvailableReactionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.AvailableReactions)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.AvailableReactions); _err != nil {
+		return fmt.Errorf("encode field available_reactions: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.ReactionsLimit))
 	}
@@ -8429,6 +9265,9 @@ func (v *MessagesGetAvailableReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAvailableReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAvailableReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAvailableReactionsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -8471,8 +9310,13 @@ func (v *MessagesSetDefaultReactionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetDefaultReactionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetDefaultReactionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetDefaultReactionTypeID)
-	EncodeTLObject(b, v.Reaction)
+	if _err := EncodeTLObject(b, v.Reaction); _err != nil {
+		return fmt.Errorf("encode field reaction: %w", _err)
+	}
 	return nil
 }
 
@@ -8532,11 +9376,16 @@ func (v *MessagesTranslateTextRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesTranslateTextRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesTranslateTextRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesTranslateTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteVectorInt(b, v.ID)
@@ -8545,7 +9394,9 @@ func (v *MessagesTranslateTextRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Text)))
 		for _, _item := range v.Text {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field text: %w", _err)
+			}
 		}
 	}
 	WriteString(b, v.ToLang)
@@ -8610,15 +9461,22 @@ func (v *MessagesGetUnreadReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetUnreadReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetUnreadReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetUnreadReactionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.SavedPeerID)
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.AddOffset))
@@ -8678,15 +9536,22 @@ func (v *MessagesReadReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadReactionsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.SavedPeerID)
+		if _err := EncodeTLObject(b, v.SavedPeerID); _err != nil {
+			return fmt.Errorf("encode field saved_peer_id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -8730,9 +9595,14 @@ func (v *MessagesSearchSentMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchSentMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchSentMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchSentMediaTypeID)
 	WriteString(b, v.Q)
-	EncodeTLObject(b, v.Filter)
+	if _err := EncodeTLObject(b, v.Filter); _err != nil {
+		return fmt.Errorf("encode field filter: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	return nil
 }
@@ -8774,6 +9644,9 @@ func (v *MessagesGetAttachMenuBotsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAttachMenuBotsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAttachMenuBotsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAttachMenuBotsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -8816,8 +9689,13 @@ func (v *MessagesGetAttachMenuBotRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAttachMenuBotRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAttachMenuBotRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAttachMenuBotTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	return nil
 }
 
@@ -8868,10 +9746,15 @@ func (v *MessagesToggleBotInAttachMenuRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleBotInAttachMenuRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleBotInAttachMenuRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleBotInAttachMenuTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteBool(b, v.Enabled)
 	return nil
 }
@@ -8954,11 +9837,18 @@ func (v *MessagesRequestWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.URL)
 	}
@@ -8966,14 +9856,20 @@ func (v *MessagesRequestWebViewRequest) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.StartParam)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ThemeParams)
+		if _err := EncodeTLObject(b, v.ThemeParams); _err != nil {
+			return fmt.Errorf("encode field theme_params: %w", _err)
+		}
 	}
 	WriteString(b, v.Platform)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	return nil
 }
@@ -9034,17 +9930,28 @@ func (v *MessagesProlongWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesProlongWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesProlongWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesProlongWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteLong(b, v.QueryID)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ReplyTo)
+		if _err := EncodeTLObject(b, v.ReplyTo); _err != nil {
+			return fmt.Errorf("encode field reply_to: %w", _err)
+		}
 	}
 	if v.Flags.Has(13) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	return nil
 }
@@ -9118,10 +10025,15 @@ func (v *MessagesRequestSimpleWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestSimpleWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestSimpleWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestSimpleWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	if v.Flags.Has(3) {
 		WriteString(b, v.URL)
 	}
@@ -9129,7 +10041,9 @@ func (v *MessagesRequestSimpleWebViewRequest) Encode(b *bytes.Buffer) error {
 		WriteString(b, v.StartParam)
 	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ThemeParams)
+		if _err := EncodeTLObject(b, v.ThemeParams); _err != nil {
+			return fmt.Errorf("encode field theme_params: %w", _err)
+		}
 	}
 	WriteString(b, v.Platform)
 	return nil
@@ -9173,9 +10087,14 @@ func (v *MessagesSendWebViewResultMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendWebViewResultMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendWebViewResultMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendWebViewResultMessageTypeID)
 	WriteString(b, v.BotQueryID)
-	EncodeTLObject(b, v.Result)
+	if _err := EncodeTLObject(b, v.Result); _err != nil {
+		return fmt.Errorf("encode field result: %w", _err)
+	}
 	return nil
 }
 
@@ -9219,8 +10138,13 @@ func (v *MessagesSendWebViewDataRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendWebViewDataRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendWebViewDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendWebViewDataTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteLong(b, v.RandomID)
 	WriteString(b, v.ButtonText)
 	WriteString(b, v.Data)
@@ -9265,8 +10189,13 @@ func (v *MessagesTranscribeAudioRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesTranscribeAudioRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesTranscribeAudioRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesTranscribeAudioTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -9311,8 +10240,13 @@ func (v *MessagesRateTranscribedAudioRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRateTranscribedAudioRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRateTranscribedAudioRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRateTranscribedAudioTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteLong(b, v.TranscriptionID)
 	WriteBool(b, v.Good)
@@ -9354,6 +10288,9 @@ func (v *MessagesGetCustomEmojiDocumentsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetCustomEmojiDocumentsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetCustomEmojiDocumentsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetCustomEmojiDocumentsTypeID)
 	WriteVectorLong(b, v.DocumentID)
 	return nil
@@ -9393,6 +10330,9 @@ func (v *MessagesGetEmojiStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -9435,6 +10375,9 @@ func (v *MessagesGetFeaturedEmojiStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFeaturedEmojiStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFeaturedEmojiStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFeaturedEmojiStickersTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -9479,10 +10422,17 @@ func (v *MessagesReportReactionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportReactionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportReactionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportReactionTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
-	EncodeTLObject(b, v.ReactionPeer)
+	if _err := EncodeTLObject(b, v.ReactionPeer); _err != nil {
+		return fmt.Errorf("encode field reaction_peer: %w", _err)
+	}
 	return nil
 }
 
@@ -9522,6 +10472,9 @@ func (v *MessagesGetTopReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetTopReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetTopReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetTopReactionsTypeID)
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
@@ -9566,6 +10519,9 @@ func (v *MessagesGetRecentReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetRecentReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetRecentReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetRecentReactionsTypeID)
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
@@ -9608,6 +10564,9 @@ func (v *MessagesClearRecentReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesClearRecentReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesClearRecentReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesClearRecentReactionsTypeID)
 	return nil
 }
@@ -9648,8 +10607,13 @@ func (v *MessagesGetExtendedMediaRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetExtendedMediaRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetExtendedMediaRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetExtendedMediaTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -9691,6 +10655,9 @@ func (v *MessagesSetDefaultHistoryTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetDefaultHistoryTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetDefaultHistoryTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetDefaultHistoryTTLTypeID)
 	WriteInt(b, uint32(v.Period))
 	return nil
@@ -9730,6 +10697,9 @@ func (v *MessagesGetDefaultHistoryTTLRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDefaultHistoryTTLRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDefaultHistoryTTLRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDefaultHistoryTTLTypeID)
 	return nil
 }
@@ -9786,10 +10756,15 @@ func (v *MessagesSendBotRequestedPeerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendBotRequestedPeerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendBotRequestedPeerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendBotRequestedPeerTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.MsgID))
 	}
@@ -9800,7 +10775,9 @@ func (v *MessagesSendBotRequestedPeerRequest) Encode(b *bytes.Buffer) error {
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.RequestedPeers)))
 	for _, _item := range v.RequestedPeers {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field requested_peers: %w", _err)
+		}
 	}
 	return nil
 }
@@ -9842,6 +10819,9 @@ func (v *MessagesGetEmojiGroupsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiGroupsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiGroupsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiGroupsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -9884,6 +10864,9 @@ func (v *MessagesGetEmojiStatusGroupsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiStatusGroupsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiStatusGroupsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiStatusGroupsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -9926,6 +10909,9 @@ func (v *MessagesGetEmojiProfilePhotoGroupsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiProfilePhotoGroupsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiProfilePhotoGroupsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiProfilePhotoGroupsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -9969,6 +10955,9 @@ func (v *MessagesSearchCustomEmojiRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchCustomEmojiRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchCustomEmojiRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchCustomEmojiTypeID)
 	WriteString(b, v.Emoticon)
 	WriteLong(b, v.Hash)
@@ -10021,10 +11010,15 @@ func (v *MessagesTogglePeerTranslationsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesTogglePeerTranslationsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesTogglePeerTranslationsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesTogglePeerTranslationsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -10064,8 +11058,13 @@ func (v *MessagesGetBotAppRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetBotAppRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetBotAppRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetBotAppTypeID)
-	EncodeTLObject(b, v.App)
+	if _err := EncodeTLObject(b, v.App); _err != nil {
+		return fmt.Errorf("encode field app: %w", _err)
+	}
 	WriteLong(b, v.Hash)
 	return nil
 }
@@ -10134,16 +11133,25 @@ func (v *MessagesRequestAppWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestAppWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestAppWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestAppWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.App)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.App); _err != nil {
+		return fmt.Errorf("encode field app: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.StartParam)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.ThemeParams)
+		if _err := EncodeTLObject(b, v.ThemeParams); _err != nil {
+			return fmt.Errorf("encode field theme_params: %w", _err)
+		}
 	}
 	WriteString(b, v.Platform)
 	return nil
@@ -10211,15 +11219,24 @@ func (v *MessagesSetChatWallPaperRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetChatWallPaperRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetChatWallPaperRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetChatWallPaperTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Wallpaper)
+		if _err := EncodeTLObject(b, v.Wallpaper); _err != nil {
+			return fmt.Errorf("encode field wallpaper: %w", _err)
+		}
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Settings)
+		if _err := EncodeTLObject(b, v.Settings); _err != nil {
+			return fmt.Errorf("encode field settings: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteInt(b, uint32(v.ID))
@@ -10274,6 +11291,9 @@ func (v *MessagesSearchEmojiStickerSetsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchEmojiStickerSetsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchEmojiStickerSetsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchEmojiStickerSetsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -10336,15 +11356,22 @@ func (v *MessagesGetSavedDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSavedDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSavedDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSavedDialogsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
 	WriteInt(b, uint32(v.OffsetDate))
 	WriteInt(b, uint32(v.OffsetID))
-	EncodeTLObject(b, v.OffsetPeer)
+	if _err := EncodeTLObject(b, v.OffsetPeer); _err != nil {
+		return fmt.Errorf("encode field offset_peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
 	return nil
@@ -10403,13 +11430,20 @@ func (v *MessagesGetSavedHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSavedHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSavedHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSavedHistoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.OffsetID))
 	WriteInt(b, uint32(v.OffsetDate))
 	WriteInt(b, uint32(v.AddOffset))
@@ -10475,13 +11509,20 @@ func (v *MessagesDeleteSavedHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteSavedHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteSavedHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteSavedHistoryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MaxID))
 	if v.Flags.Has(2) {
 		WriteInt(b, uint32(v.MinDate))
@@ -10528,6 +11569,9 @@ func (v *MessagesGetPinnedSavedDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPinnedSavedDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPinnedSavedDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPinnedSavedDialogsTypeID)
 	return nil
 }
@@ -10578,10 +11622,15 @@ func (v *MessagesToggleSavedDialogPinRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleSavedDialogPinRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleSavedDialogPinRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleSavedDialogPinTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -10629,13 +11678,18 @@ func (v *MessagesReorderPinnedSavedDialogsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReorderPinnedSavedDialogsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReorderPinnedSavedDialogsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReorderPinnedSavedDialogsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Order)))
 	for _, _item := range v.Order {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field order: %w", _err)
+		}
 	}
 	return nil
 }
@@ -10684,11 +11738,16 @@ func (v *MessagesGetSavedReactionTagsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSavedReactionTagsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSavedReactionTagsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSavedReactionTagsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	WriteLong(b, v.Hash)
 	return nil
@@ -10740,10 +11799,15 @@ func (v *MessagesUpdateSavedReactionTagRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUpdateSavedReactionTagRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUpdateSavedReactionTagRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUpdateSavedReactionTagTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Reaction)
+	if _err := EncodeTLObject(b, v.Reaction); _err != nil {
+		return fmt.Errorf("encode field reaction: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Title)
 	}
@@ -10785,6 +11849,9 @@ func (v *MessagesGetDefaultTagReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetDefaultTagReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetDefaultTagReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetDefaultTagReactionsTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -10828,8 +11895,13 @@ func (v *MessagesGetOutboxReadDateRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetOutboxReadDateRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetOutboxReadDateRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetOutboxReadDateTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -10871,6 +11943,9 @@ func (v *MessagesGetQuickRepliesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetQuickRepliesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetQuickRepliesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetQuickRepliesTypeID)
 	WriteLong(b, v.Hash)
 	return nil
@@ -10913,6 +11988,9 @@ func (v *MessagesReorderQuickRepliesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReorderQuickRepliesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReorderQuickRepliesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReorderQuickRepliesTypeID)
 	WriteVectorInt(b, v.Order)
 	return nil
@@ -10953,6 +12031,9 @@ func (v *MessagesCheckQuickReplyShortcutRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCheckQuickReplyShortcutRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCheckQuickReplyShortcutRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCheckQuickReplyShortcutTypeID)
 	WriteString(b, v.Shortcut)
 	return nil
@@ -10994,6 +12075,9 @@ func (v *MessagesEditQuickReplyShortcutRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditQuickReplyShortcutRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditQuickReplyShortcutRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditQuickReplyShortcutTypeID)
 	WriteInt(b, uint32(v.ShortcutID))
 	WriteString(b, v.Shortcut)
@@ -11035,6 +12119,9 @@ func (v *MessagesDeleteQuickReplyShortcutRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteQuickReplyShortcutRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteQuickReplyShortcutRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteQuickReplyShortcutTypeID)
 	WriteInt(b, uint32(v.ShortcutID))
 	return nil
@@ -11085,6 +12172,9 @@ func (v *MessagesGetQuickReplyMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetQuickReplyMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetQuickReplyMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetQuickReplyMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -11136,8 +12226,13 @@ func (v *MessagesSendQuickReplyMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendQuickReplyMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendQuickReplyMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendQuickReplyMessagesTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ShortcutID))
 	WriteVectorInt(b, v.ID)
 	WriteVectorLong(b, v.RandomID)
@@ -11182,6 +12277,9 @@ func (v *MessagesDeleteQuickReplyMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteQuickReplyMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteQuickReplyMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteQuickReplyMessagesTypeID)
 	WriteInt(b, uint32(v.ShortcutID))
 	WriteVectorInt(b, v.ID)
@@ -11225,6 +12323,9 @@ func (v *MessagesToggleDialogFilterTagsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleDialogFilterTagsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleDialogFilterTagsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleDialogFilterTagsTypeID)
 	WriteBool(b, v.Enabled)
 	return nil
@@ -11266,6 +12367,9 @@ func (v *MessagesGetMyStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetMyStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetMyStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetMyStickersTypeID)
 	WriteLong(b, v.OffsetID)
 	WriteInt(b, uint32(v.Limit))
@@ -11309,6 +12413,9 @@ func (v *MessagesGetEmojiStickerGroupsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiStickerGroupsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiStickerGroupsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiStickerGroupsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -11351,6 +12458,9 @@ func (v *MessagesGetAvailableEffectsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetAvailableEffectsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetAvailableEffectsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetAvailableEffectsTypeID)
 	WriteInt(b, uint32(v.Hash))
 	return nil
@@ -11395,10 +12505,17 @@ func (v *MessagesEditFactCheckRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditFactCheckRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditFactCheckRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditFactCheckTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	return nil
 }
 
@@ -11440,8 +12557,13 @@ func (v *MessagesDeleteFactCheckRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteFactCheckRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteFactCheckRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteFactCheckTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	return nil
 }
@@ -11484,8 +12606,13 @@ func (v *MessagesGetFactCheckRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFactCheckRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFactCheckRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFactCheckTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.MsgID)
 	return nil
 }
@@ -11547,16 +12674,25 @@ func (v *MessagesRequestMainWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestMainWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestMainWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestMainWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.StartParam)
 	}
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ThemeParams)
+		if _err := EncodeTLObject(b, v.ThemeParams); _err != nil {
+			return fmt.Errorf("encode field theme_params: %w", _err)
+		}
 	}
 	WriteString(b, v.Platform)
 	return nil
@@ -11611,15 +12747,22 @@ func (v *MessagesSendPaidReactionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSendPaidReactionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSendPaidReactionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSendPaidReactionTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteInt(b, uint32(v.Count))
 	WriteLong(b, v.RandomID)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Private)
+		if _err := EncodeTLObject(b, v.Private); _err != nil {
+			return fmt.Errorf("encode field private: %w", _err)
+		}
 	}
 	return nil
 }
@@ -11663,10 +12806,17 @@ func (v *MessagesTogglePaidReactionPrivacyRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesTogglePaidReactionPrivacyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesTogglePaidReactionPrivacyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesTogglePaidReactionPrivacyTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
-	EncodeTLObject(b, v.Private)
+	if _err := EncodeTLObject(b, v.Private); _err != nil {
+		return fmt.Errorf("encode field private: %w", _err)
+	}
 	return nil
 }
 
@@ -11704,6 +12854,9 @@ func (v *MessagesGetPaidReactionPrivacyRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPaidReactionPrivacyRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPaidReactionPrivacyRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPaidReactionPrivacyTypeID)
 	return nil
 }
@@ -11745,6 +12898,9 @@ func (v *MessagesViewSponsoredMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesViewSponsoredMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesViewSponsoredMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesViewSponsoredMessageTypeID)
 	WriteBytes(b, v.RandomID)
 	return nil
@@ -11798,6 +12954,9 @@ func (v *MessagesClickSponsoredMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesClickSponsoredMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesClickSponsoredMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesClickSponsoredMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -11841,6 +13000,9 @@ func (v *MessagesReportSponsoredMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportSponsoredMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportSponsoredMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportSponsoredMessageTypeID)
 	WriteBytes(b, v.RandomID)
 	WriteBytes(b, v.Option)
@@ -11893,10 +13055,15 @@ func (v *MessagesGetSponsoredMessagesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSponsoredMessagesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSponsoredMessagesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSponsoredMessagesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.MsgID))
 	}
@@ -11950,16 +13117,25 @@ func (v *MessagesSavePreparedInlineMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSavePreparedInlineMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSavePreparedInlineMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSavePreparedInlineMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Result)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.Result); _err != nil {
+		return fmt.Errorf("encode field result: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.PeerTypes)))
 		for _, _item := range v.PeerTypes {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field peer_types: %w", _err)
+			}
 		}
 	}
 	return nil
@@ -12003,8 +13179,13 @@ func (v *MessagesGetPreparedInlineMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPreparedInlineMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPreparedInlineMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPreparedInlineMessageTypeID)
-	EncodeTLObject(b, v.Bot)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
 	WriteString(b, v.ID)
 	return nil
 }
@@ -12060,6 +13241,9 @@ func (v *MessagesSearchStickersRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSearchStickersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSearchStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSearchStickersTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
@@ -12119,10 +13303,15 @@ func (v *MessagesReportMessagesDeliveryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportMessagesDeliveryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportMessagesDeliveryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportMessagesDeliveryTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.ID)
 	return nil
 }
@@ -12171,16 +13360,23 @@ func (v *MessagesGetSavedDialogsByIDRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetSavedDialogsByIDRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetSavedDialogsByIDRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetSavedDialogsByIDTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(1) {
-		EncodeTLObject(b, v.ParentPeer)
+		if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+			return fmt.Errorf("encode field parent_peer: %w", _err)
+		}
 	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Ids)))
 	for _, _item := range v.Ids {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field ids: %w", _err)
+		}
 	}
 	return nil
 }
@@ -12224,9 +13420,16 @@ func (v *MessagesReadSavedHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadSavedHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadSavedHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadSavedHistoryTypeID)
-	EncodeTLObject(b, v.ParentPeer)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.ParentPeer); _err != nil {
+		return fmt.Errorf("encode field parent_peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MaxID))
 	return nil
 }
@@ -12269,8 +13472,13 @@ func (v *MessagesToggleTodoCompletedRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleTodoCompletedRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleTodoCompletedRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleTodoCompletedTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteVectorInt(b, v.Completed)
 	WriteVectorInt(b, v.Incompleted)
@@ -12316,13 +13524,20 @@ func (v *MessagesAppendTodoListRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesAppendTodoListRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesAppendTodoListRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesAppendTodoListTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.List)))
 	for _, _item := range v.List {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field list: %w", _err)
+		}
 	}
 	return nil
 }
@@ -12382,10 +13597,15 @@ func (v *MessagesToggleSuggestedPostApprovalRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesToggleSuggestedPostApprovalRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesToggleSuggestedPostApprovalRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesToggleSuggestedPostApprovalTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.ScheduleDate))
@@ -12446,10 +13666,15 @@ func (v *MessagesGetForumTopicsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetForumTopicsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetForumTopicsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetForumTopicsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteString(b, v.Q)
 	}
@@ -12498,8 +13723,13 @@ func (v *MessagesGetForumTopicsByIDRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetForumTopicsByIDRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetForumTopicsByIDRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetForumTopicsByIDTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.Topics)
 	return nil
 }
@@ -12563,10 +13793,15 @@ func (v *MessagesEditForumTopicRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditForumTopicRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditForumTopicRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditForumTopicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.TopicID))
 	if v.Flags.Has(0) {
 		WriteString(b, v.Title)
@@ -12658,8 +13893,13 @@ func (v *MessagesUpdatePinnedForumTopicRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesUpdatePinnedForumTopicRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesUpdatePinnedForumTopicRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesUpdatePinnedForumTopicTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.TopicID))
 	WriteBool(b, v.Pinned)
 	return nil
@@ -12712,10 +13952,15 @@ func (v *MessagesReorderPinnedForumTopicsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReorderPinnedForumTopicsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReorderPinnedForumTopicsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReorderPinnedForumTopicsTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteVectorInt(b, v.Order)
 	return nil
 }
@@ -12780,10 +14025,15 @@ func (v *MessagesCreateForumTopicRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCreateForumTopicRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCreateForumTopicRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCreateForumTopicTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteString(b, v.Title)
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.IconColor))
@@ -12793,7 +14043,9 @@ func (v *MessagesCreateForumTopicRequest) Encode(b *bytes.Buffer) error {
 	}
 	WriteLong(b, v.RandomID)
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.SendAs)
+		if _err := EncodeTLObject(b, v.SendAs); _err != nil {
+			return fmt.Errorf("encode field send_as: %w", _err)
+		}
 	}
 	return nil
 }
@@ -12836,8 +14088,13 @@ func (v *MessagesDeleteTopicHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteTopicHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteTopicHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteTopicHistoryTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.TopMsgID))
 	return nil
 }
@@ -12878,6 +14135,9 @@ func (v *MessagesGetEmojiGameInfoRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetEmojiGameInfoRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetEmojiGameInfoRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetEmojiGameInfoTypeID)
 	return nil
 }
@@ -12933,10 +14193,15 @@ func (v *MessagesSummarizeTextRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSummarizeTextRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSummarizeTextRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSummarizeTextTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	if v.Flags.Has(0) {
 		WriteString(b, v.ToLang)
@@ -12986,10 +14251,19 @@ func (v *MessagesEditChatCreatorRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatCreatorRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatCreatorRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatCreatorTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.UserID)
-	EncodeTLObject(b, v.Password)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Password); _err != nil {
+		return fmt.Errorf("encode field password: %w", _err)
+	}
 	return nil
 }
 
@@ -13030,8 +14304,13 @@ func (v *MessagesGetFutureChatCreatorAfterLeaveRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetFutureChatCreatorAfterLeaveRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetFutureChatCreatorAfterLeaveRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetFutureChatCreatorAfterLeaveTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	return nil
 }
 
@@ -13074,9 +14353,16 @@ func (v *MessagesEditChatParticipantRankRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesEditChatParticipantRankRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesEditChatParticipantRankRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesEditChatParticipantRankTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	WriteString(b, v.Rank)
 	return nil
 }
@@ -13118,6 +14404,9 @@ func (v *MessagesDeclineURLAuthRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeclineURLAuthRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeclineURLAuthRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeclineURLAuthTypeID)
 	WriteString(b, v.URL)
 	return nil
@@ -13159,6 +14448,9 @@ func (v *MessagesCheckURLAuthMatchCodeRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesCheckURLAuthMatchCodeRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesCheckURLAuthMatchCodeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesCheckURLAuthMatchCodeTypeID)
 	WriteString(b, v.URL)
 	WriteString(b, v.MatchCode)
@@ -13221,15 +14513,22 @@ func (v *MessagesComposeMessageWithAiRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesComposeMessageWithAiRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesComposeMessageWithAiRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesComposeMessageWithAiTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Text)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.TranslateToLang)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Tone)
+		if _err := EncodeTLObject(b, v.Tone); _err != nil {
+			return fmt.Errorf("encode field tone: %w", _err)
+		}
 	}
 	return nil
 }
@@ -13272,12 +14571,19 @@ func (v *MessagesReportReadMetricsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportReadMetricsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportReadMetricsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportReadMetricsTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Metrics)))
 	for _, _item := range v.Metrics {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field metrics: %w", _err)
+		}
 	}
 	return nil
 }
@@ -13318,8 +14624,13 @@ func (v *MessagesReportMusicListenRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReportMusicListenRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReportMusicListenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReportMusicListenTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteInt(b, uint32(v.ListenedDuration))
 	return nil
 }
@@ -13361,10 +14672,17 @@ func (v *MessagesAddPollAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesAddPollAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesAddPollAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesAddPollAnswerTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
-	EncodeTLObject(b, v.Answer)
+	if _err := EncodeTLObject(b, v.Answer); _err != nil {
+		return fmt.Errorf("encode field answer: %w", _err)
+	}
 	return nil
 }
 
@@ -13407,8 +14725,13 @@ func (v *MessagesDeletePollAnswerRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeletePollAnswerRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeletePollAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeletePollAnswerTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
 	WriteBytes(b, v.Option)
 	return nil
@@ -13465,10 +14788,15 @@ func (v *MessagesGetUnreadPollVotesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetUnreadPollVotesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetUnreadPollVotesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetUnreadPollVotesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
@@ -13526,10 +14854,15 @@ func (v *MessagesReadPollVotesRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesReadPollVotesRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesReadPollVotesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesReadPollVotesTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	if v.Flags.Has(0) {
 		WriteInt(b, uint32(v.TopMsgID))
 	}
@@ -13574,9 +14907,14 @@ func (v *MessagesSetBotGuestChatResultRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesSetBotGuestChatResultRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesSetBotGuestChatResultRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesSetBotGuestChatResultTypeID)
 	WriteLong(b, v.QueryID)
-	EncodeTLObject(b, v.Result)
+	if _err := EncodeTLObject(b, v.Result); _err != nil {
+		return fmt.Errorf("encode field result: %w", _err)
+	}
 	return nil
 }
 
@@ -13618,9 +14956,16 @@ func (v *MessagesDeleteParticipantReactionsRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteParticipantReactionsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteParticipantReactionsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteParticipantReactionsTypeID)
-	EncodeTLObject(b, v.Peer)
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	return nil
 }
 
@@ -13661,10 +15006,17 @@ func (v *MessagesDeleteParticipantReactionRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesDeleteParticipantReactionRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesDeleteParticipantReactionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesDeleteParticipantReactionTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.MsgID))
-	EncodeTLObject(b, v.Participant)
+	if _err := EncodeTLObject(b, v.Participant); _err != nil {
+		return fmt.Errorf("encode field participant: %w", _err)
+	}
 	return nil
 }
 
@@ -13709,8 +15061,13 @@ func (v *MessagesGetPersonalChannelHistoryRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetPersonalChannelHistoryRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetPersonalChannelHistoryRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetPersonalChannelHistoryTypeID)
-	EncodeTLObject(b, v.UserID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Limit))
 	WriteInt(b, uint32(v.MaxID))
 	WriteInt(b, uint32(v.MinID))
@@ -13756,8 +15113,13 @@ func (v *MessagesGetRichMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesGetRichMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesGetRichMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesGetRichMessageTypeID)
-	EncodeTLObject(b, v.Peer)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
 	WriteInt(b, uint32(v.ID))
 	return nil
 }
@@ -13820,11 +15182,16 @@ func (v *MessagesTranslateRichMessageRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesTranslateRichMessageRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesTranslateRichMessageRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesTranslateRichMessageTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.Peer)
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
 	}
 	if v.Flags.Has(0) {
 		WriteVectorInt(b, v.ID)
@@ -13833,7 +15200,9 @@ func (v *MessagesTranslateRichMessageRequest) Encode(b *bytes.Buffer) error {
 		WriteInt(b, 0x1cb5c415)
 		WriteInt(b, uint32(len(v.Text)))
 		for _, _item := range v.Text {
-			EncodeTLObject(b, _item)
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field text: %w", _err)
+			}
 		}
 	}
 	WriteString(b, v.ToLang)
@@ -13904,17 +15273,24 @@ func (v *MessagesComposeRichMessageWithAiRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesComposeRichMessageWithAiRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesComposeRichMessageWithAiRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesComposeRichMessageWithAiTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	if v.Flags.Has(4) {
-		EncodeTLObject(b, v.Text)
+		if _err := EncodeTLObject(b, v.Text); _err != nil {
+			return fmt.Errorf("encode field text: %w", _err)
+		}
 	}
 	if v.Flags.Has(1) {
 		WriteString(b, v.TranslateToLang)
 	}
 	if v.Flags.Has(2) {
-		EncodeTLObject(b, v.Tone)
+		if _err := EncodeTLObject(b, v.Tone); _err != nil {
+			return fmt.Errorf("encode field tone: %w", _err)
+		}
 	}
 	return nil
 }
@@ -13966,12 +15342,17 @@ func (v *MessagesRequestChatJoinWebViewRequest) ConstructorID() uint32 {
 
 // Encode serializes MessagesRequestChatJoinWebViewRequest to a bytes.Buffer using the TL binary protocol.
 func (v *MessagesRequestChatJoinWebViewRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, MessagesRequestChatJoinWebViewTypeID)
 	v.SetFlags()
 	WriteInt(b, uint32(v.Flags))
 	WriteLong(b, v.QueryID)
 	if v.Flags.Has(0) {
-		EncodeTLObject(b, v.ThemeParams)
+		if _err := EncodeTLObject(b, v.ThemeParams); _err != nil {
+			return fmt.Errorf("encode field theme_params: %w", _err)
+		}
 	}
 	WriteString(b, v.Platform)
 	return nil

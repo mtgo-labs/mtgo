@@ -25,11 +25,16 @@ func (v *UsersGetUsersRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersGetUsersRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersGetUsersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersGetUsersTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -68,8 +73,13 @@ func (v *UsersGetFullUserRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersGetFullUserRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersGetFullUserRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersGetFullUserTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	return nil
 }
 
@@ -111,12 +121,19 @@ func (v *UsersSetSecureValueErrorsRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersSetSecureValueErrorsRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersSetSecureValueErrorsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersSetSecureValueErrorsTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Errors)))
 	for _, _item := range v.Errors {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field errors: %w", _err)
+		}
 	}
 	return nil
 }
@@ -156,11 +173,16 @@ func (v *UsersGetRequirementsToContactRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersGetRequirementsToContactRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersGetRequirementsToContactRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersGetRequirementsToContactTypeID)
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.ID)))
 	for _, _item := range v.ID {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field id: %w", _err)
+		}
 	}
 	return nil
 }
@@ -202,8 +224,13 @@ func (v *UsersGetSavedMusicRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersGetSavedMusicRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersGetSavedMusicRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersGetSavedMusicTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteInt(b, uint32(v.Offset))
 	WriteInt(b, uint32(v.Limit))
 	WriteLong(b, v.Hash)
@@ -248,12 +275,19 @@ func (v *UsersGetSavedMusicByIDRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersGetSavedMusicByIDRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersGetSavedMusicByIDRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersGetSavedMusicByIDTypeID)
-	EncodeTLObject(b, v.ID)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
 	WriteInt(b, 0x1cb5c415)
 	WriteInt(b, uint32(len(v.Documents)))
 	for _, _item := range v.Documents {
-		EncodeTLObject(b, _item)
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field documents: %w", _err)
+		}
 	}
 	return nil
 }
@@ -296,9 +330,16 @@ func (v *UsersSuggestBirthdayRequest) ConstructorID() uint32 {
 
 // Encode serializes UsersSuggestBirthdayRequest to a bytes.Buffer using the TL binary protocol.
 func (v *UsersSuggestBirthdayRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
 	WriteInt(b, UsersSuggestBirthdayTypeID)
-	EncodeTLObject(b, v.ID)
-	EncodeTLObject(b, v.Birthday)
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Birthday); _err != nil {
+		return fmt.Errorf("encode field birthday: %w", _err)
+	}
 	return nil
 }
 

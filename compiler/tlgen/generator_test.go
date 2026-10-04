@@ -143,6 +143,31 @@ func TestReadExpr(t *testing.T) {
 	}
 }
 
+func TestWriteExprObjectFieldPropagatesError(t *testing.T) {
+	got := writeExpr(Arg{Name: "credit", Type: "RichText"}, "RichTextClass", "v")
+	for _, want := range []string{
+		"if _err := EncodeTLObject(b, v.Credit); _err != nil {",
+		"return fmt.Errorf(\"encode field credit: %w\", _err)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("writeExpr missing %q in %s", want, got)
+		}
+	}
+}
+
+func TestWriteExprVectorElementPropagatesError(t *testing.T) {
+	got := writeExpr(Arg{Name: "texts", Type: "Vector<RichText>"}, "[]RichTextClass", "v")
+	for _, want := range []string{
+		"for _, _item := range v.Texts {",
+		"if _err := EncodeTLObject(b, _item); _err != nil {",
+		"return fmt.Errorf(\"encode field texts: %w\", _err)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("writeExpr missing %q in %s", want, got)
+		}
+	}
+}
+
 func TestWriteExpr(t *testing.T) {
 	tests := []struct {
 		arg    Arg
