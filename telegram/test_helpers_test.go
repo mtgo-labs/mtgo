@@ -22,6 +22,9 @@ type testServer struct {
 	authKey  []byte
 	done     chan struct{}
 	rpcError atomic.Pointer[tg.RPCError]
+	// rpcResult, when set, is served for every non-Ping request instead of
+	// rpcError, letting tests script successful RPC results.
+	rpcResult atomic.Pointer[tg.TLObject]
 }
 
 func newTestServer(authKey []byte) (*testServer, error) {
@@ -111,6 +114,8 @@ func (s *testServer) handleConn(conn net.Conn) {
 		var body tg.TLObject
 		if constructorID == tg.PingTypeID {
 			body = &tg.Pong{MsgID: origMsgID, PingID: pingID}
+		} else if result := s.rpcResult.Load(); result != nil {
+			body = &tg.RPCResult{ReqMsgID: origMsgID, Result: *result}
 		} else {
 			// Respond to any non-Ping request (RPC calls, InvokeWithLayer, etc.)
 			// with an RPCError so the client doesn't hang waiting for a response.

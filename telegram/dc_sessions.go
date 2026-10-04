@@ -866,40 +866,97 @@ func (c *Client) createDCSession(
 		sessionTp.Close()
 		return nil, ErrNotConnected
 	}
-	// Bot accounts cannot import exported auth bytes (the server always
-	// replies AUTH_BYTES_INVALID, verified empirically on all DCs), but
-	// auth.importBotAuthorization works on every DC: bots authorize the
-	// fresh DH key of each auxiliary session directly with the bot token.
-	// User accounts keep the export/import flow.
+	// Bots authorize the fresh DH key of each auxiliary session directly with
+	// the bot token. Not every DC serves a bot's authorization record: the
+	// server may redirect the import with USER_MIGRATE_X to the bot's home DC
+	// (observed with Telegram Business bots whose files live on DC 2). The
+	// transfer session cannot follow the redirect — the file still lives on
+	// dcID — so the redirect falls back to the standard export/import
+	// authorization transfer from the home DC, which is how TDLib's
+	// DcAuthManager authorizes bot sessions on foreign DCs. User accounts
+	// keep the export/import flow directly.
 	if c.IsBot() {
-		err = invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthImportBotAuthorizationTypeID, c.floodReg(), func() error {
-			_, botAuthErr := rpc.AuthImportBotAuthorization(ctx, &tg.AuthImportBotAuthorizationRequest{
-				APIID:        cfg.APIID,
-				APIHash:      cfg.APIHash,
-				BotAuthToken: c.BotToken(),
-			})
-			return botAuthErr
-		})
-		if err != nil {
+		if err := c.authorizeBotDCSession(ctx, rpc, dcID); err != nil {
 			sess.Stop()
 			sessionTp.Close()
-			return nil, fmt.Errorf("download: import bot auth on DC %d: %w", dcID, err)
+			return nil, fmt.Errorf("download: %w", err)
 		}
 		c.dcSessions.setBotAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
-		c.Log.Infof("Bot auth import complete for DC %d", dcID)
+		c.Log.Infof("Bot auth complete for DC %d", dcID)
 		return entry, nil
 	}
 
+	if err := c.authorizeSessionViaTransfer(ctx, rpc, dcID); err != nil {
+		sess.Stop()
+		sessionTp.Close()
+		return nil, fmt.Errorf("download: %w", err)
+	}
+
+	c.Log.Infof("Auth transfer complete for DC %d", dcID)
+
+	return entry, nil
+}
+
+// authorizeBotDCSession authorizes a freshly connected auxiliary-DC session
+// for a bot account. The primary path is auth.importBotAuthorization, which
+// authorizes the new key directly with the bot token. Some DCs refuse to
+// serve a bot's authorization record and redirect the import to the bot's
+// home DC with USER_MIGRATE_X; since the transfer session is bound to the
+// file's DC and cannot move, the redirect falls back to the standard auth
+// export/import transfer from the home DC (see authorizeSessionViaTransfer).
+func (c *Client) authorizeBotDCSession(ctx context.Context, rpc *tg.RPCClient, dcID int) error {
+	cfg := c.config()
+	err := invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthImportBotAuthorizationTypeID, c.floodReg(), func() error {
+		_, botAuthErr := rpc.AuthImportBotAuthorization(ctx, &tg.AuthImportBotAuthorizationRequest{
+			APIID:        cfg.APIID,
+			APIHash:      cfg.APIHash,
+			BotAuthToken: c.BotToken(),
+		})
+		return botAuthErr
+	})
+	if err == nil {
+		return nil
+	}
+	redirectDC, redirected := botAuthImportRedirect(err)
+	if !redirected {
+		return fmt.Errorf("import bot auth on DC %d: %w", dcID, err)
+	}
+	c.Log.Infof("Bot auth import on DC %d redirected to DC %d; falling back to auth transfer", dcID, redirectDC)
+	if transferErr := c.authorizeSessionViaTransfer(ctx, rpc, dcID); transferErr != nil {
+		return fmt.Errorf(
+			"import bot auth on DC %d: %w (server redirected to DC %d; auth transfer fallback failed: %w)",
+			dcID, err, redirectDC, transferErr,
+		)
+	}
+	return nil
+}
+
+// botAuthImportRedirect reports whether err is a USER_MIGRATE_X redirect
+// returned by auth.importBotAuthorization, returning the redirected DC.
+// The server sends it when the requested DC will not authorize the bot's
+// fresh key and the import must be served from the bot's home DC instead.
+func botAuthImportRedirect(err error) (targetDC int, redirected bool) {
+	var rpcErr *tgerr.Error
+	if !errors.As(err, &rpcErr) || rpcErr.Code != 303 || !rpcErr.IsType("USER_MIGRATE") || rpcErr.Argument <= 0 {
+		return 0, false
+	}
+	return rpcErr.Argument, true
+}
+
+// authorizeSessionViaTransfer authorizes a freshly connected auxiliary-DC
+// session via the standard authorization transfer: auth.exportAuthorization
+// on the home DC, then auth.importAuthorization into the target session.
+// This works for user and bot accounts alike (TDLib's DcAuthManager uses it
+// for every non-main DC).
+func (c *Client) authorizeSessionViaTransfer(ctx context.Context, rpc *tg.RPCClient, dcID int) error {
 	var exportResult *tg.AuthExportedAuthorization
-	err = invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthExportAuthorizationTypeID, c.floodReg(), func() error {
+	err := invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthExportAuthorizationTypeID, c.floodReg(), func() error {
 		var exportErr error
 		exportResult, exportErr = c.exportAuthDirect(ctx, dcID)
 		return exportErr
 	})
 	if err != nil {
-		sess.Stop()
-		sessionTp.Close()
-		return nil, fmt.Errorf("download: export auth for DC %d: %w", dcID, err)
+		return fmt.Errorf("export auth for DC %d: %w", dcID, err)
 	}
 	err = invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthImportAuthorizationTypeID, c.floodReg(), func() error {
 		_, importErr := rpc.AuthImportAuthorization(ctx, &tg.AuthImportAuthorizationRequest{
@@ -909,14 +966,9 @@ func (c *Client) createDCSession(
 		return importErr
 	})
 	if err != nil {
-		sess.Stop()
-		sessionTp.Close()
-		return nil, fmt.Errorf("download: import auth on DC %d: %w", dcID, err)
+		return fmt.Errorf("import auth on DC %d: %w", dcID, err)
 	}
-
-	c.Log.Infof("Auth transfer complete for DC %d", dcID)
-
-	return entry, nil
+	return nil
 }
 
 // exportAuthDirect invokes auth.exportAuthorization on the home DC session
