@@ -35,6 +35,7 @@ var ConstructorMapPages = map[uint32]func() TLObject{
 	0xa5b45e2b: func() TLObject { return &TextDate{} },
 	0x9686cb50: func() TLObject { return &TextDiff{} },
 	0xafc79cd6: func() TLObject { return &TextButton{} },
+	0x3cd2a36a: func() TLObject { return &TextTonAddress{} },
 	0x13567e8a: func() TLObject { return &PageBlockUnsupported{} },
 	0x70abc3fd: func() TLObject { return &PageBlockTitle{} },
 	0x8ffa9a1f: func() TLObject { return &PageBlockSubtitle{} },

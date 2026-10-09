@@ -1429,17 +1429,17 @@ func (c *RPCClient) BotsUpdateStarRefProgram(ctx context.Context, req *BotsUpdat
 }
 
 // BotsSetCustomVerificationTypeID is the constructor ID for the RPC function bots.setCustomVerification.
-const BotsSetCustomVerificationTypeID = 0x8b89dfbd
+const BotsSetCustomVerificationTypeID = 0xf4946757
 
-// BotsSetCustomVerificationRequest represents TL type `bots.setCustomVerification#8b89dfbd`.
+// BotsSetCustomVerificationRequest represents TL type `bots.setCustomVerification#f4946757`.
 //
 // See https://core.telegram.org/method/bots/setCustomVerification for reference.
 type BotsSetCustomVerificationRequest struct {
-	Flags             Fields         `json:"-"`
-	Enabled           bool           `json:"enabled,omitempty"`
-	Bot               InputUserClass `json:"bot,omitempty"`
-	Peer              InputPeerClass `json:"peer,omitempty"`
-	CustomDescription string         `json:"custom_description,omitempty"`
+	Flags             Fields            `json:"-"`
+	Enabled           bool              `json:"enabled,omitempty"`
+	Bot               InputUserClass    `json:"bot,omitempty"`
+	Peer              InputPeerClass    `json:"peer,omitempty"`
+	CustomDescription *TextWithEntities `json:"custom_description,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -1450,12 +1450,12 @@ func (v *BotsSetCustomVerificationRequest) SetFlags() {
 	if v.Bot != nil {
 		v.Flags.Set(0)
 	}
-	if v.CustomDescription != "" {
+	if v.CustomDescription != nil {
 		v.Flags.Set(2)
 	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x8b89dfbd.
+// ConstructorID returns the TL constructor identifier 0xf4946757.
 func (v *BotsSetCustomVerificationRequest) ConstructorID() uint32 {
 	return BotsSetCustomVerificationTypeID
 }
@@ -1477,7 +1477,9 @@ func (v *BotsSetCustomVerificationRequest) Encode(b *bytes.Buffer) error {
 		return fmt.Errorf("encode field peer: %w", _err)
 	}
 	if v.Flags.Has(2) {
-		WriteString(b, v.CustomDescription)
+		if _err := EncodeTLObject(b, v.CustomDescription); _err != nil {
+			return fmt.Errorf("encode field custom_description: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1548,16 +1550,25 @@ func (c *RPCClient) BotsGetBotRecommendations(ctx context.Context, req *BotsGetB
 }
 
 // BotsCheckUsernameTypeID is the constructor ID for the RPC function bots.checkUsername.
-const BotsCheckUsernameTypeID = 0x87f2219b
+const BotsCheckUsernameTypeID = 0xe3ac4c61
 
-// BotsCheckUsernameRequest represents TL type `bots.checkUsername#87f2219b`.
+// BotsCheckUsernameRequest represents TL type `bots.checkUsername#e3ac4c61`.
 //
 // See https://core.telegram.org/method/bots/checkUsername for reference.
 type BotsCheckUsernameRequest struct {
-	Username string `json:"username,omitempty"`
+	Flags      Fields `json:"-"`
+	Additional bool   `json:"additional,omitempty"`
+	Username   string `json:"username,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x87f2219b.
+// SetFlags computes flags from non-zero optional fields.
+func (v *BotsCheckUsernameRequest) SetFlags() {
+	if v.Additional {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xe3ac4c61.
 func (v *BotsCheckUsernameRequest) ConstructorID() uint32 {
 	return BotsCheckUsernameTypeID
 }
@@ -1568,6 +1579,8 @@ func (v *BotsCheckUsernameRequest) Encode(b *bytes.Buffer) error {
 		return ErrNilTLObject
 	}
 	WriteInt(b, BotsCheckUsernameTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	WriteString(b, v.Username)
 	return nil
 }
@@ -1954,6 +1967,100 @@ func (v *BotsSetJoinChatResultsRequest) Encode(b *bytes.Buffer) error {
 //
 // Returns the result of the RPC call, or an error if the invocation fails.
 func (c *RPCClient) BotsSetJoinChatResults(ctx context.Context, req *BotsSetJoinChatResultsRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// BotsAddUsernameTypeID is the constructor ID for the RPC function bots.addUsername.
+const BotsAddUsernameTypeID = 0x3501c08a
+
+// BotsAddUsernameRequest represents TL type `bots.addUsername#3501c08a`.
+//
+// See https://core.telegram.org/method/bots/addUsername for reference.
+type BotsAddUsernameRequest struct {
+	Bot      InputUserClass `json:"bot,omitempty"`
+	Username string         `json:"username,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3501c08a.
+func (v *BotsAddUsernameRequest) ConstructorID() uint32 {
+	return BotsAddUsernameTypeID
+}
+
+// Encode serializes BotsAddUsernameRequest to a bytes.Buffer using the TL binary protocol.
+func (v *BotsAddUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, BotsAddUsernameTypeID)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
+	WriteString(b, v.Username)
+	return nil
+}
+
+// BotsAddUsername invokes the bots.addUsername RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) BotsAddUsername(ctx context.Context, req *BotsAddUsernameRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// BotsRemoveUsernameTypeID is the constructor ID for the RPC function bots.removeUsername.
+const BotsRemoveUsernameTypeID = 0xc704147d
+
+// BotsRemoveUsernameRequest represents TL type `bots.removeUsername#c704147d`.
+//
+// See https://core.telegram.org/method/bots/removeUsername for reference.
+type BotsRemoveUsernameRequest struct {
+	Bot      InputUserClass `json:"bot,omitempty"`
+	Username string         `json:"username,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xc704147d.
+func (v *BotsRemoveUsernameRequest) ConstructorID() uint32 {
+	return BotsRemoveUsernameTypeID
+}
+
+// Encode serializes BotsRemoveUsernameRequest to a bytes.Buffer using the TL binary protocol.
+func (v *BotsRemoveUsernameRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, BotsRemoveUsernameTypeID)
+	if _err := EncodeTLObject(b, v.Bot); _err != nil {
+		return fmt.Errorf("encode field bot: %w", _err)
+	}
+	WriteString(b, v.Username)
+	return nil
+}
+
+// BotsRemoveUsername invokes the bots.removeUsername RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) BotsRemoveUsername(ctx context.Context, req *BotsRemoveUsernameRequest) (bool, error) {
 	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
 		return ReadTLObject(r)
 	})

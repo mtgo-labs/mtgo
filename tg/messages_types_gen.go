@@ -4520,6 +4520,12 @@ const MessageActionChangeCommunityTypeID = 0x5d20bae8
 // MessageActionChatJoinedViaCommunityTypeID is the constructor ID for TL type messageActionChatJoinedViaCommunity.
 const MessageActionChatJoinedViaCommunityTypeID = 0x4a8bfe80
 
+// MessageActionGramTransferTypeID is the constructor ID for TL type messageActionGramTransfer.
+const MessageActionGramTransferTypeID = 0x9329ea33
+
+// MessageActionWalletTonConnectRequestTypeID is the constructor ID for TL type messageActionWalletTonConnectRequest.
+const MessageActionWalletTonConnectRequestTypeID = 0x69b8c4bf
+
 // isMessageAction marks MessageActionEmpty as implementing the MessageActionClass interface.
 func (*MessageActionEmpty) isMessageAction() {}
 
@@ -4726,6 +4732,12 @@ func (*MessageActionChangeCommunity) isMessageAction() {}
 
 // isMessageAction marks MessageActionChatJoinedViaCommunity as implementing the MessageActionClass interface.
 func (*MessageActionChatJoinedViaCommunity) isMessageAction() {}
+
+// isMessageAction marks MessageActionGramTransfer as implementing the MessageActionClass interface.
+func (*MessageActionGramTransfer) isMessageAction() {}
+
+// isMessageAction marks MessageActionWalletTonConnectRequest as implementing the MessageActionClass interface.
+func (*MessageActionWalletTonConnectRequest) isMessageAction() {}
 
 // MessageActionEmpty represents the TL constructor messageActionEmpty (0xb6aef7b0).
 //
@@ -9387,6 +9399,200 @@ func DecodeMessageActionChatJoinedViaCommunity(r *Reader) (*MessageActionChatJoi
 func init() {
 	Registry[MessageActionChatJoinedViaCommunityTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessageActionChatJoinedViaCommunity(r)
+	}
+}
+
+// MessageActionGramTransfer represents the TL constructor messageActionGramTransfer (0x9329ea33).
+//
+// See https://core.telegram.org/constructor/messageActionGramTransfer for reference.
+type MessageActionGramTransfer struct {
+	Flags            Fields `json:"-"`
+	CommentEncrypted bool   `json:"comment_encrypted,omitempty"`
+	Amount           int64  `json:"amount,omitempty"`
+	PeerAddress      string `json:"peer_address,omitempty"`
+	TransactionID    string `json:"transaction_id,omitempty"`
+	Comment          string `json:"comment,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessageActionGramTransfer) SetFlags() {
+	if v.CommentEncrypted {
+		v.Flags.Set(1)
+	}
+	if v.Comment != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x9329ea33.
+func (v *MessageActionGramTransfer) ConstructorID() uint32 {
+	return MessageActionGramTransferTypeID
+}
+
+// Encode serializes MessageActionGramTransfer to a bytes.Buffer using the TL binary protocol.
+func (v *MessageActionGramTransfer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessageActionGramTransferTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.Amount)
+	WriteString(b, v.PeerAddress)
+	WriteString(b, v.TransactionID)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Comment)
+	}
+	return nil
+}
+
+// DecodeMessageActionGramTransfer deserializes a MessageActionGramTransfer from a reader using the TL binary protocol.
+func DecodeMessageActionGramTransfer(r *Reader) (*MessageActionGramTransfer, error) {
+	v := &MessageActionGramTransfer{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.CommentEncrypted = v.Flags.Has(1)
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rPeerAddress, _ePeerAddress := r.ReadString()
+	if _ePeerAddress != nil {
+		return nil, _ePeerAddress
+	}
+	v.PeerAddress = _rPeerAddress
+	_rTransactionID, _eTransactionID := r.ReadString()
+	if _eTransactionID != nil {
+		return nil, _eTransactionID
+	}
+	v.TransactionID = _rTransactionID
+	if v.Flags.Has(0) {
+		_rComment, _eComment := r.ReadString()
+		if _eComment != nil {
+			return nil, _eComment
+		}
+		v.Comment = _rComment
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[MessageActionGramTransferTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageActionGramTransfer(r)
+	}
+}
+
+// MessageActionWalletTonConnectRequest represents the TL constructor messageActionWalletTonConnectRequest (0x69b8c4bf).
+//
+// See https://core.telegram.org/constructor/messageActionWalletTonConnectRequest for reference.
+type MessageActionWalletTonConnectRequest struct {
+	Flags     Fields `json:"-"`
+	Accepted  bool   `json:"accepted,omitempty"`
+	Declined  bool   `json:"declined,omitempty"`
+	SessionID int64  `json:"session_id,omitempty"`
+	Expires   int32  `json:"expires,omitempty"`
+	Topic     string `json:"topic,omitempty"`
+	TraceID   string `json:"trace_id,omitempty"`
+	DappName  string `json:"dapp_name,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessageActionWalletTonConnectRequest) SetFlags() {
+	if v.Accepted {
+		v.Flags.Set(2)
+	}
+	if v.Declined {
+		v.Flags.Set(3)
+	}
+	if v.Topic != "" {
+		v.Flags.Set(0)
+	}
+	if v.TraceID != "" {
+		v.Flags.Set(1)
+	}
+	if v.DappName != "" {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x69b8c4bf.
+func (v *MessageActionWalletTonConnectRequest) ConstructorID() uint32 {
+	return MessageActionWalletTonConnectRequestTypeID
+}
+
+// Encode serializes MessageActionWalletTonConnectRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessageActionWalletTonConnectRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessageActionWalletTonConnectRequestTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.SessionID)
+	WriteInt(b, uint32(v.Expires))
+	if v.Flags.Has(0) {
+		WriteString(b, v.Topic)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.TraceID)
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.DappName)
+	}
+	return nil
+}
+
+// DecodeMessageActionWalletTonConnectRequest deserializes a MessageActionWalletTonConnectRequest from a reader using the TL binary protocol.
+func DecodeMessageActionWalletTonConnectRequest(r *Reader) (*MessageActionWalletTonConnectRequest, error) {
+	v := &MessageActionWalletTonConnectRequest{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Accepted = v.Flags.Has(2)
+	v.Declined = v.Flags.Has(3)
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	if v.Flags.Has(0) {
+		_rTopic, _eTopic := r.ReadString()
+		if _eTopic != nil {
+			return nil, _eTopic
+		}
+		v.Topic = _rTopic
+	}
+	if v.Flags.Has(1) {
+		_rTraceID, _eTraceID := r.ReadString()
+		if _eTraceID != nil {
+			return nil, _eTraceID
+		}
+		v.TraceID = _rTraceID
+	}
+	if v.Flags.Has(4) {
+		_rDappName, _eDappName := r.ReadString()
+		if _eDappName != nil {
+			return nil, _eDappName
+		}
+		v.DappName = _rDappName
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[MessageActionWalletTonConnectRequestTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageActionWalletTonConnectRequest(r)
 	}
 }
 
@@ -16120,6 +16326,9 @@ const MessageEntityDiffReplaceTypeID = 0xc6c1e5a7
 // MessageEntityDiffDeleteTypeID is the constructor ID for TL type messageEntityDiffDelete.
 const MessageEntityDiffDeleteTypeID = 0x0652c1c5
 
+// MessageEntityTonAddressTypeID is the constructor ID for TL type messageEntityTonAddress.
+const MessageEntityTonAddressTypeID = 0xfdabbfcd
+
 // isMessageEntity marks MessageEntityUnknown as implementing the MessageEntityClass interface.
 func (*MessageEntityUnknown) isMessageEntity() {}
 
@@ -16194,6 +16403,9 @@ func (*MessageEntityDiffReplace) isMessageEntity() {}
 
 // isMessageEntity marks MessageEntityDiffDelete as implementing the MessageEntityClass interface.
 func (*MessageEntityDiffDelete) isMessageEntity() {}
+
+// isMessageEntity marks MessageEntityTonAddress as implementing the MessageEntityClass interface.
+func (*MessageEntityTonAddress) isMessageEntity() {}
 
 // MessageEntityUnknown represents the TL constructor messageEntityUnknown (0xbb92ba95).
 //
@@ -17456,6 +17668,52 @@ func DecodeMessageEntityDiffDelete(r *Reader) (*MessageEntityDiffDelete, error) 
 func init() {
 	Registry[MessageEntityDiffDeleteTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessageEntityDiffDelete(r)
+	}
+}
+
+// MessageEntityTonAddress represents the TL constructor messageEntityTonAddress (0xfdabbfcd).
+//
+// See https://core.telegram.org/constructor/messageEntityTonAddress for reference.
+type MessageEntityTonAddress struct {
+	Offset int32 `json:"offset,omitempty"`
+	Length int32 `json:"length,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xfdabbfcd.
+func (v *MessageEntityTonAddress) ConstructorID() uint32 {
+	return MessageEntityTonAddressTypeID
+}
+
+// Encode serializes MessageEntityTonAddress to a bytes.Buffer using the TL binary protocol.
+func (v *MessageEntityTonAddress) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessageEntityTonAddressTypeID)
+	WriteInt(b, uint32(v.Offset))
+	WriteInt(b, uint32(v.Length))
+	return nil
+}
+
+// DecodeMessageEntityTonAddress deserializes a MessageEntityTonAddress from a reader using the TL binary protocol.
+func DecodeMessageEntityTonAddress(r *Reader) (*MessageEntityTonAddress, error) {
+	v := &MessageEntityTonAddress{}
+	_rOffset, _eOffset := r.ReadInt32()
+	if _eOffset != nil {
+		return nil, _eOffset
+	}
+	v.Offset = _rOffset
+	_rLength, _eLength := r.ReadInt32()
+	if _eLength != nil {
+		return nil, _eLength
+	}
+	v.Length = _rLength
+	return v, nil
+}
+
+func init() {
+	Registry[MessageEntityTonAddressTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageEntityTonAddress(r)
 	}
 }
 

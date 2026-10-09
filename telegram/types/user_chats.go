@@ -57,7 +57,7 @@ func ParseBotVerification(raw *tg.BotVerification, users map[int64]tg.UserClass)
 	bv := &BotVerification{
 		Bot:           getUser(users, raw.BotID),
 		CustomEmojiID: fmt.Sprintf("%d", raw.Icon),
-		Description:   raw.Description,
+		Description:   textWithEntitiesText(raw.Description),
 	}
 	return bv
 }

@@ -12266,10 +12266,12 @@ const UsernameTypeID = 0xb4073647
 //
 // See https://core.telegram.org/constructor/username for reference.
 type Username struct {
-	Flags    Fields `json:"-"`
-	Editable bool   `json:"editable,omitempty"`
-	Active   bool   `json:"active,omitempty"`
-	Username string `json:"username,omitempty"`
+	Flags     Fields `json:"-"`
+	Editable  bool   `json:"editable,omitempty"`
+	Active    bool   `json:"active,omitempty"`
+	Deletable bool   `json:"deletable,omitempty"`
+	Expired   bool   `json:"expired,omitempty"`
+	Username  string `json:"username,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -12279,6 +12281,12 @@ func (v *Username) SetFlags() {
 	}
 	if v.Active {
 		v.Flags.Set(1)
+	}
+	if v.Deletable {
+		v.Flags.Set(2)
+	}
+	if v.Expired {
+		v.Flags.Set(3)
 	}
 }
 
@@ -12309,6 +12317,8 @@ func DecodeUsername(r *Reader) (*Username, error) {
 	v.Flags = Fields(_rFlags)
 	v.Editable = v.Flags.Has(0)
 	v.Active = v.Flags.Has(1)
+	v.Deletable = v.Flags.Has(2)
+	v.Expired = v.Flags.Has(3)
 	_rUsername, _eUsername := r.ReadString()
 	if _eUsername != nil {
 		return nil, _eUsername
@@ -14928,5 +14938,353 @@ func DecodeCommunityPeerRequest(r *Reader) (*CommunityPeerRequest, error) {
 func init() {
 	Registry[CommunityPeerRequestTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeCommunityPeerRequest(r)
+	}
+}
+
+// WalletUserAddressTypeID is the constructor ID for TL type walletUserAddress.
+const WalletUserAddressTypeID = 0xfe78eecc
+
+// WalletUserAddress represents the TL constructor walletUserAddress (0xfe78eecc).
+//
+// See https://core.telegram.org/constructor/walletUserAddress for reference.
+type WalletUserAddress struct {
+	Flags     Fields `json:"-"`
+	UserID    int64  `json:"user_id,omitempty"`
+	Address   string `json:"address,omitempty"`
+	PublicKey []byte `json:"public_key,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletUserAddress) SetFlags() {
+	if v.UserID != 0 {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xfe78eecc.
+func (v *WalletUserAddress) ConstructorID() uint32 {
+	return WalletUserAddressTypeID
+}
+
+// Encode serializes WalletUserAddress to a bytes.Buffer using the TL binary protocol.
+func (v *WalletUserAddress) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletUserAddressTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteLong(b, v.UserID)
+	}
+	WriteString(b, v.Address)
+	WriteBytes(b, v.PublicKey)
+	return nil
+}
+
+// DecodeWalletUserAddress deserializes a WalletUserAddress from a reader using the TL binary protocol.
+func DecodeWalletUserAddress(r *Reader) (*WalletUserAddress, error) {
+	v := &WalletUserAddress{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	if v.Flags.Has(0) {
+		_rUserID, _eUserID := r.ReadInt64()
+		if _eUserID != nil {
+			return nil, _eUserID
+		}
+		v.UserID = _rUserID
+	}
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rPublicKey, _ePublicKey := r.ReadBytes()
+	if _ePublicKey != nil {
+		return nil, _ePublicKey
+	}
+	v.PublicKey = _rPublicKey
+	return v, nil
+}
+
+func init() {
+	Registry[WalletUserAddressTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletUserAddress(r)
+	}
+}
+
+// WalletTransactionPeerClass is the interface for TL type WalletTransactionPeer.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the WalletTransactionPeer TL type.
+type WalletTransactionPeerClass interface {
+	TLObject
+	isWalletTransactionPeer()
+}
+
+// WalletTransactionPeerUserTypeID is the constructor ID for TL type walletTransactionPeerUser.
+const WalletTransactionPeerUserTypeID = 0xd4ea706d
+
+// WalletTransactionPeerAddressTypeID is the constructor ID for TL type walletTransactionPeerAddress.
+const WalletTransactionPeerAddressTypeID = 0x062cc1bc
+
+// WalletTransactionPeerOnrampTypeID is the constructor ID for TL type walletTransactionPeerOnramp.
+const WalletTransactionPeerOnrampTypeID = 0xe595186e
+
+// WalletTransactionPeerUnsupportedTypeID is the constructor ID for TL type walletTransactionPeerUnsupported.
+const WalletTransactionPeerUnsupportedTypeID = 0x728bed5a
+
+// isWalletTransactionPeer marks WalletTransactionPeerUser as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerUser) isWalletTransactionPeer() {}
+
+// isWalletTransactionPeer marks WalletTransactionPeerAddress as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerAddress) isWalletTransactionPeer() {}
+
+// isWalletTransactionPeer marks WalletTransactionPeerOnramp as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerOnramp) isWalletTransactionPeer() {}
+
+// isWalletTransactionPeer marks WalletTransactionPeerUnsupported as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerUnsupported) isWalletTransactionPeer() {}
+
+// WalletTransactionPeerUser represents the TL constructor walletTransactionPeerUser (0xd4ea706d).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerUser for reference.
+type WalletTransactionPeerUser struct {
+	Flags   Fields `json:"-"`
+	UserID  int64  `json:"user_id,omitempty"`
+	Address string `json:"address,omitempty"`
+	Domain  string `json:"domain,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransactionPeerUser) SetFlags() {
+	if v.Domain != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xd4ea706d.
+func (v *WalletTransactionPeerUser) ConstructorID() uint32 {
+	return WalletTransactionPeerUserTypeID
+}
+
+// Encode serializes WalletTransactionPeerUser to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerUser) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerUserTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.UserID)
+	WriteString(b, v.Address)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Domain)
+	}
+	return nil
+}
+
+// DecodeWalletTransactionPeerUser deserializes a WalletTransactionPeerUser from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerUser(r *Reader) (*WalletTransactionPeerUser, error) {
+	v := &WalletTransactionPeerUser{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	if v.Flags.Has(0) {
+		_rDomain, _eDomain := r.ReadString()
+		if _eDomain != nil {
+			return nil, _eDomain
+		}
+		v.Domain = _rDomain
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerUserTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerUser(r)
+	}
+}
+
+// WalletTransactionPeerAddress represents the TL constructor walletTransactionPeerAddress (0x062cc1bc).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerAddress for reference.
+type WalletTransactionPeerAddress struct {
+	Flags   Fields `json:"-"`
+	Address string `json:"address,omitempty"`
+	Domain  string `json:"domain,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransactionPeerAddress) SetFlags() {
+	if v.Domain != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x062cc1bc.
+func (v *WalletTransactionPeerAddress) ConstructorID() uint32 {
+	return WalletTransactionPeerAddressTypeID
+}
+
+// Encode serializes WalletTransactionPeerAddress to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerAddress) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerAddressTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Address)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Domain)
+	}
+	return nil
+}
+
+// DecodeWalletTransactionPeerAddress deserializes a WalletTransactionPeerAddress from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerAddress(r *Reader) (*WalletTransactionPeerAddress, error) {
+	v := &WalletTransactionPeerAddress{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	if v.Flags.Has(0) {
+		_rDomain, _eDomain := r.ReadString()
+		if _eDomain != nil {
+			return nil, _eDomain
+		}
+		v.Domain = _rDomain
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerAddressTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerAddress(r)
+	}
+}
+
+// WalletTransactionPeerOnramp represents the TL constructor walletTransactionPeerOnramp (0xe595186e).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerOnramp for reference.
+type WalletTransactionPeerOnramp struct {
+	Flags        Fields `json:"-"`
+	Address      string `json:"address,omitempty"`
+	Domain       string `json:"domain,omitempty"`
+	ProviderName string `json:"provider_name,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransactionPeerOnramp) SetFlags() {
+	if v.Domain != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xe595186e.
+func (v *WalletTransactionPeerOnramp) ConstructorID() uint32 {
+	return WalletTransactionPeerOnrampTypeID
+}
+
+// Encode serializes WalletTransactionPeerOnramp to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerOnramp) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerOnrampTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Address)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Domain)
+	}
+	WriteString(b, v.ProviderName)
+	return nil
+}
+
+// DecodeWalletTransactionPeerOnramp deserializes a WalletTransactionPeerOnramp from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerOnramp(r *Reader) (*WalletTransactionPeerOnramp, error) {
+	v := &WalletTransactionPeerOnramp{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	if v.Flags.Has(0) {
+		_rDomain, _eDomain := r.ReadString()
+		if _eDomain != nil {
+			return nil, _eDomain
+		}
+		v.Domain = _rDomain
+	}
+	_rProviderName, _eProviderName := r.ReadString()
+	if _eProviderName != nil {
+		return nil, _eProviderName
+	}
+	v.ProviderName = _rProviderName
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerOnrampTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerOnramp(r)
+	}
+}
+
+// WalletTransactionPeerUnsupported represents the TL constructor walletTransactionPeerUnsupported (0x728bed5a).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerUnsupported for reference.
+type WalletTransactionPeerUnsupported struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x728bed5a.
+func (v *WalletTransactionPeerUnsupported) ConstructorID() uint32 {
+	return WalletTransactionPeerUnsupportedTypeID
+}
+
+// Encode serializes WalletTransactionPeerUnsupported to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerUnsupported) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerUnsupportedTypeID)
+	return nil
+}
+
+// DecodeWalletTransactionPeerUnsupported deserializes a WalletTransactionPeerUnsupported from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerUnsupported(r *Reader) (*WalletTransactionPeerUnsupported, error) {
+	v := &WalletTransactionPeerUnsupported{}
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerUnsupportedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerUnsupported(r)
 	}
 }

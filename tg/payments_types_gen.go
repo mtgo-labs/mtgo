@@ -12191,3 +12191,72 @@ func init() {
 		return DecodeStarGiftAttributeRarityLegendary(r)
 	}
 }
+
+// PaymentsCurrencyRatesTypeID is the constructor ID for TL type payments.currencyRates.
+const PaymentsCurrencyRatesTypeID = 0xbbcce4c2
+
+// PaymentsCurrencyRates represents the TL constructor payments.currencyRates (0xbbcce4c2).
+//
+// See https://core.telegram.org/constructor/payments.currencyRates for reference.
+type PaymentsCurrencyRates struct {
+	Rates []*CurrencyRate `json:"rates,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xbbcce4c2.
+func (v *PaymentsCurrencyRates) ConstructorID() uint32 {
+	return PaymentsCurrencyRatesTypeID
+}
+
+// Encode serializes PaymentsCurrencyRates to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsCurrencyRates) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsCurrencyRatesTypeID)
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Rates)))
+	for _, _item := range v.Rates {
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field rates: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodePaymentsCurrencyRates deserializes a PaymentsCurrencyRates from a reader using the TL binary protocol.
+func DecodePaymentsCurrencyRates(r *Reader) (*PaymentsCurrencyRates, error) {
+	v := &PaymentsCurrencyRates{}
+	_vhdrRates, _ehdrRates := r.ReadUint32()
+	if _ehdrRates != nil {
+		return nil, _ehdrRates
+	}
+	if _errRates := checkVectorConstructor(_vhdrRates); _errRates != nil {
+		return nil, _errRates
+	}
+	_cntRates, _ecntRates := r.ReadUint32()
+	if _ecntRates != nil {
+		return nil, _ecntRates
+	}
+	if _errRates := checkVectorCount(_cntRates); _errRates != nil {
+		return nil, _errRates
+	}
+	v.Rates = make([]*CurrencyRate, _cntRates)
+	for _iRates := range v.Rates {
+		_objRates, _errRates := ReadTLObject(r)
+		if _errRates != nil {
+			return nil, _errRates
+		}
+		_cRates, _okRates := _objRates.(*CurrencyRate)
+		if !_okRates {
+			return nil, fmt.Errorf("decode: field rates: unexpected type %T", _objRates)
+		}
+		v.Rates[_iRates] = _cRates
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[PaymentsCurrencyRatesTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePaymentsCurrencyRates(r)
+	}
+}

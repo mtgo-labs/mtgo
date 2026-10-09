@@ -108,6 +108,9 @@ const TextDiffTypeID = 0x9686cb50
 // TextButtonTypeID is the constructor ID for TL type textButton.
 const TextButtonTypeID = 0xafc79cd6
 
+// TextTonAddressTypeID is the constructor ID for TL type textTonAddress.
+const TextTonAddressTypeID = 0x3cd2a36a
+
 // isRichText marks TextEmpty as implementing the RichTextClass interface.
 func (*TextEmpty) isRichText() {}
 
@@ -200,6 +203,9 @@ func (*TextDiff) isRichText() {}
 
 // isRichText marks TextButton as implementing the RichTextClass interface.
 func (*TextButton) isRichText() {}
+
+// isRichText marks TextTonAddress as implementing the RichTextClass interface.
+func (*TextTonAddress) isRichText() {}
 
 // TextEmpty represents the TL constructor textEmpty (0xdc3d824f).
 //
@@ -1747,6 +1753,51 @@ func DecodeTextButton(r *Reader) (*TextButton, error) {
 func init() {
 	Registry[TextButtonTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTextButton(r)
+	}
+}
+
+// TextTonAddress represents the TL constructor textTonAddress (0x3cd2a36a).
+//
+// See https://core.telegram.org/constructor/textTonAddress for reference.
+type TextTonAddress struct {
+	Text RichTextClass `json:"text,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3cd2a36a.
+func (v *TextTonAddress) ConstructorID() uint32 {
+	return TextTonAddressTypeID
+}
+
+// Encode serializes TextTonAddress to a bytes.Buffer using the TL binary protocol.
+func (v *TextTonAddress) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, TextTonAddressTypeID)
+	if _err := EncodeTLObject(b, v.Text); _err != nil {
+		return fmt.Errorf("encode field text: %w", _err)
+	}
+	return nil
+}
+
+// DecodeTextTonAddress deserializes a TextTonAddress from a reader using the TL binary protocol.
+func DecodeTextTonAddress(r *Reader) (*TextTonAddress, error) {
+	v := &TextTonAddress{}
+	_objText, _errText := ReadTLObject(r)
+	if _errText != nil {
+		return nil, _errText
+	}
+	_cText, _okText := _objText.(RichTextClass)
+	if !_okText {
+		return nil, fmt.Errorf("decode: field text: unexpected type %T", _objText)
+	}
+	v.Text = _cText
+	return v, nil
+}
+
+func init() {
+	Registry[TextTonAddressTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTextTonAddress(r)
 	}
 }
 

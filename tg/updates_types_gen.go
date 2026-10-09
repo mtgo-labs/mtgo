@@ -510,6 +510,21 @@ const UpdateEphemeralBotCallbackQueryTypeID = 0x7c1079d6
 // UpdateBotStarsSubscriptionTypeID is the constructor ID for TL type updateBotStarsSubscription.
 const UpdateBotStarsSubscriptionTypeID = 0x6c0d8e23
 
+// UpdateWalletStateTypeID is the constructor ID for TL type updateWalletState.
+const UpdateWalletStateTypeID = 0x6ac3f2aa
+
+// UpdateSentWalletTransactionTypeID is the constructor ID for TL type updateSentWalletTransaction.
+const UpdateSentWalletTransactionTypeID = 0xb1434d4a
+
+// UpdateWalletGaslessInfoTypeID is the constructor ID for TL type updateWalletGaslessInfo.
+const UpdateWalletGaslessInfoTypeID = 0xa8ae1cac
+
+// UpdateWalletTonConnectSessionTypeID is the constructor ID for TL type updateWalletTonConnectSession.
+const UpdateWalletTonConnectSessionTypeID = 0x50a38e0e
+
+// UpdateWalletTonConnectPendingDisconnectTypeID is the constructor ID for TL type updateWalletTonConnectPendingDisconnect.
+const UpdateWalletTonConnectPendingDisconnectTypeID = 0xd1ee8199
+
 // isUpdate marks UpdateNewMessage as implementing the UpdateClass interface.
 func (*UpdateNewMessage) isUpdate() {}
 
@@ -1004,6 +1019,21 @@ func (*UpdateEphemeralBotCallbackQuery) isUpdate() {}
 
 // isUpdate marks UpdateBotStarsSubscription as implementing the UpdateClass interface.
 func (*UpdateBotStarsSubscription) isUpdate() {}
+
+// isUpdate marks UpdateWalletState as implementing the UpdateClass interface.
+func (*UpdateWalletState) isUpdate() {}
+
+// isUpdate marks UpdateSentWalletTransaction as implementing the UpdateClass interface.
+func (*UpdateSentWalletTransaction) isUpdate() {}
+
+// isUpdate marks UpdateWalletGaslessInfo as implementing the UpdateClass interface.
+func (*UpdateWalletGaslessInfo) isUpdate() {}
+
+// isUpdate marks UpdateWalletTonConnectSession as implementing the UpdateClass interface.
+func (*UpdateWalletTonConnectSession) isUpdate() {}
+
+// isUpdate marks UpdateWalletTonConnectPendingDisconnect as implementing the UpdateClass interface.
+func (*UpdateWalletTonConnectPendingDisconnect) isUpdate() {}
 
 // UpdateNewMessage represents the TL constructor updateNewMessage (0x1f2b0afd).
 //
@@ -11618,6 +11648,288 @@ func DecodeUpdateBotStarsSubscription(r *Reader) (*UpdateBotStarsSubscription, e
 func init() {
 	Registry[UpdateBotStarsSubscriptionTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateBotStarsSubscription(r)
+	}
+}
+
+// UpdateWalletState represents the TL constructor updateWalletState (0x6ac3f2aa).
+//
+// See https://core.telegram.org/constructor/updateWalletState for reference.
+type UpdateWalletState struct {
+	State WalletStateClass `json:"state,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x6ac3f2aa.
+func (v *UpdateWalletState) ConstructorID() uint32 {
+	return UpdateWalletStateTypeID
+}
+
+// Encode serializes UpdateWalletState to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWalletState) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateWalletStateTypeID)
+	if _err := EncodeTLObject(b, v.State); _err != nil {
+		return fmt.Errorf("encode field state: %w", _err)
+	}
+	return nil
+}
+
+// DecodeUpdateWalletState deserializes a UpdateWalletState from a reader using the TL binary protocol.
+func DecodeUpdateWalletState(r *Reader) (*UpdateWalletState, error) {
+	v := &UpdateWalletState{}
+	_objState, _errState := ReadTLObject(r)
+	if _errState != nil {
+		return nil, _errState
+	}
+	_cState, _okState := _objState.(WalletStateClass)
+	if !_okState {
+		return nil, fmt.Errorf("decode: field state: unexpected type %T", _objState)
+	}
+	v.State = _cState
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWalletStateTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWalletState(r)
+	}
+}
+
+// UpdateSentWalletTransaction represents the TL constructor updateSentWalletTransaction (0xb1434d4a).
+//
+// See https://core.telegram.org/constructor/updateSentWalletTransaction for reference.
+type UpdateSentWalletTransaction struct {
+	Flags       Fields             `json:"-"`
+	Gasless     bool               `json:"gasless,omitempty"`
+	MsgHash     string             `json:"msg_hash,omitempty"`
+	Transaction *WalletTransaction `json:"transaction,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateSentWalletTransaction) SetFlags() {
+	if v.Gasless {
+		v.Flags.Set(0)
+	}
+	if v.Transaction != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xb1434d4a.
+func (v *UpdateSentWalletTransaction) ConstructorID() uint32 {
+	return UpdateSentWalletTransactionTypeID
+}
+
+// Encode serializes UpdateSentWalletTransaction to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateSentWalletTransaction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateSentWalletTransactionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.MsgHash)
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.Transaction); _err != nil {
+			return fmt.Errorf("encode field transaction: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeUpdateSentWalletTransaction deserializes a UpdateSentWalletTransaction from a reader using the TL binary protocol.
+func DecodeUpdateSentWalletTransaction(r *Reader) (*UpdateSentWalletTransaction, error) {
+	v := &UpdateSentWalletTransaction{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Gasless = v.Flags.Has(0)
+	_rMsgHash, _eMsgHash := r.ReadString()
+	if _eMsgHash != nil {
+		return nil, _eMsgHash
+	}
+	v.MsgHash = _rMsgHash
+	if v.Flags.Has(1) {
+		_objTransaction, _errTransaction := ReadTLObject(r)
+		if _errTransaction != nil {
+			return nil, _errTransaction
+		}
+		_cTransaction, _okTransaction := _objTransaction.(*WalletTransaction)
+		if !_okTransaction {
+			return nil, fmt.Errorf("decode: field transaction: unexpected type %T", _objTransaction)
+		}
+		v.Transaction = _cTransaction
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateSentWalletTransactionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateSentWalletTransaction(r)
+	}
+}
+
+// UpdateWalletGaslessInfo represents the TL constructor updateWalletGaslessInfo (0xa8ae1cac).
+//
+// See https://core.telegram.org/constructor/updateWalletGaslessInfo for reference.
+type UpdateWalletGaslessInfo struct {
+	Flags          Fields `json:"-"`
+	Available      bool   `json:"available,omitempty"`
+	Left           int32  `json:"left,omitempty"`
+	ResetAt        int32  `json:"reset_at,omitempty"`
+	MinAmount      int64  `json:"min_amount,omitempty"`
+	RelayerAddress string `json:"relayer_address,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateWalletGaslessInfo) SetFlags() {
+	if v.Available {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xa8ae1cac.
+func (v *UpdateWalletGaslessInfo) ConstructorID() uint32 {
+	return UpdateWalletGaslessInfoTypeID
+}
+
+// Encode serializes UpdateWalletGaslessInfo to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWalletGaslessInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateWalletGaslessInfoTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Left))
+	WriteInt(b, uint32(v.ResetAt))
+	WriteLong(b, v.MinAmount)
+	WriteString(b, v.RelayerAddress)
+	return nil
+}
+
+// DecodeUpdateWalletGaslessInfo deserializes a UpdateWalletGaslessInfo from a reader using the TL binary protocol.
+func DecodeUpdateWalletGaslessInfo(r *Reader) (*UpdateWalletGaslessInfo, error) {
+	v := &UpdateWalletGaslessInfo{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Available = v.Flags.Has(0)
+	_rLeft, _eLeft := r.ReadInt32()
+	if _eLeft != nil {
+		return nil, _eLeft
+	}
+	v.Left = _rLeft
+	_rResetAt, _eResetAt := r.ReadInt32()
+	if _eResetAt != nil {
+		return nil, _eResetAt
+	}
+	v.ResetAt = _rResetAt
+	_rMinAmount, _eMinAmount := r.ReadInt64()
+	if _eMinAmount != nil {
+		return nil, _eMinAmount
+	}
+	v.MinAmount = _rMinAmount
+	_rRelayerAddress, _eRelayerAddress := r.ReadString()
+	if _eRelayerAddress != nil {
+		return nil, _eRelayerAddress
+	}
+	v.RelayerAddress = _rRelayerAddress
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWalletGaslessInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWalletGaslessInfo(r)
+	}
+}
+
+// UpdateWalletTonConnectSession represents the TL constructor updateWalletTonConnectSession (0x50a38e0e).
+//
+// See https://core.telegram.org/constructor/updateWalletTonConnectSession for reference.
+type UpdateWalletTonConnectSession struct {
+	Session *TonConnectSession `json:"session,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x50a38e0e.
+func (v *UpdateWalletTonConnectSession) ConstructorID() uint32 {
+	return UpdateWalletTonConnectSessionTypeID
+}
+
+// Encode serializes UpdateWalletTonConnectSession to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWalletTonConnectSession) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateWalletTonConnectSessionTypeID)
+	if _err := EncodeTLObject(b, v.Session); _err != nil {
+		return fmt.Errorf("encode field session: %w", _err)
+	}
+	return nil
+}
+
+// DecodeUpdateWalletTonConnectSession deserializes a UpdateWalletTonConnectSession from a reader using the TL binary protocol.
+func DecodeUpdateWalletTonConnectSession(r *Reader) (*UpdateWalletTonConnectSession, error) {
+	v := &UpdateWalletTonConnectSession{}
+	_objSession, _errSession := ReadTLObject(r)
+	if _errSession != nil {
+		return nil, _errSession
+	}
+	_cSession, _okSession := _objSession.(*TonConnectSession)
+	if !_okSession {
+		return nil, fmt.Errorf("decode: field session: unexpected type %T", _objSession)
+	}
+	v.Session = _cSession
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWalletTonConnectSessionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWalletTonConnectSession(r)
+	}
+}
+
+// UpdateWalletTonConnectPendingDisconnect represents the TL constructor updateWalletTonConnectPendingDisconnect (0xd1ee8199).
+//
+// See https://core.telegram.org/constructor/updateWalletTonConnectPendingDisconnect for reference.
+type UpdateWalletTonConnectPendingDisconnect struct {
+	SessionIds []int64 `json:"session_ids,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd1ee8199.
+func (v *UpdateWalletTonConnectPendingDisconnect) ConstructorID() uint32 {
+	return UpdateWalletTonConnectPendingDisconnectTypeID
+}
+
+// Encode serializes UpdateWalletTonConnectPendingDisconnect to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateWalletTonConnectPendingDisconnect) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateWalletTonConnectPendingDisconnectTypeID)
+	WriteVectorLong(b, v.SessionIds)
+	return nil
+}
+
+// DecodeUpdateWalletTonConnectPendingDisconnect deserializes a UpdateWalletTonConnectPendingDisconnect from a reader using the TL binary protocol.
+func DecodeUpdateWalletTonConnectPendingDisconnect(r *Reader) (*UpdateWalletTonConnectPendingDisconnect, error) {
+	v := &UpdateWalletTonConnectPendingDisconnect{}
+	_vvSessionIds, _veSessionIds := r.ReadVectorLong()
+	if _veSessionIds != nil {
+		return nil, _veSessionIds
+	}
+	v.SessionIds = _vvSessionIds
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateWalletTonConnectPendingDisconnectTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateWalletTonConnectPendingDisconnect(r)
 	}
 }
 

@@ -222,4 +222,9 @@ var ConstructorMapPeer = map[uint32]func() TLObject{
 	0xd6e3b813: func() TLObject { return &JoinChatBotResultWebView{} },
 	0x76141ebd: func() TLObject { return &CommunityPeer{} },
 	0x7beafa85: func() TLObject { return &CommunityPeerRequest{} },
+	0xfe78eecc: func() TLObject { return &WalletUserAddress{} },
+	0xd4ea706d: func() TLObject { return &WalletTransactionPeerUser{} },
+	0x062cc1bc: func() TLObject { return &WalletTransactionPeerAddress{} },
+	0xe595186e: func() TLObject { return &WalletTransactionPeerOnramp{} },
+	0x728bed5a: func() TLObject { return &WalletTransactionPeerUnsupported{} },
 }

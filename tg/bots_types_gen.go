@@ -3176,17 +3176,17 @@ func init() {
 }
 
 // BotVerifierSettingsTypeID is the constructor ID for TL type botVerifierSettings.
-const BotVerifierSettingsTypeID = 0xb0cd6617
+const BotVerifierSettingsTypeID = 0xa12aefff
 
-// BotVerifierSettings represents the TL constructor botVerifierSettings (0xb0cd6617).
+// BotVerifierSettings represents the TL constructor botVerifierSettings (0xa12aefff).
 //
 // See https://core.telegram.org/constructor/botVerifierSettings for reference.
 type BotVerifierSettings struct {
-	Flags                      Fields `json:"-"`
-	CanModifyCustomDescription bool   `json:"can_modify_custom_description,omitempty"`
-	Icon                       int64  `json:"icon,omitempty"`
-	Company                    string `json:"company,omitempty"`
-	CustomDescription          string `json:"custom_description,omitempty"`
+	Flags                      Fields            `json:"-"`
+	CanModifyCustomDescription bool              `json:"can_modify_custom_description,omitempty"`
+	Icon                       int64             `json:"icon,omitempty"`
+	Company                    string            `json:"company,omitempty"`
+	CustomDescription          *TextWithEntities `json:"custom_description,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -3194,12 +3194,12 @@ func (v *BotVerifierSettings) SetFlags() {
 	if v.CanModifyCustomDescription {
 		v.Flags.Set(1)
 	}
-	if v.CustomDescription != "" {
+	if v.CustomDescription != nil {
 		v.Flags.Set(0)
 	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xb0cd6617.
+// ConstructorID returns the TL constructor identifier 0xa12aefff.
 func (v *BotVerifierSettings) ConstructorID() uint32 {
 	return BotVerifierSettingsTypeID
 }
@@ -3215,7 +3215,9 @@ func (v *BotVerifierSettings) Encode(b *bytes.Buffer) error {
 	WriteLong(b, v.Icon)
 	WriteString(b, v.Company)
 	if v.Flags.Has(0) {
-		WriteString(b, v.CustomDescription)
+		if _err := EncodeTLObject(b, v.CustomDescription); _err != nil {
+			return fmt.Errorf("encode field custom_description: %w", _err)
+		}
 	}
 	return nil
 }
@@ -3240,11 +3242,15 @@ func DecodeBotVerifierSettings(r *Reader) (*BotVerifierSettings, error) {
 	}
 	v.Company = _rCompany
 	if v.Flags.Has(0) {
-		_rCustomDescription, _eCustomDescription := r.ReadString()
-		if _eCustomDescription != nil {
-			return nil, _eCustomDescription
+		_objCustomDescription, _errCustomDescription := ReadTLObject(r)
+		if _errCustomDescription != nil {
+			return nil, _errCustomDescription
 		}
-		v.CustomDescription = _rCustomDescription
+		_cCustomDescription, _okCustomDescription := _objCustomDescription.(*TextWithEntities)
+		if !_okCustomDescription {
+			return nil, fmt.Errorf("decode: field custom_description: unexpected type %T", _objCustomDescription)
+		}
+		v.CustomDescription = _cCustomDescription
 	}
 	return v, nil
 }
@@ -3256,18 +3262,18 @@ func init() {
 }
 
 // BotVerificationTypeID is the constructor ID for TL type botVerification.
-const BotVerificationTypeID = 0xf93cd45c
+const BotVerificationTypeID = 0xf72e0ed9
 
-// BotVerification represents the TL constructor botVerification (0xf93cd45c).
+// BotVerification represents the TL constructor botVerification (0xf72e0ed9).
 //
 // See https://core.telegram.org/constructor/botVerification for reference.
 type BotVerification struct {
-	BotID       int64  `json:"bot_id,omitempty"`
-	Icon        int64  `json:"icon,omitempty"`
-	Description string `json:"description,omitempty"`
+	BotID       int64             `json:"bot_id,omitempty"`
+	Icon        int64             `json:"icon,omitempty"`
+	Description *TextWithEntities `json:"description,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0xf93cd45c.
+// ConstructorID returns the TL constructor identifier 0xf72e0ed9.
 func (v *BotVerification) ConstructorID() uint32 {
 	return BotVerificationTypeID
 }
@@ -3280,7 +3286,9 @@ func (v *BotVerification) Encode(b *bytes.Buffer) error {
 	WriteInt(b, BotVerificationTypeID)
 	WriteLong(b, v.BotID)
 	WriteLong(b, v.Icon)
-	WriteString(b, v.Description)
+	if _err := EncodeTLObject(b, v.Description); _err != nil {
+		return fmt.Errorf("encode field description: %w", _err)
+	}
 	return nil
 }
 
@@ -3297,11 +3305,15 @@ func DecodeBotVerification(r *Reader) (*BotVerification, error) {
 		return nil, _eIcon
 	}
 	v.Icon = _rIcon
-	_rDescription, _eDescription := r.ReadString()
-	if _eDescription != nil {
-		return nil, _eDescription
+	_objDescription, _errDescription := ReadTLObject(r)
+	if _errDescription != nil {
+		return nil, _errDescription
 	}
-	v.Description = _rDescription
+	_cDescription, _okDescription := _objDescription.(*TextWithEntities)
+	if !_okDescription {
+		return nil, fmt.Errorf("decode: field description: unexpected type %T", _objDescription)
+	}
+	v.Description = _cDescription
 	return v, nil
 }
 

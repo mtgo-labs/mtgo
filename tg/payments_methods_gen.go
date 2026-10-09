@@ -3608,3 +3608,457 @@ func (c *RPCClient) PaymentsCraftStarGift(ctx context.Context, req *PaymentsCraf
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
 }
+
+// PaymentsGetCurrencyRatesTypeID is the constructor ID for the RPC function payments.getCurrencyRates.
+const PaymentsGetCurrencyRatesTypeID = 0xd35983e8
+
+// PaymentsGetCurrencyRatesRequest represents TL type `payments.getCurrencyRates#d35983e8`.
+//
+// See https://core.telegram.org/method/payments/getCurrencyRates for reference.
+type PaymentsGetCurrencyRatesRequest struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xd35983e8.
+func (v *PaymentsGetCurrencyRatesRequest) ConstructorID() uint32 {
+	return PaymentsGetCurrencyRatesTypeID
+}
+
+// Encode serializes PaymentsGetCurrencyRatesRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetCurrencyRatesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetCurrencyRatesTypeID)
+	return nil
+}
+
+// PaymentsGetCurrencyRates invokes the payments.getCurrencyRates RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetCurrencyRates(ctx context.Context) (*PaymentsCurrencyRates, error) {
+	result, err := c.invoke(ctx, &PaymentsGetCurrencyRatesRequest{}, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*PaymentsCurrencyRates); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsGetOnrampProvidersTypeID is the constructor ID for the RPC function payments.getOnrampProviders.
+const PaymentsGetOnrampProvidersTypeID = 0x3f3e00dc
+
+// PaymentsGetOnrampProvidersRequest represents TL type `payments.getOnrampProviders#3f3e00dc`.
+//
+// See https://core.telegram.org/method/payments/getOnrampProviders for reference.
+type PaymentsGetOnrampProvidersRequest struct {
+	Flags          Fields `json:"-"`
+	CryptoCurrency string `json:"crypto_currency,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsGetOnrampProvidersRequest) SetFlags() {
+	if v.CryptoCurrency != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x3f3e00dc.
+func (v *PaymentsGetOnrampProvidersRequest) ConstructorID() uint32 {
+	return PaymentsGetOnrampProvidersTypeID
+}
+
+// Encode serializes PaymentsGetOnrampProvidersRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetOnrampProvidersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetOnrampProvidersTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteString(b, v.CryptoCurrency)
+	}
+	return nil
+}
+
+// PaymentsGetOnrampProviders invokes the payments.getOnrampProviders RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetOnrampProviders(ctx context.Context, req *PaymentsGetOnrampProvidersRequest) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// PaymentsGetOnrampBaseCurrenciesTypeID is the constructor ID for the RPC function payments.getOnrampBaseCurrencies.
+const PaymentsGetOnrampBaseCurrenciesTypeID = 0x1c8bedf3
+
+// PaymentsGetOnrampBaseCurrenciesRequest represents TL type `payments.getOnrampBaseCurrencies#1c8bedf3`.
+//
+// See https://core.telegram.org/method/payments/getOnrampBaseCurrencies for reference.
+type PaymentsGetOnrampBaseCurrenciesRequest struct {
+	Provider       string `json:"provider,omitempty"`
+	CryptoCurrency string `json:"crypto_currency,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x1c8bedf3.
+func (v *PaymentsGetOnrampBaseCurrenciesRequest) ConstructorID() uint32 {
+	return PaymentsGetOnrampBaseCurrenciesTypeID
+}
+
+// Encode serializes PaymentsGetOnrampBaseCurrenciesRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetOnrampBaseCurrenciesRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetOnrampBaseCurrenciesTypeID)
+	WriteString(b, v.Provider)
+	WriteString(b, v.CryptoCurrency)
+	return nil
+}
+
+// PaymentsGetOnrampBaseCurrencies invokes the payments.getOnrampBaseCurrencies RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetOnrampBaseCurrencies(ctx context.Context, req *PaymentsGetOnrampBaseCurrenciesRequest) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// PaymentsGetOnrampAvailabilityTypeID is the constructor ID for the RPC function payments.getOnrampAvailability.
+const PaymentsGetOnrampAvailabilityTypeID = 0x2ec29951
+
+// PaymentsGetOnrampAvailabilityRequest represents TL type `payments.getOnrampAvailability#2ec29951`.
+//
+// See https://core.telegram.org/method/payments/getOnrampAvailability for reference.
+type PaymentsGetOnrampAvailabilityRequest struct {
+	Flags          Fields `json:"-"`
+	Provider       string `json:"provider,omitempty"`
+	CryptoCurrency string `json:"crypto_currency,omitempty"`
+	BaseCurrency   string `json:"base_currency,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsGetOnrampAvailabilityRequest) SetFlags() {
+	if v.BaseCurrency != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x2ec29951.
+func (v *PaymentsGetOnrampAvailabilityRequest) ConstructorID() uint32 {
+	return PaymentsGetOnrampAvailabilityTypeID
+}
+
+// Encode serializes PaymentsGetOnrampAvailabilityRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetOnrampAvailabilityRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetOnrampAvailabilityTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Provider)
+	WriteString(b, v.CryptoCurrency)
+	if v.Flags.Has(0) {
+		WriteString(b, v.BaseCurrency)
+	}
+	return nil
+}
+
+// PaymentsGetOnrampAvailability invokes the payments.getOnrampAvailability RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetOnrampAvailability(ctx context.Context, req *PaymentsGetOnrampAvailabilityRequest) (*OnrampAvailability, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*OnrampAvailability); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsGetOnrampLimitsTypeID is the constructor ID for the RPC function payments.getOnrampLimits.
+const PaymentsGetOnrampLimitsTypeID = 0x80e851fd
+
+// PaymentsGetOnrampLimitsRequest represents TL type `payments.getOnrampLimits#80e851fd`.
+//
+// See https://core.telegram.org/method/payments/getOnrampLimits for reference.
+type PaymentsGetOnrampLimitsRequest struct {
+	Flags          Fields `json:"-"`
+	Provider       string `json:"provider,omitempty"`
+	CryptoCurrency string `json:"crypto_currency,omitempty"`
+	BaseCurrency   string `json:"base_currency,omitempty"`
+	PaymentMethod  string `json:"payment_method,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsGetOnrampLimitsRequest) SetFlags() {
+	if v.PaymentMethod != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x80e851fd.
+func (v *PaymentsGetOnrampLimitsRequest) ConstructorID() uint32 {
+	return PaymentsGetOnrampLimitsTypeID
+}
+
+// Encode serializes PaymentsGetOnrampLimitsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetOnrampLimitsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetOnrampLimitsTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Provider)
+	WriteString(b, v.CryptoCurrency)
+	WriteString(b, v.BaseCurrency)
+	if v.Flags.Has(0) {
+		WriteString(b, v.PaymentMethod)
+	}
+	return nil
+}
+
+// PaymentsGetOnrampLimits invokes the payments.getOnrampLimits RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetOnrampLimits(ctx context.Context, req *PaymentsGetOnrampLimitsRequest) (*OnrampLimits, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*OnrampLimits); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsGetOnrampQuoteTypeID is the constructor ID for the RPC function payments.getOnrampQuote.
+const PaymentsGetOnrampQuoteTypeID = 0xe06645fa
+
+// PaymentsGetOnrampQuoteRequest represents TL type `payments.getOnrampQuote#e06645fa`.
+//
+// See https://core.telegram.org/method/payments/getOnrampQuote for reference.
+type PaymentsGetOnrampQuoteRequest struct {
+	Flags          Fields `json:"-"`
+	Provider       string `json:"provider,omitempty"`
+	CryptoCurrency string `json:"crypto_currency,omitempty"`
+	BaseCurrency   string `json:"base_currency,omitempty"`
+	BaseAmount     string `json:"base_amount,omitempty"`
+	CryptoAmount   string `json:"crypto_amount,omitempty"`
+	PaymentMethod  string `json:"payment_method,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsGetOnrampQuoteRequest) SetFlags() {
+	if v.BaseAmount != "" {
+		v.Flags.Set(0)
+	}
+	if v.CryptoAmount != "" {
+		v.Flags.Set(1)
+	}
+	if v.PaymentMethod != "" {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xe06645fa.
+func (v *PaymentsGetOnrampQuoteRequest) ConstructorID() uint32 {
+	return PaymentsGetOnrampQuoteTypeID
+}
+
+// Encode serializes PaymentsGetOnrampQuoteRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsGetOnrampQuoteRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsGetOnrampQuoteTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Provider)
+	WriteString(b, v.CryptoCurrency)
+	WriteString(b, v.BaseCurrency)
+	if v.Flags.Has(0) {
+		WriteString(b, v.BaseAmount)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.CryptoAmount)
+	}
+	if v.Flags.Has(2) {
+		WriteString(b, v.PaymentMethod)
+	}
+	return nil
+}
+
+// PaymentsGetOnrampQuote invokes the payments.getOnrampQuote RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsGetOnrampQuote(ctx context.Context, req *PaymentsGetOnrampQuoteRequest) (*OnrampQuote, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*OnrampQuote); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsCreateOnrampSessionTypeID is the constructor ID for the RPC function payments.createOnrampSession.
+const PaymentsCreateOnrampSessionTypeID = 0xa2197cf6
+
+// PaymentsCreateOnrampSessionRequest represents TL type `payments.createOnrampSession#a2197cf6`.
+//
+// See https://core.telegram.org/method/payments/createOnrampSession for reference.
+type PaymentsCreateOnrampSessionRequest struct {
+	Flags            Fields `json:"-"`
+	Provider         string `json:"provider,omitempty"`
+	CryptoCurrency   string `json:"crypto_currency,omitempty"`
+	Address          string `json:"address,omitempty"`
+	PaymentMethod    string `json:"payment_method,omitempty"`
+	BaseCurrency     string `json:"base_currency,omitempty"`
+	BaseAmount       string `json:"base_amount,omitempty"`
+	Memo             string `json:"memo,omitempty"`
+	Theme            string `json:"theme,omitempty"`
+	SuccessReturnURL string `json:"success_return_url,omitempty"`
+	FailReturnURL    string `json:"fail_return_url,omitempty"`
+	CryptoAmount     string `json:"crypto_amount,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsCreateOnrampSessionRequest) SetFlags() {
+	if v.PaymentMethod != "" {
+		v.Flags.Set(0)
+	}
+	if v.BaseCurrency != "" {
+		v.Flags.Set(1)
+	}
+	if v.BaseAmount != "" {
+		v.Flags.Set(2)
+	}
+	if v.Memo != "" {
+		v.Flags.Set(3)
+	}
+	if v.Theme != "" {
+		v.Flags.Set(4)
+	}
+	if v.SuccessReturnURL != "" {
+		v.Flags.Set(5)
+	}
+	if v.FailReturnURL != "" {
+		v.Flags.Set(6)
+	}
+	if v.CryptoAmount != "" {
+		v.Flags.Set(7)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xa2197cf6.
+func (v *PaymentsCreateOnrampSessionRequest) ConstructorID() uint32 {
+	return PaymentsCreateOnrampSessionTypeID
+}
+
+// Encode serializes PaymentsCreateOnrampSessionRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsCreateOnrampSessionRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsCreateOnrampSessionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Provider)
+	WriteString(b, v.CryptoCurrency)
+	WriteString(b, v.Address)
+	if v.Flags.Has(0) {
+		WriteString(b, v.PaymentMethod)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.BaseCurrency)
+	}
+	if v.Flags.Has(2) {
+		WriteString(b, v.BaseAmount)
+	}
+	if v.Flags.Has(3) {
+		WriteString(b, v.Memo)
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.Theme)
+	}
+	if v.Flags.Has(5) {
+		WriteString(b, v.SuccessReturnURL)
+	}
+	if v.Flags.Has(6) {
+		WriteString(b, v.FailReturnURL)
+	}
+	if v.Flags.Has(7) {
+		WriteString(b, v.CryptoAmount)
+	}
+	return nil
+}
+
+// PaymentsCreateOnrampSession invokes the payments.createOnrampSession RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsCreateOnrampSession(ctx context.Context, req *PaymentsCreateOnrampSessionRequest) (*OnrampSession, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*OnrampSession); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}

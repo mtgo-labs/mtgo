@@ -6041,7 +6041,7 @@ const AccountRegisterPasskeyTypeID = 0x55b41fd6
 //
 // See https://core.telegram.org/method/account/registerPasskey for reference.
 type AccountRegisterPasskeyRequest struct {
-	Credential InputPasskeyCredentialClass `json:"credential,omitempty"`
+	Credential *InputPasskeyCredentialPublicKey `json:"credential,omitempty"`
 }
 
 // ConstructorID returns the TL constructor identifier 0x55b41fd6.

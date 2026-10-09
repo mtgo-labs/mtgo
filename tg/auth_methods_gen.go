@@ -1270,10 +1270,10 @@ const AuthFinishPasskeyLoginTypeID = 0x9857ad07
 //
 // See https://core.telegram.org/method/auth/finishPasskeyLogin for reference.
 type AuthFinishPasskeyLoginRequest struct {
-	Flags         Fields                      `json:"-"`
-	Credential    InputPasskeyCredentialClass `json:"credential,omitempty"`
-	FromDCID      int32                       `json:"from_dc_id,omitempty"`
-	FromAuthKeyID int64                       `json:"from_auth_key_id,omitempty"`
+	Flags         Fields                           `json:"-"`
+	Credential    *InputPasskeyCredentialPublicKey `json:"credential,omitempty"`
+	FromDCID      int32                            `json:"from_dc_id,omitempty"`
+	FromAuthKeyID int64                            `json:"from_auth_key_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -1331,18 +1331,70 @@ func (c *RPCClient) AuthFinishPasskeyLogin(ctx context.Context, req *AuthFinishP
 	return nil, fmt.Errorf("unexpected result type %T", result)
 }
 
-// AuthInitFirebasePnvLoginTypeID is the constructor ID for the RPC function auth.initFirebasePnvLogin.
-const AuthInitFirebasePnvLoginTypeID = 0x777df37a
+// AuthCancelWebTokenAuthorizationTypeID is the constructor ID for the RPC function auth.cancelWebTokenAuthorization.
+const AuthCancelWebTokenAuthorizationTypeID = 0x490dada1
 
-// AuthInitFirebasePnvLoginRequest represents TL type `auth.initFirebasePnvLogin#777df37a`.
+// AuthCancelWebTokenAuthorizationRequest represents TL type `auth.cancelWebTokenAuthorization#490dada1`.
+//
+// See https://core.telegram.org/method/auth/cancelWebTokenAuthorization for reference.
+type AuthCancelWebTokenAuthorizationRequest struct {
+	WebAuthToken string `json:"web_auth_token,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x490dada1.
+func (v *AuthCancelWebTokenAuthorizationRequest) ConstructorID() uint32 {
+	return AuthCancelWebTokenAuthorizationTypeID
+}
+
+// Encode serializes AuthCancelWebTokenAuthorizationRequest to a bytes.Buffer using the TL binary protocol.
+func (v *AuthCancelWebTokenAuthorizationRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, AuthCancelWebTokenAuthorizationTypeID)
+	WriteString(b, v.WebAuthToken)
+	return nil
+}
+
+// AuthCancelWebTokenAuthorization invokes the auth.cancelWebTokenAuthorization RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) AuthCancelWebTokenAuthorization(ctx context.Context, req *AuthCancelWebTokenAuthorizationRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// AuthInitFirebasePnvLoginTypeID is the constructor ID for the RPC function auth.initFirebasePnvLogin.
+const AuthInitFirebasePnvLoginTypeID = 0x644f15c0
+
+// AuthInitFirebasePnvLoginRequest represents TL type `auth.initFirebasePnvLogin#644f15c0`.
 //
 // See https://core.telegram.org/method/auth/initFirebasePnvLogin for reference.
 type AuthInitFirebasePnvLoginRequest struct {
-	APIID   int32  `json:"api_id,omitempty"`
-	APIHash string `json:"api_hash,omitempty"`
+	Flags     Fields  `json:"-"`
+	ExceptIds []int64 `json:"except_ids,omitempty"`
+	APIID     int32   `json:"api_id,omitempty"`
+	APIHash   string  `json:"api_hash,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x777df37a.
+// SetFlags computes flags from non-zero optional fields.
+func (v *AuthInitFirebasePnvLoginRequest) SetFlags() {
+	if v.ExceptIds != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x644f15c0.
 func (v *AuthInitFirebasePnvLoginRequest) ConstructorID() uint32 {
 	return AuthInitFirebasePnvLoginTypeID
 }
@@ -1353,6 +1405,11 @@ func (v *AuthInitFirebasePnvLoginRequest) Encode(b *bytes.Buffer) error {
 		return ErrNilTLObject
 	}
 	WriteInt(b, AuthInitFirebasePnvLoginTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteVectorLong(b, v.ExceptIds)
+	}
 	WriteInt(b, uint32(v.APIID))
 	WriteString(b, v.APIHash)
 	return nil

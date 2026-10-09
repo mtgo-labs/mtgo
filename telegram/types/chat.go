@@ -801,7 +801,7 @@ func enrichChatFromChannelFull(c *Chat, f *tg.ChannelFull) {
 	if f.BotVerification != nil {
 		c.BotVerification = &BotVerification{
 			CustomEmojiID: fmt.Sprintf("%d", f.BotVerification.Icon),
-			Description:   f.BotVerification.Description,
+			Description:   textWithEntitiesText(f.BotVerification.Description),
 		}
 	}
 	if f.ExportedInvite != nil {
@@ -861,7 +861,7 @@ func enrichChatFromUserFull(c *Chat, f *tg.UserFull) {
 	if f.BotVerification != nil {
 		c.BotVerification = &BotVerification{
 			CustomEmojiID: fmt.Sprintf("%d", f.BotVerification.Icon),
-			Description:   f.BotVerification.Description,
+			Description:   textWithEntitiesText(f.BotVerification.Description),
 		}
 	}
 }

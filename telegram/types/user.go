@@ -301,7 +301,7 @@ func EnrichUserFull(u *User, full *tg.UserFull) {
 	if full.BotVerification != nil {
 		u.BotVerification = &BotVerification{
 			CustomEmojiID: fmt.Sprintf("%d", full.BotVerification.Icon),
-			Description:   full.BotVerification.Description,
+			Description:   textWithEntitiesText(full.BotVerification.Description),
 		}
 	}
 	if full.SendPaidMessagesStars != 0 {

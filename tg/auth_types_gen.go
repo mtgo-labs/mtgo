@@ -2862,25 +2862,8 @@ func init() {
 	}
 }
 
-// InputPasskeyCredentialClass is the interface for TL type InputPasskeyCredential.
-// Implementations must satisfy TLObject and are used to represent
-// any constructor of the InputPasskeyCredential TL type.
-type InputPasskeyCredentialClass interface {
-	TLObject
-	isInputPasskeyCredential()
-}
-
 // InputPasskeyCredentialPublicKeyTypeID is the constructor ID for TL type inputPasskeyCredentialPublicKey.
 const InputPasskeyCredentialPublicKeyTypeID = 0x3c27b78f
-
-// InputPasskeyCredentialFirebasePnvTypeID is the constructor ID for TL type inputPasskeyCredentialFirebasePNV.
-const InputPasskeyCredentialFirebasePnvTypeID = 0x5b1ccb28
-
-// isInputPasskeyCredential marks InputPasskeyCredentialPublicKey as implementing the InputPasskeyCredentialClass interface.
-func (*InputPasskeyCredentialPublicKey) isInputPasskeyCredential() {}
-
-// isInputPasskeyCredential marks InputPasskeyCredentialFirebasePnv as implementing the InputPasskeyCredentialClass interface.
-func (*InputPasskeyCredentialFirebasePnv) isInputPasskeyCredential() {}
 
 // InputPasskeyCredentialPublicKey represents the TL constructor inputPasskeyCredentialPublicKey (0x3c27b78f).
 //
@@ -2938,45 +2921,6 @@ func DecodeInputPasskeyCredentialPublicKey(r *Reader) (*InputPasskeyCredentialPu
 func init() {
 	Registry[InputPasskeyCredentialPublicKeyTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputPasskeyCredentialPublicKey(r)
-	}
-}
-
-// InputPasskeyCredentialFirebasePnv represents the TL constructor inputPasskeyCredentialFirebasePNV (0x5b1ccb28).
-//
-// See https://core.telegram.org/constructor/inputPasskeyCredentialFirebasePNV for reference.
-type InputPasskeyCredentialFirebasePnv struct {
-	PnvToken string `json:"pnv_token,omitempty"`
-}
-
-// ConstructorID returns the TL constructor identifier 0x5b1ccb28.
-func (v *InputPasskeyCredentialFirebasePnv) ConstructorID() uint32 {
-	return InputPasskeyCredentialFirebasePnvTypeID
-}
-
-// Encode serializes InputPasskeyCredentialFirebasePnv to a bytes.Buffer using the TL binary protocol.
-func (v *InputPasskeyCredentialFirebasePnv) Encode(b *bytes.Buffer) error {
-	if v == nil {
-		return ErrNilTLObject
-	}
-	WriteInt(b, InputPasskeyCredentialFirebasePnvTypeID)
-	WriteString(b, v.PnvToken)
-	return nil
-}
-
-// DecodeInputPasskeyCredentialFirebasePnv deserializes a InputPasskeyCredentialFirebasePnv from a reader using the TL binary protocol.
-func DecodeInputPasskeyCredentialFirebasePnv(r *Reader) (*InputPasskeyCredentialFirebasePnv, error) {
-	v := &InputPasskeyCredentialFirebasePnv{}
-	_rPnvToken, _ePnvToken := r.ReadString()
-	if _ePnvToken != nil {
-		return nil, _ePnvToken
-	}
-	v.PnvToken = _rPnvToken
-	return v, nil
-}
-
-func init() {
-	Registry[InputPasskeyCredentialFirebasePnvTypeID] = func(r *Reader) (TLObject, error) {
-		return DecodeInputPasskeyCredentialFirebasePnv(r)
 	}
 }
 

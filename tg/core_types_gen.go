@@ -13070,6 +13070,1414 @@ func init() {
 	}
 }
 
+// CurrencyRateTypeID is the constructor ID for TL type currencyRate.
+const CurrencyRateTypeID = 0x30d9743c
+
+// CurrencyRate represents the TL constructor currencyRate (0x30d9743c).
+//
+// See https://core.telegram.org/constructor/currencyRate for reference.
+type CurrencyRate struct {
+	Currency string  `json:"currency,omitempty"`
+	Rate     float64 `json:"rate,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x30d9743c.
+func (v *CurrencyRate) ConstructorID() uint32 {
+	return CurrencyRateTypeID
+}
+
+// Encode serializes CurrencyRate to a bytes.Buffer using the TL binary protocol.
+func (v *CurrencyRate) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, CurrencyRateTypeID)
+	WriteString(b, v.Currency)
+	WriteDouble(b, v.Rate)
+	return nil
+}
+
+// DecodeCurrencyRate deserializes a CurrencyRate from a reader using the TL binary protocol.
+func DecodeCurrencyRate(r *Reader) (*CurrencyRate, error) {
+	v := &CurrencyRate{}
+	_rCurrency, _eCurrency := r.ReadString()
+	if _eCurrency != nil {
+		return nil, _eCurrency
+	}
+	v.Currency = _rCurrency
+	_rRate, _eRate := r.ReadFloat64()
+	if _eRate != nil {
+		return nil, _eRate
+	}
+	v.Rate = _rRate
+	return v, nil
+}
+
+func init() {
+	Registry[CurrencyRateTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeCurrencyRate(r)
+	}
+}
+
+// OnrampMethodAvailabilityTypeID is the constructor ID for TL type onrampMethodAvailability.
+const OnrampMethodAvailabilityTypeID = 0x9ec8c6a8
+
+// OnrampMethodAvailability represents the TL constructor onrampMethodAvailability (0x9ec8c6a8).
+//
+// See https://core.telegram.org/constructor/onrampMethodAvailability for reference.
+type OnrampMethodAvailability struct {
+	Flags         Fields `json:"-"`
+	Available     bool   `json:"available,omitempty"`
+	PaymentMethod string `json:"payment_method,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *OnrampMethodAvailability) SetFlags() {
+	if v.Available {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x9ec8c6a8.
+func (v *OnrampMethodAvailability) ConstructorID() uint32 {
+	return OnrampMethodAvailabilityTypeID
+}
+
+// Encode serializes OnrampMethodAvailability to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampMethodAvailability) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampMethodAvailabilityTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.PaymentMethod)
+	return nil
+}
+
+// DecodeOnrampMethodAvailability deserializes a OnrampMethodAvailability from a reader using the TL binary protocol.
+func DecodeOnrampMethodAvailability(r *Reader) (*OnrampMethodAvailability, error) {
+	v := &OnrampMethodAvailability{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Available = v.Flags.Has(0)
+	_rPaymentMethod, _ePaymentMethod := r.ReadString()
+	if _ePaymentMethod != nil {
+		return nil, _ePaymentMethod
+	}
+	v.PaymentMethod = _rPaymentMethod
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampMethodAvailabilityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampMethodAvailability(r)
+	}
+}
+
+// OnrampProviderInfoTypeID is the constructor ID for TL type onrampProviderInfo.
+const OnrampProviderInfoTypeID = 0x0dc27582
+
+// OnrampProviderInfo represents the TL constructor onrampProviderInfo (0x0dc27582).
+//
+// See https://core.telegram.org/constructor/onrampProviderInfo for reference.
+type OnrampProviderInfo struct {
+	Flags                  Fields   `json:"-"`
+	SupportsBaseCurrencies bool     `json:"supports_base_currencies,omitempty"`
+	SupportsLimits         bool     `json:"supports_limits,omitempty"`
+	SupportsQuote          bool     `json:"supports_quote,omitempty"`
+	ID                     string   `json:"id,omitempty"`
+	Name                   string   `json:"name,omitempty"`
+	CryptoCurrencies       []string `json:"crypto_currencies,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *OnrampProviderInfo) SetFlags() {
+	if v.SupportsBaseCurrencies {
+		v.Flags.Set(0)
+	}
+	if v.SupportsLimits {
+		v.Flags.Set(1)
+	}
+	if v.SupportsQuote {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x0dc27582.
+func (v *OnrampProviderInfo) ConstructorID() uint32 {
+	return OnrampProviderInfoTypeID
+}
+
+// Encode serializes OnrampProviderInfo to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampProviderInfo) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampProviderInfoTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.ID)
+	WriteString(b, v.Name)
+	WriteVectorString(b, v.CryptoCurrencies)
+	return nil
+}
+
+// DecodeOnrampProviderInfo deserializes a OnrampProviderInfo from a reader using the TL binary protocol.
+func DecodeOnrampProviderInfo(r *Reader) (*OnrampProviderInfo, error) {
+	v := &OnrampProviderInfo{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.SupportsBaseCurrencies = v.Flags.Has(0)
+	v.SupportsLimits = v.Flags.Has(1)
+	v.SupportsQuote = v.Flags.Has(2)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_vvCryptoCurrencies, _veCryptoCurrencies := r.ReadVectorString()
+	if _veCryptoCurrencies != nil {
+		return nil, _veCryptoCurrencies
+	}
+	v.CryptoCurrencies = _vvCryptoCurrencies
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampProviderInfoTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampProviderInfo(r)
+	}
+}
+
+// OnrampAvailabilityTypeID is the constructor ID for TL type onrampAvailability.
+const OnrampAvailabilityTypeID = 0xf9c84973
+
+// OnrampAvailability represents the TL constructor onrampAvailability (0xf9c84973).
+//
+// See https://core.telegram.org/constructor/onrampAvailability for reference.
+type OnrampAvailability struct {
+	Flags       Fields                      `json:"-"`
+	Allowed     bool                        `json:"allowed,omitempty"`
+	BuyAllowed  bool                        `json:"buy_allowed,omitempty"`
+	CountryCode string                      `json:"country_code,omitempty"`
+	State       string                      `json:"state,omitempty"`
+	Methods     []*OnrampMethodAvailability `json:"methods,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *OnrampAvailability) SetFlags() {
+	if v.Allowed {
+		v.Flags.Set(0)
+	}
+	if v.BuyAllowed {
+		v.Flags.Set(1)
+	}
+	if v.State != "" {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xf9c84973.
+func (v *OnrampAvailability) ConstructorID() uint32 {
+	return OnrampAvailabilityTypeID
+}
+
+// Encode serializes OnrampAvailability to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampAvailability) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampAvailabilityTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.CountryCode)
+	if v.Flags.Has(2) {
+		WriteString(b, v.State)
+	}
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Methods)))
+	for _, _item := range v.Methods {
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field methods: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeOnrampAvailability deserializes a OnrampAvailability from a reader using the TL binary protocol.
+func DecodeOnrampAvailability(r *Reader) (*OnrampAvailability, error) {
+	v := &OnrampAvailability{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Allowed = v.Flags.Has(0)
+	v.BuyAllowed = v.Flags.Has(1)
+	_rCountryCode, _eCountryCode := r.ReadString()
+	if _eCountryCode != nil {
+		return nil, _eCountryCode
+	}
+	v.CountryCode = _rCountryCode
+	if v.Flags.Has(2) {
+		_rState, _eState := r.ReadString()
+		if _eState != nil {
+			return nil, _eState
+		}
+		v.State = _rState
+	}
+	_vhdrMethods, _ehdrMethods := r.ReadUint32()
+	if _ehdrMethods != nil {
+		return nil, _ehdrMethods
+	}
+	if _errMethods := checkVectorConstructor(_vhdrMethods); _errMethods != nil {
+		return nil, _errMethods
+	}
+	_cntMethods, _ecntMethods := r.ReadUint32()
+	if _ecntMethods != nil {
+		return nil, _ecntMethods
+	}
+	if _errMethods := checkVectorCount(_cntMethods); _errMethods != nil {
+		return nil, _errMethods
+	}
+	v.Methods = make([]*OnrampMethodAvailability, _cntMethods)
+	for _iMethods := range v.Methods {
+		_objMethods, _errMethods := ReadTLObject(r)
+		if _errMethods != nil {
+			return nil, _errMethods
+		}
+		_cMethods, _okMethods := _objMethods.(*OnrampMethodAvailability)
+		if !_okMethods {
+			return nil, fmt.Errorf("decode: field methods: unexpected type %T", _objMethods)
+		}
+		v.Methods[_iMethods] = _cMethods
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampAvailabilityTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampAvailability(r)
+	}
+}
+
+// OnrampLimitsTypeID is the constructor ID for TL type onrampLimits.
+const OnrampLimitsTypeID = 0x7be2677e
+
+// OnrampLimits represents the TL constructor onrampLimits (0x7be2677e).
+//
+// See https://core.telegram.org/constructor/onrampLimits for reference.
+type OnrampLimits struct {
+	BaseCurrency    string `json:"base_currency,omitempty"`
+	BaseMinAmount   string `json:"base_min_amount,omitempty"`
+	BaseMaxAmount   string `json:"base_max_amount,omitempty"`
+	CryptoMinAmount string `json:"crypto_min_amount,omitempty"`
+	CryptoMaxAmount string `json:"crypto_max_amount,omitempty"`
+	PaymentMethod   string `json:"payment_method,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7be2677e.
+func (v *OnrampLimits) ConstructorID() uint32 {
+	return OnrampLimitsTypeID
+}
+
+// Encode serializes OnrampLimits to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampLimits) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampLimitsTypeID)
+	WriteString(b, v.BaseCurrency)
+	WriteString(b, v.BaseMinAmount)
+	WriteString(b, v.BaseMaxAmount)
+	WriteString(b, v.CryptoMinAmount)
+	WriteString(b, v.CryptoMaxAmount)
+	WriteString(b, v.PaymentMethod)
+	return nil
+}
+
+// DecodeOnrampLimits deserializes a OnrampLimits from a reader using the TL binary protocol.
+func DecodeOnrampLimits(r *Reader) (*OnrampLimits, error) {
+	v := &OnrampLimits{}
+	_rBaseCurrency, _eBaseCurrency := r.ReadString()
+	if _eBaseCurrency != nil {
+		return nil, _eBaseCurrency
+	}
+	v.BaseCurrency = _rBaseCurrency
+	_rBaseMinAmount, _eBaseMinAmount := r.ReadString()
+	if _eBaseMinAmount != nil {
+		return nil, _eBaseMinAmount
+	}
+	v.BaseMinAmount = _rBaseMinAmount
+	_rBaseMaxAmount, _eBaseMaxAmount := r.ReadString()
+	if _eBaseMaxAmount != nil {
+		return nil, _eBaseMaxAmount
+	}
+	v.BaseMaxAmount = _rBaseMaxAmount
+	_rCryptoMinAmount, _eCryptoMinAmount := r.ReadString()
+	if _eCryptoMinAmount != nil {
+		return nil, _eCryptoMinAmount
+	}
+	v.CryptoMinAmount = _rCryptoMinAmount
+	_rCryptoMaxAmount, _eCryptoMaxAmount := r.ReadString()
+	if _eCryptoMaxAmount != nil {
+		return nil, _eCryptoMaxAmount
+	}
+	v.CryptoMaxAmount = _rCryptoMaxAmount
+	_rPaymentMethod, _ePaymentMethod := r.ReadString()
+	if _ePaymentMethod != nil {
+		return nil, _ePaymentMethod
+	}
+	v.PaymentMethod = _rPaymentMethod
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampLimitsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampLimits(r)
+	}
+}
+
+// OnrampQuoteTypeID is the constructor ID for TL type onrampQuote.
+const OnrampQuoteTypeID = 0x7a8011e9
+
+// OnrampQuote represents the TL constructor onrampQuote (0x7a8011e9).
+//
+// See https://core.telegram.org/constructor/onrampQuote for reference.
+type OnrampQuote struct {
+	BaseCurrency     string `json:"base_currency,omitempty"`
+	BaseAmount       string `json:"base_amount,omitempty"`
+	CryptoCurrency   string `json:"crypto_currency,omitempty"`
+	CryptoAmount     string `json:"crypto_amount,omitempty"`
+	CryptoPrice      string `json:"crypto_price,omitempty"`
+	FeeAmount        string `json:"fee_amount,omitempty"`
+	ExtraFeeAmount   string `json:"extra_fee_amount,omitempty"`
+	NetworkFeeAmount string `json:"network_fee_amount,omitempty"`
+	TotalAmount      string `json:"total_amount,omitempty"`
+	PaymentMethod    string `json:"payment_method,omitempty"`
+	ExpiresDate      int32  `json:"expires_date,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x7a8011e9.
+func (v *OnrampQuote) ConstructorID() uint32 {
+	return OnrampQuoteTypeID
+}
+
+// Encode serializes OnrampQuote to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampQuote) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampQuoteTypeID)
+	WriteString(b, v.BaseCurrency)
+	WriteString(b, v.BaseAmount)
+	WriteString(b, v.CryptoCurrency)
+	WriteString(b, v.CryptoAmount)
+	WriteString(b, v.CryptoPrice)
+	WriteString(b, v.FeeAmount)
+	WriteString(b, v.ExtraFeeAmount)
+	WriteString(b, v.NetworkFeeAmount)
+	WriteString(b, v.TotalAmount)
+	WriteString(b, v.PaymentMethod)
+	WriteInt(b, uint32(v.ExpiresDate))
+	return nil
+}
+
+// DecodeOnrampQuote deserializes a OnrampQuote from a reader using the TL binary protocol.
+func DecodeOnrampQuote(r *Reader) (*OnrampQuote, error) {
+	v := &OnrampQuote{}
+	_rBaseCurrency, _eBaseCurrency := r.ReadString()
+	if _eBaseCurrency != nil {
+		return nil, _eBaseCurrency
+	}
+	v.BaseCurrency = _rBaseCurrency
+	_rBaseAmount, _eBaseAmount := r.ReadString()
+	if _eBaseAmount != nil {
+		return nil, _eBaseAmount
+	}
+	v.BaseAmount = _rBaseAmount
+	_rCryptoCurrency, _eCryptoCurrency := r.ReadString()
+	if _eCryptoCurrency != nil {
+		return nil, _eCryptoCurrency
+	}
+	v.CryptoCurrency = _rCryptoCurrency
+	_rCryptoAmount, _eCryptoAmount := r.ReadString()
+	if _eCryptoAmount != nil {
+		return nil, _eCryptoAmount
+	}
+	v.CryptoAmount = _rCryptoAmount
+	_rCryptoPrice, _eCryptoPrice := r.ReadString()
+	if _eCryptoPrice != nil {
+		return nil, _eCryptoPrice
+	}
+	v.CryptoPrice = _rCryptoPrice
+	_rFeeAmount, _eFeeAmount := r.ReadString()
+	if _eFeeAmount != nil {
+		return nil, _eFeeAmount
+	}
+	v.FeeAmount = _rFeeAmount
+	_rExtraFeeAmount, _eExtraFeeAmount := r.ReadString()
+	if _eExtraFeeAmount != nil {
+		return nil, _eExtraFeeAmount
+	}
+	v.ExtraFeeAmount = _rExtraFeeAmount
+	_rNetworkFeeAmount, _eNetworkFeeAmount := r.ReadString()
+	if _eNetworkFeeAmount != nil {
+		return nil, _eNetworkFeeAmount
+	}
+	v.NetworkFeeAmount = _rNetworkFeeAmount
+	_rTotalAmount, _eTotalAmount := r.ReadString()
+	if _eTotalAmount != nil {
+		return nil, _eTotalAmount
+	}
+	v.TotalAmount = _rTotalAmount
+	_rPaymentMethod, _ePaymentMethod := r.ReadString()
+	if _ePaymentMethod != nil {
+		return nil, _ePaymentMethod
+	}
+	v.PaymentMethod = _rPaymentMethod
+	_rExpiresDate, _eExpiresDate := r.ReadInt32()
+	if _eExpiresDate != nil {
+		return nil, _eExpiresDate
+	}
+	v.ExpiresDate = _rExpiresDate
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampQuoteTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampQuote(r)
+	}
+}
+
+// OnrampSessionTypeID is the constructor ID for TL type onrampSession.
+const OnrampSessionTypeID = 0xd1e42e24
+
+// OnrampSession represents the TL constructor onrampSession (0xd1e42e24).
+//
+// See https://core.telegram.org/constructor/onrampSession for reference.
+type OnrampSession struct {
+	Provider    string `json:"provider,omitempty"`
+	SessionID   string `json:"session_id,omitempty"`
+	URL         string `json:"url,omitempty"`
+	ExpiresDate int32  `json:"expires_date,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xd1e42e24.
+func (v *OnrampSession) ConstructorID() uint32 {
+	return OnrampSessionTypeID
+}
+
+// Encode serializes OnrampSession to a bytes.Buffer using the TL binary protocol.
+func (v *OnrampSession) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, OnrampSessionTypeID)
+	WriteString(b, v.Provider)
+	WriteString(b, v.SessionID)
+	WriteString(b, v.URL)
+	WriteInt(b, uint32(v.ExpiresDate))
+	return nil
+}
+
+// DecodeOnrampSession deserializes a OnrampSession from a reader using the TL binary protocol.
+func DecodeOnrampSession(r *Reader) (*OnrampSession, error) {
+	v := &OnrampSession{}
+	_rProvider, _eProvider := r.ReadString()
+	if _eProvider != nil {
+		return nil, _eProvider
+	}
+	v.Provider = _rProvider
+	_rSessionID, _eSessionID := r.ReadString()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rExpiresDate, _eExpiresDate := r.ReadInt32()
+	if _eExpiresDate != nil {
+		return nil, _eExpiresDate
+	}
+	v.ExpiresDate = _rExpiresDate
+	return v, nil
+}
+
+func init() {
+	Registry[OnrampSessionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeOnrampSession(r)
+	}
+}
+
+// WalletStateClass is the interface for TL type WalletState.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the WalletState TL type.
+type WalletStateClass interface {
+	TLObject
+	isWalletState()
+}
+
+// WalletStateEmptyTypeID is the constructor ID for TL type walletStateEmpty.
+const WalletStateEmptyTypeID = 0x9cb9b2ec
+
+// WalletStateTypeID is the constructor ID for TL type walletState.
+const WalletStateTypeID = 0x95c5346b
+
+// isWalletState marks WalletStateEmpty as implementing the WalletStateClass interface.
+func (*WalletStateEmpty) isWalletState() {}
+
+// isWalletState marks WalletState as implementing the WalletStateClass interface.
+func (*WalletState) isWalletState() {}
+
+// WalletStateEmpty represents the TL constructor walletStateEmpty (0x9cb9b2ec).
+//
+// See https://core.telegram.org/constructor/walletStateEmpty for reference.
+type WalletStateEmpty struct {
+	Flags    Fields `json:"-"`
+	Creating bool   `json:"creating,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletStateEmpty) SetFlags() {
+	if v.Creating {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x9cb9b2ec.
+func (v *WalletStateEmpty) ConstructorID() uint32 {
+	return WalletStateEmptyTypeID
+}
+
+// Encode serializes WalletStateEmpty to a bytes.Buffer using the TL binary protocol.
+func (v *WalletStateEmpty) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletStateEmptyTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// DecodeWalletStateEmpty deserializes a WalletStateEmpty from a reader using the TL binary protocol.
+func DecodeWalletStateEmpty(r *Reader) (*WalletStateEmpty, error) {
+	v := &WalletStateEmpty{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Creating = v.Flags.Has(0)
+	return v, nil
+}
+
+func init() {
+	Registry[WalletStateEmptyTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletStateEmpty(r)
+	}
+}
+
+// WalletState represents the TL constructor walletState (0x95c5346b).
+//
+// See https://core.telegram.org/constructor/walletState for reference.
+type WalletState struct {
+	Flags           Fields `json:"-"`
+	BackupEnabled   bool   `json:"backup_enabled,omitempty"`
+	CanExportPhrase bool   `json:"can_export_phrase,omitempty"`
+	CanEnableBackup bool   `json:"can_enable_backup,omitempty"`
+	Address         string `json:"address,omitempty"`
+	PublicKey       []byte `json:"public_key,omitempty"`
+	Balance         int64  `json:"balance,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletState) SetFlags() {
+	if v.BackupEnabled {
+		v.Flags.Set(0)
+	}
+	if v.CanExportPhrase {
+		v.Flags.Set(1)
+	}
+	if v.CanEnableBackup {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x95c5346b.
+func (v *WalletState) ConstructorID() uint32 {
+	return WalletStateTypeID
+}
+
+// Encode serializes WalletState to a bytes.Buffer using the TL binary protocol.
+func (v *WalletState) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletStateTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Address)
+	WriteBytes(b, v.PublicKey)
+	WriteLong(b, v.Balance)
+	return nil
+}
+
+// DecodeWalletState deserializes a WalletState from a reader using the TL binary protocol.
+func DecodeWalletState(r *Reader) (*WalletState, error) {
+	v := &WalletState{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.BackupEnabled = v.Flags.Has(0)
+	v.CanExportPhrase = v.Flags.Has(1)
+	v.CanEnableBackup = v.Flags.Has(2)
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rPublicKey, _ePublicKey := r.ReadBytes()
+	if _ePublicKey != nil {
+		return nil, _ePublicKey
+	}
+	v.PublicKey = _rPublicKey
+	_rBalance, _eBalance := r.ReadInt64()
+	if _eBalance != nil {
+		return nil, _eBalance
+	}
+	v.Balance = _rBalance
+	return v, nil
+}
+
+func init() {
+	Registry[WalletStateTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletState(r)
+	}
+}
+
+// WalletTransactionTypeID is the constructor ID for TL type walletTransaction.
+const WalletTransactionTypeID = 0x952dc143
+
+// WalletTransaction represents the TL constructor walletTransaction (0x952dc143).
+//
+// See https://core.telegram.org/constructor/walletTransaction for reference.
+type WalletTransaction struct {
+	Flags            Fields                     `json:"-"`
+	Incoming         bool                       `json:"incoming,omitempty"`
+	Gasless          bool                       `json:"gasless,omitempty"`
+	Failed           bool                       `json:"failed,omitempty"`
+	KeyChange        bool                       `json:"key_change,omitempty"`
+	CommentEncrypted bool                       `json:"comment_encrypted,omitempty"`
+	ID               string                     `json:"id,omitempty"`
+	Amount           int64                      `json:"amount,omitempty"`
+	Fee              int64                      `json:"fee,omitempty"`
+	Date             int32                      `json:"date,omitempty"`
+	Peer             WalletTransactionPeerClass `json:"peer,omitempty"`
+	Comment          string                     `json:"comment,omitempty"`
+	TxHash           string                     `json:"tx_hash,omitempty"`
+	Nft              *WalletNftItem             `json:"nft,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransaction) SetFlags() {
+	if v.Incoming {
+		v.Flags.Set(0)
+	}
+	if v.Gasless {
+		v.Flags.Set(1)
+	}
+	if v.Failed {
+		v.Flags.Set(2)
+	}
+	if v.KeyChange {
+		v.Flags.Set(5)
+	}
+	if v.CommentEncrypted {
+		v.Flags.Set(6)
+	}
+	if v.Comment != "" {
+		v.Flags.Set(3)
+	}
+	if v.TxHash != "" {
+		v.Flags.Set(4)
+	}
+	if v.Nft != nil {
+		v.Flags.Set(7)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x952dc143.
+func (v *WalletTransaction) ConstructorID() uint32 {
+	return WalletTransactionTypeID
+}
+
+// Encode serializes WalletTransaction to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransaction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.ID)
+	WriteLong(b, v.Amount)
+	WriteLong(b, v.Fee)
+	WriteInt(b, uint32(v.Date))
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if v.Flags.Has(3) {
+		WriteString(b, v.Comment)
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.TxHash)
+	}
+	if v.Flags.Has(7) {
+		if _err := EncodeTLObject(b, v.Nft); _err != nil {
+			return fmt.Errorf("encode field nft: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeWalletTransaction deserializes a WalletTransaction from a reader using the TL binary protocol.
+func DecodeWalletTransaction(r *Reader) (*WalletTransaction, error) {
+	v := &WalletTransaction{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Incoming = v.Flags.Has(0)
+	v.Gasless = v.Flags.Has(1)
+	v.Failed = v.Flags.Has(2)
+	v.KeyChange = v.Flags.Has(5)
+	v.CommentEncrypted = v.Flags.Has(6)
+	_rID, _eID := r.ReadString()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	_rFee, _eFee := r.ReadInt64()
+	if _eFee != nil {
+		return nil, _eFee
+	}
+	v.Fee = _rFee
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(WalletTransactionPeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	if v.Flags.Has(3) {
+		_rComment, _eComment := r.ReadString()
+		if _eComment != nil {
+			return nil, _eComment
+		}
+		v.Comment = _rComment
+	}
+	if v.Flags.Has(4) {
+		_rTxHash, _eTxHash := r.ReadString()
+		if _eTxHash != nil {
+			return nil, _eTxHash
+		}
+		v.TxHash = _rTxHash
+	}
+	if v.Flags.Has(7) {
+		_objNft, _errNft := ReadTLObject(r)
+		if _errNft != nil {
+			return nil, _errNft
+		}
+		_cNft, _okNft := _objNft.(*WalletNftItem)
+		if !_okNft {
+			return nil, fmt.Errorf("decode: field nft: unexpected type %T", _objNft)
+		}
+		v.Nft = _cNft
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransaction(r)
+	}
+}
+
+// WalletOwnershipProofTypeID is the constructor ID for TL type walletOwnershipProof.
+const WalletOwnershipProofTypeID = 0x60bccb0d
+
+// WalletOwnershipProof represents the TL constructor walletOwnershipProof (0x60bccb0d).
+//
+// See https://core.telegram.org/constructor/walletOwnershipProof for reference.
+type WalletOwnershipProof struct {
+	Timestamp int32  `json:"timestamp,omitempty"`
+	Signature []byte `json:"signature,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x60bccb0d.
+func (v *WalletOwnershipProof) ConstructorID() uint32 {
+	return WalletOwnershipProofTypeID
+}
+
+// Encode serializes WalletOwnershipProof to a bytes.Buffer using the TL binary protocol.
+func (v *WalletOwnershipProof) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletOwnershipProofTypeID)
+	WriteInt(b, uint32(v.Timestamp))
+	WriteBytes(b, v.Signature)
+	return nil
+}
+
+// DecodeWalletOwnershipProof deserializes a WalletOwnershipProof from a reader using the TL binary protocol.
+func DecodeWalletOwnershipProof(r *Reader) (*WalletOwnershipProof, error) {
+	v := &WalletOwnershipProof{}
+	_rTimestamp, _eTimestamp := r.ReadInt32()
+	if _eTimestamp != nil {
+		return nil, _eTimestamp
+	}
+	v.Timestamp = _rTimestamp
+	_rSignature, _eSignature := r.ReadBytes()
+	if _eSignature != nil {
+		return nil, _eSignature
+	}
+	v.Signature = _rSignature
+	return v, nil
+}
+
+func init() {
+	Registry[WalletOwnershipProofTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletOwnershipProof(r)
+	}
+}
+
+// InputWalletReplacementClass is the interface for TL type InputWalletReplacement.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the InputWalletReplacement TL type.
+type InputWalletReplacementClass interface {
+	TLObject
+	isInputWalletReplacement()
+}
+
+// InputWalletNewTypeID is the constructor ID for TL type inputWalletNew.
+const InputWalletNewTypeID = 0x63a440dc
+
+// InputWalletImportedTypeID is the constructor ID for TL type inputWalletImported.
+const InputWalletImportedTypeID = 0x66a66a3b
+
+// isInputWalletReplacement marks InputWalletNew as implementing the InputWalletReplacementClass interface.
+func (*InputWalletNew) isInputWalletReplacement() {}
+
+// isInputWalletReplacement marks InputWalletImported as implementing the InputWalletReplacementClass interface.
+func (*InputWalletImported) isInputWalletReplacement() {}
+
+// InputWalletNew represents the TL constructor inputWalletNew (0x63a440dc).
+//
+// See https://core.telegram.org/constructor/inputWalletNew for reference.
+type InputWalletNew struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x63a440dc.
+func (v *InputWalletNew) ConstructorID() uint32 {
+	return InputWalletNewTypeID
+}
+
+// Encode serializes InputWalletNew to a bytes.Buffer using the TL binary protocol.
+func (v *InputWalletNew) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputWalletNewTypeID)
+	return nil
+}
+
+// DecodeInputWalletNew deserializes a InputWalletNew from a reader using the TL binary protocol.
+func DecodeInputWalletNew(r *Reader) (*InputWalletNew, error) {
+	v := &InputWalletNew{}
+	return v, nil
+}
+
+func init() {
+	Registry[InputWalletNewTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputWalletNew(r)
+	}
+}
+
+// InputWalletImported represents the TL constructor inputWalletImported (0x66a66a3b).
+//
+// See https://core.telegram.org/constructor/inputWalletImported for reference.
+type InputWalletImported struct {
+	Flags           Fields                `json:"-"`
+	PublicKey       []byte                `json:"public_key,omitempty"`
+	AnchorPublicKey []byte                `json:"anchor_public_key,omitempty"`
+	Proof           *WalletOwnershipProof `json:"proof,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputWalletImported) SetFlags() {
+	if v.AnchorPublicKey != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x66a66a3b.
+func (v *InputWalletImported) ConstructorID() uint32 {
+	return InputWalletImportedTypeID
+}
+
+// Encode serializes InputWalletImported to a bytes.Buffer using the TL binary protocol.
+func (v *InputWalletImported) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputWalletImportedTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteBytes(b, v.PublicKey)
+	if v.Flags.Has(0) {
+		WriteBytes(b, v.AnchorPublicKey)
+	}
+	if _err := EncodeTLObject(b, v.Proof); _err != nil {
+		return fmt.Errorf("encode field proof: %w", _err)
+	}
+	return nil
+}
+
+// DecodeInputWalletImported deserializes a InputWalletImported from a reader using the TL binary protocol.
+func DecodeInputWalletImported(r *Reader) (*InputWalletImported, error) {
+	v := &InputWalletImported{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rPublicKey, _ePublicKey := r.ReadBytes()
+	if _ePublicKey != nil {
+		return nil, _ePublicKey
+	}
+	v.PublicKey = _rPublicKey
+	if v.Flags.Has(0) {
+		_rAnchorPublicKey, _eAnchorPublicKey := r.ReadBytes()
+		if _eAnchorPublicKey != nil {
+			return nil, _eAnchorPublicKey
+		}
+		v.AnchorPublicKey = _rAnchorPublicKey
+	}
+	_objProof, _errProof := ReadTLObject(r)
+	if _errProof != nil {
+		return nil, _errProof
+	}
+	_cProof, _okProof := _objProof.(*WalletOwnershipProof)
+	if !_okProof {
+		return nil, fmt.Errorf("decode: field proof: unexpected type %T", _objProof)
+	}
+	v.Proof = _cProof
+	return v, nil
+}
+
+func init() {
+	Registry[InputWalletImportedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputWalletImported(r)
+	}
+}
+
+// TonConnectManifestTypeID is the constructor ID for TL type tonConnectManifest.
+const TonConnectManifestTypeID = 0x12229264
+
+// TonConnectManifest represents the TL constructor tonConnectManifest (0x12229264).
+//
+// See https://core.telegram.org/constructor/tonConnectManifest for reference.
+type TonConnectManifest struct {
+	Flags Fields           `json:"-"`
+	URL   string           `json:"url,omitempty"`
+	Name  string           `json:"name,omitempty"`
+	Icon  WebDocumentClass `json:"icon,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *TonConnectManifest) SetFlags() {
+	if v.Icon != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x12229264.
+func (v *TonConnectManifest) ConstructorID() uint32 {
+	return TonConnectManifestTypeID
+}
+
+// Encode serializes TonConnectManifest to a bytes.Buffer using the TL binary protocol.
+func (v *TonConnectManifest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, TonConnectManifestTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.URL)
+	WriteString(b, v.Name)
+	if v.Flags.Has(0) {
+		if _err := EncodeTLObject(b, v.Icon); _err != nil {
+			return fmt.Errorf("encode field icon: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeTonConnectManifest deserializes a TonConnectManifest from a reader using the TL binary protocol.
+func DecodeTonConnectManifest(r *Reader) (*TonConnectManifest, error) {
+	v := &TonConnectManifest{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	if v.Flags.Has(0) {
+		_objIcon, _errIcon := ReadTLObject(r)
+		if _errIcon != nil {
+			return nil, _errIcon
+		}
+		_cIcon, _okIcon := _objIcon.(WebDocumentClass)
+		if !_okIcon {
+			return nil, fmt.Errorf("decode: field icon: unexpected type %T", _objIcon)
+		}
+		v.Icon = _cIcon
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[TonConnectManifestTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTonConnectManifest(r)
+	}
+}
+
+// TonConnectSessionTypeID is the constructor ID for TL type tonConnectSession.
+const TonConnectSessionTypeID = 0x126556c6
+
+// TonConnectSession represents the TL constructor tonConnectSession (0x126556c6).
+//
+// See https://core.telegram.org/constructor/tonConnectSession for reference.
+type TonConnectSession struct {
+	Flags         Fields              `json:"-"`
+	Pending       bool                `json:"pending,omitempty"`
+	Closing       bool                `json:"closing,omitempty"`
+	Closed        bool                `json:"closed,omitempty"`
+	ID            int64               `json:"id,omitempty"`
+	DappClientID  string              `json:"dapp_client_id,omitempty"`
+	ClientID      string              `json:"client_id,omitempty"`
+	Nonce         []byte              `json:"nonce,omitempty"`
+	Manifest      *TonConnectManifest `json:"manifest,omitempty"`
+	ManifestError int32               `json:"manifest_error,omitempty"`
+	Date          int32               `json:"date,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *TonConnectSession) SetFlags() {
+	if v.Pending {
+		v.Flags.Set(0)
+	}
+	if v.Closing {
+		v.Flags.Set(1)
+	}
+	if v.Closed {
+		v.Flags.Set(2)
+	}
+	if v.ClientID != "" {
+		v.Flags.Set(3)
+	}
+	if v.Manifest != nil {
+		v.Flags.Set(4)
+	}
+	if v.ManifestError != 0 {
+		v.Flags.Set(5)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x126556c6.
+func (v *TonConnectSession) ConstructorID() uint32 {
+	return TonConnectSessionTypeID
+}
+
+// Encode serializes TonConnectSession to a bytes.Buffer using the TL binary protocol.
+func (v *TonConnectSession) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, TonConnectSessionTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.ID)
+	WriteString(b, v.DappClientID)
+	if v.Flags.Has(3) {
+		WriteString(b, v.ClientID)
+	}
+	WriteBytes(b, v.Nonce)
+	if v.Flags.Has(4) {
+		if _err := EncodeTLObject(b, v.Manifest); _err != nil {
+			return fmt.Errorf("encode field manifest: %w", _err)
+		}
+	}
+	if v.Flags.Has(5) {
+		WriteInt(b, uint32(v.ManifestError))
+	}
+	WriteInt(b, uint32(v.Date))
+	return nil
+}
+
+// DecodeTonConnectSession deserializes a TonConnectSession from a reader using the TL binary protocol.
+func DecodeTonConnectSession(r *Reader) (*TonConnectSession, error) {
+	v := &TonConnectSession{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Pending = v.Flags.Has(0)
+	v.Closing = v.Flags.Has(1)
+	v.Closed = v.Flags.Has(2)
+	_rID, _eID := r.ReadInt64()
+	if _eID != nil {
+		return nil, _eID
+	}
+	v.ID = _rID
+	_rDappClientID, _eDappClientID := r.ReadString()
+	if _eDappClientID != nil {
+		return nil, _eDappClientID
+	}
+	v.DappClientID = _rDappClientID
+	if v.Flags.Has(3) {
+		_rClientID, _eClientID := r.ReadString()
+		if _eClientID != nil {
+			return nil, _eClientID
+		}
+		v.ClientID = _rClientID
+	}
+	_rNonce, _eNonce := r.ReadBytes()
+	if _eNonce != nil {
+		return nil, _eNonce
+	}
+	v.Nonce = _rNonce
+	if v.Flags.Has(4) {
+		_objManifest, _errManifest := ReadTLObject(r)
+		if _errManifest != nil {
+			return nil, _errManifest
+		}
+		_cManifest, _okManifest := _objManifest.(*TonConnectManifest)
+		if !_okManifest {
+			return nil, fmt.Errorf("decode: field manifest: unexpected type %T", _objManifest)
+		}
+		v.Manifest = _cManifest
+	}
+	if v.Flags.Has(5) {
+		_rManifestError, _eManifestError := r.ReadInt32()
+		if _eManifestError != nil {
+			return nil, _eManifestError
+		}
+		v.ManifestError = _rManifestError
+	}
+	_rDate, _eDate := r.ReadInt32()
+	if _eDate != nil {
+		return nil, _eDate
+	}
+	v.Date = _rDate
+	return v, nil
+}
+
+func init() {
+	Registry[TonConnectSessionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTonConnectSession(r)
+	}
+}
+
+// TonConnectNextEventIDTypeID is the constructor ID for TL type tonConnectNextEventId.
+const TonConnectNextEventIDTypeID = 0x582464e3
+
+// TonConnectNextEventID represents the TL constructor tonConnectNextEventId (0x582464e3).
+//
+// See https://core.telegram.org/constructor/tonConnectNextEventId for reference.
+type TonConnectNextEventID struct {
+	EventID int64 `json:"event_id,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x582464e3.
+func (v *TonConnectNextEventID) ConstructorID() uint32 {
+	return TonConnectNextEventIDTypeID
+}
+
+// Encode serializes TonConnectNextEventID to a bytes.Buffer using the TL binary protocol.
+func (v *TonConnectNextEventID) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, TonConnectNextEventIDTypeID)
+	WriteLong(b, v.EventID)
+	return nil
+}
+
+// DecodeTonConnectNextEventID deserializes a TonConnectNextEventID from a reader using the TL binary protocol.
+func DecodeTonConnectNextEventID(r *Reader) (*TonConnectNextEventID, error) {
+	v := &TonConnectNextEventID{}
+	_rEventID, _eEventID := r.ReadInt64()
+	if _eEventID != nil {
+		return nil, _eEventID
+	}
+	v.EventID = _rEventID
+	return v, nil
+}
+
+func init() {
+	Registry[TonConnectNextEventIDTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTonConnectNextEventID(r)
+	}
+}
+
+// TonConnectRequestTypeID is the constructor ID for TL type tonConnectRequest.
+const TonConnectRequestTypeID = 0xa15f8513
+
+// TonConnectRequest represents the TL constructor tonConnectRequest (0xa15f8513).
+//
+// See https://core.telegram.org/constructor/tonConnectRequest for reference.
+type TonConnectRequest struct {
+	Flags     Fields `json:"-"`
+	SessionID int64  `json:"session_id,omitempty"`
+	MsgID     int32  `json:"msg_id,omitempty"`
+	Body      []byte `json:"body,omitempty"`
+	Expires   int32  `json:"expires,omitempty"`
+	Topic     string `json:"topic,omitempty"`
+	TraceID   string `json:"trace_id,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *TonConnectRequest) SetFlags() {
+	if v.Topic != "" {
+		v.Flags.Set(0)
+	}
+	if v.TraceID != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xa15f8513.
+func (v *TonConnectRequest) ConstructorID() uint32 {
+	return TonConnectRequestTypeID
+}
+
+// Encode serializes TonConnectRequest to a bytes.Buffer using the TL binary protocol.
+func (v *TonConnectRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, TonConnectRequestTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.SessionID)
+	WriteInt(b, uint32(v.MsgID))
+	WriteBytes(b, v.Body)
+	WriteInt(b, uint32(v.Expires))
+	if v.Flags.Has(0) {
+		WriteString(b, v.Topic)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.TraceID)
+	}
+	return nil
+}
+
+// DecodeTonConnectRequest deserializes a TonConnectRequest from a reader using the TL binary protocol.
+func DecodeTonConnectRequest(r *Reader) (*TonConnectRequest, error) {
+	v := &TonConnectRequest{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rBody, _eBody := r.ReadBytes()
+	if _eBody != nil {
+		return nil, _eBody
+	}
+	v.Body = _rBody
+	_rExpires, _eExpires := r.ReadInt32()
+	if _eExpires != nil {
+		return nil, _eExpires
+	}
+	v.Expires = _rExpires
+	if v.Flags.Has(0) {
+		_rTopic, _eTopic := r.ReadString()
+		if _eTopic != nil {
+			return nil, _eTopic
+		}
+		v.Topic = _rTopic
+	}
+	if v.Flags.Has(1) {
+		_rTraceID, _eTraceID := r.ReadString()
+		if _eTraceID != nil {
+			return nil, _eTraceID
+		}
+		v.TraceID = _rTraceID
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[TonConnectRequestTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeTonConnectRequest(r)
+	}
+}
+
 // ResPQTypeID is the constructor ID for TL type resPQ.
 const ResPQTypeID = 0x05162463
 
