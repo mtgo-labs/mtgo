@@ -30,10 +30,11 @@ Source returned by CodeGraph is verbatim live file content — treat it as alrea
 ## Build & Verify
 
 ```bash
-go build ./...          # compile everything
-go vet ./...            # static analysis
-go test ./...           # run all tests
-golangci-lint run       # lint (config in .golangci.yml)
+make all        # fmt + vet + lint + test — the pre-commit gate
+make fmt        # gofmt -w .
+make lint       # golangci-lint run (config in .golangci.yml)
+make test       # go test ./...
+make test-race  # go test -race ./...
 ```
 
 Run a single package or test:
@@ -44,82 +45,81 @@ go test -run TestSessionConnect ./internal/session/
 go test -bench=BenchmarkSessionRPCResult -benchmem ./internal/session/
 ```
 
-## Monorepo Layout
+CI (`.github/workflows/ci.yml`) runs only: `go mod tidy` diff check, build, vet, test. It does **not** run lint or race — run those locally via `make`.
 
-This repo is part of the `mtgo-labs` workspace.
+## Code Generation — Never Edit Generated Files
 
+Three generators; never hand-edit their outputs (`*_gen.go`, `telegram/generic/gen_helpers.go`):
+
+```bash
+go run ./cmd/tlgen        # tg/ TL types from schema (layer pinned in tg/layer_gen.go)
+go run ./cmd/errgen       # tgerr/ error types
+go run ./cmd/genhelpers   # telegram/generic/gen_helpers.go (int|int64|string peer wrappers)
 ```
-mtgo-labs/
-├── mtgo/               ← this repo (module: github.com/mtgo-labs/mtgo)
-├── session-converter/  ← session string converter library
-├── session-generator/  ← tgconv CLI for session conversion + generation
-├── storage/            ← storage interfaces
-└── storage/sqlite/     ← SQLite adapter
-```
 
-Key packages:
+If a TL type is missing or wrong, fix the schema/compiler (`compiler/`, `cmd/`) and regenerate.
+
+## Package Map
 
 | Path | Role | Editable? |
 |------|------|-----------|
-| `tg/` | Generated TL types (layer 229) | **No** — use codegen |
-| `tgerr/` | Generated error types | **No** — use codegen |
+| `tg/` | Generated TL types (`Layer = 230` in `tg/layer_gen.go`) | **No** — `cmd/tlgen` |
+| `tgerr/` | Generated error types | **No** — `cmd/errgen` |
+| `telegram/generic/gen_helpers.go` | Generated peer-ID wrapper methods | **No** — `cmd/genhelpers` |
 | `compiler/` | TL compiler and templates | Yes |
-| `internal/session/` | MTProto session, state machine, auth, pending RPCs | Yes |
-| `internal/crypto/` | MTProto crypto (AES-IGE, RSA, DH, SRP) | Yes |
-| `internal/transport/` | TCP transports (abridged, intermediate, full, obfuscated, WS) | Yes |
+| `internal/session/` | MTProto session: encryption, RPC lifecycle, state machine | Yes |
+| `internal/crypto/` | AES-IGE, RSA, DH, SRP; server key trust (`server_keys.go`) | Yes |
+| `internal/transport/` | Abridged, intermediate, full, obfuscated, WebSocket, HTTP | Yes |
+| `internal/peerid/` | **Single source of truth for marked chat IDs** (+id users, `-id` basic groups, `-100id` channels) | Yes |
 | `internal/storage/` | Storage adapter wrapper | Yes |
-| `telegram/` | High-level client API, handlers, filters, middleware, plugins | Yes |
+| `telegram/` | High-level client API; subpackages: `types`, `parser`, `peers`, `fileid`, `params`, `generic`, `otel` | Yes |
 | `mtproxy/` | MTProxy obfuscated2/fake-TLS transport | Yes |
-| `cmd/tlgen/` | TL schema code generator | Yes |
-| `cmd/errgen/` | Error type generator | Yes |
+| `cmd/` | Code generators (`tlgen`, `errgen`, `genhelpers`) | Yes |
 
-Session string conversion (Telethon, Pyrogram, GramJS, mtcute, MTKruto, gogram,
-gotgproto) is provided by the external
-[session-converter](https://github.com/mtgo-labs/session-converter) package.
-The CLI tool for session conversion and generation lives in
-[session-generator](https://github.com/mtgo-labs/session-generator).
+**Peer-ID rule:** all raw↔marked ID conversions MUST go through `internal/peerid`. Re-deriving the arithmetic at call sites has historically produced five divergent copies.
 
-Never edit `*_gen.go` files directly. If a TL type is missing or wrong, fix the schema/compiler and regenerate.
+**Sibling repos are separate modules.** `mtgo-labs/session-converter` and `mtgo-labs/storage` live as sibling checkouts but there is no `go.work` — this module pins them by version in `go.mod`. Editing a sibling does not affect builds here until it's tagged and bumped. Session string conversion (Telethon, Pyrogram, GramJS, etc.) is provided by the external session-converter package.
 
 ## Conventions
 
-- **Go 1.26+** (see `go.mod`)
-- **No CGO** — SQLite via `modernc.org/sqlite`
+- **Go 1.26+** (see `go.mod`); **no CGO** — SQLite via `modernc.org/sqlite`
 - **Commit style:** Conventional Commits with scope: `feat(telegram):`, `fix(session):`, `chore(tg):`, etc.
 - **Branch prefixes:** `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, `chore/`
 - **errcheck disabled** in golangci-lint — intentional project choice
-- **Goroutine leak detection:** `internal/session/` uses `goleak.VerifyTestMain` in `goleak_test.go`
+- **MTProto client focus:** mtgo is a protocol-layer library. Features MUST improve connection, auth, encryption, or RPC lifecycle. Application-layer features (UI, stickers, stories, payments) are out of scope. See `ARCHITECTURE.md`.
+- **Engineering priority order** (details in `ARCHITECTURE.md`): (1) security and correctness, (2) maximum measured performance, (3) lowest real-world latency, (4) minimal raw MTProto overhead. Every hot-path abstraction must justify copies, allocations, queues, locks, and goroutines with correctness or benchmark evidence.
+
+## CI & Performance Gates
+
+- **Benchmark gate:** every PR to `main` is compared against the committed `bench_baseline.txt` (`benchmark.yml`); ≥10% ns/op regressions are flagged in a PR comment. Baseline was captured on a Ryzen 5 7600X — judge regressions by **B/op and allocs/op**, not ns/op.
+- **Before pushing perf-relevant changes:** `make bench-compare REF=main` (auto-installs benchstat; uses a sibling worktree).
+- **Regenerate the baseline** after intentional perf changes: `make bench-baseline` on stable hardware, then commit `bench_baseline.txt`.
+- **`go mod tidy` must be clean** — CI fails if `go.mod`/`go.sum` change after tidy.
+- **Releases = tags.** Pushing a `v*` tag auto-bumps mtgo in 11 downstream repos and opens PRs there (`bump-deps.yml`). Tag only after CI is green.
 
 ## Architecture Notes
 
-- **Engineering priority order**: (1) security and correctness, (2) maximum measured
-  performance, (3) lowest real-world latency, (4) minimal raw MTProto overhead.
-  Every hot-path abstraction must justify copies, allocations, queues, locks,
-  goroutines, and interface boundaries with correctness or benchmark evidence.
+Flow: `telegram.Client` (entry point, owns one `session.Session` per DC) → `internal/session` (MTProto packing, RPC lifecycle, salt/ping management) → `internal/transport`. Updates flow back via `telegram.Dispatcher` → handler groups by priority → `handler.Check(update)` → `handler.Handle(ctx)`. Middleware exists at two levels: invoker-level (wraps RPC calls) and handler-level (update dispatch). State machine: Idle → Connecting → Active → Draining → Closed (`internal/session/state.go`).
 
-- `telegram.Client` is the main entry point. It owns `session.Session` instances (one per DC).
-- `internal/session.Session` manages the MTProto connection: encrypted message packing/unpacking, RPC lifecycle, keep-alive pings, salt management, and state machine (Idle → Connecting → Active → Draining → Closed).
-- `tg.TLObject` is the base interface for all generated TL types. Hand-written files in `tg/`: `tl.go`, `reader.go`, `primitives.go`, `fields.go`, `gzip.go`, `msg_container.go`, `invoker.go`, `layer.go`.
-- Handler dispatch: `telegram.Dispatcher` → handler groups sorted by priority → `handler.Check(update)` → `handler.Handle(ctx)`.
-- Middleware chains: invoker-level (wraps RPC calls) and handler-level (update dispatch).
-- `internal/session.PendingManager` tracks outstanding RPC calls with `CallHandle` (future-like: `Done() <-chan struct{}`, `Result()`).
-- **RPC Retry on Reconnect**: On transport disconnect, pending RPCs carry explicit delivery state. Read-only/replay-safe methods wait on the event-driven reconnect signal and retry up to `MaxRPCReconnectRetries`; delivery-uncertain mutations return `RPCDeliveryError` instead of risking duplicate execution. `stateCheckLoop` proactively uses `msgs_state_req` and handles `msgs_state_info`/`msg_resend_req` for overdue decoded and raw calls.
-- **DC Endpoint Health**: `DCOptionPool` tracks per-endpoint health (Ok/Error/Untested) with timestamps. Scoring: Ok (most recent) > Untested > Error with cool-down. Ported from TDLib `DcOptionsSet::find_connection`.
-- **Connection Pool**: `ConnectionPool` caches warm connections for 10s TTL to avoid redundant TCP handshakes. Entries consumed on first use. Ported from TDLib `ConnectionCreator::ready_connections`.
-- **Multi-Session Routing**: `SessionRouter` routes queries to session slots by method name: `upload.*` → SlotUpload, `upload.getFile/getWebFile` → SlotDownload, else → SlotMain. Idle upload/download slots auto-close after 5min. Ported from TDLib `NetQueryDispatcher`.
-- **Multi-DC Auth**: `DcAuthManager` tracks non-main DC auth state and supports auth export/import state transitions for transparent DC session authorization. Ported from TDLib `DcAuthManager`.
-- **Container ACK Tracking**: `ContainerTracker` maps container message IDs to child message IDs and tracks child/container ACK cleanup. Ported from TDLib `Session` query container tracking.
-- **Per-DC Backoff**: `PerDCBackoff` keeps reconnect delays independent per DC, preventing one failing DC from delaying unrelated DCs. Ported from TDLib `ConnectionCreator::ClientInfo::Backoff`.
-- **Flood Wait Handling**: `FloodWaitQueue` records delayed FLOOD_WAIT queries while `Session.Invoke` parses `FLOOD_WAIT_X`, waits, and retries without surfacing the first flood error to callers. Ported from TDLib `NetQueryDelayer`.
-- **PFS (Perfect Forward Secrecy)**: `TempKeyManager` generates a separate temp auth key for every main, upload, download, and CDN session, binds each key to its own session ID via `auth.bindTempAuthKey`, rotates at 75% lifetime, and fails closed when enabled. Ported from TDLib `Session::auth_loop`.
-- **Outbound Container Packing**: `OutboundBatcher` coalesces concurrent RPCs into MTProto `msg_container#73f1f8dc` via adaptive flushing (immediate on idle/lone, batch when N>1 queued). Per-priority FIFOs (High/Low). Opt-in via `Config.OutboundBatchEnabled`. Ported from TDLib `net/Session.h` outbound container packing.
-- **Cryptographic Trust**: `RSAKeySet` wraps bundled canonical Telegram RSA keys as the immutable trust root; `PublicRsaKeyWatchdog` fetches and verifies rotated keys against the trust set (fail-closed). `ErrKeyVerificationFailed` typed error for MITM detection. Opt-in via `Config.RSAKeyRotationInterval`. Ported from TDLib `net/PublicRsaKeyWatchdog.h`.
-- **Overload Control**: `OverloadController` gates RPC admission by priority — low-priority fast-fails at capacity (`ErrOverload`), high-priority gets bounded deferred admission. `LoadSnapshot` aggregates queue depths, in-flight counts, throttle level for observability. Opt-in via `Config.MaxInFlightRPCs`. Ported from TDLib `net/NetQueryDispatcher.h`.
-- **MTProto Client Focus**: mtgo is an MTProto client library, not a full Telegram client. Features MUST improve the protocol layer (connection, auth, encryption, RPC lifecycle). Application-layer features (UI, stickers, stories, payments) are out of scope. See Constitution Principle VII.
+| Mechanism | Where | Notes |
+|-----------|-------|-------|
+| Pending RPCs | `internal/session/pending.go` | `PendingManager` tracks `CallHandle` (future-like: `Done()`, `Result()`) |
+| Reconnect RPC retry | `internal/session` + `telegram/config.go` | Replay-safe methods retry on reconnect up to `Config.MaxRPCReconnectRetries`; delivery-uncertain mutations return `DeliveryError` (`internal/session/errors.go`) instead of risking duplicate execution |
+| State reconciliation | `internal/session/state_check.go` | `stateCheckLoop` sends `msgs_state_req`, handles `msgs_state_info`/`msg_resend_req` |
+| Flood wait | `telegram/retry.go`, `tgerr.AsFloodWait` | Auto-wait and retry for `FLOOD_WAIT_X` |
+| DC endpoint health | `internal/session/dc_options.go` | `DCOptionPool`: Ok > Untested > Error with cool-down (TDLib `DcOptionsSet`) |
+| Warm connection cache | `internal/session/conn_pool.go` | `ConnectionPool`, short TTL, consumed on first use |
+| Multi-DC auth | `internal/session/dc_auth.go` | `DcAuthManager`: auth export/import for non-main DCs |
+| Container ACK tracking | `internal/session/container_tracker.go` | `ContainerTracker`: container ↔ child message-ID ACK cleanup |
+| Per-DC backoff | `telegram/reconnect.go` | `PerDCBackoff`: reconnect delays independent per DC |
+| PFS temp keys | `internal/session/pfs.go` | `TempKeyManager`: per-session temp auth keys, `auth.bindTempAuthKey`, rotation; fails closed when enabled |
+| Outbound batching | `internal/session/outbound_batcher.go` | `OutboundBatcher` coalesces RPCs into `msg_container`; opt-in `Config.OutboundBatchEnabled` |
+| RSA key trust | `internal/crypto/server_keys.go` | `RSAKeySet` (immutable trust root) + `PublicRsaKeyWatchdog` (fail-closed rotation via `Config.RSAKeyRotationInterval`); `ErrKeyVerificationFailed` = possible MITM |
+| Overload control | `telegram/overload.go` | `OverloadController`: low-priority fast-fails `ErrOverload` at capacity; opt-in `Config.MaxInFlightRPCs`; `LoadSnapshot` in `telegram/introspection.go` |
 
 ## Testing Gotchas
 
-- `internal/session/` has goroutine leak detection via `goleak` — any new goroutine that doesn't clean up will fail tests.
+- `internal/session/` has goroutine leak detection via `goleak.VerifyTestMain` (`goleak_test.go`) — any new goroutine that doesn't clean up will fail tests.
 - Tests use `mockTransport` (in `session_test.go`) with `sendCh`/`recvCh` channels for simulating transport behavior.
 - `startTestWorkers` bypasses the full lifecycle to test Send/Read/ACK loops in isolation.
 - `forceSetState` on the state machine is for test use only — do not use in production code.
@@ -158,4 +158,4 @@ Default five-label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, 
 
 ### Domain docs
 
-Single-context: `GLOSSARY.md` at repo root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Read `docs/agents/domain.md` before domain work. `GLOSSARY.md` (repo root) and `docs/adr/` are created lazily by the domain-modeling skill — if absent, proceed silently.
