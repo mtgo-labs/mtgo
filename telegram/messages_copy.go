@@ -13,6 +13,11 @@ import (
 // it was forwarded. The message appears as if it were originally sent by the
 // authenticated user in the destination chat.
 //
+// When a Caption (or CaptionEntities) is provided the copy is sent with the
+// replacement caption: media is re-sent by file reference and text-only
+// messages use the caption as the new body. messages.forwardMessages cannot
+// carry a replacement caption, so this path fetches the source message first.
+//
 // Parameters:
 //   - ctx: context for cancellation and deadlines
 //   - chatID: the destination chat where the copy will appear
@@ -49,37 +54,31 @@ func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64
 
 	opt := params.GetOptDef(&params.CopyMessage{}, opts...)
 
-	var flags tg.Fields
-	if opt.DisableNotification {
-		flags.Set(5)
-	}
-	if opt.DropAuthor {
-		flags.Set(8)
-	}
-	if opt.Caption != "" {
-		flags.Set(11)
+	// messages.forwardMessages cannot carry a replacement caption. When one is
+	// requested, fetch the source message and re-send it with the new caption
+	// instead (see copyMessageWithCaption).
+	if opt.Caption != "" || len(opt.CaptionEntities) > 0 {
+		return c.copyMessageWithCaption(ctx, chatID, peer, messageID, opt)
 	}
 
 	var replyTo tg.InputReplyToClass
 	if opt.ReplyToMessageID != 0 {
-		flags.Set(0)
 		replyTo = &tg.InputReplyToMessage{ReplyToMsgID: opt.ReplyToMessageID}
 	}
 
 	req := &tg.MessagesForwardMessagesRequest{
-		Flags:             flags,
-		Silent:            opt.DisableNotification,
-		DropAuthor:        opt.DropAuthor,
-		DropMediaCaptions: opt.Caption != "",
-		FromPeer:          fromPeer,
-		ID:                []int32{messageID},
-		RandomID:          []int64{c.RandomID()},
-		ToPeer:            peer,
-		ReplyTo:           replyTo,
+		Silent:     opt.DisableNotification,
+		DropAuthor: opt.DropAuthor,
+		FromPeer:   fromPeer,
+		ID:         []int32{messageID},
+		RandomID:   []int64{c.RandomID()},
+		ToPeer:     peer,
+		ReplyTo:    replyTo,
 	}
 	if opt.ScheduleDate != nil {
 		req.ScheduleDate = *opt.ScheduleDate
 	}
+	req.SetFlags()
 
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
@@ -92,6 +91,82 @@ func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64
 		return 0, nil
 	}
 	return int64(msg.ID), nil
+}
+
+// copyMessageWithCaption implements CopyMessage when a replacement caption (or
+// caption entities) is requested. messages.forwardMessages has no caption
+// field, so the source message is fetched via messages.getMessages and re-sent:
+// photos and documents are re-sent by raw file reference with the new caption,
+// and text-only messages are sent as plain text using the caption as the body.
+func (c *Client) copyMessageWithCaption(ctx context.Context, chatID int64, peer tg.InputPeerClass, messageID int32, opt *params.CopyMessage) (int64, error) {
+	res, err := c.Raw().MessagesGetMessages(ctx, &tg.MessagesGetMessagesRequest{
+		ID: []tg.InputMessageClass{&tg.InputMessageID{ID: messageID}},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("get source message: %w", err)
+	}
+	msgs, err := extractMessagesFromMessagesClass(res, c)
+	if err != nil {
+		return 0, err
+	}
+	if len(msgs) == 0 {
+		return 0, fmt.Errorf("copy message: source message %d not found", messageID)
+	}
+	src := msgs[0]
+
+	sendOpts := &params.SendMessage{
+		DisableNotification:   opt.DisableNotification,
+		ReplyToMessageID:      opt.ReplyToMessageID,
+		ReplyMarkup:           opt.ReplyMarkup,
+		Entities:              opt.CaptionEntities,
+		ParseMode:             opt.ParseMode,
+		ScheduleDate:          opt.ScheduleDate,
+		NoForwards:            opt.NoForwards,
+		ShowCaptionAboveMedia: opt.ShowCaptionAboveMedia,
+		ProtectContent:        opt.ProtectContent,
+		MessageThreadID:       opt.MessageThreadID,
+		AllowPaidBroadcast:    opt.AllowPaidBroadcast,
+		PaidMessageStarCount:  opt.PaidMessageStarCount,
+	}
+
+	var sent *types.Message
+	switch {
+	case src.Photo != nil:
+		media := &tg.InputMediaPhoto{
+			ID: &tg.InputPhoto{
+				ID:            src.Photo.ID,
+				AccessHash:    src.Photo.AccessHash,
+				FileReference: src.Photo.FileReference,
+			},
+			TTLSeconds: int32(src.Photo.TTLSeconds),
+		}
+		if pm, ok := src.Media.(*types.PhotoMedia); ok {
+			media.Spoiler = pm.IsSpoiler
+		}
+		sent, err = c.sendMediaInternal(ctx, peer, media, opt.Caption, sendOpts)
+	case src.Document != nil && src.Document.RawDocument != nil:
+		raw := src.Document.RawDocument
+		media := &tg.InputMediaDocument{
+			ID: &tg.InputDocument{
+				ID:            raw.ID,
+				AccessHash:    raw.AccessHash,
+				FileReference: raw.FileReference,
+			},
+			TTLSeconds: int32(src.Document.TTLSeconds),
+			Spoiler:    src.Document.IsSpoiler,
+		}
+		sent, err = c.sendMediaInternal(ctx, peer, media, opt.Caption, sendOpts)
+	default:
+		text := opt.Caption
+		if text == "" {
+			text = src.Text
+		}
+		sent, err = c.SendMessage(ctx, chatID, text, sendOpts)
+	}
+	if err != nil {
+		return 0, err
+	}
+	return int64(sent.ID), nil
 }
 
 // CopyMediaGroup copies an entire album (grouped media messages) from one chat to another
@@ -155,13 +230,13 @@ func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID in
 	}
 
 	req := &tg.MessagesForwardMessagesRequest{
-		Flags:      (1 << 8),
 		DropAuthor: true,
 		FromPeer:   fromPeer,
 		ID:         groupedMsgIDs,
 		RandomID:   randomIDs,
 		ToPeer:     peer,
 	}
+	req.SetFlags()
 
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)
