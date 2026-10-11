@@ -48,3 +48,6 @@ testdc
 # Worktrees
 .zcode/
 # ZCode session artifacts
+
+# Local agent issue notes (not tracked)
+issues/
