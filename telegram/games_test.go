@@ -25,7 +25,7 @@ func TestSetGameScore(t *testing.T) {
 		Chats: []tg.ChatClass{},
 	})
 
-	msg, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 100, false, false)
+	msg, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 100, false)
 	if err != nil {
 		t.Fatalf("SetGameScore() error: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestSetGameScore_WithForce(t *testing.T) {
 		Chats: []tg.ChatClass{},
 	})
 
-	msg, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 200, true, false)
+	msg, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 200, true)
 	if err != nil {
 		t.Fatalf("SetGameScore() error: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestSetGameScore_RPCError(t *testing.T) {
 
 	mock.setError(tg.MessagesSetGameScoreTypeID, errors.New("rpc error"))
 
-	_, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 100, false, false)
+	_, err := c.SetGameScore(context.Background(), int64(10), 55, 42, 100, false)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

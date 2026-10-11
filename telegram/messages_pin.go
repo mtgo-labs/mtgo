@@ -45,19 +45,18 @@ func (c *Client) PinMessage(ctx context.Context, chatID int64, messageID int32, 
 	}
 	opt := params.GetOptDef(&params.PinMessage{}, opts...)
 
-	var flags tg.Fields
-	flags.Set(0)
-	if opt.Silent {
-		flags.Set(5)
-	}
-
-	rpc := c.Raw()
-	result, err := rpc.MessagesUpdatePinnedMessage(ctx, &tg.MessagesUpdatePinnedMessageRequest{
-		Flags:  flags,
+	// Flags derive from fields via SetFlags: silent is flags.0, unpin flags.1,
+	// pm_oneside flags.2. Never hand-set bit 5 — it does not exist in
+	// messages.updatePinnedMessage#d2aaf7ec.
+	req := &tg.MessagesUpdatePinnedMessageRequest{
 		Silent: opt.Silent,
 		Peer:   peer,
 		ID:     messageID,
-	})
+	}
+	req.SetFlags()
+
+	rpc := c.Raw()
+	result, err := rpc.MessagesUpdatePinnedMessage(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("update pinned message: %w", err)
 	}
@@ -95,13 +94,15 @@ func (c *Client) UnpinMessage(ctx context.Context, chatID int64, messageID int32
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	rpc := c.Raw()
-	result, err := rpc.MessagesUpdatePinnedMessage(ctx, &tg.MessagesUpdatePinnedMessageRequest{
-		Flags: (1 << 0) | (1 << 1),
-		Unpin: true,
+	req := &tg.MessagesUpdatePinnedMessageRequest{
+		Unpin: true, // flags.1, derived by SetFlags; bit 0 is silent
 		Peer:  peer,
 		ID:    messageID,
-	})
+	}
+	req.SetFlags()
+
+	rpc := c.Raw()
+	result, err := rpc.MessagesUpdatePinnedMessage(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("update pinned message: %w", err)
 	}

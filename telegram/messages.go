@@ -254,22 +254,11 @@ func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID i
 		randomIDs[i] = c.RandomID()
 	}
 
-	var flags tg.Fields
-	if opt.DisableNotification {
-		flags.Set(5)
-	}
-	if opt.DropAuthor {
-		flags.Set(8)
-	}
-	if opt.DropMediaCaptions {
-		flags.Set(9)
-	}
-	if opt.NoForwards {
-		flags.Set(14)
-	}
-
+	// Flags are derived from the struct fields via SetFlags: drop_author is
+	// flags.11, drop_media_captions is flags.12. Never hand-set these bits:
+	// bit 8 is with_my_score and bit 9 is top_msg_id, which would leak onto
+	// the wire because Encode's SetFlags pass can only OR bits, never clear.
 	req := &tg.MessagesForwardMessagesRequest{
-		Flags:             flags,
 		Silent:            opt.DisableNotification,
 		DropAuthor:        opt.DropAuthor,
 		DropMediaCaptions: opt.DropMediaCaptions,
@@ -282,6 +271,7 @@ func (c *Client) ForwardMessages(ctx context.Context, chatID int64, fromChatID i
 	if opt.ScheduleDate != nil {
 		req.ScheduleDate = *opt.ScheduleDate
 	}
+	req.SetFlags()
 
 	rpc := c.Raw()
 	result, err := rpc.MessagesForwardMessages(ctx, req)

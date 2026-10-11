@@ -63,12 +63,8 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 	if opt.NoForwards {
 		flags.Set(4)
 	}
-	if opt.Period != nil {
-		flags.Set(8)
-	}
 
 	req := &tg.StoriesSendStoryRequest{
-		Flags:        flags,
 		Pinned:       opt.Pinned,
 		Noforwards:   opt.NoForwards,
 		Peer:         peer,
@@ -77,8 +73,9 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 		PrivacyRules: opt.PrivacyRules,
 	}
 	if opt.Period != nil {
-		req.Period = *opt.Period
+		req.Period = *opt.Period // flags.3, derived by SetFlags (bit 8 is albums)
 	}
+	req.SetFlags()
 
 	rpc := c.Raw()
 	result, err := rpc.StoriesSendStory(ctx, req)

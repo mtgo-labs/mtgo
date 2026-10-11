@@ -38,7 +38,7 @@ func TestSetGameScore_ZeroScore(t *testing.T) {
 		Chats: []tg.ChatClass{},
 	})
 
-	msg, err := c.SetGameScore(context.Background(), 10, 55, 42, 0, false, false)
+	msg, err := c.SetGameScore(context.Background(), 10, 55, 42, 0, false)
 	if err != nil {
 		t.Fatalf("SetGameScore() error: %v", err)
 	}

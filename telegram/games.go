@@ -11,10 +11,13 @@ import (
 
 // SetGameScore sets the game score for the specified user in a game message.
 // chatID identifies the chat containing the game message, messageID is the message ID,
-// userID is the player's ID, and score is the new score value. If force is true, the score
-// is set even if it's lower than the current one. If noForward is true, the score update
-// message won't be forwarded. Returns the edited Message or an error.
-func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64, userID int64, score int, force, noForward bool) (*types.Message, error) {
+// userID is the player's ID, and score is the new score value. If force is true, the
+// score is set even if it's lower than the current one. Returns the edited Message
+// or an error.
+//
+// Note: messages.setGameScore has no noforwards flag; content protection cannot
+// be requested here.
+func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64, userID int64, score int, force bool) (*types.Message, error) {
 	c.Log.Debugf("SetGameScore chat_id=%d user_id=%d score=%d", chatID, userID, score)
 	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
@@ -26,25 +29,20 @@ func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
 
-	var flags tg.Fields
-	if force {
-		flags.Set(1)
-	}
-	if noForward {
-		flags.Set(2)
-	}
-	flags.Set(0)
-
-	rpc := c.Raw()
-	result, err := rpc.MessagesSetGameScore(ctx, &tg.MessagesSetGameScoreRequest{
-		Flags:       flags,
+	// Flags derive from fields via SetFlags: edit_message is flags.0 and force
+	// is flags.1 (messages.setGameScore#8ef8ecc0 defines no others).
+	req := &tg.MessagesSetGameScoreRequest{
 		EditMessage: true,
 		Force:       force,
 		Peer:        peer,
 		ID:          int32(messageID),
 		UserID:      user,
 		Score:       int32(score),
-	})
+	}
+	req.SetFlags()
+
+	rpc := c.Raw()
+	result, err := rpc.MessagesSetGameScore(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("set game score: %w", err)
 	}

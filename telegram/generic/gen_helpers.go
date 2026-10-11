@@ -1135,13 +1135,13 @@ func SetChatUsername[T PeerInput, C Caller](c C, chat T, username string) error 
 	return client.SetChatUsername(ctx, chatID, username)
 }
 
-func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID int64, score int, force bool, noForward bool) (*types.Message, error) {
+func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID int64, score int, force bool) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SetGameScore(ctx, chatID, messageID, userID, score, force, noForward)
+	return client.SetGameScore(ctx, chatID, messageID, userID, score, force)
 }
 
 func SetProtectedContent[T PeerInput, C Caller](c C, chat T, enabled bool) error {
