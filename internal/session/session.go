@@ -1876,6 +1876,12 @@ func (s *Session) readLoop(ctx context.Context) (retErr error) {
 			if _, ok := err.(*tgerr.SecurityCheckMismatch); ok {
 				return err
 			}
+			// Undecryptable or malformed frame: drop it, but log loudly —
+			// silent drops here surface later as hung RPCs and reconnect
+			// churn (e.g. the 1 MiB message-body cap incident).
+			if s.log != nil {
+				s.log.Warnf("session: dropped incoming frame (%d bytes): %v", len(data), err)
+			}
 			continue
 		}
 

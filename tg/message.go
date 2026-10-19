@@ -7,8 +7,15 @@ import (
 )
 
 // errMessageBodyTooLarge is returned when a decoded MTProto message body exceeds
-// the maximum allowed size (1 MiB).
+// the maximum allowed size.
 var errMessageBodyTooLarge = errors.New("message body too large")
+
+// maxMessageBodyLen bounds a single MTProto message body. The transport
+// layer caps whole frames at 16 MiB (MaxPayloadLen); a message body may fill
+// nearly all of it. Notably, upload.getFile responses with limit=1 MiB carry
+// a body of 1 MiB + the rpc_result/upload.file wrapper (~28 bytes), so a
+// 1 MiB cap here silently drops every maximum-size file chunk.
+const maxMessageBodyLen = 1 << 24
 
 const MTProtoMessageID = 0x5BB8E511
 
@@ -46,7 +53,7 @@ func DecodeMTProtoMessage(r *Reader) (*MTProtoMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	if length > 1<<20 {
+	if length > maxMessageBodyLen {
 		return nil, fmt.Errorf("%w: %d bytes", errMessageBodyTooLarge, length)
 	}
 	bodyData, err := r.ReadRawBytes(int(length))
@@ -87,7 +94,7 @@ func DecodeMTProtoMessageRaw(r *Reader) (*MTProtoMessageRaw, error) {
 	if err != nil {
 		return nil, err
 	}
-	if length > 1<<20 {
+	if length > maxMessageBodyLen {
 		return nil, fmt.Errorf("%w: %d bytes", errMessageBodyTooLarge, length)
 	}
 	bodyData, err := r.ReadRawBytesCopy(int(length))
