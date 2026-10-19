@@ -58,6 +58,7 @@ func (c *Client) uploadRPCs(ctx context.Context, fileSize int64, workers int) ([
 	c.transferPoolMu.Unlock()
 
 	if err := pool.ensureCreated(ctx); err != nil {
+		c.Log.Warnf("upload pool creation failed: %v; falling back to main-session multiplexing", err)
 		return []*tg.RPCClient{c.Raw()}, nil
 	}
 
