@@ -692,9 +692,9 @@ const (
 // DCs than user accounts, so they start lower. The limiter adapts at runtime:
 // slow chunks (>1.5s) shrink the rate, fast streaks grow it back.
 var (
-	botDownloadRate  = 25.0
-	userDownloadRate = 50.0
-	minDownloadRate  = 3.0
+	botDownloadRate  = 30.0
+	userDownloadRate = 75.0
+	minDownloadRate  = 15.0
 )
 
 // downloadLimiter is a per-transfer adaptive token bucket shared by all
