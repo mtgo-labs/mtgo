@@ -683,7 +683,7 @@ func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int
 // clean networks converge to maxDownloadWindow while congested or rate-limited
 // paths back off without disconnecting.
 const (
-	minDownloadWindow = 1
+	minDownloadWindow = 2
 	maxDownloadWindow = 4
 )
 
@@ -846,7 +846,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 			// in flight on this connection. Starts at 2; four consecutive
 			// sub-second chunks grow it toward maxDownloadWindow, a response
 			// slower than 2.5s shrinks it (floor 1).
-			window := 2
+			window := minDownloadWindow
 			fastStreak := 0
 			sem := make(chan struct{}, maxDownloadWindow)
 			var inflight sync.WaitGroup
