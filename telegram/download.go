@@ -757,23 +757,24 @@ func (l *downloadLimiter) acquire(ctx context.Context) error {
 }
 
 // observe feeds a completed chunk's round-trip time back into the limiter.
-// Slow responses shrink the allowed rate (exponential backoff toward
-// minDownloadRate); sustained fast responses grow it back (additive, capped at
-// the initial rate).
+// Genuinely stalled responses (>2.5s — well past a healthy 1-2s cross-DC
+// round trip for a maximum-size chunk) shrink the allowed rate (gentle
+// exponential backoff toward minDownloadRate); sustained fast responses
+// (<1.2s) grow it back (additive, capped at the initial rate).
 func (l *downloadLimiter) observe(elapsed time.Duration) {
 	if l == nil {
 		return
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if elapsed > 1500*time.Millisecond {
-		l.rate = max(l.rate*0.8, minDownloadRate)
+	if elapsed > 2500*time.Millisecond {
+		l.rate = max(l.rate*0.85, minDownloadRate)
 		l.fastStreak = 0
 		return
 	}
-	if elapsed < 500*time.Millisecond {
+	if elapsed < 1200*time.Millisecond {
 		l.fastStreak++
-		if l.fastStreak >= 5 && l.rate < l.maxRate {
+		if l.fastStreak >= 3 && l.rate < l.maxRate {
 			l.rate = min(l.rate+2, l.maxRate)
 			l.fastStreak = 0
 		}
