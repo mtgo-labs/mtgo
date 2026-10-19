@@ -98,46 +98,47 @@ type dcSessions struct {
 	creations  map[*dcSessionCreation]uint64
 	generation uint64
 
-	// botAuthKeys holds, per DC, the auth key of the first bot-authorized
-	// session created on that DC. auth.importBotAuthorization is heavily
-	// rate-limited (FLOOD_WAIT), so only one session per DC performs the
-	// import; every additional transfer session on that DC is a shifted
-	// session sharing this key.
-	botAuthKeys map[int]*botAuthKeyInfo
+	// dcAuthKeys holds, per DC, the auth key of the first authorized
+	// session created on that DC (bot or user). Authorization on a foreign DC
+	// (auth.importBotAuthorization or auth export/import) is heavily
+	// rate-limited (FLOOD_WAIT), so only one session per DC performs it;
+	// every additional transfer session on that DC is a shifted session
+	// sharing this key with a fresh session ID (tdesktop pattern).
+	dcAuthKeys map[int]*dcAuthKeyInfo
 }
 
-type botAuthKeyInfo struct {
+type dcAuthKeyInfo struct {
 	key  []byte
 	salt int64
 }
 
 func newDCSessions() *dcSessions {
 	return &dcSessions{
-		entries:     make(map[int]*dcSessionEntry),
-		pools:       make(map[int]*dcSessionPool),
-		initLocks:   make(map[int]*sync.Mutex),
-		creations:   make(map[*dcSessionCreation]uint64),
-		botAuthKeys: make(map[int]*botAuthKeyInfo),
+		entries:    make(map[int]*dcSessionEntry),
+		pools:      make(map[int]*dcSessionPool),
+		initLocks:  make(map[int]*sync.Mutex),
+		creations:  make(map[*dcSessionCreation]uint64),
+		dcAuthKeys: make(map[int]*dcAuthKeyInfo),
 	}
 }
 
-// setBotAuthKey records the first bot-authorized key on a DC.
-func (d *dcSessions) setBotAuthKey(dcID int, key []byte, salt int64, generation uint64) {
+// setDCAuthKey records the first authorized key on a DC.
+func (d *dcSessions) setDCAuthKey(dcID int, key []byte, salt int64, generation uint64) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.generation != generation {
 		return
 	}
-	if _, ok := d.botAuthKeys[dcID]; !ok {
-		d.botAuthKeys[dcID] = &botAuthKeyInfo{key: key, salt: salt}
+	if _, ok := d.dcAuthKeys[dcID]; !ok {
+		d.dcAuthKeys[dcID] = &dcAuthKeyInfo{key: key, salt: salt}
 	}
 }
 
-// botAuthKey returns the first bot-authorized key recorded for a DC, if any.
-func (d *dcSessions) botAuthKey(dcID int) *botAuthKeyInfo {
+// dcAuthKey returns the first authorized key recorded for a DC, if any.
+func (d *dcSessions) dcAuthKey(dcID int) *dcAuthKeyInfo {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return d.botAuthKeys[dcID]
+	return d.dcAuthKeys[dcID]
 }
 
 func (d *dcSessions) beginCreation(parent context.Context, generation uint64) (*dcSessionCreation, context.Context, bool) {
@@ -309,7 +310,7 @@ func (d *dcSessions) remove(dcID int) {
 	p := d.pools[dcID]
 	delete(d.pools, dcID)
 	delete(d.initLocks, dcID)
-	delete(d.botAuthKeys, dcID)
+	delete(d.dcAuthKeys, dcID)
 	d.mu.Unlock()
 	waits := stopDCSessionCreations(creations)
 
@@ -350,7 +351,7 @@ func (d *dcSessions) cleanup(waitForDial ...bool) {
 	d.entries = make(map[int]*dcSessionEntry)
 	d.pools = make(map[int]*dcSessionPool)
 	d.initLocks = make(map[int]*sync.Mutex)
-	d.botAuthKeys = make(map[int]*botAuthKeyInfo)
+	d.dcAuthKeys = make(map[int]*dcAuthKeyInfo)
 	d.mu.Unlock()
 	waits := stopDCSessionCreations(creations)
 
@@ -502,9 +503,11 @@ func (c *Client) dcRPCPool(ctx context.Context, dcID int, size int) ([]*tg.RPCCl
 	if dcID == homeDC || homeDC == 0 {
 		if pool, poolErr := c.ensureHomeTransferPool(ctx, size); poolErr == nil {
 			return pool.rpcClients(), nil
+		} else {
+			// Pool creation failed (e.g. dial error): fall back to main-session
+			// multiplexing, which has robust reconnection logic.
+			c.Log.Warnf("home transfer pool creation failed (size=%d): %v; falling back to main-session multiplexing", size, poolErr)
 		}
-		// Pool creation failed (e.g. dial error): fall back to main-session
-		// multiplexing, which has robust reconnection logic.
 		mainRPC := c.Raw()
 		rpcs := make([]*tg.RPCClient, size)
 		for i := range rpcs {
@@ -718,26 +721,27 @@ func (c *Client) replaceDCRPCPoolEntryIfCurrent(
 	return entry.rpc, nil
 }
 
-// createShiftedBotSession builds an additional cross-DC session for a bot by
-// sharing the first bot-authorized key on that DC (unique session ID per
-// session, so the server never sees the same (key, session) pair twice).
-func (c *Client) createShiftedBotSession(
+// createShiftedDCSession builds an additional cross-DC session by sharing the
+// first authorized key on that DC (unique session ID per session, so the
+// server never sees the same (key, session) pair twice). Works for bot and
+// user accounts alike: the authorization lives in the key, not the session.
+func (c *Client) createShiftedDCSession(
 	dc session.DataCenter,
 	dcID int,
 	sessionTp *sessionTransport,
-	info *botAuthKeyInfo,
+	info *dcAuthKeyInfo,
 ) (*dcSessionEntry, error) {
 	cfg := c.config()
 	dcStorage := NewMemoryStorage()
 	if err := dcStorage.SetAuthKey(info.key); err != nil {
 		sessionTp.Close()
-		return nil, fmt.Errorf("bot dc session: set auth key DC %d: %w", dcID, err)
+		return nil, fmt.Errorf("dc session: set auth key DC %d: %w", dcID, err)
 	}
 	sess, err := session.NewSession(dc, dcStorage, cfg.Device.DeviceModel, cfg.Device.AppVersion,
 		cfg.Device.SystemLangCode, cfg.Device.LangCode)
 	if err != nil {
 		sessionTp.Close()
-		return nil, fmt.Errorf("bot dc session: create session DC %d: %w", dcID, err)
+		return nil, fmt.Errorf("dc session: create session DC %d: %w", dcID, err)
 	}
 	configureSessionDispatch(sess, c)
 	configureSessionHealth(sess, cfg, c.connMetrics)
@@ -746,9 +750,9 @@ func (c *Client) createShiftedBotSession(
 	sess.SetServerTime(time.Now())
 	if err := sess.Connect(sessionTp, 15*time.Second); err != nil {
 		sessionTp.Close()
-		return nil, fmt.Errorf("bot dc session: connect DC %d: %w", dcID, err)
+		return nil, fmt.Errorf("dc session: connect DC %d: %w", dcID, err)
 	}
-	c.Log.Infof("bot shifted DC session established for DC %d (shared key)", dcID)
+	c.Log.Debugf("shifted DC session established for DC %d (shared key)", dcID)
 	return newDCSessionEntry(sess, sessionTp, c), nil
 }
 
@@ -800,14 +804,12 @@ func (c *Client) createDCSession(
 		return nil, errDCBecameHome
 	}
 
-	// Bots: reuse the first bot-authorized key on this DC. Only the first
-	// session per DC performs auth.importBotAuthorization (heavily
-	// rate-limited by the server); every additional session is a shifted
-	// session sharing that key with a unique session ID.
-	if c.IsBot() {
-		if info := c.dcSessions.botAuthKey(dcID); info != nil {
-			return c.createShiftedBotSession(dc, dcID, sessionTp, info)
-		}
+	// Reuse the first authorized key on this DC (bot or user). Only the
+	// first session per DC performs authorization (heavily rate-limited by
+	// the server); every additional session is a shifted session sharing
+	// that key with a unique session ID.
+	if info := c.dcSessions.dcAuthKey(dcID); info != nil {
+		return c.createShiftedDCSession(dc, dcID, sessionTp, info)
 	}
 
 	dcStorage := NewMemoryStorage()
@@ -881,7 +883,7 @@ func (c *Client) createDCSession(
 			sessionTp.Close()
 			return nil, fmt.Errorf("download: %w", err)
 		}
-		c.dcSessions.setBotAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
+		c.dcSessions.setDCAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
 		c.Log.Infof("Bot auth complete for DC %d", dcID)
 		return entry, nil
 	}
@@ -891,6 +893,11 @@ func (c *Client) createDCSession(
 		sessionTp.Close()
 		return nil, fmt.Errorf("download: %w", err)
 	}
+
+	// Record the user key so additional pool sessions on this DC (and
+	// replacements for dead ones) skip the DH + export/import dance and
+	// connect as shifted sessions sharing this key.
+	c.dcSessions.setDCAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
 
 	c.Log.Infof("Auth transfer complete for DC %d", dcID)
 
@@ -948,7 +955,16 @@ func botAuthImportRedirect(err error) (targetDC int, redirected bool) {
 // on the home DC, then auth.importAuthorization into the target session.
 // This works for user and bot accounts alike (TDLib's DcAuthManager uses it
 // for every non-main DC).
+//
+// The export→import pair is serialized per target DC: Telegram returns the
+// same (id, bytes) for concurrent exports toward one DC until they are
+// imported, so parallel imports of colliding exports fail with
+// AUTH_BYTES_INVALID (observed with parallel pool creation; the same race
+// wzgram hits with bot media-session pools).
 func (c *Client) authorizeSessionViaTransfer(ctx context.Context, rpc *tg.RPCClient, dcID int) error {
+	c.authTransferMu.Lock(dcID)
+	defer c.authTransferMu.Unlock(dcID)
+
 	var exportResult *tg.AuthExportedAuthorization
 	err := invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthExportAuthorizationTypeID, c.floodReg(), func() error {
 		var exportErr error

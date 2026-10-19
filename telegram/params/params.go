@@ -323,12 +323,15 @@ type Download struct {
 	// disables automatic refresh.
 	FileRefresher FileRefresher
 
-	// RequestDelay sets a delay applied between consecutive chunk requests
-	// during download. This paces requests to avoid triggering Telegram's
-	// per-DC rate limiter, which forcefully disconnects sessions that request
-	// too aggressively. A value of 0 lets the client choose a sensible
-	// default based on whether the download is cross-DC. Set to a negative
-	// value to disable pacing entirely.
+	// RequestDelay sets the pacing applied to chunk requests during
+	// download, as the minimum interval between request sends. This avoids
+	// triggering Telegram's per-DC rate limiter, which forcefully disconnects
+	// sessions that request too aggressively. A value of 0 (default) selects
+	// an adaptive token bucket: it starts permissive (higher for user
+	// accounts than bots) and adjusts itself at runtime — shrinking when the
+	// DC responds slowly, recovering when chunks come back fast. Set to a
+	// negative value to disable pacing entirely, or a positive duration for
+	// a fixed interval.
 	RequestDelay time.Duration
 
 	// StallTimeout aborts the download if no data chunk is received within

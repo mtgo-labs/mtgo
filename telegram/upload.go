@@ -15,6 +15,12 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
+// uploadWorkerWindow is the number of parts each upload worker keeps in
+// flight. Telegram's file DCs accept multiple SaveFilePart requests per
+// connection concurrently; pipelining keeps the connection busy while earlier
+// parts are acknowledged. The byte limiter remains the bound on total data.
+const uploadWorkerWindow = 2
+
 // uploadBufPool reuses upload buffers to avoid allocating and copying a 512 KB
 // slice for every upload part. Workers process the data and return the
 // underlying buffer to the pool when the RPC call completes.
@@ -359,6 +365,20 @@ func uploadFileKnownRPC(ctx context.Context, rpcs []*tg.RPCClient, reader io.Rea
 					hasErr.Store(true)
 				}
 			}()
+			// Pipelining: keep up to uploadWorkerWindow parts in flight per
+			// worker so a connection is not idle while its previous part is
+			// still being acknowledged server-side. The byte limiter remains
+			// the authoritative bound on in-flight data.
+			// Workers=1 is the documented "force serial upload" switch — no
+			// pipelining there. Otherwise keep up to uploadWorkerWindow parts
+			// in flight per worker.
+			window := uploadWorkerWindow
+			if workers == 1 {
+				window = 1
+			}
+			sem := make(chan struct{}, window)
+			var inflight sync.WaitGroup
+			defer inflight.Wait()
 			for job := range jobs {
 				if hasErr.Load() {
 					uploadBufPool.Put(job.bufPtr)
@@ -371,60 +391,71 @@ func uploadFileKnownRPC(ctx context.Context, rpcs []*tg.RPCClient, reader io.Rea
 					results <- partResult{index: job.partIdx, err: ctx.Err()}
 					hasErr.Store(true)
 					continue
-				default:
+				case sem <- struct{}{}:
 				}
-				// Byte-based in-flight limiter: caps total concurrent upload
-				// data at 4MB (matching mtcute/TDLib), preventing server overload.
-				if err := limiter.acquire(ctx, int64(len(job.data))); err != nil {
+				inflight.Add(1)
+				go func(job uploadJob) {
+					defer inflight.Done()
+					defer func() { <-sem }()
+					defer func() {
+						if r := recover(); r != nil {
+							results <- partResult{err: fmt.Errorf("upload part panic: %v", r)}
+							hasErr.Store(true)
+						}
+					}()
+					// Byte-based in-flight limiter: caps total concurrent upload
+					// data (matching mtcute/TDLib), preventing server overload.
+					if err := limiter.acquire(ctx, int64(len(job.data))); err != nil {
+						uploadBufPool.Put(job.bufPtr)
+						results <- partResult{index: job.partIdx, err: err}
+						hasErr.Store(true)
+						return
+					}
+
+					var uploadErr error
+					// The pool invoker handles round-robin, dead-session replacement,
+					// and fallback to main session. Workers just call the RPC.
+					partCtx, partCancel := context.WithTimeout(ctx, uploadPartTimeout)
+					if isBig {
+						_, uploadErr = rpc.UploadSaveBigFilePart(partCtx, &tg.UploadSaveBigFilePartRequest{
+							FileID:         fileID,
+							FilePart:       job.partIdx,
+							FileTotalParts: totalParts,
+							Bytes:          job.data,
+						})
+					} else {
+						_, uploadErr = rpc.UploadSaveFilePart(partCtx, &tg.UploadSaveFilePartRequest{
+							FileID:   fileID,
+							FilePart: job.partIdx,
+							Bytes:    job.data,
+						})
+					}
+					partCancel()
+
+					limiter.release(int64(len(job.data)))
+
 					uploadBufPool.Put(job.bufPtr)
-					results <- partResult{index: job.partIdx, err: err}
-					hasErr.Store(true)
-					continue
-				}
 
-				var uploadErr error
-				// The pool invoker handles round-robin, dead-session replacement,
-				// and fallback to main session. Workers just call the RPC.
-				partCtx, partCancel := context.WithTimeout(ctx, uploadPartTimeout)
-				if isBig {
-					_, uploadErr = rpc.UploadSaveBigFilePart(partCtx, &tg.UploadSaveBigFilePartRequest{
-						FileID:         fileID,
-						FilePart:       job.partIdx,
-						FileTotalParts: totalParts,
-						Bytes:          job.data,
-					})
-				} else {
-					_, uploadErr = rpc.UploadSaveFilePart(partCtx, &tg.UploadSaveFilePartRequest{
-						FileID:   fileID,
-						FilePart: job.partIdx,
-						Bytes:    job.data,
-					})
-				}
-				partCancel()
+					if uploadErr != nil {
+						results <- partResult{index: job.partIdx, err: uploadErr}
+						hasErr.Store(true)
+						return
+					}
 
-				limiter.release(int64(len(job.data)))
+					results <- partResult{index: job.partIdx}
 
-				uploadBufPool.Put(job.bufPtr)
-
-				if uploadErr != nil {
-					results <- partResult{index: job.partIdx, err: uploadErr}
-					hasErr.Store(true)
-					continue
-				}
-
-				results <- partResult{index: job.partIdx}
-
-				if opts != nil && opts.Progress != nil {
-					done := uploadedBytes.Add(int64(len(job.data)))
-					progressMu.Lock()
-					opts.Progress(params.ProgressInfo{
-						FileName:      fileName,
-						TotalBytes:    fileSize,
-						UploadedBytes: done,
-						IsUpload:      true,
-					})
-					progressMu.Unlock()
-				}
+					if opts != nil && opts.Progress != nil {
+						done := uploadedBytes.Add(int64(len(job.data)))
+						progressMu.Lock()
+						opts.Progress(params.ProgressInfo{
+							FileName:      fileName,
+							TotalBytes:    fileSize,
+							UploadedBytes: done,
+							IsUpload:      true,
+						})
+						progressMu.Unlock()
+					}
+				}(job)
 			}
 		}()
 	}

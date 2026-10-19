@@ -165,6 +165,11 @@ type Client struct {
 	uploadPool     *uploadSessionPool
 	downloadPool   *uploadSessionPool
 
+	// authTransferMu serializes auth export/import pairs per target DC
+	// (concurrent exports toward one DC return identical bytes, and only the
+	// first import succeeds — the rest fail with AUTH_BYTES_INVALID).
+	authTransferMu keyedMutexes
+
 	// dcOptionPool manages candidate endpoints per DC with health scoring.
 	// Ported from td/td/telegram/net/DcOptionsSet.h.
 	dcOptionPool *session.DCOptionPool

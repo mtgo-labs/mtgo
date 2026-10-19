@@ -674,11 +674,113 @@ func downloadWorkers(opts *params.Download, fileSize int64, dcID int, homeDC int
 	return min(defaultTransferWorkers, parts)
 }
 
-// downloadWorkerWindow is the number of chunk requests each parallel-download
-// worker keeps in flight on its connection. A window greater than 1 keeps the
-// TCP pipe full across round-trips (tdesktop grows per-session windows to 4-16
-// parts); 2 gives most of the benefit without unbounded buffering.
-const downloadWorkerWindow = 2
+// downloadWindow bounds are for the per-worker adaptive in-flight window: the
+// number of chunk requests a worker keeps outstanding on its connection. A
+// window above 1 keeps the TCP pipe full across round-trips. tdesktop grows
+// per-session windows from 1 toward 4-16 parts as responses come back fast;
+// wzgram runs 3-6 workers per media session. The window starts small and
+// adapts: consecutive fast chunks grow it, slow responses shrink it — so
+// clean networks converge to maxDownloadWindow while congested or rate-limited
+// paths back off without disconnecting.
+const (
+	minDownloadWindow = 1
+	maxDownloadWindow = 4
+)
+
+// downloadRateLimits are the adaptive token-bucket defaults for chunk request
+// pacing, in requests per second. Bots are throttled harder by Telegram's file
+// DCs than user accounts, so they start lower. The limiter adapts at runtime:
+// slow chunks (>1.5s) shrink the rate, fast streaks grow it back.
+var (
+	botDownloadRate  = 25.0
+	userDownloadRate = 50.0
+	minDownloadRate  = 3.0
+)
+
+// downloadLimiter is a per-transfer adaptive token bucket shared by all
+// download workers. It replaces the old fixed 25ms inter-request sleep: the
+// bucket starts permissive, backs off multiplicatively when the DC responds
+// slowly (rate limiting / near-disconnect), and recovers additively when
+// chunks come back fast — the same policy wzgram uses to top tglib-bench.
+type downloadLimiter struct {
+	mu         sync.Mutex
+	rate       float64 // tokens (requests) per second
+	burst      float64 // bucket capacity
+	tokens     float64
+	last       time.Time
+	maxRate    float64
+	fastStreak int
+}
+
+func newDownloadLimiter(rate float64) *downloadLimiter {
+	burst := rate / 2
+	if burst < 1 {
+		burst = 1
+	}
+	return &downloadLimiter{
+		rate:    rate,
+		maxRate: rate,
+		burst:   burst,
+		tokens:  burst,
+		last:    time.Now(),
+	}
+}
+
+// acquire blocks until one request token is available or ctx is done.
+func (l *downloadLimiter) acquire(ctx context.Context) error {
+	if l == nil {
+		return nil
+	}
+	for {
+		l.mu.Lock()
+		now := time.Now()
+		l.tokens += now.Sub(l.last).Seconds() * l.rate
+		l.last = now
+		if l.tokens > l.burst {
+			l.tokens = l.burst
+		}
+		if l.tokens >= 1 {
+			l.tokens--
+			l.mu.Unlock()
+			return nil
+		}
+		wait := time.Duration((1 - l.tokens) / l.rate * float64(time.Second))
+		l.mu.Unlock()
+		timer := time.NewTimer(wait)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
+}
+
+// observe feeds a completed chunk's round-trip time back into the limiter.
+// Slow responses shrink the allowed rate (exponential backoff toward
+// minDownloadRate); sustained fast responses grow it back (additive, capped at
+// the initial rate).
+func (l *downloadLimiter) observe(elapsed time.Duration) {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if elapsed > 1500*time.Millisecond {
+		l.rate = max(l.rate*0.8, minDownloadRate)
+		l.fastStreak = 0
+		return
+	}
+	if elapsed < 500*time.Millisecond {
+		l.fastStreak++
+		if l.fastStreak >= 5 && l.rate < l.maxRate {
+			l.rate = min(l.rate+2, l.maxRate)
+			l.fastStreak = 0
+		}
+	} else {
+		l.fastStreak = 0
+	}
+}
 
 func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, dcID int, location tg.InputFileLocationClass, fileSize int64, writer io.WriterAt, opts *params.Download) (int64, error) {
 	chunkSize := chunkSizeForDownload(opts)
@@ -704,7 +806,21 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 	}
 
 	jobs := make(chan job, workers)
-	results := make(chan result, workers*downloadWorkerWindow)
+	results := make(chan result, workers*maxDownloadWindow)
+	// Adaptive pacing shared by all workers. RequestDelay semantics:
+	//   negative → disabled (nil limiter)
+	//   zero     → adaptive default (bot/user aware)
+	//   positive → fixed 1/delay rate, no adaptation
+	var limiter *downloadLimiter
+	if opts == nil || opts.RequestDelay == 0 {
+		rate := userDownloadRate
+		if c.IsBot() {
+			rate = botDownloadRate
+		}
+		limiter = newDownloadLimiter(rate)
+	} else if opts.RequestDelay > 0 {
+		limiter = newDownloadLimiter(float64(time.Second) / float64(opts.RequestDelay))
+	}
 	// send delivers a worker result, abandoning the send when the context is
 	// cancelled so in-flight workers cannot leak.
 	send := func(r result) {
@@ -721,19 +837,38 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 		go func(workerIdx int) {
 			defer wg.Done()
 
-			var rpcMu sync.Mutex // guards currentRPC, recoveries, backoff
+			var rpcMu sync.Mutex // guards currentRPC, recoveries, backoff, window
 			currentRPC := rpcs[workerIdx%len(rpcs)]
 			recoveries := 0
 			backoff := time.Duration(0)
 
-			// Pipelining window: keep up to downloadWorkerWindow chunk
-			// requests in flight per connection so throughput is not capped
-			// at one round-trip per chunk.
-			sem := make(chan struct{}, downloadWorkerWindow)
+			// Adaptive pipelining window: the number of chunk requests kept
+			// in flight on this connection. Starts at 2; four consecutive
+			// sub-second chunks grow it toward maxDownloadWindow, a response
+			// slower than 2.5s shrinks it (floor 1).
+			window := 2
+			fastStreak := 0
+			sem := make(chan struct{}, maxDownloadWindow)
 			var inflight sync.WaitGroup
 			defer inflight.Wait()
 
 			for j := range jobs {
+				// Wait until in-flight (occupied sem slots) is below the current
+				// adaptive window. The sem keeps a hard cap of maxDownloadWindow;
+				// the gate tracks the adaptive limit.
+				for {
+					rpcMu.Lock()
+					w := window
+					rpcMu.Unlock()
+					if len(sem) < w {
+						break
+					}
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(2 * time.Millisecond):
+					}
+				}
 				select {
 				case sem <- struct{}{}:
 				case <-ctx.Done():
@@ -758,15 +893,44 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 						default:
 						}
 
+						// Acquire a request token before sending. Pacing up front keeps
+						// the in-flight window true (the semaphore is not held while
+						// sleeping) and spreads request starts across the window.
+						if err := limiter.acquire(ctx); err != nil {
+							send(result{offset: j.offset, err: err})
+							return
+						}
+
 						rpcMu.Lock()
 						rpc := currentRPC
 						rpcMu.Unlock()
 
+						reqStart := time.Now()
 						res, err := rpc.UploadGetFile(ctx, &tg.UploadGetFileRequest{
 							Location: location,
 							Offset:   j.offset,
 							Limit:    j.limit,
 						})
+						chunkElapsed := time.Since(reqStart)
+						limiter.observe(chunkElapsed)
+						// Feed the adaptive window: slow responses shrink it, sustained
+						// fast responses grow it. rpcMu also guards window/fastStreak.
+						rpcMu.Lock()
+						if chunkElapsed > 2500*time.Millisecond {
+							if window > minDownloadWindow {
+								window--
+							}
+							fastStreak = 0
+						} else if chunkElapsed < time.Second {
+							fastStreak++
+							if fastStreak >= 4 && window < maxDownloadWindow {
+								window++
+								fastStreak = 0
+							}
+						} else {
+							fastStreak = 0
+						}
+						rpcMu.Unlock()
 						if err != nil {
 							recoveredRPC, recovered, recoverErr := c.recoverDownloadWorkerRPC(ctx, dcID, len(rpcs), workerIdx, err)
 							if recoverErr != nil {
@@ -839,14 +1003,6 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 					}
 					st.reset()
 					send(result{offset: j.offset, n: n})
-
-					// Pace requests to avoid triggering the DC's rate limiter.
-					if delay := downloadPacingDelay(opts, dcID, c.homeDC()); delay > 0 {
-						select {
-						case <-ctx.Done():
-						case <-time.After(delay):
-						}
-					}
 				}(j)
 			}
 		}(i)
