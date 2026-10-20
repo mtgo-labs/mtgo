@@ -455,8 +455,15 @@ func (c *Client) GetMessages(ctx context.Context, chatID int64, messageIDs []int
 	peer, peerErr := resolvePeer(ctx, c, chatID)
 	if peerErr != nil {
 		peer, peerErr = c.ResolvePeer(ctx, chatID)
+		if peerErr != nil {
+			// Never fall through to the peer-less messages.getMessages with an
+			// unresolved chat: the server answers with empty MessageEmpty
+			// placeholders, which callers cannot distinguish from real
+			// "message has no media" results. Surface the resolution failure.
+			return nil, fmt.Errorf("get messages: resolve chat %d: %w", chatID, peerErr)
+		}
 	}
-	if ch, ok := peer.(*tg.InputPeerChannel); peerErr == nil && ok {
+	if ch, ok := peer.(*tg.InputPeerChannel); ok {
 		result, err = rpc.ChannelsGetMessages(ctx, &tg.ChannelsGetMessagesRequest{
 			Channel: &tg.InputChannel{ChannelID: ch.ChannelID, AccessHash: ch.AccessHash},
 			ID:      ids,

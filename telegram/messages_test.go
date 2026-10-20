@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/mtgo-labs/mtgo/telegram/fileid"
@@ -236,6 +237,22 @@ func TestGetMessagesUsesChannelsGetMessagesForChannels(t *testing.T) {
 	}
 	if ch.ChannelID != 10 || ch.AccessHash != 20 {
 		t.Fatalf("channel = (%d, %d), want (10, 20)", ch.ChannelID, ch.AccessHash)
+	}
+}
+
+func TestGetMessagesUnresolvablePeerReturnsError(t *testing.T) {
+	c, _ := newClientWithMock(t)
+	// No peer cached and no way to resolve chat 424242: GetMessages must
+	// fail with the resolution error instead of silently issuing the
+	// peer-less messages.getMessages (which returns empty MessageEmpty
+	// placeholders indistinguishable from "message has no media" — field
+	// report #1).
+	_, err := c.GetMessages(context.Background(), 424242, []int32{1})
+	if err == nil {
+		t.Fatal("GetMessages() with unresolvable peer must return an error")
+	}
+	if !strings.Contains(err.Error(), "resolve") {
+		t.Fatalf("error should mention resolution, got: %v", err)
 	}
 }
 

@@ -938,6 +938,9 @@ func (c *Client) createDCSession(
 // export/import transfer from the home DC (see authorizeSessionViaTransfer).
 func (c *Client) authorizeBotDCSession(ctx context.Context, rpc *tg.RPCClient, dcID int) error {
 	cfg := c.config()
+	if d := c.floodReg().floodWaitRemaining(tg.AuthImportBotAuthorizationTypeID); d > 0 {
+		c.Log.Warnf("bot auth on DC %d: waiting %v for FLOOD_WAIT before retrying", dcID, d.Truncate(time.Second))
+	}
 	err := invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthImportBotAuthorizationTypeID, c.floodReg(), func() error {
 		_, botAuthErr := rpc.AuthImportBotAuthorization(ctx, &tg.AuthImportBotAuthorizationRequest{
 			APIID:        cfg.APIID,
@@ -989,6 +992,18 @@ func botAuthImportRedirect(err error) (targetDC int, redirected bool) {
 func (c *Client) authorizeSessionViaTransfer(ctx context.Context, rpc *tg.RPCClient, dcID int) error {
 	c.authTransferMu.Lock(dcID)
 	defer c.authTransferMu.Unlock(dcID)
+
+	for _, m := range []struct {
+		name   string
+		method uint32
+	}{
+		{"export", tg.AuthExportAuthorizationTypeID},
+		{"import", tg.AuthImportAuthorizationTypeID},
+	} {
+		if d := c.floodReg().floodWaitRemaining(m.method); d > 0 {
+			c.Log.Warnf("auth %s for DC %d: waiting %v for FLOOD_WAIT before retrying", m.name, dcID, d.Truncate(time.Second))
+		}
+	}
 
 	var exportResult *tg.AuthExportedAuthorization
 	err := invokeWithFloodPolicy(ctx, transferFloodThreshold, tg.AuthExportAuthorizationTypeID, c.floodReg(), func() error {

@@ -1,14 +1,18 @@
 package session
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
 
 const (
 	msgIDReplayCapacity = 256
-	msgIDFutureWindow   = 30 * time.Second
-	msgIDPastWindow     = 300 * time.Second
+	// msgIDFutureWindow tolerates server-time jitter in the validator's
+	// clock reference. 60s keeps genuine frames under load (server batches,
+	// minor offset drift) from being classified as "from the future".
+	msgIDFutureWindow = 60 * time.Second
+	msgIDPastWindow   = 300 * time.Second
 )
 
 type msgIDValidator struct {
@@ -25,17 +29,26 @@ func newMsgIDValidator(serverTS func() int64) *msgIDValidator {
 }
 
 func (v *msgIDValidator) Check(msgID int64) bool {
+	ok, _ := v.CheckWithReason(msgID)
+	return ok
+}
+
+// CheckWithReason is Check with a human-readable rejection reason for
+// logging. Rejecting every inbound frame silently (e.g. because the clock
+// reference drifted from server time) makes a client go deaf with healthy
+// connections and no diagnostics — the reason must be observable.
+func (v *msgIDValidator) CheckWithReason(msgID int64) (bool, string) {
 	if msgID%2 != 1 {
-		return false
+		return false, "even msg_id (not server-originated)"
 	}
 
 	now := v.serverTS()
 	msgTime := msgID >> 32
-	if msgTime > now+30 {
-		return false
+	if msgTime > now+int64(msgIDFutureWindow/time.Second) {
+		return false, fmt.Sprintf("msg_id timestamp %d is in the future vs reference %d (reference not synced to server time?)", msgTime, now)
 	}
-	if msgTime < now-300 {
-		return false
+	if msgTime < now-int64(msgIDPastWindow/time.Second) {
+		return false, fmt.Sprintf("msg_id timestamp %d is older than the %s replay window vs reference %d (reference ahead of server time?)", msgTime, msgIDPastWindow, now)
 	}
 
 	v.mu.Lock()
@@ -46,7 +59,7 @@ func (v *msgIDValidator) Check(msgID int64) bool {
 	}
 
 	if _, exists := v.idSet[msgID]; exists {
-		return false
+		return false, "replayed msg_id"
 	}
 
 	v.ids = append(v.ids, msgID)
@@ -59,7 +72,7 @@ func (v *msgIDValidator) Check(msgID int64) bool {
 		v.ids = v.ids[len(v.ids)-msgIDReplayCapacity:]
 	}
 
-	return true
+	return true, ""
 }
 
 func (v *msgIDValidator) Reset() {

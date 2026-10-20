@@ -13,9 +13,15 @@ import (
 // single invocation may make under the flood policy.
 const floodMaxRetries = 5
 
-// transferFloodThreshold is the flood wait transfers accept: any duration
-// the server mandates.
-const transferFloodThreshold = 24 * time.Hour
+// transferFloodThreshold is the maximum flood wait transfer authorization
+// (auth.export/importAuthorization, auth.importBotAuthorization) will sleep
+// through before failing. Transfer floods are common under churn and are
+// usually minutes long, so waiting a bounded time keeps bulk downloads
+// alive across them — but the previous "any duration" 24h bound made a
+// flooded transfer sleep silently until the caller's context deadline,
+// surfacing as "download hangs forever with no bytes and no error" (field
+// report #2). Longer waits return the typed FLOOD_WAIT error instead.
+const transferFloodThreshold = 5 * time.Minute
 
 // floodRegistry remembers server-imposed per-method flood deadlines so new
 // calls to a still-waiting method sleep locally BEFORE wasting a round trip.
@@ -35,6 +41,25 @@ func (f *floodRegistry) record(method uint32, t time.Time) {
 	if existing, ok := f.until[method]; !ok || t.After(existing) {
 		f.until[method] = t
 	}
+}
+
+// floodWaitRemaining reports how long the method remains flooded. Used to
+// log waits before sleeping so a gated call is observable instead of looking
+// like a hang.
+func (f *floodRegistry) floodWaitRemaining(method uint32) time.Duration {
+	if f == nil {
+		return 0
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	until, ok := f.until[method]
+	if !ok {
+		return 0
+	}
+	if d := time.Until(until); d > 0 {
+		return d
+	}
+	return 0
 }
 
 // waitIfFlooded sleeps until the method's flood deadline passes. Returns
