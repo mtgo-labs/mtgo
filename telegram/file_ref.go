@@ -38,6 +38,15 @@ type FileRefOrigin struct {
 // document or photo expires, the refresher re-fetches the containing message
 // (via messages.getMessages or channels.getMessages) and extracts a fresh
 // file reference.
+//
+// Bot accounts: refetching arbitrary messages is heavily restricted for
+// bots — messages.getMessages only sees the bot's own messages, and
+// channels.getMessages requires admin rights in the channel. Automatic
+// refresh is therefore effectively USER-account-only. Bots holding stale
+// references (e.g. references embedded in reply_to_message, which are stale
+// on arrival) must instead obtain a fresh message from an update or
+// webhook-style refetch and re-extract the media from it. Treat bot-side
+// file references as best-effort.
 type FileRefresher struct {
 	client  *Client
 	mu      sync.Mutex
