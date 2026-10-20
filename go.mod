@@ -2,6 +2,13 @@ module github.com/mtgo-labs/mtgo
 
 go 1.26.2
 
+// go1.26.8 has a GC crash (mark-phase stack scan of goroutines with cgo
+// callback frames); 1.26.7 is the last known-good patch. See
+// issues/go1.26.8-gc-crash.md before bumping. NOTE: this line only stops
+// GOTOOLCHAIN=auto from floating on *older* local Go; the Makefile export
+// and the root guard test catch newer local toolchains.
+toolchain go1.26.7
+
 require (
 	github.com/klauspost/compress v1.20.1
 	github.com/mtgo-labs/storage v0.5.0

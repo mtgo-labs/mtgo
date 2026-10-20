@@ -83,6 +83,7 @@ If a TL type is missing or wrong, fix the schema/compiler (`compiler/`, `cmd/`) 
 ## Conventions
 
 - **Go 1.26+** (see `go.mod`); **no CGO** — SQLite via `modernc.org/sqlite`
+- **Never build with go1.26.8** — GC crash with cgo callback threads. `go.mod` pins `toolchain go1.26.7`, `make` exports `GOTOOLCHAIN=go1.26.7`, and a root guard test (`toolchain_guard_test.go`) fails builds on 1.26.8. See `issues/go1.26.8-gc-crash.md`; lift only after the upstream fix ships.
 - **Commit style:** Conventional Commits with scope: `feat(telegram):`, `fix(session):`, `chore(tg):`, etc.
 - **Branch prefixes:** `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, `chore/`
 - **errcheck disabled** in golangci-lint — intentional project choice

@@ -6,6 +6,13 @@ BENCH_FLAGS := -run=xxx -bench=. -benchmem -benchtime=1s
 BENCH_COUNT ?= 5
 REF        ?= main
 
+# go1.26.8 crashes in the GC with cgo callback threads; 1.26.7 is the last
+# known-good patch (issues/go1.26.8-gc-crash.md). Force every make-driven
+# build/test/vet/bench onto 1.26.7 regardless of the `go` on PATH. Override
+# with `make GOTOOLCHAIN=local` only on machines whose `go` is already 1.26.7.
+GOTOOLCHAIN ?= go1.26.7
+export GOTOOLCHAIN
+
 # ---- Targets ----
 
 ## all: fmt + vet + lint + test (the pre-commit gate)
