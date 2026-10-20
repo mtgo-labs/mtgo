@@ -385,13 +385,25 @@ func uploadFileKnownRPC(ctx context.Context, rpcs []*tg.RPCClient, reader io.Rea
 					continue
 				}
 
+				// Check cancellation before contending for a pipeline slot:
+				// with both cases ready a select picks randomly, which let
+				// cancelled contexts race ahead of the slot and surface as
+				// flaky "no error" uploads (TestUploadFile_ContextCancelled).
 				select {
 				case <-ctx.Done():
 					uploadBufPool.Put(job.bufPtr)
 					results <- partResult{index: job.partIdx, err: ctx.Err()}
 					hasErr.Store(true)
 					continue
+				default:
+				}
+				select {
 				case sem <- struct{}{}:
+				case <-ctx.Done():
+					uploadBufPool.Put(job.bufPtr)
+					results <- partResult{index: job.partIdx, err: ctx.Err()}
+					hasErr.Store(true)
+					continue
 				}
 				inflight.Add(1)
 				go func(job uploadJob) {

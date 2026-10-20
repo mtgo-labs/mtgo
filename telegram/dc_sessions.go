@@ -721,11 +721,28 @@ func (c *Client) replaceDCRPCPoolEntryIfCurrent(
 	return entry.rpc, nil
 }
 
+// sendTransferInitConnection sends the mandatory invokeWithLayer(initConnection)
+// handshake on a freshly connected transfer session. Telegram's frontends close
+// unidentified sessions within seconds — pool sessions skip the PFS bind that
+// normally carries initConnection on the main session, so without this the DC
+// kills the connection mid-transfer (observed as "server closed connection
+// (EOF) after 0-8s", chunk retries, and write-breaker churn).
+func (c *Client) sendTransferInitConnection(ctx context.Context, sess *session.Session) error {
+	query := wrapInitConnection(c.config(), &tg.HelpGetConfigRequest{})
+	initCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	if _, err := sess.Invoke(initCtx, query, 3, 15*time.Second); err != nil {
+		return fmt.Errorf("transfer session init connection: %w", err)
+	}
+	return nil
+}
+
 // createShiftedDCSession builds an additional cross-DC session by sharing the
 // first authorized key on that DC (unique session ID per session, so the
 // server never sees the same (key, session) pair twice). Works for bot and
 // user accounts alike: the authorization lives in the key, not the session.
 func (c *Client) createShiftedDCSession(
+	ctx context.Context,
 	dc session.DataCenter,
 	dcID int,
 	sessionTp *sessionTransport,
@@ -748,11 +765,19 @@ func (c *Client) createShiftedDCSession(
 	sess.SetUpdateHandler(func(obj tg.TLObject) {})
 	sess.SetServerSalt(info.salt)
 	sess.SetServerTime(time.Now())
+
 	if err := sess.Connect(sessionTp, 15*time.Second); err != nil {
 		sessionTp.Close()
 		return nil, fmt.Errorf("dc session: connect DC %d: %w", dcID, err)
 	}
-	c.Log.Debugf("shifted DC session established for DC %d (shared key)", dcID)
+	// Identify the session (invokeWithLayer+initConnection); unidentified
+	// sessions are culled by the server within seconds.
+	if err := c.sendTransferInitConnection(ctx, sess); err != nil {
+		sess.Stop()
+		sessionTp.Close()
+		return nil, fmt.Errorf("dc session DC %d: %w", dcID, err)
+	}
+	c.Log.Debugf("shifted DC session established for DC %d (%s, shared key)", dcID, dc.Address())
 	return newDCSessionEntry(sess, sessionTp, c), nil
 }
 
@@ -767,7 +792,7 @@ func (c *Client) createDCSession(
 		ID:       dcID,
 		TestMode: c.config().TestMode,
 		IPv6:     c.config().IPv6,
-	}
+	}.TransferDataCenter()
 	addr := dc.Address()
 	if addr == "" {
 		return nil, fmt.Errorf("download: %w: %d", ErrUnknownDC, dcID)
@@ -809,7 +834,7 @@ func (c *Client) createDCSession(
 	// the server); every additional session is a shifted session sharing
 	// that key with a unique session ID.
 	if info := c.dcSessions.dcAuthKey(dcID); info != nil {
-		return c.createShiftedDCSession(dc, dcID, sessionTp, info)
+		return c.createShiftedDCSession(ctx, dc, dcID, sessionTp, info)
 	}
 
 	dcStorage := NewMemoryStorage()

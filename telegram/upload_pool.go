@@ -294,15 +294,15 @@ func (c *Client) createUploadSession(ctx context.Context) (*dcSessionEntry, erro
 		return nil, errors.New("upload pool: main session has no auth key")
 	}
 	serverSalt := mainSess.ServerSalt()
-
 	dc := session.DataCenter{
 		ID:       homeDC,
 		TestMode: c.config().TestMode,
 		IPv6:     c.config().IPv6,
-	}
+	}.TransferDataCenter()
 
-	// Dial directly to the home DC, bypassing the DCOptionPool to avoid
-	// IPv6 endpoint issues and duplicate-pool churn from parallel creation.
+	// Dial the home DC's media-only endpoint when available: bulk transfers
+	// on the main API endpoint get throttled and culled by the frontends
+	// (Telegram exposes dedicated media subnets for file traffic).
 	sessionTp, err := c.dialTCPTransportContext(ctx, dc, 15*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("upload pool: transport DC %d: %w", homeDC, err)
@@ -324,8 +324,8 @@ func (c *Client) createUploadSession(ctx context.Context) (*dcSessionEntry, erro
 		return nil, fmt.Errorf("upload pool: create session: %w", err)
 	}
 
-	// Wire logger. Do NOT wire PFSInitConnection or reconnect hooks —
-	// upload sessions are ephemeral and dc-bound (mtcute pattern).
+	// Wire logger. Do NOT wire reconnect hooks — upload sessions are
+	// ephemeral and dc-bound.
 	if c.Log != nil {
 		sess.SetLogger(c.Log)
 	}
@@ -333,13 +333,19 @@ func (c *Client) createUploadSession(ctx context.Context) (*dcSessionEntry, erro
 	sess.SetServerSalt(serverSalt)
 	sess.SetServerTime(time.Now())
 
-	// Connect with the pre-set auth key. No DH exchange, no PFS.
 	if err := sess.Connect(sessionTp, 15*time.Second); err != nil {
 		sessionTp.Close()
 		return nil, fmt.Errorf("upload pool: connect DC %d: %w", homeDC, err)
 	}
+	// Identify the session (invokeWithLayer+initConnection); unidentified
+	// sessions are culled by the server within seconds.
+	if err := c.sendTransferInitConnection(ctx, sess); err != nil {
+		sess.Stop()
+		sessionTp.Close()
+		return nil, fmt.Errorf("upload pool DC %d: %w", homeDC, err)
+	}
 
-	c.Log.Debugf("upload session established on DC %d", homeDC)
+	c.Log.Debugf("upload session established on DC %d (%s)", homeDC, dc.Address())
 	entry := newDCSessionEntry(sess, sessionTp, c)
 	return entry, nil
 }

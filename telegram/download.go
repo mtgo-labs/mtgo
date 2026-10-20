@@ -73,6 +73,8 @@ func downloadPacingDelay(opts *params.Download, dcID, homeDC int) time.Duration 
 	return 0
 }
 
+var chunkDebug = os.Getenv("MTGO_CHUNK_DEBUG") == "1"
+
 var errParallelDownloadUnsupported = errors.New("download: parallel download unsupported for response")
 
 // ErrDownloadStalled is returned when no data has been received within the
@@ -691,6 +693,22 @@ const (
 // pacing, in requests per second. Bots are throttled harder by Telegram's file
 // DCs than user accounts, so they start lower. The limiter adapts at runtime:
 // slow chunks (>1.5s) shrink the rate, fast streaks grow it back.
+// chunkLatencyScale returns a latency reference for a chunk of the given
+// byte limit: one second per 512 KiB. A healthy maximum-size (1 MiB) chunk
+// legitimately takes about twice as long as a 512 KiB one, so the adaptive
+// window and rate limiter scale their "fast"/"slow" thresholds by this
+// reference instead of comparing every chunk against fixed wall-clock bounds
+// (which froze the window at 2 for 1 MiB chunks while 512 KiB chunks grew
+// to 4 — halving throughput at exactly the granularity the fastest clients
+// use).
+func chunkLatencyScale(limit int32) time.Duration {
+	units := int64(limit) / (512 * 1024)
+	if units < 1 {
+		units = 1
+	}
+	return time.Duration(units) * time.Second
+}
+
 var (
 	botDownloadRate  = 30.0
 	userDownloadRate = 75.0
@@ -761,18 +779,19 @@ func (l *downloadLimiter) acquire(ctx context.Context) error {
 // round trip for a maximum-size chunk) shrink the allowed rate (gentle
 // exponential backoff toward minDownloadRate); sustained fast responses
 // (<1.2s) grow it back (additive, capped at the initial rate).
-func (l *downloadLimiter) observe(elapsed time.Duration) {
+func (l *downloadLimiter) observe(elapsed time.Duration, limit int32) {
 	if l == nil {
 		return
 	}
+	ref := chunkLatencyScale(limit)
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if elapsed > 2500*time.Millisecond {
+	if elapsed > 5*ref/2 {
 		l.rate = max(l.rate*0.85, minDownloadRate)
 		l.fastStreak = 0
 		return
 	}
-	if elapsed < 1200*time.Millisecond {
+	if elapsed < 6*ref/5 {
 		l.fastStreak++
 		if l.fastStreak >= 3 && l.rate < l.maxRate {
 			l.rate = min(l.rate+2, l.maxRate)
@@ -913,16 +932,23 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 							Limit:    j.limit,
 						})
 						chunkElapsed := time.Since(reqStart)
-						limiter.observe(chunkElapsed)
+						if chunkDebug {
+							rpcMu.Lock()
+							w := window
+							rpcMu.Unlock()
+							fmt.Fprintf(os.Stderr, "CHUNK w=%d off=%d el=%v\n", w, j.offset, chunkElapsed.Truncate(time.Millisecond))
+						}
+						limiter.observe(chunkElapsed, j.limit)
 						// Feed the adaptive window: slow responses shrink it, sustained
 						// fast responses grow it. rpcMu also guards window/fastStreak.
+						ref := chunkLatencyScale(j.limit)
 						rpcMu.Lock()
-						if chunkElapsed > 2500*time.Millisecond {
+						if chunkElapsed > 5*ref/2 {
 							if window > minDownloadWindow {
 								window--
 							}
 							fastStreak = 0
-						} else if chunkElapsed < time.Second {
+						} else if chunkElapsed < ref {
 							fastStreak++
 							if fastStreak >= 4 && window < maxDownloadWindow {
 								window++

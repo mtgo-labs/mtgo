@@ -104,11 +104,8 @@ func (s *sessionTransport) Recv() ([]byte, error) {
 
 func (s *sessionTransport) Close() error {
 	if s.conn != nil {
-		// Force RST via SO_LINGER=0 before closing. Without this the TCP
-		// stack does a graceful FIN → TIME_WAIT, and a fast reconnect
-		// can cause the server to flag the new connection as
-		// AUTH_KEY_DUPLICATED (406).
-		_ = transport.SetTCPLinger(s.conn, 0)
+		// EXPERIMENT (local bench): graceful close. RST storms from pool
+		// teardown appear to trip server-side penalties.
 		return s.conn.Close()
 	}
 	if tp, ok := s.transport.(closableTransport); ok {

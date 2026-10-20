@@ -39,6 +39,27 @@ func (dc DataCenter) Port() int {
 	return 443
 }
 
+// MediaAddress returns the media-only transfer endpoint for the DC, if one
+// is known. Empty string means no dedicated media endpoint exists and the
+// main address should be used.
+func (dc DataCenter) MediaAddress() string {
+	if dc.TestMode {
+		return testMediaIPv4[dc.ID]
+	}
+	return prodMediaIPv4[dc.ID]
+}
+
+// TransferDataCenter returns the DataCenter to use for file transfers: the
+// media-only endpoint when known, otherwise the main endpoint.
+func (dc DataCenter) TransferDataCenter() DataCenter {
+	if addr := dc.MediaAddress(); addr != "" {
+		t := dc
+		t.IPAddress = addr
+		return t
+	}
+	return dc
+}
+
 // String returns a human-readable label for this data center, e.g. "DC2".
 func (dc DataCenter) String() string {
 	if dc.IPAddress != "" || dc.PortValue > 0 {
@@ -69,7 +90,15 @@ var (
 		4: "2001:b28:f23d:f001::14",
 		5: "2001:b28:f23d:f001::5",
 	}
-	testIPv6 = map[int]string{
+	prodMediaIPv4 = map[int]string{
+		// Media-only endpoints from help.getConfig (production). Telegram
+		// exposes dedicated file-transfer IPs only for some DCs; transfers
+		// on the main API endpoints get throttled and culled.
+		2: "149.154.167.223",
+		4: "149.154.165.96",
+	}
+	testMediaIPv4 = map[int]string{}
+	testIPv6      = map[int]string{
 		1: "2001:b28:f23f:f001::a",
 		2: "2001:67c:0468:f001::a",
 		3: "2001:b28:f23f:f001::d",

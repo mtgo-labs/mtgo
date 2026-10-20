@@ -58,8 +58,16 @@ const (
 	numFutureSalts       = 4
 	initialSaltFetchWait = 15 * time.Second
 	saltFetchInterval    = time.Hour
-	ackFlushInterval     = 30 * time.Second
-	slowWriteThreshold   = 3 * time.Second
+	// ackFlushInterval and ackFlushThreshold control msgs_ack batching.
+	// Telegram's servers flow-control connections whose received content
+	// goes unacknowledged — a 30s flush interval capped bulk downloads at
+	// roughly half of the achievable per-connection rate (the server stalls
+	// sending once too many responses are unacked). pyrogram flushes at 10
+	// pending acks with no timer; TDLib acks per read loop. Batch small and
+	// flush often: the msgs_ack envelope is a few dozen bytes.
+	ackFlushInterval   = 250 * time.Millisecond
+	ackFlushThreshold  = 16
+	slowWriteThreshold = 3 * time.Second
 )
 
 // hasDecodedResults returns true if any goroutine is waiting for a decoded TL
@@ -2142,7 +2150,7 @@ func (s *Session) ackLoop(ctx context.Context) error {
 			}
 			seen[msgID] = struct{}{}
 			buf = append(buf, msgID)
-			if len(buf) >= 8192 {
+			if len(buf) >= ackFlushThreshold {
 				if err := flush(); err != nil {
 					return err
 				}
