@@ -388,6 +388,14 @@ type Config struct {
 	// If Storage is nil, SessionName is set, and InMemory is false,
 	// the client auto-creates an in-memory storage.
 	// Or wrap a custom adapter with storage.NewAdapter(adapter).
+	//
+	// A session database must have exactly one open writer per process
+	// lifetime: two handles interleaving session state (seq/ack, salts)
+	// corrupt RPC traffic in ways that surface as plausible server-side
+	// errors. The sqlite backend enforces this with an exclusive lock at
+	// open and fails with *sqlite.SessionInUseError (naming the holding
+	// PID) when the file is already open elsewhere — for example by a
+	// leftover previous instance.
 	Storage storage.Storage
 	// WebSocket routes MTProto traffic over a WebSocket connection instead of
 	// plain TCP. Useful behind restrictive firewalls that block raw TCP but
