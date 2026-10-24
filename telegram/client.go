@@ -102,8 +102,12 @@ type Client struct {
 	storage storage.Storage
 	session *session.Session
 	me      *types.User
-	dialer  transport.Dialer
-	Log     *Logger
+	// mePartial marks a me reconstructed from a storage row without full
+	// profile fields (e.g. a session string minted externally): GetMe/Me
+	// refresh it from the server once instead of serving it forever.
+	mePartial bool
+	dialer    transport.Dialer
+	Log       *Logger
 
 	sessions            map[sessionKey]*session.Session
 	sessionsMu          sync.Mutex
@@ -650,19 +654,23 @@ func (c *Client) RandomID() int64 {
 }
 
 // Me returns the currently authenticated user. If the user has not been cached yet
-// and the client is connected, it fetches the user from the server. Returns nil if
-// not connected or if the fetch fails.
+// and the client is connected, it fetches the user from the server. A cached user
+// restored from a storage row without profile fields is refreshed from the server
+// on first use. Returns nil if not connected or if the fetch fails.
 func (c *Client) Me() *types.User {
 	c.mu.RLock()
 	me := c.me
+	partial := c.mePartial
 	c.mu.RUnlock()
-	if me != nil {
+	if me != nil && !partial {
 		return me
 	}
 	if !c.IsConnected() {
-		return nil
+		return me
 	}
-	me, _ = c.GetMe(context.Background())
+	if refreshed, err := c.GetMe(context.Background()); err == nil {
+		return refreshed
+	}
 	return me
 }
 
@@ -2312,6 +2320,7 @@ func (c *Client) authenticateUser(st storage.Storage, timeout time.Duration) err
 				if err := c.commitAuthorizedUser(me, authGeneration); err != nil {
 					return err
 				}
+				c.markMePartial()
 				c.Log.Debug("user account restored: id=", me.ID, " username=", me.Username)
 			}
 		}
@@ -2399,6 +2408,7 @@ func (c *Client) restoreAuthorizedUser(parent context.Context, st storage.Storag
 		if err := c.commitAuthorizedUser(me, authGeneration); err != nil {
 			return err
 		}
+		c.markMePartial()
 		c.Log.Debug("user restored from storage: id=", me.ID, " username=", me.Username)
 		return nil
 	}
@@ -3831,12 +3841,22 @@ func (c *Client) LogOut() error {
 func (c *Client) SetMe(user *types.User) {
 	c.mu.Lock()
 	c.me = user
+	c.mePartial = false
 	c.mu.Unlock()
 	if user != nil {
 		// Successful authorization makes subsequent AUTH_KEY_UNREGISTERED a
 		// terminal loss even if persisting UserID later fails.
 		c.mainAuthKeyOrigin.Store(authKeyOriginLoaded)
 	}
+}
+
+// markMePartial flags the cached authenticated user as reconstructed from
+// storage without full profile fields, so GetMe and Me refresh it from the
+// server on first use instead of serving the partial data forever.
+func (c *Client) markMePartial() {
+	c.mu.Lock()
+	c.mePartial = true
+	c.mu.Unlock()
 }
 
 func (c *Client) saveMeToStorage(user *types.User) {

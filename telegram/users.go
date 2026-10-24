@@ -62,7 +62,11 @@ func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, 
 }
 
 // GetMe retrieves the currently authenticated user's full information.
-// The result is also cached on the client via SetMe.
+// The result is cached on the client via SetMe; subsequent calls return the
+// cached user without a server round-trip. A user restored from a storage row
+// that lacks profile fields (e.g. a session string minted by an external tool)
+// is cached as partial: the first GetMe call re-fetches the full profile from
+// the server and persists the healed fields back to storage.
 //
 // Parameters:
 //   - ctx: context for cancellation and deadlines
@@ -78,8 +82,9 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 	c.Log.Debug("GetMe")
 	c.mu.RLock()
 	me := c.me
+	partial := c.mePartial
 	c.mu.RUnlock()
-	if me != nil {
+	if me != nil && !partial {
 		return me, nil
 	}
 
