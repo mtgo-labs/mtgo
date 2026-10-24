@@ -420,6 +420,90 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 	return c.DownloadToFile(ctx, location, filePath, fileSize, opts)
 }
 
+// DownloadMediaToWriter resolves the file location from the given Media
+// interface and streams the download into w as chunks arrive, returning the
+// total number of bytes written.
+//
+// Unlike DownloadMedia it does not buffer the whole file in memory, and unlike
+// DownloadMediaToFile it needs no filesystem path: any io.Writer works, so a
+// caller can pipe media straight into a consumer (e.g. ffmpeg's stdin) and
+// start processing after the first chunk instead of waiting for the whole
+// transfer. Bytes reach a plain io.Writer sequentially in offset order.
+//
+// If w also implements io.WriterAt and the file is large enough, the download
+// parallelizes across connections exactly like DownloadToFile; chunks then
+// arrive out of order, which only WriterAt targets can absorb.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout.
+//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - thumbSize: thumbnail size to download for photos. Pass an empty string for full media.
+//   - w: destination writer. Must not be nil.
+//   - opts: optional download settings (chunk size, progress callback). May be nil for defaults.
+//
+// Returns:
+//   - int64: the number of bytes written to w on success.
+//   - error: non-nil if the client is disconnected, the location cannot be resolved, w is nil,
+//     or the download fails. On failure bytes already written to w are not rolled back.
+//
+// Example:
+//
+//	ctx := context.Background()
+//	pr, pw := io.Pipe()
+//	go consume(pr) // e.g. ffmpeg stdin
+//	n, err := client.DownloadMediaToWriter(ctx, docMedia, "", pw, nil)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Printf("streamed %d bytes\n", n)
+func (c *Client) DownloadMediaToWriter(ctx context.Context, media types.Media, thumbSize string, w io.Writer, opts *params.Download) (int64, error) {
+	ctx = withTransferRetry(ctx)
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return 0, err
+	}
+	if w == nil {
+		return 0, errors.New("download media: nil writer")
+	}
+
+	c.Log.Debug("DownloadMediaToWriter")
+
+	location, dcID, err := GetFileLocation(media, thumbSize)
+	if err != nil {
+		return 0, fmt.Errorf("download media: %w", err)
+	}
+	if opts == nil {
+		opts = &params.Download{DCID: dcID}
+	} else if opts.DCID == 0 {
+		opts.DCID = dcID
+	}
+	fileSize := getMediaFileSize(media)
+
+	rpc, err := c.dcRPC(ctx, int(dcID))
+	if err != nil {
+		return 0, fmt.Errorf("download: dc rpc: %w", err)
+	}
+
+	if shouldParallelDownload(fileSize, w, opts, int(dcID), c.homeDC()) {
+		rpcs, err := c.dcRPCPool(ctx, int(dcID), downloadWorkers(opts, fileSize, int(dcID), c.homeDC()))
+		if err != nil {
+			return 0, fmt.Errorf("download: dc rpc pool: %w", err)
+		}
+		written, err := c.downloadToWriterAt(ctx, rpcs, int(dcID), location, fileSize, w.(io.WriterAt), opts)
+		if err != nil {
+			if errors.Is(err, errParallelDownloadUnsupported) && written == 0 {
+				goto serialWriterDownload
+			}
+			return written, err
+		}
+		if written >= fileSize {
+			return written, nil
+		}
+	}
+
+serialWriterDownload:
+	return c.downloadToWriter(ctx, rpc, int(dcID), location, fileSize, w, opts)
+}
+
 // StreamFile downloads a file in chunks and delivers them over the returned read-only channel.
 //
 // This method enables streaming processing of large files without loading them entirely into memory.

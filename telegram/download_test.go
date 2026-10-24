@@ -6,7 +6,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -758,6 +760,147 @@ func TestDownloadMediaToFile_NotConnected(t *testing.T) {
 	}, "", "/tmp/test.pdf", 1024, nil)
 	if err == nil {
 		t.Fatal("expected error when not connected")
+	}
+}
+
+// writeCountingWriter records how many times a download touched the writer.
+type writeCountingWriter struct {
+	buf    bytes.Buffer
+	writes int
+}
+
+func (w *writeCountingWriter) Write(p []byte) (int, error) {
+	w.writes++
+	return w.buf.Write(p)
+}
+
+// sliceWriterAt is a pre-sized io.WriterAt target for the parallel path,
+// with os.File-style sequential Write at a moving offset for the serial path.
+type sliceWriterAt struct {
+	data []byte
+	off  int64
+}
+
+func (s *sliceWriterAt) Write(p []byte) (int, error) {
+	n, err := s.WriteAt(p, s.off)
+	s.off += int64(n)
+	return n, err
+}
+
+func (s *sliceWriterAt) WriteAt(p []byte, off int64) (int, error) {
+	if off < 0 || off+int64(len(p)) > int64(len(s.data)) {
+		return 0, errors.New("write out of range")
+	}
+	copy(s.data[off:], p)
+	return len(p), nil
+}
+
+func newWriterTestMedia(size int64) *types.DocumentMedia {
+	return &types.DocumentMedia{
+		RawDocument: &tg.Document{ID: 100, AccessHash: 200, DCID: 2, Size: size},
+		FileSize:    size,
+	}
+}
+
+func TestDownloadMediaToWriter_StreamsToPlainWriter(t *testing.T) {
+	data := make([]byte, downloadChunkSize*2+300)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = mock
+
+	var w writeCountingWriter
+	written, err := c.DownloadMediaToWriter(context.Background(), newWriterTestMedia(int64(len(data))), "", &w, nil)
+	if err != nil {
+		t.Fatalf("DownloadMediaToWriter() error = %v", err)
+	}
+	if written != int64(len(data)) {
+		t.Fatalf("written = %d, want %d", written, len(data))
+	}
+	if !bytes.Equal(w.buf.Bytes(), data) {
+		t.Fatal("streamed data does not match original")
+	}
+	// A multi-chunk file must reach the writer as chunks arrive, not in one
+	// buffer at the end.
+	if w.writes < 2 {
+		t.Fatalf("writer touched %d times, want >= 2 (chunked streaming)", w.writes)
+	}
+}
+
+func TestDownloadMediaToWriter_WriterAtParallelizes(t *testing.T) {
+	data := make([]byte, downloadChunkSize*5+123)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	mock.delay = 10 * time.Millisecond
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = mock
+
+	w := &sliceWriterAt{data: make([]byte, len(data))}
+	written, err := c.DownloadMediaToWriter(context.Background(), newWriterTestMedia(int64(len(data))), "", w, nil)
+	if err != nil {
+		t.Fatalf("DownloadMediaToWriter() error = %v", err)
+	}
+	if written != int64(len(data)) {
+		t.Fatalf("written = %d, want %d", written, len(data))
+	}
+	if !bytes.Equal(w.data, data) {
+		t.Fatal("downloaded data does not match original")
+	}
+	if maxActive := mock.maxActive.Load(); maxActive <= 1 {
+		t.Fatalf("WriterAt download max concurrency = %d, want > 1", maxActive)
+	}
+}
+
+func TestDownloadMediaToWriter_WorkersOneStaysSerial(t *testing.T) {
+	data := make([]byte, downloadChunkSize*3)
+	_, _ = rand.Read(data)
+
+	mock := newMockDownloadInvoker(data)
+	mock.delay = 10 * time.Millisecond
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	c.testInvoker = mock
+
+	w := &sliceWriterAt{data: make([]byte, len(data))}
+	_, err := c.DownloadMediaToWriter(context.Background(), newWriterTestMedia(int64(len(data))), "", w, &params.Download{Workers: 1})
+	if err != nil {
+		t.Fatalf("DownloadMediaToWriter() error = %v", err)
+	}
+	if !bytes.Equal(w.data, data) {
+		t.Fatal("downloaded data does not match original")
+	}
+	if maxActive := mock.maxActive.Load(); maxActive != 1 {
+		t.Fatalf("Workers=1 download max concurrency = %d, want 1", maxActive)
+	}
+}
+
+func TestDownloadMediaToWriter_NotConnected(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	_, err := c.DownloadMediaToWriter(context.Background(), &types.DocumentMedia{}, "", io.Discard, nil)
+	if err == nil {
+		t.Fatal("expected error when not connected")
+	}
+}
+
+func TestDownloadMediaToWriter_NilWriter(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	_, err := c.DownloadMediaToWriter(context.Background(), &types.DocumentMedia{}, "", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "nil writer") {
+		t.Fatalf("error = %v, want nil writer rejection", err)
+	}
+}
+
+func TestDownloadMediaToWriter_NilMedia(t *testing.T) {
+	c, _ := NewClient(1, "h", nil)
+	c.state.setConnected(true)
+	_, err := c.DownloadMediaToWriter(context.Background(), nil, "", io.Discard, nil)
+	if err == nil {
+		t.Fatal("expected error for nil media")
 	}
 }
 
