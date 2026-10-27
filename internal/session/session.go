@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -241,6 +242,10 @@ type Session struct {
 	consecWriteFailures   atomic.Int32
 	writeBreakerThreshold atomic.Int32
 	writeBreakerOpen      atomic.Bool
+	// noWorkersStreak counts consecutive "No workers running" RPC errors;
+	// the session recycles itself when it reaches noWorkersRecycleThreshold.
+	noWorkersStreak   atomic.Int32
+	noWorkersRecycled atomic.Bool
 	// connectedAt is set when the session reaches StateActive and cleared on
 	// reset. It enables diagnostic error messages that report how long the
 	// connection was alive before it died.
@@ -471,6 +476,46 @@ func (s *Session) trackWriteResult(err error) {
 		if s.writeBreakerOpen.Load() {
 			s.writeBreakerOpen.Store(false)
 		}
+	}
+}
+
+// noWorkersRecycleThreshold is the number of consecutive "No workers running"
+// RPC errors after which the session declares the server-side connection
+// poisoned and recycles itself. A single occurrence may be transient, so the
+// first error is retried in place like any other server error; from the
+// second consecutive one on, every RPC on the connection keeps failing until
+// it is re-established, so lingering only delays recovery.
+const noWorkersRecycleThreshold = 2
+
+// isNoWorkersRunningError matches the server's "No workers running" RPC error
+// (code -500): the server-side connection has lost its worker pool, so no RPC
+// on it will execute until the connection is re-established.
+func isNoWorkersRunningError(e *tgerr.Error) bool {
+	if e == nil || (e.Code != -500 && e.Code != 500) {
+		return false
+	}
+	return strings.EqualFold(strings.ReplaceAll(e.Message, "_", " "), "no workers running")
+}
+
+// noteNoWorkersError records one consecutive "No workers running" error and
+// reports whether this call should recycle the session (true exactly once).
+func (s *Session) noteNoWorkersError() bool {
+	if int(s.noWorkersStreak.Add(1)) < noWorkersRecycleThreshold {
+		return false
+	}
+	return s.noWorkersRecycled.CompareAndSwap(false, true)
+}
+
+// recycleNoWorkersConnection fail-fasts the session errgroup — the same
+// mechanism as the write circuit breaker — so the client reconnects instead of
+// hammering a connection the server cannot serve.
+func (s *Session) recycleNoWorkersConnection(streak int) {
+	s.recordShutdownCause(fmt.Errorf("server reports no workers running (%d consecutive RPC errors); recycling connection", streak), "noWorkers")
+	if s.log != nil {
+		s.log.Errorf("session: no workers running on %s: recycling connection after %d consecutive errors", s.dc, streak)
+	}
+	if s.group != nil {
+		s.group.Cancel()
 	}
 }
 
@@ -1284,6 +1329,25 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 			if tgerr.Is(parsed, tgerr.ErrAuthKeyDuplicated) {
 				return nil, parsed
 			}
+			if isNoWorkersRunningError(parsed) {
+				if s.noteNoWorkersError() {
+					s.recycleNoWorkersConnection(int(s.noWorkersStreak.Load()))
+					return nil, fmt.Errorf("%w: %v", ErrSessionClosed, parsed)
+				}
+				lastErr = parsed
+				if backoff == 0 {
+					backoff = 100 * time.Millisecond
+				} else {
+					backoff = backoff * 2
+					if backoff > 2*time.Second {
+						backoff = 2 * time.Second
+					}
+				}
+				continue
+			}
+			// Any other served response means the connection's workers are
+			// alive again.
+			s.noWorkersStreak.Store(0)
 			if rpcErr.ErrorCode == 420 {
 				return obj, nil
 			}
@@ -1374,6 +1438,7 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 		if hasChain {
 			s.SetChain(msgID, chainID)
 		}
+		s.noWorkersStreak.Store(0)
 		return obj, nil
 	}
 	if lastErr == nil {
