@@ -1,9 +1,11 @@
 package session
 
 import (
+	"errors"
 	"math/rand"
 	"sort"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -43,14 +45,29 @@ type DCOptionPool struct {
 	dcID     int
 	options  []DCOptionWithHealth
 	coolDown time.Duration // cool-down after failure before retry
-	mu       sync.RWMutex
+	// familyUnreachable records when an address family last proved
+	// unroutable on this host (keyed by the DataCenter.IPv6 flag).
+	familyUnreachable map[bool]time.Time
+	// familyProbeInterval is how long a family stays suppressed after
+	// proving unroutable; afterwards candidates include it again so a
+	// family that appears later (e.g. IPv6 on a roaming host) is retried.
+	familyProbeInterval time.Duration
+	mu                  sync.RWMutex
 }
+
+// defaultFamilyProbeInterval is the default suppression window for an
+// address family whose dials fail at the routing level. Long enough to keep
+// quiet across reconnect backoff loops, short enough to pick up a network
+// change that introduces the family without waiting for ResetHealth.
+const defaultFamilyProbeInterval = 5 * time.Minute
 
 // NewDCOptionPool creates a new endpoint pool for the given DC.
 func NewDCOptionPool(dcID int, coolDown time.Duration) *DCOptionPool {
 	return &DCOptionPool{
-		dcID:     dcID,
-		coolDown: coolDown,
+		dcID:                dcID,
+		coolDown:            coolDown,
+		familyUnreachable:   make(map[bool]time.Time),
+		familyProbeInterval: defaultFamilyProbeInterval,
 	}
 }
 
@@ -91,6 +108,33 @@ func (p *DCOptionPool) RecordFailure(option DataCenter) {
 	}
 }
 
+// RecordDialFailure records a failed connection attempt. When the dial
+// error proves the host cannot route the endpoint's address family at all
+// (network/host unreachable, family unsupported) rather than the endpoint
+// being down, the family is additionally marked unreachable so Candidates
+// skips its endpoints for the probe interval while the other family still
+// offers candidates. This keeps IPv4-only hosts from re-racing IPv6
+// endpoints (and vice versa) on every connect.
+func (p *DCOptionPool) RecordDialFailure(option DataCenter, err error) {
+	p.RecordFailure(option)
+	if err == nil || !isFamilyUnreachableError(err) {
+		return
+	}
+	p.mu.Lock()
+	p.familyUnreachable[option.IPv6] = time.Now()
+	p.mu.Unlock()
+}
+
+// isFamilyUnreachableError reports whether err indicates the host has no
+// route to (or kernel support for) the dialed address family, as opposed to
+// one endpoint being down. Such dials fail instantly at the kernel level,
+// e.g. dialing an IPv6 Telegram DC on an IPv4-only host.
+func isFamilyUnreachableError(err error) bool {
+	return errors.Is(err, syscall.ENETUNREACH) ||
+		errors.Is(err, syscall.EHOSTUNREACH) ||
+		errors.Is(err, syscall.EAFNOSUPPORT)
+}
+
 // AddOption adds a new endpoint to the pool with HealthUntested state.
 func (p *DCOptionPool) AddOption(option DataCenter) {
 	p.mu.Lock()
@@ -129,11 +173,14 @@ func (p *DCOptionPool) UpdateOptions(options []DataCenter) {
 
 // ResetHealth marks every endpoint untested after a network change so stale
 // failures and successes from the previous network do not affect selection.
+// Address-family suppression is cleared too: a network change is exactly
+// when a previously unroutable family may become available.
 func (p *DCOptionPool) ResetHealth() {
 	p.mu.Lock()
 	for i := range p.options {
 		p.options[i].Health = EndpointHealth{State: HealthUntested}
 	}
+	clear(p.familyUnreachable)
 	p.mu.Unlock()
 }
 
@@ -203,7 +250,39 @@ func (p *DCOptionPool) CandidatesForDC(dcID, max int) ([]DataCenter, error) {
 	if len(candidates) == 0 {
 		return nil, ErrAllEndpointsFailing
 	}
+	// Drop endpoints of address families that recently proved unroutable
+	// (e.g. IPv6 on an IPv4-only host), but only while the other family
+	// still has candidates: if filtering would remove every endpoint, keep
+	// them all — connectivity beats quietness.
+	if filtered := p.excludeUnreachableFamilies(candidates, now); len(filtered) > 0 {
+		candidates = filtered
+	}
 	return candidates, nil
+}
+
+// excludeUnreachableFamilies removes candidates whose address family is
+// currently suppressed; it returns candidates unchanged when no family is
+// suppressed. Callers must treat an empty result as "keep the unfiltered
+// list" rather than "no endpoints".
+func (p *DCOptionPool) excludeUnreachableFamilies(candidates []DataCenter, now time.Time) []DataCenter {
+	var suppressIPv4, suppressIPv6 bool
+	if t, ok := p.familyUnreachable[false]; ok && now.Sub(t) < p.familyProbeInterval {
+		suppressIPv4 = true
+	}
+	if t, ok := p.familyUnreachable[true]; ok && now.Sub(t) < p.familyProbeInterval {
+		suppressIPv6 = true
+	}
+	if !suppressIPv4 && !suppressIPv6 {
+		return candidates
+	}
+	filtered := make([]DataCenter, 0, len(candidates))
+	for _, candidate := range candidates {
+		if (candidate.IPv6 && suppressIPv6) || (!candidate.IPv6 && suppressIPv4) {
+			continue
+		}
+		filtered = append(filtered, candidate)
+	}
+	return filtered
 }
 
 // OptionCount returns the number of endpoints in the pool.

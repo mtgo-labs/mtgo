@@ -5,11 +5,14 @@ import (
 	"errors"
 	"io"
 	"net"
+	"os"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 )
 
 type racingDialer struct {
@@ -210,4 +213,116 @@ func TestDialTCPTransportContextCancelsBlockedHandshake(t *testing.T) {
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("dialTCPTransportContext error = %v, want context deadline exceeded", err)
 	}
+}
+
+// unreachableDialer simulates an IPv4-only host: addresses in failAddrs are
+// rejected instantly with a kernel-style network-unreachable error (as the
+// kernel does for an IPv6 literal with no IPv6 route); everything else
+// connects.
+type unreachableDialer struct {
+	failAddrs map[string]error
+	mu        sync.Mutex
+	dialled   []string
+}
+
+func (d *unreachableDialer) Dial(network, address string, timeout time.Duration) (net.Conn, error) {
+	return d.DialContext(context.Background(), network, address, timeout)
+}
+
+func (d *unreachableDialer) DialContext(_ context.Context, _, address string, _ time.Duration) (net.Conn, error) {
+	d.mu.Lock()
+	d.dialled = append(d.dialled, address)
+	d.mu.Unlock()
+	if err, ok := d.failAddrs[address]; ok {
+		return nil, err
+	}
+	client, server := net.Pipe()
+	go func() {
+		_, _ = io.Copy(io.Discard, server)
+		_ = server.Close()
+	}()
+	return client, nil
+}
+
+func (d *unreachableDialer) attempts(address string) int {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	n := 0
+	for _, a := range d.dialled {
+		if a == address {
+			n++
+		}
+	}
+	return n
+}
+
+func TestDialRacedTCPTransportSkipsUnroutableFamilyAfterFirstFailure(t *testing.T) {
+	client, err := NewClient(1, "hash", nil)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	v4Addr := "127.0.0.2:443"
+	v6Addr := "[2001:b28:f23d:f001::a]:443"
+	// The IPv4 endpoint wins after a short delay so the IPv6 routing failure
+	// is always processed (and recorded) before the race returns.
+	v4 := session.DataCenter{ID: 2, IPAddress: "127.0.0.2", PortValue: 443}
+	v6 := session.DataCenter{ID: 2, IPv6: true, IPAddress: "2001:b28:f23d:f001::a", PortValue: 443}
+	client.dialer = &unreachableDialer{failAddrs: map[string]error{
+		v6Addr: &net.OpError{
+			Op:   "dial",
+			Net:  "tcp6",
+			Addr: &net.TCPAddr{IP: net.ParseIP("2001:b28:f23d:f001::a"), Port: 443},
+			Err:  os.NewSyscallError("connect", syscall.ENETUNREACH),
+		},
+	}}
+	client.dialer = &delayedDialer{inner: client.dialer, delays: map[string]time.Duration{v4Addr: 25 * time.Millisecond}}
+	client.dcOptionPool.AddOption(v4)
+	client.dcOptionPool.AddOption(v6)
+
+	// First dial races both families; IPv6 fails at the routing level and
+	// IPv4 wins.
+	tp, err := client.dialRacedTCPTransport(v4, 2*time.Second)
+	if err != nil {
+		t.Fatalf("first dialRacedTCPTransport: %v", err)
+	}
+	tp.Close()
+
+	// The next dial must not touch the unroutable family again.
+	tp, err = client.dialRacedTCPTransport(v4, 2*time.Second)
+	if err != nil {
+		t.Fatalf("second dialRacedTCPTransport: %v", err)
+	}
+	tp.Close()
+	dialer := client.dialer.(*delayedDialer).inner.(*unreachableDialer)
+	if n := dialer.attempts(v6Addr); n != 1 {
+		t.Fatalf("IPv6 endpoint dialled %d times, want exactly 1 (no re-race of unroutable family)", n)
+	}
+	if n := dialer.attempts(v4Addr); n != 2 {
+		t.Fatalf("IPv4 endpoint dialled %d times, want 2", n)
+	}
+}
+
+// delayedDialer wraps a dialer and sleeps before delegating to selected
+// addresses so race ordering is deterministic in tests.
+type delayedDialer struct {
+	inner  transport.Dialer
+	delays map[string]time.Duration
+}
+
+func (d *delayedDialer) Dial(network, address string, timeout time.Duration) (net.Conn, error) {
+	return d.DialContext(context.Background(), network, address, timeout)
+}
+
+func (d *delayedDialer) DialContext(ctx context.Context, network, address string, timeout time.Duration) (net.Conn, error) {
+	if delay, ok := d.delays[address]; ok {
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return d.inner.(transport.ContextDialer).DialContext(ctx, network, address, timeout)
 }

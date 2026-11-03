@@ -1904,7 +1904,7 @@ func (c *Client) dialRacedTCPTransportContext(
 		start := time.Now()
 		st, err := c.dialTCPTransportContext(ctx, candidates[0], timeout)
 		if err != nil {
-			c.dcOptionPool.RecordFailure(candidates[0])
+			c.dcOptionPool.RecordDialFailure(candidates[0], err)
 			c.connMetrics.recordDialFailure(candidates[0].String(), err)
 			return nil, err
 		}
@@ -1942,10 +1942,14 @@ func (c *Client) dialRacedTCPTransportContext(
 			go c.drainRacingLosers(results, len(candidates)-received-1)
 			return result.st, nil
 		}
-		c.dcOptionPool.RecordFailure(result.endpoint)
+		c.dcOptionPool.RecordDialFailure(result.endpoint, result.err)
 		c.connMetrics.recordDialFailure(result.endpoint.String(), result.err)
 		failures = append(failures, fmt.Errorf("%s: %w", result.endpoint, result.err))
-		c.Log.Warnf("DC endpoint %s failed in %v: %v", result.endpoint, result.elapsed, result.err)
+		// Debug, not Warn: when another candidate wins the race this is
+		// expected churn (e.g. IPv6 endpoints on an IPv4-only host). The
+		// aggregate error below still surfaces every failure when they all
+		// lose, so total dial failures remain visible.
+		c.Log.Debugf("DC endpoint %s failed in %v: %v", result.endpoint, result.elapsed, result.err)
 	}
 
 	return nil, fmt.Errorf("dial DC%d: all %d endpoint candidates failed: %v", dc.ID, len(candidates), failures)
@@ -1960,7 +1964,7 @@ func (c *Client) drainRacingLosers(results <-chan dialResult, count int) {
 			continue
 		}
 		if result.err != nil && !errors.Is(result.err, context.Canceled) {
-			c.dcOptionPool.RecordFailure(result.endpoint)
+			c.dcOptionPool.RecordDialFailure(result.endpoint, result.err)
 			c.connMetrics.recordDialFailure(result.endpoint.String(), result.err)
 		}
 	}
