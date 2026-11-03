@@ -96,6 +96,10 @@ jobs:
 
       - name: Bump mtgo dependency
         env:
+          # Step-level beats the GOTOOLCHAIN=local that setup-go exports via
+          # GITHUB_ENV when a patch version is pinned: downstream go.mod files
+          # must be allowed to float the toolchain (mtgo-bot-api: >=1.26.9).
+          GOTOOLCHAIN: auto
           VERSION: ${{ steps.ver.outputs.version }}
           MODULES: ${{ matrix.modules }}
           IS_WASM: ${{ matrix.wasm }}
