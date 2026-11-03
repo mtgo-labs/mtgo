@@ -126,4 +126,5 @@ var ConstructorMapPayments = map[uint32]func() TLObject{
 	0x78fbf3a8: func() TLObject { return &StarGiftAttributeRarityEpic{} },
 	0xcef7e7a8: func() TLObject { return &StarGiftAttributeRarityLegendary{} },
 	0xbbcce4c2: func() TLObject { return &PaymentsCurrencyRates{} },
+	0x725bb4eb: func() TLObject { return &PaymentsStarGiftDepositPayload{} },
 }

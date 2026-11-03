@@ -1353,3 +1353,68 @@ func (c *RPCClient) WalletTonConnectGetSessions(ctx context.Context) (*WalletTon
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
 }
+
+// WalletSetCardStickersTypeID is the constructor ID for the RPC function wallet.setCardStickers.
+const WalletSetCardStickersTypeID = 0x068509ac
+
+// WalletSetCardStickersRequest represents TL type `wallet.setCardStickers#068509ac`.
+//
+// See https://core.telegram.org/method/wallet/setCardStickers for reference.
+type WalletSetCardStickersRequest struct {
+	Flags        Fields                    `json:"-"`
+	Stickers     []*InputWalletCardSticker `json:"stickers,omitempty"`
+	BgNftAddress string                    `json:"bg_nft_address,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletSetCardStickersRequest) SetFlags() {
+	if v.BgNftAddress != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x068509ac.
+func (v *WalletSetCardStickersRequest) ConstructorID() uint32 {
+	return WalletSetCardStickersTypeID
+}
+
+// Encode serializes WalletSetCardStickersRequest to a bytes.Buffer using the TL binary protocol.
+func (v *WalletSetCardStickersRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletSetCardStickersTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Stickers)))
+	for _, _item := range v.Stickers {
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field stickers: %w", _err)
+		}
+	}
+	if v.Flags.Has(0) {
+		WriteString(b, v.BgNftAddress)
+	}
+	return nil
+}
+
+// WalletSetCardStickers invokes the wallet.setCardStickers RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) WalletSetCardStickers(ctx context.Context, req *WalletSetCardStickersRequest) (*WalletCard, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*WalletCard); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}

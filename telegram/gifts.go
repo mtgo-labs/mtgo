@@ -308,9 +308,19 @@ func (c *Client) GetGiftWithdrawalURL(ctx context.Context, gift tg.InputSavedSta
 	if err != nil {
 		return "", fmt.Errorf("compute SRP: %w", err)
 	}
-	res, err := c.Raw().PaymentsGetStarGiftWithdrawalURL(ctx, &tg.PaymentsGetStarGiftWithdrawalURLRequest{
-		Stargift: gift,
+	// Layer 232 replaced the SRP argument of payments.getStarGiftWithdrawalUrl
+	// with a temporary password obtained via account.getTmpPassword; 60s is
+	// enough since it is consumed immediately by the call below.
+	tmp, err := c.Raw().AccountGetTmpPassword(ctx, &tg.AccountGetTmpPasswordRequest{
 		Password: srp,
+		Period:   60,
+	})
+	if err != nil {
+		return "", fmt.Errorf("get tmp password: %w", err)
+	}
+	res, err := c.Raw().PaymentsGetStarGiftWithdrawalURL(ctx, &tg.PaymentsGetStarGiftWithdrawalURLRequest{
+		Stargift:    gift,
+		TmpPassword: tmp.TmpPassword,
 	})
 	if err != nil {
 		return "", err

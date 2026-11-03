@@ -12260,3 +12260,59 @@ func init() {
 		return DecodePaymentsCurrencyRates(r)
 	}
 }
+
+// PaymentsStarGiftDepositPayloadTypeID is the constructor ID for TL type payments.starGiftDepositPayload.
+const PaymentsStarGiftDepositPayloadTypeID = 0x725bb4eb
+
+// PaymentsStarGiftDepositPayload represents the TL constructor payments.starGiftDepositPayload (0x725bb4eb).
+//
+// See https://core.telegram.org/constructor/payments.starGiftDepositPayload for reference.
+type PaymentsStarGiftDepositPayload struct {
+	NftAddress string `json:"nft_address,omitempty"`
+	Payload    []byte `json:"payload,omitempty"`
+	Amount     int64  `json:"amount,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x725bb4eb.
+func (v *PaymentsStarGiftDepositPayload) ConstructorID() uint32 {
+	return PaymentsStarGiftDepositPayloadTypeID
+}
+
+// Encode serializes PaymentsStarGiftDepositPayload to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsStarGiftDepositPayload) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsStarGiftDepositPayloadTypeID)
+	WriteString(b, v.NftAddress)
+	WriteBytes(b, v.Payload)
+	WriteLong(b, v.Amount)
+	return nil
+}
+
+// DecodePaymentsStarGiftDepositPayload deserializes a PaymentsStarGiftDepositPayload from a reader using the TL binary protocol.
+func DecodePaymentsStarGiftDepositPayload(r *Reader) (*PaymentsStarGiftDepositPayload, error) {
+	v := &PaymentsStarGiftDepositPayload{}
+	_rNftAddress, _eNftAddress := r.ReadString()
+	if _eNftAddress != nil {
+		return nil, _eNftAddress
+	}
+	v.NftAddress = _rNftAddress
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	_rAmount, _eAmount := r.ReadInt64()
+	if _eAmount != nil {
+		return nil, _eAmount
+	}
+	v.Amount = _rAmount
+	return v, nil
+}
+
+func init() {
+	Registry[PaymentsStarGiftDepositPayloadTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodePaymentsStarGiftDepositPayload(r)
+	}
+}

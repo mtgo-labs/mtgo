@@ -4,7 +4,7 @@ package tg
 
 // ConstructorMapUsers maps constructor IDs to factory functions.
 var ConstructorMapUsers = map[uint32]func() TLObject{
-	0x06cbe645: func() TLObject { return &UserFull{} },
+	0xb90c2afd: func() TLObject { return &UserFull{} },
 	0x3b6d152e: func() TLObject { return &UsersUserFull{} },
 	0x62d706b8: func() TLObject { return &UsersUsers{} },
 	0x315a4974: func() TLObject { return &UsersUsersSlice{} },

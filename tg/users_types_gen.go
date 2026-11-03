@@ -16,7 +16,7 @@ type UserFullClass interface {
 }
 
 // UserFullTypeID is the constructor ID for TL type userFull.
-const UserFullTypeID = 0x06cbe645
+const UserFullTypeID = 0xb90c2afd
 
 // UsersUserFullTypeID is the constructor ID for TL type users.userFull.
 const UsersUserFullTypeID = 0x3b6d152e
@@ -27,7 +27,7 @@ func (*UserFull) isUserFull() {}
 // isUserFull marks UsersUserFull as implementing the UserFullClass interface.
 func (*UsersUserFull) isUserFull() {}
 
-// UserFull represents the TL constructor userFull (0x06cbe645).
+// UserFull represents the TL constructor userFull (0xb90c2afd).
 //
 // See https://core.telegram.org/constructor/userFull for reference.
 type UserFull struct {
@@ -91,6 +91,8 @@ type UserFull struct {
 	SavedMusic               DocumentClass            `json:"saved_music,omitempty"`
 	Note                     *TextWithEntities        `json:"note,omitempty"`
 	BotManagerID             int64                    `json:"bot_manager_id,omitempty"`
+	WalletCard               *WalletCard              `json:"wallet_card,omitempty"`
+	ShareTheme               ShareThemeClass          `json:"share_theme,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -257,9 +259,15 @@ func (v *UserFull) SetFlags() {
 	if v.BotManagerID != 0 {
 		v.Flags2.Set(25)
 	}
+	if v.WalletCard != nil {
+		v.Flags2.Set(19)
+	}
+	if v.ShareTheme != nil {
+		v.Flags2.Set(27)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x06cbe645.
+// ConstructorID returns the TL constructor identifier 0xb90c2afd.
 func (v *UserFull) ConstructorID() uint32 {
 	return UserFullTypeID
 }
@@ -428,6 +436,16 @@ func (v *UserFull) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags2.Has(25) {
 		WriteLong(b, v.BotManagerID)
+	}
+	if v.Flags2.Has(19) {
+		if _err := EncodeTLObject(b, v.WalletCard); _err != nil {
+			return fmt.Errorf("encode field wallet_card: %w", _err)
+		}
+	}
+	if v.Flags2.Has(27) {
+		if _err := EncodeTLObject(b, v.ShareTheme); _err != nil {
+			return fmt.Errorf("encode field share_theme: %w", _err)
+		}
 	}
 	return nil
 }
@@ -822,6 +840,28 @@ func DecodeUserFull(r *Reader) (*UserFull, error) {
 			return nil, _eBotManagerID
 		}
 		v.BotManagerID = _rBotManagerID
+	}
+	if v.Flags2.Has(19) {
+		_objWalletCard, _errWalletCard := ReadTLObject(r)
+		if _errWalletCard != nil {
+			return nil, _errWalletCard
+		}
+		_cWalletCard, _okWalletCard := _objWalletCard.(*WalletCard)
+		if !_okWalletCard {
+			return nil, fmt.Errorf("decode: field wallet_card: unexpected type %T", _objWalletCard)
+		}
+		v.WalletCard = _cWalletCard
+	}
+	if v.Flags2.Has(27) {
+		_objShareTheme, _errShareTheme := ReadTLObject(r)
+		if _errShareTheme != nil {
+			return nil, _errShareTheme
+		}
+		_cShareTheme, _okShareTheme := _objShareTheme.(ShareThemeClass)
+		if !_okShareTheme {
+			return nil, fmt.Errorf("decode: field share_theme: unexpected type %T", _objShareTheme)
+		}
+		v.ShareTheme = _cShareTheme
 	}
 	return v, nil
 }

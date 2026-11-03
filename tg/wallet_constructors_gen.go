@@ -15,6 +15,8 @@ var ConstructorMapWallet = map[uint32]func() TLObject{
 	0x0e1f6896: func() TLObject { return &WalletTonConnectSessions{} },
 	0xbde90a8d: func() TLObject { return &WalletExistingBalance{} },
 	0x4c1ef10e: func() TLObject { return &WalletNftAttribute{} },
-	0x3441fd1c: func() TLObject { return &WalletNftItem{} },
+	0x173dfaf3: func() TLObject { return &WalletNftItem{} },
 	0x794d486f: func() TLObject { return &WalletNftItems{} },
+	0xf3010cba: func() TLObject { return &WalletCardSticker{} },
+	0x8ed043b1: func() TLObject { return &WalletCard{} },
 }

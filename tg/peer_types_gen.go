@@ -2120,7 +2120,7 @@ const ChatTypeID = 0x41cbf256
 const ChatForbiddenTypeID = 0x6592a1a7
 
 // ChannelTypeID is the constructor ID for TL type channel.
-const ChannelTypeID = 0xd49f34c6
+const ChannelTypeID = 0x7ad15240
 
 // ChannelForbiddenTypeID is the constructor ID for TL type channelForbidden.
 const ChannelForbiddenTypeID = 0x17d493d5
@@ -2419,7 +2419,7 @@ func init() {
 	}
 }
 
-// Channel represents the TL constructor channel (0xd49f34c6).
+// Channel represents the TL constructor channel (0x7ad15240).
 //
 // See https://core.telegram.org/constructor/channel for reference.
 type Channel struct {
@@ -2453,6 +2453,7 @@ type Channel struct {
 	BroadcastMessagesAllowed bool                 `json:"broadcast_messages_allowed,omitempty"`
 	Monoforum                bool                 `json:"monoforum,omitempty"`
 	ForumTabs                bool                 `json:"forum_tabs,omitempty"`
+	InNews                   bool                 `json:"in_news,omitempty"`
 	ID                       int64                `json:"id,omitempty"`
 	AccessHash               int64                `json:"access_hash,omitempty"`
 	Title                    string               `json:"title,omitempty"`
@@ -2475,6 +2476,7 @@ type Channel struct {
 	SendPaidMessagesStars    int64                `json:"send_paid_messages_stars,omitempty"`
 	LinkedMonoforumID        int64                `json:"linked_monoforum_id,omitempty"`
 	LinkedCommunityID        int64                `json:"linked_community_id,omitempty"`
+	PinnedMsgID              int32                `json:"pinned_msg_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -2563,6 +2565,9 @@ func (v *Channel) SetFlags() {
 	if v.ForumTabs {
 		v.Flags2.Set(19)
 	}
+	if v.InNews {
+		v.Flags2.Set(21)
+	}
 	if v.AccessHash != 0 {
 		v.Flags.Set(13)
 	}
@@ -2617,9 +2622,12 @@ func (v *Channel) SetFlags() {
 	if v.LinkedCommunityID != 0 {
 		v.Flags2.Set(20)
 	}
+	if v.PinnedMsgID != 0 {
+		v.Flags2.Set(22)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xd49f34c6.
+// ConstructorID returns the TL constructor identifier 0x7ad15240.
 func (v *Channel) ConstructorID() uint32 {
 	return ChannelTypeID
 }
@@ -2719,6 +2727,9 @@ func (v *Channel) Encode(b *bytes.Buffer) error {
 	if v.Flags2.Has(20) {
 		WriteLong(b, v.LinkedCommunityID)
 	}
+	if v.Flags2.Has(22) {
+		WriteInt(b, uint32(v.PinnedMsgID))
+	}
 	return nil
 }
 
@@ -2763,6 +2774,7 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 	v.BroadcastMessagesAllowed = v.Flags2.Has(16)
 	v.Monoforum = v.Flags2.Has(17)
 	v.ForumTabs = v.Flags2.Has(19)
+	v.InNews = v.Flags2.Has(21)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -2982,6 +2994,13 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 			return nil, _eLinkedCommunityID
 		}
 		v.LinkedCommunityID = _rLinkedCommunityID
+	}
+	if v.Flags2.Has(22) {
+		_rPinnedMsgID, _ePinnedMsgID := r.ReadInt32()
+		if _ePinnedMsgID != nil {
+			return nil, _ePinnedMsgID
+		}
+		v.PinnedMsgID = _rPinnedMsgID
 	}
 	return v, nil
 }
@@ -15036,6 +15055,12 @@ const WalletTransactionPeerOnrampTypeID = 0xe595186e
 // WalletTransactionPeerUnsupportedTypeID is the constructor ID for TL type walletTransactionPeerUnsupported.
 const WalletTransactionPeerUnsupportedTypeID = 0x728bed5a
 
+// WalletTransactionPeerChannelTypeID is the constructor ID for TL type walletTransactionPeerChannel.
+const WalletTransactionPeerChannelTypeID = 0x54e70c31
+
+// WalletTransactionPeerTelegramGiftTypeID is the constructor ID for TL type walletTransactionPeerTelegramGift.
+const WalletTransactionPeerTelegramGiftTypeID = 0xf4729499
+
 // isWalletTransactionPeer marks WalletTransactionPeerUser as implementing the WalletTransactionPeerClass interface.
 func (*WalletTransactionPeerUser) isWalletTransactionPeer() {}
 
@@ -15047,6 +15072,12 @@ func (*WalletTransactionPeerOnramp) isWalletTransactionPeer() {}
 
 // isWalletTransactionPeer marks WalletTransactionPeerUnsupported as implementing the WalletTransactionPeerClass interface.
 func (*WalletTransactionPeerUnsupported) isWalletTransactionPeer() {}
+
+// isWalletTransactionPeer marks WalletTransactionPeerChannel as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerChannel) isWalletTransactionPeer() {}
+
+// isWalletTransactionPeer marks WalletTransactionPeerTelegramGift as implementing the WalletTransactionPeerClass interface.
+func (*WalletTransactionPeerTelegramGift) isWalletTransactionPeer() {}
 
 // WalletTransactionPeerUser represents the TL constructor walletTransactionPeerUser (0xd4ea706d).
 //
@@ -15286,5 +15317,126 @@ func DecodeWalletTransactionPeerUnsupported(r *Reader) (*WalletTransactionPeerUn
 func init() {
 	Registry[WalletTransactionPeerUnsupportedTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWalletTransactionPeerUnsupported(r)
+	}
+}
+
+// WalletTransactionPeerChannel represents the TL constructor walletTransactionPeerChannel (0x54e70c31).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerChannel for reference.
+type WalletTransactionPeerChannel struct {
+	Flags     Fields `json:"-"`
+	ChannelID int64  `json:"channel_id,omitempty"`
+	Address   string `json:"address,omitempty"`
+	Domain    string `json:"domain,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransactionPeerChannel) SetFlags() {
+	if v.Domain != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x54e70c31.
+func (v *WalletTransactionPeerChannel) ConstructorID() uint32 {
+	return WalletTransactionPeerChannelTypeID
+}
+
+// Encode serializes WalletTransactionPeerChannel to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerChannel) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerChannelTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.ChannelID)
+	WriteString(b, v.Address)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Domain)
+	}
+	return nil
+}
+
+// DecodeWalletTransactionPeerChannel deserializes a WalletTransactionPeerChannel from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerChannel(r *Reader) (*WalletTransactionPeerChannel, error) {
+	v := &WalletTransactionPeerChannel{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rChannelID, _eChannelID := r.ReadInt64()
+	if _eChannelID != nil {
+		return nil, _eChannelID
+	}
+	v.ChannelID = _rChannelID
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	if v.Flags.Has(0) {
+		_rDomain, _eDomain := r.ReadString()
+		if _eDomain != nil {
+			return nil, _eDomain
+		}
+		v.Domain = _rDomain
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerChannelTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerChannel(r)
+	}
+}
+
+// WalletTransactionPeerTelegramGift represents the TL constructor walletTransactionPeerTelegramGift (0xf4729499).
+//
+// See https://core.telegram.org/constructor/walletTransactionPeerTelegramGift for reference.
+type WalletTransactionPeerTelegramGift struct {
+	Flags      Fields `json:"-"`
+	OwnProfile bool   `json:"own_profile,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletTransactionPeerTelegramGift) SetFlags() {
+	if v.OwnProfile {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xf4729499.
+func (v *WalletTransactionPeerTelegramGift) ConstructorID() uint32 {
+	return WalletTransactionPeerTelegramGiftTypeID
+}
+
+// Encode serializes WalletTransactionPeerTelegramGift to a bytes.Buffer using the TL binary protocol.
+func (v *WalletTransactionPeerTelegramGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletTransactionPeerTelegramGiftTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// DecodeWalletTransactionPeerTelegramGift deserializes a WalletTransactionPeerTelegramGift from a reader using the TL binary protocol.
+func DecodeWalletTransactionPeerTelegramGift(r *Reader) (*WalletTransactionPeerTelegramGift, error) {
+	v := &WalletTransactionPeerTelegramGift{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.OwnProfile = v.Flags.Has(0)
+	return v, nil
+}
+
+func init() {
+	Registry[WalletTransactionPeerTelegramGiftTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletTransactionPeerTelegramGift(r)
 	}
 }

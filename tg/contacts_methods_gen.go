@@ -1463,3 +1463,110 @@ func (c *RPCClient) ContactsUpdateContactNote(ctx context.Context, req *Contacts
 	_ = result
 	return true, nil
 }
+
+// ContactsExportNoPaidMessagesTokenTypeID is the constructor ID for the RPC function contacts.exportNoPaidMessagesToken.
+const ContactsExportNoPaidMessagesTokenTypeID = 0x83c586ae
+
+// ContactsExportNoPaidMessagesTokenRequest represents TL type `contacts.exportNoPaidMessagesToken#83c586ae`.
+//
+// See https://core.telegram.org/method/contacts/exportNoPaidMessagesToken for reference.
+type ContactsExportNoPaidMessagesTokenRequest struct {
+	Flags     Fields `json:"-"`
+	Revoke    bool   `json:"revoke,omitempty"`
+	Temporary bool   `json:"temporary,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *ContactsExportNoPaidMessagesTokenRequest) SetFlags() {
+	if v.Revoke {
+		v.Flags.Set(0)
+	}
+	if v.Temporary {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x83c586ae.
+func (v *ContactsExportNoPaidMessagesTokenRequest) ConstructorID() uint32 {
+	return ContactsExportNoPaidMessagesTokenTypeID
+}
+
+// Encode serializes ContactsExportNoPaidMessagesTokenRequest to a bytes.Buffer using the TL binary protocol.
+func (v *ContactsExportNoPaidMessagesTokenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ContactsExportNoPaidMessagesTokenTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// ContactsExportNoPaidMessagesToken invokes the contacts.exportNoPaidMessagesToken RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) ContactsExportNoPaidMessagesToken(ctx context.Context, req *ContactsExportNoPaidMessagesTokenRequest) (*ExportedNoPaidMessagesToken, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*ExportedNoPaidMessagesToken); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// ContactsImportNoPaidMessagesTokenTypeID is the constructor ID for the RPC function contacts.importNoPaidMessagesToken.
+const ContactsImportNoPaidMessagesTokenTypeID = 0x35a7c6ca
+
+// ContactsImportNoPaidMessagesTokenRequest represents TL type `contacts.importNoPaidMessagesToken#35a7c6ca`.
+//
+// See https://core.telegram.org/method/contacts/importNoPaidMessagesToken for reference.
+type ContactsImportNoPaidMessagesTokenRequest struct {
+	UserID InputUserClass `json:"user_id,omitempty"`
+	Token  string         `json:"token,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x35a7c6ca.
+func (v *ContactsImportNoPaidMessagesTokenRequest) ConstructorID() uint32 {
+	return ContactsImportNoPaidMessagesTokenTypeID
+}
+
+// Encode serializes ContactsImportNoPaidMessagesTokenRequest to a bytes.Buffer using the TL binary protocol.
+func (v *ContactsImportNoPaidMessagesTokenRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ContactsImportNoPaidMessagesTokenTypeID)
+	if _err := EncodeTLObject(b, v.UserID); _err != nil {
+		return fmt.Errorf("encode field user_id: %w", _err)
+	}
+	WriteString(b, v.Token)
+	return nil
+}
+
+// ContactsImportNoPaidMessagesToken invokes the contacts.importNoPaidMessagesToken RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) ContactsImportNoPaidMessagesToken(ctx context.Context, req *ContactsImportNoPaidMessagesTokenRequest) (UserClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(UserClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}

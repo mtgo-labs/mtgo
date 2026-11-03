@@ -414,6 +414,22 @@ func TestGenerateFunctions(t *testing.T) {
 			QualType: "TestObj",
 			Type:     "TestObj",
 		},
+		{
+			// Regression: a flags word with no conditional fields yet (layer 232
+			// payments.getStarGiftWithdrawalUrl shape). Encode calls SetFlags for
+			// any combinator with flags, so the method must exist even when
+			// there is nothing to compute.
+			Section:  SectionFunctions,
+			QualName: "testFuncFlagsEmpty",
+			Name:     "TestFuncFlagsEmpty",
+			ID:       0x0ABCDE00,
+			Args: []Arg{
+				{Name: "flags", Type: "#", FlagBit: -1},
+				{Name: "plain", Type: "string", FlagBit: -1},
+			},
+			QualType: "TestObj",
+			Type:     "TestObj",
+		},
 	}
 
 	tmpDir := t.TempDir()
@@ -442,5 +458,8 @@ func TestGenerateFunctions(t *testing.T) {
 	}
 	if !strings.Contains(content, "OptVal") {
 		t.Fatal("missing optional string field")
+	}
+	if !strings.Contains(content, "func (v *TestFuncFlagsEmptyRequest) SetFlags()") {
+		t.Fatal("missing SetFlags for flags word without conditional fields")
 	}
 }

@@ -5,7 +5,7 @@ package tg
 // ConstructorMapMessages maps constructor IDs to factory functions.
 var ConstructorMapMessages = map[uint32]func() TLObject{
 	0x2633421b: func() TLObject { return &ChatFull{} },
-	0xa04e8d3a: func() TLObject { return &ChannelFull{} },
+	0xc4c4dd40: func() TLObject { return &ChannelFull{} },
 	0xcbb7a507: func() TLObject { return &CommunityFull{} },
 	0xe5d7d19c: func() TLObject { return &MessagesChatFull{} },
 	0x90a6ca84: func() TLObject { return &MessageEmpty{} },
@@ -101,6 +101,7 @@ var ConstructorMapMessages = map[uint32]func() TLObject{
 	0x4a8bfe80: func() TLObject { return &MessageActionChatJoinedViaCommunity{} },
 	0x9329ea33: func() TLObject { return &MessageActionGramTransfer{} },
 	0x69b8c4bf: func() TLObject { return &MessageActionWalletTonConnectRequest{} },
+	0xc1d2f1c6: func() TLObject { return &MessageActionNoPaidMessagesTokenUsed{} },
 	0xfc89f7f3: func() TLObject { return &Dialog{} },
 	0x71bd134c: func() TLObject { return &DialogFolder{} },
 	0xf78a0973: func() TLObject { return &DialogCommunity{} },
@@ -295,7 +296,7 @@ var ConstructorMapMessages = map[uint32]func() TLObject{
 	0x455b853d: func() TLObject { return &MessageViews{} },
 	0xb6c4f543: func() TLObject { return &MessagesMessageViews{} },
 	0xa6341782: func() TLObject { return &MessagesDiscussionMessage{} },
-	0x1b97dd66: func() TLObject { return &MessageReplyHeader{} },
+	0xddb5ab75: func() TLObject { return &MessageReplyHeader{} },
 	0x0e5af939: func() TLObject { return &MessageReplyStoryHeader{} },
 	0x83d60fc2: func() TLObject { return &MessageReplies{} },
 	0x1662af0b: func() TLObject { return &MessagesHistoryImport{} },
@@ -413,4 +414,6 @@ var ConstructorMapMessages = map[uint32]func() TLObject{
 	0xdd27bee9: func() TLObject { return &EphemeralMessage{} },
 	0x4203998f: func() TLObject { return &MessagesTranslatedRichMessage{} },
 	0x4c4537c8: func() TLObject { return &MessagesComposedRichMessageWithAi{} },
+	0x695dd042: func() TLObject { return &ExportedNoPaidMessagesToken{} },
+	0x57df45a7: func() TLObject { return &InputWalletCardSticker{} },
 }

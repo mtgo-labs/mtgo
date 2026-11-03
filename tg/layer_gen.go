@@ -3,4 +3,4 @@
 package tg
 
 // Layer is the MTProto TL schema layer version used by this package.
-const Layer = 230
+const Layer = 232

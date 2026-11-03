@@ -6687,20 +6687,21 @@ func (c *RPCClient) MessagesRequestURLAuth(ctx context.Context, req *MessagesReq
 }
 
 // MessagesAcceptURLAuthTypeID is the constructor ID for the RPC function messages.acceptUrlAuth.
-const MessagesAcceptURLAuthTypeID = 0x67a3f0de
+const MessagesAcceptURLAuthTypeID = 0x18dd4e92
 
-// MessagesAcceptURLAuthRequest represents TL type `messages.acceptUrlAuth#67a3f0de`.
+// MessagesAcceptURLAuthRequest represents TL type `messages.acceptUrlAuth#18dd4e92`.
 //
 // See https://core.telegram.org/method/messages/acceptUrlAuth for reference.
 type MessagesAcceptURLAuthRequest struct {
-	Flags            Fields         `json:"-"`
-	WriteAllowed     bool           `json:"write_allowed,omitempty"`
-	SharePhoneNumber bool           `json:"share_phone_number,omitempty"`
-	Peer             InputPeerClass `json:"peer,omitempty"`
-	MsgID            int32          `json:"msg_id,omitempty"`
-	ButtonID         int32          `json:"button_id,omitempty"`
-	URL              string         `json:"url,omitempty"`
-	MatchCode        string         `json:"match_code,omitempty"`
+	Flags             Fields                       `json:"-"`
+	WriteAllowed      bool                         `json:"write_allowed,omitempty"`
+	SharePhoneNumber  bool                         `json:"share_phone_number,omitempty"`
+	Peer              InputPeerClass               `json:"peer,omitempty"`
+	MsgID             int32                        `json:"msg_id,omitempty"`
+	ButtonID          int32                        `json:"button_id,omitempty"`
+	URL               string                       `json:"url,omitempty"`
+	MatchCode         string                       `json:"match_code,omitempty"`
+	TonconnectSession *InputTonConnectOauthSession `json:"tonconnect_session,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -6726,9 +6727,12 @@ func (v *MessagesAcceptURLAuthRequest) SetFlags() {
 	if v.MatchCode != "" {
 		v.Flags.Set(4)
 	}
+	if v.TonconnectSession != nil {
+		v.Flags.Set(5)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x67a3f0de.
+// ConstructorID returns the TL constructor identifier 0x18dd4e92.
 func (v *MessagesAcceptURLAuthRequest) ConstructorID() uint32 {
 	return MessagesAcceptURLAuthTypeID
 }
@@ -6757,6 +6761,11 @@ func (v *MessagesAcceptURLAuthRequest) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(4) {
 		WriteString(b, v.MatchCode)
+	}
+	if v.Flags.Has(5) {
+		if _err := EncodeTLObject(b, v.TonconnectSession); _err != nil {
+			return fmt.Errorf("encode field tonconnect_session: %w", _err)
+		}
 	}
 	return nil
 }
@@ -15373,6 +15382,100 @@ func (c *RPCClient) MessagesRequestChatJoinWebView(ctx context.Context, req *Mes
 		return nil, err
 	}
 	if _c, _ok := result.(*WebViewResultURL); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesSetShareThemeTypeID is the constructor ID for the RPC function messages.setShareTheme.
+const MessagesSetShareThemeTypeID = 0x698a9b1a
+
+// MessagesSetShareThemeRequest represents TL type `messages.setShareTheme#698a9b1a`.
+//
+// See https://core.telegram.org/method/messages/setShareTheme for reference.
+type MessagesSetShareThemeRequest struct {
+	Peer  InputPeerClass  `json:"peer,omitempty"`
+	Theme ShareThemeClass `json:"theme,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x698a9b1a.
+func (v *MessagesSetShareThemeRequest) ConstructorID() uint32 {
+	return MessagesSetShareThemeTypeID
+}
+
+// Encode serializes MessagesSetShareThemeRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesSetShareThemeRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesSetShareThemeTypeID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Theme); _err != nil {
+		return fmt.Errorf("encode field theme: %w", _err)
+	}
+	return nil
+}
+
+// MessagesSetShareTheme invokes the messages.setShareTheme RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesSetShareTheme(ctx context.Context, req *MessagesSetShareThemeRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// MessagesGetShareThemeBackdropsTypeID is the constructor ID for the RPC function messages.getShareThemeBackdrops.
+const MessagesGetShareThemeBackdropsTypeID = 0xf4599ef2
+
+// MessagesGetShareThemeBackdropsRequest represents TL type `messages.getShareThemeBackdrops#f4599ef2`.
+//
+// See https://core.telegram.org/method/messages/getShareThemeBackdrops for reference.
+type MessagesGetShareThemeBackdropsRequest struct {
+	Hash int32 `json:"hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf4599ef2.
+func (v *MessagesGetShareThemeBackdropsRequest) ConstructorID() uint32 {
+	return MessagesGetShareThemeBackdropsTypeID
+}
+
+// Encode serializes MessagesGetShareThemeBackdropsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesGetShareThemeBackdropsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesGetShareThemeBackdropsTypeID)
+	WriteInt(b, uint32(v.Hash))
+	return nil
+}
+
+// MessagesGetShareThemeBackdrops invokes the messages.getShareThemeBackdrops RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesGetShareThemeBackdrops(ctx context.Context, req *MessagesGetShareThemeBackdropsRequest) (ShareThemeBackdropsClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(ShareThemeBackdropsClass); _ok {
 		return _c, nil
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)

@@ -2067,7 +2067,7 @@ type URLAuthResultClass interface {
 }
 
 // URLAuthResultRequestTypeID is the constructor ID for TL type urlAuthResultRequest.
-const URLAuthResultRequestTypeID = 0x3cd623ec
+const URLAuthResultRequestTypeID = 0xbdca6167
 
 // URLAuthResultAcceptedTypeID is the constructor ID for TL type urlAuthResultAccepted.
 const URLAuthResultAcceptedTypeID = 0x623a8fa0
@@ -2084,7 +2084,7 @@ func (*URLAuthResultAccepted) isURLAuthResult() {}
 // isURLAuthResult marks URLAuthResultDefault as implementing the URLAuthResultClass interface.
 func (*URLAuthResultDefault) isURLAuthResult() {}
 
-// URLAuthResultRequest represents the TL constructor urlAuthResultRequest (0x3cd623ec).
+// URLAuthResultRequest represents the TL constructor urlAuthResultRequest (0xbdca6167).
 //
 // See https://core.telegram.org/constructor/urlAuthResultRequest for reference.
 type URLAuthResultRequest struct {
@@ -2093,6 +2093,7 @@ type URLAuthResultRequest struct {
 	RequestPhoneNumber bool      `json:"request_phone_number,omitempty"`
 	MatchCodesFirst    bool      `json:"match_codes_first,omitempty"`
 	IsApp              bool      `json:"is_app,omitempty"`
+	RequestWallet      bool      `json:"request_wallet,omitempty"`
 	Bot                UserClass `json:"bot,omitempty"`
 	Domain             string    `json:"domain,omitempty"`
 	Browser            string    `json:"browser,omitempty"`
@@ -2102,6 +2103,8 @@ type URLAuthResultRequest struct {
 	MatchCodes         []string  `json:"match_codes,omitempty"`
 	UserIDHint         int64     `json:"user_id_hint,omitempty"`
 	VerifiedAppName    string    `json:"verified_app_name,omitempty"`
+	TcSessionID        int64     `json:"tc_session_id,omitempty"`
+	TcClientID         string    `json:"tc_client_id,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -2117,6 +2120,9 @@ func (v *URLAuthResultRequest) SetFlags() {
 	}
 	if v.IsApp {
 		v.Flags.Set(6)
+	}
+	if v.RequestWallet {
+		v.Flags.Set(8)
 	}
 	if v.Browser != "" {
 		v.Flags.Set(2)
@@ -2139,9 +2145,15 @@ func (v *URLAuthResultRequest) SetFlags() {
 	if v.VerifiedAppName != "" {
 		v.Flags.Set(7)
 	}
+	if v.TcSessionID != 0 {
+		v.Flags.Set(9)
+	}
+	if v.TcClientID != "" {
+		v.Flags.Set(10)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x3cd623ec.
+// ConstructorID returns the TL constructor identifier 0xbdca6167.
 func (v *URLAuthResultRequest) ConstructorID() uint32 {
 	return URLAuthResultRequestTypeID
 }
@@ -2179,6 +2191,12 @@ func (v *URLAuthResultRequest) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(7) {
 		WriteString(b, v.VerifiedAppName)
 	}
+	if v.Flags.Has(9) {
+		WriteLong(b, v.TcSessionID)
+	}
+	if v.Flags.Has(10) {
+		WriteString(b, v.TcClientID)
+	}
 	return nil
 }
 
@@ -2194,6 +2212,7 @@ func DecodeURLAuthResultRequest(r *Reader) (*URLAuthResultRequest, error) {
 	v.RequestPhoneNumber = v.Flags.Has(1)
 	v.MatchCodesFirst = v.Flags.Has(5)
 	v.IsApp = v.Flags.Has(6)
+	v.RequestWallet = v.Flags.Has(8)
 	_objBot, _errBot := ReadTLObject(r)
 	if _errBot != nil {
 		return nil, _errBot
@@ -2256,6 +2275,20 @@ func DecodeURLAuthResultRequest(r *Reader) (*URLAuthResultRequest, error) {
 			return nil, _eVerifiedAppName
 		}
 		v.VerifiedAppName = _rVerifiedAppName
+	}
+	if v.Flags.Has(9) {
+		_rTcSessionID, _eTcSessionID := r.ReadInt64()
+		if _eTcSessionID != nil {
+			return nil, _eTcSessionID
+		}
+		v.TcSessionID = _rTcSessionID
+	}
+	if v.Flags.Has(10) {
+		_rTcClientID, _eTcClientID := r.ReadString()
+		if _eTcClientID != nil {
+			return nil, _eTcClientID
+		}
+		v.TcClientID = _rTcClientID
 	}
 	return v, nil
 }
@@ -2970,6 +3003,75 @@ func DecodeAuthFirebasePnvIntent(r *Reader) (*AuthFirebasePnvIntent, error) {
 func init() {
 	Registry[AuthFirebasePnvIntentTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeAuthFirebasePnvIntent(r)
+	}
+}
+
+// InputTonConnectOauthSessionTypeID is the constructor ID for TL type inputTonConnectOauthSession.
+const InputTonConnectOauthSessionTypeID = 0x629f66ce
+
+// InputTonConnectOauthSession represents the TL constructor inputTonConnectOauthSession (0x629f66ce).
+//
+// See https://core.telegram.org/constructor/inputTonConnectOauthSession for reference.
+type InputTonConnectOauthSession struct {
+	SessionID       int64                 `json:"session_id,omitempty"`
+	ChallengeAnswer []byte                `json:"challenge_answer,omitempty"`
+	Body            []byte                `json:"body,omitempty"`
+	Proof           *WalletOwnershipProof `json:"proof,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x629f66ce.
+func (v *InputTonConnectOauthSession) ConstructorID() uint32 {
+	return InputTonConnectOauthSessionTypeID
+}
+
+// Encode serializes InputTonConnectOauthSession to a bytes.Buffer using the TL binary protocol.
+func (v *InputTonConnectOauthSession) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputTonConnectOauthSessionTypeID)
+	WriteLong(b, v.SessionID)
+	WriteBytes(b, v.ChallengeAnswer)
+	WriteBytes(b, v.Body)
+	if _err := EncodeTLObject(b, v.Proof); _err != nil {
+		return fmt.Errorf("encode field proof: %w", _err)
+	}
+	return nil
+}
+
+// DecodeInputTonConnectOauthSession deserializes a InputTonConnectOauthSession from a reader using the TL binary protocol.
+func DecodeInputTonConnectOauthSession(r *Reader) (*InputTonConnectOauthSession, error) {
+	v := &InputTonConnectOauthSession{}
+	_rSessionID, _eSessionID := r.ReadInt64()
+	if _eSessionID != nil {
+		return nil, _eSessionID
+	}
+	v.SessionID = _rSessionID
+	_rChallengeAnswer, _eChallengeAnswer := r.ReadBytes()
+	if _eChallengeAnswer != nil {
+		return nil, _eChallengeAnswer
+	}
+	v.ChallengeAnswer = _rChallengeAnswer
+	_rBody, _eBody := r.ReadBytes()
+	if _eBody != nil {
+		return nil, _eBody
+	}
+	v.Body = _rBody
+	_objProof, _errProof := ReadTLObject(r)
+	if _errProof != nil {
+		return nil, _errProof
+	}
+	_cProof, _okProof := _objProof.(*WalletOwnershipProof)
+	if !_okProof {
+		return nil, fmt.Errorf("decode: field proof: unexpected type %T", _objProof)
+	}
+	v.Proof = _cProof
+	return v, nil
+}
+
+func init() {
+	Registry[InputTonConnectOauthSessionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputTonConnectOauthSession(r)
 	}
 }
 

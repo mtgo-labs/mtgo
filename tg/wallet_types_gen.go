@@ -785,9 +785,9 @@ func init() {
 }
 
 // WalletNftItemTypeID is the constructor ID for TL type wallet.nftItem.
-const WalletNftItemTypeID = 0x3441fd1c
+const WalletNftItemTypeID = 0x173dfaf3
 
-// WalletNftItem represents the TL constructor wallet.nftItem (0x3441fd1c).
+// WalletNftItem represents the TL constructor wallet.nftItem (0x173dfaf3).
 //
 // See https://core.telegram.org/constructor/wallet.nftItem for reference.
 type WalletNftItem struct {
@@ -804,6 +804,7 @@ type WalletNftItem struct {
 	Lottie            WebDocumentClass      `json:"lottie,omitempty"`
 	Attributes        []*WalletNftAttribute `json:"attributes,omitempty"`
 	Extra             *DataJSON             `json:"extra,omitempty"`
+	Gift              StarGiftClass         `json:"gift,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -835,9 +836,12 @@ func (v *WalletNftItem) SetFlags() {
 	if v.Extra != nil {
 		v.Flags.Set(8)
 	}
+	if v.Gift != nil {
+		v.Flags.Set(9)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x3441fd1c.
+// ConstructorID returns the TL constructor identifier 0x173dfaf3.
 func (v *WalletNftItem) ConstructorID() uint32 {
 	return WalletNftItemTypeID
 }
@@ -894,6 +898,11 @@ func (v *WalletNftItem) Encode(b *bytes.Buffer) error {
 	if v.Flags.Has(8) {
 		if _err := EncodeTLObject(b, v.Extra); _err != nil {
 			return fmt.Errorf("encode field extra: %w", _err)
+		}
+	}
+	if v.Flags.Has(9) {
+		if _err := EncodeTLObject(b, v.Gift); _err != nil {
+			return fmt.Errorf("encode field gift: %w", _err)
 		}
 	}
 	return nil
@@ -1026,6 +1035,17 @@ func DecodeWalletNftItem(r *Reader) (*WalletNftItem, error) {
 		}
 		v.Extra = _cExtra
 	}
+	if v.Flags.Has(9) {
+		_objGift, _errGift := ReadTLObject(r)
+		if _errGift != nil {
+			return nil, _errGift
+		}
+		_cGift, _okGift := _objGift.(StarGiftClass)
+		if !_okGift {
+			return nil, fmt.Errorf("decode: field gift: unexpected type %T", _objGift)
+		}
+		v.Gift = _cGift
+	}
 	return v, nil
 }
 
@@ -1127,5 +1147,188 @@ func DecodeWalletNftItems(r *Reader) (*WalletNftItems, error) {
 func init() {
 	Registry[WalletNftItemsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWalletNftItems(r)
+	}
+}
+
+// WalletCardStickerTypeID is the constructor ID for TL type wallet.cardSticker.
+const WalletCardStickerTypeID = 0xf3010cba
+
+// WalletCardSticker represents the TL constructor wallet.cardSticker (0xf3010cba).
+//
+// See https://core.telegram.org/constructor/wallet.cardSticker for reference.
+type WalletCardSticker struct {
+	Coordinates *MediaAreaCoordinates `json:"coordinates,omitempty"`
+	Nft         *WalletNftItem        `json:"nft,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xf3010cba.
+func (v *WalletCardSticker) ConstructorID() uint32 {
+	return WalletCardStickerTypeID
+}
+
+// Encode serializes WalletCardSticker to a bytes.Buffer using the TL binary protocol.
+func (v *WalletCardSticker) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletCardStickerTypeID)
+	if _err := EncodeTLObject(b, v.Coordinates); _err != nil {
+		return fmt.Errorf("encode field coordinates: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.Nft); _err != nil {
+		return fmt.Errorf("encode field nft: %w", _err)
+	}
+	return nil
+}
+
+// DecodeWalletCardSticker deserializes a WalletCardSticker from a reader using the TL binary protocol.
+func DecodeWalletCardSticker(r *Reader) (*WalletCardSticker, error) {
+	v := &WalletCardSticker{}
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
+	_objNft, _errNft := ReadTLObject(r)
+	if _errNft != nil {
+		return nil, _errNft
+	}
+	_cNft, _okNft := _objNft.(*WalletNftItem)
+	if !_okNft {
+		return nil, fmt.Errorf("decode: field nft: unexpected type %T", _objNft)
+	}
+	v.Nft = _cNft
+	return v, nil
+}
+
+func init() {
+	Registry[WalletCardStickerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletCardSticker(r)
+	}
+}
+
+// WalletCardTypeID is the constructor ID for TL type wallet.card.
+const WalletCardTypeID = 0x8ed043b1
+
+// WalletCard represents the TL constructor wallet.card (0x8ed043b1).
+//
+// See https://core.telegram.org/constructor/wallet.card for reference.
+type WalletCard struct {
+	Flags     Fields               `json:"-"`
+	Stickers  []*WalletCardSticker `json:"stickers,omitempty"`
+	BgNftItem *WalletNftItem       `json:"bg_nft_item,omitempty"`
+	Address   string               `json:"address,omitempty"`
+	Balance   int64                `json:"balance,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WalletCard) SetFlags() {
+	if v.Stickers != nil {
+		v.Flags.Set(0)
+	}
+	if v.BgNftItem != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x8ed043b1.
+func (v *WalletCard) ConstructorID() uint32 {
+	return WalletCardTypeID
+}
+
+// Encode serializes WalletCard to a bytes.Buffer using the TL binary protocol.
+func (v *WalletCard) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WalletCardTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Stickers)))
+		for _, _item := range v.Stickers {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field stickers: %w", _err)
+			}
+		}
+	}
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.BgNftItem); _err != nil {
+			return fmt.Errorf("encode field bg_nft_item: %w", _err)
+		}
+	}
+	WriteString(b, v.Address)
+	WriteLong(b, v.Balance)
+	return nil
+}
+
+// DecodeWalletCard deserializes a WalletCard from a reader using the TL binary protocol.
+func DecodeWalletCard(r *Reader) (*WalletCard, error) {
+	v := &WalletCard{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	if v.Flags.Has(0) {
+		_vhdrStickers, _ehdrStickers := r.ReadUint32()
+		if _ehdrStickers != nil {
+			return nil, _ehdrStickers
+		}
+		if _errStickers := checkVectorConstructor(_vhdrStickers); _errStickers != nil {
+			return nil, _errStickers
+		}
+		_cntStickers, _ecntStickers := r.ReadUint32()
+		if _ecntStickers != nil {
+			return nil, _ecntStickers
+		}
+		if _errStickers := checkVectorCount(_cntStickers); _errStickers != nil {
+			return nil, _errStickers
+		}
+		v.Stickers = make([]*WalletCardSticker, _cntStickers)
+		for _iStickers := range v.Stickers {
+			_objStickers, _errStickers := ReadTLObject(r)
+			if _errStickers != nil {
+				return nil, _errStickers
+			}
+			_cStickers, _okStickers := _objStickers.(*WalletCardSticker)
+			if !_okStickers {
+				return nil, fmt.Errorf("decode: field stickers: unexpected type %T", _objStickers)
+			}
+			v.Stickers[_iStickers] = _cStickers
+		}
+	}
+	if v.Flags.Has(1) {
+		_objBgNftItem, _errBgNftItem := ReadTLObject(r)
+		if _errBgNftItem != nil {
+			return nil, _errBgNftItem
+		}
+		_cBgNftItem, _okBgNftItem := _objBgNftItem.(*WalletNftItem)
+		if !_okBgNftItem {
+			return nil, fmt.Errorf("decode: field bg_nft_item: unexpected type %T", _objBgNftItem)
+		}
+		v.BgNftItem = _cBgNftItem
+	}
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rBalance, _eBalance := r.ReadInt64()
+	if _eBalance != nil {
+		return nil, _eBalance
+	}
+	v.Balance = _rBalance
+	return v, nil
+}
+
+func init() {
+	Registry[WalletCardTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWalletCard(r)
 	}
 }

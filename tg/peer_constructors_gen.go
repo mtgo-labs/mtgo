@@ -35,7 +35,7 @@ var ConstructorMapPeer = map[uint32]func() TLObject{
 	0x29562865: func() TLObject { return &ChatEmpty{} },
 	0x41cbf256: func() TLObject { return &Chat{} },
 	0x6592a1a7: func() TLObject { return &ChatForbidden{} },
-	0xd49f34c6: func() TLObject { return &Channel{} },
+	0x7ad15240: func() TLObject { return &Channel{} },
 	0x17d493d5: func() TLObject { return &ChannelForbidden{} },
 	0xfd3cdab8: func() TLObject { return &CommunityForbidden{} },
 	0x65efe954: func() TLObject { return &Community{} },
@@ -227,4 +227,6 @@ var ConstructorMapPeer = map[uint32]func() TLObject{
 	0x062cc1bc: func() TLObject { return &WalletTransactionPeerAddress{} },
 	0xe595186e: func() TLObject { return &WalletTransactionPeerOnramp{} },
 	0x728bed5a: func() TLObject { return &WalletTransactionPeerUnsupported{} },
+	0x54e70c31: func() TLObject { return &WalletTransactionPeerChannel{} },
+	0xf4729499: func() TLObject { return &WalletTransactionPeerTelegramGift{} },
 }

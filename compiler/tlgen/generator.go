@@ -611,7 +611,11 @@ func generateGroupedFunctions(cfg genConfig, outDir string, combos []Combinator,
 			writeTypeFields(&body, cfg, td.Fields)
 			body.WriteString("}\n")
 
-			writeSetFlags(&body, structName, td, len(td.FlagSyncs) > 0)
+			// Emit SetFlags whenever the combinator declares a flags word —
+			// upstream schemas can reserve flags:# with no conditional fields
+			// yet (e.g. layer 232 payments.getStarGiftWithdrawalUrl), and Encode
+			// always calls SetFlags when HasFlags. Mirrors the types path below.
+			writeSetFlags(&body, structName, td, td.HasFlags)
 			fmt.Fprintf(&body, "\n// ConstructorID returns the TL constructor identifier 0x%08x.\nfunc (v *%s) ConstructorID() uint32 {\n\treturn %s\n}\n", td.ID, structName, constName)
 			writeEncodeMethod(&body, cfg, structName, constName, td)
 			writeBoolFlagHelpers(&body, structName, td)

@@ -2459,17 +2459,22 @@ func (c *RPCClient) PaymentsGetSavedStarGift(ctx context.Context, req *PaymentsG
 }
 
 // PaymentsGetStarGiftWithdrawalURLTypeID is the constructor ID for the RPC function payments.getStarGiftWithdrawalUrl.
-const PaymentsGetStarGiftWithdrawalURLTypeID = 0xd06e93a8
+const PaymentsGetStarGiftWithdrawalURLTypeID = 0xc8ca817b
 
-// PaymentsGetStarGiftWithdrawalURLRequest represents TL type `payments.getStarGiftWithdrawalUrl#d06e93a8`.
+// PaymentsGetStarGiftWithdrawalURLRequest represents TL type `payments.getStarGiftWithdrawalUrl#c8ca817b`.
 //
 // See https://core.telegram.org/method/payments/getStarGiftWithdrawalUrl for reference.
 type PaymentsGetStarGiftWithdrawalURLRequest struct {
-	Stargift InputSavedStarGiftClass    `json:"stargift,omitempty"`
-	Password InputCheckPasswordSRPClass `json:"password,omitempty"`
+	Flags       Fields                  `json:"-"`
+	Stargift    InputSavedStarGiftClass `json:"stargift,omitempty"`
+	TmpPassword []byte                  `json:"tmp_password,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0xd06e93a8.
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsGetStarGiftWithdrawalURLRequest) SetFlags() {
+}
+
+// ConstructorID returns the TL constructor identifier 0xc8ca817b.
 func (v *PaymentsGetStarGiftWithdrawalURLRequest) ConstructorID() uint32 {
 	return PaymentsGetStarGiftWithdrawalURLTypeID
 }
@@ -2480,12 +2485,12 @@ func (v *PaymentsGetStarGiftWithdrawalURLRequest) Encode(b *bytes.Buffer) error 
 		return ErrNilTLObject
 	}
 	WriteInt(b, PaymentsGetStarGiftWithdrawalURLTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
 	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
 		return fmt.Errorf("encode field stargift: %w", _err)
 	}
-	if _err := EncodeTLObject(b, v.Password); _err != nil {
-		return fmt.Errorf("encode field password: %w", _err)
-	}
+	WriteBytes(b, v.TmpPassword)
 	return nil
 }
 
@@ -4061,4 +4066,226 @@ func (c *RPCClient) PaymentsCreateOnrampSession(ctx context.Context, req *Paymen
 		return _c, nil
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsWithdrawStarGiftTypeID is the constructor ID for the RPC function payments.withdrawStarGift.
+const PaymentsWithdrawStarGiftTypeID = 0xec2030ae
+
+// PaymentsWithdrawStarGiftRequest represents TL type `payments.withdrawStarGift#ec2030ae`.
+//
+// See https://core.telegram.org/method/payments/withdrawStarGift for reference.
+type PaymentsWithdrawStarGiftRequest struct {
+	Flags         Fields                  `json:"-"`
+	KeepOnProfile bool                    `json:"keep_on_profile,omitempty"`
+	Stargift      InputSavedStarGiftClass `json:"stargift,omitempty"`
+	TmpPassword   []byte                  `json:"tmp_password,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsWithdrawStarGiftRequest) SetFlags() {
+	if v.KeepOnProfile {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xec2030ae.
+func (v *PaymentsWithdrawStarGiftRequest) ConstructorID() uint32 {
+	return PaymentsWithdrawStarGiftTypeID
+}
+
+// Encode serializes PaymentsWithdrawStarGiftRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsWithdrawStarGiftRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsWithdrawStarGiftTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
+	WriteBytes(b, v.TmpPassword)
+	return nil
+}
+
+// PaymentsWithdrawStarGift invokes the payments.withdrawStarGift RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsWithdrawStarGift(ctx context.Context, req *PaymentsWithdrawStarGiftRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// PaymentsDepositStarGiftTypeID is the constructor ID for the RPC function payments.depositStarGift.
+const PaymentsDepositStarGiftTypeID = 0xc0a2ea9f
+
+// PaymentsDepositStarGiftRequest represents TL type `payments.depositStarGift#c0a2ea9f`.
+//
+// See https://core.telegram.org/method/payments/depositStarGift for reference.
+type PaymentsDepositStarGiftRequest struct {
+	Flags      Fields         `json:"-"`
+	HideSender bool           `json:"hide_sender,omitempty"`
+	Peer       InputPeerClass `json:"peer,omitempty"`
+	Slug       string         `json:"slug,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsDepositStarGiftRequest) SetFlags() {
+	if v.HideSender {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xc0a2ea9f.
+func (v *PaymentsDepositStarGiftRequest) ConstructorID() uint32 {
+	return PaymentsDepositStarGiftTypeID
+}
+
+// Encode serializes PaymentsDepositStarGiftRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsDepositStarGiftRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsDepositStarGiftTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteString(b, v.Slug)
+	return nil
+}
+
+// PaymentsDepositStarGift invokes the payments.depositStarGift RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsDepositStarGift(ctx context.Context, req *PaymentsDepositStarGiftRequest) (*PaymentsStarGiftDepositPayload, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*PaymentsStarGiftDepositPayload); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// PaymentsDisplayStarGiftTypeID is the constructor ID for the RPC function payments.displayStarGift.
+const PaymentsDisplayStarGiftTypeID = 0x4aa5f0fe
+
+// PaymentsDisplayStarGiftRequest represents TL type `payments.displayStarGift#4aa5f0fe`.
+//
+// See https://core.telegram.org/method/payments/displayStarGift for reference.
+type PaymentsDisplayStarGiftRequest struct {
+	Flags Fields         `json:"-"`
+	Peer  InputPeerClass `json:"peer,omitempty"`
+	Slug  string         `json:"slug,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *PaymentsDisplayStarGiftRequest) SetFlags() {
+	if v.Peer != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x4aa5f0fe.
+func (v *PaymentsDisplayStarGiftRequest) ConstructorID() uint32 {
+	return PaymentsDisplayStarGiftTypeID
+}
+
+// Encode serializes PaymentsDisplayStarGiftRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsDisplayStarGiftRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsDisplayStarGiftTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
+	}
+	WriteString(b, v.Slug)
+	return nil
+}
+
+// PaymentsDisplayStarGift invokes the payments.displayStarGift RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsDisplayStarGift(ctx context.Context, req *PaymentsDisplayStarGiftRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// PaymentsDeleteStarGiftTypeID is the constructor ID for the RPC function payments.deleteStarGift.
+const PaymentsDeleteStarGiftTypeID = 0x3cdaf8aa
+
+// PaymentsDeleteStarGiftRequest represents TL type `payments.deleteStarGift#3cdaf8aa`.
+//
+// See https://core.telegram.org/method/payments/deleteStarGift for reference.
+type PaymentsDeleteStarGiftRequest struct {
+	Stargift InputSavedStarGiftClass `json:"stargift,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3cdaf8aa.
+func (v *PaymentsDeleteStarGiftRequest) ConstructorID() uint32 {
+	return PaymentsDeleteStarGiftTypeID
+}
+
+// Encode serializes PaymentsDeleteStarGiftRequest to a bytes.Buffer using the TL binary protocol.
+func (v *PaymentsDeleteStarGiftRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, PaymentsDeleteStarGiftTypeID)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
+	return nil
+}
+
+// PaymentsDeleteStarGift invokes the payments.deleteStarGift RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) PaymentsDeleteStarGift(ctx context.Context, req *PaymentsDeleteStarGiftRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
 }

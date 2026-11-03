@@ -19,7 +19,7 @@ type ChatFullClass interface {
 const ChatFullTypeID = 0x2633421b
 
 // ChannelFullTypeID is the constructor ID for TL type channelFull.
-const ChannelFullTypeID = 0xa04e8d3a
+const ChannelFullTypeID = 0xc4c4dd40
 
 // CommunityFullTypeID is the constructor ID for TL type communityFull.
 const CommunityFullTypeID = 0xcbb7a507
@@ -382,7 +382,7 @@ func init() {
 	}
 }
 
-// ChannelFull represents the TL constructor channelFull (0xa04e8d3a).
+// ChannelFull represents the TL constructor channelFull (0xc4c4dd40).
 //
 // See https://core.telegram.org/constructor/channelFull for reference.
 type ChannelFull struct {
@@ -456,6 +456,7 @@ type ChannelFull struct {
 	SendPaidMessagesStars  int64                   `json:"send_paid_messages_stars,omitempty"`
 	MainTab                ProfileTabClass         `json:"main_tab,omitempty"`
 	GuardBotID             int64                   `json:"guard_bot_id,omitempty"`
+	ShareTheme             ShareThemeClass         `json:"share_theme,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -637,9 +638,12 @@ func (v *ChannelFull) SetFlags() {
 	if v.GuardBotID != 0 {
 		v.Flags2.Set(23)
 	}
+	if v.ShareTheme != nil {
+		v.Flags2.Set(25)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0xa04e8d3a.
+// ConstructorID returns the TL constructor identifier 0xc4c4dd40.
 func (v *ChannelFull) ConstructorID() uint32 {
 	return ChannelFullTypeID
 }
@@ -806,6 +810,11 @@ func (v *ChannelFull) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags2.Has(23) {
 		WriteLong(b, v.GuardBotID)
+	}
+	if v.Flags2.Has(25) {
+		if _err := EncodeTLObject(b, v.ShareTheme); _err != nil {
+			return fmt.Errorf("encode field share_theme: %w", _err)
+		}
 	}
 	return nil
 }
@@ -1225,6 +1234,17 @@ func DecodeChannelFull(r *Reader) (*ChannelFull, error) {
 			return nil, _eGuardBotID
 		}
 		v.GuardBotID = _rGuardBotID
+	}
+	if v.Flags2.Has(25) {
+		_objShareTheme, _errShareTheme := ReadTLObject(r)
+		if _errShareTheme != nil {
+			return nil, _errShareTheme
+		}
+		_cShareTheme, _okShareTheme := _objShareTheme.(ShareThemeClass)
+		if !_okShareTheme {
+			return nil, fmt.Errorf("decode: field share_theme: unexpected type %T", _objShareTheme)
+		}
+		v.ShareTheme = _cShareTheme
 	}
 	return v, nil
 }
@@ -4526,6 +4546,9 @@ const MessageActionGramTransferTypeID = 0x9329ea33
 // MessageActionWalletTonConnectRequestTypeID is the constructor ID for TL type messageActionWalletTonConnectRequest.
 const MessageActionWalletTonConnectRequestTypeID = 0x69b8c4bf
 
+// MessageActionNoPaidMessagesTokenUsedTypeID is the constructor ID for TL type messageActionNoPaidMessagesTokenUsed.
+const MessageActionNoPaidMessagesTokenUsedTypeID = 0xc1d2f1c6
+
 // isMessageAction marks MessageActionEmpty as implementing the MessageActionClass interface.
 func (*MessageActionEmpty) isMessageAction() {}
 
@@ -4738,6 +4761,9 @@ func (*MessageActionGramTransfer) isMessageAction() {}
 
 // isMessageAction marks MessageActionWalletTonConnectRequest as implementing the MessageActionClass interface.
 func (*MessageActionWalletTonConnectRequest) isMessageAction() {}
+
+// isMessageAction marks MessageActionNoPaidMessagesTokenUsed as implementing the MessageActionClass interface.
+func (*MessageActionNoPaidMessagesTokenUsed) isMessageAction() {}
 
 // MessageActionEmpty represents the TL constructor messageActionEmpty (0xb6aef7b0).
 //
@@ -9593,6 +9619,38 @@ func DecodeMessageActionWalletTonConnectRequest(r *Reader) (*MessageActionWallet
 func init() {
 	Registry[MessageActionWalletTonConnectRequestTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessageActionWalletTonConnectRequest(r)
+	}
+}
+
+// MessageActionNoPaidMessagesTokenUsed represents the TL constructor messageActionNoPaidMessagesTokenUsed (0xc1d2f1c6).
+//
+// See https://core.telegram.org/constructor/messageActionNoPaidMessagesTokenUsed for reference.
+type MessageActionNoPaidMessagesTokenUsed struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0xc1d2f1c6.
+func (v *MessageActionNoPaidMessagesTokenUsed) ConstructorID() uint32 {
+	return MessageActionNoPaidMessagesTokenUsedTypeID
+}
+
+// Encode serializes MessageActionNoPaidMessagesTokenUsed to a bytes.Buffer using the TL binary protocol.
+func (v *MessageActionNoPaidMessagesTokenUsed) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessageActionNoPaidMessagesTokenUsedTypeID)
+	return nil
+}
+
+// DecodeMessageActionNoPaidMessagesTokenUsed deserializes a MessageActionNoPaidMessagesTokenUsed from a reader using the TL binary protocol.
+func DecodeMessageActionNoPaidMessagesTokenUsed(r *Reader) (*MessageActionNoPaidMessagesTokenUsed, error) {
+	v := &MessageActionNoPaidMessagesTokenUsed{}
+	return v, nil
+}
+
+func init() {
+	Registry[MessageActionNoPaidMessagesTokenUsedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageActionNoPaidMessagesTokenUsed(r)
 	}
 }
 
@@ -24822,7 +24880,7 @@ type MessageReplyHeaderClass interface {
 }
 
 // MessageReplyHeaderTypeID is the constructor ID for TL type messageReplyHeader.
-const MessageReplyHeaderTypeID = 0x1b97dd66
+const MessageReplyHeaderTypeID = 0xddb5ab75
 
 // MessageReplyStoryHeaderTypeID is the constructor ID for TL type messageReplyStoryHeader.
 const MessageReplyStoryHeaderTypeID = 0x0e5af939
@@ -24833,7 +24891,7 @@ func (*MessageReplyHeader) isMessageReplyHeader() {}
 // isMessageReplyHeader marks MessageReplyStoryHeader as implementing the MessageReplyHeaderClass interface.
 func (*MessageReplyStoryHeader) isMessageReplyHeader() {}
 
-// MessageReplyHeader represents the TL constructor messageReplyHeader (0x1b97dd66).
+// MessageReplyHeader represents the TL constructor messageReplyHeader (0xddb5ab75).
 //
 // See https://core.telegram.org/constructor/messageReplyHeader for reference.
 type MessageReplyHeader struct {
@@ -24852,6 +24910,7 @@ type MessageReplyHeader struct {
 	QuoteOffset      int32                `json:"quote_offset,omitempty"`
 	TodoItemID       int32                `json:"todo_item_id,omitempty"`
 	PollOption       []byte               `json:"poll_option,omitempty"`
+	QuoteRich        []RichTextClass      `json:"quote_rich,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -24898,9 +24957,12 @@ func (v *MessageReplyHeader) SetFlags() {
 	if v.PollOption != nil {
 		v.Flags.Set(12)
 	}
+	if v.QuoteRich != nil {
+		v.Flags.Set(14)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x1b97dd66.
+// ConstructorID returns the TL constructor identifier 0xddb5ab75.
 func (v *MessageReplyHeader) ConstructorID() uint32 {
 	return MessageReplyHeaderTypeID
 }
@@ -24954,6 +25016,15 @@ func (v *MessageReplyHeader) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(12) {
 		WriteBytes(b, v.PollOption)
+	}
+	if v.Flags.Has(14) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.QuoteRich)))
+		for _, _item := range v.QuoteRich {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field quote_rich: %w", _err)
+			}
+		}
 	}
 	return nil
 }
@@ -25072,6 +25143,34 @@ func DecodeMessageReplyHeader(r *Reader) (*MessageReplyHeader, error) {
 			return nil, _ePollOption
 		}
 		v.PollOption = _rPollOption
+	}
+	if v.Flags.Has(14) {
+		_vhdrQuoteRich, _ehdrQuoteRich := r.ReadUint32()
+		if _ehdrQuoteRich != nil {
+			return nil, _ehdrQuoteRich
+		}
+		if _errQuoteRich := checkVectorConstructor(_vhdrQuoteRich); _errQuoteRich != nil {
+			return nil, _errQuoteRich
+		}
+		_cntQuoteRich, _ecntQuoteRich := r.ReadUint32()
+		if _ecntQuoteRich != nil {
+			return nil, _ecntQuoteRich
+		}
+		if _errQuoteRich := checkVectorCount(_cntQuoteRich); _errQuoteRich != nil {
+			return nil, _errQuoteRich
+		}
+		v.QuoteRich = make([]RichTextClass, _cntQuoteRich)
+		for _iQuoteRich := range v.QuoteRich {
+			_objQuoteRich, _errQuoteRich := ReadTLObject(r)
+			if _errQuoteRich != nil {
+				return nil, _errQuoteRich
+			}
+			_cQuoteRich, _okQuoteRich := _objQuoteRich.(RichTextClass)
+			if !_okQuoteRich {
+				return nil, fmt.Errorf("decode: field quote_rich: unexpected type %T", _objQuoteRich)
+			}
+			v.QuoteRich[_iQuoteRich] = _cQuoteRich
+		}
 	}
 	return v, nil
 }
@@ -35166,5 +35265,135 @@ func DecodeMessagesComposedRichMessageWithAi(r *Reader) (*MessagesComposedRichMe
 func init() {
 	Registry[MessagesComposedRichMessageWithAiTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessagesComposedRichMessageWithAi(r)
+	}
+}
+
+// ExportedNoPaidMessagesTokenTypeID is the constructor ID for TL type exportedNoPaidMessagesToken.
+const ExportedNoPaidMessagesTokenTypeID = 0x695dd042
+
+// ExportedNoPaidMessagesToken represents the TL constructor exportedNoPaidMessagesToken (0x695dd042).
+//
+// See https://core.telegram.org/constructor/exportedNoPaidMessagesToken for reference.
+type ExportedNoPaidMessagesToken struct {
+	Flags   Fields `json:"-"`
+	Token   string `json:"token,omitempty"`
+	URL     string `json:"url,omitempty"`
+	Expires int32  `json:"expires,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *ExportedNoPaidMessagesToken) SetFlags() {
+	if v.Expires != 0 {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x695dd042.
+func (v *ExportedNoPaidMessagesToken) ConstructorID() uint32 {
+	return ExportedNoPaidMessagesTokenTypeID
+}
+
+// Encode serializes ExportedNoPaidMessagesToken to a bytes.Buffer using the TL binary protocol.
+func (v *ExportedNoPaidMessagesToken) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ExportedNoPaidMessagesTokenTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Token)
+	WriteString(b, v.URL)
+	if v.Flags.Has(0) {
+		WriteInt(b, uint32(v.Expires))
+	}
+	return nil
+}
+
+// DecodeExportedNoPaidMessagesToken deserializes a ExportedNoPaidMessagesToken from a reader using the TL binary protocol.
+func DecodeExportedNoPaidMessagesToken(r *Reader) (*ExportedNoPaidMessagesToken, error) {
+	v := &ExportedNoPaidMessagesToken{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rToken, _eToken := r.ReadString()
+	if _eToken != nil {
+		return nil, _eToken
+	}
+	v.Token = _rToken
+	_rURL, _eURL := r.ReadString()
+	if _eURL != nil {
+		return nil, _eURL
+	}
+	v.URL = _rURL
+	if v.Flags.Has(0) {
+		_rExpires, _eExpires := r.ReadInt32()
+		if _eExpires != nil {
+			return nil, _eExpires
+		}
+		v.Expires = _rExpires
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[ExportedNoPaidMessagesTokenTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeExportedNoPaidMessagesToken(r)
+	}
+}
+
+// InputWalletCardStickerTypeID is the constructor ID for TL type inputWalletCardSticker.
+const InputWalletCardStickerTypeID = 0x57df45a7
+
+// InputWalletCardSticker represents the TL constructor inputWalletCardSticker (0x57df45a7).
+//
+// See https://core.telegram.org/constructor/inputWalletCardSticker for reference.
+type InputWalletCardSticker struct {
+	Coordinates *MediaAreaCoordinates `json:"coordinates,omitempty"`
+	NftAddress  string                `json:"nft_address,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x57df45a7.
+func (v *InputWalletCardSticker) ConstructorID() uint32 {
+	return InputWalletCardStickerTypeID
+}
+
+// Encode serializes InputWalletCardSticker to a bytes.Buffer using the TL binary protocol.
+func (v *InputWalletCardSticker) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputWalletCardStickerTypeID)
+	if _err := EncodeTLObject(b, v.Coordinates); _err != nil {
+		return fmt.Errorf("encode field coordinates: %w", _err)
+	}
+	WriteString(b, v.NftAddress)
+	return nil
+}
+
+// DecodeInputWalletCardSticker deserializes a InputWalletCardSticker from a reader using the TL binary protocol.
+func DecodeInputWalletCardSticker(r *Reader) (*InputWalletCardSticker, error) {
+	v := &InputWalletCardSticker{}
+	_objCoordinates, _errCoordinates := ReadTLObject(r)
+	if _errCoordinates != nil {
+		return nil, _errCoordinates
+	}
+	_cCoordinates, _okCoordinates := _objCoordinates.(*MediaAreaCoordinates)
+	if !_okCoordinates {
+		return nil, fmt.Errorf("decode: field coordinates: unexpected type %T", _objCoordinates)
+	}
+	v.Coordinates = _cCoordinates
+	_rNftAddress, _eNftAddress := r.ReadString()
+	if _eNftAddress != nil {
+		return nil, _eNftAddress
+	}
+	v.NftAddress = _rNftAddress
+	return v, nil
+}
+
+func init() {
+	Registry[InputWalletCardStickerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputWalletCardSticker(r)
 	}
 }

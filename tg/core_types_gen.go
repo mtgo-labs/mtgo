@@ -9711,7 +9711,7 @@ type InputReplyToClass interface {
 }
 
 // InputReplyToMessageTypeID is the constructor ID for TL type inputReplyToMessage.
-const InputReplyToMessageTypeID = 0x3bd4b7c2
+const InputReplyToMessageTypeID = 0x75c1ad70
 
 // InputReplyToStoryTypeID is the constructor ID for TL type inputReplyToStory.
 const InputReplyToStoryTypeID = 0x5881323a
@@ -9734,7 +9734,7 @@ func (*InputReplyToMonoForum) isInputReplyTo() {}
 // isInputReplyTo marks InputReplyToEphemeralMessage as implementing the InputReplyToClass interface.
 func (*InputReplyToEphemeralMessage) isInputReplyTo() {}
 
-// InputReplyToMessage represents the TL constructor inputReplyToMessage (0x3bd4b7c2).
+// InputReplyToMessage represents the TL constructor inputReplyToMessage (0x75c1ad70).
 //
 // See https://core.telegram.org/constructor/inputReplyToMessage for reference.
 type InputReplyToMessage struct {
@@ -9748,6 +9748,7 @@ type InputReplyToMessage struct {
 	MonoforumPeerID InputPeerClass       `json:"monoforum_peer_id,omitempty"`
 	TodoItemID      int32                `json:"todo_item_id,omitempty"`
 	PollOption      []byte               `json:"poll_option,omitempty"`
+	QuoteRich       []RichTextClass      `json:"quote_rich,omitempty"`
 }
 
 // SetFlags computes flags from non-zero optional fields.
@@ -9776,9 +9777,12 @@ func (v *InputReplyToMessage) SetFlags() {
 	if v.PollOption != nil {
 		v.Flags.Set(7)
 	}
+	if v.QuoteRich != nil {
+		v.Flags.Set(8)
+	}
 }
 
-// ConstructorID returns the TL constructor identifier 0x3bd4b7c2.
+// ConstructorID returns the TL constructor identifier 0x75c1ad70.
 func (v *InputReplyToMessage) ConstructorID() uint32 {
 	return InputReplyToMessageTypeID
 }
@@ -9825,6 +9829,15 @@ func (v *InputReplyToMessage) Encode(b *bytes.Buffer) error {
 	}
 	if v.Flags.Has(7) {
 		WriteBytes(b, v.PollOption)
+	}
+	if v.Flags.Has(8) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.QuoteRich)))
+		for _, _item := range v.QuoteRich {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field quote_rich: %w", _err)
+			}
+		}
 	}
 	return nil
 }
@@ -9926,6 +9939,34 @@ func DecodeInputReplyToMessage(r *Reader) (*InputReplyToMessage, error) {
 			return nil, _ePollOption
 		}
 		v.PollOption = _rPollOption
+	}
+	if v.Flags.Has(8) {
+		_vhdrQuoteRich, _ehdrQuoteRich := r.ReadUint32()
+		if _ehdrQuoteRich != nil {
+			return nil, _ehdrQuoteRich
+		}
+		if _errQuoteRich := checkVectorConstructor(_vhdrQuoteRich); _errQuoteRich != nil {
+			return nil, _errQuoteRich
+		}
+		_cntQuoteRich, _ecntQuoteRich := r.ReadUint32()
+		if _ecntQuoteRich != nil {
+			return nil, _ecntQuoteRich
+		}
+		if _errQuoteRich := checkVectorCount(_cntQuoteRich); _errQuoteRich != nil {
+			return nil, _errQuoteRich
+		}
+		v.QuoteRich = make([]RichTextClass, _cntQuoteRich)
+		for _iQuoteRich := range v.QuoteRich {
+			_objQuoteRich, _errQuoteRich := ReadTLObject(r)
+			if _errQuoteRich != nil {
+				return nil, _errQuoteRich
+			}
+			_cQuoteRich, _okQuoteRich := _objQuoteRich.(RichTextClass)
+			if !_okQuoteRich {
+				return nil, fmt.Errorf("decode: field quote_rich: unexpected type %T", _objQuoteRich)
+			}
+			v.QuoteRich[_iQuoteRich] = _cQuoteRich
+		}
 	}
 	return v, nil
 }
@@ -14475,6 +14516,461 @@ func DecodeTonConnectRequest(r *Reader) (*TonConnectRequest, error) {
 func init() {
 	Registry[TonConnectRequestTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeTonConnectRequest(r)
+	}
+}
+
+// ShareThemeClass is the interface for TL type ShareTheme.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the ShareTheme TL type.
+type ShareThemeClass interface {
+	TLObject
+	isShareTheme()
+}
+
+// ShareThemeDefaultTypeID is the constructor ID for TL type shareThemeDefault.
+const ShareThemeDefaultTypeID = 0x95ace84f
+
+// ShareThemeEmojiBackdropTypeID is the constructor ID for TL type shareThemeEmojiBackdrop.
+const ShareThemeEmojiBackdropTypeID = 0x64b334e1
+
+// ShareThemeGiftTypeID is the constructor ID for TL type shareThemeGift.
+const ShareThemeGiftTypeID = 0xebece66d
+
+// InputShareThemeGiftTypeID is the constructor ID for TL type inputShareThemeGift.
+const InputShareThemeGiftTypeID = 0x3fb92b5b
+
+// isShareTheme marks ShareThemeDefault as implementing the ShareThemeClass interface.
+func (*ShareThemeDefault) isShareTheme() {}
+
+// isShareTheme marks ShareThemeEmojiBackdrop as implementing the ShareThemeClass interface.
+func (*ShareThemeEmojiBackdrop) isShareTheme() {}
+
+// isShareTheme marks ShareThemeGift as implementing the ShareThemeClass interface.
+func (*ShareThemeGift) isShareTheme() {}
+
+// isShareTheme marks InputShareThemeGift as implementing the ShareThemeClass interface.
+func (*InputShareThemeGift) isShareTheme() {}
+
+// ShareThemeDefault represents the TL constructor shareThemeDefault (0x95ace84f).
+//
+// See https://core.telegram.org/constructor/shareThemeDefault for reference.
+type ShareThemeDefault struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x95ace84f.
+func (v *ShareThemeDefault) ConstructorID() uint32 {
+	return ShareThemeDefaultTypeID
+}
+
+// Encode serializes ShareThemeDefault to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeDefault) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeDefaultTypeID)
+	return nil
+}
+
+// DecodeShareThemeDefault deserializes a ShareThemeDefault from a reader using the TL binary protocol.
+func DecodeShareThemeDefault(r *Reader) (*ShareThemeDefault, error) {
+	v := &ShareThemeDefault{}
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeDefaultTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeDefault(r)
+	}
+}
+
+// ShareThemeEmojiBackdrop represents the TL constructor shareThemeEmojiBackdrop (0x64b334e1).
+//
+// See https://core.telegram.org/constructor/shareThemeEmojiBackdrop for reference.
+type ShareThemeEmojiBackdrop struct {
+	Flags      Fields          `json:"-"`
+	BackdropID int32           `json:"backdrop_id,omitempty"`
+	Emojis     []ReactionClass `json:"emojis,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *ShareThemeEmojiBackdrop) SetFlags() {
+	if v.BackdropID != 0 {
+		v.Flags.Set(0)
+	}
+	if v.Emojis != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x64b334e1.
+func (v *ShareThemeEmojiBackdrop) ConstructorID() uint32 {
+	return ShareThemeEmojiBackdropTypeID
+}
+
+// Encode serializes ShareThemeEmojiBackdrop to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeEmojiBackdrop) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeEmojiBackdropTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteInt(b, uint32(v.BackdropID))
+	}
+	if v.Flags.Has(1) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Emojis)))
+		for _, _item := range v.Emojis {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field emojis: %w", _err)
+			}
+		}
+	}
+	return nil
+}
+
+// DecodeShareThemeEmojiBackdrop deserializes a ShareThemeEmojiBackdrop from a reader using the TL binary protocol.
+func DecodeShareThemeEmojiBackdrop(r *Reader) (*ShareThemeEmojiBackdrop, error) {
+	v := &ShareThemeEmojiBackdrop{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	if v.Flags.Has(0) {
+		_rBackdropID, _eBackdropID := r.ReadInt32()
+		if _eBackdropID != nil {
+			return nil, _eBackdropID
+		}
+		v.BackdropID = _rBackdropID
+	}
+	if v.Flags.Has(1) {
+		_vhdrEmojis, _ehdrEmojis := r.ReadUint32()
+		if _ehdrEmojis != nil {
+			return nil, _ehdrEmojis
+		}
+		if _errEmojis := checkVectorConstructor(_vhdrEmojis); _errEmojis != nil {
+			return nil, _errEmojis
+		}
+		_cntEmojis, _ecntEmojis := r.ReadUint32()
+		if _ecntEmojis != nil {
+			return nil, _ecntEmojis
+		}
+		if _errEmojis := checkVectorCount(_cntEmojis); _errEmojis != nil {
+			return nil, _errEmojis
+		}
+		v.Emojis = make([]ReactionClass, _cntEmojis)
+		for _iEmojis := range v.Emojis {
+			_objEmojis, _errEmojis := ReadTLObject(r)
+			if _errEmojis != nil {
+				return nil, _errEmojis
+			}
+			_cEmojis, _okEmojis := _objEmojis.(ReactionClass)
+			if !_okEmojis {
+				return nil, fmt.Errorf("decode: field emojis: unexpected type %T", _objEmojis)
+			}
+			v.Emojis[_iEmojis] = _cEmojis
+		}
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeEmojiBackdropTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeEmojiBackdrop(r)
+	}
+}
+
+// ShareThemeGift represents the TL constructor shareThemeGift (0xebece66d).
+//
+// See https://core.telegram.org/constructor/shareThemeGift for reference.
+type ShareThemeGift struct {
+	Stargift StarGiftClass `json:"stargift,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xebece66d.
+func (v *ShareThemeGift) ConstructorID() uint32 {
+	return ShareThemeGiftTypeID
+}
+
+// Encode serializes ShareThemeGift to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeGiftTypeID)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
+	return nil
+}
+
+// DecodeShareThemeGift deserializes a ShareThemeGift from a reader using the TL binary protocol.
+func DecodeShareThemeGift(r *Reader) (*ShareThemeGift, error) {
+	v := &ShareThemeGift{}
+	_objStargift, _errStargift := ReadTLObject(r)
+	if _errStargift != nil {
+		return nil, _errStargift
+	}
+	_cStargift, _okStargift := _objStargift.(StarGiftClass)
+	if !_okStargift {
+		return nil, fmt.Errorf("decode: field stargift: unexpected type %T", _objStargift)
+	}
+	v.Stargift = _cStargift
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeGiftTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeGift(r)
+	}
+}
+
+// InputShareThemeGift represents the TL constructor inputShareThemeGift (0x3fb92b5b).
+//
+// See https://core.telegram.org/constructor/inputShareThemeGift for reference.
+type InputShareThemeGift struct {
+	Stargift InputSavedStarGiftClass `json:"stargift,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x3fb92b5b.
+func (v *InputShareThemeGift) ConstructorID() uint32 {
+	return InputShareThemeGiftTypeID
+}
+
+// Encode serializes InputShareThemeGift to a bytes.Buffer using the TL binary protocol.
+func (v *InputShareThemeGift) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputShareThemeGiftTypeID)
+	if _err := EncodeTLObject(b, v.Stargift); _err != nil {
+		return fmt.Errorf("encode field stargift: %w", _err)
+	}
+	return nil
+}
+
+// DecodeInputShareThemeGift deserializes a InputShareThemeGift from a reader using the TL binary protocol.
+func DecodeInputShareThemeGift(r *Reader) (*InputShareThemeGift, error) {
+	v := &InputShareThemeGift{}
+	_objStargift, _errStargift := ReadTLObject(r)
+	if _errStargift != nil {
+		return nil, _errStargift
+	}
+	_cStargift, _okStargift := _objStargift.(InputSavedStarGiftClass)
+	if !_okStargift {
+		return nil, fmt.Errorf("decode: field stargift: unexpected type %T", _objStargift)
+	}
+	v.Stargift = _cStargift
+	return v, nil
+}
+
+func init() {
+	Registry[InputShareThemeGiftTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputShareThemeGift(r)
+	}
+}
+
+// ShareThemeBackdropOptionTypeID is the constructor ID for TL type shareThemeBackdropOption.
+const ShareThemeBackdropOptionTypeID = 0x45c1d652
+
+// ShareThemeBackdropOption represents the TL constructor shareThemeBackdropOption (0x45c1d652).
+//
+// See https://core.telegram.org/constructor/shareThemeBackdropOption for reference.
+type ShareThemeBackdropOption struct {
+	BackdropID   int32  `json:"backdrop_id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	CenterColor  int32  `json:"center_color,omitempty"`
+	EdgeColor    int32  `json:"edge_color,omitempty"`
+	PatternColor int32  `json:"pattern_color,omitempty"`
+	TextColor    int32  `json:"text_color,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x45c1d652.
+func (v *ShareThemeBackdropOption) ConstructorID() uint32 {
+	return ShareThemeBackdropOptionTypeID
+}
+
+// Encode serializes ShareThemeBackdropOption to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeBackdropOption) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeBackdropOptionTypeID)
+	WriteInt(b, uint32(v.BackdropID))
+	WriteString(b, v.Name)
+	WriteInt(b, uint32(v.CenterColor))
+	WriteInt(b, uint32(v.EdgeColor))
+	WriteInt(b, uint32(v.PatternColor))
+	WriteInt(b, uint32(v.TextColor))
+	return nil
+}
+
+// DecodeShareThemeBackdropOption deserializes a ShareThemeBackdropOption from a reader using the TL binary protocol.
+func DecodeShareThemeBackdropOption(r *Reader) (*ShareThemeBackdropOption, error) {
+	v := &ShareThemeBackdropOption{}
+	_rBackdropID, _eBackdropID := r.ReadInt32()
+	if _eBackdropID != nil {
+		return nil, _eBackdropID
+	}
+	v.BackdropID = _rBackdropID
+	_rName, _eName := r.ReadString()
+	if _eName != nil {
+		return nil, _eName
+	}
+	v.Name = _rName
+	_rCenterColor, _eCenterColor := r.ReadInt32()
+	if _eCenterColor != nil {
+		return nil, _eCenterColor
+	}
+	v.CenterColor = _rCenterColor
+	_rEdgeColor, _eEdgeColor := r.ReadInt32()
+	if _eEdgeColor != nil {
+		return nil, _eEdgeColor
+	}
+	v.EdgeColor = _rEdgeColor
+	_rPatternColor, _ePatternColor := r.ReadInt32()
+	if _ePatternColor != nil {
+		return nil, _ePatternColor
+	}
+	v.PatternColor = _rPatternColor
+	_rTextColor, _eTextColor := r.ReadInt32()
+	if _eTextColor != nil {
+		return nil, _eTextColor
+	}
+	v.TextColor = _rTextColor
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeBackdropOptionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeBackdropOption(r)
+	}
+}
+
+// ShareThemeBackdropsClass is the interface for TL type ShareThemeBackdrops.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the ShareThemeBackdrops TL type.
+type ShareThemeBackdropsClass interface {
+	TLObject
+	isShareThemeBackdrops()
+}
+
+// ShareThemeBackdropsNotModifiedTypeID is the constructor ID for TL type shareThemeBackdropsNotModified.
+const ShareThemeBackdropsNotModifiedTypeID = 0x7a3f6dff
+
+// ShareThemeBackdropsTypeID is the constructor ID for TL type shareThemeBackdrops.
+const ShareThemeBackdropsTypeID = 0xaaeadce0
+
+// isShareThemeBackdrops marks ShareThemeBackdropsNotModified as implementing the ShareThemeBackdropsClass interface.
+func (*ShareThemeBackdropsNotModified) isShareThemeBackdrops() {}
+
+// isShareThemeBackdrops marks ShareThemeBackdrops as implementing the ShareThemeBackdropsClass interface.
+func (*ShareThemeBackdrops) isShareThemeBackdrops() {}
+
+// ShareThemeBackdropsNotModified represents the TL constructor shareThemeBackdropsNotModified (0x7a3f6dff).
+//
+// See https://core.telegram.org/constructor/shareThemeBackdropsNotModified for reference.
+type ShareThemeBackdropsNotModified struct {
+}
+
+// ConstructorID returns the TL constructor identifier 0x7a3f6dff.
+func (v *ShareThemeBackdropsNotModified) ConstructorID() uint32 {
+	return ShareThemeBackdropsNotModifiedTypeID
+}
+
+// Encode serializes ShareThemeBackdropsNotModified to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeBackdropsNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeBackdropsNotModifiedTypeID)
+	return nil
+}
+
+// DecodeShareThemeBackdropsNotModified deserializes a ShareThemeBackdropsNotModified from a reader using the TL binary protocol.
+func DecodeShareThemeBackdropsNotModified(r *Reader) (*ShareThemeBackdropsNotModified, error) {
+	v := &ShareThemeBackdropsNotModified{}
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeBackdropsNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeBackdropsNotModified(r)
+	}
+}
+
+// ShareThemeBackdrops represents the TL constructor shareThemeBackdrops (0xaaeadce0).
+//
+// See https://core.telegram.org/constructor/shareThemeBackdrops for reference.
+type ShareThemeBackdrops struct {
+	Hash      int32                       `json:"hash,omitempty"`
+	Backdrops []*ShareThemeBackdropOption `json:"backdrops,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xaaeadce0.
+func (v *ShareThemeBackdrops) ConstructorID() uint32 {
+	return ShareThemeBackdropsTypeID
+}
+
+// Encode serializes ShareThemeBackdrops to a bytes.Buffer using the TL binary protocol.
+func (v *ShareThemeBackdrops) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, ShareThemeBackdropsTypeID)
+	WriteInt(b, uint32(v.Hash))
+	WriteInt(b, 0x1cb5c415)
+	WriteInt(b, uint32(len(v.Backdrops)))
+	for _, _item := range v.Backdrops {
+		if _err := EncodeTLObject(b, _item); _err != nil {
+			return fmt.Errorf("encode field backdrops: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeShareThemeBackdrops deserializes a ShareThemeBackdrops from a reader using the TL binary protocol.
+func DecodeShareThemeBackdrops(r *Reader) (*ShareThemeBackdrops, error) {
+	v := &ShareThemeBackdrops{}
+	_rHash, _eHash := r.ReadInt32()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_vhdrBackdrops, _ehdrBackdrops := r.ReadUint32()
+	if _ehdrBackdrops != nil {
+		return nil, _ehdrBackdrops
+	}
+	if _errBackdrops := checkVectorConstructor(_vhdrBackdrops); _errBackdrops != nil {
+		return nil, _errBackdrops
+	}
+	_cntBackdrops, _ecntBackdrops := r.ReadUint32()
+	if _ecntBackdrops != nil {
+		return nil, _ecntBackdrops
+	}
+	if _errBackdrops := checkVectorCount(_cntBackdrops); _errBackdrops != nil {
+		return nil, _errBackdrops
+	}
+	v.Backdrops = make([]*ShareThemeBackdropOption, _cntBackdrops)
+	for _iBackdrops := range v.Backdrops {
+		_objBackdrops, _errBackdrops := ReadTLObject(r)
+		if _errBackdrops != nil {
+			return nil, _errBackdrops
+		}
+		_cBackdrops, _okBackdrops := _objBackdrops.(*ShareThemeBackdropOption)
+		if !_okBackdrops {
+			return nil, fmt.Errorf("decode: field backdrops: unexpected type %T", _objBackdrops)
+		}
+		v.Backdrops[_iBackdrops] = _cBackdrops
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[ShareThemeBackdropsTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeShareThemeBackdrops(r)
 	}
 }
 
