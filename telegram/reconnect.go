@@ -1066,9 +1066,11 @@ func (rm *reconnectManager) loop(ctx context.Context, immediate bool, done chan 
 		if refreshOK {
 			// DC option refresh is best-effort. A terminal auth error latches
 			// authLoss and fails ownership; transient refresh failures must not
-			// suppress reconnect hooks or update-gap recovery.
+			// suppress update-gap recovery. The resubscribe re-establishes the
+			// update subscription on the new session (identification + state +
+			// reconnect hooks) and fires the hooks itself.
 			if rm.client.authLossError() == nil && rm.client.ownsMainSession(postSession) {
-				rm.client.fireReconnect()
+				rm.client.resubscribeUpdates("reconnect")
 			}
 		}
 	}()
