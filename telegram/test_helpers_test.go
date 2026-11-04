@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -25,6 +26,71 @@ type testServer struct {
 	// rpcResult, when set, is served for every non-Ping request instead of
 	// rpcError, letting tests script successful RPC results.
 	rpcResult atomic.Pointer[tg.TLObject]
+
+	// record, when true, captures every client request. Requests wrapped in
+	// invokeWithLayer+initConnection record the inner query constructor with
+	// withLayer=true.
+	record   atomic.Bool
+	recMu    sync.Mutex
+	requests []recordedRequest
+
+	// push support: the most recent connection's write state, so tests can
+	// deliver unsolicited server messages (new_session_created, updates...).
+	connMu      sync.Mutex
+	curConn     net.Conn
+	curSalt     int64
+	curSession  []byte
+	pushCounter int32
+}
+
+type recordedRequest struct {
+	constructor uint32
+	withLayer   bool
+}
+
+func (s *testServer) startRecording() {
+	s.recMu.Lock()
+	s.requests = nil
+	s.recMu.Unlock()
+	s.record.Store(true)
+}
+
+func (s *testServer) recorded() []recordedRequest {
+	s.recMu.Lock()
+	defer s.recMu.Unlock()
+	out := make([]recordedRequest, len(s.requests))
+	copy(out, s.requests)
+	return out
+}
+
+func (s *testServer) clearRecorded() {
+	s.recMu.Lock()
+	s.requests = nil
+	s.recMu.Unlock()
+}
+
+// push sends an unsolicited encrypted message to the client on the most
+// recent connection.
+func (s *testServer) push(body tg.TLObject) error {
+	s.connMu.Lock()
+	defer s.connMu.Unlock()
+	if s.curConn == nil {
+		return fmt.Errorf("test server: no connection to push to")
+	}
+	authKeyID := computeAuthKeyID(s.authKey)
+	s.pushCounter++
+	msgID := (time.Now().Unix() << 32) | int64(1000+s.pushCounter)
+	msg := &tg.MTProtoMessage{MsgID: msgID, SeqNo: 1, Body: body}
+	encrypted, err := crypto.Pack(msg, s.curSalt, s.curSession, s.authKey, authKeyID)
+	if err != nil {
+		return err
+	}
+	var out bytes.Buffer
+	binary.Write(&out, binary.LittleEndian, uint32(len(encrypted)))
+	out.Write(encrypted)
+	s.curConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	_, err = s.curConn.Write(out.Bytes())
+	return err
 }
 
 func newTestServer(authKey []byte) (*testServer, error) {
@@ -62,6 +128,17 @@ func (s *testServer) serve() {
 
 func (s *testServer) handleConn(conn net.Conn) {
 	defer conn.Close()
+
+	s.connMu.Lock()
+	s.curConn = conn
+	s.connMu.Unlock()
+	defer func() {
+		s.connMu.Lock()
+		if s.curConn == conn {
+			s.curConn = nil
+		}
+		s.connMu.Unlock()
+	}()
 
 	handshake := make([]byte, 4)
 	if _, err := io.ReadFull(conn, handshake); err != nil {
@@ -104,9 +181,21 @@ func (s *testServer) handleConn(conn net.Conn) {
 			return
 		}
 
-		msgSeq++
 		salt := int64(binary.LittleEndian.Uint64(decrypted[0:8]))
-		sessionID := decrypted[8:16]
+		sessionID := append([]byte(nil), decrypted[8:16]...)
+		s.connMu.Lock()
+		s.curSalt = salt
+		s.curSession = sessionID
+		s.connMu.Unlock()
+
+		if s.record.Load() {
+			constructor, withLayer := classifyRequest(constructorID, decrypted)
+			s.recMu.Lock()
+			s.requests = append(s.requests, recordedRequest{constructor: constructor, withLayer: withLayer})
+			s.recMu.Unlock()
+		}
+
+		msgSeq++
 		respMsgID := (time.Now().Unix() << 32) | int64(msgSeq*4+1)
 		respSeqNo := uint32(0)
 		origMsgID := int64(binary.LittleEndian.Uint64(decrypted[16:24]))
@@ -183,6 +272,41 @@ func unpackSafeNoSessionCheck(data, authKey, authKeyID []byte) (constructorID ui
 		pingID = int64(binary.LittleEndian.Uint64(bodyBytes[4:12]))
 	}
 	return constructorID, pingID, decrypted, nil
+}
+
+// classifyRequest maps a decoded client request to the innermost query
+// constructor ID. invokeWithLayer+initConnection wrapping is unwrapped so the
+// recorded request shows what actually ran; withLayer reports whether the
+// request was wrapped.
+func classifyRequest(constructorID uint32, decrypted []byte) (constructor uint32, withLayer bool) {
+	constructor = constructorID
+	if constructorID != tg.InvokeWithLayerTypeID {
+		return constructor, false
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			constructor = constructorID
+			withLayer = true
+		}
+	}()
+	// decrypted: salt(8) session_id(8) msg_id(8) seq_no(4) length(4) body...
+	body := bytes.NewReader(decrypted[32:])
+	_ = tg.ReadInt(body) // invokeWithLayer constructor
+	_ = tg.ReadInt(body) // layer
+	_ = tg.ReadInt(body) // initConnection constructor
+	flags := tg.ReadInt(body)
+	_ = tg.ReadInt(body) // api_id
+	for range 6 {        // device_model..lang_code strings
+		_ = tg.ReadString(body)
+	}
+	if flags&1 != 0 { // proxy: string address + int port
+		_ = tg.ReadString(body)
+		_ = tg.ReadInt(body)
+	}
+	if flags&2 != 0 { // params: JSONValue — cannot skip reliably
+		return constructorID, true
+	}
+	return uint32(tg.ReadInt(body)), true
 }
 
 func computeAuthKeyID(key []byte) []byte {

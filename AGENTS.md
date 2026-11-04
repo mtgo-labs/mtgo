@@ -117,6 +117,7 @@ Flow: `telegram.Client` (entry point, owns one `session.Session` per DC) → `in
 | Outbound batching | `internal/session/outbound_batcher.go` | `OutboundBatcher` coalesces RPCs into `msg_container`; opt-in `Config.OutboundBatchEnabled` |
 | RSA key trust | `internal/crypto/server_keys.go` | `RSAKeySet` (immutable trust root) + `PublicRsaKeyWatchdog` (fail-closed rotation via `Config.RSAKeyRotationInterval`); `ErrKeyVerificationFailed` = possible MITM |
 | Overload control | `telegram/overload.go` | `OverloadController`: low-priority fast-fails `ErrOverload` at capacity; opt-in `Config.MaxInFlightRPCs`; `LoadSnapshot` in `telegram/introspection.go` |
+| Update subscription restore | `telegram/update_subscription.go` | On `new_session_created`, after reconnect, and on 15-min update silence (`Config.UpdateSilenceTimeout`, docs-mandated): reset `apiInit`, re-identify via initConnection-wrapped `updates.getState`, fire `OnReconnect` hooks. The server pushes updates only to connections that ran initConnection + an API call — a server-side session replacement silently resets that (bug: permanent deafness with healthy pings) |
 
 ## Testing Gotchas
 

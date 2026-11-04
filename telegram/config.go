@@ -467,6 +467,16 @@ type Config struct {
 	// treating the connection as dead. RTT variation may extend this timeout.
 	// Defaults to 30 seconds.
 	HealthPongTimeout time.Duration
+	// UpdateSilenceTimeout bounds how long the client may receive no updates
+	// before it re-establishes its update subscription: it re-identifies the
+	// current server-side session (initConnection-wrapped RPC), re-fetches
+	// updates.getState, and fires the reconnect hooks so gap recovery can
+	// run. The update documentation lists "no updates for 15 minutes or
+	// longer" as a mandatory gap-recovery trigger; wedged server-side session
+	// state is otherwise invisible because pings keep being answered.
+	// See https://core.telegram.org/api/updates#recovering-gaps. Defaults to
+	// 15 minutes; set to a negative value to disable the watchdog.
+	UpdateSilenceTimeout time.Duration
 
 	// PFS enables Perfect Forward Secrecy mode where temporary auth keys
 	// are used for message encryption instead of the permanent key. Temp
@@ -619,22 +629,23 @@ var DefaultConfig = Config{
 		SystemLangCode: "en",
 		ClientPlatform: types.ClientPlatformAndroid,
 	},
-	SkipUpdates:        true,
-	TransportMode:      TransportModeAbridged,
-	SavePeers:          true,
-	WebSocketTLS:       true,
-	FetchReplies:       true,
-	FetchTopics:        true,
-	FetchStories:       true,
-	FetchStickers:      true,
-	ReconnectEnabled:   true,
-	ReconnectBaseDelay: 1 * time.Second,
-	ReconnectMaxDelay:  60 * time.Second,
-	HealthEnabled:      true,
-	HealthPingInterval: 60 * time.Second,
-	HealthPongTimeout:  30 * time.Second,
-	ConnPoolTTL:        10 * time.Second,
-	DCPoolSize:         1,
-	UploadPoolSize:     8,
-	EndpointCoolDown:   16 * time.Second,
+	SkipUpdates:          true,
+	TransportMode:        TransportModeAbridged,
+	SavePeers:            true,
+	WebSocketTLS:         true,
+	FetchReplies:         true,
+	FetchTopics:          true,
+	FetchStories:         true,
+	FetchStickers:        true,
+	ReconnectEnabled:     true,
+	ReconnectBaseDelay:   1 * time.Second,
+	ReconnectMaxDelay:    60 * time.Second,
+	HealthEnabled:        true,
+	HealthPingInterval:   60 * time.Second,
+	HealthPongTimeout:    30 * time.Second,
+	UpdateSilenceTimeout: 15 * time.Minute,
+	ConnPoolTTL:          10 * time.Second,
+	DCPoolSize:           1,
+	UploadPoolSize:       8,
+	EndpointCoolDown:     16 * time.Second,
 }

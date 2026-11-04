@@ -191,6 +191,10 @@ type Client struct {
 	// keyWatchdog periodically refreshes server RSA keys when non-nil.
 	keyWatchdog       *crypto.PublicRsaKeyWatchdog
 	keyWatchdogCancel context.CancelFunc
+	// updateSilenceCancel/updateSilenceDone stop the update-silence
+	// watchdog loop (see update_subscription.go); guarded by postConnectMu.
+	updateSilenceCancel context.CancelFunc
+	updateSilenceDone   chan struct{}
 	// overloadController gates RPC admission by priority when non-nil.
 	// Constructed when Config.MaxInFlightRPCs > 0.
 	overloadController *OverloadController
@@ -214,10 +218,15 @@ type Client struct {
 	rng   *rand.Rand
 	rngMu sync.Mutex
 
+	// lastUpdateAt (unix nano) records the last received update batch; it
+	// drives the update-silence watchdog (update_subscription.go).
+	lastUpdateAt atomic.Int64
+
 	// Booleans grouped at end to minimize padding on 64-bit.
-	apiInit     atomic.Bool
-	mwSorted    bool
-	migratingDC atomic.Bool
+	apiInit       atomic.Bool
+	resubscribing atomic.Bool
+	mwSorted      bool
+	migratingDC   atomic.Bool
 }
 
 func (c *Client) config() Config {
@@ -906,14 +915,17 @@ func configureSessionDispatch(sess *session.Session, c *Client) {
 		_, err := sess.Invoke(ctx, query, 3, 10*time.Second)
 		return err
 	})
-	// Wire the new_session_created callback: when the server tells us
-	// that the previous session was destroyed, fire reconnect hooks so
-	// that the updatesrecovery plugin can trigger getDifference and
-	// recover any updates lost during the gap.
+	// Wire the new_session_created callback: the server replaced this
+	// session (MTProto server garbage collection or reboot), which resets the
+	// server-side session identification that update push depends on
+	// (https://core.telegram.org/api/updates). Re-establish the subscription
+	// — re-identify via initConnection, re-fetch updates.getState — so the
+	// updatesrecovery plugin's getDifference runs against a session the
+	// server will push updates to again.
 	sess.SetOnNewSession(func(firstMsgID, uniqueID, serverSalt int64) {
-		c.Log.Warnf("session: new_session_created (first_msg_id=%d, unique_id=%d, server_salt=%d) — triggering gap recovery",
+		c.Log.Warnf("session: new_session_created (first_msg_id=%d, unique_id=%d, server_salt=%d) — re-establishing update subscription (identify + state + gap recovery)",
 			firstMsgID, uniqueID, serverSalt)
-		go c.fireReconnect()
+		go c.resubscribeUpdates("new_session_created")
 	})
 }
 
@@ -2288,6 +2300,10 @@ func (c *Client) activateMainSession(sess *session.Session) error {
 		)
 	}
 	c.watchMainSession(sess)
+	// Stamp the update-silence timer and (re)start the watchdog: a fresh
+	// main session means any previous update subscription is gone.
+	c.markUpdateReceived()
+	c.startUpdateSilenceWatchdog()
 	c.connMetrics.recordConnected()
 	c.signalReconnect()
 	return nil
@@ -2604,6 +2620,7 @@ func (c *Client) processRawUpdate(obj tg.TLObject) {
 	if !ok {
 		return
 	}
+	c.markUpdateReceived()
 
 	// Notify lifecycle hooks before dispatch. Plugins use this for state
 	// tracking and gap detection. Hooks must be non-blocking.
@@ -2662,6 +2679,9 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if c.reconnectMgr != nil {
 		c.reconnectMgr.Stop()
 	}
+	// autoConnectMu is released: safe to wait for the update-silence loop,
+	// which may be blocked inside an RPC acquiring that mutex.
+	c.stopUpdateSilenceWatchdog()
 }
 
 // cleanupSessionsLocked tears down client-owned resources. The caller must
