@@ -15480,3 +15480,464 @@ func (c *RPCClient) MessagesGetShareThemeBackdrops(ctx context.Context, req *Mes
 	}
 	return nil, fmt.Errorf("unexpected result type %T", result)
 }
+
+// MessagesGetBotWidgetQueryAnswerTypeID is the constructor ID for the RPC function messages.getBotWidgetQueryAnswer.
+const MessagesGetBotWidgetQueryAnswerTypeID = 0x5c550579
+
+// MessagesGetBotWidgetQueryAnswerRequest represents TL type `messages.getBotWidgetQueryAnswer#5c550579`.
+//
+// See https://core.telegram.org/method/messages/getBotWidgetQueryAnswer for reference.
+type MessagesGetBotWidgetQueryAnswerRequest struct {
+	Peer      InputPeerClass       `json:"peer,omitempty"`
+	MsgID     int32                `json:"msg_id,omitempty"`
+	QueryType WidgetQueryTypeClass `json:"query_type,omitempty"`
+	Data      []byte               `json:"data,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x5c550579.
+func (v *MessagesGetBotWidgetQueryAnswerRequest) ConstructorID() uint32 {
+	return MessagesGetBotWidgetQueryAnswerTypeID
+}
+
+// Encode serializes MessagesGetBotWidgetQueryAnswerRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesGetBotWidgetQueryAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesGetBotWidgetQueryAnswerTypeID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.MsgID))
+	if _err := EncodeTLObject(b, v.QueryType); _err != nil {
+		return fmt.Errorf("encode field query_type: %w", _err)
+	}
+	WriteBytes(b, v.Data)
+	return nil
+}
+
+// MessagesGetBotWidgetQueryAnswer invokes the messages.getBotWidgetQueryAnswer RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesGetBotWidgetQueryAnswer(ctx context.Context, req *MessagesGetBotWidgetQueryAnswerRequest) (*MessagesBotWidgetQueryAnswer, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*MessagesBotWidgetQueryAnswer); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesSetBotWidgetQueryAnswerTypeID is the constructor ID for the RPC function messages.setBotWidgetQueryAnswer.
+const MessagesSetBotWidgetQueryAnswerTypeID = 0xf8cdec6a
+
+// MessagesSetBotWidgetQueryAnswerRequest represents TL type `messages.setBotWidgetQueryAnswer#f8cdec6a`.
+//
+// See https://core.telegram.org/method/messages/setBotWidgetQueryAnswer for reference.
+type MessagesSetBotWidgetQueryAnswerRequest struct {
+	Flags   Fields `json:"-"`
+	QueryID int64  `json:"query_id,omitempty"`
+	Result  string `json:"result,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesSetBotWidgetQueryAnswerRequest) SetFlags() {
+	if v.Result != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xf8cdec6a.
+func (v *MessagesSetBotWidgetQueryAnswerRequest) ConstructorID() uint32 {
+	return MessagesSetBotWidgetQueryAnswerTypeID
+}
+
+// Encode serializes MessagesSetBotWidgetQueryAnswerRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesSetBotWidgetQueryAnswerRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesSetBotWidgetQueryAnswerTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.QueryID)
+	if v.Flags.Has(0) {
+		WriteString(b, v.Result)
+	}
+	return nil
+}
+
+// MessagesSetBotWidgetQueryAnswer invokes the messages.setBotWidgetQueryAnswer RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesSetBotWidgetQueryAnswer(ctx context.Context, req *MessagesSetBotWidgetQueryAnswerRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// MessagesEditMessageWidgetDataTypeID is the constructor ID for the RPC function messages.editMessageWidgetData.
+const MessagesEditMessageWidgetDataTypeID = 0xf624bc1e
+
+// MessagesEditMessageWidgetDataRequest represents TL type `messages.editMessageWidgetData#f624bc1e`.
+//
+// See https://core.telegram.org/method/messages/editMessageWidgetData for reference.
+type MessagesEditMessageWidgetDataRequest struct {
+	Flags      Fields         `json:"-"`
+	Peer       InputPeerClass `json:"peer,omitempty"`
+	ID         int32          `json:"id,omitempty"`
+	PublicData string         `json:"public_data,omitempty"`
+	ChatData   string         `json:"chat_data,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesEditMessageWidgetDataRequest) SetFlags() {
+	if v.PublicData != "" {
+		v.Flags.Set(0)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xf624bc1e.
+func (v *MessagesEditMessageWidgetDataRequest) ConstructorID() uint32 {
+	return MessagesEditMessageWidgetDataTypeID
+}
+
+// Encode serializes MessagesEditMessageWidgetDataRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesEditMessageWidgetDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesEditMessageWidgetDataTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.ID))
+	if v.Flags.Has(0) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.ChatData)
+	}
+	return nil
+}
+
+// MessagesEditMessageWidgetData invokes the messages.editMessageWidgetData RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesEditMessageWidgetData(ctx context.Context, req *MessagesEditMessageWidgetDataRequest) (UpdatesClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(UpdatesClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesEditInlineBotMessageWidgetDataTypeID is the constructor ID for the RPC function messages.editInlineBotMessageWidgetData.
+const MessagesEditInlineBotMessageWidgetDataTypeID = 0x6396ce2b
+
+// MessagesEditInlineBotMessageWidgetDataRequest represents TL type `messages.editInlineBotMessageWidgetData#6396ce2b`.
+//
+// See https://core.telegram.org/method/messages/editInlineBotMessageWidgetData for reference.
+type MessagesEditInlineBotMessageWidgetDataRequest struct {
+	Flags      Fields                       `json:"-"`
+	ID         InputBotInlineMessageIDClass `json:"id,omitempty"`
+	PublicData string                       `json:"public_data,omitempty"`
+	ChatData   string                       `json:"chat_data,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesEditInlineBotMessageWidgetDataRequest) SetFlags() {
+	if v.PublicData != "" {
+		v.Flags.Set(0)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x6396ce2b.
+func (v *MessagesEditInlineBotMessageWidgetDataRequest) ConstructorID() uint32 {
+	return MessagesEditInlineBotMessageWidgetDataTypeID
+}
+
+// Encode serializes MessagesEditInlineBotMessageWidgetDataRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesEditInlineBotMessageWidgetDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesEditInlineBotMessageWidgetDataTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.ID); _err != nil {
+		return fmt.Errorf("encode field id: %w", _err)
+	}
+	if v.Flags.Has(0) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.ChatData)
+	}
+	return nil
+}
+
+// MessagesEditInlineBotMessageWidgetData invokes the messages.editInlineBotMessageWidgetData RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesEditInlineBotMessageWidgetData(ctx context.Context, req *MessagesEditInlineBotMessageWidgetDataRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// MessagesEditWidgetDataTypeID is the constructor ID for the RPC function messages.editWidgetData.
+const MessagesEditWidgetDataTypeID = 0xeac343c0
+
+// MessagesEditWidgetDataRequest represents TL type `messages.editWidgetData#eac343c0`.
+//
+// See https://core.telegram.org/method/messages/editWidgetData for reference.
+type MessagesEditWidgetDataRequest struct {
+	Flags      Fields `json:"-"`
+	WidgetID   int64  `json:"widget_id,omitempty"`
+	PublicData string `json:"public_data,omitempty"`
+	CacheTime  int32  `json:"cache_time,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesEditWidgetDataRequest) SetFlags() {
+	if v.CacheTime != 0 {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xeac343c0.
+func (v *MessagesEditWidgetDataRequest) ConstructorID() uint32 {
+	return MessagesEditWidgetDataTypeID
+}
+
+// Encode serializes MessagesEditWidgetDataRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesEditWidgetDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesEditWidgetDataTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.WidgetID)
+	WriteString(b, v.PublicData)
+	if v.Flags.Has(0) {
+		WriteInt(b, uint32(v.CacheTime))
+	}
+	return nil
+}
+
+// MessagesEditWidgetData invokes the messages.editWidgetData RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesEditWidgetData(ctx context.Context, req *MessagesEditWidgetDataRequest) (bool, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return false, err
+	}
+	_ = result
+	return true, nil
+}
+
+// MessagesGetWidgetPublicDataTypeID is the constructor ID for the RPC function messages.getWidgetPublicData.
+const MessagesGetWidgetPublicDataTypeID = 0x6fc53181
+
+// MessagesGetWidgetPublicDataRequest represents TL type `messages.getWidgetPublicData#6fc53181`.
+//
+// See https://core.telegram.org/method/messages/getWidgetPublicData for reference.
+type MessagesGetWidgetPublicDataRequest struct {
+	Peer  InputPeerClass `json:"peer,omitempty"`
+	MsgID int32          `json:"msg_id,omitempty"`
+	Hash  int64          `json:"hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x6fc53181.
+func (v *MessagesGetWidgetPublicDataRequest) ConstructorID() uint32 {
+	return MessagesGetWidgetPublicDataTypeID
+}
+
+// Encode serializes MessagesGetWidgetPublicDataRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesGetWidgetPublicDataRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesGetWidgetPublicDataTypeID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.MsgID))
+	WriteLong(b, v.Hash)
+	return nil
+}
+
+// MessagesGetWidgetPublicData invokes the messages.getWidgetPublicData RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesGetWidgetPublicData(ctx context.Context, req *MessagesGetWidgetPublicDataRequest) (WidgetPublicDataClass, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(WidgetPublicDataClass); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesTranscribeAudioFileTypeID is the constructor ID for the RPC function messages.transcribeAudioFile.
+const MessagesTranscribeAudioFileTypeID = 0x072d2ef7
+
+// MessagesTranscribeAudioFileRequest represents TL type `messages.transcribeAudioFile#072d2ef7`.
+//
+// See https://core.telegram.org/method/messages/transcribeAudioFile for reference.
+type MessagesTranscribeAudioFileRequest struct {
+	File InputFileClass `json:"file,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x072d2ef7.
+func (v *MessagesTranscribeAudioFileRequest) ConstructorID() uint32 {
+	return MessagesTranscribeAudioFileTypeID
+}
+
+// Encode serializes MessagesTranscribeAudioFileRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesTranscribeAudioFileRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesTranscribeAudioFileTypeID)
+	if _err := EncodeTLObject(b, v.File); _err != nil {
+		return fmt.Errorf("encode field file: %w", _err)
+	}
+	return nil
+}
+
+// MessagesTranscribeAudioFile invokes the messages.transcribeAudioFile RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesTranscribeAudioFile(ctx context.Context, req *MessagesTranscribeAudioFileRequest) (*MessagesTranscribedAudio, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _c, _ok := result.(*MessagesTranscribedAudio); _ok {
+		return _c, nil
+	}
+	return nil, fmt.Errorf("unexpected result type %T", result)
+}
+
+// MessagesGetTranscriptionLangsTypeID is the constructor ID for the RPC function messages.getTranscriptionLangs.
+const MessagesGetTranscriptionLangsTypeID = 0xba6cd9aa
+
+// MessagesGetTranscriptionLangsRequest represents TL type `messages.getTranscriptionLangs#ba6cd9aa`.
+//
+// See https://core.telegram.org/method/messages/getTranscriptionLangs for reference.
+type MessagesGetTranscriptionLangsRequest struct {
+	Flags Fields         `json:"-"`
+	Peer  InputPeerClass `json:"peer,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesGetTranscriptionLangsRequest) SetFlags() {
+	if v.Peer != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xba6cd9aa.
+func (v *MessagesGetTranscriptionLangsRequest) ConstructorID() uint32 {
+	return MessagesGetTranscriptionLangsTypeID
+}
+
+// Encode serializes MessagesGetTranscriptionLangsRequest to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesGetTranscriptionLangsRequest) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesGetTranscriptionLangsTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		if _err := EncodeTLObject(b, v.Peer); _err != nil {
+			return fmt.Errorf("encode field peer: %w", _err)
+		}
+	}
+	return nil
+}
+
+// MessagesGetTranscriptionLangs invokes the messages.getTranscriptionLangs RPC method on the server.
+//
+// Parameters:
+//   - ctx: context for cancellation and timeout
+//   - req: the request parameters
+//
+// Returns the result of the RPC call, or an error if the invocation fails.
+func (c *RPCClient) MessagesGetTranscriptionLangs(ctx context.Context, req *MessagesGetTranscriptionLangsRequest) (TLObject, error) {
+	result, err := c.invoke(ctx, req, func(r *Reader) (TLObject, error) {
+		return ReadTLObject(r)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
