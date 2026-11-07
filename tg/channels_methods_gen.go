@@ -2204,18 +2204,19 @@ func (c *RPCClient) ChannelsDeactivateAllUsernames(ctx context.Context, req *Cha
 }
 
 // ChannelsToggleForumTypeID is the constructor ID for the RPC function channels.toggleForum.
-const ChannelsToggleForumTypeID = 0x3ff75734
+const ChannelsToggleForumTypeID = 0xa2952b54
 
-// ChannelsToggleForumRequest represents TL type `channels.toggleForum#3ff75734`.
+// ChannelsToggleForumRequest represents TL type `channels.toggleForum#a2952b54`.
 //
 // See https://core.telegram.org/method/channels/toggleForum for reference.
 type ChannelsToggleForumRequest struct {
 	Channel InputChannelClass `json:"channel,omitempty"`
 	Enabled bool              `json:"enabled,omitempty"`
 	Tabs    bool              `json:"tabs,omitempty"`
+	Sidebar bool              `json:"sidebar,omitempty"`
 }
 
-// ConstructorID returns the TL constructor identifier 0x3ff75734.
+// ConstructorID returns the TL constructor identifier 0xa2952b54.
 func (v *ChannelsToggleForumRequest) ConstructorID() uint32 {
 	return ChannelsToggleForumTypeID
 }
@@ -2231,6 +2232,7 @@ func (v *ChannelsToggleForumRequest) Encode(b *bytes.Buffer) error {
 	}
 	WriteBool(b, v.Enabled)
 	WriteBool(b, v.Tabs)
+	WriteBool(b, v.Sidebar)
 	return nil
 }
 

@@ -462,6 +462,12 @@ const InputMediaTodoTypeID = 0x9fc55fde
 // InputMediaStakeDiceTypeID is the constructor ID for TL type inputMediaStakeDice.
 const InputMediaStakeDiceTypeID = 0xf3a9244a
 
+// InputMediaWidgetTypeID is the constructor ID for TL type inputMediaWidget.
+const InputMediaWidgetTypeID = 0x44f6c04e
+
+// InputMediaWidgetIDTypeID is the constructor ID for TL type inputMediaWidgetId.
+const InputMediaWidgetIDTypeID = 0x7c855cb5
+
 // isInputMedia marks InputMediaEmpty as implementing the InputMediaClass interface.
 func (*InputMediaEmpty) isInputMedia() {}
 
@@ -521,6 +527,12 @@ func (*InputMediaTodo) isInputMedia() {}
 
 // isInputMedia marks InputMediaStakeDice as implementing the InputMediaClass interface.
 func (*InputMediaStakeDice) isInputMedia() {}
+
+// isInputMedia marks InputMediaWidget as implementing the InputMediaClass interface.
+func (*InputMediaWidget) isInputMedia() {}
+
+// isInputMedia marks InputMediaWidgetID as implementing the InputMediaClass interface.
+func (*InputMediaWidgetID) isInputMedia() {}
 
 // InputMediaEmpty represents the TL constructor inputMediaEmpty (0x9664f57f).
 //
@@ -2327,6 +2339,174 @@ func DecodeInputMediaStakeDice(r *Reader) (*InputMediaStakeDice, error) {
 func init() {
 	Registry[InputMediaStakeDiceTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputMediaStakeDice(r)
+	}
+}
+
+// InputMediaWidget represents the TL constructor inputMediaWidget (0x44f6c04e).
+//
+// See https://core.telegram.org/constructor/inputMediaWidget for reference.
+type InputMediaWidget struct {
+	Flags        Fields `json:"-"`
+	AllowQueries bool   `json:"allow_queries,omitempty"`
+	SharedWidget bool   `json:"shared_widget,omitempty"`
+	Width        int32  `json:"width,omitempty"`
+	Height       int32  `json:"height,omitempty"`
+	HTML         string `json:"html,omitempty"`
+	PublicData   string `json:"public_data,omitempty"`
+	ChatData     string `json:"chat_data,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputMediaWidget) SetFlags() {
+	if v.AllowQueries {
+		v.Flags.Set(0)
+	}
+	if v.SharedWidget {
+		v.Flags.Set(1)
+	}
+	if v.PublicData != "" {
+		v.Flags.Set(2)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(3)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x44f6c04e.
+func (v *InputMediaWidget) ConstructorID() uint32 {
+	return InputMediaWidgetTypeID
+}
+
+// Encode serializes InputMediaWidget to a bytes.Buffer using the TL binary protocol.
+func (v *InputMediaWidget) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputMediaWidgetTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Width))
+	WriteInt(b, uint32(v.Height))
+	WriteString(b, v.HTML)
+	if v.Flags.Has(2) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(3) {
+		WriteString(b, v.ChatData)
+	}
+	return nil
+}
+
+// DecodeInputMediaWidget deserializes a InputMediaWidget from a reader using the TL binary protocol.
+func DecodeInputMediaWidget(r *Reader) (*InputMediaWidget, error) {
+	v := &InputMediaWidget{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.AllowQueries = v.Flags.Has(0)
+	v.SharedWidget = v.Flags.Has(1)
+	_rWidth, _eWidth := r.ReadInt32()
+	if _eWidth != nil {
+		return nil, _eWidth
+	}
+	v.Width = _rWidth
+	_rHeight, _eHeight := r.ReadInt32()
+	if _eHeight != nil {
+		return nil, _eHeight
+	}
+	v.Height = _rHeight
+	_rHTML, _eHTML := r.ReadString()
+	if _eHTML != nil {
+		return nil, _eHTML
+	}
+	v.HTML = _rHTML
+	if v.Flags.Has(2) {
+		_rPublicData, _ePublicData := r.ReadString()
+		if _ePublicData != nil {
+			return nil, _ePublicData
+		}
+		v.PublicData = _rPublicData
+	}
+	if v.Flags.Has(3) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputMediaWidgetTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputMediaWidget(r)
+	}
+}
+
+// InputMediaWidgetID represents the TL constructor inputMediaWidgetId (0x7c855cb5).
+//
+// See https://core.telegram.org/constructor/inputMediaWidgetId for reference.
+type InputMediaWidgetID struct {
+	Flags    Fields `json:"-"`
+	WidgetID int64  `json:"widget_id,omitempty"`
+	ChatData string `json:"chat_data,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputMediaWidgetID) SetFlags() {
+	if v.ChatData != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x7c855cb5.
+func (v *InputMediaWidgetID) ConstructorID() uint32 {
+	return InputMediaWidgetIDTypeID
+}
+
+// Encode serializes InputMediaWidgetID to a bytes.Buffer using the TL binary protocol.
+func (v *InputMediaWidgetID) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputMediaWidgetIDTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.WidgetID)
+	if v.Flags.Has(0) {
+		WriteString(b, v.ChatData)
+	}
+	return nil
+}
+
+// DecodeInputMediaWidgetID deserializes a InputMediaWidgetID from a reader using the TL binary protocol.
+func DecodeInputMediaWidgetID(r *Reader) (*InputMediaWidgetID, error) {
+	v := &InputMediaWidgetID{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rWidgetID, _eWidgetID := r.ReadInt64()
+	if _eWidgetID != nil {
+		return nil, _eWidgetID
+	}
+	v.WidgetID = _rWidgetID
+	if v.Flags.Has(0) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputMediaWidgetIDTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputMediaWidgetID(r)
 	}
 }
 
@@ -14971,6 +15151,191 @@ func DecodeShareThemeBackdrops(r *Reader) (*ShareThemeBackdrops, error) {
 func init() {
 	Registry[ShareThemeBackdropsTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeShareThemeBackdrops(r)
+	}
+}
+
+// WidgetQueryTypeClass is the interface for TL type WidgetQueryType.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the WidgetQueryType TL type.
+type WidgetQueryTypeClass interface {
+	TLObject
+	isWidgetQueryType()
+}
+
+// WidgetQueryTypeDataTypeID is the constructor ID for TL type widgetQueryTypeData.
+const WidgetQueryTypeDataTypeID = 0x16d8cf0b
+
+// WidgetQueryTypeSignDataTypeID is the constructor ID for TL type widgetQueryTypeSignData.
+const WidgetQueryTypeSignDataTypeID = 0x192047dc
+
+// WidgetQueryTypeSentTransactionTypeID is the constructor ID for TL type widgetQueryTypeSentTransaction.
+const WidgetQueryTypeSentTransactionTypeID = 0xff3b33b4
+
+// isWidgetQueryType marks WidgetQueryTypeData as implementing the WidgetQueryTypeClass interface.
+func (*WidgetQueryTypeData) isWidgetQueryType() {}
+
+// isWidgetQueryType marks WidgetQueryTypeSignData as implementing the WidgetQueryTypeClass interface.
+func (*WidgetQueryTypeSignData) isWidgetQueryType() {}
+
+// isWidgetQueryType marks WidgetQueryTypeSentTransaction as implementing the WidgetQueryTypeClass interface.
+func (*WidgetQueryTypeSentTransaction) isWidgetQueryType() {}
+
+// WidgetQueryTypeData represents the TL constructor widgetQueryTypeData (0x16d8cf0b).
+//
+// See https://core.telegram.org/constructor/widgetQueryTypeData for reference.
+type WidgetQueryTypeData struct {
+	Flags      Fields `json:"-"`
+	WithWallet bool   `json:"with_wallet,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *WidgetQueryTypeData) SetFlags() {
+	if v.WithWallet {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x16d8cf0b.
+func (v *WidgetQueryTypeData) ConstructorID() uint32 {
+	return WidgetQueryTypeDataTypeID
+}
+
+// Encode serializes WidgetQueryTypeData to a bytes.Buffer using the TL binary protocol.
+func (v *WidgetQueryTypeData) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WidgetQueryTypeDataTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	return nil
+}
+
+// DecodeWidgetQueryTypeData deserializes a WidgetQueryTypeData from a reader using the TL binary protocol.
+func DecodeWidgetQueryTypeData(r *Reader) (*WidgetQueryTypeData, error) {
+	v := &WidgetQueryTypeData{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.WithWallet = v.Flags.Has(0)
+	return v, nil
+}
+
+func init() {
+	Registry[WidgetQueryTypeDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWidgetQueryTypeData(r)
+	}
+}
+
+// WidgetQueryTypeSignData represents the TL constructor widgetQueryTypeSignData (0x192047dc).
+//
+// See https://core.telegram.org/constructor/widgetQueryTypeSignData for reference.
+type WidgetQueryTypeSignData struct {
+	Wallet   *UserWallet `json:"wallet,omitempty"`
+	SignData *DataJSON   `json:"sign_data,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x192047dc.
+func (v *WidgetQueryTypeSignData) ConstructorID() uint32 {
+	return WidgetQueryTypeSignDataTypeID
+}
+
+// Encode serializes WidgetQueryTypeSignData to a bytes.Buffer using the TL binary protocol.
+func (v *WidgetQueryTypeSignData) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WidgetQueryTypeSignDataTypeID)
+	if _err := EncodeTLObject(b, v.Wallet); _err != nil {
+		return fmt.Errorf("encode field wallet: %w", _err)
+	}
+	if _err := EncodeTLObject(b, v.SignData); _err != nil {
+		return fmt.Errorf("encode field sign_data: %w", _err)
+	}
+	return nil
+}
+
+// DecodeWidgetQueryTypeSignData deserializes a WidgetQueryTypeSignData from a reader using the TL binary protocol.
+func DecodeWidgetQueryTypeSignData(r *Reader) (*WidgetQueryTypeSignData, error) {
+	v := &WidgetQueryTypeSignData{}
+	_objWallet, _errWallet := ReadTLObject(r)
+	if _errWallet != nil {
+		return nil, _errWallet
+	}
+	_cWallet, _okWallet := _objWallet.(*UserWallet)
+	if !_okWallet {
+		return nil, fmt.Errorf("decode: field wallet: unexpected type %T", _objWallet)
+	}
+	v.Wallet = _cWallet
+	_objSignData, _errSignData := ReadTLObject(r)
+	if _errSignData != nil {
+		return nil, _errSignData
+	}
+	_cSignData, _okSignData := _objSignData.(*DataJSON)
+	if !_okSignData {
+		return nil, fmt.Errorf("decode: field sign_data: unexpected type %T", _objSignData)
+	}
+	v.SignData = _cSignData
+	return v, nil
+}
+
+func init() {
+	Registry[WidgetQueryTypeSignDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWidgetQueryTypeSignData(r)
+	}
+}
+
+// WidgetQueryTypeSentTransaction represents the TL constructor widgetQueryTypeSentTransaction (0xff3b33b4).
+//
+// See https://core.telegram.org/constructor/widgetQueryTypeSentTransaction for reference.
+type WidgetQueryTypeSentTransaction struct {
+	Wallet  *UserWallet `json:"wallet,omitempty"`
+	MsgHash string      `json:"msg_hash,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xff3b33b4.
+func (v *WidgetQueryTypeSentTransaction) ConstructorID() uint32 {
+	return WidgetQueryTypeSentTransactionTypeID
+}
+
+// Encode serializes WidgetQueryTypeSentTransaction to a bytes.Buffer using the TL binary protocol.
+func (v *WidgetQueryTypeSentTransaction) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, WidgetQueryTypeSentTransactionTypeID)
+	if _err := EncodeTLObject(b, v.Wallet); _err != nil {
+		return fmt.Errorf("encode field wallet: %w", _err)
+	}
+	WriteString(b, v.MsgHash)
+	return nil
+}
+
+// DecodeWidgetQueryTypeSentTransaction deserializes a WidgetQueryTypeSentTransaction from a reader using the TL binary protocol.
+func DecodeWidgetQueryTypeSentTransaction(r *Reader) (*WidgetQueryTypeSentTransaction, error) {
+	v := &WidgetQueryTypeSentTransaction{}
+	_objWallet, _errWallet := ReadTLObject(r)
+	if _errWallet != nil {
+		return nil, _errWallet
+	}
+	_cWallet, _okWallet := _objWallet.(*UserWallet)
+	if !_okWallet {
+		return nil, fmt.Errorf("decode: field wallet: unexpected type %T", _objWallet)
+	}
+	v.Wallet = _cWallet
+	_rMsgHash, _eMsgHash := r.ReadString()
+	if _eMsgHash != nil {
+		return nil, _eMsgHash
+	}
+	v.MsgHash = _rMsgHash
+	return v, nil
+}
+
+func init() {
+	Registry[WidgetQueryTypeSentTransactionTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeWidgetQueryTypeSentTransaction(r)
 	}
 }
 

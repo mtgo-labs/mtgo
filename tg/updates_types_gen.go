@@ -525,6 +525,24 @@ const UpdateWalletTonConnectSessionTypeID = 0x50a38e0e
 // UpdateWalletTonConnectPendingDisconnectTypeID is the constructor ID for TL type updateWalletTonConnectPendingDisconnect.
 const UpdateWalletTonConnectPendingDisconnectTypeID = 0xd1ee8199
 
+// UpdateEditForumTopicTypeID is the constructor ID for TL type updateEditForumTopic.
+const UpdateEditForumTopicTypeID = 0x2366665c
+
+// UpdateBotWidgetQueryTypeID is the constructor ID for TL type updateBotWidgetQuery.
+const UpdateBotWidgetQueryTypeID = 0xb373fe68
+
+// UpdateInlineBotWidgetQueryTypeID is the constructor ID for TL type updateInlineBotWidgetQuery.
+const UpdateInlineBotWidgetQueryTypeID = 0xa5f07e08
+
+// UpdateBotWidgetCopyQueryTypeID is the constructor ID for TL type updateBotWidgetCopyQuery.
+const UpdateBotWidgetCopyQueryTypeID = 0xfa89bef7
+
+// UpdateMessageWidgetDataTypeID is the constructor ID for TL type updateMessageWidgetData.
+const UpdateMessageWidgetDataTypeID = 0xbbb078dd
+
+// UpdateTranscribedAudioFileTypeID is the constructor ID for TL type updateTranscribedAudioFile.
+const UpdateTranscribedAudioFileTypeID = 0x734c2e7b
+
 // isUpdate marks UpdateNewMessage as implementing the UpdateClass interface.
 func (*UpdateNewMessage) isUpdate() {}
 
@@ -1034,6 +1052,24 @@ func (*UpdateWalletTonConnectSession) isUpdate() {}
 
 // isUpdate marks UpdateWalletTonConnectPendingDisconnect as implementing the UpdateClass interface.
 func (*UpdateWalletTonConnectPendingDisconnect) isUpdate() {}
+
+// isUpdate marks UpdateEditForumTopic as implementing the UpdateClass interface.
+func (*UpdateEditForumTopic) isUpdate() {}
+
+// isUpdate marks UpdateBotWidgetQuery as implementing the UpdateClass interface.
+func (*UpdateBotWidgetQuery) isUpdate() {}
+
+// isUpdate marks UpdateInlineBotWidgetQuery as implementing the UpdateClass interface.
+func (*UpdateInlineBotWidgetQuery) isUpdate() {}
+
+// isUpdate marks UpdateBotWidgetCopyQuery as implementing the UpdateClass interface.
+func (*UpdateBotWidgetCopyQuery) isUpdate() {}
+
+// isUpdate marks UpdateMessageWidgetData as implementing the UpdateClass interface.
+func (*UpdateMessageWidgetData) isUpdate() {}
+
+// isUpdate marks UpdateTranscribedAudioFile as implementing the UpdateClass interface.
+func (*UpdateTranscribedAudioFile) isUpdate() {}
 
 // UpdateNewMessage represents the TL constructor updateNewMessage (0x1f2b0afd).
 //
@@ -11930,6 +11966,735 @@ func DecodeUpdateWalletTonConnectPendingDisconnect(r *Reader) (*UpdateWalletTonC
 func init() {
 	Registry[UpdateWalletTonConnectPendingDisconnectTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeUpdateWalletTonConnectPendingDisconnect(r)
+	}
+}
+
+// UpdateEditForumTopic represents the TL constructor updateEditForumTopic (0x2366665c).
+//
+// See https://core.telegram.org/constructor/updateEditForumTopic for reference.
+type UpdateEditForumTopic struct {
+	Flags       Fields    `json:"-"`
+	Peer        PeerClass `json:"peer,omitempty"`
+	TopicID     int32     `json:"topic_id,omitempty"`
+	Title       string    `json:"title,omitempty"`
+	IconEmojiID int64     `json:"icon_emoji_id,omitempty"`
+	Closed      bool      `json:"closed,omitempty"`
+	Hidden      bool      `json:"hidden,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateEditForumTopic) SetFlags() {
+	if v.Title != "" {
+		v.Flags.Set(0)
+	}
+	if v.IconEmojiID != 0 {
+		v.Flags.Set(1)
+	}
+	if v.Closed {
+		v.Flags.Set(2)
+	}
+	if v.Hidden {
+		v.Flags.Set(3)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x2366665c.
+func (v *UpdateEditForumTopic) ConstructorID() uint32 {
+	return UpdateEditForumTopicTypeID
+}
+
+// Encode serializes UpdateEditForumTopic to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateEditForumTopic) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateEditForumTopicTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.TopicID))
+	if v.Flags.Has(0) {
+		WriteString(b, v.Title)
+	}
+	if v.Flags.Has(1) {
+		WriteLong(b, v.IconEmojiID)
+	}
+	if v.Flags.Has(2) {
+		WriteBool(b, v.Closed)
+	}
+	if v.Flags.Has(3) {
+		WriteBool(b, v.Hidden)
+	}
+	return nil
+}
+
+// SetClosed sets value of Closed conditional field.
+func (v *UpdateEditForumTopic) SetClosed(value bool) {
+	v.Flags.Set(2)
+	v.Closed = value
+}
+
+// GetClosed returns value of Closed conditional field and a boolean
+// that is true if the field was set.
+func (v *UpdateEditForumTopic) GetClosed() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(2) {
+		return value, false
+	}
+	return v.Closed, true
+}
+
+// SetHidden sets value of Hidden conditional field.
+func (v *UpdateEditForumTopic) SetHidden(value bool) {
+	v.Flags.Set(3)
+	v.Hidden = value
+}
+
+// GetHidden returns value of Hidden conditional field and a boolean
+// that is true if the field was set.
+func (v *UpdateEditForumTopic) GetHidden() (value bool, ok bool) {
+	if v == nil {
+		return
+	}
+	if !v.Flags.Has(3) {
+		return value, false
+	}
+	return v.Hidden, true
+}
+
+// DecodeUpdateEditForumTopic deserializes a UpdateEditForumTopic from a reader using the TL binary protocol.
+func DecodeUpdateEditForumTopic(r *Reader) (*UpdateEditForumTopic, error) {
+	v := &UpdateEditForumTopic{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	_rTopicID, _eTopicID := r.ReadInt32()
+	if _eTopicID != nil {
+		return nil, _eTopicID
+	}
+	v.TopicID = _rTopicID
+	if v.Flags.Has(0) {
+		_rTitle, _eTitle := r.ReadString()
+		if _eTitle != nil {
+			return nil, _eTitle
+		}
+		v.Title = _rTitle
+	}
+	if v.Flags.Has(1) {
+		_rIconEmojiID, _eIconEmojiID := r.ReadInt64()
+		if _eIconEmojiID != nil {
+			return nil, _eIconEmojiID
+		}
+		v.IconEmojiID = _rIconEmojiID
+	}
+	if v.Flags.Has(2) {
+		_rClosed, _eClosed := r.ReadBool()
+		if _eClosed != nil {
+			return nil, _eClosed
+		}
+		v.Closed = _rClosed
+	}
+	if v.Flags.Has(3) {
+		_rHidden, _eHidden := r.ReadBool()
+		if _eHidden != nil {
+			return nil, _eHidden
+		}
+		v.Hidden = _rHidden
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateEditForumTopicTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateEditForumTopic(r)
+	}
+}
+
+// UpdateBotWidgetQuery represents the TL constructor updateBotWidgetQuery (0xb373fe68).
+//
+// See https://core.telegram.org/constructor/updateBotWidgetQuery for reference.
+type UpdateBotWidgetQuery struct {
+	Flags        Fields               `json:"-"`
+	QueryID      int64                `json:"query_id,omitempty"`
+	QueryType    WidgetQueryTypeClass `json:"query_type,omitempty"`
+	UserID       int64                `json:"user_id,omitempty"`
+	Peer         PeerClass            `json:"peer,omitempty"`
+	MsgID        int32                `json:"msg_id,omitempty"`
+	ChatInstance int64                `json:"chat_instance,omitempty"`
+	ChatType     string               `json:"chat_type,omitempty"`
+	Data         []byte               `json:"data,omitempty"`
+	WidgetID     int64                `json:"widget_id,omitempty"`
+	WalletCard   *WalletCard          `json:"wallet_card,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateBotWidgetQuery) SetFlags() {
+	if v.WidgetID != 0 {
+		v.Flags.Set(0)
+	}
+	if v.WalletCard != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xb373fe68.
+func (v *UpdateBotWidgetQuery) ConstructorID() uint32 {
+	return UpdateBotWidgetQueryTypeID
+}
+
+// Encode serializes UpdateBotWidgetQuery to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateBotWidgetQuery) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateBotWidgetQueryTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.QueryID)
+	if _err := EncodeTLObject(b, v.QueryType); _err != nil {
+		return fmt.Errorf("encode field query_type: %w", _err)
+	}
+	WriteLong(b, v.UserID)
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.MsgID))
+	WriteLong(b, v.ChatInstance)
+	WriteString(b, v.ChatType)
+	WriteBytes(b, v.Data)
+	if v.Flags.Has(0) {
+		WriteLong(b, v.WidgetID)
+	}
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.WalletCard); _err != nil {
+			return fmt.Errorf("encode field wallet_card: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeUpdateBotWidgetQuery deserializes a UpdateBotWidgetQuery from a reader using the TL binary protocol.
+func DecodeUpdateBotWidgetQuery(r *Reader) (*UpdateBotWidgetQuery, error) {
+	v := &UpdateBotWidgetQuery{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objQueryType, _errQueryType := ReadTLObject(r)
+	if _errQueryType != nil {
+		return nil, _errQueryType
+	}
+	_cQueryType, _okQueryType := _objQueryType.(WidgetQueryTypeClass)
+	if !_okQueryType {
+		return nil, fmt.Errorf("decode: field query_type: unexpected type %T", _objQueryType)
+	}
+	v.QueryType = _cQueryType
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	_rChatInstance, _eChatInstance := r.ReadInt64()
+	if _eChatInstance != nil {
+		return nil, _eChatInstance
+	}
+	v.ChatInstance = _rChatInstance
+	_rChatType, _eChatType := r.ReadString()
+	if _eChatType != nil {
+		return nil, _eChatType
+	}
+	v.ChatType = _rChatType
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	if v.Flags.Has(0) {
+		_rWidgetID, _eWidgetID := r.ReadInt64()
+		if _eWidgetID != nil {
+			return nil, _eWidgetID
+		}
+		v.WidgetID = _rWidgetID
+	}
+	if v.Flags.Has(1) {
+		_objWalletCard, _errWalletCard := ReadTLObject(r)
+		if _errWalletCard != nil {
+			return nil, _errWalletCard
+		}
+		_cWalletCard, _okWalletCard := _objWalletCard.(*WalletCard)
+		if !_okWalletCard {
+			return nil, fmt.Errorf("decode: field wallet_card: unexpected type %T", _objWalletCard)
+		}
+		v.WalletCard = _cWalletCard
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateBotWidgetQueryTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateBotWidgetQuery(r)
+	}
+}
+
+// UpdateInlineBotWidgetQuery represents the TL constructor updateInlineBotWidgetQuery (0xa5f07e08).
+//
+// See https://core.telegram.org/constructor/updateInlineBotWidgetQuery for reference.
+type UpdateInlineBotWidgetQuery struct {
+	Flags           Fields                       `json:"-"`
+	QueryID         int64                        `json:"query_id,omitempty"`
+	QueryType       WidgetQueryTypeClass         `json:"query_type,omitempty"`
+	UserID          int64                        `json:"user_id,omitempty"`
+	InlineMessageID InputBotInlineMessageIDClass `json:"inline_message_id,omitempty"`
+	ChatInstance    int64                        `json:"chat_instance,omitempty"`
+	ChatType        string                       `json:"chat_type,omitempty"`
+	Data            []byte                       `json:"data,omitempty"`
+	WidgetID        int64                        `json:"widget_id,omitempty"`
+	WalletCard      *WalletCard                  `json:"wallet_card,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateInlineBotWidgetQuery) SetFlags() {
+	if v.WidgetID != 0 {
+		v.Flags.Set(0)
+	}
+	if v.WalletCard != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xa5f07e08.
+func (v *UpdateInlineBotWidgetQuery) ConstructorID() uint32 {
+	return UpdateInlineBotWidgetQueryTypeID
+}
+
+// Encode serializes UpdateInlineBotWidgetQuery to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateInlineBotWidgetQuery) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateInlineBotWidgetQueryTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.QueryID)
+	if _err := EncodeTLObject(b, v.QueryType); _err != nil {
+		return fmt.Errorf("encode field query_type: %w", _err)
+	}
+	WriteLong(b, v.UserID)
+	if _err := EncodeTLObject(b, v.InlineMessageID); _err != nil {
+		return fmt.Errorf("encode field inline_message_id: %w", _err)
+	}
+	WriteLong(b, v.ChatInstance)
+	WriteString(b, v.ChatType)
+	WriteBytes(b, v.Data)
+	if v.Flags.Has(0) {
+		WriteLong(b, v.WidgetID)
+	}
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.WalletCard); _err != nil {
+			return fmt.Errorf("encode field wallet_card: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeUpdateInlineBotWidgetQuery deserializes a UpdateInlineBotWidgetQuery from a reader using the TL binary protocol.
+func DecodeUpdateInlineBotWidgetQuery(r *Reader) (*UpdateInlineBotWidgetQuery, error) {
+	v := &UpdateInlineBotWidgetQuery{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objQueryType, _errQueryType := ReadTLObject(r)
+	if _errQueryType != nil {
+		return nil, _errQueryType
+	}
+	_cQueryType, _okQueryType := _objQueryType.(WidgetQueryTypeClass)
+	if !_okQueryType {
+		return nil, fmt.Errorf("decode: field query_type: unexpected type %T", _objQueryType)
+	}
+	v.QueryType = _cQueryType
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_objInlineMessageID, _errInlineMessageID := ReadTLObject(r)
+	if _errInlineMessageID != nil {
+		return nil, _errInlineMessageID
+	}
+	_cInlineMessageID, _okInlineMessageID := _objInlineMessageID.(InputBotInlineMessageIDClass)
+	if !_okInlineMessageID {
+		return nil, fmt.Errorf("decode: field inline_message_id: unexpected type %T", _objInlineMessageID)
+	}
+	v.InlineMessageID = _cInlineMessageID
+	_rChatInstance, _eChatInstance := r.ReadInt64()
+	if _eChatInstance != nil {
+		return nil, _eChatInstance
+	}
+	v.ChatInstance = _rChatInstance
+	_rChatType, _eChatType := r.ReadString()
+	if _eChatType != nil {
+		return nil, _eChatType
+	}
+	v.ChatType = _rChatType
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	if v.Flags.Has(0) {
+		_rWidgetID, _eWidgetID := r.ReadInt64()
+		if _eWidgetID != nil {
+			return nil, _eWidgetID
+		}
+		v.WidgetID = _rWidgetID
+	}
+	if v.Flags.Has(1) {
+		_objWalletCard, _errWalletCard := ReadTLObject(r)
+		if _errWalletCard != nil {
+			return nil, _errWalletCard
+		}
+		_cWalletCard, _okWalletCard := _objWalletCard.(*WalletCard)
+		if !_okWalletCard {
+			return nil, fmt.Errorf("decode: field wallet_card: unexpected type %T", _objWalletCard)
+		}
+		v.WalletCard = _cWalletCard
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateInlineBotWidgetQueryTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateInlineBotWidgetQuery(r)
+	}
+}
+
+// UpdateBotWidgetCopyQuery represents the TL constructor updateBotWidgetCopyQuery (0xfa89bef7).
+//
+// See https://core.telegram.org/constructor/updateBotWidgetCopyQuery for reference.
+type UpdateBotWidgetCopyQuery struct {
+	Flags      Fields               `json:"-"`
+	QueryID    int64                `json:"query_id,omitempty"`
+	QueryType  WidgetQueryTypeClass `json:"query_type,omitempty"`
+	UserID     int64                `json:"user_id,omitempty"`
+	Data       []byte               `json:"data,omitempty"`
+	WidgetID   int64                `json:"widget_id,omitempty"`
+	WalletCard *WalletCard          `json:"wallet_card,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateBotWidgetCopyQuery) SetFlags() {
+	if v.WalletCard != nil {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xfa89bef7.
+func (v *UpdateBotWidgetCopyQuery) ConstructorID() uint32 {
+	return UpdateBotWidgetCopyQueryTypeID
+}
+
+// Encode serializes UpdateBotWidgetCopyQuery to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateBotWidgetCopyQuery) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateBotWidgetCopyQueryTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.QueryID)
+	if _err := EncodeTLObject(b, v.QueryType); _err != nil {
+		return fmt.Errorf("encode field query_type: %w", _err)
+	}
+	WriteLong(b, v.UserID)
+	WriteBytes(b, v.Data)
+	WriteLong(b, v.WidgetID)
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.WalletCard); _err != nil {
+			return fmt.Errorf("encode field wallet_card: %w", _err)
+		}
+	}
+	return nil
+}
+
+// DecodeUpdateBotWidgetCopyQuery deserializes a UpdateBotWidgetCopyQuery from a reader using the TL binary protocol.
+func DecodeUpdateBotWidgetCopyQuery(r *Reader) (*UpdateBotWidgetCopyQuery, error) {
+	v := &UpdateBotWidgetCopyQuery{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rQueryID, _eQueryID := r.ReadInt64()
+	if _eQueryID != nil {
+		return nil, _eQueryID
+	}
+	v.QueryID = _rQueryID
+	_objQueryType, _errQueryType := ReadTLObject(r)
+	if _errQueryType != nil {
+		return nil, _errQueryType
+	}
+	_cQueryType, _okQueryType := _objQueryType.(WidgetQueryTypeClass)
+	if !_okQueryType {
+		return nil, fmt.Errorf("decode: field query_type: unexpected type %T", _objQueryType)
+	}
+	v.QueryType = _cQueryType
+	_rUserID, _eUserID := r.ReadInt64()
+	if _eUserID != nil {
+		return nil, _eUserID
+	}
+	v.UserID = _rUserID
+	_rData, _eData := r.ReadBytes()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	_rWidgetID, _eWidgetID := r.ReadInt64()
+	if _eWidgetID != nil {
+		return nil, _eWidgetID
+	}
+	v.WidgetID = _rWidgetID
+	if v.Flags.Has(1) {
+		_objWalletCard, _errWalletCard := ReadTLObject(r)
+		if _errWalletCard != nil {
+			return nil, _errWalletCard
+		}
+		_cWalletCard, _okWalletCard := _objWalletCard.(*WalletCard)
+		if !_okWalletCard {
+			return nil, fmt.Errorf("decode: field wallet_card: unexpected type %T", _objWalletCard)
+		}
+		v.WalletCard = _cWalletCard
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateBotWidgetCopyQueryTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateBotWidgetCopyQuery(r)
+	}
+}
+
+// UpdateMessageWidgetData represents the TL constructor updateMessageWidgetData (0xbbb078dd).
+//
+// See https://core.telegram.org/constructor/updateMessageWidgetData for reference.
+type UpdateMessageWidgetData struct {
+	Flags          Fields    `json:"-"`
+	Peer           PeerClass `json:"peer,omitempty"`
+	MsgID          int32     `json:"msg_id,omitempty"`
+	PublicData     string    `json:"public_data,omitempty"`
+	PublicDataHash int64     `json:"public_data_hash,omitempty"`
+	ChatData       string    `json:"chat_data,omitempty"`
+	PTS            int32     `json:"pts,omitempty"`
+	PTSCount       int32     `json:"pts_count,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateMessageWidgetData) SetFlags() {
+	if v.PublicData != "" {
+		v.Flags.Set(0)
+	}
+	if v.PublicDataHash != 0 {
+		v.Flags.Set(0)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(1)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xbbb078dd.
+func (v *UpdateMessageWidgetData) ConstructorID() uint32 {
+	return UpdateMessageWidgetDataTypeID
+}
+
+// Encode serializes UpdateMessageWidgetData to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateMessageWidgetData) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateMessageWidgetDataTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if _err := EncodeTLObject(b, v.Peer); _err != nil {
+		return fmt.Errorf("encode field peer: %w", _err)
+	}
+	WriteInt(b, uint32(v.MsgID))
+	if v.Flags.Has(0) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(0) {
+		WriteLong(b, v.PublicDataHash)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.ChatData)
+	}
+	WriteInt(b, uint32(v.PTS))
+	WriteInt(b, uint32(v.PTSCount))
+	return nil
+}
+
+// DecodeUpdateMessageWidgetData deserializes a UpdateMessageWidgetData from a reader using the TL binary protocol.
+func DecodeUpdateMessageWidgetData(r *Reader) (*UpdateMessageWidgetData, error) {
+	v := &UpdateMessageWidgetData{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_objPeer, _errPeer := ReadTLObject(r)
+	if _errPeer != nil {
+		return nil, _errPeer
+	}
+	_cPeer, _okPeer := _objPeer.(PeerClass)
+	if !_okPeer {
+		return nil, fmt.Errorf("decode: field peer: unexpected type %T", _objPeer)
+	}
+	v.Peer = _cPeer
+	_rMsgID, _eMsgID := r.ReadInt32()
+	if _eMsgID != nil {
+		return nil, _eMsgID
+	}
+	v.MsgID = _rMsgID
+	if v.Flags.Has(0) {
+		_rPublicData, _ePublicData := r.ReadString()
+		if _ePublicData != nil {
+			return nil, _ePublicData
+		}
+		v.PublicData = _rPublicData
+	}
+	if v.Flags.Has(0) {
+		_rPublicDataHash, _ePublicDataHash := r.ReadInt64()
+		if _ePublicDataHash != nil {
+			return nil, _ePublicDataHash
+		}
+		v.PublicDataHash = _rPublicDataHash
+	}
+	if v.Flags.Has(1) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	_rPTS, _ePTS := r.ReadInt32()
+	if _ePTS != nil {
+		return nil, _ePTS
+	}
+	v.PTS = _rPTS
+	_rPTSCount, _ePTSCount := r.ReadInt32()
+	if _ePTSCount != nil {
+		return nil, _ePTSCount
+	}
+	v.PTSCount = _rPTSCount
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateMessageWidgetDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateMessageWidgetData(r)
+	}
+}
+
+// UpdateTranscribedAudioFile represents the TL constructor updateTranscribedAudioFile (0x734c2e7b).
+//
+// See https://core.telegram.org/constructor/updateTranscribedAudioFile for reference.
+type UpdateTranscribedAudioFile struct {
+	Flags           Fields `json:"-"`
+	Pending         bool   `json:"pending,omitempty"`
+	TranscriptionID int64  `json:"transcription_id,omitempty"`
+	Text            string `json:"text,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UpdateTranscribedAudioFile) SetFlags() {
+	if v.Pending {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x734c2e7b.
+func (v *UpdateTranscribedAudioFile) ConstructorID() uint32 {
+	return UpdateTranscribedAudioFileTypeID
+}
+
+// Encode serializes UpdateTranscribedAudioFile to a bytes.Buffer using the TL binary protocol.
+func (v *UpdateTranscribedAudioFile) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UpdateTranscribedAudioFileTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.TranscriptionID)
+	WriteString(b, v.Text)
+	return nil
+}
+
+// DecodeUpdateTranscribedAudioFile deserializes a UpdateTranscribedAudioFile from a reader using the TL binary protocol.
+func DecodeUpdateTranscribedAudioFile(r *Reader) (*UpdateTranscribedAudioFile, error) {
+	v := &UpdateTranscribedAudioFile{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.Pending = v.Flags.Has(0)
+	_rTranscriptionID, _eTranscriptionID := r.ReadInt64()
+	if _eTranscriptionID != nil {
+		return nil, _eTranscriptionID
+	}
+	v.TranscriptionID = _rTranscriptionID
+	_rText, _eText := r.ReadString()
+	if _eText != nil {
+		return nil, _eText
+	}
+	v.Text = _rText
+	return v, nil
+}
+
+func init() {
+	Registry[UpdateTranscribedAudioFileTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUpdateTranscribedAudioFile(r)
 	}
 }
 

@@ -19,7 +19,7 @@ func main() {
 func run() error {
 	sourceDir := flag.String("source", "compiler/source", "directory containing .tl files")
 	outDir := flag.String("out", "tg", "output directory for generated Go files")
-	layer := flag.Int("layer", 232, "API layer number")
+	layer := flag.Int("layer", 233, "API layer number")
 	e2eSchema := flag.String("e2e", "compiler/e2e.tl", "path to e2e secret chat TL schema")
 	flag.Parse()
 
