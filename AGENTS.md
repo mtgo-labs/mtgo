@@ -63,7 +63,7 @@ If a TL type is missing or wrong, fix the schema/compiler (`compiler/`, `cmd/`) 
 
 | Path | Role | Editable? |
 |------|------|-----------|
-| `tg/` | Generated TL types (`Layer = 230` in `tg/layer_gen.go`) | **No** — `cmd/tlgen` |
+| `tg/` | Generated TL types (`Layer = 233` in `tg/layer_gen.go`) | **No** — `cmd/tlgen` |
 | `tgerr/` | Generated error types | **No** — `cmd/errgen` |
 | `telegram/generic/gen_helpers.go` | Generated peer-ID wrapper methods | **No** — `cmd/genhelpers` |
 | `compiler/` | TL compiler and templates | Yes |
