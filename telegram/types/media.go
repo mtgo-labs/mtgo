@@ -46,16 +46,16 @@ type PhotoMedia struct {
 // MediaType returns MessageMediaTypePhoto.
 func (m *PhotoMedia) MediaType() MessageMediaType { return MessageMediaTypePhoto }
 
-// DocumentMedia represents a generic file document attached to a message. The
+// Document represents a generic file document attached to a message. The
 // MediaType method disambiguates the document into voice, video note, animation,
 // audio, video, sticker, or plain document based on its flags and MIME type.
 //
 // Example:
 //
-//	if doc, ok := msg.Media.(*types.DocumentMedia); ok {
+//	if doc, ok := msg.Media.(*types.Document); ok {
 //	    fmt.Printf("File: %s (%s, %d bytes)\n", doc.FileName, doc.MimeType, doc.FileSize)
 //	}
-type DocumentMedia struct {
+type Document struct {
 	FileID              string
 	FileUniqueID        string
 	FileName            string
@@ -80,13 +80,13 @@ type DocumentMedia struct {
 	IsVoice             bool
 	IsRound             bool
 	IsAnimation         bool
-	AlternativeVideos   []*DocumentMedia
+	AlternativeVideos   []*Document
 	RawDocument         *tg.Document
 }
 
 // MediaType returns the specific MessageMediaType derived from the document's
 // flags and MIME type.
-func (m *DocumentMedia) MediaType() MessageMediaType {
+func (m *Document) MediaType() MessageMediaType {
 	if m.IsVoice {
 		return MessageMediaTypeVoice
 	}
@@ -106,6 +106,11 @@ func (m *DocumentMedia) MediaType() MessageMediaType {
 	}
 	return MessageMediaTypeDocument
 }
+
+// DocumentMedia is a compatibility alias for [Document].
+//
+// Deprecated: use Document.
+type DocumentMedia = Document
 
 // ContactMedia represents a contact shared in a message.
 type ContactMedia struct {
@@ -164,10 +169,10 @@ type WebPageMedia struct {
 	Title            string
 	Description      string
 	Photo            *Photo
-	Document         *DocumentMedia
-	Audio            *DocumentMedia
-	Animation        *DocumentMedia
-	Video            *DocumentMedia
+	Document         *Document
+	Audio            *Document
+	Animation        *Document
+	Video            *Document
 	Duration         int
 	Author           string
 	EmbedURL         string
@@ -251,7 +256,7 @@ type GameMedia struct {
 	ShortName   string
 	Description string
 	Photo       *Photo
-	Animation   *DocumentMedia
+	Animation   *Document
 }
 
 // MediaType returns MessageMediaTypeGame.
@@ -321,7 +326,7 @@ func ParseMedia(raw tg.MessageMediaClass) Media {
 	case *tg.MessageMediaPhoto:
 		return parsePhotoMedia(r)
 	case *tg.MessageMediaDocument:
-		return parseDocumentMedia(r)
+		return parseDocument(r)
 	case *tg.MessageMediaContact:
 		return &ContactMedia{
 			PhoneNumber: r.PhoneNumber,
@@ -421,8 +426,8 @@ func parsePhoto(raw *tg.Photo) *Photo {
 	return p
 }
 
-func parseDocumentMedia(raw *tg.MessageMediaDocument) *DocumentMedia {
-	m := &DocumentMedia{
+func parseDocument(raw *tg.MessageMediaDocument) *Document {
+	m := &Document{
 		IsSpoiler: raw.Spoiler,
 		IsVoice:   raw.Voice,
 		IsRound:   raw.Round,
@@ -438,7 +443,7 @@ func parseDocumentMedia(raw *tg.MessageMediaDocument) *DocumentMedia {
 	return m
 }
 
-func parseDocumentAttrs(doc *tg.Document, m *DocumentMedia) {
+func parseDocumentAttrs(doc *tg.Document, m *Document) {
 	m.FileUniqueID = fmt.Sprintf("%d", doc.ID)
 	m.FileSize = doc.Size
 	m.MimeType = doc.MimeType
@@ -494,7 +499,7 @@ func parseDocumentAttrs(doc *tg.Document, m *DocumentMedia) {
 	}
 }
 
-func documentFileType(m *DocumentMedia) fileid.FileType {
+func documentFileType(m *Document) fileid.FileType {
 	switch m.MediaType() {
 	case MessageMediaTypeVoice:
 		return fileid.FileTypeVoice
@@ -582,7 +587,7 @@ func parseWebPageMedia(raw *tg.MessageMediaWebPage) *WebPageMedia {
 	}
 	if wp.Document != nil {
 		if doc, ok := wp.Document.(*tg.Document); ok {
-			dm := &DocumentMedia{}
+			dm := &Document{}
 			parseDocumentAttrs(doc, dm)
 			m.Document = dm
 		}
@@ -690,7 +695,7 @@ func parseGameMedia(raw *tg.MessageMediaGame) *GameMedia {
 	}
 	if raw.Game.Document != nil {
 		if doc, ok := raw.Game.Document.(*tg.Document); ok {
-			dm := &DocumentMedia{}
+			dm := &Document{}
 			parseDocumentAttrs(doc, dm)
 			g.Animation = dm
 		}
@@ -935,13 +940,13 @@ type ExternalReplyInfo struct {
 	LinkPreviewOptions *LinkPreviewOptions
 	Photo              *Photo
 	Animation          *Animation
-	Audio              *DocumentMedia
-	Document           *DocumentMedia
+	Audio              *Document
+	Document           *Document
 	PaidMedia          *PaidMedia
 	Sticker            *Sticker
-	Video              *DocumentMedia
-	VideoNote          *DocumentMedia
-	Voice              *DocumentMedia
+	Video              *Document
+	VideoNote          *Document
+	Voice              *Document
 	Checklist          *Checklist
 	Contact            *ContactMedia
 	Location           *LocationMedia
@@ -969,14 +974,14 @@ func parseLinkPreviewOptions(raw tg.MessageMediaClass) *LinkPreviewOptions {
 	return nil
 }
 
-func parseAnimationFromDoc(doc *DocumentMedia) *Animation {
+func parseAnimationFromDoc(doc *Document) *Animation {
 	if doc == nil || doc.RawDocument == nil {
 		return nil
 	}
 	return ParseAnimation(doc.RawDocument)
 }
 
-func parseStickerFromDoc(doc *DocumentMedia) *Sticker {
+func parseStickerFromDoc(doc *Document) *Sticker {
 	if doc == nil || doc.RawDocument == nil {
 		return nil
 	}
@@ -1031,7 +1036,7 @@ func ParseExternalReplyInfo(raw *tg.MessageReplyHeader, pm *PeerMap) *ExternalRe
 			case *PhotoMedia:
 				info.Media = MessageMediaTypePhoto
 				info.Photo = v.Photo
-			case *DocumentMedia:
+			case *Document:
 				info.Media = v.MediaType()
 				info.Document = v
 				switch info.Media {
@@ -1355,7 +1360,7 @@ func ParseGroupCallMember(raw *tg.GroupCallParticipant) *GroupCallMember {
 type ChatBackground struct {
 	ID                    int64
 	WallpaperDocID        int64
-	Document              *DocumentMedia
+	Document              *Document
 	IsOnlyForSelf         bool
 	BackgroundColor       int32
 	SecondBackgroundColor int32

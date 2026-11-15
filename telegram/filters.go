@@ -451,7 +451,7 @@ var MediaSpoiler Filter = func(ctx *Context) bool {
 	switch m := ctx.Message.Media.(type) {
 	case *types.PhotoMedia:
 		return m.IsSpoiler
-	case *types.DocumentMedia:
+	case *types.Document:
 		return m.IsSpoiler
 	}
 	return false
@@ -888,7 +888,7 @@ var SelfDestruction Filter = func(ctx *Context) bool {
 	switch m := ctx.Message.Media.(type) {
 	case *types.PhotoMedia:
 		return m.TTLSeconds > 0
-	case *types.DocumentMedia:
+	case *types.Document:
 		return m.TTLSeconds > 0
 	}
 	return false

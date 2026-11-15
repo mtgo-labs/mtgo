@@ -78,8 +78,8 @@ func TestGetFileLocation_PhotoMediaNoSizes(t *testing.T) {
 	}
 }
 
-func TestGetFileLocation_DocumentMedia(t *testing.T) {
-	media := &types.DocumentMedia{
+func TestGetFileLocation_Document(t *testing.T) {
+	media := &types.Document{
 		FileID:   "123_456",
 		FileName: "doc.pdf",
 		MimeType: "application/pdf",
@@ -102,8 +102,8 @@ func TestGetFileLocation_DocumentMedia(t *testing.T) {
 	}
 }
 
-func TestGetFileLocation_DocumentMediaThumb(t *testing.T) {
-	media := &types.DocumentMedia{
+func TestGetFileLocation_DocumentThumb(t *testing.T) {
+	media := &types.Document{
 		FileID:   "123_456",
 		FileName: "video.mp4",
 	}

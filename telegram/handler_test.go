@@ -511,7 +511,7 @@ func TestPhotoFilter(t *testing.T) {
 	if !f(&Context{Message: &types.Message{Media: &types.PhotoMedia{}}}) {
 		t.Error("expected true for photo media")
 	}
-	if f(&Context{Message: &types.Message{Media: &types.DocumentMedia{}}}) {
+	if f(&Context{Message: &types.Message{Media: &types.Document{}}}) {
 		t.Error("expected false for document media")
 	}
 	if f(&Context{Message: &types.Message{}}) {
@@ -521,7 +521,7 @@ func TestPhotoFilter(t *testing.T) {
 
 func TestDocumentFilter(t *testing.T) {
 	f := Document
-	if !f(&Context{Message: &types.Message{Media: &types.DocumentMedia{}}}) {
+	if !f(&Context{Message: &types.Message{Media: &types.Document{}}}) {
 		t.Error("expected true for document media")
 	}
 	if f(&Context{Message: &types.Message{Media: &types.PhotoMedia{}}}) {

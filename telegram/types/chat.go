@@ -179,7 +179,7 @@ type Chat struct {
 	CanManageBots         bool
 
 	MainProfileTab    ProfileTab
-	FirstProfileAudio *DocumentMedia
+	FirstProfileAudio *Document
 	Rating            *UserRating
 	PendingRating     *UserRating
 	PendingRatingDate time.Time

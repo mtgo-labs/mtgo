@@ -331,7 +331,7 @@ serialFileDownload:
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos (e.g. "m", "x"). Pass an empty string to
 //     download the full-resolution media. Ignored for documents.
 //   - opts: optional download settings (chunk size, progress callback). May be nil for defaults.
@@ -380,7 +380,7 @@ func (c *MessageMethods) DownloadMedia(ctx context.Context, media types.Media, t
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos. Pass an empty string for full media.
 //   - filePath: destination path on the local filesystem.
 //   - fileSize: total expected file size in bytes. Used for progress reporting; pass 0 if unknown.
@@ -436,7 +436,7 @@ func (c *MessageMethods) DownloadMediaToFile(ctx context.Context, media types.Me
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos. Pass an empty string for full media.
 //   - w: destination writer. Must not be nil.
 //   - opts: optional download settings (chunk size, progress callback). May be nil for defaults.
@@ -1520,7 +1520,7 @@ func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location
 
 func getMediaFileSize(media types.Media) int64 {
 	switch m := media.(type) {
-	case *types.DocumentMedia:
+	case *types.Document:
 		return m.FileSize
 	default:
 		return 0
@@ -2043,7 +2043,7 @@ func resolveMediaInput(media types.Media) (*downloadInput, error) {
 			fileSize: 0,
 			mimeType: "image/jpeg",
 		}, nil
-	case *types.DocumentMedia:
+	case *types.Document:
 		return &downloadInput{
 			media:    m,
 			fileName: m.FileName,
@@ -2197,7 +2197,7 @@ func (c *Client) downloadBytes(ctx context.Context, input any, progress params.P
 // the absolute file path.
 //
 // The input parameter accepts either a *types.Message (extracts media automatically)
-// or a types.Media value (PhotoMedia, DocumentMedia, etc.).
+// or a types.Media value (PhotoMedia, Document, etc.).
 //
 // If fileName is empty, files are saved in the "downloads" directory with an
 // auto-generated name based on the media type and timestamp. Paths ending with "/"

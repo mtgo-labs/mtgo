@@ -148,8 +148,8 @@ type Message struct {
 	HasMediaSpoiler                         bool
 	Caption                                 string
 	CaptionEntities                         []*MessageEntity
-	Audio                                   *DocumentMedia
-	Document                                *DocumentMedia
+	Audio                                   *Document
+	Document                                *Document
 	Photo                                   *Photo
 	LivePhoto                               *LivePhoto
 	Sticker                                 *Sticker
@@ -158,9 +158,9 @@ type Message struct {
 	Giveaway                                *GiveawayMedia
 	Invoice                                 *InvoiceMedia
 	Story                                   *StoryMedia
-	Video                                   *DocumentMedia
-	Voice                                   *DocumentMedia
-	VideoNote                               *DocumentMedia
+	Video                                   *Document
+	Voice                                   *Document
+	VideoNote                               *Document
 	Contact                                 *ContactMedia
 	Location                                *LocationMedia
 	Venue                                   *VenueMedia
@@ -731,7 +731,7 @@ func (m *Message) setDirectMediaFields(raw tg.MessageMediaClass) {
 		case *PhotoMedia:
 			m.Photo = media.Photo
 			m.HasMediaSpoiler = media.IsSpoiler
-		case *DocumentMedia:
+		case *Document:
 			m.Document = media
 			m.HasMediaSpoiler = media.IsSpoiler
 			switch media.MediaType() {

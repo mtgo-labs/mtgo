@@ -754,7 +754,7 @@ func TestDownloadMedia_NotConnected(t *testing.T) {
 
 func TestDownloadMediaToFile_NotConnected(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
-	err := c.DownloadMediaToFile(context.Background(), &types.DocumentMedia{
+	err := c.DownloadMediaToFile(context.Background(), &types.Document{
 		FileID:   "100_200",
 		FileName: "test.pdf",
 	}, "", "/tmp/test.pdf", 1024, nil)
@@ -795,8 +795,8 @@ func (s *sliceWriterAt) WriteAt(p []byte, off int64) (int, error) {
 	return len(p), nil
 }
 
-func newWriterTestMedia(size int64) *types.DocumentMedia {
-	return &types.DocumentMedia{
+func newWriterTestMedia(size int64) *types.Document {
+	return &types.Document{
 		RawDocument: &tg.Document{ID: 100, AccessHash: 200, DCID: 2, Size: size},
 		FileSize:    size,
 	}
@@ -880,7 +880,7 @@ func TestDownloadMediaToWriter_WorkersOneStaysSerial(t *testing.T) {
 
 func TestDownloadMediaToWriter_NotConnected(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
-	_, err := c.DownloadMediaToWriter(context.Background(), &types.DocumentMedia{}, "", io.Discard, nil)
+	_, err := c.DownloadMediaToWriter(context.Background(), &types.Document{}, "", io.Discard, nil)
 	if err == nil {
 		t.Fatal("expected error when not connected")
 	}
@@ -889,7 +889,7 @@ func TestDownloadMediaToWriter_NotConnected(t *testing.T) {
 func TestDownloadMediaToWriter_NilWriter(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
 	c.state.setConnected(true)
-	_, err := c.DownloadMediaToWriter(context.Background(), &types.DocumentMedia{}, "", nil, nil)
+	_, err := c.DownloadMediaToWriter(context.Background(), &types.Document{}, "", nil, nil)
 	if err == nil || !strings.Contains(err.Error(), "nil writer") {
 		t.Fatalf("error = %v, want nil writer rejection", err)
 	}

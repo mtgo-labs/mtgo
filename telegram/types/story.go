@@ -31,7 +31,7 @@ type Story struct {
 	Media               Media
 	HasProtectedContent bool
 	Photo               *Photo
-	Video               *DocumentMedia
+	Video               *Document
 	Edited              bool
 	Pinned              bool
 	Public              bool
