@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mtgo-labs/mtgo/telegram/peers"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 // Client connection and lifecycle errors.
@@ -361,6 +362,18 @@ func (e *ReconnectError) Unwrap() error { return e.Err }
 type AuthKeyInvalidatedError struct {
 	Cause   error
 	Cleanup error
+}
+
+// AccountTerminated reports whether the authorization was lost because the
+// account itself was deactivated or banned, rather than the key being
+// revoked or the session expired. Terminated accounts cannot be recovered
+// by signing in again with the same credential.
+func (e *AuthKeyInvalidatedError) AccountTerminated() bool {
+	if e == nil {
+		return false
+	}
+	return tgerr.Is(e.Cause, tgerr.ErrUserDeactivated) ||
+		tgerr.Is(e.Cause, tgerr.ErrUserDeactivatedBan)
 }
 
 func (e *AuthKeyInvalidatedError) Error() string {
