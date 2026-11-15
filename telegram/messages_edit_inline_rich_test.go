@@ -113,7 +113,7 @@ func TestBoundEditInlineForwardsOpts(t *testing.T) {
 	client, mock := newClientWithMock(t)
 	inlineID := &tg.InputBotInlineMessageID{DCID: 0, ID: 7, AccessHash: 99}
 
-	ok, err := client.BoundEditInline(inlineID, "<i>it</i>", &params.EditMessage{
+	ok, err := client.BoundEditInline(context.Background(), inlineID, "<i>it</i>", &params.EditMessage{
 		ParseMode:             params.ParseModeHTML,
 		DisableWebPagePreview: true,
 	})
@@ -139,7 +139,7 @@ func TestBoundEditInlineForwardsOpts(t *testing.T) {
 
 	// Rich message forwarding through the bound path.
 	rm := RichMessageMarkdown("m", false)
-	if _, err := client.BoundEditInline(inlineID, "", &params.EditMessage{RichMessage: rm}); err != nil {
+	if _, err := client.BoundEditInline(context.Background(), inlineID, "", &params.EditMessage{RichMessage: rm}); err != nil {
 		t.Fatalf("BoundEditInline(rich) error: %v", err)
 	}
 	req, ok = mock.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
@@ -152,7 +152,7 @@ func TestBoundEditInlineCaptionForwardsOpts(t *testing.T) {
 	client, mock := newClientWithMock(t)
 	inlineID := &tg.InputBotInlineMessageID{DCID: 0, ID: 7, AccessHash: 99}
 
-	ok, err := client.BoundEditInlineCaption(inlineID, "*c*", &params.EditMessage{
+	ok, err := client.BoundEditInlineCaption(context.Background(), inlineID, "*c*", &params.EditMessage{
 		ParseMode: params.MarkdownV2,
 	})
 	if err != nil {

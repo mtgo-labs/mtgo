@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -268,7 +269,7 @@ type Message struct {
 	// preserved for advanced use cases that need access to the full TL object.
 	Raw                  tg.MessageClass
 	BusinessConnectionID string
-	binder               Binder
+	binder               MessageBinder
 	translate            func(key string, args ...any) string
 }
 
@@ -1188,7 +1189,7 @@ func getBarePeerID(peer tg.PeerClass) int64 {
 // SetBinder injects the Binder that backs all bound convenience methods on this
 // Message. Called internally by the Client after constructing a Message from an
 // update.
-func (m *Message) SetBinder(b Binder) {
+func (m *Message) SetBinder(b MessageBinder) {
 	m.binder = b
 }
 
@@ -1199,19 +1200,27 @@ func (m *Message) SetBinder(b Binder) {
 //
 //	reply, err := msg.Reply("Got it!", &params.SendMessage{ParseMode: params.ParseModeHTML})
 func (m *Message) Reply(text string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyContext(context.Background(), text, opts...)
+}
+
+func (m *Message) ReplyContext(ctx context.Context, text string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSend(m.ChatID, text, m.ID, opts...)
+	return m.binder.BoundSend(ctx, m.ChatID, text, m.ID, opts...)
 }
 
 // Send sends a text message in the same chat without replying to any message.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) Send(text string, opts ...*params.SendMessage) (*Message, error) {
+	return m.SendContext(context.Background(), text, opts...)
+}
+
+func (m *Message) SendContext(ctx context.Context, text string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSend(m.ChatID, text, 0, opts...)
+	return m.binder.BoundSend(ctx, m.ChatID, text, 0, opts...)
 }
 
 // Forward forwards this message to another chat.
@@ -1222,20 +1231,28 @@ func (m *Message) Send(text string, opts ...*params.SendMessage) (*Message, erro
 //	fwd, err := msg.Forward(targetChatID, &params.ForwardMessages{DropAuthor: true})
 //	fmt.Printf("Forwarded as message %d\n", fwd.ID)
 func (m *Message) Forward(chatID int64, opts ...*params.ForwardMessages) (*Message, error) {
+	return m.ForwardContext(context.Background(), chatID, opts...)
+}
+
+func (m *Message) ForwardContext(ctx context.Context, chatID int64, opts ...*params.ForwardMessages) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundForward(chatID, m.ChatID, m.ID, opts...)
+	return m.binder.BoundForward(ctx, chatID, m.ChatID, m.ID, opts...)
 }
 
 // Copy copies this message into another chat without the forward header.
 // Returns the new message ID. Returns ErrNoBinder if the message was not created
 // by a client.
 func (m *Message) Copy(chatID int64, opts ...*params.CopyMessage) (int64, error) {
+	return m.CopyContext(context.Background(), chatID, opts...)
+}
+
+func (m *Message) CopyContext(ctx context.Context, chatID int64, opts ...*params.CopyMessage) (int64, error) {
 	if m.binder == nil {
 		return 0, ErrNoBinder
 	}
-	return m.binder.BoundCopy(chatID, m.ChatID, m.ID, opts...)
+	return m.binder.BoundCopy(ctx, chatID, m.ChatID, m.ID, opts...)
 }
 
 // Edit modifies the text content of this message.
@@ -1246,19 +1263,27 @@ func (m *Message) Copy(chatID int64, opts ...*params.CopyMessage) (int64, error)
 //
 //	edited, err := msg.Edit("<i>Updated text</i>", &params.EditMessage{ParseMode: params.ParseModeHTML})
 func (m *Message) Edit(text string, opts ...*params.EditMessage) (*Message, error) {
+	return m.EditContext(context.Background(), text, opts...)
+}
+
+func (m *Message) EditContext(ctx context.Context, text string, opts ...*params.EditMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundEdit(m.ChatID, m.ID, text, opts...)
+	return m.binder.BoundEdit(ctx, m.ChatID, m.ID, text, opts...)
 }
 
 // EditCaption changes the caption of this media message.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) EditCaption(caption string, opts ...*params.EditMessage) (*Message, error) {
+	return m.EditCaptionContext(context.Background(), caption, opts...)
+}
+
+func (m *Message) EditCaptionContext(ctx context.Context, caption string, opts ...*params.EditMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundEditCaption(m.ChatID, m.ID, caption, opts...)
+	return m.binder.BoundEditCaption(ctx, m.ChatID, m.ID, caption, opts...)
 }
 
 // Delete removes this message from the chat.
@@ -1270,10 +1295,14 @@ func (m *Message) EditCaption(caption string, opts ...*params.EditMessage) (*Mes
 //	count, err := msg.Delete(&params.DeleteMessages{Revoke: true})
 //	fmt.Printf("Deleted %d message(s)\n", count)
 func (m *Message) Delete(opts ...*params.DeleteMessages) (int, error) {
+	return m.DeleteContext(context.Background(), opts...)
+}
+
+func (m *Message) DeleteContext(ctx context.Context, opts ...*params.DeleteMessages) (int, error) {
 	if m.binder == nil {
 		return 0, ErrNoBinder
 	}
-	return m.binder.BoundDelete(m.ChatID, []int32{m.ID}, opts...)
+	return m.binder.BoundDelete(ctx, m.ChatID, []int32{m.ID}, opts...)
 }
 
 // React adds one or more emoji reactions to this message.
@@ -1283,6 +1312,10 @@ func (m *Message) Delete(opts ...*params.DeleteMessages) (int, error) {
 //
 //	err := msg.React("👍", "❤️")
 func (m *Message) React(emojis ...string) error {
+	return m.ReactContext(context.Background(), emojis...)
+}
+
+func (m *Message) ReactContext(ctx context.Context, emojis ...string) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
@@ -1290,7 +1323,7 @@ func (m *Message) React(emojis ...string) error {
 	for _, e := range emojis {
 		opts = append(opts, &params.React{Emoji: e})
 	}
-	return m.binder.BoundReact(m.ChatID, m.ID, opts...)
+	return m.binder.BoundReact(ctx, m.ChatID, m.ID, opts...)
 }
 
 // Pin pins this message in the chat.
@@ -1300,28 +1333,40 @@ func (m *Message) React(emojis ...string) error {
 //
 //	err := msg.Pin(&params.PinMessage{Silent: true})
 func (m *Message) Pin(opts ...*params.PinMessage) error {
+	return m.PinContext(context.Background(), opts...)
+}
+
+func (m *Message) PinContext(ctx context.Context, opts ...*params.PinMessage) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundPin(m.ChatID, m.ID, opts...)
+	return m.binder.BoundPin(ctx, m.ChatID, m.ID, opts...)
 }
 
 // Unpin removes this message from the pinned list.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) Unpin(opts ...*params.PinMessage) error {
+	return m.UnpinContext(context.Background(), opts...)
+}
+
+func (m *Message) UnpinContext(ctx context.Context, opts ...*params.PinMessage) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundUnpin(m.ChatID, m.ID, opts...)
+	return m.binder.BoundUnpin(ctx, m.ChatID, m.ID, opts...)
 }
 
 // Read marks this message (and all before it) as read.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) Read() error {
+	return m.ReadContext(context.Background())
+}
+
+func (m *Message) ReadContext(ctx context.Context) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundRead(m.ChatID, m.ID)
+	return m.binder.BoundRead(ctx, m.ChatID, m.ID)
 }
 
 // Download fetches the media attached to this message as raw bytes.
@@ -1334,10 +1379,14 @@ func (m *Message) Read() error {
 //	    os.WriteFile("photo.jpg", data, 0644)
 //	}
 func (m *Message) Download(opts ...*params.Download) ([]byte, error) {
+	return m.DownloadContext(context.Background(), opts...)
+}
+
+func (m *Message) DownloadContext(ctx context.Context, opts ...*params.Download) ([]byte, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundDownload(m.ChatID, m.ID, opts...)
+	return m.binder.BoundDownload(ctx, m.ChatID, m.ID, opts...)
 }
 
 // DownloadTo downloads the media attached to this message to a file and returns
@@ -1358,102 +1407,154 @@ func (m *Message) Download(opts ...*params.Download) ([]byte, error) {
 //	// Custom directory (auto-generates filename)
 //	path, err := msg.DownloadTo("/tmp/media/")
 func (m *Message) DownloadTo(fileName string, progress params.ProgressFunc) (string, error) {
+	return m.DownloadToContext(context.Background(), fileName, progress)
+}
+
+func (m *Message) DownloadToContext(ctx context.Context, fileName string, progress params.ProgressFunc) (string, error) {
 	if m.binder == nil {
 		return "", ErrNoBinder
 	}
-	return m.binder.BoundDownloadTo(m.ChatID, m.ID, fileName, &params.Download{FileName: fileName, Progress: progress})
+	return m.binder.BoundDownloadTo(ctx, m.ChatID, m.ID, fileName, &params.Download{FileName: fileName, Progress: progress})
 }
 
 // ReplyMedia sends media to the same chat, quoting this message as a reply.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) ReplyMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyMediaContext(context.Background(), media, caption, opts...)
+}
+
+func (m *Message) ReplyMediaContext(ctx context.Context, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendMedia(m.ChatID, media, caption, m.ID, opts...)
+	return m.binder.BoundSendMedia(ctx, m.ChatID, media, caption, m.ID, opts...)
 }
 
 // SendMedia sends media to the same chat without replying to any message.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) SendMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.SendMediaContext(context.Background(), media, caption, opts...)
+}
+
+func (m *Message) SendMediaContext(ctx context.Context, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendMedia(m.ChatID, media, caption, 0, opts...)
+	return m.binder.BoundSendMedia(ctx, m.ChatID, media, caption, 0, opts...)
 }
 
 // EditMedia replaces the media content of this message.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) EditMedia(media tg.InputMediaClass) (*Message, error) {
+	return m.EditMediaContext(context.Background(), media)
+}
+
+func (m *Message) EditMediaContext(ctx context.Context, media tg.InputMediaClass) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundEditMedia(m.ChatID, m.ID, media)
+	return m.binder.BoundEditMedia(ctx, m.ChatID, m.ID, media)
 }
 
 // EditReplyMarkup changes only the inline keyboard of this message.
 // Returns ErrNoBinder if the message was not created by a client.
 func (m *Message) EditReplyMarkup(markup tg.ReplyMarkupClass) (*Message, error) {
+	return m.EditReplyMarkupContext(context.Background(), markup)
+}
+
+func (m *Message) EditReplyMarkupContext(ctx context.Context, markup tg.ReplyMarkupClass) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundEditReplyMarkup(m.ChatID, m.ID, markup)
+	return m.binder.BoundEditReplyMarkup(ctx, m.ChatID, m.ID, markup)
 }
 
 func (m *Message) ReplyAnimation(file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+	return m.ReplyAnimationContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyAnimationContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyAnimation(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyAnimation(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplyAudio(file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
+	return m.ReplyAudioContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyAudioContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyAudio(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyAudio(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplyDocument(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	return m.ReplyDocumentContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyDocumentContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyDocument(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyDocument(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplyPhoto(file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
+	return m.ReplyPhotoContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyPhotoContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyPhoto(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyPhoto(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplyVideo(file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
+	return m.ReplyVideoContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyVideoContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyVideo(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyVideo(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplyVideoNote(file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
+	return m.ReplyVideoNoteContext(context.Background(), file, opts...)
+}
+
+func (m *Message) ReplyVideoNoteContext(ctx context.Context, file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyVideoNote(m.ChatID, file, m.ID, opts...)
+	return m.binder.BoundReplyVideoNote(ctx, m.ChatID, file, m.ID, opts...)
 }
 
 func (m *Message) ReplyVoice(file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+	return m.ReplyVoiceContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyVoiceContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyVoice(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyVoice(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) ReplySticker(file *InputFile, opts ...*params.SendSticker) (*Message, error) {
+	return m.ReplyStickerContext(context.Background(), file, opts...)
+}
+
+func (m *Message) ReplyStickerContext(ctx context.Context, file *InputFile, opts ...*params.SendSticker) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplySticker(m.ChatID, file, m.ID, opts...)
+	return m.binder.BoundReplySticker(ctx, m.ChatID, file, m.ID, opts...)
 }
 
 // ReplyText is an alias for Reply, provided for naming consistency with the
@@ -1465,241 +1566,365 @@ func (m *Message) ReplyText(text string, opts ...*params.SendMessage) (*Message,
 // Answer sends a text message in the same chat without replying. Semantically
 // equivalent to Send; named for use in callback/query contexts.
 func (m *Message) Answer(text string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerContext(context.Background(), text, opts...)
+}
+
+func (m *Message) AnswerContext(ctx context.Context, text string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSend(m.ChatID, text, 0, opts...)
+	return m.binder.BoundSend(ctx, m.ChatID, text, 0, opts...)
 }
 
 // ReplyRich sends a rich message replying to this message.
 func (m *Message) ReplyRich(rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyRichContext(context.Background(), rm, opts...)
+}
+
+func (m *Message) ReplyRichContext(ctx context.Context, rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendRich(m.ChatID, rm, m.ID, opts...)
+	return m.binder.BoundSendRich(ctx, m.ChatID, rm, m.ID, opts...)
 }
 
 // AnswerRich sends a rich message in the same chat without replying.
 func (m *Message) AnswerRich(rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerRichContext(context.Background(), rm, opts...)
+}
+
+func (m *Message) AnswerRichContext(ctx context.Context, rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendRich(m.ChatID, rm, 0, opts...)
+	return m.binder.BoundSendRich(ctx, m.ChatID, rm, 0, opts...)
 }
 
 func (m *Message) AnswerAnimation(file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+	return m.AnswerAnimationContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerAnimationContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerAnimation(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerAnimation(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerAudio(file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
+	return m.AnswerAudioContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerAudioContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerAudio(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerAudio(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerDocument(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	return m.AnswerDocumentContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerDocumentContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerDocument(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerDocument(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerPhoto(file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
+	return m.AnswerPhotoContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerPhotoContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerPhoto(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerPhoto(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerVideo(file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
+	return m.AnswerVideoContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerVideoContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerVideo(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerVideo(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerVideoNote(file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
+	return m.AnswerVideoNoteContext(context.Background(), file, opts...)
+}
+
+func (m *Message) AnswerVideoNoteContext(ctx context.Context, file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerVideoNote(m.ChatID, file, opts...)
+	return m.binder.BoundAnswerVideoNote(ctx, m.ChatID, file, opts...)
 }
 
 func (m *Message) AnswerVoice(file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+	return m.AnswerVoiceContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerVoiceContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerVoice(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerVoice(ctx, m.ChatID, file, caption, opts...)
 }
 
 func (m *Message) AnswerSticker(file *InputFile, opts ...*params.SendSticker) (*Message, error) {
+	return m.AnswerStickerContext(context.Background(), file, opts...)
+}
+
+func (m *Message) AnswerStickerContext(ctx context.Context, file *InputFile, opts ...*params.SendSticker) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerSticker(m.ChatID, file, opts...)
+	return m.binder.BoundAnswerSticker(ctx, m.ChatID, file, opts...)
 }
 
 // AnswerMedia sends media to the same chat without replying to any message.
 func (m *Message) AnswerMedia(media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerMediaContext(context.Background(), media, caption, opts...)
+}
+
+func (m *Message) AnswerMediaContext(ctx context.Context, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendMedia(m.ChatID, media, caption, 0, opts...)
+	return m.binder.BoundSendMedia(ctx, m.ChatID, media, caption, 0, opts...)
 }
 
 // AnswerMediaGroup sends an album of media items to the same chat without
 // replying to any message.
 func (m *Message) AnswerMediaGroup(media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
+	return m.AnswerMediaGroupContext(context.Background(), media, opts...)
+}
+
+func (m *Message) AnswerMediaGroupContext(ctx context.Context, media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendMediaGroup(m.ChatID, media, 0, opts...)
+	return m.binder.BoundSendMediaGroup(ctx, m.ChatID, media, 0, opts...)
 }
 
 // ReplyContact sends a contact card as a reply to this message.
 func (m *Message) ReplyContact(phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
+	return m.ReplyContactContext(context.Background(), phone, firstName, lastName, opts...)
+}
+
+func (m *Message) ReplyContactContext(ctx context.Context, phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendContact(m.ChatID, phone, firstName, lastName, m.ID, opts...)
+	return m.binder.BoundSendContact(ctx, m.ChatID, phone, firstName, lastName, m.ID, opts...)
 }
 
 // AnswerContact sends a contact card without replying.
 func (m *Message) AnswerContact(phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
+	return m.AnswerContactContext(context.Background(), phone, firstName, lastName, opts...)
+}
+
+func (m *Message) AnswerContactContext(ctx context.Context, phone, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendContact(m.ChatID, phone, firstName, lastName, 0, opts...)
+	return m.binder.BoundSendContact(ctx, m.ChatID, phone, firstName, lastName, 0, opts...)
 }
 
 // ReplyLocation sends a geographic location as a reply to this message.
 func (m *Message) ReplyLocation(lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
+	return m.ReplyLocationContext(context.Background(), lat, lng, opts...)
+}
+
+func (m *Message) ReplyLocationContext(ctx context.Context, lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendLocation(m.ChatID, lat, lng, m.ID, opts...)
+	return m.binder.BoundSendLocation(ctx, m.ChatID, lat, lng, m.ID, opts...)
 }
 
 // AnswerLocation sends a geographic location without replying.
 func (m *Message) AnswerLocation(lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
+	return m.AnswerLocationContext(context.Background(), lat, lng, opts...)
+}
+
+func (m *Message) AnswerLocationContext(ctx context.Context, lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendLocation(m.ChatID, lat, lng, 0, opts...)
+	return m.binder.BoundSendLocation(ctx, m.ChatID, lat, lng, 0, opts...)
 }
 
 // ReplyVenue sends a named venue as a reply to this message.
 func (m *Message) ReplyVenue(lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
+	return m.ReplyVenueContext(context.Background(), lat, lng, title, address, opts...)
+}
+
+func (m *Message) ReplyVenueContext(ctx context.Context, lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendVenue(m.ChatID, lat, lng, title, address, m.ID, opts...)
+	return m.binder.BoundSendVenue(ctx, m.ChatID, lat, lng, title, address, m.ID, opts...)
 }
 
 // AnswerVenue sends a named venue without replying.
 func (m *Message) AnswerVenue(lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
+	return m.AnswerVenueContext(context.Background(), lat, lng, title, address, opts...)
+}
+
+func (m *Message) AnswerVenueContext(ctx context.Context, lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendVenue(m.ChatID, lat, lng, title, address, 0, opts...)
+	return m.binder.BoundSendVenue(ctx, m.ChatID, lat, lng, title, address, 0, opts...)
 }
 
 // ReplyPoll sends a poll as a reply to this message.
 func (m *Message) ReplyPoll(question string, options []string, opts ...*params.SendPoll) (*Message, error) {
+	return m.ReplyPollContext(context.Background(), question, options, opts...)
+}
+
+func (m *Message) ReplyPollContext(ctx context.Context, question string, options []string, opts ...*params.SendPoll) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendPoll(m.ChatID, question, options, m.ID, opts...)
+	return m.binder.BoundSendPoll(ctx, m.ChatID, question, options, m.ID, opts...)
 }
 
 // AnswerPoll sends a poll without replying.
 func (m *Message) AnswerPoll(question string, options []string, opts ...*params.SendPoll) (*Message, error) {
+	return m.AnswerPollContext(context.Background(), question, options, opts...)
+}
+
+func (m *Message) AnswerPollContext(ctx context.Context, question string, options []string, opts ...*params.SendPoll) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendPoll(m.ChatID, question, options, 0, opts...)
+	return m.binder.BoundSendPoll(ctx, m.ChatID, question, options, 0, opts...)
 }
 
 // ReplyDice sends a dice roll as a reply to this message.
 func (m *Message) ReplyDice(emoji string, opts ...*params.SendDice) (*Message, error) {
+	return m.ReplyDiceContext(context.Background(), emoji, opts...)
+}
+
+func (m *Message) ReplyDiceContext(ctx context.Context, emoji string, opts ...*params.SendDice) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendDice(m.ChatID, emoji, m.ID, opts...)
+	return m.binder.BoundSendDice(ctx, m.ChatID, emoji, m.ID, opts...)
 }
 
 // AnswerDice sends a dice roll without replying.
 func (m *Message) AnswerDice(emoji string, opts ...*params.SendDice) (*Message, error) {
+	return m.AnswerDiceContext(context.Background(), emoji, opts...)
+}
+
+func (m *Message) AnswerDiceContext(ctx context.Context, emoji string, opts ...*params.SendDice) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendDice(m.ChatID, emoji, 0, opts...)
+	return m.binder.BoundSendDice(ctx, m.ChatID, emoji, 0, opts...)
 }
 
 // ReplyGame sends a game as a reply to this message.
 func (m *Message) ReplyGame(gameShortName string, opts ...*params.SendGame) (*Message, error) {
+	return m.ReplyGameContext(context.Background(), gameShortName, opts...)
+}
+
+func (m *Message) ReplyGameContext(ctx context.Context, gameShortName string, opts ...*params.SendGame) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendGame(m.ChatID, gameShortName, m.ID, opts...)
+	return m.binder.BoundSendGame(ctx, m.ChatID, gameShortName, m.ID, opts...)
 }
 
 // AnswerGame sends a game without replying.
 func (m *Message) AnswerGame(gameShortName string, opts ...*params.SendGame) (*Message, error) {
+	return m.AnswerGameContext(context.Background(), gameShortName, opts...)
+}
+
+func (m *Message) AnswerGameContext(ctx context.Context, gameShortName string, opts ...*params.SendGame) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendGame(m.ChatID, gameShortName, 0, opts...)
+	return m.binder.BoundSendGame(ctx, m.ChatID, gameShortName, 0, opts...)
 }
 
 func (m *Message) ReplyCachedMedia(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	return m.ReplyCachedMediaContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) ReplyCachedMediaContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyDocument(m.ChatID, file, caption, m.ID, opts...)
+	return m.binder.BoundReplyDocument(ctx, m.ChatID, file, caption, m.ID, opts...)
 }
 
 func (m *Message) AnswerCachedMedia(file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
+	return m.AnswerCachedMediaContext(context.Background(), file, caption, opts...)
+}
+
+func (m *Message) AnswerCachedMediaContext(ctx context.Context, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundAnswerDocument(m.ChatID, file, caption, opts...)
+	return m.binder.BoundAnswerDocument(ctx, m.ChatID, file, caption, opts...)
 }
 
 // ReplyMediaGroup sends an album of media items as a reply to this message.
 func (m *Message) ReplyMediaGroup(media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
+	return m.ReplyMediaGroupContext(context.Background(), media, opts...)
+}
+
+func (m *Message) ReplyMediaGroupContext(ctx context.Context, media []tg.InputMediaClass, opts ...*params.SendMediaGroup) ([]*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendMediaGroup(m.ChatID, media, m.ID, opts...)
+	return m.binder.BoundSendMediaGroup(ctx, m.ChatID, media, m.ID, opts...)
 }
 
 // ReplyChatAction sends a chat action indicator (e.g. typing) to the same chat.
 func (m *Message) ReplyChatAction(action tg.SendMessageActionClass) error {
+	return m.ReplyChatActionContext(context.Background(), action)
+}
+
+func (m *Message) ReplyChatActionContext(ctx context.Context, action tg.SendMessageActionClass) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundSendChatAction(m.ChatID, action)
+	return m.binder.BoundSendChatAction(ctx, m.ChatID, action)
 }
 
 // ReplyInlineBotResult sends an inline bot result as a reply to this message.
 func (m *Message) ReplyInlineBotResult(queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
+	return m.ReplyInlineBotResultContext(context.Background(), queryID, resultID, opts...)
+}
+
+func (m *Message) ReplyInlineBotResultContext(ctx context.Context, queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendInlineBotResult(m.ChatID, queryID, resultID, m.ID, opts...)
+	return m.binder.BoundSendInlineBotResult(ctx, m.ChatID, queryID, resultID, m.ID, opts...)
 }
 
 // AnswerInlineBotResult sends an inline bot result without replying.
 func (m *Message) AnswerInlineBotResult(queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
+	return m.AnswerInlineBotResultContext(context.Background(), queryID, resultID, opts...)
+}
+
+func (m *Message) AnswerInlineBotResultContext(ctx context.Context, queryID int64, resultID string, opts ...*params.SendInlineBotResult) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundSendInlineBotResult(m.ChatID, queryID, resultID, 0, opts...)
+	return m.binder.BoundSendInlineBotResult(ctx, m.ChatID, queryID, resultID, 0, opts...)
 }
 
 // EditText is an alias for Edit, provided for naming consistency.
@@ -1710,45 +1935,69 @@ func (m *Message) EditText(text string, opts ...*params.EditMessage) (*Message, 
 // EditLiveLocation updates the location of a live location message. Not yet
 // implemented.
 func (m *Message) EditLiveLocation(lat, lng float64) (*Message, error) {
-	return nil, m.binder.BoundStub("EditLiveLocation")
+	return m.EditLiveLocationContext(context.Background(), lat, lng)
+}
+
+func (m *Message) EditLiveLocationContext(ctx context.Context, lat, lng float64) (*Message, error) {
+	return nil, m.binder.BoundStub(ctx, "EditLiveLocation")
 }
 
 // StopLiveLocation stops a live location sharing. Not yet implemented.
 func (m *Message) StopLiveLocation() (*Message, error) {
-	return nil, m.binder.BoundStub("StopLiveLocation")
+	return m.StopLiveLocationContext(context.Background())
+}
+
+func (m *Message) StopLiveLocationContext(ctx context.Context) (*Message, error) {
+	return nil, m.binder.BoundStub(ctx, "StopLiveLocation")
 }
 
 // CopyMediaGroup copies all messages in this message's album into another chat.
 func (m *Message) CopyMediaGroup(chatID int64) ([]*Message, error) {
+	return m.CopyMediaGroupContext(context.Background(), chatID)
+}
+
+func (m *Message) CopyMediaGroupContext(ctx context.Context, chatID int64) ([]*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundCopyMediaGroup(chatID, m.ChatID, m.ID)
+	return m.binder.BoundCopyMediaGroup(ctx, chatID, m.ChatID, m.ID)
 }
 
 // Vote casts a vote in a poll message using the selected option byte sequences.
 func (m *Message) Vote(options [][]byte) error {
+	return m.VoteContext(context.Background(), options)
+}
+
+func (m *Message) VoteContext(ctx context.Context, options [][]byte) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundVote(m.ChatID, m.ID, options)
+	return m.binder.BoundVote(ctx, m.ChatID, m.ID, options)
 }
 
 // RetractVote withdraws the current user's vote in a poll.
 func (m *Message) RetractVote() error {
+	return m.RetractVoteContext(context.Background())
+}
+
+func (m *Message) RetractVoteContext(ctx context.Context) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundRetractVote(m.ChatID, m.ID)
+	return m.binder.BoundRetractVote(ctx, m.ChatID, m.ID)
 }
 
 // GetMediaGroup retrieves all messages that belong to the same album as this
 // message.
 func (m *Message) GetMediaGroup() ([]*Message, error) {
+	return m.GetMediaGroupContext(context.Background())
+}
+
+func (m *Message) GetMediaGroupContext(ctx context.Context) ([]*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundGetMediaGroup(m.ChatID, m.ID)
+	return m.binder.BoundGetMediaGroup(ctx, m.ChatID, m.ID)
 }
 
 // View is an alias for Read; marks this message as read.
@@ -1758,94 +2007,142 @@ func (m *Message) View() error {
 
 // Click simulates a button press on this message. Not yet implemented.
 func (m *Message) Click(buttonIndex int) error {
+	return m.ClickContext(context.Background(), buttonIndex)
+}
+
+func (m *Message) ClickContext(ctx context.Context, buttonIndex int) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundStub("Click")
+	return m.binder.BoundStub(ctx, "Click")
 }
 
 // Pay initiates a payment for an invoice message. Not yet implemented.
 func (m *Message) Pay() error {
+	return m.PayContext(context.Background())
+}
+
+func (m *Message) PayContext(ctx context.Context) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundStub("Pay")
+	return m.binder.BoundStub(ctx, "Pay")
 }
 
 // ReplyPaidMedia sends paid media as a reply. Not yet implemented.
 func (m *Message) ReplyPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyPaidMediaContext(context.Background(), caption, opts...)
+}
+
+func (m *Message) ReplyPaidMediaContext(ctx context.Context, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, m.binder.BoundStub("ReplyPaidMedia")
+	return nil, m.binder.BoundStub(ctx, "ReplyPaidMedia")
 }
 
 // AnswerPaidMedia sends paid media without replying. Not yet implemented.
 func (m *Message) AnswerPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerPaidMediaContext(context.Background(), caption, opts...)
+}
+
+func (m *Message) AnswerPaidMediaContext(ctx context.Context, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, m.binder.BoundStub("AnswerPaidMedia")
+	return nil, m.binder.BoundStub(ctx, "AnswerPaidMedia")
 }
 
 // ReplyInvoice sends an invoice as a reply. Not yet implemented.
 func (m *Message) ReplyInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyInvoiceContext(context.Background(), title, description, opts...)
+}
+
+func (m *Message) ReplyInvoiceContext(ctx context.Context, title, description string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, m.binder.BoundStub("ReplyInvoice")
+	return nil, m.binder.BoundStub(ctx, "ReplyInvoice")
 }
 
 // AnswerInvoice sends an invoice without replying. Not yet implemented.
 func (m *Message) AnswerInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerInvoiceContext(context.Background(), title, description, opts...)
+}
+
+func (m *Message) AnswerInvoiceContext(ctx context.Context, title, description string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, m.binder.BoundStub("AnswerInvoice")
+	return nil, m.binder.BoundStub(ctx, "AnswerInvoice")
 }
 
 func (m *Message) ReplyChecklist(checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
+	return m.ReplyChecklistContext(context.Background(), checklist, opts...)
+}
+
+func (m *Message) ReplyChecklistContext(ctx context.Context, checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyChecklist(m.ChatID, checklist, m.ID, opts...)
+	return m.binder.BoundReplyChecklist(ctx, m.ChatID, checklist, m.ID, opts...)
 }
 
 func (m *Message) AnswerChecklist(checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
+	return m.AnswerChecklistContext(context.Background(), checklist, opts...)
+}
+
+func (m *Message) AnswerChecklistContext(ctx context.Context, checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return m.binder.BoundReplyChecklist(m.ChatID, checklist, 0, opts...)
+	return m.binder.BoundReplyChecklist(ctx, m.ChatID, checklist, 0, opts...)
 }
 
 func (m *Message) EditChecklist(checklist *tg.InputMediaTodo, opts ...*params.EditMessage) (*Message, error) {
+	return m.EditChecklistContext(context.Background(), checklist, opts...)
+}
+
+func (m *Message) EditChecklistContext(ctx context.Context, checklist *tg.InputMediaTodo, opts ...*params.EditMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
 	media := tg.InputMediaClass(checklist)
-	return m.binder.BoundEditMedia(m.ChatID, m.ID, media)
+	return m.binder.BoundEditMedia(ctx, m.ChatID, m.ID, media)
 }
 
 // AcceptGiftPurchaseOffer accepts a gift purchase offer. Not yet implemented.
 func (m *Message) AcceptGiftPurchaseOffer() error {
+	return m.AcceptGiftPurchaseOfferContext(context.Background())
+}
+
+func (m *Message) AcceptGiftPurchaseOfferContext(ctx context.Context) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundStub("AcceptGiftPurchaseOffer")
+	return m.binder.BoundStub(ctx, "AcceptGiftPurchaseOffer")
 }
 
 // RejectGiftPurchaseOffer rejects a gift purchase offer. Not yet implemented.
 func (m *Message) RejectGiftPurchaseOffer() error {
+	return m.RejectGiftPurchaseOfferContext(context.Background())
+}
+
+func (m *Message) RejectGiftPurchaseOfferContext(ctx context.Context) error {
 	if m.binder == nil {
 		return ErrNoBinder
 	}
-	return m.binder.BoundStub("RejectGiftPurchaseOffer")
+	return m.binder.BoundStub(ctx, "RejectGiftPurchaseOffer")
 }
 
 // Summarize generates a summary of the message content. Not yet implemented.
 func (m *Message) Summarize() (string, error) {
+	return m.SummarizeContext(context.Background())
+}
+
+func (m *Message) SummarizeContext(ctx context.Context) (string, error) {
 	if m.binder == nil {
 		return "", ErrNoBinder
 	}
-	return "", m.binder.BoundStub("Summarize")
+	return "", m.binder.BoundStub(ctx, "Summarize")
 }

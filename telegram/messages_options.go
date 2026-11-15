@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -52,11 +53,9 @@ type SearchGlobalOption struct {
 	Filter tg.MessagesFilterClass
 }
 
-// SendDiceOption configures the animated emoji used in a dice message. When Emoticon
-// is empty, the default game die (🎲) is used. Other supported values include
-// 🎯 (dart), 🏀 (basketball), ⚽ (football), 🎰 (slot machine), and 🎳 (bowling).
-type SendDiceOption struct {
-	// Emoticon is the Unicode emoji representing the animated dice type.
-	// Leave empty to use the default 🎲.
-	Emoticon string
-}
+// Compatibility aliases for option structs relocated to params.
+type (
+	SendDiceOption        = params.SendDiceOption
+	GetPaymentFormOption  = params.GetPaymentFormOption
+	SendPaymentFormOption = params.SendPaymentFormOption
+)

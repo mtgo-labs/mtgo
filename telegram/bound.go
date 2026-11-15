@@ -22,8 +22,7 @@ import (
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSend(chatID int64, text string, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSend(ctx context.Context, chatID int64, text string, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMessage{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -34,8 +33,7 @@ func (c *Client) BoundSend(chatID int64, text string, replyTo int32, opts ...*pa
 // BoundSendRich sends a rich message to the given chat, optionally replying to
 // another message identified by replyTo. Bound-method convenience wrapper
 // around [Client.SendRichMessage].
-func (c *Client) BoundSendRich(chatID int64, rm tg.InputRichMessageClass, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendRich(ctx context.Context, chatID int64, rm tg.InputRichMessageClass, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMessage{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -55,8 +53,7 @@ func (c *Client) BoundSendRich(chatID int64, rm tg.InputRichMessageClass, replyT
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendMedia(chatID int64, media tg.InputMediaClass, caption string, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendMedia(ctx context.Context, chatID int64, media tg.InputMediaClass, caption string, replyTo int32, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMessage{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -76,8 +73,7 @@ func (c *Client) BoundSendMedia(chatID int64, media tg.InputMediaClass, caption 
 //
 // Returns the forwarded message, nil if no messages were returned, or an error
 // if the forward fails.
-func (c *Client) BoundForward(chatID int64, fromChatID int64, msgID int32, opts ...*params.ForwardMessages) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundForward(ctx context.Context, chatID int64, fromChatID int64, msgID int32, opts ...*params.ForwardMessages) (*types.Message, error) {
 	opt := params.GetOptDef(&params.ForwardMessages{}, opts...)
 	msgs, err := c.ForwardMessages(ctx, chatID, fromChatID, []int32{msgID}, opt)
 	if err != nil {
@@ -100,8 +96,7 @@ func (c *Client) BoundForward(chatID int64, fromChatID int64, msgID int32, opts 
 //   - opts: optional [params.CopyMessage] overrides
 //
 // Returns the new message ID or an error if the copy fails.
-func (c *Client) BoundCopy(chatID int64, fromChatID int64, msgID int32, opts ...*params.CopyMessage) (int64, error) {
-	ctx := context.Background()
+func (c *Client) BoundCopy(ctx context.Context, chatID int64, fromChatID int64, msgID int32, opts ...*params.CopyMessage) (int64, error) {
 	opt := params.GetOptDef(&params.CopyMessage{}, opts...)
 	return c.CopyMessage(ctx, chatID, fromChatID, msgID, opt)
 }
@@ -116,8 +111,7 @@ func (c *Client) BoundCopy(chatID int64, fromChatID int64, msgID int32, opts ...
 //   - opts: optional [params.EditMessage] overrides
 //
 // Returns the edited message or an error if the edit fails.
-func (c *Client) BoundEdit(chatID int64, msgID int32, text string, opts ...*params.EditMessage) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundEdit(ctx context.Context, chatID int64, msgID int32, text string, opts ...*params.EditMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.EditMessage{}, opts...)
 	return c.EditMessageText(ctx, chatID, msgID, text, opt)
 }
@@ -132,8 +126,7 @@ func (c *Client) BoundEdit(chatID int64, msgID int32, text string, opts ...*para
 //   - opts: optional [params.EditMessage] overrides
 //
 // Returns the edited message or an error if the edit fails.
-func (c *Client) BoundEditCaption(chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditCaption(ctx context.Context, chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.EditMessage{}, opts...)
 	return c.EditMessageCaption(ctx, chatID, msgID, caption, opt)
 }
@@ -147,8 +140,7 @@ func (c *Client) BoundEditCaption(chatID int64, msgID int32, caption string, opt
 //   - media: new media content
 //
 // Returns the edited message or an error if the edit fails.
-func (c *Client) BoundEditMedia(chatID int64, msgID int32, media tg.InputMediaClass) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditMedia(ctx context.Context, chatID int64, msgID int32, media tg.InputMediaClass) (*types.Message, error) {
 	return c.EditMessageMedia(ctx, chatID, msgID, media)
 }
 
@@ -161,38 +153,31 @@ func (c *Client) BoundEditMedia(chatID int64, msgID int32, media tg.InputMediaCl
 //   - markup: new reply markup (inline keyboard)
 //
 // Returns the edited message or an error if the edit fails.
-func (c *Client) BoundEditReplyMarkup(chatID int64, msgID int32, markup tg.ReplyMarkupClass) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditReplyMarkup(ctx context.Context, chatID int64, msgID int32, markup tg.ReplyMarkupClass) (*types.Message, error) {
 	return c.EditMessageReplyMarkup(ctx, chatID, msgID, markup)
 }
 
-func (c *Client) BoundEditInline(inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditInline(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error) {
 	return c.EditInlineText(ctx, inlineMessageID, text, editInlineOptsFromParams(opts...)...)
 }
 
-func (c *Client) BoundEditInlineCaption(inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditInlineCaption(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error) {
 	return c.EditInlineCaption(ctx, inlineMessageID, caption, editInlineOptsFromParams(opts...)...)
 }
 
-func (c *Client) BoundEditInlineMedia(inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass) (bool, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditInlineMedia(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass) (bool, error) {
 	return c.EditInlineMedia(ctx, inlineMessageID, media)
 }
 
-func (c *Client) BoundEditInlineReplyMarkup(inlineMessageID tg.InputBotInlineMessageIDClass, markup tg.ReplyMarkupClass) (bool, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, markup tg.ReplyMarkupClass) (bool, error) {
 	return c.EditInlineReplyMarkup(ctx, inlineMessageID, markup)
 }
 
-func (c *Client) BoundEditInlineRich(inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass) (bool, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditInlineRich(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass) (bool, error) {
 	return c.EditInlineRichMessage(ctx, inlineMessageID, rm)
 }
 
-func (c *Client) BoundEditRich(chatID int64, msgID int32, rm tg.InputRichMessageClass) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundEditRich(ctx context.Context, chatID int64, msgID int32, rm tg.InputRichMessageClass) (*types.Message, error) {
 	return c.EditMessageText(ctx, chatID, msgID, "", &params.EditMessage{RichMessage: rm})
 }
 
@@ -223,8 +208,7 @@ func editInlineOptsFromParams(opts ...*params.EditMessage) []*EditInlineOpts {
 //   - opts: optional [params.DeleteMessages] overrides
 //
 // Returns the number of messages deleted or an error if the deletion fails.
-func (c *Client) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error) {
-	ctx := context.Background()
+func (c *Client) BoundDelete(ctx context.Context, chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error) {
 	opt := params.GetOptDef(&params.DeleteMessages{}, opts...)
 	return c.DeleteMessages(ctx, chatID, msgIDs, opt)
 }
@@ -239,8 +223,7 @@ func (c *Client) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.Delet
 //   - emojis: slice of emoji strings to react with (e.g. "👍", "❤️")
 //
 // Returns an error if the reaction fails.
-func (c *Client) BoundReact(chatID int64, msgID int32, opts ...*params.React) error {
-	ctx := context.Background()
+func (c *Client) BoundReact(ctx context.Context, chatID int64, msgID int32, opts ...*params.React) error {
 	o := params.GetOptDef(&params.React{}, opts...)
 	reactions := []types.Reaction{{Emoji: o.Emoji}}
 	return c.SendReaction(ctx, chatID, msgID, reactions)
@@ -255,8 +238,7 @@ func (c *Client) BoundReact(chatID int64, msgID int32, opts ...*params.React) er
 //   - opts: optional [params.PinMessage] overrides
 //
 // Returns an error if the pin operation fails.
-func (c *Client) BoundPin(chatID int64, msgID int32, opts ...*params.PinMessage) error {
-	ctx := context.Background()
+func (c *Client) BoundPin(ctx context.Context, chatID int64, msgID int32, opts ...*params.PinMessage) error {
 	opt := params.GetOptDef(&params.PinMessage{}, opts...)
 	_, err := c.PinMessage(ctx, chatID, msgID, opt)
 	return err
@@ -271,8 +253,7 @@ func (c *Client) BoundPin(chatID int64, msgID int32, opts ...*params.PinMessage)
 //   - opts: optional [params.PinMessage] overrides (currently unused)
 //
 // Returns an error if the unpin operation fails.
-func (c *Client) BoundUnpin(chatID int64, msgID int32, opts ...*params.PinMessage) error {
-	ctx := context.Background()
+func (c *Client) BoundUnpin(ctx context.Context, chatID int64, msgID int32, opts ...*params.PinMessage) error {
 	_, err := c.UnpinMessage(ctx, chatID, msgID)
 	return err
 }
@@ -286,8 +267,7 @@ func (c *Client) BoundUnpin(chatID int64, msgID int32, opts ...*params.PinMessag
 //   - msgID: message ID up to which messages are considered read
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundRead(chatID int64, msgID int32) error {
-	ctx := context.Background()
+func (c *Client) BoundRead(ctx context.Context, chatID int64, msgID int32) error {
 	return c.ReadHistory(ctx, chatID, msgID)
 }
 
@@ -303,8 +283,7 @@ func (c *Client) BoundRead(chatID int64, msgID int32) error {
 //   - cacheTime: maximum seconds the client may cache the answer
 //
 // Returns an error if the answer fails to send.
-func (c *Client) BoundAnswerCallback(queryID int64, opts ...*params.AnswerCallback) error {
-	ctx := context.Background()
+func (c *Client) BoundAnswerCallback(ctx context.Context, queryID int64, opts ...*params.AnswerCallback) error {
 	o := params.GetOptDef(&params.AnswerCallback{}, opts...)
 	return c.AnswerCallbackQuery(ctx, queryID, o.Text, o.ShowAlert, o.URL, int(o.CacheTime))
 }
@@ -321,8 +300,7 @@ func (c *Client) BoundAnswerCallback(queryID int64, opts ...*params.AnswerCallba
 //
 // Returns the downloaded media bytes, nil if the message has no media, or an
 // error if retrieval or download fails.
-func (c *Client) BoundDownload(chatID int64, msgID int32, opts ...*params.Download) ([]byte, error) {
-	ctx := context.Background()
+func (c *Client) BoundDownload(ctx context.Context, chatID int64, msgID int32, opts ...*params.Download) ([]byte, error) {
 	opt := params.GetOptDef(&params.Download{}, opts...)
 	msgs, err := c.GetMessages(ctx, chatID, []int32{msgID})
 	if err != nil {
@@ -334,8 +312,7 @@ func (c *Client) BoundDownload(chatID int64, msgID int32, opts ...*params.Downlo
 	return c.DownloadMedia(ctx, msgs[0].Media, "", opt)
 }
 
-func (c *Client) BoundDownloadTo(chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error) {
-	ctx := context.Background()
+func (c *Client) BoundDownloadTo(ctx context.Context, chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error) {
 	opt := params.GetOptDef(&params.Download{FileName: fileName}, opts...)
 	if opt.FileName == "" {
 		opt.FileName = fileName
@@ -362,8 +339,7 @@ func (c *Client) BoundDownloadTo(chatID int64, msgID int32, fileName string, opt
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendContact(chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendContact(ctx context.Context, chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendContact{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -382,8 +358,7 @@ func (c *Client) BoundSendContact(chatID int64, phone, firstName, lastName strin
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendLocation(chatID int64, lat, lng float64, replyTo int32, opts ...*params.SendLocation) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendLocation(ctx context.Context, chatID int64, lat, lng float64, replyTo int32, opts ...*params.SendLocation) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendLocation{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -405,8 +380,7 @@ func (c *Client) BoundSendLocation(chatID int64, lat, lng float64, replyTo int32
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendVenue(chatID int64, lat, lng float64, title, address string, replyTo int32, opts ...*params.SendVenue) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, replyTo int32, opts ...*params.SendVenue) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendVenue{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -425,8 +399,7 @@ func (c *Client) BoundSendVenue(chatID int64, lat, lng float64, title, address s
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message containing the poll or an error if the send fails.
-func (c *Client) BoundSendPoll(chatID int64, question string, options []string, replyTo int32, opts ...*params.SendPoll) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendPoll(ctx context.Context, chatID int64, question string, options []string, replyTo int32, opts ...*params.SendPoll) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendPoll{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -445,8 +418,7 @@ func (c *Client) BoundSendPoll(chatID int64, question string, options []string, 
 //   - opts: optional [params.SendMessage] overrides (currently unused)
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendDice(chatID int64, emoji string, replyTo int32, opts ...*params.SendDice) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendDice(ctx context.Context, chatID int64, emoji string, replyTo int32, opts ...*params.SendDice) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendDice{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -472,8 +444,7 @@ func (c *Client) BoundSendDice(chatID int64, emoji string, replyTo int32, opts .
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendGame(chatID int64, gameShortName string, replyTo int32, opts ...*params.SendGame) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendGame(ctx context.Context, chatID int64, gameShortName string, replyTo int32, opts ...*params.SendGame) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendGame{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -492,8 +463,7 @@ func (c *Client) BoundSendGame(chatID int64, gameShortName string, replyTo int32
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the slice of sent messages or an error if the send fails.
-func (c *Client) BoundSendMediaGroup(chatID int64, media []tg.InputMediaClass, replyTo int32, opts ...*params.SendMediaGroup) ([]*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendMediaGroup(ctx context.Context, chatID int64, media []tg.InputMediaClass, replyTo int32, opts ...*params.SendMediaGroup) ([]*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMediaGroup{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -517,8 +487,7 @@ func (c *Client) BoundSendMediaGroup(chatID int64, media []tg.InputMediaClass, r
 //   - action: the chat action to display (e.g. [*tg.SendMessageTypingAction])
 //
 // Returns an error if the action fails to send.
-func (c *Client) BoundSendChatAction(chatID int64, action tg.SendMessageActionClass) error {
-	ctx := context.Background()
+func (c *Client) BoundSendChatAction(ctx context.Context, chatID int64, action tg.SendMessageActionClass) error {
 	return c.SendChatAction(ctx, chatID, action)
 }
 
@@ -534,8 +503,7 @@ func (c *Client) BoundSendChatAction(chatID int64, action tg.SendMessageActionCl
 //   - opts: optional [params.SendMessage] overrides
 //
 // Returns the sent message or an error if the send fails.
-func (c *Client) BoundSendInlineBotResult(chatID int64, queryID int64, resultID string, replyTo int32, opts ...*params.SendInlineBotResult) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundSendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, replyTo int32, opts ...*params.SendInlineBotResult) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendInlineBotResult{ReplyToMessageID: replyTo}, opts...)
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = replyTo
@@ -559,8 +527,7 @@ func (c *Client) BoundSendInlineBotResult(chatID int64, queryID int64, resultID 
 //   - options: slice of option byte arrays to vote for
 //
 // Returns an error if the vote fails.
-func (c *Client) BoundVote(chatID int64, msgID int32, options [][]byte) error {
-	ctx := context.Background()
+func (c *Client) BoundVote(ctx context.Context, chatID int64, msgID int32, options [][]byte) error {
 	return c.VotePoll(ctx, chatID, msgID, options)
 }
 
@@ -572,8 +539,7 @@ func (c *Client) BoundVote(chatID int64, msgID int32, options [][]byte) error {
 //   - msgID: ID of the poll message
 //
 // Returns an error if the retraction fails.
-func (c *Client) BoundRetractVote(chatID int64, msgID int32) error {
-	ctx := context.Background()
+func (c *Client) BoundRetractVote(ctx context.Context, chatID int64, msgID int32) error {
 	return c.RetractVote(ctx, chatID, msgID)
 }
 
@@ -586,8 +552,7 @@ func (c *Client) BoundRetractVote(chatID int64, msgID int32) error {
 //   - msgID: ID of any message in the media group
 //
 // Returns the slice of messages in the group or an error if retrieval fails.
-func (c *Client) BoundGetMediaGroup(chatID int64, msgID int32) ([]*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundGetMediaGroup(ctx context.Context, chatID int64, msgID int32) ([]*types.Message, error) {
 	return c.GetMediaGroup(ctx, chatID, msgID)
 }
 
@@ -603,8 +568,7 @@ func (c *Client) BoundGetMediaGroup(chatID int64, msgID int32) ([]*types.Message
 //
 // Returns the copied messages, nil if no messages found, or an error if the
 // operation fails.
-func (c *Client) BoundCopyMediaGroup(chatID int64, fromChatID int64, msgID int32) ([]*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundCopyMediaGroup(ctx context.Context, chatID int64, fromChatID int64, msgID int32) ([]*types.Message, error) {
 	msgs, err := c.GetMessages(ctx, fromChatID, []int32{msgID})
 	if err != nil {
 		return nil, err
@@ -623,7 +587,7 @@ func (c *Client) BoundCopyMediaGroup(chatID int64, fromChatID int64, msgID int32
 //   - method: name of the unimplemented method
 //
 // Returns an error with the message "method <method> not implemented".
-func (c *Client) BoundStub(method string) error {
+func (c *Client) BoundStub(ctx context.Context, method string) error {
 	return fmt.Errorf("method %s not implemented", method)
 }
 
@@ -641,8 +605,7 @@ func (c *Client) BoundStub(method string) error {
 //   - switchPMText: label shown on the switch-to-PM button
 //
 // Returns an error if the answer fails to send.
-func (c *Client) BoundAnswerInline(queryID int64, results []tg.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
-	ctx := context.Background()
+func (c *Client) BoundAnswerInline(ctx context.Context, queryID int64, results []tg.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
 	o := params.GetOptDef(&params.InlineQuery{}, opts...)
 	req := &tg.MessagesSetInlineBotResultsRequest{
 		QueryID:   queryID,
@@ -671,8 +634,8 @@ func (c *Client) BoundAnswerInline(queryID int64, results []tg.InputBotInlineRes
 //   - userID: ID of the user to block
 //
 // Returns an error if the block operation fails.
-func (c *Client) BoundBlock(userID int64) error {
-	return c.BlockUser(context.Background(), userID)
+func (c *Client) BoundBlock(ctx context.Context, userID int64) error {
+	return c.BlockUser(ctx, userID)
 }
 
 // BoundUnblock removes a user from the block list. This is a bound-method
@@ -682,8 +645,8 @@ func (c *Client) BoundBlock(userID int64) error {
 //   - userID: ID of the user to unblock
 //
 // Returns an error if the unblock operation fails.
-func (c *Client) BoundUnblock(userID int64) error {
-	return c.UnblockUser(context.Background(), userID)
+func (c *Client) BoundUnblock(ctx context.Context, userID int64) error {
+	return c.UnblockUser(ctx, userID)
 }
 
 // BoundGetCommonChats returns the list of common chats shared with a user. This
@@ -695,8 +658,7 @@ func (c *Client) BoundUnblock(userID int64) error {
 //   - limit: maximum number of chats to return
 //
 // Returns a slice of Chat objects or an error if the request fails.
-func (c *Client) BoundGetCommonChats(userID int64, limit int) ([]*types.Chat, error) {
-	ctx := context.Background()
+func (c *Client) BoundGetCommonChats(ctx context.Context, userID int64, limit int) ([]*types.Chat, error) {
 	peer, err := resolveUserID(ctx, c, userID)
 	if err != nil {
 		return nil, err
@@ -738,8 +700,8 @@ func parseCommonChats(result tg.ChatsClass) []*types.Chat {
 //   - chatID: ID of the user chat to archive
 //
 // Returns an error if the archive operation fails.
-func (c *Client) BoundArchiveUser(chatID int64) error {
-	return c.BoundArchive(chatID)
+func (c *Client) BoundArchiveUser(ctx context.Context, chatID int64) error {
+	return c.BoundArchive(ctx, chatID)
 }
 
 // BoundUnarchiveUser unarchives a user chat (moves it back to the main list).
@@ -749,57 +711,55 @@ func (c *Client) BoundArchiveUser(chatID int64) error {
 //   - chatID: ID of the user chat to unarchive
 //
 // Returns an error if the unarchive operation fails.
-func (c *Client) BoundUnarchiveUser(chatID int64) error {
-	return c.BoundUnarchive(chatID)
+func (c *Client) BoundUnarchiveUser(ctx context.Context, chatID int64) error {
+	return c.BoundUnarchive(ctx, chatID)
 }
 
-func (c *Client) BoundAnswerPreCheckout(queryID int64, opts ...*params.AnswerPreCheckout) error {
+func (c *Client) BoundAnswerPreCheckout(ctx context.Context, queryID int64, opts ...*params.AnswerPreCheckout) error {
 	o := params.GetOptDef(&params.AnswerPreCheckout{}, opts...)
-	return c.AnswerPreCheckoutQuery(context.Background(), queryID, o.Ok, o.ErrorMsg)
+	return c.AnswerPreCheckoutQuery(ctx, queryID, o.Ok, o.ErrorMsg)
 }
 
-func (c *Client) BoundAnswerShipping(queryID int64, opts ...*params.AnswerShipping) error {
+func (c *Client) BoundAnswerShipping(ctx context.Context, queryID int64, opts ...*params.AnswerShipping) error {
 	o := params.GetOptDef(&params.AnswerShipping{}, opts...)
 	var shippingOpts []*tg.ShippingOption
 	if o.ShippingOptions != nil {
 		shippingOpts = o.ShippingOptions.([]*tg.ShippingOption)
 	}
-	return c.AnswerShippingQuery(context.Background(), queryID, o.Ok, shippingOpts)
+	return c.AnswerShippingQuery(ctx, queryID, o.Ok, shippingOpts)
 }
 
-func (c *Client) BoundApproveJoinRequest(chatID int64, userID int64) error {
-	return c.ApproveChatJoinRequest(context.Background(), chatID, userID)
+func (c *Client) BoundApproveJoinRequest(ctx context.Context, chatID int64, userID int64) error {
+	return c.ApproveChatJoinRequest(ctx, chatID, userID)
 }
 
-func (c *Client) BoundDeclineJoinRequest(chatID int64, userID int64) error {
-	return c.DeclineChatJoinRequest(context.Background(), chatID, userID)
+func (c *Client) BoundDeclineJoinRequest(ctx context.Context, chatID int64, userID int64) error {
+	return c.DeclineChatJoinRequest(ctx, chatID, userID)
 }
 
-func (c *Client) BoundStoryReply(peerID int64, storyID int32, text string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *Client) BoundStoryReply(ctx context.Context, peerID int64, storyID int32, text string, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMessage{}, opts...)
 	opt.ReplyTo = &tg.InputReplyToStory{
 		Peer:    &tg.InputPeerUser{UserID: peerID},
 		StoryID: storyID,
 	}
-	return c.SendMessage(context.Background(), peerID, text, opt)
+	return c.SendMessage(ctx, peerID, text, opt)
 }
 
-func (c *Client) BoundStoryReplyMedia(peerID int64, storyID int32, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *Client) BoundStoryReplyMedia(ctx context.Context, peerID int64, storyID int32, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
 	opt := params.GetOptDef(&params.SendMessage{}, opts...)
 	opt.ReplyTo = &tg.InputReplyToStory{
 		Peer:    &tg.InputPeerUser{UserID: peerID},
 		StoryID: storyID,
 	}
-	return c.SendMedia(context.Background(), peerID, media, caption, opt)
+	return c.SendMedia(ctx, peerID, media, caption, opt)
 }
 
-func (c *Client) BoundStoryForward(fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*types.Message, error) {
-	ctx := context.Background()
+func (c *Client) BoundStoryForward(ctx context.Context, fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*types.Message, error) {
 	return c.ForwardStory(ctx, chatID, fromChatID, storyID)
 }
 
-func (c *Client) BoundStoryRead(peerID int64, storyID int32) error {
-	ctx := context.Background()
+func (c *Client) BoundStoryRead(ctx context.Context, peerID int64, storyID int32) error {
 	peer, err := c.ResolvePeer(ctx, peerID)
 	if err != nil {
 		return err
@@ -811,21 +771,20 @@ func (c *Client) BoundStoryRead(peerID int64, storyID int32) error {
 	return err
 }
 
-func (c *Client) BoundStoryDelete(peerID int64, storyID int32) error {
-	return c.DeleteStories(context.Background(), peerID, []int32{storyID})
+func (c *Client) BoundStoryDelete(ctx context.Context, peerID int64, storyID int32) error {
+	return c.DeleteStories(ctx, peerID, []int32{storyID})
 }
 
-func (c *Client) BoundStoryEditCaption(peerID int64, storyID int32, opts ...*params.EditCaption) (*types.Story, error) {
+func (c *Client) BoundStoryEditCaption(ctx context.Context, peerID int64, storyID int32, opts ...*params.EditCaption) (*types.Story, error) {
 	o := params.GetOptDef(&params.EditCaption{}, opts...)
-	return c.EditStoryCaption(context.Background(), peerID, storyID, o.Caption)
+	return c.EditStoryCaption(ctx, peerID, storyID, o.Caption)
 }
 
-func (c *Client) BoundStoryEditMedia(peerID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
-	return c.EditStoryMedia(context.Background(), peerID, storyID, media)
+func (c *Client) BoundStoryEditMedia(ctx context.Context, peerID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
+	return c.EditStoryMedia(ctx, peerID, storyID, media)
 }
 
-func (c *Client) BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*params.EditPrivacy) (*types.Story, error) {
-	ctx := context.Background()
+func (c *Client) BoundStoryEditPrivacy(ctx context.Context, peerID int64, storyID int32, opts ...*params.EditPrivacy) (*types.Story, error) {
 	peer, err := c.ResolvePeer(ctx, peerID)
 	if err != nil {
 		return nil, err
@@ -882,8 +841,7 @@ func storyPrivacyRules(o *params.EditPrivacy) []tg.InputPrivacyRuleClass {
 	return rules
 }
 
-func (c *Client) BoundStoryReact(peerID int64, storyID int32, opts ...*params.React) error {
-	ctx := context.Background()
+func (c *Client) BoundStoryReact(ctx context.Context, peerID int64, storyID int32, opts ...*params.React) error {
 	o := params.GetOptDef(&params.React{}, opts...)
 	peer, err := c.ResolvePeer(ctx, peerID)
 	if err != nil {
@@ -899,8 +857,7 @@ func (c *Client) BoundStoryReact(peerID int64, storyID int32, opts ...*params.Re
 	return err
 }
 
-func (c *Client) BoundStoryDownload(peerID int64, storyID int32, opts ...*params.Download) ([]byte, error) {
-	ctx := context.Background()
+func (c *Client) BoundStoryDownload(ctx context.Context, peerID int64, storyID int32, opts ...*params.Download) ([]byte, error) {
 	stories, err := c.GetStories(ctx, peerID, []int32{storyID})
 	if err != nil {
 		return nil, err

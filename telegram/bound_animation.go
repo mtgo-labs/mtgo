@@ -6,8 +6,7 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func (c *Client) BoundAddToGifs(doc tg.InputDocumentClass) error {
-	ctx := context.Background()
+func (c *Client) BoundAddToGifs(ctx context.Context, doc tg.InputDocumentClass) error {
 	_, err := c.Raw().MessagesSaveGIF(ctx, &tg.MessagesSaveGIFRequest{
 		ID:     doc,
 		Unsave: false,
@@ -15,8 +14,7 @@ func (c *Client) BoundAddToGifs(doc tg.InputDocumentClass) error {
 	return err
 }
 
-func (c *Client) BoundRemoveFromGifs(doc tg.InputDocumentClass) error {
-	ctx := context.Background()
+func (c *Client) BoundRemoveFromGifs(ctx context.Context, doc tg.InputDocumentClass) error {
 	_, err := c.Raw().MessagesSaveGIF(ctx, &tg.MessagesSaveGIFRequest{
 		ID:     doc,
 		Unsave: true,
@@ -24,15 +22,13 @@ func (c *Client) BoundRemoveFromGifs(doc tg.InputDocumentClass) error {
 	return err
 }
 
-func (c *Client) BoundGetSavedGifs(hash int64) (tg.SavedGifsClass, error) {
-	ctx := context.Background()
+func (c *Client) BoundGetSavedGifs(ctx context.Context, hash int64) (tg.SavedGifsClass, error) {
 	return c.Raw().MessagesGetSavedGifs(ctx, &tg.MessagesGetSavedGifsRequest{
 		Hash: hash,
 	})
 }
 
-func (c *Client) BoundAddToStickers(doc tg.InputDocumentClass) error {
-	ctx := context.Background()
+func (c *Client) BoundAddToStickers(ctx context.Context, doc tg.InputDocumentClass) error {
 	_, err := c.Raw().MessagesFaveSticker(ctx, &tg.MessagesFaveStickerRequest{
 		ID:     doc,
 		Unfave: false,
@@ -40,8 +36,7 @@ func (c *Client) BoundAddToStickers(doc tg.InputDocumentClass) error {
 	return err
 }
 
-func (c *Client) BoundRemoveFromStickers(doc tg.InputDocumentClass) error {
-	ctx := context.Background()
+func (c *Client) BoundRemoveFromStickers(ctx context.Context, doc tg.InputDocumentClass) error {
 	_, err := c.Raw().MessagesFaveSticker(ctx, &tg.MessagesFaveStickerRequest{
 		ID:     doc,
 		Unfave: true,

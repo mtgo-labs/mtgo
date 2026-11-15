@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -12,7 +13,7 @@ func TestBoundArchive(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 	mock.setResult(tg.FoldersEditPeerFoldersTypeID, &tg.Updates{})
 
-	if err := c.BoundArchive(10); err != nil {
+	if err := c.BoundArchive(context.Background(), 10); err != nil {
 		t.Fatalf("BoundArchive() error: %v", err)
 	}
 
@@ -47,7 +48,7 @@ func TestBoundArchivePeerNotFound(t *testing.T) {
 	// Empty first dialogs page: the account cascade finds no such peer.
 	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
-	err := c.BoundArchive(999)
+	err := c.BoundArchive(context.Background(), 999)
 	if err == nil {
 		t.Fatal("expected error for unknown peer")
 	}
@@ -61,7 +62,7 @@ func TestBoundSetTitle(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 	mock.setResult(tg.ChannelsEditTitleTypeID, &tg.Updates{})
 
-	if err := c.BoundSetTitle(10, "New Title"); err != nil {
+	if err := c.BoundSetTitle(context.Background(), 10, "New Title"); err != nil {
 		t.Fatalf("BoundSetTitle() error: %v", err)
 	}
 
@@ -91,7 +92,7 @@ func TestBoundSetTitleChatPeer(t *testing.T) {
 	c.CachePeer(50, &tg.InputPeerChat{ChatID: 50})
 	mock.setResult(tg.MessagesEditChatTitleTypeID, &tg.Updates{})
 
-	if err := c.BoundSetTitle(50, "Chat Title"); err != nil {
+	if err := c.BoundSetTitle(context.Background(), 50, "Chat Title"); err != nil {
 		t.Fatalf("BoundSetTitle() error: %v", err)
 	}
 
@@ -112,7 +113,7 @@ func TestBoundSetTitlePeerNotFound(t *testing.T) {
 	// Empty first dialogs page: the account cascade finds no such peer.
 	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
-	err := c.BoundSetTitle(999, "test")
+	err := c.BoundSetTitle(context.Background(), 999, "test")
 	if err == nil {
 		t.Fatal("expected error for unknown peer")
 	}
@@ -125,7 +126,7 @@ func TestBoundSetDescription(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	if err := c.BoundSetDescription(10, "New description"); err != nil {
+	if err := c.BoundSetDescription(context.Background(), 10, "New description"); err != nil {
 		t.Fatalf("BoundSetDescription() error: %v", err)
 	}
 
@@ -154,7 +155,7 @@ func TestBoundSetDescriptionChatPeer(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	c.CachePeer(50, &tg.InputPeerChat{ChatID: 50})
 
-	if err := c.BoundSetDescription(50, "Chat desc"); err != nil {
+	if err := c.BoundSetDescription(context.Background(), 50, "Chat desc"); err != nil {
 		t.Fatalf("BoundSetDescription() error: %v", err)
 	}
 
@@ -173,7 +174,7 @@ func TestBoundBanMember(t *testing.T) {
 	c.CachePeer(42, &tg.InputPeerUser{UserID: 42, AccessHash: 100})
 	mock.setResult(tg.ChannelsEditBannedTypeID, &tg.Updates{})
 
-	if err := c.BoundBanMember(10, 42); err != nil {
+	if err := c.BoundBanMember(context.Background(), 10, 42); err != nil {
 		t.Fatalf("BoundBanMember() error: %v", err)
 	}
 
@@ -206,7 +207,7 @@ func TestBoundBanMemberNonChannelPeer(t *testing.T) {
 	c, _ := newClientWithBotRPCMock(t)
 	c.CachePeer(50, &tg.InputPeerChat{ChatID: 50})
 
-	err := c.BoundBanMember(50, 42)
+	err := c.BoundBanMember(context.Background(), 50, 42)
 	if err == nil {
 		t.Fatal("expected error for non-channel peer")
 	}
@@ -220,7 +221,7 @@ func TestBoundBanMemberPeerNotFound(t *testing.T) {
 	// Empty first dialogs page: the account cascade finds no such peer.
 	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
-	err := c.BoundBanMember(999, 42)
+	err := c.BoundBanMember(context.Background(), 999, 42)
 	if err == nil {
 		t.Fatal("expected error for unknown peer")
 	}
@@ -241,7 +242,7 @@ func TestBoundJoinChat(t *testing.T) {
 		},
 	})
 
-	chat, err := c.BoundJoinChat(0, "a1b2c3d4e5f6g7h8i9j0")
+	chat, err := c.BoundJoinChat(context.Background(), 0, "a1b2c3d4e5f6g7h8i9j0")
 	if err != nil {
 		t.Fatalf("BoundJoinChat() error: %v", err)
 	}
@@ -274,7 +275,7 @@ func TestBoundJoinChatURL(t *testing.T) {
 		},
 	})
 
-	chat, err := c.BoundJoinChat(0, "https://t.me/+tPknWlMV9eU3NThk")
+	chat, err := c.BoundJoinChat(context.Background(), 0, "https://t.me/+tPknWlMV9eU3NThk")
 	if err != nil {
 		t.Fatalf("BoundJoinChat() error: %v", err)
 	}
@@ -310,7 +311,7 @@ func TestBoundJoinChatByUsername(t *testing.T) {
 		},
 	})
 
-	chat, err := c.BoundJoinChat(0, "mtgo_labs")
+	chat, err := c.BoundJoinChat(context.Background(), 0, "mtgo_labs")
 	if err != nil {
 		t.Fatalf("BoundJoinChat() error: %v", err)
 	}
@@ -364,7 +365,7 @@ func TestBoundJoinChatURLUsername(t *testing.T) {
 		},
 	})
 
-	chat, err := c.BoundJoinChat(0, "https://t.me/mtgo_labs")
+	chat, err := c.BoundJoinChat(context.Background(), 0, "https://t.me/mtgo_labs")
 	if err != nil {
 		t.Fatalf("BoundJoinChat() error: %v", err)
 	}
@@ -384,7 +385,7 @@ func TestBoundJoinChatURLUsername(t *testing.T) {
 func TestBoundJoinChatEmptyUsername(t *testing.T) {
 	c, _ := newClientWithBotRPCMock(t)
 
-	_, err := c.BoundJoinChat(0, "")
+	_, err := c.BoundJoinChat(context.Background(), 0, "")
 	if err == nil {
 		t.Fatal("expected error for empty username")
 	}
@@ -398,7 +399,7 @@ func TestBoundLeaveChat(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 	mock.setResult(tg.ChannelsLeaveChannelTypeID, &tg.Updates{})
 
-	if err := c.BoundLeaveChat(10); err != nil {
+	if err := c.BoundLeaveChat(context.Background(), 10); err != nil {
 		t.Fatalf("BoundLeaveChat() error: %v", err)
 	}
 
@@ -425,7 +426,7 @@ func TestBoundLeaveChatPeer(t *testing.T) {
 	c.CachePeer(50, &tg.InputPeerChat{ChatID: 50})
 	mock.setResult(tg.MessagesDeleteChatUserTypeID, &tg.Updates{})
 
-	if err := c.BoundLeaveChat(50); err != nil {
+	if err := c.BoundLeaveChat(context.Background(), 50); err != nil {
 		t.Fatalf("BoundLeaveChat() error: %v", err)
 	}
 
@@ -443,7 +444,7 @@ func TestBoundLeaveChatPeerNotFound(t *testing.T) {
 	// Empty first dialogs page: the account cascade finds no such peer.
 	mock.setResult(tg.MessagesGetDialogsTypeID, &tg.MessagesDialogs{})
 
-	err := c.BoundLeaveChat(999)
+	err := c.BoundLeaveChat(context.Background(), 999)
 	if err == nil {
 		t.Fatal("expected error for unknown peer")
 	}
@@ -456,7 +457,7 @@ func TestBoundAddToGifs(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
 	doc := &tg.InputDocument{ID: 123, AccessHash: 456}
-	if err := c.BoundAddToGifs(doc); err != nil {
+	if err := c.BoundAddToGifs(context.Background(), doc); err != nil {
 		t.Fatalf("BoundAddToGifs() error: %v", err)
 	}
 
@@ -485,7 +486,7 @@ func TestBoundRemoveFromGifs(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
 	doc := &tg.InputDocument{ID: 789, AccessHash: 101}
-	if err := c.BoundRemoveFromGifs(doc); err != nil {
+	if err := c.BoundRemoveFromGifs(context.Background(), doc); err != nil {
 		t.Fatalf("BoundRemoveFromGifs() error: %v", err)
 	}
 
@@ -504,7 +505,7 @@ func TestBoundGetSavedGifs(t *testing.T) {
 		Gifs: []tg.DocumentClass{},
 	})
 
-	result, err := c.BoundGetSavedGifs(0)
+	result, err := c.BoundGetSavedGifs(context.Background(), 0)
 	if err != nil {
 		t.Fatalf("BoundGetSavedGifs() error: %v", err)
 	}
@@ -535,7 +536,7 @@ func TestBoundGetSavedGifsRPCError(t *testing.T) {
 	rpcErr := errors.New("rpc error")
 	mock.setError(tg.MessagesGetSavedGifsTypeID, rpcErr)
 
-	_, err := c.BoundGetSavedGifs(0)
+	_, err := c.BoundGetSavedGifs(context.Background(), 0)
 	if err == nil {
 		t.Fatal("expected error from RPC")
 	}

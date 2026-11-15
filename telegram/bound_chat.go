@@ -14,8 +14,8 @@ import (
 //   - chatID: identifier of the chat to archive
 //
 // Returns an error if the peer cannot be resolved or the archive operation fails.
-func (c *Client) BoundArchive(chatID int64) error {
-	return c.ArchiveChat(context.Background(), chatID)
+func (c *Client) BoundArchive(ctx context.Context, chatID int64) error {
+	return c.ArchiveChat(ctx, chatID)
 }
 
 // BoundUnarchive moves the specified chat back to the main chat list from the
@@ -26,8 +26,8 @@ func (c *Client) BoundArchive(chatID int64) error {
 //   - chatID: identifier of the chat to unarchive
 //
 // Returns an error if the peer cannot be resolved or the unarchive operation fails.
-func (c *Client) BoundUnarchive(chatID int64) error {
-	return c.UnarchiveChat(context.Background(), chatID)
+func (c *Client) BoundUnarchive(ctx context.Context, chatID int64) error {
+	return c.UnarchiveChat(ctx, chatID)
 }
 
 // BoundSetTitle changes the title of a group or channel. The caller must have
@@ -39,8 +39,8 @@ func (c *Client) BoundUnarchive(chatID int64) error {
 //   - title: new title string
 //
 // Returns an error if the peer cannot be resolved or the title update fails.
-func (c *Client) BoundSetTitle(chatID int64, title string) error {
-	return c.SetChatTitle(context.Background(), chatID, title)
+func (c *Client) BoundSetTitle(ctx context.Context, chatID int64, title string) error {
+	return c.SetChatTitle(ctx, chatID, title)
 }
 
 // BoundSetDescription changes the description (bio or about text) of a group or
@@ -52,8 +52,8 @@ func (c *Client) BoundSetTitle(chatID int64, title string) error {
 //   - description: new description text
 //
 // Returns an error if the peer cannot be resolved or the update fails.
-func (c *Client) BoundSetDescription(chatID int64, description string) error {
-	return c.SetChatDescription(context.Background(), chatID, description)
+func (c *Client) BoundSetDescription(ctx context.Context, chatID int64, description string) error {
+	return c.SetChatDescription(ctx, chatID, description)
 }
 
 // BoundSetPhoto changes the profile photo of a group or channel. This is a
@@ -64,8 +64,8 @@ func (c *Client) BoundSetDescription(chatID int64, description string) error {
 //   - photo: input photo object (uploaded image or cropped area)
 //
 // Returns an error if the peer cannot be resolved or the photo update fails.
-func (c *Client) BoundSetPhoto(chatID int64, photo tg.InputChatPhotoClass) error {
-	return c.SetChatPhoto(context.Background(), chatID, photo)
+func (c *Client) BoundSetPhoto(ctx context.Context, chatID int64, photo tg.InputChatPhotoClass) error {
+	return c.SetChatPhoto(ctx, chatID, photo)
 }
 
 // BoundDeletePhoto removes the profile photo of a group or channel, reverting
@@ -76,8 +76,8 @@ func (c *Client) BoundSetPhoto(chatID int64, photo tg.InputChatPhotoClass) error
 //   - chatID: identifier of the chat whose photo to delete
 //
 // Returns an error if the peer cannot be resolved or the deletion fails.
-func (c *Client) BoundDeletePhoto(chatID int64) error {
-	return c.DeleteChatPhoto(context.Background(), chatID)
+func (c *Client) BoundDeletePhoto(ctx context.Context, chatID int64) error {
+	return c.DeleteChatPhoto(ctx, chatID)
 }
 
 // BoundSetUsername changes the public username of a group, channel, or the
@@ -89,8 +89,8 @@ func (c *Client) BoundDeletePhoto(chatID int64) error {
 //   - username: new public username (without @)
 //
 // Returns an error if the peer cannot be resolved or the username update fails.
-func (c *Client) BoundSetUsername(chatID int64, username string) error {
-	return c.SetChatUsername(context.Background(), chatID, username)
+func (c *Client) BoundSetUsername(ctx context.Context, chatID int64, username string) error {
+	return c.SetChatUsername(ctx, chatID, username)
 }
 
 // BoundBanMember bans a user from a group or channel. The banned user cannot
@@ -102,8 +102,8 @@ func (c *Client) BoundSetUsername(chatID int64, username string) error {
 //   - userID: identifier of the user to ban
 //
 // Returns an error if the peer cannot be resolved or the ban fails.
-func (c *Client) BoundBanMember(chatID int64, userID int64) error {
-	return c.BanChatMember(context.Background(), chatID, userID)
+func (c *Client) BoundBanMember(ctx context.Context, chatID int64, userID int64) error {
+	return c.BanChatMember(ctx, chatID, userID)
 }
 
 // BoundUnbanMember removes a prior ban on a user, allowing them to rejoin the
@@ -115,8 +115,8 @@ func (c *Client) BoundBanMember(chatID int64, userID int64) error {
 //   - userID: identifier of the user to unban
 //
 // Returns an error if the peer cannot be resolved or the unban fails.
-func (c *Client) BoundUnbanMember(chatID int64, userID int64) error {
-	return c.UnbanChatMember(context.Background(), chatID, userID)
+func (c *Client) BoundUnbanMember(ctx context.Context, chatID int64, userID int64) error {
+	return c.UnbanChatMember(ctx, chatID, userID)
 }
 
 // BoundRestrictMember applies restrictions to a user in a group, limiting what
@@ -129,8 +129,8 @@ func (c *Client) BoundUnbanMember(chatID int64, userID int64) error {
 //   - bannedRights: set of actions to forbid
 //
 // Returns an error if the peer cannot be resolved or the restriction fails.
-func (c *Client) BoundRestrictMember(chatID int64, userID int64, bannedRights *tg.ChatBannedRights) error {
-	return c.RestrictChatMember(context.Background(), chatID, userID, bannedRights)
+func (c *Client) BoundRestrictMember(ctx context.Context, chatID int64, userID int64, bannedRights *tg.ChatBannedRights) error {
+	return c.RestrictChatMember(ctx, chatID, userID, bannedRights)
 }
 
 // BoundPromoteMember grants admin privileges to a user in a group or channel.
@@ -142,8 +142,8 @@ func (c *Client) BoundRestrictMember(chatID int64, userID int64, bannedRights *t
 //   - adminRights: set of admin rights to grant
 //
 // Returns an error if the peer cannot be resolved or the promotion fails.
-func (c *Client) BoundPromoteMember(chatID int64, userID int64, adminRights *tg.ChatAdminRights) error {
-	return c.PromoteChatMember(context.Background(), chatID, userID, adminRights)
+func (c *Client) BoundPromoteMember(ctx context.Context, chatID int64, userID int64, adminRights *tg.ChatAdminRights) error {
+	return c.PromoteChatMember(ctx, chatID, userID, adminRights)
 }
 
 // BoundJoinChat joins a chat or channel by username, invite link, or invite hash.
@@ -160,9 +160,9 @@ func (c *Client) BoundPromoteMember(chatID int64, userID int64, adminRights *tg.
 //
 // Returns the joined Chat object or an error if the link is empty or the
 // join fails.
-func (c *Client) BoundJoinChat(chatID int64, link string) (*types.Chat, error) {
+func (c *Client) BoundJoinChat(ctx context.Context, chatID int64, link string) (*types.Chat, error) {
 	if link != "" {
-		return c.JoinChat(context.Background(), link)
+		return c.JoinChat(ctx, link)
 	}
 	return nil, ErrJoinRequiresInvite
 }
@@ -174,8 +174,8 @@ func (c *Client) BoundJoinChat(chatID int64, link string) (*types.Chat, error) {
 //   - chatID: identifier of the chat to leave
 //
 // Returns an error if the peer cannot be resolved or the leave operation fails.
-func (c *Client) BoundLeaveChat(chatID int64) error {
-	return c.LeaveChat(context.Background(), chatID)
+func (c *Client) BoundLeaveChat(ctx context.Context, chatID int64) error {
+	return c.LeaveChat(ctx, chatID)
 }
 
 // BoundExportInviteLink creates a new invite link for the specified chat and
@@ -186,8 +186,8 @@ func (c *Client) BoundLeaveChat(chatID int64) error {
 //   - chatID: identifier of the chat for which to generate an invite link
 //
 // Returns the invite link string or an error if generation fails.
-func (c *Client) BoundExportInviteLink(chatID int64) (string, error) {
-	return c.ExportChatInviteLink(context.Background(), chatID)
+func (c *Client) BoundExportInviteLink(ctx context.Context, chatID int64) (string, error) {
+	return c.ExportChatInviteLink(ctx, chatID)
 }
 
 // BoundGetMember retrieves information about a single member of the specified
@@ -199,8 +199,8 @@ func (c *Client) BoundExportInviteLink(chatID int64) (string, error) {
 //   - userID: identifier of the member to look up
 //
 // Returns the ChatMember information or an error if the lookup fails.
-func (c *Client) BoundGetMember(chatID int64, userID int64) (*types.ChatMember, error) {
-	return c.GetChatMember(context.Background(), chatID, userID)
+func (c *Client) BoundGetMember(ctx context.Context, chatID int64, userID int64) (*types.ChatMember, error) {
+	return c.GetChatMember(ctx, chatID, userID)
 }
 
 // BoundGetMembers retrieves a paginated list of members in the specified chat.
@@ -212,8 +212,8 @@ func (c *Client) BoundGetMember(chatID int64, userID int64) (*types.ChatMember, 
 //   - offset: number of members to skip (for pagination)
 //
 // Returns a slice of ChatMember objects or an error if the retrieval fails.
-func (c *Client) BoundGetMembers(chatID int64, limit int, offset int) ([]*types.ChatMember, error) {
-	return c.GetChatMembers(context.Background(), chatID, limit, offset)
+func (c *Client) BoundGetMembers(ctx context.Context, chatID int64, limit int, offset int) ([]*types.ChatMember, error) {
+	return c.GetChatMembers(ctx, chatID, limit, offset)
 }
 
 // BoundAddMembers adds a user to the specified group or channel. The caller
@@ -225,8 +225,8 @@ func (c *Client) BoundGetMembers(chatID int64, limit int, offset int) ([]*types.
 //   - userID: identifier of the user to add
 //
 // Returns an error if the peer cannot be resolved or the add operation fails.
-func (c *Client) BoundAddMembers(chatID int64, userID int64) error {
-	return c.AddChatMember(context.Background(), chatID, userID)
+func (c *Client) BoundAddMembers(ctx context.Context, chatID int64, userID int64) error {
+	return c.AddChatMember(ctx, chatID, userID)
 }
 
 // BoundMarkUnread toggles the unread status of a chat in the chat list. When
@@ -239,8 +239,8 @@ func (c *Client) BoundAddMembers(chatID int64, userID int64) error {
 //   - unread: whether to mark as unread (true) or read (false)
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundMarkUnread(chatID int64, unread bool) error {
-	return c.MarkChatUnread(context.Background(), chatID, unread)
+func (c *Client) BoundMarkUnread(ctx context.Context, chatID int64, unread bool) error {
+	return c.MarkChatUnread(ctx, chatID, unread)
 }
 
 // BoundSetProtectedContent enables or disables content protection (no-forward)
@@ -253,8 +253,8 @@ func (c *Client) BoundMarkUnread(chatID int64, unread bool) error {
 //   - enabled: true to enable content protection, false to disable
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundSetProtectedContent(chatID int64, enabled bool) error {
-	return c.SetProtectedContent(context.Background(), chatID, enabled)
+func (c *Client) BoundSetProtectedContent(ctx context.Context, chatID int64, enabled bool) error {
+	return c.SetProtectedContent(ctx, chatID, enabled)
 }
 
 // BoundSetTTL sets the Time-To-Live (auto-delete) period for messages in the
@@ -266,8 +266,8 @@ func (c *Client) BoundSetProtectedContent(chatID int64, enabled bool) error {
 //   - ttl: auto-delete period in seconds (0 to disable)
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundSetTTL(chatID int64, ttl int) error {
-	return c.SetChatTTL(context.Background(), chatID, ttl)
+func (c *Client) BoundSetTTL(ctx context.Context, chatID int64, ttl int) error {
+	return c.SetChatTTL(ctx, chatID, ttl)
 }
 
 // BoundSetPermissions sets the default permissions for all members in a group.
@@ -278,8 +278,8 @@ func (c *Client) BoundSetTTL(chatID int64, ttl int) error {
 //   - permissions: set of banned rights defining what members cannot do
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundSetPermissions(chatID int64, permissions *tg.ChatBannedRights) error {
-	return c.SetChatPermissions(context.Background(), chatID, permissions)
+func (c *Client) BoundSetPermissions(ctx context.Context, chatID int64, permissions *tg.ChatBannedRights) error {
+	return c.SetChatPermissions(ctx, chatID, permissions)
 }
 
 // BoundSetAdminTitle sets a custom title for an administrator in a supergroup
@@ -292,8 +292,8 @@ func (c *Client) BoundSetPermissions(chatID int64, permissions *tg.ChatBannedRig
 //   - title: custom title string (e.g. "Co-Founder")
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundSetAdminTitle(chatID int64, userID int64, title string) error {
-	return c.SetAdministratorTitle(context.Background(), chatID, userID, title)
+func (c *Client) BoundSetAdminTitle(ctx context.Context, chatID int64, userID int64, title string) error {
+	return c.SetAdministratorTitle(ctx, chatID, userID, title)
 }
 
 // BoundSetSlowMode sets the slow mode interval for a group. Members must wait
@@ -305,8 +305,8 @@ func (c *Client) BoundSetAdminTitle(chatID int64, userID int64, title string) er
 //   - seconds: slow mode interval in seconds (0 to disable)
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundSetSlowMode(chatID int64, seconds int) error {
-	return c.SetSlowMode(context.Background(), chatID, seconds)
+func (c *Client) BoundSetSlowMode(ctx context.Context, chatID int64, seconds int) error {
+	return c.SetSlowMode(ctx, chatID, seconds)
 }
 
 // BoundMute mutes notifications for the specified chat. This is a bound-method
@@ -316,8 +316,8 @@ func (c *Client) BoundSetSlowMode(chatID int64, seconds int) error {
 //   - chatID: identifier of the chat to mute
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundMute(chatID int64) error {
-	return c.MuteChat(context.Background(), chatID)
+func (c *Client) BoundMute(ctx context.Context, chatID int64) error {
+	return c.MuteChat(ctx, chatID)
 }
 
 // BoundUnmute unmutes notifications for the specified chat. This is a
@@ -327,8 +327,8 @@ func (c *Client) BoundMute(chatID int64) error {
 //   - chatID: identifier of the chat to unmute
 //
 // Returns an error if the operation fails.
-func (c *Client) BoundUnmute(chatID int64) error {
-	return c.UnmuteChat(context.Background(), chatID)
+func (c *Client) BoundUnmute(ctx context.Context, chatID int64) error {
+	return c.UnmuteChat(ctx, chatID)
 }
 
 // BoundUnpinAll removes all pinned messages from the specified chat. This is a
@@ -338,8 +338,8 @@ func (c *Client) BoundUnmute(chatID int64) error {
 //   - chatID: identifier of the chat
 //
 // Returns the number of messages unpinned or an error if the operation fails.
-func (c *Client) BoundUnpinAll(chatID int64) (int, error) {
-	return c.UnpinAllMessages(context.Background(), chatID)
+func (c *Client) BoundUnpinAll(ctx context.Context, chatID int64) (int, error) {
+	return c.UnpinAllMessages(ctx, chatID)
 }
 
 // BoundGetChat retrieves full information about the specified chat. This is a
@@ -349,8 +349,8 @@ func (c *Client) BoundUnpinAll(chatID int64) (int, error) {
 //   - chatID: identifier of the chat to retrieve
 //
 // Returns the Chat object or an error if retrieval fails.
-func (c *Client) BoundGetChat(chatID int64) (*types.Chat, error) {
-	return c.GetChat(context.Background(), chatID)
+func (c *Client) BoundGetChat(ctx context.Context, chatID int64) (*types.Chat, error) {
+	return c.GetChat(ctx, chatID)
 }
 
 // BoundGetEventLog retrieves the event log (admin log) for the specified chat.
@@ -362,6 +362,6 @@ func (c *Client) BoundGetChat(chatID int64) (*types.Chat, error) {
 //   - limit: maximum number of events to return
 //
 // Returns a slice of ChatEvent objects or an error if retrieval fails.
-func (c *Client) BoundGetEventLog(chatID int64, query string, limit int) ([]*types.ChatEvent, error) {
-	return c.GetChatEventLog(context.Background(), chatID, query, limit)
+func (c *Client) BoundGetEventLog(ctx context.Context, chatID int64, query string, limit int) ([]*types.ChatEvent, error) {
+	return c.GetChatEventLog(ctx, chatID, query, limit)
 }

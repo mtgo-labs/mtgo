@@ -3650,7 +3650,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 	return upd
 }
 
-func bindMessage(msg *types.Message, binder types.Binder) {
+func bindMessage(msg *types.Message, binder types.MessageBinder) {
 	if msg != nil {
 		msg.SetBinder(binder)
 	}

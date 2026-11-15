@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/peerid"
@@ -41,18 +42,6 @@ type PeerInfo struct {
 	AccessHash int64
 }
 
-// FolderBinder provides folder management operations bound to a client.
-type FolderBinder interface {
-	BoundGetFolders() ([]tg.DialogFilterClass, error)
-	BoundEditFolder(filter *tg.DialogFilter) error
-	BoundDeleteFolder(folderID int32) error
-	BoundIncludeChat(folderID int32, chatID int64) error
-	BoundExcludeChat(folderID int32, chatID int64) error
-	BoundUpdateFolderColor(folderID int32, color int32) error
-	BoundPinChatInFolder(folderID int32, chatID int64) error
-	BoundRemoveChatFromFolder(folderID int32, chatID int64) error
-}
-
 // Folder represents a chat folder (dialog filter) with inclusion/exclusion rules,
 // pinned chats, and management methods via a FolderBinder.
 //
@@ -89,13 +78,21 @@ func (f *Folder) SetBinder(b FolderBinder) {
 }
 
 func (f *Folder) Delete() error {
+	return f.DeleteContext(context.Background())
+}
+
+func (f *Folder) DeleteContext(ctx context.Context) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundDeleteFolder(f.ID)
+	return f.binder.BoundDeleteFolder(ctx, f.ID)
 }
 
 func (f *Folder) Edit(name string, icon string) error {
+	return f.EditContext(context.Background(), name, icon)
+}
+
+func (f *Folder) EditContext(ctx context.Context, name string, icon string) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
@@ -113,42 +110,62 @@ func (f *Folder) Edit(name string, icon string) error {
 	if f.Icon != "" {
 		raw.Emoticon = f.Icon
 	}
-	return f.binder.BoundEditFolder(raw)
+	return f.binder.BoundEditFolder(ctx, raw)
 }
 
 func (f *Folder) IncludeChat(chatID int64) error {
+	return f.IncludeChatContext(context.Background(), chatID)
+}
+
+func (f *Folder) IncludeChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundIncludeChat(f.ID, chatID)
+	return f.binder.BoundIncludeChat(ctx, f.ID, chatID)
 }
 
 func (f *Folder) ExcludeChat(chatID int64) error {
+	return f.ExcludeChatContext(context.Background(), chatID)
+}
+
+func (f *Folder) ExcludeChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundExcludeChat(f.ID, chatID)
+	return f.binder.BoundExcludeChat(ctx, f.ID, chatID)
 }
 
 func (f *Folder) UpdateColor(color int32) error {
+	return f.UpdateColorContext(context.Background(), color)
+}
+
+func (f *Folder) UpdateColorContext(ctx context.Context, color int32) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundUpdateFolderColor(f.ID, color)
+	return f.binder.BoundUpdateFolderColor(ctx, f.ID, color)
 }
 
 func (f *Folder) PinChat(chatID int64) error {
+	return f.PinChatContext(context.Background(), chatID)
+}
+
+func (f *Folder) PinChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundPinChatInFolder(f.ID, chatID)
+	return f.binder.BoundPinChatInFolder(ctx, f.ID, chatID)
 }
 
 func (f *Folder) RemoveChat(chatID int64) error {
+	return f.RemoveChatContext(context.Background(), chatID)
+}
+
+func (f *Folder) RemoveChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundRemoveChatFromFolder(f.ID, chatID)
+	return f.binder.BoundRemoveChatFromFolder(ctx, f.ID, chatID)
 }
 
 func (f *Folder) toDialogFilter() (*tg.DialogFilter, error) {

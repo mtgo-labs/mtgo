@@ -223,7 +223,7 @@ func TestBoundSendRich_ForwardsReplyTo(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
 	rm := RichMessageMarkdown("m", false)
-	_, err := c.BoundSendRich(10, rm, 42)
+	_, err := c.BoundSendRich(context.Background(), 10, rm, 42)
 	if err != nil {
 		t.Fatalf("BoundSendRich() error: %v", err)
 	}

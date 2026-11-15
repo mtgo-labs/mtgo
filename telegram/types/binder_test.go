@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -25,7 +26,7 @@ type mockBinder struct {
 	err           error
 }
 
-func (m *mockBinder) BoundSend(chatID int64, text string, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
+func (m *mockBinder) BoundSend(ctx context.Context, chatID int64, text string, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendText = text
 	m.sendReplyTo = replyTo
@@ -35,7 +36,7 @@ func (m *mockBinder) BoundSend(chatID int64, text string, replyTo int32, opts ..
 	return &Message{ID: 99, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendMedia(chatID int64, media tl.InputMediaClass, caption string, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
+func (m *mockBinder) BoundSendMedia(ctx context.Context, chatID int64, media tl.InputMediaClass, caption string, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	m.mediaReplyTo = replyTo
@@ -45,23 +46,23 @@ func (m *mockBinder) BoundSendMedia(chatID int64, media tl.InputMediaClass, capt
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundForward(chatID int64, fromChatID int64, msgID int32, opts ...*params.ForwardMessages) (*Message, error) {
+func (m *mockBinder) BoundForward(ctx context.Context, chatID int64, fromChatID int64, msgID int32, opts ...*params.ForwardMessages) (*Message, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundCopy(chatID int64, fromChatID int64, msgID int32, opts ...*params.CopyMessage) (int64, error) {
+func (m *mockBinder) BoundCopy(ctx context.Context, chatID int64, fromChatID int64, msgID int32, opts ...*params.CopyMessage) (int64, error) {
 	return 0, nil
 }
 
-func (m *mockBinder) BoundEdit(chatID int64, msgID int32, text string, opts ...*params.EditMessage) (*Message, error) {
+func (m *mockBinder) BoundEdit(ctx context.Context, chatID int64, msgID int32, text string, opts ...*params.EditMessage) (*Message, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundEditInline(inlineMessageID tl.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error) {
+func (m *mockBinder) BoundEditInline(ctx context.Context, inlineMessageID tl.InputBotInlineMessageIDClass, text string, opts ...*params.EditMessage) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBinder) BoundSendRich(chatID int64, rm tl.InputRichMessageClass, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
+func (m *mockBinder) BoundSendRich(ctx context.Context, chatID int64, rm tl.InputRichMessageClass, replyTo int32, opts ...*params.SendMessage) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	if m.err != nil {
@@ -70,23 +71,23 @@ func (m *mockBinder) BoundSendRich(chatID int64, rm tl.InputRichMessageClass, re
 	return &Message{ID: 1, ChatID: chatID, RichMessage: nil}, nil
 }
 
-func (m *mockBinder) BoundEditRich(chatID int64, msgID int32, rm tl.InputRichMessageClass) (*Message, error) {
+func (m *mockBinder) BoundEditRich(ctx context.Context, chatID int64, msgID int32, rm tl.InputRichMessageClass) (*Message, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundEditInlineRich(inlineMessageID tl.InputBotInlineMessageIDClass, rm tl.InputRichMessageClass) (bool, error) {
+func (m *mockBinder) BoundEditInlineRich(ctx context.Context, inlineMessageID tl.InputBotInlineMessageIDClass, rm tl.InputRichMessageClass) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBinder) BoundEditCaption(chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*Message, error) {
+func (m *mockBinder) BoundEditCaption(ctx context.Context, chatID int64, msgID int32, caption string, opts ...*params.EditMessage) (*Message, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundEditInlineCaption(inlineMessageID tl.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error) {
+func (m *mockBinder) BoundEditInlineCaption(ctx context.Context, inlineMessageID tl.InputBotInlineMessageIDClass, caption string, opts ...*params.EditMessage) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBinder) BoundEditMedia(chatID int64, msgID int32, media tl.InputMediaClass) (*Message, error) {
+func (m *mockBinder) BoundEditMedia(ctx context.Context, chatID int64, msgID int32, media tl.InputMediaClass) (*Message, error) {
 	m.editMedia = media
 	if m.err != nil {
 		return nil, m.err
@@ -94,19 +95,19 @@ func (m *mockBinder) BoundEditMedia(chatID int64, msgID int32, media tl.InputMed
 	return &Message{ID: msgID, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundEditInlineMedia(inlineMessageID tl.InputBotInlineMessageIDClass, media tl.InputMediaClass) (bool, error) {
+func (m *mockBinder) BoundEditInlineMedia(ctx context.Context, inlineMessageID tl.InputBotInlineMessageIDClass, media tl.InputMediaClass) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBinder) BoundEditReplyMarkup(chatID int64, msgID int32, markup tl.ReplyMarkupClass) (*Message, error) {
+func (m *mockBinder) BoundEditReplyMarkup(ctx context.Context, chatID int64, msgID int32, markup tl.ReplyMarkupClass) (*Message, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundEditInlineReplyMarkup(inlineMessageID tl.InputBotInlineMessageIDClass, markup tl.ReplyMarkupClass) (bool, error) {
+func (m *mockBinder) BoundEditInlineReplyMarkup(ctx context.Context, inlineMessageID tl.InputBotInlineMessageIDClass, markup tl.ReplyMarkupClass) (bool, error) {
 	return true, nil
 }
 
-func (m *mockBinder) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error) {
+func (m *mockBinder) BoundDelete(ctx context.Context, chatID int64, msgIDs []int32, opts ...*params.DeleteMessages) (int, error) {
 	m.deletedChatID = chatID
 	m.deletedMsgIDs = msgIDs
 	if m.err != nil {
@@ -115,25 +116,25 @@ func (m *mockBinder) BoundDelete(chatID int64, msgIDs []int32, opts ...*params.D
 	return len(msgIDs), nil
 }
 
-func (m *mockBinder) BoundReact(chatID int64, msgID int32, opts ...*params.React) error {
+func (m *mockBinder) BoundReact(ctx context.Context, chatID int64, msgID int32, opts ...*params.React) error {
 	return nil
 }
 
-func (m *mockBinder) BoundPin(chatID int64, msgID int32, opts ...*params.PinMessage) error {
+func (m *mockBinder) BoundPin(ctx context.Context, chatID int64, msgID int32, opts ...*params.PinMessage) error {
 	m.pinnedChatID = chatID
 	m.pinnedMsgID = msgID
 	return m.err
 }
 
-func (m *mockBinder) BoundUnpin(chatID int64, msgID int32, opts ...*params.PinMessage) error {
+func (m *mockBinder) BoundUnpin(ctx context.Context, chatID int64, msgID int32, opts ...*params.PinMessage) error {
 	return nil
 }
 
-func (m *mockBinder) BoundRead(chatID int64, msgID int32) error {
+func (m *mockBinder) BoundRead(ctx context.Context, chatID int64, msgID int32) error {
 	return nil
 }
 
-func (m *mockBinder) BoundAnswerCallback(queryID int64, opts ...*params.AnswerCallback) error {
+func (m *mockBinder) BoundAnswerCallback(ctx context.Context, queryID int64, opts ...*params.AnswerCallback) error {
 	o := params.GetOptDef(&params.AnswerCallback{}, opts...)
 	m.answerID = queryID
 	m.answerText = o.Text
@@ -141,176 +142,176 @@ func (m *mockBinder) BoundAnswerCallback(queryID int64, opts ...*params.AnswerCa
 	return m.err
 }
 
-func (m *mockBinder) BoundDownload(chatID int64, msgID int32, opts ...*params.Download) ([]byte, error) {
+func (m *mockBinder) BoundDownload(ctx context.Context, chatID int64, msgID int32, opts ...*params.Download) ([]byte, error) {
 	return nil, nil
 }
 
-func (m *mockBinder) BoundDownloadTo(chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error) {
+func (m *mockBinder) BoundDownloadTo(ctx context.Context, chatID int64, msgID int32, fileName string, opts ...*params.Download) (string, error) {
 	return "", nil
 }
 
-func (m *mockBinder) BoundSendContact(chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*Message, error) {
+func (m *mockBinder) BoundSendContact(ctx context.Context, chatID int64, phone, firstName, lastName string, replyTo int32, opts ...*params.SendContact) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 101, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendLocation(chatID int64, lat, lng float64, replyTo int32, opts ...*params.SendLocation) (*Message, error) {
+func (m *mockBinder) BoundSendLocation(ctx context.Context, chatID int64, lat, lng float64, replyTo int32, opts ...*params.SendLocation) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 102, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendVenue(chatID int64, lat, lng float64, title, address string, replyTo int32, opts ...*params.SendVenue) (*Message, error) {
+func (m *mockBinder) BoundSendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, replyTo int32, opts ...*params.SendVenue) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 103, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendPoll(chatID int64, question string, options []string, replyTo int32, opts ...*params.SendPoll) (*Message, error) {
+func (m *mockBinder) BoundSendPoll(ctx context.Context, chatID int64, question string, options []string, replyTo int32, opts ...*params.SendPoll) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 104, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendDice(chatID int64, emoji string, replyTo int32, opts ...*params.SendDice) (*Message, error) {
+func (m *mockBinder) BoundSendDice(ctx context.Context, chatID int64, emoji string, replyTo int32, opts ...*params.SendDice) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 105, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendGame(chatID int64, gameShortName string, replyTo int32, opts ...*params.SendGame) (*Message, error) {
+func (m *mockBinder) BoundSendGame(ctx context.Context, chatID int64, gameShortName string, replyTo int32, opts ...*params.SendGame) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 106, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundSendMediaGroup(chatID int64, media []tl.InputMediaClass, replyTo int32, opts ...*params.SendMediaGroup) ([]*Message, error) {
+func (m *mockBinder) BoundSendMediaGroup(ctx context.Context, chatID int64, media []tl.InputMediaClass, replyTo int32, opts ...*params.SendMediaGroup) ([]*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return []*Message{{ID: 107, ChatID: chatID}}, nil
 }
 
-func (m *mockBinder) BoundSendChatAction(chatID int64, action tl.SendMessageActionClass) error {
+func (m *mockBinder) BoundSendChatAction(ctx context.Context, chatID int64, action tl.SendMessageActionClass) error {
 	return nil
 }
 
-func (m *mockBinder) BoundSendInlineBotResult(chatID int64, queryID int64, resultID string, replyTo int32, opts ...*params.SendInlineBotResult) (*Message, error) {
+func (m *mockBinder) BoundSendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, replyTo int32, opts ...*params.SendInlineBotResult) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 108, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundVote(chatID int64, msgID int32, options [][]byte) error {
+func (m *mockBinder) BoundVote(ctx context.Context, chatID int64, msgID int32, options [][]byte) error {
 	return nil
 }
 
-func (m *mockBinder) BoundRetractVote(chatID int64, msgID int32) error {
+func (m *mockBinder) BoundRetractVote(ctx context.Context, chatID int64, msgID int32) error {
 	return nil
 }
 
-func (m *mockBinder) BoundGetMediaGroup(chatID int64, msgID int32) ([]*Message, error) {
+func (m *mockBinder) BoundGetMediaGroup(ctx context.Context, chatID int64, msgID int32) ([]*Message, error) {
 	return []*Message{{ID: msgID, ChatID: chatID}}, nil
 }
 
-func (m *mockBinder) BoundCopyMediaGroup(chatID int64, fromChatID int64, msgID int32) ([]*Message, error) {
+func (m *mockBinder) BoundCopyMediaGroup(ctx context.Context, chatID int64, fromChatID int64, msgID int32) ([]*Message, error) {
 	return []*Message{{ID: 109, ChatID: chatID}}, nil
 }
 
-func (m *mockBinder) BoundStub(method string) error {
+func (m *mockBinder) BoundStub(ctx context.Context, method string) error {
 	return errors.New("stub: " + method)
 }
 
-func (m *mockBinder) BoundAnswerInline(queryID int64, results []tl.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
+func (m *mockBinder) BoundAnswerInline(ctx context.Context, queryID int64, results []tl.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundBlock(userID int64) error {
+func (m *mockBinder) BoundBlock(ctx context.Context, userID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundUnblock(userID int64) error {
+func (m *mockBinder) BoundUnblock(ctx context.Context, userID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundGetCommonChats(userID int64, limit int) ([]*Chat, error) {
+func (m *mockBinder) BoundGetCommonChats(ctx context.Context, userID int64, limit int) ([]*Chat, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	return []*Chat{{ID: userID}}, nil
 }
 
-func (m *mockBinder) BoundArchiveUser(chatID int64) error {
+func (m *mockBinder) BoundArchiveUser(ctx context.Context, chatID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundUnarchiveUser(chatID int64) error {
+func (m *mockBinder) BoundUnarchiveUser(ctx context.Context, chatID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundAnswerPreCheckout(queryID int64, opts ...*params.AnswerPreCheckout) error {
+func (m *mockBinder) BoundAnswerPreCheckout(ctx context.Context, queryID int64, opts ...*params.AnswerPreCheckout) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundAnswerShipping(queryID int64, opts ...*params.AnswerShipping) error {
+func (m *mockBinder) BoundAnswerShipping(ctx context.Context, queryID int64, opts ...*params.AnswerShipping) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundApproveJoinRequest(chatID int64, userID int64) error {
+func (m *mockBinder) BoundApproveJoinRequest(ctx context.Context, chatID int64, userID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundDeclineJoinRequest(chatID int64, userID int64) error {
+func (m *mockBinder) BoundDeclineJoinRequest(ctx context.Context, chatID int64, userID int64) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundStoryReply(peerID int64, storyID int32, text string, opts ...*params.SendMessage) (*Message, error) {
+func (m *mockBinder) BoundStoryReply(ctx context.Context, peerID int64, storyID int32, text string, opts ...*params.SendMessage) (*Message, error) {
 	return &Message{ID: 200}, m.err
 }
 
-func (m *mockBinder) BoundStoryReplyMedia(peerID int64, storyID int32, media tl.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
+func (m *mockBinder) BoundStoryReplyMedia(ctx context.Context, peerID int64, storyID int32, media tl.InputMediaClass, caption string, opts ...*params.SendMessage) (*Message, error) {
 	return &Message{ID: 201}, m.err
 }
 
-func (m *mockBinder) BoundStoryForward(fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*Message, error) {
+func (m *mockBinder) BoundStoryForward(ctx context.Context, fromChatID int64, storyID int32, chatID int64, opts ...*params.StoryForward) (*Message, error) {
 	return &Message{ID: 202}, m.err
 }
 
-func (m *mockBinder) BoundStoryRead(peerID int64, storyID int32) error {
+func (m *mockBinder) BoundStoryRead(ctx context.Context, peerID int64, storyID int32) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundStoryDelete(peerID int64, storyID int32) error {
+func (m *mockBinder) BoundStoryDelete(ctx context.Context, peerID int64, storyID int32) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundStoryEditCaption(peerID int64, storyID int32, opts ...*params.EditCaption) (*Story, error) {
+func (m *mockBinder) BoundStoryEditCaption(ctx context.Context, peerID int64, storyID int32, opts ...*params.EditCaption) (*Story, error) {
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundStoryEditMedia(peerID int64, storyID int32, media tl.InputMediaClass) (*Story, error) {
+func (m *mockBinder) BoundStoryEditMedia(ctx context.Context, peerID int64, storyID int32, media tl.InputMediaClass) (*Story, error) {
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundStoryEditPrivacy(peerID int64, storyID int32, opts ...*params.EditPrivacy) (*Story, error) {
+func (m *mockBinder) BoundStoryEditPrivacy(ctx context.Context, peerID int64, storyID int32, opts ...*params.EditPrivacy) (*Story, error) {
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundStoryReact(peerID int64, storyID int32, opts ...*params.React) error {
+func (m *mockBinder) BoundStoryReact(ctx context.Context, peerID int64, storyID int32, opts ...*params.React) error {
 	return m.err
 }
 
-func (m *mockBinder) BoundStoryDownload(peerID int64, storyID int32, opts ...*params.Download) ([]byte, error) {
+func (m *mockBinder) BoundStoryDownload(ctx context.Context, peerID int64, storyID int32, opts ...*params.Download) ([]byte, error) {
 	return nil, m.err
 }
 
-func (m *mockBinder) BoundReplyChecklist(chatID int64, checklist *tl.InputMediaTodo, replyTo int32, opts ...*params.SendChecklist) (*Message, error) {
+func (m *mockBinder) BoundReplyChecklist(ctx context.Context, chatID int64, checklist *tl.InputMediaTodo, replyTo int32, opts ...*params.SendChecklist) (*Message, error) {
 	m.sendChatID = chatID
 	m.sendReplyTo = replyTo
 	return &Message{ID: 110, ChatID: chatID}, m.err
 }
 
-func (m *mockBinder) BoundReplyPhoto(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendPhoto) (*Message, error) {
+func (m *mockBinder) BoundReplyPhoto(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendPhoto) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	m.mediaReplyTo = replyTo
@@ -320,7 +321,7 @@ func (m *mockBinder) BoundReplyPhoto(chatID int64, file *InputFile, caption stri
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerPhoto(chatID int64, file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
+func (m *mockBinder) BoundAnswerPhoto(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendPhoto) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	if m.err != nil {
@@ -329,26 +330,7 @@ func (m *mockBinder) BoundAnswerPhoto(chatID int64, file *InputFile, caption str
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundReplyAudio(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendAudio) (*Message, error) {
-	m.sendChatID = chatID
-	m.mediaCaption = caption
-	m.mediaReplyTo = replyTo
-	if m.err != nil {
-		return nil, m.err
-	}
-	return &Message{ID: 100, ChatID: chatID}, nil
-}
-
-func (m *mockBinder) BoundAnswerAudio(chatID int64, file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
-	m.sendChatID = chatID
-	m.mediaCaption = caption
-	if m.err != nil {
-		return nil, m.err
-	}
-	return &Message{ID: 100, ChatID: chatID}, nil
-}
-
-func (m *mockBinder) BoundReplyVideo(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendVideo) (*Message, error) {
+func (m *mockBinder) BoundReplyAudio(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendAudio) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	m.mediaReplyTo = replyTo
@@ -358,7 +340,7 @@ func (m *mockBinder) BoundReplyVideo(chatID int64, file *InputFile, caption stri
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerVideo(chatID int64, file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
+func (m *mockBinder) BoundAnswerAudio(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAudio) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	if m.err != nil {
@@ -367,26 +349,7 @@ func (m *mockBinder) BoundAnswerVideo(chatID int64, file *InputFile, caption str
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundReplyDocument(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendDocument) (*Message, error) {
-	m.sendChatID = chatID
-	m.mediaCaption = caption
-	m.mediaReplyTo = replyTo
-	if m.err != nil {
-		return nil, m.err
-	}
-	return &Message{ID: 100, ChatID: chatID}, nil
-}
-
-func (m *mockBinder) BoundAnswerDocument(chatID int64, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
-	m.sendChatID = chatID
-	m.mediaCaption = caption
-	if m.err != nil {
-		return nil, m.err
-	}
-	return &Message{ID: 100, ChatID: chatID}, nil
-}
-
-func (m *mockBinder) BoundReplyAnimation(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendAnimation) (*Message, error) {
+func (m *mockBinder) BoundReplyVideo(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendVideo) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	m.mediaReplyTo = replyTo
@@ -396,7 +359,7 @@ func (m *mockBinder) BoundReplyAnimation(chatID int64, file *InputFile, caption 
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerAnimation(chatID int64, file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+func (m *mockBinder) BoundAnswerVideo(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVideo) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	if m.err != nil {
@@ -405,7 +368,7 @@ func (m *mockBinder) BoundAnswerAnimation(chatID int64, file *InputFile, caption
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundReplyVoice(chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendVoice) (*Message, error) {
+func (m *mockBinder) BoundReplyDocument(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendDocument) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	m.mediaReplyTo = replyTo
@@ -415,7 +378,7 @@ func (m *mockBinder) BoundReplyVoice(chatID int64, file *InputFile, caption stri
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerVoice(chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+func (m *mockBinder) BoundAnswerDocument(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendDocument) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaCaption = caption
 	if m.err != nil {
@@ -424,7 +387,45 @@ func (m *mockBinder) BoundAnswerVoice(chatID int64, file *InputFile, caption str
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundReplyVideoNote(chatID int64, file *InputFile, replyTo int32, opts ...*params.SendVideoNote) (*Message, error) {
+func (m *mockBinder) BoundReplyAnimation(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendAnimation) (*Message, error) {
+	m.sendChatID = chatID
+	m.mediaCaption = caption
+	m.mediaReplyTo = replyTo
+	if m.err != nil {
+		return nil, m.err
+	}
+	return &Message{ID: 100, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) BoundAnswerAnimation(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAnimation) (*Message, error) {
+	m.sendChatID = chatID
+	m.mediaCaption = caption
+	if m.err != nil {
+		return nil, m.err
+	}
+	return &Message{ID: 100, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) BoundReplyVoice(ctx context.Context, chatID int64, file *InputFile, caption string, replyTo int32, opts ...*params.SendVoice) (*Message, error) {
+	m.sendChatID = chatID
+	m.mediaCaption = caption
+	m.mediaReplyTo = replyTo
+	if m.err != nil {
+		return nil, m.err
+	}
+	return &Message{ID: 100, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) BoundAnswerVoice(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error) {
+	m.sendChatID = chatID
+	m.mediaCaption = caption
+	if m.err != nil {
+		return nil, m.err
+	}
+	return &Message{ID: 100, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) BoundReplyVideoNote(ctx context.Context, chatID int64, file *InputFile, replyTo int32, opts ...*params.SendVideoNote) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaReplyTo = replyTo
 	if m.err != nil {
@@ -433,7 +434,7 @@ func (m *mockBinder) BoundReplyVideoNote(chatID int64, file *InputFile, replyTo 
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerVideoNote(chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
+func (m *mockBinder) BoundAnswerVideoNote(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*Message, error) {
 	m.sendChatID = chatID
 	if m.err != nil {
 		return nil, m.err
@@ -441,7 +442,7 @@ func (m *mockBinder) BoundAnswerVideoNote(chatID int64, file *InputFile, opts ..
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundReplySticker(chatID int64, file *InputFile, replyTo int32, opts ...*params.SendSticker) (*Message, error) {
+func (m *mockBinder) BoundReplySticker(ctx context.Context, chatID int64, file *InputFile, replyTo int32, opts ...*params.SendSticker) (*Message, error) {
 	m.sendChatID = chatID
 	m.mediaReplyTo = replyTo
 	if m.err != nil {
@@ -450,7 +451,7 @@ func (m *mockBinder) BoundReplySticker(chatID int64, file *InputFile, replyTo in
 	return &Message{ID: 100, ChatID: chatID}, nil
 }
 
-func (m *mockBinder) BoundAnswerSticker(chatID int64, file *InputFile, opts ...*params.SendSticker) (*Message, error) {
+func (m *mockBinder) BoundAnswerSticker(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendSticker) (*Message, error) {
 	m.sendChatID = chatID
 	if m.err != nil {
 		return nil, m.err

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -245,28 +244,6 @@ func (c *MessageMethods) EditInlineRichMessage(ctx context.Context, inlineMessag
 		return false, err
 	}
 	return result, nil
-}
-
-// EditInlineOpts provides optional parameters for inline message editing operations.
-//
-// Example:
-//
-//	opts := &telegram.EditInlineOpts{
-//		NoWebpage:   true,
-//		InvertMedia: false,
-//		Entities:    nil,
-//	}
-//	ok, err := client.EditInlineText(ctx, msgID, "hello", opts)
-type EditInlineOpts struct {
-	NoWebpage   bool
-	InvertMedia bool
-	ReplyMarkup tg.ReplyMarkupClass
-	Entities    []tg.MessageEntityClass
-	// ParseMode parses the text/caption into entities when Entities is empty.
-	ParseMode params.ParseMode
-	// RichMessage replaces the inline message content with a rich message
-	// (flag 23).
-	RichMessage tg.InputRichMessageClass
 }
 
 func getEditInlineOpts(opts ...*EditInlineOpts) *EditInlineOpts {

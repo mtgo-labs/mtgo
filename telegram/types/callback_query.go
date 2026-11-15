@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -43,7 +44,7 @@ type CallbackQuery struct {
 	// InlineMessageID is the inline message identifier, set when the callback
 	// originates from an inline message.
 	InlineMessageID tg.InputBotInlineMessageIDClass
-	binder          Binder
+	binder          CallbackQueryBinder
 }
 
 // InlineQuery represents an incoming inline query from a user typing a query in
@@ -62,7 +63,7 @@ type InlineQuery struct {
 	// PeerType describes the chat the inline query originated from; maps to the
 	// Bot API inline-query chat_type.
 	PeerType tg.InlineQueryPeerTypeClass
-	binder   Binder
+	binder   InlineQueryBinder
 }
 
 // ParseCallbackQuery extracts a CallbackQuery from an MTProto update.
@@ -108,7 +109,7 @@ func ParseCallbackQuery(raw tg.UpdateClass) *CallbackQuery {
 // SetBinder injects the Binder that backs all bound convenience methods on this
 // CallbackQuery. Called internally by the Client after constructing a
 // CallbackQuery from an update.
-func (c *CallbackQuery) SetBinder(b Binder) {
+func (c *CallbackQuery) SetBinder(b CallbackQueryBinder) {
 	c.binder = b
 }
 
@@ -119,47 +120,67 @@ func (c *CallbackQuery) SetBinder(b Binder) {
 //
 //	err := callback.Answer("Processing…")
 func (c *CallbackQuery) Answer(text string) error {
+	return c.AnswerContext(context.Background(), text)
+}
+
+func (c *CallbackQuery) AnswerContext(ctx context.Context, text string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{Text: text})
+	return c.binder.BoundAnswerCallback(ctx, c.ID, &params.AnswerCallback{Text: text})
 }
 
 // AnswerAlert shows a pop-up alert dialog to the user who pressed the button.
 // Use this for important notifications that require explicit dismissal.
 func (c *CallbackQuery) AnswerAlert(text string) error {
+	return c.AnswerAlertContext(context.Background(), text)
+}
+
+func (c *CallbackQuery) AnswerAlertContext(ctx context.Context, text string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{Text: text, ShowAlert: true})
+	return c.binder.BoundAnswerCallback(ctx, c.ID, &params.AnswerCallback{Text: text, ShowAlert: true})
 }
 
 // AnswerURL opens a URL in the user's browser (or the Telegram in-app browser).
 // Used for login URLs and game URLs.
 func (c *CallbackQuery) AnswerURL(url string) error {
+	return c.AnswerURLContext(context.Background(), url)
+}
+
+func (c *CallbackQuery) AnswerURLContext(ctx context.Context, url string) error {
 	if c.binder == nil {
 		return ErrNoBinder
 	}
-	return c.binder.BoundAnswerCallback(c.ID, &params.AnswerCallback{URL: url})
+	return c.binder.BoundAnswerCallback(ctx, c.ID, &params.AnswerCallback{URL: url})
 }
 
 // Reply sends a text message in the chat where the callback button was pressed.
 func (c *CallbackQuery) Reply(text string) (*Message, error) {
+	return c.ReplyContext(context.Background(), text)
+}
+
+func (c *CallbackQuery) ReplyContext(ctx context.Context, text string) (*Message, error) {
 	if c.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return c.binder.BoundSend(c.ChatID, text, 0)
+	return c.binder.BoundSend(ctx, c.ChatID, text, 0)
 }
 
 func (c *CallbackQuery) EditMessageText(text string, opts ...*params.EditMessage) (*Message, bool, error) {
+	return c.EditMessageTextContext(context.Background(), text, opts...)
+}
+
+func (c *CallbackQuery) EditMessageTextContext(ctx context.Context, text string, opts ...*params.EditMessage) (*Message, bool, error) {
 	if c.binder == nil {
 		return nil, false, ErrNoBinder
 	}
 	if c.InlineMessageID != nil {
-		ok, err := c.binder.BoundEditInline(c.InlineMessageID, text, opts...)
+		ok, err := c.binder.BoundEditInline(ctx, c.InlineMessageID, text, opts...)
 		return nil, ok, err
 	}
-	msg, err := c.binder.BoundEdit(c.ChatID, c.MessageID, text, opts...)
+	msg, err := c.binder.BoundEdit(ctx, c.ChatID, c.MessageID, text, opts...)
 	return msg, false, err
 }
 
@@ -168,14 +189,18 @@ func (c *CallbackQuery) EditMessage(text string, opts ...*params.EditMessage) (*
 }
 
 func (c *CallbackQuery) EditMessageCaption(caption string, opts ...*params.EditMessage) (*Message, bool, error) {
+	return c.EditMessageCaptionContext(context.Background(), caption, opts...)
+}
+
+func (c *CallbackQuery) EditMessageCaptionContext(ctx context.Context, caption string, opts ...*params.EditMessage) (*Message, bool, error) {
 	if c.binder == nil {
 		return nil, false, ErrNoBinder
 	}
 	if c.InlineMessageID != nil {
-		ok, err := c.binder.BoundEditInlineCaption(c.InlineMessageID, caption, opts...)
+		ok, err := c.binder.BoundEditInlineCaption(ctx, c.InlineMessageID, caption, opts...)
 		return nil, ok, err
 	}
-	msg, err := c.binder.BoundEditCaption(c.ChatID, c.MessageID, caption, opts...)
+	msg, err := c.binder.BoundEditCaption(ctx, c.ChatID, c.MessageID, caption, opts...)
 	return msg, false, err
 }
 
@@ -185,14 +210,18 @@ func (c *CallbackQuery) EditCaption(caption string, opts ...*params.EditMessage)
 }
 
 func (c *CallbackQuery) EditMessageMedia(media tg.InputMediaClass) (*Message, bool, error) {
+	return c.EditMessageMediaContext(context.Background(), media)
+}
+
+func (c *CallbackQuery) EditMessageMediaContext(ctx context.Context, media tg.InputMediaClass) (*Message, bool, error) {
 	if c.binder == nil {
 		return nil, false, ErrNoBinder
 	}
 	if c.InlineMessageID != nil {
-		ok, err := c.binder.BoundEditInlineMedia(c.InlineMessageID, media)
+		ok, err := c.binder.BoundEditInlineMedia(ctx, c.InlineMessageID, media)
 		return nil, ok, err
 	}
-	msg, err := c.binder.BoundEditMedia(c.ChatID, c.MessageID, media)
+	msg, err := c.binder.BoundEditMedia(ctx, c.ChatID, c.MessageID, media)
 	return msg, false, err
 }
 
@@ -202,14 +231,18 @@ func (c *CallbackQuery) EditMedia(media tg.InputMediaClass) (*Message, error) {
 }
 
 func (c *CallbackQuery) EditMessageReplyMarkup(markup tg.ReplyMarkupClass) (*Message, bool, error) {
+	return c.EditMessageReplyMarkupContext(context.Background(), markup)
+}
+
+func (c *CallbackQuery) EditMessageReplyMarkupContext(ctx context.Context, markup tg.ReplyMarkupClass) (*Message, bool, error) {
 	if c.binder == nil {
 		return nil, false, ErrNoBinder
 	}
 	if c.InlineMessageID != nil {
-		ok, err := c.binder.BoundEditInlineReplyMarkup(c.InlineMessageID, markup)
+		ok, err := c.binder.BoundEditInlineReplyMarkup(ctx, c.InlineMessageID, markup)
 		return nil, ok, err
 	}
-	msg, err := c.binder.BoundEditReplyMarkup(c.ChatID, c.MessageID, markup)
+	msg, err := c.binder.BoundEditReplyMarkup(ctx, c.ChatID, c.MessageID, markup)
 	return msg, false, err
 }
 
@@ -221,23 +254,31 @@ func (c *CallbackQuery) EditReplyMarkup(markup tg.ReplyMarkupClass) (*Message, e
 // EditRich replaces the originating message content with a rich message. Works
 // for both inline messages (InlineMessageID set) and regular chat messages.
 func (c *CallbackQuery) EditRich(rm tg.InputRichMessageClass) (*Message, bool, error) {
+	return c.EditRichContext(context.Background(), rm)
+}
+
+func (c *CallbackQuery) EditRichContext(ctx context.Context, rm tg.InputRichMessageClass) (*Message, bool, error) {
 	if c.binder == nil {
 		return nil, false, ErrNoBinder
 	}
 	if c.InlineMessageID != nil {
-		ok, err := c.binder.BoundEditInlineRich(c.InlineMessageID, rm)
+		ok, err := c.binder.BoundEditInlineRich(ctx, c.InlineMessageID, rm)
 		return nil, ok, err
 	}
-	msg, err := c.binder.BoundEditRich(c.ChatID, c.MessageID, rm)
+	msg, err := c.binder.BoundEditRich(ctx, c.ChatID, c.MessageID, rm)
 	return msg, false, err
 }
 
 // Delete removes the message that originated this callback query.
 func (c *CallbackQuery) Delete() (int, error) {
+	return c.DeleteContext(context.Background())
+}
+
+func (c *CallbackQuery) DeleteContext(ctx context.Context) (int, error) {
 	if c.binder == nil {
 		return 0, ErrNoBinder
 	}
-	return c.binder.BoundDelete(c.ChatID, []int32{c.MessageID})
+	return c.binder.BoundDelete(ctx, c.ChatID, []int32{c.MessageID})
 }
 
 // ParseInlineQuery extracts an InlineQuery from an MTProto update.
@@ -262,7 +303,7 @@ func ParseInlineQuery(raw tg.UpdateClass) *InlineQuery {
 // SetBinder injects the Binder that backs all bound convenience methods on this
 // InlineQuery. Called internally by the Client after constructing an InlineQuery
 // from an update.
-func (iq *InlineQuery) SetBinder(b Binder) {
+func (iq *InlineQuery) SetBinder(b InlineQueryBinder) {
 	iq.binder = b
 }
 
@@ -270,10 +311,14 @@ func (iq *InlineQuery) SetBinder(b Binder) {
 // inline result objects. Optional params control gallery mode, caching, and
 // pagination.
 func (iq *InlineQuery) Answer(results []tg.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
+	return iq.AnswerContext(context.Background(), results, opts...)
+}
+
+func (iq *InlineQuery) AnswerContext(ctx context.Context, results []tg.InputBotInlineResultClass, opts ...*params.InlineQuery) error {
 	if iq.binder == nil {
 		return ErrNoInlineBinder
 	}
-	return iq.binder.BoundAnswerInline(iq.ID, results, opts...)
+	return iq.binder.BoundAnswerInline(ctx, iq.ID, results, opts...)
 }
 
 func (iq *InlineQuery) AnswerResults(results []InlineResultBuilder, opts ...*params.InlineQuery) error {

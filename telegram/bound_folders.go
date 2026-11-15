@@ -15,8 +15,7 @@ func (c *Client) BoundGetFolders() ([]tg.DialogFilterClass, error) {
 	return result.Filters, nil
 }
 
-func (c *Client) BoundCreateFolder(filter *tg.DialogFilter) error {
-	ctx := context.Background()
+func (c *Client) BoundCreateFolder(ctx context.Context, filter *tg.DialogFilter) error {
 	_, err := c.Raw().MessagesUpdateDialogFilter(ctx, &tg.MessagesUpdateDialogFilterRequest{
 		Flags:  1 << 0,
 		ID:     filter.ID,
@@ -25,8 +24,7 @@ func (c *Client) BoundCreateFolder(filter *tg.DialogFilter) error {
 	return err
 }
 
-func (c *Client) BoundEditFolder(filter *tg.DialogFilter) error {
-	ctx := context.Background()
+func (c *Client) BoundEditFolder(ctx context.Context, filter *tg.DialogFilter) error {
 	_, err := c.Raw().MessagesUpdateDialogFilter(ctx, &tg.MessagesUpdateDialogFilterRequest{
 		Flags:  1 << 0,
 		ID:     filter.ID,
@@ -35,24 +33,21 @@ func (c *Client) BoundEditFolder(filter *tg.DialogFilter) error {
 	return err
 }
 
-func (c *Client) BoundDeleteFolder(folderID int32) error {
-	ctx := context.Background()
+func (c *Client) BoundDeleteFolder(ctx context.Context, folderID int32) error {
 	_, err := c.Raw().MessagesUpdateDialogFilter(ctx, &tg.MessagesUpdateDialogFilterRequest{
 		ID: folderID,
 	})
 	return err
 }
 
-func (c *Client) BoundReorderFolders(order []int32) error {
-	ctx := context.Background()
+func (c *Client) BoundReorderFolders(ctx context.Context, order []int32) error {
 	_, err := c.Raw().MessagesUpdateDialogFiltersOrder(ctx, &tg.MessagesUpdateDialogFiltersOrderRequest{
 		Order: order,
 	})
 	return err
 }
 
-func (c *Client) BoundIncludeChat(folderID int32, chatID int64) error {
-	ctx := context.Background()
+func (c *Client) BoundIncludeChat(ctx context.Context, folderID int32, chatID int64) error {
 	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
@@ -64,14 +59,13 @@ func (c *Client) BoundIncludeChat(folderID int32, chatID int64) error {
 	for _, f := range folders {
 		if df, ok := f.(*tg.DialogFilter); ok && df.ID == folderID {
 			df.IncludePeers = append(df.IncludePeers, peer)
-			return c.BoundEditFolder(df)
+			return c.BoundEditFolder(ctx, df)
 		}
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
-func (c *Client) BoundExcludeChat(folderID int32, chatID int64) error {
-	ctx := context.Background()
+func (c *Client) BoundExcludeChat(ctx context.Context, folderID int32, chatID int64) error {
 	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
@@ -83,13 +77,13 @@ func (c *Client) BoundExcludeChat(folderID int32, chatID int64) error {
 	for _, f := range folders {
 		if df, ok := f.(*tg.DialogFilter); ok && df.ID == folderID {
 			df.ExcludePeers = append(df.ExcludePeers, peer)
-			return c.BoundEditFolder(df)
+			return c.BoundEditFolder(ctx, df)
 		}
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
-func (c *Client) BoundUpdateFolderColor(folderID int32, color int32) error {
+func (c *Client) BoundUpdateFolderColor(ctx context.Context, folderID int32, color int32) error {
 	folders, err := c.BoundGetFolders()
 	if err != nil {
 		return err
@@ -97,14 +91,13 @@ func (c *Client) BoundUpdateFolderColor(folderID int32, color int32) error {
 	for _, f := range folders {
 		if df, ok := f.(*tg.DialogFilter); ok && df.ID == folderID {
 			df.Color = color
-			return c.BoundEditFolder(df)
+			return c.BoundEditFolder(ctx, df)
 		}
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
-func (c *Client) BoundPinChatInFolder(folderID int32, chatID int64) error {
-	ctx := context.Background()
+func (c *Client) BoundPinChatInFolder(ctx context.Context, folderID int32, chatID int64) error {
 	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
@@ -116,14 +109,13 @@ func (c *Client) BoundPinChatInFolder(folderID int32, chatID int64) error {
 	for _, f := range folders {
 		if df, ok := f.(*tg.DialogFilter); ok && df.ID == folderID {
 			df.PinnedPeers = append(df.PinnedPeers, peer)
-			return c.BoundEditFolder(df)
+			return c.BoundEditFolder(ctx, df)
 		}
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
 
-func (c *Client) BoundRemoveChatFromFolder(folderID int32, chatID int64) error {
-	ctx := context.Background()
+func (c *Client) BoundRemoveChatFromFolder(ctx context.Context, folderID int32, chatID int64) error {
 	peer, err := resolvePeer(ctx, c, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
@@ -137,7 +129,7 @@ func (c *Client) BoundRemoveChatFromFolder(folderID int32, chatID int64) error {
 			df.PinnedPeers = removePeerFromSlice(df.PinnedPeers, peer)
 			df.IncludePeers = removePeerFromSlice(df.IncludePeers, peer)
 			df.ExcludePeers = removePeerFromSlice(df.ExcludePeers, peer)
-			return c.BoundEditFolder(df)
+			return c.BoundEditFolder(ctx, df)
 		}
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)

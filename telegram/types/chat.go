@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -257,185 +258,289 @@ func (c *Chat) requireBinder() error {
 }
 
 func (c *Chat) Archive() error {
+	return c.ArchiveContext(context.Background())
+}
+
+func (c *Chat) ArchiveContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundArchive(c.ID)
+	return c.binder.BoundArchive(ctx, c.ID)
 }
 
 func (c *Chat) Unarchive() error {
+	return c.UnarchiveContext(context.Background())
+}
+
+func (c *Chat) UnarchiveContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundUnarchive(c.ID)
+	return c.binder.BoundUnarchive(ctx, c.ID)
 }
 
 func (c *Chat) SetTitle(title string) error {
+	return c.SetTitleContext(context.Background(), title)
+}
+
+func (c *Chat) SetTitleContext(ctx context.Context, title string) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetTitle(c.ID, title)
+	return c.binder.BoundSetTitle(ctx, c.ID, title)
 }
 
 func (c *Chat) SetDescription(description string) error {
+	return c.SetDescriptionContext(context.Background(), description)
+}
+
+func (c *Chat) SetDescriptionContext(ctx context.Context, description string) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetDescription(c.ID, description)
+	return c.binder.BoundSetDescription(ctx, c.ID, description)
 }
 
 func (c *Chat) SetPhoto(photo tg.InputChatPhotoClass) error {
+	return c.SetPhotoContext(context.Background(), photo)
+}
+
+func (c *Chat) SetPhotoContext(ctx context.Context, photo tg.InputChatPhotoClass) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetPhoto(c.ID, photo)
+	return c.binder.BoundSetPhoto(ctx, c.ID, photo)
 }
 
 func (c *Chat) DeletePhoto() error {
+	return c.DeletePhotoContext(context.Background())
+}
+
+func (c *Chat) DeletePhotoContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundDeletePhoto(c.ID)
+	return c.binder.BoundDeletePhoto(ctx, c.ID)
 }
 
 func (c *Chat) SetUsername(username string) error {
+	return c.SetUsernameContext(context.Background(), username)
+}
+
+func (c *Chat) SetUsernameContext(ctx context.Context, username string) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetUsername(c.ID, username)
+	return c.binder.BoundSetUsername(ctx, c.ID, username)
 }
 
 func (c *Chat) BanMember(userID int64) error {
+	return c.BanMemberContext(context.Background(), userID)
+}
+
+func (c *Chat) BanMemberContext(ctx context.Context, userID int64) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundBanMember(c.ID, userID)
+	return c.binder.BoundBanMember(ctx, c.ID, userID)
 }
 
 func (c *Chat) UnbanMember(userID int64) error {
+	return c.UnbanMemberContext(context.Background(), userID)
+}
+
+func (c *Chat) UnbanMemberContext(ctx context.Context, userID int64) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundUnbanMember(c.ID, userID)
+	return c.binder.BoundUnbanMember(ctx, c.ID, userID)
 }
 
 func (c *Chat) RestrictMember(userID int64, bannedRights *tg.ChatBannedRights) error {
+	return c.RestrictMemberContext(context.Background(), userID, bannedRights)
+}
+
+func (c *Chat) RestrictMemberContext(ctx context.Context, userID int64, bannedRights *tg.ChatBannedRights) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundRestrictMember(c.ID, userID, bannedRights)
+	return c.binder.BoundRestrictMember(ctx, c.ID, userID, bannedRights)
 }
 
 func (c *Chat) PromoteMember(userID int64, adminRights *tg.ChatAdminRights) error {
+	return c.PromoteMemberContext(context.Background(), userID, adminRights)
+}
+
+func (c *Chat) PromoteMemberContext(ctx context.Context, userID int64, adminRights *tg.ChatAdminRights) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundPromoteMember(c.ID, userID, adminRights)
+	return c.binder.BoundPromoteMember(ctx, c.ID, userID, adminRights)
 }
 
 func (c *Chat) Join(link string) (*Chat, error) {
+	return c.JoinContext(context.Background(), link)
+}
+
+func (c *Chat) JoinContext(ctx context.Context, link string) (*Chat, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundJoinChat(c.ID, link)
+	return c.binder.BoundJoinChat(ctx, c.ID, link)
 }
 
 func (c *Chat) Leave() error {
+	return c.LeaveContext(context.Background())
+}
+
+func (c *Chat) LeaveContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundLeaveChat(c.ID)
+	return c.binder.BoundLeaveChat(ctx, c.ID)
 }
 
 func (c *Chat) ExportInviteLink() (string, error) {
+	return c.ExportInviteLinkContext(context.Background())
+}
+
+func (c *Chat) ExportInviteLinkContext(ctx context.Context) (string, error) {
 	if err := c.requireBinder(); err != nil {
 		return "", err
 	}
-	return c.binder.BoundExportInviteLink(c.ID)
+	return c.binder.BoundExportInviteLink(ctx, c.ID)
 }
 
 func (c *Chat) GetMember(userID int64) (*ChatMember, error) {
+	return c.GetMemberContext(context.Background(), userID)
+}
+
+func (c *Chat) GetMemberContext(ctx context.Context, userID int64) (*ChatMember, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundGetMember(c.ID, userID)
+	return c.binder.BoundGetMember(ctx, c.ID, userID)
 }
 
 func (c *Chat) GetMembers(limit int, offset int) ([]*ChatMember, error) {
+	return c.GetMembersContext(context.Background(), limit, offset)
+}
+
+func (c *Chat) GetMembersContext(ctx context.Context, limit int, offset int) ([]*ChatMember, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundGetMembers(c.ID, limit, offset)
+	return c.binder.BoundGetMembers(ctx, c.ID, limit, offset)
 }
 
 func (c *Chat) AddMembers(userID int64) error {
+	return c.AddMembersContext(context.Background(), userID)
+}
+
+func (c *Chat) AddMembersContext(ctx context.Context, userID int64) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundAddMembers(c.ID, userID)
+	return c.binder.BoundAddMembers(ctx, c.ID, userID)
 }
 
 func (c *Chat) MarkUnread(unread bool) error {
+	return c.MarkUnreadContext(context.Background(), unread)
+}
+
+func (c *Chat) MarkUnreadContext(ctx context.Context, unread bool) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundMarkUnread(c.ID, unread)
+	return c.binder.BoundMarkUnread(ctx, c.ID, unread)
 }
 
 func (c *Chat) SetProtectedContent(enabled bool) error {
+	return c.SetProtectedContentContext(context.Background(), enabled)
+}
+
+func (c *Chat) SetProtectedContentContext(ctx context.Context, enabled bool) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetProtectedContent(c.ID, enabled)
+	return c.binder.BoundSetProtectedContent(ctx, c.ID, enabled)
 }
 
 func (c *Chat) SetTTL(ttl int) error {
+	return c.SetTTLContext(context.Background(), ttl)
+}
+
+func (c *Chat) SetTTLContext(ctx context.Context, ttl int) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetTTL(c.ID, ttl)
+	return c.binder.BoundSetTTL(ctx, c.ID, ttl)
 }
 
 func (c *Chat) SetPermissions(permissions *tg.ChatBannedRights) error {
+	return c.SetPermissionsContext(context.Background(), permissions)
+}
+
+func (c *Chat) SetPermissionsContext(ctx context.Context, permissions *tg.ChatBannedRights) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetPermissions(c.ID, permissions)
+	return c.binder.BoundSetPermissions(ctx, c.ID, permissions)
 }
 
 func (c *Chat) SetAdminTitle(userID int64, title string) error {
+	return c.SetAdminTitleContext(context.Background(), userID, title)
+}
+
+func (c *Chat) SetAdminTitleContext(ctx context.Context, userID int64, title string) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetAdminTitle(c.ID, userID, title)
+	return c.binder.BoundSetAdminTitle(ctx, c.ID, userID, title)
 }
 
 func (c *Chat) SetSlowMode(seconds int) error {
+	return c.SetSlowModeContext(context.Background(), seconds)
+}
+
+func (c *Chat) SetSlowModeContext(ctx context.Context, seconds int) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundSetSlowMode(c.ID, seconds)
+	return c.binder.BoundSetSlowMode(ctx, c.ID, seconds)
 }
 
 func (c *Chat) Mute() error {
+	return c.MuteContext(context.Background())
+}
+
+func (c *Chat) MuteContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundMute(c.ID)
+	return c.binder.BoundMute(ctx, c.ID)
 }
 
 func (c *Chat) Unmute() error {
+	return c.UnmuteContext(context.Background())
+}
+
+func (c *Chat) UnmuteContext(ctx context.Context) error {
 	if err := c.requireBinder(); err != nil {
 		return err
 	}
-	return c.binder.BoundUnmute(c.ID)
+	return c.binder.BoundUnmute(ctx, c.ID)
 }
 
 func (c *Chat) UnpinAll() (int, error) {
+	return c.UnpinAllContext(context.Background())
+}
+
+func (c *Chat) UnpinAllContext(ctx context.Context) (int, error) {
 	if err := c.requireBinder(); err != nil {
 		return 0, err
 	}
-	return c.binder.BoundUnpinAll(c.ID)
+	return c.binder.BoundUnpinAll(ctx, c.ID)
 }
 
 func (c *Chat) UnpinAllMessages() (int, error) {
@@ -443,17 +548,25 @@ func (c *Chat) UnpinAllMessages() (int, error) {
 }
 
 func (c *Chat) GetChat() (*Chat, error) {
+	return c.GetChatContext(context.Background())
+}
+
+func (c *Chat) GetChatContext(ctx context.Context) (*Chat, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundGetChat(c.ID)
+	return c.binder.BoundGetChat(ctx, c.ID)
 }
 
 func (c *Chat) GetEventLog(query string, limit int) ([]*ChatEvent, error) {
+	return c.GetEventLogContext(context.Background(), query, limit)
+}
+
+func (c *Chat) GetEventLogContext(ctx context.Context, query string, limit int) ([]*ChatEvent, error) {
 	if err := c.requireBinder(); err != nil {
 		return nil, err
 	}
-	return c.binder.BoundGetEventLog(c.ID, query, limit)
+	return c.binder.BoundGetEventLog(ctx, c.ID, query, limit)
 }
 
 // DC returns the data center ID where the chat's photo is stored, or 0 if no photo.

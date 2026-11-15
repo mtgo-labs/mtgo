@@ -9,18 +9,6 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// GetPaymentFormOption holds optional parameters for GetPaymentForm.
-type GetPaymentFormOption struct {
-	ThemeParams *string
-}
-
-// SendPaymentFormOption holds optional parameters for SendPaymentForm.
-type SendPaymentFormOption struct {
-	RequestedInfoID  string
-	ShippingOptionID string
-	TipAmount        *int64
-}
-
 // GetPaymentForm retrieves the payment form for an invoice message in the specified chat.
 // The payment form contains the invoice details, available payment methods, and form ID
 // needed for SendPaymentForm.

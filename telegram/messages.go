@@ -643,7 +643,7 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 	return extractSingleMessage(result, c)
 }
 
-func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.Message, error) {
+func extractSingleMessage(result tg.UpdatesClass, binder types.MessageBinder) (*types.Message, error) {
 	switch v := result.(type) {
 	case *tg.Updates:
 		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
@@ -704,7 +704,7 @@ func extractSingleMessage(result tg.UpdatesClass, binder types.Binder) (*types.M
 	}
 }
 
-func extractMessages(result tg.UpdatesClass, binder types.Binder) ([]*types.Message, error) {
+func extractMessages(result tg.UpdatesClass, binder types.MessageBinder) ([]*types.Message, error) {
 	switch v := result.(type) {
 	case *tg.Updates:
 		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
@@ -729,7 +729,7 @@ func extractMessages(result tg.UpdatesClass, binder types.Binder) ([]*types.Mess
 	}
 }
 
-func extractMessagesFromMessagesClass(result tg.MessagesClass, binder types.Binder) ([]*types.Message, error) {
+func extractMessagesFromMessagesClass(result tg.MessagesClass, binder types.MessageBinder) ([]*types.Message, error) {
 	switch v := result.(type) {
 	case *tg.MessagesMessages:
 		return parseMessageClasses(v.Messages, types.NewPeerMapFromClasses(v.Users, v.Chats), binder), nil
@@ -744,7 +744,7 @@ func extractMessagesFromMessagesClass(result tg.MessagesClass, binder types.Bind
 	}
 }
 
-func parseMessageClasses(messages []tg.MessageClass, pm *types.PeerMap, binder types.Binder) []*types.Message {
+func parseMessageClasses(messages []tg.MessageClass, pm *types.PeerMap, binder types.MessageBinder) []*types.Message {
 	result := make([]*types.Message, 0, len(messages))
 	for _, m := range messages {
 		if parsed := types.ParseMessage(m, pm); parsed != nil {
