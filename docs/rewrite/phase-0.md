@@ -92,10 +92,10 @@ behavior, error-handling, or return-value differences from `main`.
 
 ## Remaining gaps (deliberate, tracked for later phases)
 
-- **Widgets** are absent at every layer: no TL constructors in
-  `compiler/source/api.tl`, no `tg/` types, no client methods. Phase 1b adds
-  them: schema update + layer bump regenerated via `cmd/tlgen`, then the
-  widget send/edit operations with `Message` bound pairs.
+- **Widgets** were absent at every layer: no TL constructors in
+  `compiler/source/api.tl`, no `tg/` types, no client methods. Landed after
+  Phase 7: the layer-233 schema bump (commit `d5ee165`) followed by the
+  widget operations and bound pairs (see the phase 7 report).
 - The 170 `Bound*` methods remain as binder interface members; they are
   removed domain-by-domain in Phases 1–6 as normalized operations replace
   them (constraint: no deletion before consumers migrate and tests pass).

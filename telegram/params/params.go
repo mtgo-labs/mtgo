@@ -1364,3 +1364,39 @@ type GetStarsTransactionsOption struct {
 	SubscriptionID string
 	Ton            bool
 }
+
+// SendWidget holds all configurable options for the send-widget Telegram API
+// call. Widgets are interactive HTML surfaces rendered inside a message.
+type SendWidget struct {
+	// AllowQueries lets the widget issue widget queries back to the bot.
+	AllowQueries bool
+	// SharedWidget marks the widget as shared: one instance per chat, whose
+	// state is updated in place via its widget ID.
+	SharedWidget bool
+	// PublicData is data visible to every chat member.
+	PublicData string
+	// ChatData is per-chat private state for the widget.
+	ChatData string
+	// Shared send fields.
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+}
+
+func (s *SendWidget) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass, int32) {
+	return s.DisableNotification, s.Silent, s.Background, s.ClearDraft, s.NoForwards, s.ReplyToMessageID, s.ReplyTo, s.ReplyMarkup, s.ScheduleDate, s.EffectID, s.SendAs, s.MessageThreadID
+}
+func (s *SendWidget) ToSendMsg() *SendMessage { return flatToSendMsg(s) }

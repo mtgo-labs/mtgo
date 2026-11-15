@@ -153,6 +153,7 @@ type MessageBinder interface {
 	RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error)
 	ResolveStarGiftOffer(ctx context.Context, offerMessageID int32, decline bool) (*Message, error)
 	SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error)
+	EditMessageWidgetData(ctx context.Context, chatID int64, messageID int32, publicData, chatData string) (*Message, error)
 	UnpinMessage(ctx context.Context, chatID int64, messageID int32) (*Message, error)
 	VotePoll(ctx context.Context, chatID int64, messageID int32, options [][]byte) error
 }
@@ -222,4 +223,10 @@ func editInlineOptsFromParams(opts ...*params.EditMessage) []*params.EditInlineO
 		ParseMode:   p.ParseMode,
 		RichMessage: p.RichMessage,
 	}}
+}
+
+// WidgetQueryBinder is the minimal set of client operations required by
+// WidgetQuery bound methods. It is satisfied automatically by *telegram.Client.
+type WidgetQueryBinder interface {
+	AnswerWidgetQuery(ctx context.Context, queryID int64, result string) error
 }

@@ -31,6 +31,9 @@ type Update struct {
 	CallbackQuery *types.CallbackQuery
 	// InlineQuery is populated when a user types a query in an inline mode request.
 	InlineQuery *types.InlineQuery
+	// WidgetQuery is populated when a widget message of the logged-in bot
+	// issues a widget query.
+	WidgetQuery *types.WidgetQuery
 	// ChosenInlineResult is populated when a user selects a result from an inline query.
 	ChosenInlineResult *types.ChosenInlineResult
 	// UserStatus is populated when a contact's online/offline status changes.

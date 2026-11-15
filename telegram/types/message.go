@@ -2386,6 +2386,19 @@ func (m *Message) EditChecklistContext(ctx context.Context, checklist *tg.InputM
 	return m.binder.EditMessageMedia(ctx, m.ChatID, m.ID, media)
 }
 
+// EditWidgetData updates the public or per-chat data of this widget message
+// in place and returns the updated message.
+func (m *Message) EditWidgetData(publicData, chatData string) (*Message, error) {
+	return m.EditWidgetDataContext(context.Background(), publicData, chatData)
+}
+
+func (m *Message) EditWidgetDataContext(ctx context.Context, publicData, chatData string) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.EditMessageWidgetData(ctx, m.ChatID, m.ID, publicData, chatData)
+}
+
 // AcceptGiftPurchaseOffer accepts this gift purchase offer and returns the
 // updated message.
 func (m *Message) AcceptGiftPurchaseOffer() (*Message, error) {

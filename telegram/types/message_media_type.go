@@ -47,6 +47,8 @@ const (
 	MessageMediaTypeInvoice MessageMediaType = "invoice"
 	// MessageMediaTypePaidMedia is media behind a paywall requiring Telegram Stars.
 	MessageMediaTypePaidMedia MessageMediaType = "paid_media"
+	// MessageMediaTypeWidget is an interactive HTML widget surface.
+	MessageMediaTypeWidget MessageMediaType = "widget"
 	// MessageMediaTypeChecklist is a task checklist.
 	MessageMediaTypeChecklist MessageMediaType = "checklist"
 )

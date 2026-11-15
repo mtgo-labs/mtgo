@@ -19,3 +19,5 @@ var (
 	_ types.ShippingQueryBinder    = (*Client)(nil)
 	_ types.SessionBinder          = (*Client)(nil)
 )
+
+var _ types.WidgetQueryBinder = (*Client)(nil)

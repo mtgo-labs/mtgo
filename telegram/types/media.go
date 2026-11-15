@@ -309,6 +309,28 @@ type PaidMedia struct {
 // MediaType returns MessageMediaTypePaidMedia.
 func (m *PaidMedia) MediaType() MessageMediaType { return MessageMediaTypePaidMedia }
 
+// WidgetMedia represents an interactive HTML widget attached to a message.
+type WidgetMedia struct {
+	// CanQuery reports whether the widget may issue widget queries.
+	CanQuery bool
+	// BackgroundQuery reports whether queries may run without user action.
+	BackgroundQuery bool
+	// Width and Height are the widget dimensions in pixels.
+	Width  int32
+	Height int32
+	// Payload is the widget's compiled payload.
+	Payload []byte
+	// PublicData is the state visible to every chat member.
+	PublicData string
+	// ChatData is the per-chat private state.
+	ChatData string
+	// WidgetID identifies the widget for shared instances; 0 otherwise.
+	WidgetID int64
+}
+
+// MediaType returns MessageMediaTypeWidget.
+func (m *WidgetMedia) MediaType() MessageMediaType { return MessageMediaTypeWidget }
+
 // ParseMedia converts an MTProto MessageMediaClass into the appropriate Media
 // implementation. Returns nil if raw is nil or the media type is not recognized.
 //
@@ -358,6 +380,17 @@ func ParseMedia(raw tg.MessageMediaClass) Media {
 		return parseStoryMedia(r)
 	case *tg.MessageMediaGiveaway:
 		return &GiveawayMedia{}
+	case *tg.MessageMediaWidget:
+		return &WidgetMedia{
+			CanQuery:        r.CanQuery,
+			BackgroundQuery: r.BackgroundQuery,
+			Width:           r.Width,
+			Height:          r.Height,
+			Payload:         r.Payload,
+			PublicData:      r.PublicData,
+			ChatData:        r.ChatData,
+			WidgetID:        r.WidgetID,
+		}
 	case *tg.MessageMediaGiveawayResults:
 		return &GiveawayResultsMedia{}
 	case *tg.MessageMediaPaidMedia:

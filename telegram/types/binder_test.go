@@ -661,3 +661,13 @@ func (m *mockBinder) SendInvoice(ctx context.Context, chatID int64, invoice *tg.
 	m.mediaReplyTo = firstReplyTo(opts...)
 	return &Message{ID: 1, ChatID: chatID}, nil
 }
+
+func (m *mockBinder) EditMessageWidgetData(ctx context.Context, chatID int64, messageID int32, publicData, chatData string) (*Message, error) {
+	m.widgetPublicData, m.widgetChatData = publicData, chatData
+	return &Message{ID: messageID, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) AnswerWidgetQuery(ctx context.Context, queryID int64, result string) error {
+	m.answeredWidgetID, m.answeredWidgetResult = queryID, result
+	return nil
+}

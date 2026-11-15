@@ -298,6 +298,15 @@ func EditMessageText[T PeerInput, C Caller](c C, chat T, messageID int32, text s
 	return client.EditMessageText(ctx, chatID, messageID, text, opts...)
 }
 
+func EditMessageWidgetData[T PeerInput, C Caller](c C, chat T, messageID int32, publicData string, chatData string) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.EditMessageWidgetData(ctx, chatID, messageID, publicData, chatData)
+}
+
 func EditStoryCaption[T PeerInput, C Caller](c C, chat T, storyID int32, caption string) (*types.Story, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -809,6 +818,15 @@ func GetUserBoosts[T PeerInput, C Caller](c C, chat T, userID int64) ([]*tg.Boos
 		return nil, err
 	}
 	return client.GetUserBoosts(ctx, chatID, userID)
+}
+
+func GetWidgetPublicData[T PeerInput, C Caller](c C, chat T, messageID int32, hash int64) (*telegram.WidgetPublicData, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetWidgetPublicData(ctx, chatID, messageID, hash)
 }
 
 func IncludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
@@ -1349,6 +1367,15 @@ func SendWalletTransfer[T PeerInput, C Caller](c C, user T, dataNormal []byte, d
 		return err
 	}
 	return client.SendWalletTransfer(ctx, userID, dataNormal, dataGasless)
+}
+
+func SendWidget[T PeerInput, C Caller](c C, chat T, width int32, height int32, html string, opts ...*params.SendWidget) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.SendWidget(ctx, chatID, width, height, html, opts...)
 }
 
 func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, title string) error {

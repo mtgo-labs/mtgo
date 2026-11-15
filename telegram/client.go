@@ -3523,6 +3523,11 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		if upd.CallbackQuery != nil {
 			upd.CallbackQuery.SetBinder(c)
 		}
+	case *tg.UpdateBotWidgetQuery:
+		upd.WidgetQuery = types.ParseWidgetQuery(v)
+		if upd.WidgetQuery != nil {
+			upd.WidgetQuery.SetBinder(c)
+		}
 	case *tg.UpdateBotInlineQuery:
 		upd.InlineQuery = &types.InlineQuery{ID: v.QueryID, UserID: v.UserID, Query: v.Query, Offset: v.Offset}
 	case *tg.UpdateBotInlineSend:
