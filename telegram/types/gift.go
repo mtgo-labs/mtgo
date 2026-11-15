@@ -113,7 +113,7 @@ func (g *Gift) ShowContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundShowGift(ctx, g.MsgID)
+	return g.binder.ShowGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Hide() error {
@@ -124,7 +124,7 @@ func (g *Gift) HideContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundHideGift(ctx, g.MsgID)
+	return g.binder.HideGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Convert() error {
@@ -135,7 +135,7 @@ func (g *Gift) ConvertContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundConvertGift(ctx, g.MsgID)
+	return g.binder.ConvertGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Upgrade(keepOriginalDetails bool) error {
@@ -146,7 +146,8 @@ func (g *Gift) UpgradeContext(ctx context.Context, keepOriginalDetails bool) err
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundUpgradeGift(ctx, g.MsgID, keepOriginalDetails)
+	_, err := g.binder.UpgradeGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID}, keepOriginalDetails)
+	return err
 }
 
 func (g *Gift) Transfer(toID int64) error {
@@ -157,7 +158,8 @@ func (g *Gift) TransferContext(ctx context.Context, toID int64) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundTransferGift(ctx, g.MsgID, toID)
+	_, err := g.binder.TransferGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID}, toID)
+	return err
 }
 
 // ParseGift parses a star gift from a TL StarGiftClass, handling both regular

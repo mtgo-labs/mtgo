@@ -44,7 +44,7 @@ func (s *ActiveSession) ResetContext(ctx context.Context) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundResetSession(ctx, s.Hash)
+	return s.binder.ResetSession(ctx, s.Hash)
 }
 
 // ParseActiveSession converts an MTProto AuthorizationTL into an ActiveSession.

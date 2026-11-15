@@ -126,7 +126,7 @@ func (u *User) ArchiveContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundArchiveUser(ctx, u.ID)
+	return u.binder.ArchiveChat(ctx, u.ID)
 }
 
 func (u *User) Unarchive() error {
@@ -137,7 +137,7 @@ func (u *User) UnarchiveContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundUnarchiveUser(ctx, u.ID)
+	return u.binder.UnarchiveChat(ctx, u.ID)
 }
 
 func (u *User) Block() error {
@@ -148,7 +148,7 @@ func (u *User) BlockContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundBlock(ctx, u.ID)
+	return u.binder.BlockUser(ctx, u.ID)
 }
 
 func (u *User) Unblock() error {
@@ -159,7 +159,7 @@ func (u *User) UnblockContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundUnblock(ctx, u.ID)
+	return u.binder.UnblockUser(ctx, u.ID)
 }
 
 func (u *User) GetCommonChats(limit int) ([]*Chat, error) {
@@ -170,7 +170,7 @@ func (u *User) GetCommonChatsContext(ctx context.Context, limit int) ([]*Chat, e
 	if u.binder == nil {
 		return nil, ErrNoUserBinder
 	}
-	return u.binder.BoundGetCommonChats(ctx, u.ID, limit)
+	return u.binder.GetCommonChats(ctx, u.ID, limit)
 }
 
 // String returns the user's username, full name, or a fallback "user_<id>" string.

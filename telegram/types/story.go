@@ -68,7 +68,12 @@ func (s *Story) ReplyContext(ctx context.Context, text string, opts ...*params.S
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryReply(ctx, s.FromID, s.ID, text, opts...)
+	opt := params.GetOptDef(&params.SendMessage{}, opts...)
+	opt.ReplyTo = &tg.InputReplyToStory{
+		Peer:    &tg.InputPeerUser{UserID: s.FromID},
+		StoryID: s.ID,
+	}
+	return s.binder.SendMessage(ctx, s.FromID, text, opt)
 }
 
 func (s *Story) ReplyText(text string, opts ...*params.SendMessage) (*Message, error) {
@@ -83,7 +88,12 @@ func (s *Story) ReplyMediaContext(ctx context.Context, media tg.InputMediaClass,
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryReplyMedia(ctx, s.FromID, s.ID, media, caption, opts...)
+	opt := params.GetOptDef(&params.SendMessage{}, opts...)
+	opt.ReplyTo = &tg.InputReplyToStory{
+		Peer:    &tg.InputPeerUser{UserID: s.FromID},
+		StoryID: s.ID,
+	}
+	return s.binder.SendMedia(ctx, s.FromID, media, caption, opt)
 }
 
 func (s *Story) ReplyPhoto(fileID, accessHash int64, caption string, opts ...*params.SendMessage) (*Message, error) {
@@ -126,7 +136,7 @@ func (s *Story) ReplyMediaGroupContext(ctx context.Context, media []tg.InputMedi
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, s.binder.BoundStub(ctx, "Story.ReplyMediaGroup")
+	return nil, errNotImplemented
 }
 
 func (s *Story) Forward(chatID int64, opts ...*params.StoryForward) (*Message, error) {
@@ -137,7 +147,7 @@ func (s *Story) ForwardContext(ctx context.Context, chatID int64, opts ...*param
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryForward(ctx, s.FromID, s.ID, chatID, opts...)
+	return s.binder.ForwardStory(ctx, chatID, s.FromID, s.ID)
 }
 
 func (s *Story) Copy(chatID int64, opts ...*params.StoryForward) (*Message, error) {
@@ -152,7 +162,7 @@ func (s *Story) DeleteContext(ctx context.Context) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundStoryDelete(ctx, s.FromID, s.ID)
+	return s.binder.DeleteStories(ctx, s.FromID, []int32{s.ID})
 }
 
 func (s *Story) EditCaption(caption string) (*Story, error) {
@@ -163,7 +173,7 @@ func (s *Story) EditCaptionContext(ctx context.Context, caption string) (*Story,
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryEditCaption(ctx, s.FromID, s.ID, &params.EditCaption{Caption: caption})
+	return s.binder.EditStoryCaption(ctx, s.FromID, s.ID, caption)
 }
 
 func (s *Story) EditMedia(media tg.InputMediaClass) (*Story, error) {
@@ -174,7 +184,7 @@ func (s *Story) EditMediaContext(ctx context.Context, media tg.InputMediaClass) 
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryEditMedia(ctx, s.FromID, s.ID, media)
+	return s.binder.EditStoryMedia(ctx, s.FromID, s.ID, media)
 }
 
 func (s *Story) EditPrivacy(opts ...*params.EditPrivacy) (*Story, error) {
@@ -185,7 +195,7 @@ func (s *Story) EditPrivacyContext(ctx context.Context, opts ...*params.EditPriv
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryEditPrivacy(ctx, s.FromID, s.ID, opts...)
+	return s.binder.EditStoryPrivacy(ctx, s.FromID, s.ID, opts...)
 }
 
 func (s *Story) React(emoji string) error {
@@ -196,7 +206,7 @@ func (s *Story) ReactContext(ctx context.Context, emoji string) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundStoryReact(ctx, s.FromID, s.ID, &params.React{Emoji: emoji})
+	return s.binder.SendStoryReaction(ctx, s.FromID, s.ID, &params.React{Emoji: emoji})
 }
 
 func (s *Story) Download(opts ...*params.Download) ([]byte, error) {
@@ -207,7 +217,15 @@ func (s *Story) DownloadContext(ctx context.Context, opts ...*params.Download) (
 	if s.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return s.binder.BoundStoryDownload(ctx, s.FromID, s.ID, opts...)
+	stories, err := s.binder.GetStories(ctx, s.FromID, []int32{s.ID})
+	if err != nil {
+		return nil, err
+	}
+	if len(stories) == 0 || stories[0].Media == nil {
+		return nil, nil
+	}
+	opt := params.GetOptDef(&params.Download{}, opts...)
+	return s.binder.DownloadMedia(ctx, stories[0].Media, "", opt)
 }
 
 func (s *Story) Read() error {
@@ -218,7 +236,7 @@ func (s *Story) ReadContext(ctx context.Context) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundStoryRead(ctx, s.FromID, s.ID)
+	return s.binder.ReadStories(ctx, s.FromID, s.ID)
 }
 
 func (s *Story) View() error {

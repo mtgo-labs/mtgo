@@ -2,7 +2,6 @@ package types
 
 import (
 	"context"
-	"github.com/mtgo-labs/mtgo/telegram/params"
 )
 
 // PreCheckoutQuery is sent to the bot when a user confirms a payment but before
@@ -33,7 +32,7 @@ func (q *PreCheckoutQuery) AnswerContext(ctx context.Context, ok bool, errorMsg 
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerPreCheckout(ctx, q.ID, &params.AnswerPreCheckout{Ok: ok, ErrorMsg: errorMsg})
+	return q.binder.AnswerPreCheckoutQuery(ctx, q.ID, ok, errorMsg)
 }
 
 // ShippingQuery is sent to the bot when a user selects a shipping address during
@@ -60,7 +59,7 @@ func (q *ShippingQuery) AnswerContext(ctx context.Context, ok bool, errorMsg str
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerShipping(ctx, q.ID, &params.AnswerShipping{Ok: ok, ErrorMsg: errorMsg})
+	return q.binder.AnswerShippingQuery(ctx, q.ID, ok, nil)
 }
 
 // OrderInfo contains the contact and shipping details provided by the buyer

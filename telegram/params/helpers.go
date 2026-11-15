@@ -426,3 +426,13 @@ func CustomEmoji(offset, length int32, documentID int64) Entity {
 func Mention(offset, length int32) Entity {
 	return Entity{Type: EntityMention, Offset: offset, Length: length}
 }
+
+// WithReplyTo merges a reply-to message ID into the first opts entry (or a
+// default), leaving an explicitly set reply target untouched.
+func WithReplyTo(replyTo int32, opts ...*SendMessage) *SendMessage {
+	opt := GetOptDef(&SendMessage{ReplyToMessageID: replyTo}, opts...)
+	if opt.ReplyToMessageID == 0 {
+		opt.ReplyToMessageID = replyTo
+	}
+	return opt
+}

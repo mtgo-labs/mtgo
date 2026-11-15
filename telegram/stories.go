@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -440,4 +441,53 @@ func findStoryInUpdates(updates []tg.UpdateClass, users []tg.UserClass, chats []
 		}
 	}
 	return nil, ErrStoryNotInUpdates
+}
+
+// ReadStories marks the stories of a peer as read up to the given story ID.
+func (c *StoryMethods) ReadStories(ctx context.Context, peerID int64, maxStoryID int32) error {
+	peer, err := c.ResolvePeer(ctx, peerID)
+	if err != nil {
+		return err
+	}
+	_, err = c.Raw().StoriesReadStories(ctx, &tg.StoriesReadStoriesRequest{
+		Peer:  peer,
+		MaxID: maxStoryID,
+	})
+	return err
+}
+
+// EditStoryPrivacy replaces the privacy rules of a story and returns the
+// updated story.
+func (c *StoryMethods) EditStoryPrivacy(ctx context.Context, peerID int64, storyID int32, opts ...*params.EditPrivacy) (*types.Story, error) {
+	peer, err := c.ResolvePeer(ctx, peerID)
+	if err != nil {
+		return nil, err
+	}
+	o := params.GetOptDef(&params.EditPrivacy{}, opts...)
+	result, err := c.Raw().StoriesEditStory(ctx, &tg.StoriesEditStoryRequest{
+		Peer:         peer,
+		ID:           storyID,
+		PrivacyRules: storyPrivacyRules(o),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("edit story: %w", err)
+	}
+	return extractStoryFromUpdates(result)
+}
+
+// SendStoryReaction reacts to a story with an emoji.
+func (c *StoryMethods) SendStoryReaction(ctx context.Context, peerID int64, storyID int32, opts ...*params.React) error {
+	o := params.GetOptDef(&params.React{}, opts...)
+	peer, err := c.ResolvePeer(ctx, peerID)
+	if err != nil {
+		return err
+	}
+	_, err = c.Raw().StoriesSendReaction(ctx, &tg.StoriesSendReactionRequest{
+		Peer:    peer,
+		StoryID: storyID,
+		Reaction: &tg.ReactionEmoji{
+			Emoticon: o.Emoji,
+		},
+	})
+	return err
 }

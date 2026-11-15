@@ -37,7 +37,7 @@ func (r *ChatJoinRequest) ApproveContext(ctx context.Context) error {
 	if r.binder == nil {
 		return ErrNoBinder
 	}
-	return r.binder.BoundApproveJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
+	return r.binder.ApproveChatJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
 }
 
 func (r *ChatJoinRequest) Decline() error {
@@ -48,7 +48,7 @@ func (r *ChatJoinRequest) DeclineContext(ctx context.Context) error {
 	if r.binder == nil {
 		return ErrNoBinder
 	}
-	return r.binder.BoundDeclineJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
+	return r.binder.DeclineChatJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
 }
 
 // ParseChatJoinRequest converts a TL UpdateBotChatInviteRequester into a ChatJoinRequest.
