@@ -19,7 +19,7 @@ import (
 //   - phoneNumber: the contact's phone number in international format
 //   - firstName: the contact's first name
 //   - lastName: the contact's last name
-//   - opts: optional SendMessage parameters (silent, reply, schedule, etc.)
+//   - opts: optional SendContact parameters (vCard, silent, reply, schedule, etc.)
 //
 // Returns the sent message on success.
 //
@@ -30,31 +30,27 @@ import (
 // Example:
 //
 //	ctx := context.Background()
-//	msg, err := client.SendContact(ctx, chatID, "+1234567890", "John", "Doe", nil)
+//	msg, err := client.SendContact(ctx, chatID, "+1234567890", "John", "Doe")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(msg.ID)
-func (c *MessageMethods) SendContact(ctx context.Context, chatID int64, phoneNumber, firstName, lastName string, opts *params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendContact(ctx context.Context, chatID int64, phoneNumber, firstName, lastName string, opts ...*params.SendContact) (*types.Message, error) {
 	c.Log.Debugf("SendContact chat_id=%d", chatID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	var cfg params.SendMessage
-	if opts != nil {
-		cfg = *opts
-	}
-
+	opt := params.GetOptDef(&params.SendContact{}, opts...)
 	media := &tg.InputMediaContact{
 		PhoneNumber: phoneNumber,
 		FirstName:   firstName,
 		LastName:    lastName,
-		Vcard:       "",
+		Vcard:       opt.Vcard,
 	}
 
-	return c.sendMediaInternal(ctx, peer, media, "", &cfg)
+	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }
 
 // SendLocation sends a geographic point (latitude/longitude) as a message to the
@@ -65,7 +61,9 @@ func (c *MessageMethods) SendContact(ctx context.Context, chatID int64, phoneNum
 //   - chatID: the target chat
 //   - lat: latitude of the location
 //   - lng: longitude of the location
-//   - opts: optional SendMessage parameters (silent, reply, schedule, etc.)
+//   - opts: optional SendLocation parameters (live period, heading,
+//     proximity alert, silent, reply, schedule, etc.); a LivePeriod turns the
+//     message into a live location
 //
 // Returns the sent message on success.
 //
@@ -76,31 +74,38 @@ func (c *MessageMethods) SendContact(ctx context.Context, chatID int64, phoneNum
 // Example:
 //
 //	ctx := context.Background()
-//	msg, err := client.SendLocation(ctx, chatID, 40.7128, -74.0060, nil)
+//	msg, err := client.SendLocation(ctx, chatID, 40.7128, -74.0060)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(msg.ID)
-func (c *MessageMethods) SendLocation(ctx context.Context, chatID int64, lat, lng float64, opts *params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendLocation(ctx context.Context, chatID int64, lat, lng float64, opts ...*params.SendLocation) (*types.Message, error) {
 	c.Log.Debugf("SendLocation chat_id=%d", chatID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	var cfg params.SendMessage
-	if opts != nil {
-		cfg = *opts
+	opt := params.GetOptDef(&params.SendLocation{}, opts...)
+	geo := &tg.InputGeoPoint{Lat: lat, Long: lng}
+	var media tg.InputMediaClass
+	if opt.LivePeriod != nil {
+		live := &tg.InputMediaGeoLive{
+			GeoPoint: geo,
+			Period:   *opt.LivePeriod,
+		}
+		if opt.Heading != nil {
+			live.Heading = *opt.Heading
+		}
+		if opt.ProximityAlertRadius != nil {
+			live.ProximityNotificationRadius = *opt.ProximityAlertRadius
+		}
+		media = live
+	} else {
+		media = &tg.InputMediaGeoPoint{GeoPoint: geo}
 	}
 
-	media := &tg.InputMediaGeoPoint{
-		GeoPoint: &tg.InputGeoPoint{
-			Lat:  lat,
-			Long: lng,
-		},
-	}
-
-	return c.sendMediaInternal(ctx, peer, media, "", &cfg)
+	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }
 
 // SendVenue sends a venue (a named location with an address) as a message to the
@@ -113,7 +118,8 @@ func (c *MessageMethods) SendLocation(ctx context.Context, chatID int64, lat, ln
 //   - lng: longitude of the venue
 //   - title: the venue name shown above the address
 //   - address: the venue address shown below the title
-//   - opts: optional SendMessage parameters (silent, reply, schedule, etc.)
+//   - opts: optional SendVenue parameters (provider, venue ID, Foursquare
+//     details, silent, reply, schedule, etc.)
 //
 // Returns the sent message on success.
 //
@@ -124,23 +130,31 @@ func (c *MessageMethods) SendLocation(ctx context.Context, chatID int64, lat, ln
 // Example:
 //
 //	ctx := context.Background()
-//	msg, err := client.SendVenue(ctx, chatID, 48.8584, 2.2945, "Eiffel Tower", "Paris, France", nil)
+//	msg, err := client.SendVenue(ctx, chatID, 48.8584, 2.2945, "Eiffel Tower", "Paris, France")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(msg.ID)
-func (c *MessageMethods) SendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, opts *params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, opts ...*params.SendVenue) (*types.Message, error) {
 	c.Log.Debugf("SendVenue chat_id=%d", chatID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	var cfg params.SendMessage
-	if opts != nil {
-		cfg = *opts
+	opt := params.GetOptDef(&params.SendVenue{}, opts...)
+	provider, venueID, venueType := opt.Provider, opt.VenueID, opt.VenueType
+	if opt.FoursquareID != "" {
+		if provider == "" {
+			provider = "foursquare"
+		}
+		if venueID == "" {
+			venueID = opt.FoursquareID
+		}
+		if venueType == "" {
+			venueType = opt.FoursquareType
+		}
 	}
-
 	media := &tg.InputMediaVenue{
 		GeoPoint: &tg.InputGeoPoint{
 			Lat:  lat,
@@ -148,12 +162,12 @@ func (c *MessageMethods) SendVenue(ctx context.Context, chatID int64, lat, lng f
 		},
 		Title:     title,
 		Address:   address,
-		Provider:  "",
-		VenueID:   "",
-		VenueType: "",
+		Provider:  provider,
+		VenueID:   venueID,
+		VenueType: venueType,
 	}
 
-	return c.sendMediaInternal(ctx, peer, media, "", &cfg)
+	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }
 
 // SendDice sends an animated dice (or other animated emoji) message to the specified
@@ -162,7 +176,8 @@ func (c *MessageMethods) SendVenue(ctx context.Context, chatID int64, lat, lng f
 // Parameters:
 //   - ctx: context for cancellation and deadlines
 //   - chatID: the target chat
-//   - opts: optional SendDiceOption to choose the animated emoji (defaults to 🎲)
+//   - opts: optional SendDice parameters (animated emoji — defaults to 🎲 —
+//     silent, reply, schedule, etc.)
 //
 // Returns the sent message on success.
 //
@@ -173,28 +188,29 @@ func (c *MessageMethods) SendVenue(ctx context.Context, chatID int64, lat, lng f
 // Example:
 //
 //	ctx := context.Background()
-//	msg, err := client.SendDice(ctx, chatID, nil)
+//	msg, err := client.SendDice(ctx, chatID)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(msg.ID)
-func (c *MessageMethods) SendDice(ctx context.Context, chatID int64, opts *SendDiceOption) (*types.Message, error) {
+func (c *MessageMethods) SendDice(ctx context.Context, chatID int64, opts ...*params.SendDice) (*types.Message, error) {
 	c.Log.Debugf("SendDice chat_id=%d", chatID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	emoticon := "\U0001F3B2"
-	if opts != nil && opts.Emoticon != "" {
-		emoticon = opts.Emoticon
+	opt := params.GetOptDef(&params.SendDice{}, opts...)
+	emoticon := opt.Emoticon
+	if emoticon == "" {
+		emoticon = "\U0001F3B2"
 	}
 
 	media := &tg.InputMediaDice{
 		Emoticon: emoticon,
 	}
 
-	return c.sendMediaInternal(ctx, peer, media, "", &params.SendMessage{})
+	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }
 
 // SendPoll sends a poll question with the given answer options to the specified chat.
@@ -205,57 +221,78 @@ func (c *MessageMethods) SendDice(ctx context.Context, chatID int64, opts *SendD
 //   - chatID: the target chat
 //   - question: the poll question text
 //   - options: the available answer choices
-//   - opts: optional SendMessage parameters (silent, reply, schedule, etc.)
+//   - opts: optional SendPoll parameters (quiz mode, close date or period,
+//     public voters, explanation text, silent, reply, schedule, etc.)
 //
 // Returns the sent poll message on success.
 //
 // Returns an error if:
 //   - the peer cannot be resolved
-//   - fewer than two options are provided
 //   - the RPC call fails
 //
 // Example:
 //
 //	ctx := context.Background()
 //	msg, err := client.SendPoll(ctx, chatID, "What's your favorite color?",
-//	    []string{"Red", "Blue", "Green"}, nil)
+//	    []string{"Red", "Blue", "Green"}, &params.SendPoll{PublicVoters: true})
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(msg.ID)
-func (c *MessageMethods) SendPoll(ctx context.Context, chatID int64, question string, options []string, opts *params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendPoll(ctx context.Context, chatID int64, question string, options []string, opts ...*params.SendPoll) (*types.Message, error) {
 	c.Log.Debugf("SendPoll chat_id=%d", chatID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	var cfg params.SendMessage
-	if opts != nil {
-		cfg = *opts
-	}
+	opt := params.GetOptDef(&params.SendPoll{}, opts...)
 
 	answers := make([]tg.PollAnswerClass, len(options))
-	for i, opt := range options {
-		optionBytes := []byte{byte(i)}
+	for i, o := range options {
 		answers[i] = &tg.PollAnswer{
 			Text: &tg.TextWithEntities{
-				Text: opt,
+				Text: o,
 			},
-			Option: optionBytes,
+			Option: []byte{byte(i)},
 		}
 	}
 
-	media := &tg.InputMediaPoll{
-		Poll: &tg.Poll{
-			Question: &tg.TextWithEntities{
-				Text: question,
-			},
-			Answers: answers,
+	poll := &tg.Poll{
+		PublicVoters:          opt.PublicVoters,
+		MultipleChoice:        opt.MultipleChoice,
+		Quiz:                  opt.Quiz,
+		OpenAnswers:           opt.OpenAnswers,
+		RevotingDisabled:      opt.RevotingDisabled,
+		ShuffleAnswers:        opt.ShuffleAnswers,
+		HideResultsUntilClose: opt.HideResultsUntilClose,
+		SubscribersOnly:       opt.SubscribersOnly,
+		Closed:                opt.Closed,
+		Question: &tg.TextWithEntities{
+			Text: question,
 		},
+		Answers: answers,
+	}
+	if opt.ClosePeriod != nil {
+		poll.ClosePeriod = *opt.ClosePeriod
+	}
+	if opt.CloseDate != nil {
+		poll.CloseDate = *opt.CloseDate
 	}
 
-	return c.sendMediaInternal(ctx, peer, media, "", &cfg)
+	media := &tg.InputMediaPoll{Poll: poll}
+	if opt.Solution != nil {
+		media.Solution = *opt.Solution
+		media.SolutionEntities = opt.SolutionEntities
+	}
+	if opt.DescriptionMedia != nil {
+		media.AttachedMedia = opt.DescriptionMedia
+	}
+	// Note: SendPoll.CorrectAnswers is not mapped — the pinned TL generator
+	// encodes the wire field as Vector<int> instead of Vector<bytes>, so quiz
+	// answer keys cannot be sent correctly until the compiler handles it.
+
+	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }
 
 // SendCachedMedia sends a previously uploaded file referenced by its file ID.

@@ -734,7 +734,7 @@ func TestSendContact(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendContact(context.Background(), 10, "+1234567890", "John", "Doe", nil)
+	_, err := c.SendContact(context.Background(), 10, "+1234567890", "John", "Doe")
 	if err != nil {
 		t.Fatalf("SendContact() error: %v", err)
 	}
@@ -846,7 +846,7 @@ func TestSendLocation(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendLocation(context.Background(), 10, 40.7128, -74.0060, nil)
+	_, err := c.SendLocation(context.Background(), 10, 40.7128, -74.0060)
 	if err != nil {
 		t.Fatalf("SendLocation() error: %v", err)
 	}
@@ -876,7 +876,7 @@ func TestSendLocationWithReply(t *testing.T) {
 
 	_, err := c.SendLocation(
 		context.Background(), 10, 1.0, 2.0,
-		&params.SendMessage{ReplyToMessageID: 42},
+		&params.SendLocation{ReplyToMessageID: 42},
 	)
 	if err != nil {
 		t.Fatalf("SendLocation() error: %v", err)
@@ -892,7 +892,7 @@ func TestSendLocationWithReply(t *testing.T) {
 
 func TestSendContactPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
-	_, err := c.SendContact(context.Background(), 999, "+1", "A", "B", nil)
+	_, err := c.SendContact(context.Background(), 999, "+1", "A", "B")
 	if err == nil {
 		t.Fatal("expected error for unresolved peer")
 	}
@@ -902,7 +902,7 @@ func TestSendVenue(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendVenue(context.Background(), 10, 40.7128, -74.0060, "NYC", "123 Main St", nil)
+	_, err := c.SendVenue(context.Background(), 10, 40.7128, -74.0060, "NYC", "123 Main St")
 	if err != nil {
 		t.Fatalf("SendVenue() error: %v", err)
 	}
@@ -926,7 +926,7 @@ func TestSendDice(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendDice(context.Background(), 10, nil)
+	_, err := c.SendDice(context.Background(), 10)
 	if err != nil {
 		t.Fatalf("SendDice() error: %v", err)
 	}
@@ -949,7 +949,7 @@ func TestSendDiceCustomEmoticon(t *testing.T) {
 
 	_, err := c.SendDice(
 		context.Background(), 10,
-		&SendDiceOption{Emoticon: "\U0001F3AF"},
+		&params.SendDice{Emoticon: "\U0001F3AF"},
 	)
 	if err != nil {
 		t.Fatalf("SendDice() error: %v", err)
@@ -971,7 +971,7 @@ func TestSendPoll(t *testing.T) {
 	c, inv := newClientWithMock(t)
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
-	_, err := c.SendPoll(context.Background(), 10, "What is your fav?", []string{"A", "B", "C"}, nil)
+	_, err := c.SendPoll(context.Background(), 10, "What is your fav?", []string{"A", "B", "C"})
 	if err != nil {
 		t.Fatalf("SendPoll() error: %v", err)
 	}
@@ -1193,8 +1193,102 @@ func TestEditInlineFlags(t *testing.T) {
 
 func TestSendPollPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
-	_, err := c.SendPoll(context.Background(), 999, "Q?", []string{"A"}, nil)
+	_, err := c.SendPoll(context.Background(), 999, "Q?", []string{"A"})
 	if err == nil {
 		t.Fatal("expected error for unresolved peer")
+	}
+}
+
+func TestSendContactVcard(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	_, err := c.SendContact(context.Background(), 10, "+123", "A", "B",
+		&params.SendContact{Vcard: "BEGIN:VCARD\nVERSION:3.0\nEND:VCARD"})
+	if err != nil {
+		t.Fatalf("SendContact() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	media, ok := req.Media.(*tg.InputMediaContact)
+	if !ok {
+		t.Fatalf("expected InputMediaContact, got %T", req.Media)
+	}
+	if media.Vcard != "BEGIN:VCARD\nVERSION:3.0\nEND:VCARD" {
+		t.Errorf("vcard = %q", media.Vcard)
+	}
+}
+
+func TestSendLocationLive(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	live := int32(3600)
+	heading := int32(90)
+	_, err := c.SendLocation(context.Background(), 10, 1.5, 2.5,
+		&params.SendLocation{LivePeriod: &live, Heading: &heading})
+	if err != nil {
+		t.Fatalf("SendLocation() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	media, ok := req.Media.(*tg.InputMediaGeoLive)
+	if !ok {
+		t.Fatalf("expected InputMediaGeoLive, got %T", req.Media)
+	}
+	if media.Period != 3600 || media.Heading != 90 {
+		t.Errorf("live location = %#v, want period 3600 heading 90", media)
+	}
+}
+
+func TestSendVenueFoursquare(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	_, err := c.SendVenue(context.Background(), 10, 48.85, 2.29, "Tower", "Paris",
+		&params.SendVenue{FoursquareID: "fsq1", FoursquareType: "landmark"})
+	if err != nil {
+		t.Fatalf("SendVenue() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	media, ok := req.Media.(*tg.InputMediaVenue)
+	if !ok {
+		t.Fatalf("expected InputMediaVenue, got %T", req.Media)
+	}
+	if media.Provider != "foursquare" || media.VenueID != "fsq1" || media.VenueType != "landmark" {
+		t.Errorf("venue = %#v, want foursquare mapping", media)
+	}
+}
+
+func TestSendPollFlags(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	solution := "Because"
+	_, err := c.SendPoll(context.Background(), 10, "Q?", []string{"A", "B"},
+		&params.SendPoll{Quiz: true, PublicVoters: true, Solution: &solution})
+	if err != nil {
+		t.Fatalf("SendPoll() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	media, ok := req.Media.(*tg.InputMediaPoll)
+	if !ok {
+		t.Fatalf("expected InputMediaPoll, got %T", req.Media)
+	}
+	if !media.Poll.Quiz || !media.Poll.PublicVoters {
+		t.Errorf("poll flags = %#v", media.Poll)
+	}
+	if media.Solution != "Because" {
+		t.Errorf("solution = %q", media.Solution)
 	}
 }

@@ -1090,22 +1090,22 @@ func SendChatAction[T PeerInput, C Caller](c C, chat T, action tg.SendMessageAct
 	return client.SendChatAction(ctx, chatID, action)
 }
 
-func SendContact[T PeerInput, C Caller](c C, chat T, phoneNumber string, firstName string, lastName string, opts *params.SendMessage) (*types.Message, error) {
+func SendContact[T PeerInput, C Caller](c C, chat T, phoneNumber string, firstName string, lastName string, opts ...*params.SendContact) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendContact(ctx, chatID, phoneNumber, firstName, lastName, opts)
+	return client.SendContact(ctx, chatID, phoneNumber, firstName, lastName, opts...)
 }
 
-func SendDice[T PeerInput, C Caller](c C, chat T, opts *telegram.SendDiceOption) (*types.Message, error) {
+func SendDice[T PeerInput, C Caller](c C, chat T, opts ...*params.SendDice) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendDice(ctx, chatID, opts)
+	return client.SendDice(ctx, chatID, opts...)
 }
 
 func SendDocument[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, caption string, opts ...*params.SendDocument) (*types.Message, error) {
@@ -1162,13 +1162,13 @@ func SendLivePhoto[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile,
 	return client.SendLivePhoto(ctx, chatID, file, ttlSeconds, caption, opts...)
 }
 
-func SendLocation[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, opts *params.SendMessage) (*types.Message, error) {
+func SendLocation[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, opts ...*params.SendLocation) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendLocation(ctx, chatID, lat, lng, opts)
+	return client.SendLocation(ctx, chatID, lat, lng, opts...)
 }
 
 func SendMedia[T PeerInput, C Caller](c C, chat T, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
@@ -1234,13 +1234,13 @@ func SendPhoto[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, cap
 	return client.SendPhoto(ctx, chatID, file, caption, opts...)
 }
 
-func SendPoll[T PeerInput, C Caller](c C, chat T, question string, options []string, opts *params.SendMessage) (*types.Message, error) {
+func SendPoll[T PeerInput, C Caller](c C, chat T, question string, options []string, opts ...*params.SendPoll) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendPoll(ctx, chatID, question, options, opts)
+	return client.SendPoll(ctx, chatID, question, options, opts...)
 }
 
 func SendReaction[T PeerInput, C Caller](c C, chat T, messageID int32, reactions []types.Reaction, opts ...*params.SendReactionOption) error {
@@ -1306,13 +1306,13 @@ func SendStory[T PeerInput, C Caller](c C, chat T, media tg.InputMediaClass, opt
 	return client.SendStory(ctx, chatID, media, opts...)
 }
 
-func SendVenue[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, title string, address string, opts *params.SendMessage) (*types.Message, error) {
+func SendVenue[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, title string, address string, opts ...*params.SendVenue) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendVenue(ctx, chatID, lat, lng, title, address, opts)
+	return client.SendVenue(ctx, chatID, lat, lng, title, address, opts...)
 }
 
 func SendVideo[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, caption string, opts ...*params.SendVideo) (*types.Message, error) {

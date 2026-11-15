@@ -1842,7 +1842,7 @@ func (m *Message) ReplyContactContext(ctx context.Context, phone, firstName, las
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = m.ID
 	}
-	return m.binder.SendContact(ctx, m.ChatID, phone, firstName, lastName, opt.ToSendMsg())
+	return m.binder.SendContact(ctx, m.ChatID, phone, firstName, lastName, opt)
 }
 
 // AnswerContact sends a contact card without replying.
@@ -1858,7 +1858,7 @@ func (m *Message) AnswerContactContext(ctx context.Context, phone, firstName, la
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = 0
 	}
-	return m.binder.SendContact(ctx, m.ChatID, phone, firstName, lastName, opt.ToSendMsg())
+	return m.binder.SendContact(ctx, m.ChatID, phone, firstName, lastName, opt)
 }
 
 // ReplyLocation sends a geographic location as a reply to this message.
@@ -1874,7 +1874,7 @@ func (m *Message) ReplyLocationContext(ctx context.Context, lat, lng float64, op
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = m.ID
 	}
-	return m.binder.SendLocation(ctx, m.ChatID, lat, lng, opt.ToSendMsg())
+	return m.binder.SendLocation(ctx, m.ChatID, lat, lng, opt)
 }
 
 // AnswerLocation sends a geographic location without replying.
@@ -1890,7 +1890,7 @@ func (m *Message) AnswerLocationContext(ctx context.Context, lat, lng float64, o
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = 0
 	}
-	return m.binder.SendLocation(ctx, m.ChatID, lat, lng, opt.ToSendMsg())
+	return m.binder.SendLocation(ctx, m.ChatID, lat, lng, opt)
 }
 
 // ReplyVenue sends a named venue as a reply to this message.
@@ -1906,7 +1906,7 @@ func (m *Message) ReplyVenueContext(ctx context.Context, lat, lng float64, title
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = m.ID
 	}
-	return m.binder.SendVenue(ctx, m.ChatID, lat, lng, title, address, opt.ToSendMsg())
+	return m.binder.SendVenue(ctx, m.ChatID, lat, lng, title, address, opt)
 }
 
 // AnswerVenue sends a named venue without replying.
@@ -1922,7 +1922,7 @@ func (m *Message) AnswerVenueContext(ctx context.Context, lat, lng float64, titl
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = 0
 	}
-	return m.binder.SendVenue(ctx, m.ChatID, lat, lng, title, address, opt.ToSendMsg())
+	return m.binder.SendVenue(ctx, m.ChatID, lat, lng, title, address, opt)
 }
 
 // ReplyPoll sends a poll as a reply to this message.
@@ -1938,7 +1938,7 @@ func (m *Message) ReplyPollContext(ctx context.Context, question string, options
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = m.ID
 	}
-	return m.binder.SendPoll(ctx, m.ChatID, question, options, opt.ToSendMsg())
+	return m.binder.SendPoll(ctx, m.ChatID, question, options, opt)
 }
 
 // AnswerPoll sends a poll without replying.
@@ -1954,7 +1954,7 @@ func (m *Message) AnswerPollContext(ctx context.Context, question string, option
 	if opt.ReplyToMessageID == 0 {
 		opt.ReplyToMessageID = 0
 	}
-	return m.binder.SendPoll(ctx, m.ChatID, question, options, opt.ToSendMsg())
+	return m.binder.SendPoll(ctx, m.ChatID, question, options, opt)
 }
 
 // ReplyDice sends a dice roll as a reply to this message.
