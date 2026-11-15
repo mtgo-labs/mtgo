@@ -37,7 +37,7 @@ func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error)
 	return c.Client.GetBoostsStatus(c.Ctx, chatID)
 }
 
-// GetBoosts retrieves the list of boosts that the current user has applied across all chats.
+// GetMyBoosts retrieves the list of boosts that the current user has applied across all chats.
 //
 // Parameters:
 //   - opts: optional [GetBoostsOption] parameters for filtering and pagination
