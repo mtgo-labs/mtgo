@@ -2149,8 +2149,7 @@ func (m *Message) EditText(text string, opts ...*params.EditMessage) (*Message, 
 	return m.Edit(text, opts...)
 }
 
-// EditLiveLocation updates the location of a live location message. Not yet
-// implemented.
+// EditLiveLocation updates the coordinates of this live-location message.
 func (m *Message) EditLiveLocation(lat, lng float64) (*Message, error) {
 	return m.EditLiveLocationContext(context.Background(), lat, lng)
 }
@@ -2159,10 +2158,11 @@ func (m *Message) EditLiveLocationContext(ctx context.Context, lat, lng float64)
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	return m.binder.EditLiveLocation(ctx, m.ChatID, m.ID, lat, lng)
 }
 
-// StopLiveLocation stops a live location sharing. Not yet implemented.
+// StopLiveLocation stops the live-location sharing of this message, keeping
+// the last known coordinates.
 func (m *Message) StopLiveLocation() (*Message, error) {
 	return m.StopLiveLocationContext(context.Background())
 }
@@ -2171,7 +2171,7 @@ func (m *Message) StopLiveLocationContext(ctx context.Context) (*Message, error)
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	return m.binder.StopLiveLocation(ctx, m.ChatID, m.ID)
 }
 
 // CopyMediaGroup copies all messages in this message's album into another chat.
@@ -2235,19 +2235,46 @@ func (m *Message) View() error {
 	return m.Read()
 }
 
-// Click simulates a button press on this message. Not yet implemented.
-func (m *Message) Click(buttonIndex int) error {
+// Click presses the callback button at the given flattened index in this
+// message's inline keyboard and returns the bot's answer.
+func (m *Message) Click(buttonIndex int) (*tg.MessagesBotCallbackAnswer, error) {
 	return m.ClickContext(context.Background(), buttonIndex)
 }
 
-func (m *Message) ClickContext(ctx context.Context, buttonIndex int) error {
+func (m *Message) ClickContext(ctx context.Context, buttonIndex int) (*tg.MessagesBotCallbackAnswer, error) {
 	if m.binder == nil {
-		return ErrNoBinder
+		return nil, ErrNoBinder
 	}
-	return errNotImplemented
+	data, err := m.callbackButtonData(buttonIndex)
+	if err != nil {
+		return nil, err
+	}
+	return m.binder.RequestCallbackAnswer(ctx, m.ChatID, int64(m.ID), data)
 }
 
-// Pay initiates a payment for an invoice message. Not yet implemented.
+// callbackButtonData returns the callback payload of the inline button at the
+// flattened index.
+func (m *Message) callbackButtonData(buttonIndex int) ([]byte, error) {
+	if m.ReplyMarkup == nil {
+		return nil, fmt.Errorf("message %d has no reply markup", m.ID)
+	}
+	i := 0
+	for _, row := range m.ReplyMarkup.Rows {
+		for _, btn := range row {
+			if i == buttonIndex {
+				if len(btn.Data) == 0 {
+					return nil, fmt.Errorf("button %d is not a callback button", buttonIndex)
+				}
+				return btn.Data, nil
+			}
+			i++
+		}
+	}
+	return nil, fmt.Errorf("button index %d out of range", buttonIndex)
+}
+
+// Pay initiates a payment for this invoice message. Not yet implemented:
+// completing a checkout requires the interactive payment form flow.
 func (m *Message) Pay() error {
 	return m.PayContext(context.Background())
 }
@@ -2259,52 +2286,62 @@ func (m *Message) PayContext(ctx context.Context) error {
 	return errNotImplemented
 }
 
-// ReplyPaidMedia sends paid media as a reply. Not yet implemented.
-func (m *Message) ReplyPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
-	return m.ReplyPaidMediaContext(context.Background(), caption, opts...)
+// ReplyPaidMedia sends paid media as a reply to this message.
+func (m *Message) ReplyPaidMedia(media *tg.InputMediaPaidMedia, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyPaidMediaContext(context.Background(), media, caption, opts...)
 }
 
-func (m *Message) ReplyPaidMediaContext(ctx context.Context, caption string, opts ...*params.SendMessage) (*Message, error) {
+func (m *Message) ReplyPaidMediaContext(ctx context.Context, media *tg.InputMediaPaidMedia, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	opt := params.GetOptDef(&params.SendMessage{ReplyToMessageID: m.ID}, opts...)
+	if opt.ReplyToMessageID == 0 {
+		opt.ReplyToMessageID = m.ID
+	}
+	return m.binder.SendMedia(ctx, m.ChatID, media, caption, opt)
 }
 
-// AnswerPaidMedia sends paid media without replying. Not yet implemented.
-func (m *Message) AnswerPaidMedia(caption string, opts ...*params.SendMessage) (*Message, error) {
-	return m.AnswerPaidMediaContext(context.Background(), caption, opts...)
+// AnswerPaidMedia sends paid media without replying.
+func (m *Message) AnswerPaidMedia(media *tg.InputMediaPaidMedia, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerPaidMediaContext(context.Background(), media, caption, opts...)
 }
 
-func (m *Message) AnswerPaidMediaContext(ctx context.Context, caption string, opts ...*params.SendMessage) (*Message, error) {
+func (m *Message) AnswerPaidMediaContext(ctx context.Context, media *tg.InputMediaPaidMedia, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	opt := params.GetOptDef(&params.SendMessage{}, opts...)
+	return m.binder.SendMedia(ctx, m.ChatID, media, caption, opt)
 }
 
-// ReplyInvoice sends an invoice as a reply. Not yet implemented.
-func (m *Message) ReplyInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
-	return m.ReplyInvoiceContext(context.Background(), title, description, opts...)
+// ReplyInvoice sends an invoice as a reply to this message.
+func (m *Message) ReplyInvoice(invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.ReplyInvoiceContext(context.Background(), invoice, caption, opts...)
 }
 
-func (m *Message) ReplyInvoiceContext(ctx context.Context, title, description string, opts ...*params.SendMessage) (*Message, error) {
+func (m *Message) ReplyInvoiceContext(ctx context.Context, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	opt := params.GetOptDef(&params.SendMessage{ReplyToMessageID: m.ID}, opts...)
+	if opt.ReplyToMessageID == 0 {
+		opt.ReplyToMessageID = m.ID
+	}
+	return m.binder.SendInvoice(ctx, m.ChatID, invoice, caption, opt)
 }
 
-// AnswerInvoice sends an invoice without replying. Not yet implemented.
-func (m *Message) AnswerInvoice(title, description string, opts ...*params.SendMessage) (*Message, error) {
-	return m.AnswerInvoiceContext(context.Background(), title, description, opts...)
+// AnswerInvoice sends an invoice without replying.
+func (m *Message) AnswerInvoice(invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
+	return m.AnswerInvoiceContext(context.Background(), invoice, caption, opts...)
 }
 
-func (m *Message) AnswerInvoiceContext(ctx context.Context, title, description string, opts ...*params.SendMessage) (*Message, error) {
+func (m *Message) AnswerInvoiceContext(ctx context.Context, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
 	if m.binder == nil {
 		return nil, ErrNoBinder
 	}
-	return nil, errNotImplemented
+	opt := params.GetOptDef(&params.SendMessage{}, opts...)
+	return m.binder.SendInvoice(ctx, m.ChatID, invoice, caption, opt)
 }
 
 func (m *Message) ReplyChecklist(checklist *tg.InputMediaTodo, opts ...*params.SendChecklist) (*Message, error) {
@@ -2349,31 +2386,33 @@ func (m *Message) EditChecklistContext(ctx context.Context, checklist *tg.InputM
 	return m.binder.EditMessageMedia(ctx, m.ChatID, m.ID, media)
 }
 
-// AcceptGiftPurchaseOffer accepts a gift purchase offer. Not yet implemented.
-func (m *Message) AcceptGiftPurchaseOffer() error {
+// AcceptGiftPurchaseOffer accepts this gift purchase offer and returns the
+// updated message.
+func (m *Message) AcceptGiftPurchaseOffer() (*Message, error) {
 	return m.AcceptGiftPurchaseOfferContext(context.Background())
 }
 
-func (m *Message) AcceptGiftPurchaseOfferContext(ctx context.Context) error {
+func (m *Message) AcceptGiftPurchaseOfferContext(ctx context.Context) (*Message, error) {
 	if m.binder == nil {
-		return ErrNoBinder
+		return nil, ErrNoBinder
 	}
-	return errNotImplemented
+	return m.binder.ResolveStarGiftOffer(ctx, m.ID, false)
 }
 
-// RejectGiftPurchaseOffer rejects a gift purchase offer. Not yet implemented.
-func (m *Message) RejectGiftPurchaseOffer() error {
+// RejectGiftPurchaseOffer rejects this gift purchase offer and returns the
+// updated message.
+func (m *Message) RejectGiftPurchaseOffer() (*Message, error) {
 	return m.RejectGiftPurchaseOfferContext(context.Background())
 }
 
-func (m *Message) RejectGiftPurchaseOfferContext(ctx context.Context) error {
+func (m *Message) RejectGiftPurchaseOfferContext(ctx context.Context) (*Message, error) {
 	if m.binder == nil {
-		return ErrNoBinder
+		return nil, ErrNoBinder
 	}
-	return errNotImplemented
+	return m.binder.ResolveStarGiftOffer(ctx, m.ID, true)
 }
 
-// Summarize generates a summary of the message content. Not yet implemented.
+// Summarize generates a server-side summary of the message content.
 func (m *Message) Summarize() (string, error) {
 	return m.SummarizeContext(context.Background())
 }

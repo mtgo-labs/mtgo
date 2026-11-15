@@ -148,6 +148,11 @@ type MessageBinder interface {
 	SendVideoNote(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*Message, error)
 	SendVoice(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*Message, error)
 	SummarizeMessage(ctx context.Context, chatID int64, messageID int32) (*tg.TextWithEntities, error)
+	EditLiveLocation(ctx context.Context, chatID int64, messageID int32, lat, lng float64) (*Message, error)
+	StopLiveLocation(ctx context.Context, chatID int64, messageID int32) (*Message, error)
+	RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error)
+	ResolveStarGiftOffer(ctx context.Context, offerMessageID int32, decline bool) (*Message, error)
+	SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error)
 	UnpinMessage(ctx context.Context, chatID int64, messageID int32) (*Message, error)
 	VotePoll(ctx context.Context, chatID int64, messageID int32, options [][]byte) error
 }

@@ -12,19 +12,21 @@ import (
 // mockBinder implements the binder interfaces with recording for the flows the
 // tests observe.
 type mockBinder struct {
-	sendChatID    int64
-	sendText      string
-	sendReplyTo   int32
-	deletedChatID int64
-	deletedMsgIDs []int32
-	pinnedChatID  int64
-	pinnedMsgID   int32
-	mediaCaption  string
-	mediaReplyTo  int32
-	editMedia     tg.InputMediaClass
-	answerID      int64
-	answerText    string
-	answerAlert   bool
+	sendChatID        int64
+	sendText          string
+	sendReplyTo       int32
+	deletedChatID     int64
+	deletedMsgIDs     []int32
+	pinnedChatID      int64
+	pinnedMsgID       int32
+	mediaCaption      string
+	mediaReplyTo      int32
+	editMedia         tg.InputMediaClass
+	answerID          int64
+	answerText        string
+	answerAlert       bool
+	clickedData       []byte
+	giftOfferDeclined bool
 }
 
 func firstReplyTo(opts ...*params.SendMessage) int32 {
@@ -308,7 +310,7 @@ func (m *mockBinder) SendChatAction(ctx context.Context, chatID int64, action tg
 	return nil
 }
 
-func (m *mockBinder) SendContact(ctx context.Context, chatID int64, phoneNumber, firstName, lastName string, opts *params.SendMessage) (*Message, error) {
+func (m *mockBinder) SendContact(ctx context.Context, chatID int64, phoneNumber, firstName, lastName string, opts ...*params.SendContact) (*Message, error) {
 	return nil, nil
 }
 
@@ -324,7 +326,7 @@ func (m *mockBinder) SendInlineBotResult(ctx context.Context, chatID int64, quer
 	return nil, nil
 }
 
-func (m *mockBinder) SendLocation(ctx context.Context, chatID int64, lat, lng float64, opts *params.SendMessage) (*Message, error) {
+func (m *mockBinder) SendLocation(ctx context.Context, chatID int64, lat, lng float64, opts ...*params.SendLocation) (*Message, error) {
 	return nil, nil
 }
 
@@ -342,7 +344,7 @@ func (m *mockBinder) SendPhoto(ctx context.Context, chatID int64, file *InputFil
 	return &Message{ID: 99}, nil
 }
 
-func (m *mockBinder) SendPoll(ctx context.Context, chatID int64, question string, options []string, opts *params.SendMessage) (*Message, error) {
+func (m *mockBinder) SendPoll(ctx context.Context, chatID int64, question string, options []string, opts ...*params.SendPoll) (*Message, error) {
 	return nil, nil
 }
 
@@ -358,7 +360,7 @@ func (m *mockBinder) SendSticker(ctx context.Context, chatID int64, file *InputF
 	return nil, nil
 }
 
-func (m *mockBinder) SendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, opts *params.SendMessage) (*Message, error) {
+func (m *mockBinder) SendVenue(ctx context.Context, chatID int64, lat, lng float64, title, address string, opts ...*params.SendVenue) (*Message, error) {
 	return nil, nil
 }
 
@@ -635,4 +637,27 @@ func TestSetBinder(t *testing.T) {
 	if m.binder == nil {
 		t.Fatal("binder should be set")
 	}
+}
+
+func (m *mockBinder) EditLiveLocation(ctx context.Context, chatID int64, messageID int32, lat, lng float64) (*Message, error) {
+	return &Message{ID: messageID, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) StopLiveLocation(ctx context.Context, chatID int64, messageID int32) (*Message, error) {
+	return &Message{ID: messageID, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
+	m.clickedData = data
+	return &tg.MessagesBotCallbackAnswer{Message: "ok"}, nil
+}
+
+func (m *mockBinder) ResolveStarGiftOffer(ctx context.Context, offerMessageID int32, decline bool) (*Message, error) {
+	m.giftOfferDeclined = decline
+	return &Message{ID: offerMessageID}, nil
+}
+
+func (m *mockBinder) SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
+	m.mediaReplyTo = firstReplyTo(opts...)
+	return &Message{ID: 1, ChatID: chatID}, nil
 }
