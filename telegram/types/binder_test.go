@@ -12,21 +12,25 @@ import (
 // mockBinder implements the binder interfaces with recording for the flows the
 // tests observe.
 type mockBinder struct {
-	sendChatID        int64
-	sendText          string
-	sendReplyTo       int32
-	deletedChatID     int64
-	deletedMsgIDs     []int32
-	pinnedChatID      int64
-	pinnedMsgID       int32
-	mediaCaption      string
-	mediaReplyTo      int32
-	editMedia         tg.InputMediaClass
-	answerID          int64
-	answerText        string
-	answerAlert       bool
-	clickedData       []byte
-	giftOfferDeclined bool
+	sendChatID           int64
+	sendText             string
+	sendReplyTo          int32
+	deletedChatID        int64
+	deletedMsgIDs        []int32
+	pinnedChatID         int64
+	pinnedMsgID          int32
+	mediaCaption         string
+	mediaReplyTo         int32
+	editMedia            tg.InputMediaClass
+	answerID             int64
+	answerText           string
+	answerAlert          bool
+	clickedData          []byte
+	giftOfferDeclined    bool
+	widgetPublicData     string
+	widgetChatData       string
+	answeredWidgetID     int64
+	answeredWidgetResult string
 }
 
 func firstReplyTo(opts ...*params.SendMessage) int32 {

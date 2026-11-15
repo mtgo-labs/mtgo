@@ -161,6 +161,7 @@ func populateContext(ctx *Context, update *Update) {
 	ctx.DeletedBusinessMessages = update.DeletedBusinessMessages
 	ctx.CallbackQuery = update.CallbackQuery
 	ctx.InlineQuery = update.InlineQuery
+	ctx.WidgetQuery = update.WidgetQuery
 	ctx.ChosenInlineResult = update.ChosenInlineResult
 	ctx.UserStatus = update.UserStatus
 	ctx.ChatMember = update.ChatMember

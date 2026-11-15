@@ -1089,6 +1089,7 @@ func TestPopulateContextCoverage(t *testing.T) {
 		"DeletedBusinessMessages": "DeletedBusinessMessages",
 		"CallbackQuery":           "CallbackQuery",
 		"InlineQuery":             "InlineQuery",
+		"WidgetQuery":             "WidgetQuery",
 		"ChosenInlineResult":      "ChosenInlineResult",
 		"UserStatus":              "UserStatus",
 		"ChatMember":              "ChatMember",
