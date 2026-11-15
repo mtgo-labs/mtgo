@@ -44,6 +44,13 @@ func (f *MsgFactory) UpdateServerTime(t time.Time) {
 	f.msgIDGen.UpdateServerTime(t)
 }
 
+// ResetSequence restarts the sequence-number generator. Sequence numbers are
+// scoped to a session identity, so it must be reset whenever the session id
+// rotates (see Session.resetMessageSession).
+func (f *MsgFactory) ResetSequence() {
+	f.seqNoGen.Reset()
+}
+
 // AdvanceServerTime monotonically refines the server-time offset from an
 // inbound message timestamp. See MsgIDGenerator.AdvanceOffset.
 func (f *MsgFactory) AdvanceServerTime(t time.Time) {

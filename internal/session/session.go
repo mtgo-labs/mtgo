@@ -146,6 +146,10 @@ type Session struct {
 	// sidBytes is the little-endian encoding of sessionID, cached to avoid
 	// allocating on every Send call. Populated at construction time.
 	sidBytes [8]byte
+	// sidMux guards sidBytes separately from s.mu: sessionIDBytes is called
+	// from every pack path, and the session id can rotate at runtime
+	// (resetMessageSession).
+	sidMux sync.RWMutex
 
 	// msgFactory generates unique message IDs and sequence numbers.
 	msgFactory *MsgFactory
@@ -189,11 +193,18 @@ type Session struct {
 	// pongTimeout is how long to wait for a pong before considering the
 	// connection dead.
 	pongTimeout time.Duration
-	// pingMux protects pingCbs.
+	// pingMux protects pingCbs and the curPing triple.
 	pingMux sync.Mutex
 	// pingCbs maps pingID to a channel that is closed when the matching
 	// pong is received.
 	pingCbs map[int64]chan struct{}
+	// curPing tracks the single in-flight keep-alive ping (the ping loop is
+	// strictly sequential): its msg_id, payload id, and pong channel. It lets
+	// a bad_server_salt rejection of the ping complete the wait instead of
+	// running into the pong timeout.
+	curPingMsgID int64
+	curPingID    int64
+	curPongCh    chan struct{}
 	// Ping health values are lock-free because they are read by observability
 	// while the ping loop updates them.
 	rttEWMA     atomic.Int64
@@ -803,7 +814,28 @@ func (s *Session) closeTransport() {
 }
 
 func (s *Session) sessionIDBytes() []byte {
-	return s.sidBytes[:]
+	s.sidMux.RLock()
+	b := s.sidBytes
+	s.sidMux.RUnlock()
+	return b[:]
+}
+
+// rotateSessionID installs a fresh session identity. Called after a
+// bad_msg_notification code 17 rejection (see resetMessageSession); the
+// sidBytes snapshot lock is separate from s.mu because sessionIDBytes is
+// called from every pack path.
+func (s *Session) rotateSessionID() bool {
+	var sid [8]byte
+	if _, err := rand.Read(sid[:]); err != nil {
+		return false
+	}
+	s.mu.Lock()
+	s.sessionID = int64(binary.LittleEndian.Uint64(sid[:]))
+	s.mu.Unlock()
+	s.sidMux.Lock()
+	s.sidBytes = sid
+	s.sidMux.Unlock()
+	return true
 }
 
 // packAndWrite registers a pending handle for msgID, stores the encrypted
@@ -996,6 +1028,7 @@ func (s *Session) handlePacket(msgID int64, seqNo uint32, body tg.TLObject) {
 			s.pending.Resolve(bv.BadMsgID, bv)
 		case *tg.BadServerSalt:
 			s.saltMgr.StoreSimple(bv.NewServerSalt)
+			s.satisfyRejectedPing(bv.BadMsgID)
 			s.pending.Resolve(bv.BadMsgID, bv)
 		}
 	case *tg.NewSessionCreated:
@@ -1365,10 +1398,11 @@ func (s *Session) Invoke(ctx context.Context, query tg.TLObject, retries int, ti
 				continue
 			}
 
-			// G12: CONNECTION_NOT_INITED (400) — the server lost track of the
-			// connection init state. Retry; the caller (client layer) wraps in
-			// initConnection which re-establishes server-side state.
-			if g12Retries < maxG12Retries && tgerr.Is(parsed, tgerr.ErrConnectionNotInited) {
+			// G12: CONNECTION_NOT_INITED / CONNECTION_LAYER_INVALID (400) —
+			// the server lost track of the connection init state. Retry; the
+			// caller (client layer) wraps in initConnection which
+			// re-establishes server-side state.
+			if g12Retries < maxG12Retries && (tgerr.Is(parsed, tgerr.ErrConnectionNotInited) || tgerr.Is(parsed, tgerr.ErrConnectionLayerInvalid)) {
 				g12Retries++
 				if s.log != nil {
 					s.log.Warnf("connection not inited method=%s attempt=%d", methodName, i+1)
@@ -1797,16 +1831,26 @@ func (s *Session) sendServiceMessage(body tg.TLObject) error {
 }
 
 func (s *Session) buildServiceMessage(body tg.TLObject) ([]byte, error) {
+	data, _, err := s.buildServiceMessageID(body)
+	return data, err
+}
+
+// buildServiceMessageID is buildServiceMessage that also returns the
+// allocated msg_id, for callers that must correlate a later rejection
+// (bad_msg_notification, bad_server_salt) with the message they sent.
+func (s *Session) buildServiceMessageID(body tg.TLObject) ([]byte, int64, error) {
 	s.mu.RLock()
 	authKey := s.authKey
 	authKeyID := s.authKeyID
 	s.mu.RUnlock()
+	msgID := s.msgFactory.AllocateMsgID()
 	message := &tg.MTProtoMessage{
-		MsgID: s.msgFactory.AllocateMsgID(),
+		MsgID: msgID,
 		SeqNo: uint32(s.msgFactory.AllocateSeqNo(false)),
 		Body:  body,
 	}
-	return crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	data, err := crypto.Pack(message, s.saltMgr.Load(), s.sessionIDBytes(), authKey, authKeyID)
+	return data, msgID, err
 }
 
 // writeEncryptedImpl is the shared implementation for writeEncrypted and
@@ -2070,14 +2114,25 @@ func (s *Session) pingLoop(ctx context.Context) error {
 		delay := s.pingInterval + pongTimeout
 		disconnectDelay := int32((delay + time.Second - 1) / time.Second)
 
-		s.pingMux.Lock()
-		s.pingCbs[pingID] = pongCh
-		s.pingMux.Unlock()
-
-		if err := s.sendServiceMessage(&tg.PingDelayDisconnectRequest{
+		// Build first so the msg_id is known before the ping is on the wire:
+		// a bad_server_salt rejection can then be matched to this ping while
+		// its callback is guaranteed to be registered.
+		encrypted, msgID, err := s.buildServiceMessageID(&tg.PingDelayDisconnectRequest{
 			PingID:          pingID,
 			DisconnectDelay: max(disconnectDelay, 1),
-		}); err != nil {
+		})
+		if err != nil {
+			return fmt.Errorf("session: ping write failed: %w", err)
+		}
+
+		s.pingMux.Lock()
+		s.pingCbs[pingID] = pongCh
+		s.curPingMsgID = msgID
+		s.curPingID = pingID
+		s.curPongCh = pongCh
+		s.pingMux.Unlock()
+
+		if err := s.writeEncryptedDirect(encrypted, 10*time.Second); err != nil {
 			s.removePingCallback(pingID)
 			return fmt.Errorf("session: ping write failed: %w", err)
 		}
@@ -2111,7 +2166,57 @@ func (s *Session) pingLoop(ctx context.Context) error {
 func (s *Session) removePingCallback(pingID int64) {
 	s.pingMux.Lock()
 	delete(s.pingCbs, pingID)
+	if pingID == s.curPingID {
+		s.curPingMsgID, s.curPingID, s.curPongCh = 0, 0, nil
+	}
 	s.pingMux.Unlock()
+}
+
+// satisfyRejectedPing completes the wait of a keep-alive ping that the server
+// rejected with bad_server_salt. The rejected ping was never processed, so
+// no pong will ever arrive for it; without this the ping loop would count it
+// as a missed pong, time out, and reconnect — turning every salt expiry
+// (roughly hourly on a quiet connection) into a full reconnect. The new salt
+// was already stored by the caller, the next scheduled ping uses it, and the
+// pending disconnect deadline of the last processed ping still covers the
+// gap, so satisfying the wait is safe.
+func (s *Session) satisfyRejectedPing(badMsgID int64) {
+	s.pingMux.Lock()
+	defer s.pingMux.Unlock()
+	if badMsgID != s.curPingMsgID || s.curPongCh == nil {
+		return
+	}
+	ch := s.curPongCh
+	delete(s.pingCbs, s.curPingID)
+	s.curPingMsgID, s.curPingID, s.curPongCh = 0, 0, nil
+	close(ch)
+}
+
+// resetMessageSession rotates the client session identity after
+// bad_msg_notification code 17 (msg_id too high — the local clock ran ahead
+// of the server). msg_ids must strictly increase within one session, so once
+// the time correction lands, every newly allocated ID sits below what the
+// server already saw in this session and keeps being rejected (code 16) for
+// the whole clock-skew duration: the client stays unusable while the session
+// id is kept. Like TDLib, start a fresh session instead — rotate the session
+// id and reset the sequence counter (the message-ID floor was already
+// cleared by UpdateServerTime). Affected requests are re-sent by their
+// Invoke retry loops on the new session; a re-sent request the server had
+// already executed is impossible here, because the server rejects these
+// messages without processing them. In PFS mode the temporary key was bound
+// to the previous session id: the server answers AUTH_KEY_PERM_EMPTY and
+// the existing rebind recovery binds it again under the new id.
+func (s *Session) resetMessageSession(badMsgID, serverTime int64) {
+	if !s.rotateSessionID() {
+		if s.log != nil {
+			s.log.Errorf("session: cannot rotate session id after code 17 (rand failed); keeping old session")
+		}
+		return
+	}
+	s.msgFactory.ResetSequence()
+	if s.log != nil {
+		s.log.Warnf("session: msg_id too high (code=17), session reset (server_time=%d, old session kept until reconnect)", serverTime)
+	}
 }
 
 func (s *Session) recordPingRTT(sample time.Duration) {
@@ -2432,11 +2537,18 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 			// in the upper 32 bits of the notification's msg_id (msgID parameter).
 			serverTime := msgID >> 32
 			s.msgFactory.UpdateServerTime(time.Unix(serverTime, 0))
+			if errorCode == 17 {
+				s.resetMessageSession(badMsgID, serverTime)
+			}
 			if s.log != nil {
 				s.log.Warnf("session: time corrected (code=%d) server_time=%d", errorCode, serverTime)
 			}
-			if errorCode == 17 && s.log != nil {
-				s.log.Warnf("session: msg_id too high (code=17), reconnect recommended to reset session")
+			// A container rejection strands its children until their per-attempt
+			// timeouts; fail them now so their Invoke retry loops re-send
+			// immediately (the server rejected the container without executing
+			// any of them).
+			for _, childID := range s.containerTracker.NackContainer(badMsgID) {
+				s.pending.Reject(childID, fmt.Errorf("session: bad_msg code %d: container rejected (container msg_id=%d)", errorCode, badMsgID))
 			}
 			// Resolve with BadMsgNotification so Invoke's retry loop
 			// re-sends the query with the corrected time (via a fresh
@@ -2478,6 +2590,7 @@ func (s *Session) handleRawPacket(msgID int64, body []byte) bool {
 		badMsgID := int64(binary.LittleEndian.Uint64(body[4:12]))
 		newSalt := int64(binary.LittleEndian.Uint64(body[20:28]))
 		s.saltMgr.StoreSimple(newSalt)
+		s.satisfyRejectedPing(badMsgID)
 		s.pending.Resolve(badMsgID, &tg.BadServerSalt{
 			BadMsgID:      badMsgID,
 			BadMsgSeqno:   int32(binary.LittleEndian.Uint32(body[12:16])),
