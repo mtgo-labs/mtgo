@@ -117,8 +117,8 @@ func (c *MessageMethods) RetractVote(ctx context.Context, chatID int64, messageI
 	return err
 }
 
-func (c *MessageMethods) GetMessagesViews(ctx context.Context, chatID int64, messageIDs []int32, increment bool) ([]int32, error) {
-	c.Log.Debugf("GetMessagesViews chat_id=%d count=%d increment=%v", chatID, len(messageIDs), increment)
+func (c *MessageMethods) ViewMessages(ctx context.Context, chatID int64, messageIDs []int32, increment bool) ([]int32, error) {
+	c.Log.Debugf("ViewMessages chat_id=%d count=%d increment=%v", chatID, len(messageIDs), increment)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)

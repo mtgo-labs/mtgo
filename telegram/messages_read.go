@@ -7,7 +7,7 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// ReadHistory marks the chat history of the specified chat as read up to and
+// ReadChatHistory marks the chat history of the specified chat as read up to and
 // including maxID. After this call, the chat will no longer show unread badges
 // for messages with IDs at or below maxID.
 //
@@ -19,8 +19,8 @@ import (
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *MessageMethods) ReadHistory(ctx context.Context, chatID int64, maxID int32) error {
-	c.Log.Debugf("ReadHistory chat_id=%d max_id=%d", chatID, maxID)
+func (c *MessageMethods) ReadChatHistory(ctx context.Context, chatID int64, maxID int32) error {
+	c.Log.Debugf("ReadChatHistory chat_id=%d max_id=%d", chatID, maxID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)

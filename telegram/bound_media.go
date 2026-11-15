@@ -304,7 +304,7 @@ func (c *Client) BoundPay(ctx context.Context, chatID int64, msgID int32) (tg.Pa
 }
 
 func (c *Client) BoundView(ctx context.Context, chatID int64, msgID int32) error {
-	return c.ReadHistory(ctx, chatID, msgID)
+	return c.ReadChatHistory(ctx, chatID, msgID)
 }
 
 func (c *Client) BoundEditLiveLocation(ctx context.Context, chatID int64, msgID int32, lat, lng float64) (*types.Message, error) {

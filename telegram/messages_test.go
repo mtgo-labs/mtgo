@@ -472,9 +472,9 @@ func TestReadHistory(t *testing.T) {
 
 	inv.setResult(tg.ChannelsReadHistoryTypeID, &tg.Updates{})
 
-	err := c.ReadHistory(context.Background(), 10, 500)
+	err := c.ReadChatHistory(context.Background(), 10, 500)
 	if err != nil {
-		t.Fatalf("ReadHistory() error: %v", err)
+		t.Fatalf("ReadChatHistory() error: %v", err)
 	}
 	// A channel/supergroup peer must dispatch to channels.readHistory, not
 	// messages.readHistory (which silently no-ops for channels).
@@ -503,8 +503,8 @@ func TestReadHistoryBasicChat(t *testing.T) {
 		PTSCount: 5,
 	})
 
-	if err := c.ReadHistory(context.Background(), 10, 500); err != nil {
-		t.Fatalf("ReadHistory() error: %v", err)
+	if err := c.ReadChatHistory(context.Background(), 10, 500); err != nil {
+		t.Fatalf("ReadChatHistory() error: %v", err)
 	}
 	req, ok := inv.lastCall().(*tg.MessagesReadHistoryRequest)
 	if !ok {
@@ -563,7 +563,7 @@ func TestReadReactions(t *testing.T) {
 
 func TestReadHistoryPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
-	err := c.ReadHistory(context.Background(), 999, 0)
+	err := c.ReadChatHistory(context.Background(), 999, 0)
 	if err == nil {
 		t.Fatal("expected error for unresolved peer")
 	}

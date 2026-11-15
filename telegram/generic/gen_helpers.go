@@ -523,15 +523,6 @@ func GetMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32) ([]*typ
 	return client.GetMessages(ctx, chatID, messageIDs)
 }
 
-func GetMessagesViews[T PeerInput, C Caller](c C, chat T, messageIDs []int32, increment bool) ([]int32, error) {
-	client, ctx := extractClient(c)
-	chatID, err := resolveID[T](ctx, client, chat)
-	if err != nil {
-		return nil, err
-	}
-	return client.GetMessagesViews(ctx, chatID, messageIDs, increment)
-}
-
 func GetPaymentForm[T PeerInput, C Caller](c C, chat T, messageID int32, opts ...*telegram.GetPaymentFormOption) (*types.PaymentForm, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -685,6 +676,15 @@ func ReadChannelHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
 	return client.ReadChannelHistory(ctx, chatID, maxID)
 }
 
+func ReadChatHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ReadChatHistory(ctx, chatID, maxID)
+}
+
 func ReadChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -692,15 +692,6 @@ func ReadChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error
 		return err
 	}
 	return client.ReadChatStories(ctx, chatID, storyIDs)
-}
-
-func ReadHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
-	client, ctx := extractClient(c)
-	chatID, err := resolveID[T](ctx, client, chat)
-	if err != nil {
-		return err
-	}
-	return client.ReadHistory(ctx, chatID, maxID)
 }
 
 func ReadMentions[T PeerInput, C Caller](c C, chat T) error {
@@ -1259,6 +1250,15 @@ func UnpinMessage[T PeerInput, C Caller](c C, chat T, messageID int32) (*types.M
 		return nil, err
 	}
 	return client.UnpinMessage(ctx, chatID, messageID)
+}
+
+func ViewMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32, increment bool) ([]int32, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.ViewMessages(ctx, chatID, messageIDs, increment)
 }
 
 func VotePoll[T PeerInput, C Caller](c C, chat T, messageID int32, options [][]byte) error {

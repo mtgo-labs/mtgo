@@ -260,7 +260,7 @@ func (c *Client) BoundUnpin(ctx context.Context, chatID int64, msgID int32, opts
 
 // BoundRead marks messages as read up to the specified message ID in the given
 // chat. This is a bound-method convenience wrapper around
-// [Client.ReadHistory].
+// [Client.ReadChatHistory].
 //
 // Parameters:
 //   - chatID: chat whose history to mark as read
@@ -268,7 +268,7 @@ func (c *Client) BoundUnpin(ctx context.Context, chatID int64, msgID int32, opts
 //
 // Returns an error if the operation fails.
 func (c *Client) BoundRead(ctx context.Context, chatID int64, msgID int32) error {
-	return c.ReadHistory(ctx, chatID, msgID)
+	return c.ReadChatHistory(ctx, chatID, msgID)
 }
 
 // BoundAnswerCallback sends an answer to a callback query triggered by an
