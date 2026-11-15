@@ -59,3 +59,23 @@ func (c *UtilityMethods) GetDialogs(ctx context.Context, limit int, offsetDate i
 	}
 	return dialogs, nil
 }
+
+// GetAppConfig returns the server-side application configuration used for
+// feature flags and UI limits. Pass the previous hash to receive nil when
+// unchanged.
+func (c *UtilityMethods) GetAppConfig(ctx context.Context, hash int32) (*tg.HelpAppConfig, error) {
+	result, err := c.Raw().HelpGetAppConfig(ctx, &tg.HelpGetAppConfigRequest{
+		Hash: hash,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get app config: %w", err)
+	}
+	switch v := result.(type) {
+	case *tg.HelpAppConfig:
+		return v, nil
+	case *tg.HelpAppConfigNotModified:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("get app config: unexpected result %T", result)
+	}
+}

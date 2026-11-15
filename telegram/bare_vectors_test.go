@@ -40,3 +40,28 @@ func TestGetLeaveFolderSuggestions(t *testing.T) {
 		t.Fatalf("request = %#v, want folder 2", inv.lastCall())
 	}
 }
+
+func TestGetAppConfig(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.HelpGetAppConfigTypeID, &tg.HelpAppConfig{
+		Hash:   5,
+		Config: &tg.JSONObject{},
+	})
+
+	cfg, err := c.GetAppConfig(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetAppConfig() error: %v", err)
+	}
+	if cfg == nil || cfg.Hash != 5 {
+		t.Fatalf("config = %#v, want hash 5", cfg)
+	}
+
+	inv.setResult(tg.HelpGetAppConfigTypeID, &tg.HelpAppConfigNotModified{})
+	cfg, err = c.GetAppConfig(context.Background(), 5)
+	if err != nil {
+		t.Fatalf("GetAppConfig() error: %v", err)
+	}
+	if cfg != nil {
+		t.Fatalf("config = %#v, want nil when not modified", cfg)
+	}
+}
