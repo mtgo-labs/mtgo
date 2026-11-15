@@ -69,7 +69,7 @@ func readPassword() ([]byte, error) {
 
 // loginUser runs the interactive phone login flow:
 //
-//	SendCode → code via CodeFunc → SignIn
+//	//	SendPhoneNumberCode → code via CodeFunc → SignIn
 //	  → if 2FA → password via PasswordFunc → CheckPassword
 //	  → if sign-up required → SignUp
 //
@@ -91,7 +91,7 @@ func (c *Client) loginUser(ctx context.Context) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "login: sending code to %s...\n", phone)
-	sentCode, err := c.SendCode(ctx, phone)
+	sentCode, err := c.SendPhoneNumberCode(ctx, phone)
 	if err != nil {
 		if errors.Is(err, ErrAlreadyAuthed) {
 			return nil

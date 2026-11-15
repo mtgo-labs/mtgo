@@ -205,3 +205,40 @@ func (c *PasswordMethods) RemoveCloudPassword(ctx context.Context, password stri
 	c.Log.Info("password: cloud password removed")
 	return err
 }
+
+// ResetCloudPasswordResult reports the outcome of a cloud-password reset
+// request started with ResetCloudPassword.
+type ResetCloudPasswordResult struct {
+	// OK is true when the password was reset immediately.
+	OK bool
+	// RetryDate is the unix time after which a new request may be attempted
+	// (set when too many reset requests were made recently).
+	RetryDate int32
+	// UntilDate is the unix time when the pending reset takes effect.
+	UntilDate int32
+}
+
+// ResetCloudPassword starts resetting the cloud password when the current one
+// is forgotten. The server schedules the reset and confirms it after a
+// safety wait; until then the old password (and login) keeps working.
+func (c *PasswordMethods) ResetCloudPassword(ctx context.Context) (*ResetCloudPasswordResult, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+
+	c.Log.Debug("resetting cloud password")
+	result, err := c.Raw().AccountResetPassword(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("reset cloud password: %w", err)
+	}
+	switch v := result.(type) {
+	case *tg.AccountResetPasswordOk:
+		return &ResetCloudPasswordResult{OK: true}, nil
+	case *tg.AccountResetPasswordRequestedWait:
+		return &ResetCloudPasswordResult{UntilDate: v.UntilDate}, nil
+	case *tg.AccountResetPasswordFailedWait:
+		return &ResetCloudPasswordResult{RetryDate: v.RetryDate}, nil
+	default:
+		return nil, fmt.Errorf("reset cloud password: unexpected result %T", result)
+	}
+}

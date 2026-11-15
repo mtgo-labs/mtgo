@@ -86,7 +86,7 @@ type ActiveSessions struct {
 //
 // Example:
 //
-//	info, err := client.SendCode(ctx, "+1234567890")
+//	info, err := client.SendPhoneNumberCode(ctx, "+1234567890")
 //	fmt.Printf("Code type: %s, hash: %s\n", info.Type, info.PhoneCodeHash)
 type SentCodeInfo struct {
 	// Type indicates how the code was delivered (e.g., SMS, call, Telegram app).

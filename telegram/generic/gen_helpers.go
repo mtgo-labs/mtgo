@@ -1189,6 +1189,15 @@ func SetChatDescription[T PeerInput, C Caller](c C, chat T, about string) error 
 	return client.SetChatDescription(ctx, chatID, about)
 }
 
+func SetChatEmojiStatus[T PeerInput, C Caller](c C, chat T, customEmojiID int64) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatEmojiStatus(ctx, chatID, customEmojiID)
+}
+
 func SetChatMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButtonClass) error {
 	client, ctx := extractClient(c)
 	userID, err := resolveID[T](ctx, client, user)

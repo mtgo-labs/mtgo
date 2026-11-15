@@ -3856,17 +3856,6 @@ func (c *Client) ExportSessionString() (string, error) {
 	return st.ExportSessionString()
 }
 
-// LogOut disconnects the client. It does not revoke the session on the server;
-// for full server-side logout use the auth.SignOut method.
-//
-// Returns ErrNotConnected if the client is not connected.
-func (c *AuthMethods) LogOut() error {
-	if !c.IsConnected() {
-		return ErrNotConnected
-	}
-	return c.Disconnect()
-}
-
 // SetMe sets the authenticated user on the client. This is typically called internally
 // after a successful sign-in.
 func (c *Client) SetMe(user *types.User) {
