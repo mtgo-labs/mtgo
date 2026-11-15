@@ -180,3 +180,44 @@ func (c *AccountMethods) GetAccountTTL(ctx context.Context) (int32, error) {
 	}
 	return result.Days, nil
 }
+
+// GetTermsOfServiceUpdate returns the pending terms-of-service revision the
+// logged-in user has not accepted yet, or nil when the current terms are
+// already accepted.
+func (c *AccountMethods) GetTermsOfServiceUpdate(ctx context.Context) (*tg.HelpTermsOfService, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+
+	c.Log.Debug("GetTermsOfServiceUpdate")
+
+	result, err := c.Raw().HelpGetTermsOfServiceUpdate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get terms of service update: %w", err)
+	}
+	if update, ok := result.(*tg.HelpTermsOfServiceUpdate); ok {
+		return update.TermsOfService, nil
+	}
+	return nil, nil
+}
+
+// AcceptTermsOfService accepts a pending terms-of-service revision, as
+// returned by GetTermsOfServiceUpdate.
+func (c *AccountMethods) AcceptTermsOfService(ctx context.Context, terms *tg.HelpTermsOfService) error {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return err
+	}
+	if terms == nil || terms.ID == nil {
+		return fmt.Errorf("terms of service revision is required")
+	}
+
+	c.Log.Debug("AcceptTermsOfService")
+
+	_, err := c.Raw().HelpAcceptTermsOfService(ctx, &tg.HelpAcceptTermsOfServiceRequest{
+		ID: terms.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("accept terms of service: %w", err)
+	}
+	return nil
+}

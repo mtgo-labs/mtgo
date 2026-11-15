@@ -346,3 +346,24 @@ func (c *ChatMethods) SetChatNotificationSettings(ctx context.Context, chatID in
 	}
 	return nil
 }
+
+// SetChatEmojiStatus sets the custom emoji displayed next to a channel's
+// title. Pass 0 as customEmojiID to clear the status.
+func (c *ChatMethods) SetChatEmojiStatus(ctx context.Context, chatID int64, customEmojiID int64) error {
+	c.Log.Debugf("SetChatEmojiStatus chat_id=%d emoji=%d", chatID, customEmojiID)
+	channel, err := resolveChannelID(ctx, c.Client, chatID)
+	if err != nil {
+		return fmt.Errorf("resolve channel: %w", err)
+	}
+
+	_, err = c.Raw().ChannelsUpdateEmojiStatus(ctx, &tg.ChannelsUpdateEmojiStatusRequest{
+		Channel: channel,
+		EmojiStatus: &tg.EmojiStatus{
+			DocumentID: customEmojiID,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("set chat emoji status: %w", err)
+	}
+	return nil
+}

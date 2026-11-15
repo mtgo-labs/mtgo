@@ -222,3 +222,67 @@ func (c *UserMethods) UpdateStatus(ctx context.Context, offline bool) error {
 	})
 	return err
 }
+
+// SetEmojiStatus sets the custom emoji displayed next to the logged-in user's
+// name. Pass 0 as customEmojiID to clear the status, and a non-zero until
+// (unix time) for a status that expires automatically.
+func (c *UserMethods) SetEmojiStatus(ctx context.Context, customEmojiID int64, until int32) error {
+	c.Log.Debugf("SetEmojiStatus emoji=%d until=%d", customEmojiID, until)
+	_, err := c.Raw().AccountUpdateEmojiStatus(ctx, &tg.AccountUpdateEmojiStatusRequest{
+		EmojiStatus: &tg.EmojiStatus{
+			DocumentID: customEmojiID,
+			Until:      until,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("set emoji status: %w", err)
+	}
+	return nil
+}
+
+// SetBirthday sets the logged-in user's birthday shown to contacts. Pass a
+// month of 0 to hide the birthday; pass a year of 0 to keep the year hidden.
+func (c *UserMethods) SetBirthday(ctx context.Context, month, day, year int32) error {
+	c.Log.Debugf("SetBirthday %d/%d/%d", day, month, year)
+	req := &tg.AccountUpdateBirthdayRequest{}
+	if month != 0 {
+		req.Birthday = &tg.Birthday{
+			Month: month,
+			Day:   day,
+			Year:  year,
+		}
+	}
+	_, err := c.Raw().AccountUpdateBirthday(ctx, req)
+	if err != nil {
+		return fmt.Errorf("set birthday: %w", err)
+	}
+	return nil
+}
+
+// ReorderActiveUsernames changes the display order of the logged-in user's
+// active usernames. order must contain every active username exactly once.
+func (c *UserMethods) ReorderActiveUsernames(ctx context.Context, order []string) error {
+	c.Log.Debugf("ReorderActiveUsernames n=%d", len(order))
+	_, err := c.Raw().AccountReorderUsernames(ctx, &tg.AccountReorderUsernamesRequest{
+		Order: order,
+	})
+	if err != nil {
+		return fmt.Errorf("reorder active usernames: %w", err)
+	}
+	return nil
+}
+
+// ToggleUsername activates or deactivates one of the logged-in user's
+// usernames. Deactivated usernames keep their reservation but no longer
+// resolve to the user.
+func (c *UserMethods) ToggleUsername(ctx context.Context, username string, active bool) error {
+	c.Log.Debugf("ToggleUsername %s active=%v", username, active)
+	_, err := c.Raw().AccountToggleUsername(ctx, &tg.AccountToggleUsernameRequest{
+		Username: username,
+		Active:   active,
+	})
+	if err != nil {
+		return fmt.Errorf("toggle username: %w", err)
+	}
+	return nil
+}
