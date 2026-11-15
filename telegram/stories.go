@@ -491,3 +491,335 @@ func (c *StoryMethods) SendStoryReaction(ctx context.Context, peerID int64, stor
 	})
 	return err
 }
+
+// parseStoriesResult converts a stories result page into parsed stories.
+func parseStoriesResult(result *tg.StoriesStories) []*types.Story {
+	stories := make([]*types.Story, 0, len(result.Stories))
+	pm := types.NewPeerMapFromClasses(result.Users, result.Chats)
+	for _, s := range result.Stories {
+		if parsed := types.ParseStory(s, pm); parsed != nil {
+			stories = append(stories, parsed)
+		}
+	}
+	return stories
+}
+
+// GetPinnedStories returns the stories a peer pinned to the top of its
+// profile. offsetID paginates by story ID; a limit of 0 or less defaults to
+// 10.
+func (c *StoryMethods) GetPinnedStories(ctx context.Context, chatID int64, offsetID int32, limit int) ([]*types.Story, error) {
+	c.Log.Debugf("GetPinnedStories chat_id=%d", chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetPinnedStories(ctx, &tg.StoriesGetPinnedStoriesRequest{
+		Peer:     peer,
+		OffsetID: offsetID,
+		Limit:    clampStoryLimit(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get pinned stories: %w", err)
+	}
+	return parseStoriesResult(result), nil
+}
+
+// GetArchivedStories returns the archived stories of a peer. offsetID
+// paginates by story ID; a limit of 0 or less defaults to 10.
+func (c *StoryMethods) GetArchivedStories(ctx context.Context, chatID int64, offsetID int32, limit int) ([]*types.Story, error) {
+	c.Log.Debugf("GetArchivedStories chat_id=%d", chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetStoriesArchive(ctx, &tg.StoriesGetStoriesArchiveRequest{
+		Peer:     peer,
+		OffsetID: offsetID,
+		Limit:    clampStoryLimit(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get archived stories: %w", err)
+	}
+	return parseStoriesResult(result), nil
+}
+
+func clampStoryLimit(limit int) int32 {
+	if limit <= 0 || limit > 100 {
+		return 10
+	}
+	return int32(limit)
+}
+
+// StoriesFeedEntry is one peer's stories inside the all-stories feed.
+type StoriesFeedEntry struct {
+	// Chat is the peer that owns the stories.
+	Chat *types.Chat
+	// Stories are the peer's active stories.
+	Stories []*types.Story
+}
+
+// StoriesFeed is one page of the all-stories feed of the logged-in user's
+// contacts.
+type StoriesFeed struct {
+	// Count is the total number of peers with active stories.
+	Count int32
+	// State is the feed cursor; pass it back to receive further pages.
+	State string
+	// HasMore reports whether more pages follow.
+	HasMore bool
+	// StealthMode is the current stealth-mode state of the feed.
+	StealthMode *tg.StoriesStealthMode
+	// Peers holds each story-owning peer with its stories.
+	Peers []StoriesFeedEntry
+}
+
+// GetAllStories returns the all-stories feed of the logged-in user's
+// contacts. Pass the previous page's State (and next=true) to continue;
+// hidden=true lists contacts hidden from the feed. Returns nil when the feed
+// state is unchanged since the last call.
+func (c *StoryMethods) GetAllStories(ctx context.Context, state string, next, hidden bool) (*StoriesFeed, error) {
+	c.Log.Debugf("GetAllStories state=%q next=%v hidden=%v", state, next, hidden)
+	result, err := c.Raw().StoriesGetAllStories(ctx, &tg.StoriesGetAllStoriesRequest{
+		Next:   next,
+		Hidden: hidden,
+		State:  state,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get all stories: %w", err)
+	}
+	switch v := result.(type) {
+	case *tg.StoriesAllStoriesNotModified:
+		return nil, nil
+	case *tg.StoriesAllStories:
+		pm := types.NewPeerMapFromClasses(v.Users, v.Chats)
+		feed := &StoriesFeed{
+			Count:       v.Count,
+			State:       v.State,
+			HasMore:     v.HasMore,
+			StealthMode: v.StealthMode,
+			Peers:       make([]StoriesFeedEntry, 0, len(v.PeerStories)),
+		}
+		for _, ps := range v.PeerStories {
+			owned, ok := ps.(*tg.PeerStories)
+			if !ok {
+				continue
+			}
+			entry := StoriesFeedEntry{Chat: types.ParseChatFromPeer(owned.Peer, pm)}
+			for _, s := range owned.Stories {
+				if parsed := types.ParseStory(s, pm); parsed != nil {
+					entry.Stories = append(entry.Stories, parsed)
+				}
+			}
+			feed.Peers = append(feed.Peers, entry)
+		}
+		return feed, nil
+	default:
+		return nil, fmt.Errorf("get all stories: unexpected result %T", result)
+	}
+}
+
+// ActivateStealthMode hides the logged-in user's story views from others:
+// past hides views made during the last minutes, future hides upcoming views
+// for a window. Stealth mode has a cooldown between activations.
+func (c *StoryMethods) ActivateStealthMode(ctx context.Context, past, future bool) error {
+	c.Log.Debugf("ActivateStealthMode past=%v future=%v", past, future)
+	_, err := c.Raw().StoriesActivateStealthMode(ctx, &tg.StoriesActivateStealthModeRequest{
+		Past:   past,
+		Future: future,
+	})
+	if err != nil {
+		return fmt.Errorf("activate stealth mode: %w", err)
+	}
+	return nil
+}
+
+// GetRemainingStoryCount returns how many stories the logged-in user can
+// still post today on their own profile.
+func (c *StoryMethods) GetRemainingStoryCount(ctx context.Context) (int32, error) {
+	c.Log.Debug("GetRemainingStoryCount")
+	result, err := c.Raw().StoriesCanSendStory(ctx, &tg.StoriesCanSendStoryRequest{
+		Peer: &tg.InputPeerSelf{},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("get remaining story count: %w", err)
+	}
+	return result.CountRemains, nil
+}
+
+// GetChatsToSendStories returns the chats where the logged-in user may post
+// stories (own profile plus admin channels).
+func (c *StoryMethods) GetChatsToSendStories(ctx context.Context) ([]*types.Chat, error) {
+	c.Log.Debug("GetChatsToSendStories")
+	result, err := c.Raw().StoriesGetChatsToSend(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get chats to send stories: %w", err)
+	}
+	var raw []tg.ChatClass
+	switch v := result.(type) {
+	case *tg.MessagesChats:
+		raw = v.Chats
+	case *tg.MessagesChatsSlice:
+		raw = v.Chats
+	default:
+		return nil, fmt.Errorf("get chats to send stories: unexpected result %T", result)
+	}
+	chats := make([]*types.Chat, 0, len(raw))
+	for _, ch := range raw {
+		if parsed := types.ParseChatFromChat(ch); parsed != nil {
+			chats = append(chats, parsed)
+		}
+	}
+	return chats, nil
+}
+
+// ExportStoryLink returns the public t.me link of a story.
+func (c *StoryMethods) ExportStoryLink(ctx context.Context, chatID int64, storyID int32) (string, error) {
+	c.Log.Debugf("ExportStoryLink chat_id=%d story_id=%d", chatID, storyID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return "", fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesExportStoryLink(ctx, &tg.StoriesExportStoryLinkRequest{
+		Peer: peer,
+		ID:   storyID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("export story link: %w", err)
+	}
+	return result.Link, nil
+}
+
+// ToggleStoriesHidden hides (or unhides) a peer's stories from the logged-in
+// user's main feed.
+func (c *StoryMethods) ToggleStoriesHidden(ctx context.Context, chatID int64, hidden bool) error {
+	c.Log.Debugf("ToggleStoriesHidden chat_id=%d hidden=%v", chatID, hidden)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return fmt.Errorf("resolve peer: %w", err)
+	}
+	_, err = c.Raw().StoriesTogglePeerStoriesHidden(ctx, &tg.StoriesTogglePeerStoriesHiddenRequest{
+		Peer:   peer,
+		Hidden: hidden,
+	})
+	if err != nil {
+		return fmt.Errorf("toggle stories hidden: %w", err)
+	}
+	return nil
+}
+
+// ToggleAllStoriesHidden hides (or unhides) every contact's stories from the
+// logged-in user's main feed.
+func (c *StoryMethods) ToggleAllStoriesHidden(ctx context.Context, hidden bool) error {
+	c.Log.Debugf("ToggleAllStoriesHidden hidden=%v", hidden)
+	_, err := c.Raw().StoriesToggleAllStoriesHidden(ctx, &tg.StoriesToggleAllStoriesHiddenRequest{
+		Hidden: hidden,
+	})
+	if err != nil {
+		return fmt.Errorf("toggle all stories hidden: %w", err)
+	}
+	return nil
+}
+
+// StoryViewersPage is one page of a story's viewer list.
+type StoryViewersPage struct {
+	// Count is the total number of viewers.
+	Count int32
+	// ViewsCount, ForwardsCount, and ReactionsCount are the story's totals.
+	ViewsCount     int32
+	ForwardsCount  int32
+	ReactionsCount int32
+	// Views are the viewers on this page; entries may be reactions, forwards,
+	// or plain views depending on the requested ordering.
+	Views []tg.StoryViewClass
+	// NextOffset fetches the next page; empty on the last page.
+	NextOffset string
+}
+
+// GetStoryViewers lists the viewers of one story. Set justContacts to skip
+// non-contacts, reactionsFirst or forwardsFirst to order reactions or
+// forwards ahead of plain views, and q to filter by name.
+func (c *StoryMethods) GetStoryViewers(ctx context.Context, chatID, storyID int64, q string, justContacts, reactionsFirst, forwardsFirst bool, offset string, limit int) (*StoryViewersPage, error) {
+	c.Log.Debugf("GetStoryViewers chat_id=%d story_id=%d", chatID, storyID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetStoryViewsList(ctx, &tg.StoriesGetStoryViewsListRequest{
+		JustContacts:   justContacts,
+		ReactionsFirst: reactionsFirst,
+		ForwardsFirst:  forwardsFirst,
+		Peer:           peer,
+		Q:              q,
+		ID:             int32(storyID),
+		Offset:         offset,
+		Limit:          clampStoryLimit(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get story viewers: %w", err)
+	}
+	return &StoryViewersPage{
+		Count:          result.Count,
+		ViewsCount:     result.ViewsCount,
+		ForwardsCount:  result.ForwardsCount,
+		ReactionsCount: result.ReactionsCount,
+		Views:          result.Views,
+		NextOffset:     result.NextOffset,
+	}, nil
+}
+
+// StoryReactionsPage is one page of the reactions to a story.
+type StoryReactionsPage struct {
+	// Count is the total number of reactions.
+	Count int32
+	// Reactions are the reactions on this page.
+	Reactions []tg.StoryReactionClass
+	// NextOffset fetches the next page; empty on the last page.
+	NextOffset string
+}
+
+// GetStoryReactions lists reactions to one story; pass a reaction to list
+// only that reaction, and forwardsFirst to order forwards ahead.
+func (c *StoryMethods) GetStoryReactions(ctx context.Context, chatID, storyID int64, reaction tg.ReactionClass, offset string, limit int, forwardsFirst bool) (*StoryReactionsPage, error) {
+	c.Log.Debugf("GetStoryReactions chat_id=%d story_id=%d", chatID, storyID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetStoryReactionsList(ctx, &tg.StoriesGetStoryReactionsListRequest{
+		ForwardsFirst: forwardsFirst,
+		Peer:          peer,
+		ID:            int32(storyID),
+		Reaction:      reaction,
+		Offset:        offset,
+		Limit:         clampStoryLimit(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get story reactions: %w", err)
+	}
+	return &StoryReactionsPage{
+		Count:      result.Count,
+		Reactions:  result.Reactions,
+		NextOffset: result.NextOffset,
+	}, nil
+}
+
+// ReportStory reports stories that violate the terms of service. option is a
+// reason identifier obtained from the report options; message adds optional
+// context.
+func (c *StoryMethods) ReportStory(ctx context.Context, chatID int64, storyIDs []int32, option []byte, message string) error {
+	c.Log.Debugf("ReportStory chat_id=%d count=%d", chatID, len(storyIDs))
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return fmt.Errorf("resolve peer: %w", err)
+	}
+	_, err = c.Raw().StoriesReport(ctx, &tg.StoriesReportRequest{
+		Peer:    peer,
+		ID:      storyIDs,
+		Option:  option,
+		Message: message,
+	})
+	if err != nil {
+		return fmt.Errorf("report story: %w", err)
+	}
+	return nil
+}
