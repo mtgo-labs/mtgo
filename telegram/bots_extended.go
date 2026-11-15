@@ -209,3 +209,25 @@ func (c *BotsMethods) GetBotRecommendations(ctx context.Context, botID int64) ([
 	}
 	return users, nil
 }
+
+// GetOwnedBots lists the bots created by the logged-in user.
+func (c *BotsMethods) GetOwnedBots(ctx context.Context) ([]*types.User, error) {
+	c.Log.Debug("GetOwnedBots")
+	raw, err := c.Raw().BotsGetAdminedBots(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get owned bots: %w", err)
+	}
+	vector, ok := raw.(*tg.GenericVector)
+	if !ok {
+		return nil, fmt.Errorf("get owned bots: unexpected result %T", raw)
+	}
+	bots := make([]*types.User, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if u, ok := item.(tg.UserClass); ok {
+			if parsed := types.ParseUser(u); parsed != nil {
+				bots = append(bots, parsed)
+			}
+		}
+	}
+	return bots, nil
+}

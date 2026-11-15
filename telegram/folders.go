@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mtgo-labs/mtgo/internal/peerid"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
@@ -440,4 +441,26 @@ func (c *FolderMethods) LeaveFolder(ctx context.Context, folderID int32, chatIDs
 		return fmt.Errorf("leave folder: %w", err)
 	}
 	return nil
+}
+
+// GetLeaveFolderSuggestions lists chats the server suggests also leaving when
+// leaving a shareable folder.
+func (c *FolderMethods) GetLeaveFolderSuggestions(ctx context.Context, folderID int32) ([]int64, error) {
+	raw, err := c.Raw().ChatlistsGetLeaveChatlistSuggestions(ctx, &tg.ChatlistsGetLeaveChatlistSuggestionsRequest{
+		Chatlist: folderChatlistInput(folderID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get leave folder suggestions: %w", err)
+	}
+	vector, ok := raw.(*tg.GenericVector)
+	if !ok {
+		return nil, fmt.Errorf("get leave folder suggestions: unexpected result %T", raw)
+	}
+	ids := make([]int64, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if peer, ok := item.(tg.PeerClass); ok {
+			ids = append(ids, peerid.MarkFromPeer(peer))
+		}
+	}
+	return ids, nil
 }
