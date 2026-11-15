@@ -82,6 +82,15 @@ func BlockUser[T PeerInput, C Caller](c C, user T) error {
 	return client.BlockUser(ctx, userID)
 }
 
+func CancelStarsSubscriptionByBot[T PeerInput, C Caller](c C, user T, chargeID string, restore bool) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.CancelStarsSubscriptionByBot(ctx, userID, chargeID, restore)
+}
+
 func CloseForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -125,6 +134,15 @@ func CreateForumTopic[T PeerInput, C Caller](c C, chat T, title string, iconColo
 		return nil, err
 	}
 	return client.CreateForumTopic(ctx, chatID, title, iconColor, iconEmojiID)
+}
+
+func CreateGiftCollection[T PeerInput, C Caller](c C, chat T, title string, gifts []tg.InputSavedStarGiftClass) (*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.CreateGiftCollection(ctx, chatID, title, gifts)
 }
 
 func CreateStickerSet[T PeerInput, C Caller](c C, user T, title string, shortName string, stickers []*tg.InputStickerSetItem, opts ...*telegram.CreateStickerSetOption) (*tg.MessagesStickerSet, error) {
@@ -188,6 +206,15 @@ func DeleteForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 		return err
 	}
 	return client.DeleteForumTopic(ctx, chatID, topicID)
+}
+
+func DeleteGiftCollection[T PeerInput, C Caller](c C, chat T, collectionID int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.DeleteGiftCollection(ctx, chatID, collectionID)
 }
 
 func DeleteMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32, opts ...*params.DeleteMessages) (int, error) {
@@ -568,6 +595,24 @@ func GetGameHighScores[T PeerInput, C Caller](c C, chat T, messageID int64, user
 	return client.GetGameHighScores(ctx, chatID, messageID, userID)
 }
 
+func GetGiftCollections[T PeerInput, C Caller](c C, chat T, hash int64) ([]*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetGiftCollections(ctx, chatID, hash)
+}
+
+func GetGiveawayInfo[T PeerInput, C Caller](c C, chat T, messageID int32) (tg.GiveawayInfoClass, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetGiveawayInfo(ctx, chatID, messageID)
+}
+
 func GetInlineBotResults[T PeerInput, C Caller](c C, bot int64, chat T, query string, offset string) (*tg.MessagesBotResults, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -611,6 +656,15 @@ func GetPaymentForm[T PeerInput, C Caller](c C, chat T, messageID int32, opts ..
 		return nil, err
 	}
 	return client.GetPaymentForm(ctx, chatID, messageID, opts...)
+}
+
+func GetPaymentReceipt[T PeerInput, C Caller](c C, chat T, messageID int32) (tg.PaymentReceiptClass, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetPaymentReceipt(ctx, chatID, messageID)
 }
 
 func GetPinnedStories[T PeerInput, C Caller](c C, chat T, offsetID int32, limit int) ([]*types.Story, error) {
@@ -674,6 +728,24 @@ func GetStarsBalance[T PeerInput, C Caller](c C, chat T) (int64, error) {
 		return 0, err
 	}
 	return client.GetStarsBalance(ctx, chatID)
+}
+
+func GetStarsRevenueAdsAccountURL[T PeerInput, C Caller](c C, chat T) (string, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return "", err
+	}
+	return client.GetStarsRevenueAdsAccountURL(ctx, chatID)
+}
+
+func GetStarsRevenueStats[T PeerInput, C Caller](c C, chat T, dark bool) (*tg.PaymentsStarsRevenueStats, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetStarsRevenueStats(ctx, chatID, dark)
 }
 
 func GetStarsTransactions[T PeerInput, C Caller](c C, chat T, inbound bool, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
@@ -746,6 +818,15 @@ func IncludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
 		return err
 	}
 	return client.IncludeChat(ctx, folderID, chatID)
+}
+
+func LaunchPrepaidGiveaway[T PeerInput, C Caller](c C, chat T, giveawayID int64, purpose tg.InputStorePaymentPurposeClass) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.LaunchPrepaidGiveaway(ctx, chatID, giveawayID, purpose)
 }
 
 func LeaveChat[T PeerInput, C Caller](c C, chat T) error {
@@ -899,6 +980,15 @@ func ReopenForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 		return err
 	}
 	return client.ReopenForumTopic(ctx, chatID, topicID)
+}
+
+func ReorderGiftCollections[T PeerInput, C Caller](c C, chat T, order []int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ReorderGiftCollections(ctx, chatID, order)
 }
 
 func ReportStory[T PeerInput, C Caller](c C, chat T, storyIDs []int32, option []byte, message string) error {
@@ -1252,6 +1342,15 @@ func SendVoice[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, cap
 	return client.SendVoice(ctx, chatID, file, caption, opts...)
 }
 
+func SendWalletTransfer[T PeerInput, C Caller](c C, user T, dataNormal []byte, dataGasless []byte) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SendWalletTransfer(ctx, userID, dataNormal, dataGasless)
+}
+
 func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, title string) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1376,6 +1475,15 @@ func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID in
 		return nil, err
 	}
 	return client.SetGameScore(ctx, chatID, messageID, userID, score, force)
+}
+
+func SetGiftChatNotifications[T PeerInput, C Caller](c C, chat T, enabled bool) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetGiftChatNotifications(ctx, chatID, enabled)
 }
 
 func SetProtectedContent[T PeerInput, C Caller](c C, chat T, enabled bool) error {
@@ -1540,6 +1648,15 @@ func UnpinMessage[T PeerInput, C Caller](c C, chat T, messageID int32) (*types.M
 	return client.UnpinMessage(ctx, chatID, messageID)
 }
 
+func UpdateGiftCollection[T PeerInput, C Caller](c C, chat T, collectionID int32, title string, remove []tg.InputSavedStarGiftClass, add []tg.InputSavedStarGiftClass, order []tg.InputSavedStarGiftClass) (*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.UpdateGiftCollection(ctx, chatID, collectionID, title, remove, add, order)
+}
+
 func ViewMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32, increment bool) ([]int32, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1556,4 +1673,13 @@ func VotePoll[T PeerInput, C Caller](c C, chat T, messageID int32, options [][]b
 		return err
 	}
 	return client.VotePoll(ctx, chatID, messageID, options)
+}
+
+func WithdrawStarsRevenue[T PeerInput, C Caller](c C, chat T, amount int64, password string) (string, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return "", err
+	}
+	return client.WithdrawStarsRevenue(ctx, chatID, amount, password)
 }
