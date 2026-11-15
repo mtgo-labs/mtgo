@@ -97,6 +97,21 @@ structural reference.
 - Wallet internals, Ton Connect, star-ref suite, story albums (Phase 5/6
   deferrals unchanged).
 
+### Addendum — widget surface (after the phase gate)
+
+The widget gap tracked since phase 0 landed as two follow-up commits:
+
+- `d5ee165` — TL layer bumped 232 → 233 (official schema): widget media,
+  inline-widget messages, widget-query updates and answers, user wallets,
+  audio transcription, additive user/channel fields. Full suite passed
+  unchanged on the regenerated `tg/`.
+- `915eb5a` — `SendWidget` (+ `params.SendWidget`), `EditMessageWidgetData`,
+  shared-widget `EditWidgetData`, `GetWidgetPublicData` (NotModified → flag),
+  `AnswerWidgetQuery`; `types.WidgetMedia` parsing, `WidgetQuery` update
+  type with bound `Answer` behind a minimal `WidgetQueryBinder`, dispatched
+  into `Update.WidgetQuery`; `Message.EditWidgetData` bound pair. 7 new
+  tests; wrappers regenerated (189).
+
 ## Commits
 
 - `346c6a1` feat(bots,folders): owned-bots listing and leave-folder suggestions
