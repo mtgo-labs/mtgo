@@ -491,6 +491,32 @@ func (c *AuthMethods) RecoverPassword(ctx context.Context, code string) (*types.
 	}
 }
 
+// RequestPasswordRecovery asks Telegram to email a recovery code for an
+// account whose cloud password is unknown. It is the first half of the 2FA
+// recovery flow: the code it triggers is completed with RecoverPassword.
+//
+// Returns a masked email pattern (for example "sm***@gmail.com") describing
+// where the code was sent.
+//
+// Example:
+//
+//	pattern, err := client.RequestPasswordRecovery(ctx)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Println("recovery code sent to:", pattern)
+func (c *AuthMethods) RequestPasswordRecovery(ctx context.Context) (string, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return "", err
+	}
+	c.Log.Debug("auth: RequestPasswordRecovery")
+	result, err := c.Raw().AuthRequestPasswordRecovery(ctx)
+	if err != nil {
+		return "", err
+	}
+	return result.EmailPattern, nil
+}
+
 // commitAuthorizedUser serializes successful authorization with terminal auth
 // classification and cleanup. Holding authLossMu through persistence makes the
 // ordering explicit: a latched loss rejects the write, otherwise later cleanup
