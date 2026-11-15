@@ -62,7 +62,7 @@ func computeNewPasswordHash(algo *tg.PasswordKdfAlgoSha256sha256pbkdf2hmacsha512
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) EnableCloudPassword(ctx context.Context, password, hint string) error {
+func (c *PasswordMethods) EnableCloudPassword(ctx context.Context, password, hint string) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (c *Client) EnableCloudPassword(ctx context.Context, password, hint string)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) ChangeCloudPassword(ctx context.Context, currentPassword, newPassword, newHint string) error {
+func (c *PasswordMethods) ChangeCloudPassword(ctx context.Context, currentPassword, newPassword, newHint string) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func (c *Client) ChangeCloudPassword(ctx context.Context, currentPassword, newPa
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) RemoveCloudPassword(ctx context.Context, password string) error {
+func (c *PasswordMethods) RemoveCloudPassword(ctx context.Context, password string) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}

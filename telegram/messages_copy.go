@@ -40,14 +40,14 @@ import (
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("copied as:", newID)
-func (c *Client) CopyMessage(ctx context.Context, chatID int64, fromChatID int64, messageID int32, opts ...*params.CopyMessage) (int64, error) {
+func (c *MessageMethods) CopyMessage(ctx context.Context, chatID int64, fromChatID int64, messageID int32, opts ...*params.CopyMessage) (int64, error) {
 	c.Log.Debugf("CopyMessage to=%d from=%d", chatID, fromChatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	fromPeer, err := resolvePeer(ctx, c, fromChatID)
+	fromPeer, err := resolvePeer(ctx, c.Client, fromChatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve from peer: %w", err)
 	}
@@ -196,14 +196,14 @@ func (c *Client) copyMessageWithCaption(ctx context.Context, chatID int64, peer 
 //	for _, m := range msgs {
 //	    fmt.Println("copied:", m.ID)
 //	}
-func (c *Client) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID int64, groupedID int64) ([]*types.Message, error) {
+func (c *MessageMethods) CopyMediaGroup(ctx context.Context, chatID int64, fromChatID int64, groupedID int64) ([]*types.Message, error) {
 	c.Log.Debugf("CopyMediaGroup to=%d from=%d", chatID, fromChatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	fromPeer, err := resolvePeer(ctx, c, fromChatID)
+	fromPeer, err := resolvePeer(ctx, c.Client, fromChatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve from peer: %w", err)
 	}

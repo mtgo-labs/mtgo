@@ -12,7 +12,7 @@ import (
 // less defaults to 100. offsetDate can be used for pagination by passing the date of
 // the last received dialog. Returns nil (no error) when the dialog list has not been
 // modified since the last call.
-func (c *Client) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([]*types.Chat, error) {
+func (c *UtilityMethods) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([]*types.Chat, error) {
 	if limit <= 0 {
 		limit = 100
 	}

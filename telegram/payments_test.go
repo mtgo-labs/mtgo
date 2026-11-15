@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetPaymentForm_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.GetPaymentForm(context.TODO(), 999, 1, nil)
 	if err == nil {
 		t.Fatal("expected error for unresolvable peer")
@@ -16,7 +16,7 @@ func TestGetPaymentForm_PeerResolveError(t *testing.T) {
 }
 
 func TestSendPaymentForm_NilCredentials(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.SendPaymentForm(context.TODO(), 1, 0, 1, nil, nil)
 	if err == nil {
 		t.Fatal("expected error for nil credentials")
@@ -24,7 +24,7 @@ func TestSendPaymentForm_NilCredentials(t *testing.T) {
 }
 
 func TestSendPaymentForm_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	creds := &tg.InputPaymentCredentials{Data: &tg.DataJSON{Data: "{}"}}
 	_, err := c.SendPaymentForm(context.TODO(), 1, 999, 1, creds, nil)
 	if err == nil {
@@ -49,7 +49,7 @@ func TestSendPaymentForm_TipOption(t *testing.T) {
 }
 
 func TestGetStarsBalance_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.GetStarsBalance(context.TODO(), 999)
 	if err == nil {
 		t.Fatal("expected error for unresolvable peer")
@@ -57,7 +57,7 @@ func TestGetStarsBalance_PeerResolveError(t *testing.T) {
 }
 
 func TestSendGift_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.SendGift(context.TODO(), 999, 1, "hello")
 	if err == nil {
 		t.Fatal("expected error for unresolvable user")

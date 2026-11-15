@@ -108,7 +108,7 @@ type UploadResult struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Uploaded %d bytes\n", result.Size)
-func (c *Client) UploadFile(ctx context.Context, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (*UploadResult, error) {
+func (c *UtilityMethods) UploadFile(ctx context.Context, reader io.Reader, fileName string, fileSize int64, opts *UploadOptions) (*UploadResult, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -628,7 +628,7 @@ func generateFileID() (int64, error) {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Photo sent, message ID: %d\n", msg.ID)
-func (c *Client) SendPhoto(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendPhoto) (*types.Message, error) {
+func (c *MessageMethods) SendPhoto(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendPhoto) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -636,14 +636,14 @@ func (c *Client) SendPhoto(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindPhoto)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindPhoto)
 	if err != nil {
 		return nil, fmt.Errorf("send_photo: %w", err)
 	}
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendDocument) (*types.Message, error) {
+func (c *MessageMethods) SendDocument(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendDocument) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -651,7 +651,7 @@ func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindDocument)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindDocument)
 	if err != nil {
 		return nil, fmt.Errorf("send_document: %w", err)
 	}
@@ -666,7 +666,7 @@ func (c *Client) SendDocument(ctx context.Context, chatID int64, file *InputFile
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVideo) (*types.Message, error) {
+func (c *MessageMethods) SendVideo(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVideo) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -674,7 +674,7 @@ func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindVideo)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindVideo)
 	if err != nil {
 		return nil, fmt.Errorf("send_video: %w", err)
 	}
@@ -686,7 +686,7 @@ func (c *Client) SendVideo(ctx context.Context, chatID int64, file *InputFile, c
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAudio) (*types.Message, error) {
+func (c *MessageMethods) SendAudio(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAudio) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -694,7 +694,7 @@ func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindAudio)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindAudio)
 	if err != nil {
 		return nil, fmt.Errorf("send_audio: %w", err)
 	}
@@ -705,7 +705,7 @@ func (c *Client) SendAudio(ctx context.Context, chatID int64, file *InputFile, c
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendAnimation(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAnimation) (*types.Message, error) {
+func (c *MessageMethods) SendAnimation(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendAnimation) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -713,14 +713,14 @@ func (c *Client) SendAnimation(ctx context.Context, chatID int64, file *InputFil
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindAnimation)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindAnimation)
 	if err != nil {
 		return nil, fmt.Errorf("send_animation: %w", err)
 	}
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendVoice(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*types.Message, error) {
+func (c *MessageMethods) SendVoice(ctx context.Context, chatID int64, file *InputFile, caption string, opts ...*params.SendVoice) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -728,14 +728,14 @@ func (c *Client) SendVoice(ctx context.Context, chatID int64, file *InputFile, c
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindVoice)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindVoice)
 	if err != nil {
 		return nil, fmt.Errorf("send_voice: %w", err)
 	}
 	return c.SendMedia(ctx, chatID, media, caption, opt.ToSendMsg())
 }
 
-func (c *Client) SendVideoNote(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*types.Message, error) {
+func (c *MessageMethods) SendVideoNote(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendVideoNote) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -743,14 +743,14 @@ func (c *Client) SendVideoNote(ctx context.Context, chatID int64, file *InputFil
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindVideoNote)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindVideoNote)
 	if err != nil {
 		return nil, fmt.Errorf("send_video_note: %w", err)
 	}
 	return c.SendMedia(ctx, chatID, media, "", opt.ToSendMsg())
 }
 
-func (c *Client) SendSticker(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendSticker) (*types.Message, error) {
+func (c *MessageMethods) SendSticker(ctx context.Context, chatID int64, file *InputFile, opts ...*params.SendSticker) (*types.Message, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -758,7 +758,7 @@ func (c *Client) SendSticker(ctx context.Context, chatID int64, file *InputFile,
 	if opt.FileName != "" && file.GetFileName() == "" {
 		file.SetFileName(opt.FileName)
 	}
-	media, err := resolveFile(ctx, file, c, mediaKindSticker)
+	media, err := resolveFile(ctx, file, c.Client, mediaKindSticker)
 	if err != nil {
 		return nil, fmt.Errorf("send_sticker: %w", err)
 	}

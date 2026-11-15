@@ -65,7 +65,7 @@ type SendInlineBotResultOption struct {
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) AnswerInlineQuery(ctx context.Context, queryID int64, results []tg.InputBotInlineResultClass, opts ...*AnswerInlineQueryOption) error {
+func (c *BotsMethods) AnswerInlineQuery(ctx context.Context, queryID int64, results []tg.InputBotInlineResultClass, opts ...*AnswerInlineQueryOption) error {
 	c.Log.Debugf("AnswerInlineQuery query_id=%d", queryID)
 	opt := getOptDef(&AnswerInlineQueryOption{}, opts...)
 
@@ -107,7 +107,7 @@ func (c *Client) AnswerInlineQuery(ctx context.Context, queryID int64, results [
 //
 // Returns the sent guest message or an error if the query ID is invalid, the
 // RPC call fails, or Telegram returns an unexpected result type.
-func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, result tg.InputBotInlineResultClass) (*types.SentGuestMessage, error) {
+func (c *BotsMethods) AnswerGuestQuery(ctx context.Context, guestQueryID string, result tg.InputBotInlineResultClass) (*types.SentGuestMessage, error) {
 	c.Log.Debugf("AnswerGuestQuery query_id=%s", guestQueryID)
 
 	queryID, err := strconv.ParseInt(guestQueryID, 10, 64)
@@ -153,13 +153,13 @@ func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, resu
 //	for _, r := range results.Results {
 //	    fmt.Printf("Result: %T\n", r)
 //	}
-func (c *Client) GetInlineBotResults(ctx context.Context, bot int64, chatID int64, query, offset string) (*tg.MessagesBotResults, error) {
+func (c *BotsMethods) GetInlineBotResults(ctx context.Context, bot int64, chatID int64, query, offset string) (*tg.MessagesBotResults, error) {
 	c.Log.Debug("GetInlineBotResults")
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}
-	user, err := resolveUserID(ctx, c, bot)
+	user, err := resolveUserID(ctx, c.Client, bot)
 	if err != nil {
 		return nil, fmt.Errorf("resolve bot: %w", err)
 	}
@@ -199,11 +199,11 @@ func (c *Client) GetInlineBotResults(ctx context.Context, bot int64, chatID int6
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Sent message ID: %d\n", msg.ID)
-func (c *Client) SendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, opts ...*SendInlineBotResultOption) (*types.Message, error) {
+func (c *BotsMethods) SendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, opts ...*SendInlineBotResultOption) (*types.Message, error) {
 	c.Log.Debugf("SendInlineBotResult chat_id=%d", chatID)
 	opt := getOptDef(&SendInlineBotResultOption{}, opts...)
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}

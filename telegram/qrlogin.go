@@ -42,7 +42,7 @@ type QRLoginToken struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("QR token expires at unix %d\n", token.Expires)
-func (c *Client) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error) {
+func (c *AuthMethods) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (c *Client) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error)
 //	    return
 //	}
 //	fmt.Printf("Logged in as %s\n", user.FirstName)
-func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*types.User, error) {
+func (c *AuthMethods) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}

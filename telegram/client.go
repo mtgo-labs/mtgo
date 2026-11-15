@@ -95,6 +95,31 @@ type Dispatcher interface {
 // Use the accessor methods (Me, Session, Storage, Config) to inspect client state,
 // and the RPC methods (Invoke, Raw) to make arbitrary API calls.
 type Client struct {
+	// Domain method groups. Every client-facing operation lives on exactly one
+	// group; the groups are embedded so their methods are promoted onto
+	// *Client (client.SendMessage == client.MessageMethods.SendMessage). The
+	// promoted-method collision test guarantees no group method collides with
+	// another group or a direct Client method.
+	*AccountMethods
+	*AdvancedMethods
+	*AuthMethods
+	*BotsMethods
+	*BusinessMethods
+	*ChatMethods
+	*ContactsMethods
+	*InviteLinkMethods
+	*MessageMethods
+	*PasswordMethods
+	*PaymentMethods
+	*PhoneMethods
+	*PremiumMethods
+	*SecretChatMethods
+	*StickerMethods
+	*StoryMethods
+	*UserMethods
+	*UtilityMethods
+	*WalletMethods
+
 	cfg     Config
 	cfgMu   sync.RWMutex
 	mu      sync.RWMutex
@@ -301,6 +326,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		Log:               logger,
 		rng:               rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())^0x9E3779B97F4A7C15)),
 	}
+	client.initMethodGroups()
 
 	client.dcAuthManager = session.NewDcAuthManager(2, func(ctx context.Context, fromDC, toDC int) (*tg.AuthExportedAuthorization, error) {
 		return client.Raw().AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
@@ -3833,7 +3859,7 @@ func (c *Client) ExportSessionString() (string, error) {
 // for full server-side logout use the auth.SignOut method.
 //
 // Returns ErrNotConnected if the client is not connected.
-func (c *Client) LogOut() error {
+func (c *AuthMethods) LogOut() error {
 	if !c.IsConnected() {
 		return ErrNotConnected
 	}

@@ -18,9 +18,9 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetChatMenuButton(ctx context.Context, userID int64, button tg.BotMenuButtonClass) error {
+func (c *BotsMethods) SetChatMenuButton(ctx context.Context, userID int64, button tg.BotMenuButtonClass) error {
 	c.Log.Debugf("SetChatMenuButton user_id=%d", userID)
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -45,9 +45,9 @@ func (c *Client) SetChatMenuButton(ctx context.Context, userID int64, button tg.
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Menu button type: %T\n", button)
-func (c *Client) GetChatMenuButton(ctx context.Context, userID int64) (tg.BotMenuButtonClass, error) {
+func (c *BotsMethods) GetChatMenuButton(ctx context.Context, userID int64) (tg.BotMenuButtonClass, error) {
 	c.Log.Debugf("GetChatMenuButton user_id=%d", userID)
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

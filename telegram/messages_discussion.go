@@ -9,9 +9,9 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func (c *Client) GetDiscussionMessage(ctx context.Context, chatID int64, messageID int32) (*types.Message, error) {
+func (c *MessageMethods) GetDiscussionMessage(ctx context.Context, chatID int64, messageID int32) (*types.Message, error) {
 	c.Log.Debugf("GetDiscussionMessage chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -36,9 +36,9 @@ func (c *Client) GetDiscussionMessage(ctx context.Context, chatID int64, message
 	return m, nil
 }
 
-func (c *Client) GetDiscussionReplies(ctx context.Context, chatID int64, messageID int32, limit int, offsetID int32) ([]*types.Message, error) {
+func (c *MessageMethods) GetDiscussionReplies(ctx context.Context, chatID int64, messageID int32, limit int, offsetID int32) ([]*types.Message, error) {
 	c.Log.Debugf("GetDiscussionReplies chat_id=%d msg_id=%d limit=%d", chatID, messageID, limit)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -60,9 +60,9 @@ func (c *Client) GetDiscussionReplies(ctx context.Context, chatID int64, message
 	return extractMessagesFromMessagesClass(result, c)
 }
 
-func (c *Client) GetDiscussionRepliesCount(ctx context.Context, chatID int64, messageID int32) (int, error) {
+func (c *MessageMethods) GetDiscussionRepliesCount(ctx context.Context, chatID int64, messageID int32) (int, error) {
 	c.Log.Debugf("GetDiscussionRepliesCount chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -83,7 +83,7 @@ func (c *Client) GetDiscussionRepliesCount(ctx context.Context, chatID int64, me
 	return int(count), nil
 }
 
-func (c *Client) SendMessageDraft(ctx context.Context, chatID int64, text string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendMessageDraft(ctx context.Context, chatID int64, text string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendMessageDraft chat_id=%d", chatID)
 	opt := params.GetOptDef(&params.SendMessage{}, opts...)
 	opt.ClearDraft = true

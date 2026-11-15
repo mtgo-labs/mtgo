@@ -69,7 +69,7 @@ type SendCodeResult struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("phone code hash:", result.PhoneCodeHash)
-func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
+func (c *AuthMethods) SendCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func parseRecaptchaChallenge(err error) (action, key string, ok bool) {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("signed in as:", user.FirstName)
-func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
+func (c *AuthMethods) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("registered as:", user.FirstName, user.LastName)
-func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
+func (c *AuthMethods) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 //	    return
 //	}
 //	fmt.Println("signed out:", ok)
-func (c *Client) SignOut(ctx context.Context) (bool, error) {
+func (c *AuthMethods) SignOut(ctx context.Context) (bool, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return false, err
 	}
@@ -333,7 +333,7 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 //
 // Returns an empty string when no hint has been set by the user.
 // Returns an error if the server request fails or the session is not authorized.
-func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
+func (c *AuthMethods) GetPasswordHint(ctx context.Context) (string, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return "", err
 	}
@@ -363,7 +363,7 @@ func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("authenticated as:", user.FirstName)
-func (c *Client) CheckPassword(ctx context.Context, password string) (*types.User, error) {
+func (c *AuthMethods) CheckPassword(ctx context.Context, password string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -403,7 +403,7 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 // Returns the authenticated User on success.
 // Returns an error if the recovery code is invalid or expired, or if the
 // server rejects the request.
-func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
+func (c *AuthMethods) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -538,7 +538,7 @@ type ActiveSessions struct {
 //	for _, s := range sessions.Sessions {
 //	    fmt.Printf("%s (%s) - IP: %s\n", s.DeviceModel, s.Platform, s.IP)
 //	}
-func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
+func (c *AuthMethods) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -588,7 +588,7 @@ func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error)
 //	        client.ResetSession(ctx, s.Hash)
 //	    }
 //	}
-func (c *Client) ResetSession(ctx context.Context, hash int64) error {
+func (c *AuthMethods) ResetSession(ctx context.Context, hash int64) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}

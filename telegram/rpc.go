@@ -190,7 +190,7 @@ func wrapInitConnection(cfg Config, input tg.TLObject) tg.TLObject {
 //	peers, err := rpc.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
 //	    Username: "durov",
 //	})
-func (c *Client) Raw() *tg.RPCClient {
+func (c *AdvancedMethods) Raw() *tg.RPCClient {
 	if inv := c.testInvoker; inv != nil {
 		return tg.NewRPCClient(inv)
 	}
@@ -202,7 +202,7 @@ func (c *Client) Raw() *tg.RPCClient {
 	}
 	mws := c.invokerMiddlewares
 
-	base := tg.Invoker(&clientInvoker{client: c})
+	base := tg.Invoker(&clientInvoker{client: c.Client})
 	for i := len(mws) - 1; i >= 0; i-- {
 		base = mws[i](base)
 	}
@@ -222,7 +222,7 @@ func (c *Client) Raw() *tg.RPCClient {
 //	result, err := client.RPC().MessagesGetMessages(ctx, &tg.MessagesGetMessagesRequest{
 //	    ID: []tg.InputMessageClass{&tg.InputMessageID{ID: 42}},
 //	})
-func (c *Client) RPC() *tg.RPCClient { return c.Raw() }
+func (c *AdvancedMethods) RPC() *tg.RPCClient { return c.Raw() }
 
 // InvokeJSON sends a raw Telegram API call encoded as JSON. functionName is the
 // exact TL method name (e.g. "messages.SendMessage"). payload is the JSON-encoded
@@ -245,7 +245,7 @@ func (c *Client) RPC() *tg.RPCClient { return c.Raw() }
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(string(resp))
-func (c *Client) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error) {
+func (c *AdvancedMethods) InvokeJSON(ctx context.Context, functionName string, payload []byte, useSnakeCase bool) ([]byte, error) {
 	jc := NewJSONClient(c.Raw())
 	return jc.InvokeJSON(ctx, functionName, payload, useSnakeCase)
 }

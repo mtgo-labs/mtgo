@@ -11,7 +11,7 @@ import (
 
 // GetCustomEmojiStickers returns sticker metadata for the given custom emoji
 // document identifiers. Telegram accepts at most 200 identifiers per request.
-func (c *Client) GetCustomEmojiStickers(ctx context.Context, customEmojiIDs []string) ([]*types.Sticker, error) {
+func (c *StickerMethods) GetCustomEmojiStickers(ctx context.Context, customEmojiIDs []string) ([]*types.Sticker, error) {
 	c.Log.Debugf("GetCustomEmojiStickers count=%d", len(customEmojiIDs))
 	if len(customEmojiIDs) == 0 {
 		return []*types.Sticker{}, nil

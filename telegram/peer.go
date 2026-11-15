@@ -70,7 +70,7 @@ func (c *Client) cacheUsername(username string, id int64) {
 //	}
 //
 //	fmt.Println(peer)
-func (c *Client) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass, error) {
+func (c *UtilityMethods) ResolvePeer(ctx context.Context, peerID any) (tg.InputPeerClass, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (c *Client) resolveChatRefFull(ctx context.Context, r ChatRef) (tg.InputPee
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Resolved @durov to %T\n", peer)
-func (c *Client) ResolveUsername(ctx context.Context, username string) (tg.InputPeerClass, error) {
+func (c *UtilityMethods) ResolveUsername(ctx context.Context, username string) (tg.InputPeerClass, error) {
 	return c.peersManager().InputPeerByUsername(ctx, username)
 }
 
@@ -154,19 +154,19 @@ func (c *Client) ResolveUsername(ctx context.Context, username string) (tg.Input
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Resolved phone to %T\n", peer)
-func (c *Client) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
+func (c *UtilityMethods) ResolvePhone(ctx context.Context, phone string) (tg.InputPeerClass, error) {
 	return c.peersManager().InputPeerByPhone(ctx, phone)
 }
 
 // ResolvePeerCache looks up a previously cached InputPeer by its numeric ID.
 // Returns the cached peer or ErrPeerNotFound if not present.
-func (c *Client) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
+func (c *UtilityMethods) ResolvePeerCache(id int64) (tg.InputPeerClass, error) {
 	return c.peersManager().Cached(id)
 }
 
 // CachePeer stores an InputPeer in the peer cache under the given numeric ID,
 // canonicalizing the key and preserving known access hashes.
-func (c *Client) CachePeer(id int64, peer tg.InputPeerClass) {
+func (c *UtilityMethods) CachePeer(id int64, peer tg.InputPeerClass) {
 	c.peersManager().Cache(id, peer)
 }
 

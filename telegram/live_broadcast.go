@@ -75,7 +75,7 @@ type BroadcastStream struct {
 //	// Or with a custom config:
 //	cfg := &telegram.BroadcastConfig{Bitrate: "4000k", FrameRate: 60}
 //	stream, err = client.NewBroadcastStream(chatID, cfg)
-func (c *Client) NewBroadcastStream(chatID int64, cfg ...*BroadcastConfig) (*BroadcastStream, error) {
+func (c *PhoneMethods) NewBroadcastStream(chatID int64, cfg ...*BroadcastConfig) (*BroadcastStream, error) {
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
 		return nil, ErrFFmpegNotFound
 	}
@@ -87,7 +87,7 @@ func (c *Client) NewBroadcastStream(chatID int64, cfg ...*BroadcastConfig) (*Bro
 
 	return &BroadcastStream{
 		chatID: chatID,
-		client: c,
+		client: c.Client,
 		state:  BroadcastIdle,
 		cfg:    config,
 	}, nil

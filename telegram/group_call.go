@@ -21,12 +21,12 @@ import (
 // To create a call with RTMP streaming enabled:
 //
 //	call, err := client.CreateCall(ctx, chatID, true)
-func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.PhoneCallClass, error) {
+func (c *PhoneMethods) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.PhoneCallClass, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
-	resolved, err := resolvePeer(ctx, c, peer)
+	resolved, err := resolvePeer(ctx, c.Client, peer)
 	if err != nil {
 		return nil, fmt.Errorf("create call: resolve peer: %w", err)
 	}
@@ -62,12 +62,12 @@ func (c *Client) CreateCall(ctx context.Context, peer int64, rtmp ...bool) (tg.P
 //		log.Fatal(err)
 //	}
 //	fmt.Println("active call found:", call)
-func (c *Client) GetActiveCall(ctx context.Context, chatID int64) (tg.InputGroupCallClass, error) {
+func (c *PhoneMethods) GetActiveCall(ctx context.Context, chatID int64) (tg.InputGroupCallClass, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
-	resolved, err := resolvePeer(ctx, c, chatID)
+	resolved, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("get active call: resolve peer: %w", err)
 	}
@@ -311,7 +311,7 @@ func (r *CallReader) readCDNChunk(ctx context.Context, redirect *tg.UploadFileCD
 //		log.Fatal(err)
 //	}
 //	fmt.Printf("got chunk: %d bytes\n", len(chunk))
-func (c *Client) NewCallReader(ctx context.Context, chatID int64) (*CallReader, error) {
+func (c *PhoneMethods) NewCallReader(ctx context.Context, chatID int64) (*CallReader, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -338,7 +338,7 @@ func (c *Client) NewCallReader(ctx context.Context, chatID int64) (*CallReader, 
 		call:       call,
 		scale:      stream.Channels[0].Scale,
 		selectedCh: 0,
-		client:     c,
+		client:     c.Client,
 	}, nil
 }
 

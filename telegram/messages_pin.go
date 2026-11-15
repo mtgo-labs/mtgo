@@ -37,9 +37,9 @@ import (
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("pinned:", pinned.ID)
-func (c *Client) PinMessage(ctx context.Context, chatID int64, messageID int32, opts ...*params.PinMessage) (*types.Message, error) {
+func (c *MessageMethods) PinMessage(ctx context.Context, chatID int64, messageID int32, opts ...*params.PinMessage) (*types.Message, error) {
 	c.Log.Debugf("PinMessage chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -87,9 +87,9 @@ func (c *Client) PinMessage(ctx context.Context, chatID int64, messageID int32, 
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("unpinned:", msg.ID)
-func (c *Client) UnpinMessage(ctx context.Context, chatID int64, messageID int32) (*types.Message, error) {
+func (c *MessageMethods) UnpinMessage(ctx context.Context, chatID int64, messageID int32) (*types.Message, error) {
 	c.Log.Debugf("UnpinMessage chat_id=%d msg_id=%d", chatID, messageID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -131,9 +131,9 @@ func (c *Client) UnpinMessage(ctx context.Context, chatID int64, messageID int32
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("affected pts:", pts)
-func (c *Client) UnpinAllMessages(ctx context.Context, chatID int64) (int, error) {
+func (c *MessageMethods) UnpinAllMessages(ctx context.Context, chatID int64) (int, error) {
 	c.Log.Debugf("UnpinAllMessages chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}

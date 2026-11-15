@@ -17,14 +17,14 @@ import (
 //
 // Note: messages.setGameScore has no noforwards flag; content protection cannot
 // be requested here.
-func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64, userID int64, score int, force bool) (*types.Message, error) {
+func (c *BotsMethods) SetGameScore(ctx context.Context, chatID int64, messageID int64, userID int64, score int, force bool) (*types.Message, error) {
 	c.Log.Debugf("SetGameScore chat_id=%d user_id=%d score=%d", chatID, userID, score)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -53,14 +53,14 @@ func (c *Client) SetGameScore(ctx context.Context, chatID int64, messageID int64
 // chatID identifies the chat containing the game, messageID is the message ID,
 // and userID is the player whose scores to retrieve. Returns a slice of HighScore
 // entries or an error if the peer or user cannot be resolved.
-func (c *Client) GetGameHighScores(ctx context.Context, chatID int64, messageID int64, userID int64) ([]*tg.HighScore, error) {
+func (c *BotsMethods) GetGameHighScores(ctx context.Context, chatID int64, messageID int64, userID int64) ([]*tg.HighScore, error) {
 	c.Log.Debugf("GetGameHighScores chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -96,9 +96,9 @@ func (c *Client) GetGameHighScores(ctx context.Context, chatID int64, messageID 
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Game sent, message ID: %d\n", msg.ID)
-func (c *Client) SendGame(ctx context.Context, chatID int64, gameShortName string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendGame(ctx context.Context, chatID int64, gameShortName string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendGame chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}

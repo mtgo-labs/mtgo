@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetBusinessConnection_EmptyConnectionID(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.GetBusinessConnection(context.TODO(), "")
 	if err == nil {
 		t.Fatal("expected error for empty connection ID")

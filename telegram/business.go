@@ -19,7 +19,7 @@ import (
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Business connection: %+v\n", conn)
-func (c *Client) GetBusinessConnection(ctx context.Context, connectionID string) (*tg.BotBusinessConnection, error) {
+func (c *BusinessMethods) GetBusinessConnection(ctx context.Context, connectionID string) (*tg.BotBusinessConnection, error) {
 	if connectionID == "" {
 		return nil, ErrBusinessConnIDRequired
 	}

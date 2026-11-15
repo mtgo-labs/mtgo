@@ -25,8 +25,8 @@ import (
 //	    log.Fatal(err)
 //	}
 //	fmt.Println(chat.Title)
-func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error) {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) GetChat(ctx context.Context, chatID int64) (*types.Chat, error) {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -40,7 +40,7 @@ func (c *Client) GetChat(ctx context.Context, chatID int64) (*types.Chat, error)
 		}
 		return extractChatFromFull(result)
 	case *tg.InputPeerChannel:
-		ch, err := resolveChannelID(ctx, c, chatID)
+		ch, err := resolveChannelID(ctx, c.Client, chatID)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ func parseJoinLink(link string) (joinTarget, error) {
 //	chat, err := client.JoinChat(ctx, "https://t.me/+tPknWlMV9eU3NThk")
 //	chat, err := client.JoinChat(ctx, "@mtgo_labs")
 //	chat, err := client.JoinChat(ctx, "mtgo_labs")
-func (c *Client) JoinChat(ctx context.Context, link string) (*types.Chat, error) {
+func (c *ChatMethods) JoinChat(ctx context.Context, link string) (*types.Chat, error) {
 	target, err := parseJoinLink(link)
 	if err != nil {
 		return nil, err
@@ -236,8 +236,8 @@ func (c *Client) joinByInviteHash(ctx context.Context, inviteHash string) (*type
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("Left the chat")
-func (c *Client) LeaveChat(ctx context.Context, chatID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) LeaveChat(ctx context.Context, chatID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -246,7 +246,7 @@ func (c *Client) LeaveChat(ctx context.Context, chatID int64) error {
 
 	switch p := peer.(type) {
 	case *tg.InputPeerChannel:
-		ch, err := resolveChannelID(ctx, c, chatID)
+		ch, err := resolveChannelID(ctx, c.Client, chatID)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (c *Client) LeaveChat(ctx context.Context, chatID int64) error {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Created channel: %s (ID: %d)\n", ch.Title, ch.ID)
-func (c *Client) CreateChannel(ctx context.Context, title, about string, megagroup bool) (*types.Chat, error) {
+func (c *ChatMethods) CreateChannel(ctx context.Context, title, about string, megagroup bool) (*types.Chat, error) {
 	c.Log.Debugf("CreateChannel megagroup=%v", megagroup)
 	var flags tg.Fields
 	flags.Set(0)
@@ -325,8 +325,8 @@ func (c *Client) CreateChannel(ctx context.Context, title, about string, megagro
 //   - chatID: identifier of the target chat (ChatRef)
 //
 // Returns an error if the peer cannot be resolved or is an unsupported type.
-func (c *Client) DeleteChat(ctx context.Context, chatID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) DeleteChat(ctx context.Context, chatID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -335,7 +335,7 @@ func (c *Client) DeleteChat(ctx context.Context, chatID int64) error {
 
 	switch p := peer.(type) {
 	case *tg.InputPeerChannel:
-		ch, err := resolveChannelID(ctx, c, chatID)
+		ch, err := resolveChannelID(ctx, c.Client, chatID)
 		if err != nil {
 			return err
 		}
@@ -359,15 +359,15 @@ func (c *Client) DeleteChat(ctx context.Context, chatID int64) error {
 //   - title: the new title string
 //
 // Returns an error if the peer cannot be resolved or is an unsupported type.
-func (c *Client) SetChatTitle(ctx context.Context, chatID int64, title string) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) SetChatTitle(ctx context.Context, chatID int64, title string) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
 
 	switch p := peer.(type) {
 	case *tg.InputPeerChannel:
-		ch, err := resolveChannelID(ctx, c, chatID)
+		ch, err := resolveChannelID(ctx, c.Client, chatID)
 		if err != nil {
 			return err
 		}
@@ -391,8 +391,8 @@ func (c *Client) SetChatTitle(ctx context.Context, chatID int64, title string) e
 //   - about: the new description text
 //
 // Returns an error if the peer cannot be resolved or is an unsupported type.
-func (c *Client) SetChatDescription(ctx context.Context, chatID int64, about string) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) SetChatDescription(ctx context.Context, chatID int64, about string) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -419,8 +419,8 @@ func (c *Client) SetChatDescription(ctx context.Context, chatID int64, about str
 //   - username: the new public username (without @)
 //
 // Returns an error if the channel cannot be resolved or the username is taken.
-func (c *Client) SetChatUsername(ctx context.Context, chatID int64, username string) error {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) SetChatUsername(ctx context.Context, chatID int64, username string) error {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
@@ -447,8 +447,8 @@ func (c *Client) SetChatUsername(ctx context.Context, chatID int64, username str
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("User banned successfully")
-func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) BanChatMember(ctx context.Context, chatID int64, userID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -460,7 +460,7 @@ func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) 
 		return ErrBanSupergroupOnly
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -497,8 +497,8 @@ func (c *Client) BanChatMember(ctx context.Context, chatID int64, userID int64) 
 //
 // Returns an error if the peer is not a channel/supergroup, or if the user or
 // channel cannot be resolved.
-func (c *Client) UnbanChatMember(ctx context.Context, chatID int64, userID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) UnbanChatMember(ctx context.Context, chatID int64, userID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -510,7 +510,7 @@ func (c *Client) UnbanChatMember(ctx context.Context, chatID int64, userID int64
 		return ErrUnbanSupergroupOnly
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user peer: %w", err)
 	}
@@ -556,14 +556,14 @@ func (c *Client) UnbanChatMember(ctx context.Context, chatID int64, userID int64
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) PromoteChatMember(ctx context.Context, chatID int64, userID int64, adminRights *tg.ChatAdminRights) error {
+func (c *ChatMethods) PromoteChatMember(ctx context.Context, chatID int64, userID int64, adminRights *tg.ChatAdminRights) error {
 	c.Log.Debugf("PromoteChatMember chat_id=%d user_id=%d", chatID, userID)
-	ch, err := resolveChannelID(ctx, c, chatID)
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -587,13 +587,13 @@ func (c *Client) PromoteChatMember(ctx context.Context, chatID int64, userID int
 //
 // Returns a types.ChatMember with the participant's details, or an error if
 // the channel, user, or participant cannot be resolved.
-func (c *Client) GetChatMember(ctx context.Context, chatID int64, userID int64) (*types.ChatMember, error) {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) GetChatMember(ctx context.Context, chatID int64, userID int64) (*types.ChatMember, error) {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -642,8 +642,8 @@ func (c *Client) GetChatMember(ctx context.Context, chatID int64, userID int64) 
 //	for _, m := range members {
 //	    fmt.Printf("%s (ID: %d)\n", m.User.FirstName, m.User.ID)
 //	}
-func (c *Client) GetChatMembers(ctx context.Context, chatID int64, limit int, offset int) ([]*types.ChatMember, error) {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) GetChatMembers(ctx context.Context, chatID int64, limit int, offset int) ([]*types.ChatMember, error) {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -698,8 +698,8 @@ func (c *Client) GetChatMembers(ctx context.Context, chatID int64, limit int, of
 //
 // Returns the member count, or an error if the channel cannot be resolved or
 // the server returns an unexpected response type.
-func (c *Client) GetChatMembersCount(ctx context.Context, chatID int64) (int, error) {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) GetChatMembersCount(ctx context.Context, chatID int64) (int, error) {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, err
 	}
@@ -731,13 +731,13 @@ func (c *Client) GetChatMembersCount(ctx context.Context, chatID int64) (int, er
 //
 // Returns an error if the channel or user cannot be resolved, or if the user
 // cannot be invited (e.g. already a member or privacy restrictions).
-func (c *Client) AddChatMember(ctx context.Context, chatID int64, userID int64) error {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) AddChatMember(ctx context.Context, chatID int64, userID int64) error {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -764,8 +764,8 @@ func (c *Client) AddChatMember(ctx context.Context, chatID int64, userID int64) 
 //
 // Returns an error if the peer is not a channel/supergroup, or if the user or
 // channel cannot be resolved.
-func (c *Client) RestrictChatMember(ctx context.Context, chatID int64, userID int64, bannedRights *tg.ChatBannedRights) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) RestrictChatMember(ctx context.Context, chatID int64, userID int64, bannedRights *tg.ChatBannedRights) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -773,7 +773,7 @@ func (c *Client) RestrictChatMember(ctx context.Context, chatID int64, userID in
 	if !ok {
 		return ErrRestrictSupergroupOnly
 	}
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -805,14 +805,14 @@ func (c *Client) RestrictChatMember(ctx context.Context, chatID int64, userID in
 //   - photo: the new chat photo input (uploaded file, existing photo, or empty)
 //
 // Returns an error if the peer cannot be resolved or is an unsupported type.
-func (c *Client) SetChatPhoto(ctx context.Context, chatID int64, photo tg.InputChatPhotoClass) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) SetChatPhoto(ctx context.Context, chatID int64, photo tg.InputChatPhotoClass) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
 	switch p := peer.(type) {
 	case *tg.InputPeerChannel:
-		ch, err := resolveChannelID(ctx, c, chatID)
+		ch, err := resolveChannelID(ctx, c.Client, chatID)
 		if err != nil {
 			return err
 		}
@@ -836,7 +836,7 @@ func (c *Client) SetChatPhoto(ctx context.Context, chatID int64, photo tg.InputC
 //   - chatID: identifier of the target chat (ChatRef)
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) DeleteChatPhoto(ctx context.Context, chatID int64) error {
+func (c *ChatMethods) DeleteChatPhoto(ctx context.Context, chatID int64) error {
 	return c.SetChatPhoto(ctx, chatID, &tg.InputChatPhotoEmpty{})
 }
 
@@ -850,8 +850,8 @@ func (c *Client) DeleteChatPhoto(ctx context.Context, chatID int64) error {
 //   - ttl: time-to-live in seconds; 0 disables auto-deletion
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) SetChatTTL(ctx context.Context, chatID int64, ttl int) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) SetChatTTL(ctx context.Context, chatID int64, ttl int) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -874,8 +874,8 @@ func (c *Client) SetChatTTL(ctx context.Context, chatID int64, ttl int) error {
 //     denied action for regular members
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) SetChatPermissions(ctx context.Context, chatID int64, permissions *tg.ChatBannedRights) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) SetChatPermissions(ctx context.Context, chatID int64, permissions *tg.ChatBannedRights) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -897,8 +897,8 @@ func (c *Client) SetChatPermissions(ctx context.Context, chatID int64, permissio
 //   - unread: true to mark as unread, false to remove the marker
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) MarkChatUnread(ctx context.Context, chatID int64, unread bool) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) MarkChatUnread(ctx context.Context, chatID int64, unread bool) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -925,8 +925,8 @@ func (c *Client) MarkChatUnread(ctx context.Context, chatID int64, unread bool) 
 //   - enabled: true to enable protected content, false to disable
 //
 // Returns an error if the channel cannot be resolved or the RPC call fails.
-func (c *Client) SetProtectedContent(ctx context.Context, chatID int64, enabled bool) error {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) SetProtectedContent(ctx context.Context, chatID int64, enabled bool) error {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
@@ -949,12 +949,12 @@ func (c *Client) SetProtectedContent(ctx context.Context, chatID int64, enabled 
 //   - title: the custom admin title string (e.g. "Head Mod")
 //
 // Returns an error if the channel or user cannot be resolved.
-func (c *Client) SetAdministratorTitle(ctx context.Context, chatID int64, userID int64, title string) error {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) SetAdministratorTitle(ctx context.Context, chatID int64, userID int64, title string) error {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -986,11 +986,11 @@ func (c *Client) SetAdministratorTitle(ctx context.Context, chatID int64, userID
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Created group: %s (ID: %d)\n", group.Title, group.ID)
-func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64) (*types.Chat, error) {
+func (c *ChatMethods) CreateGroup(ctx context.Context, title string, userIDs []int64) (*types.Chat, error) {
 	c.Log.Debugf("CreateGroup count=%d", len(userIDs))
 	users := make([]tg.InputUserClass, len(userIDs))
 	for i, uid := range userIDs {
-		u, err := resolveUserID(ctx, c, uid)
+		u, err := resolveUserID(ctx, c.Client, uid)
 		if err != nil {
 			return nil, fmt.Errorf("resolve user %v: %w", uid, err)
 		}
@@ -1024,7 +1024,7 @@ func (c *Client) CreateGroup(ctx context.Context, title string, userIDs []int64)
 //   - about: the supergroup description/about text
 //
 // Returns the newly created types.Chat on success, or an error if creation fails.
-func (c *Client) CreateSupergroup(ctx context.Context, title, about string) (*types.Chat, error) {
+func (c *ChatMethods) CreateSupergroup(ctx context.Context, title, about string) (*types.Chat, error) {
 	return c.CreateChannel(ctx, title, about, true)
 }
 
@@ -1038,8 +1038,8 @@ func (c *Client) CreateSupergroup(ctx context.Context, title, about string) (*ty
 //   - seconds: the slow mode interval in seconds; 0 disables slow mode
 //
 // Returns an error if the channel cannot be resolved or the RPC call fails.
-func (c *Client) SetSlowMode(ctx context.Context, chatID int64, seconds int) error {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) SetSlowMode(ctx context.Context, chatID int64, seconds int) error {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
@@ -1064,8 +1064,8 @@ func (c *Client) SetSlowMode(ctx context.Context, chatID int64, seconds int) err
 //
 // Returns a slice of types.ChatEvent entries, or an error if the channel cannot
 // be resolved or the RPC call fails.
-func (c *Client) GetChatEventLog(ctx context.Context, chatID int64, query string, limit int) ([]*types.ChatEvent, error) {
-	ch, err := resolveChannelID(ctx, c, chatID)
+func (c *ChatMethods) GetChatEventLog(ctx context.Context, chatID int64, query string, limit int) ([]*types.ChatEvent, error) {
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,8 +1121,8 @@ var (
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("Chat muted")
-func (c *Client) MuteChat(ctx context.Context, chatID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) MuteChat(ctx context.Context, chatID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -1144,8 +1144,8 @@ func (c *Client) MuteChat(ctx context.Context, chatID int64) error {
 //   - chatID: identifier of the target chat (ChatRef)
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) UnmuteChat(ctx context.Context, chatID int64) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *ChatMethods) UnmuteChat(ctx context.Context, chatID int64) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}

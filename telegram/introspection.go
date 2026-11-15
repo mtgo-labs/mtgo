@@ -17,7 +17,7 @@ type LoadSnapshot struct {
 // LoadSnapshot returns an aggregated view of the client's internal load state.
 // When production-hardening features are disabled (all config zero), most fields
 // will be zero — this is expected (backward compat, Principle IV).
-func (c *Client) LoadSnapshot() LoadSnapshot {
+func (c *AdvancedMethods) LoadSnapshot() LoadSnapshot {
 	snap := LoadSnapshot{}
 
 	c.mu.RLock()
@@ -47,6 +47,6 @@ func (c *Client) LoadSnapshot() LoadSnapshot {
 }
 
 // ConnectionSnapshot returns transport and connection lifecycle diagnostics.
-func (c *Client) ConnectionSnapshot() ConnectionSnapshot {
+func (c *AdvancedMethods) ConnectionSnapshot() ConnectionSnapshot {
 	return c.connMetrics.Snapshot()
 }

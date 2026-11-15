@@ -28,11 +28,11 @@ import (
 //	for _, u := range users {
 //	    fmt.Printf("%s %s (ID: %d)\n", u.FirstName, u.LastName, u.ID)
 //	}
-func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, error) {
+func (c *UserMethods) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, error) {
 	c.Log.Debugf("GetUsers count=%d", len(userIDs))
 	inputs := make([]tg.InputUserClass, len(userIDs))
 	for i, id := range userIDs {
-		u, err := resolveUserID(ctx, c, id)
+		u, err := resolveUserID(ctx, c.Client, id)
 		if err != nil {
 			return nil, fmt.Errorf("resolve user %v: %w", id, err)
 		}
@@ -73,7 +73,7 @@ func (c *Client) GetUsers(ctx context.Context, userIDs []int64) ([]*types.User, 
 //
 // Returns the authenticated types.User, or an error if the client is not
 // connected or the server response is unexpected.
-func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
+func (c *UserMethods) GetMe(ctx context.Context) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -141,9 +141,9 @@ func (c *Client) GetMe(ctx context.Context) (*types.User, error) {
 //	for _, ch := range chats {
 //	    fmt.Println(ch.Title)
 //	}
-func (c *Client) GetCommonChats(ctx context.Context, userID int64, limit int) ([]*types.Chat, error) {
+func (c *UserMethods) GetCommonChats(ctx context.Context, userID int64, limit int) ([]*types.Chat, error) {
 	c.Log.Debugf("GetCommonChats user_id=%d", userID)
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -190,7 +190,7 @@ func (c *Client) GetCommonChats(ctx context.Context, userID int64, limit int) ([
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Updated profile: %s\n", updated.FirstName)
-func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, bio string) (*types.User, error) {
+func (c *UserMethods) UpdateProfile(ctx context.Context, firstName, lastName, bio string) (*types.User, error) {
 	c.Log.Debug("UpdateProfile")
 	var fn, ln, b string
 	if firstName != "" {
@@ -214,7 +214,7 @@ func (c *Client) UpdateProfile(ctx context.Context, firstName, lastName, bio str
 	return types.ParseUser(result), nil
 }
 
-func (c *Client) UpdateStatus(ctx context.Context, offline bool) error {
+func (c *UserMethods) UpdateStatus(ctx context.Context, offline bool) error {
 	c.Log.Debugf("UpdateStatus offline=%v", offline)
 	rpc := c.Raw()
 	_, err := rpc.AccountUpdateStatus(ctx, &tg.AccountUpdateStatusRequest{

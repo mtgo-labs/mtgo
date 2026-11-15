@@ -40,7 +40,7 @@ func (m *mockPeerResolver) ResolvePhone(_ context.Context, phone string) (tg.Inp
 // testClient wraps a PeerResolver in a Client whose test override makes the
 // resolution helpers use it with cache-only semantics.
 func testClient(r PeerResolver) *Client {
-	return &Client{testResolver: r}
+	return initClient(&Client{testResolver: r})
 }
 
 func TestResolvePeer_Self(t *testing.T) {
@@ -160,7 +160,7 @@ func TestClientPeerResolver_Override(t *testing.T) {
 			42: &tg.InputPeerUser{UserID: 42, AccessHash: 100},
 		},
 	}
-	c := &Client{testResolver: inner}
+	c := initClient(&Client{testResolver: inner})
 	resolver := c.clientPeerResolver()
 	peer, err := resolvePeer(t.Context(), testClient(resolver), 42)
 	if err != nil {
@@ -176,7 +176,7 @@ func TestClientPeerResolver_Override(t *testing.T) {
 }
 
 func TestClientPeerResolver_FallbackToSelf(t *testing.T) {
-	c := &Client{}
+	c := initClient(&Client{})
 	c.peersManager().Cache(10, &tg.InputPeerChat{ChatID: 10})
 	resolver := c.clientPeerResolver()
 	peer, err := resolvePeer(t.Context(), testClient(resolver), 10)

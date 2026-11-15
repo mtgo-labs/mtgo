@@ -184,7 +184,7 @@ type FileChunk struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Downloaded %d bytes\n", len(data))
-func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
+func (c *UtilityMethods) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ serialDownload:
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
+func (c *UtilityMethods) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
@@ -351,7 +351,7 @@ serialFileDownload:
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Downloaded photo thumbnail: %d bytes\n", len(data))
-func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize string, opts *params.Download) ([]byte, error) {
+func (c *MessageMethods) DownloadMedia(ctx context.Context, media types.Media, thumbSize string, opts *params.Download) ([]byte, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thumbSize string, filePath string, fileSize int64, opts *params.Download) error {
+func (c *MessageMethods) DownloadMediaToFile(ctx context.Context, media types.Media, thumbSize string, filePath string, fileSize int64, opts *params.Download) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -456,7 +456,7 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("streamed %d bytes\n", n)
-func (c *Client) DownloadMediaToWriter(ctx context.Context, media types.Media, thumbSize string, w io.Writer, opts *params.Download) (int64, error) {
+func (c *MessageMethods) DownloadMediaToWriter(ctx context.Context, media types.Media, thumbSize string, w io.Writer, opts *params.Download) (int64, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return 0, err
@@ -536,7 +536,7 @@ serialWriterDownload:
 //	    }
 //	    _, _ = os.Stdout.Write(chunk.Data)
 //	}
-func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
+func (c *UtilityMethods) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
@@ -2210,7 +2210,7 @@ func (c *Client) downloadBytes(ctx context.Context, input any, progress params.P
 //   - progress: optional progress callback
 //
 // Returns the absolute path of the downloaded file.
-func (c *Client) Download(ctx context.Context, input any, fileName string, progress params.ProgressFunc) (string, error) {
+func (c *UtilityMethods) Download(ctx context.Context, input any, fileName string, progress params.ProgressFunc) (string, error) {
 	return c.downloadToPath(ctx, input, fileName, progress)
 }
 
@@ -2223,7 +2223,7 @@ func (c *Client) Download(ctx context.Context, input any, fileName string, progr
 //   - progress: optional progress callback
 //
 // Returns the raw file contents as a byte slice.
-func (c *Client) DownloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
+func (c *UtilityMethods) DownloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
 	return c.downloadBytes(ctx, input, progress)
 }
 
@@ -2244,7 +2244,7 @@ type StreamChunk struct {
 //   - ctx: context for cancellation and timeout
 //   - input: *types.Message or types.Media to stream
 //   - opts: optional download settings (chunk size). May be nil for defaults.
-func (c *Client) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
+func (c *MessageMethods) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}

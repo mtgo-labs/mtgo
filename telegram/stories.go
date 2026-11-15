@@ -44,13 +44,13 @@ type SendStoryOption struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Story posted with ID %d\n", story.ID)
-func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMediaClass, opts ...*SendStoryOption) (*types.Story, error) {
+func (c *StoryMethods) SendStory(ctx context.Context, chatID int64, media tg.InputMediaClass, opts ...*SendStoryOption) (*types.Story, error) {
 	c.Log.Debugf("SendStory chat_id=%d", chatID)
 	if media == nil {
 		return nil, ErrMediaRequired
 	}
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -100,13 +100,13 @@ func (c *Client) SendStory(ctx context.Context, chatID int64, media tg.InputMedi
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Caption updated for story %d\n", story.ID)
-func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int32, caption string) (*types.Story, error) {
+func (c *StoryMethods) EditStoryCaption(ctx context.Context, chatID int64, storyID int32, caption string) (*types.Story, error) {
 	c.Log.Debugf("EditStoryCaption chat_id=%d story_id=%d", chatID, storyID)
 	if caption == "" {
 		return nil, ErrCaptionRequired
 	}
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -135,13 +135,13 @@ func (c *Client) EditStoryCaption(ctx context.Context, chatID int64, storyID int
 //
 // Returns the updated Story on success, or an error if the media is nil,
 // the peer cannot be resolved, or the Telegram API returns an error.
-func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
+func (c *StoryMethods) EditStoryMedia(ctx context.Context, chatID int64, storyID int32, media tg.InputMediaClass) (*types.Story, error) {
 	c.Log.Debugf("EditStoryMedia chat_id=%d story_id=%d", chatID, storyID)
 	if media == nil {
 		return nil, ErrMediaRequired
 	}
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -175,13 +175,13 @@ func (c *Client) EditStoryMedia(ctx context.Context, chatID int64, storyID int32
 //
 // Returns an error if the context has no client, no story IDs are provided,
 // the peer cannot be resolved, or the Telegram API returns an error.
-func (c *Client) DeleteStories(ctx context.Context, chatID int64, storyIDs []int32) error {
+func (c *StoryMethods) DeleteStories(ctx context.Context, chatID int64, storyIDs []int32) error {
 	c.Log.Debugf("DeleteStories chat_id=%d story_ids=%v", chatID, storyIDs)
 	if len(storyIDs) == 0 {
 		return ErrStoryIDsRequired
 	}
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -211,13 +211,13 @@ func (c *Client) DeleteStories(ctx context.Context, chatID int64, storyIDs []int
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Retrieved %d stories\n", len(stories))
-func (c *Client) GetStories(ctx context.Context, userID int64, storyIDs []int32) ([]*types.Story, error) {
+func (c *StoryMethods) GetStories(ctx context.Context, userID int64, storyIDs []int32) ([]*types.Story, error) {
 	c.Log.Debugf("GetStories user_id=%d count=%d", userID, len(storyIDs))
 	if len(storyIDs) == 0 {
 		return nil, ErrStoryIDsRequired
 	}
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}
@@ -265,9 +265,9 @@ func (c *Client) GetStories(ctx context.Context, userID int64, storyIDs []int32)
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Chat has %d active stories\n", len(stories))
-func (c *Client) GetChatStories(ctx context.Context, chatID int64) ([]*types.Story, error) {
+func (c *StoryMethods) GetChatStories(ctx context.Context, chatID int64) ([]*types.Story, error) {
 	c.Log.Debugf("GetChatStories chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -305,13 +305,13 @@ func (c *Client) GetChatStories(ctx context.Context, chatID int64) ([]*types.Sto
 // Returns a slice of StoryViewsTL on success, or an error if no IDs are provided,
 // the peer cannot be resolved, the response has an unexpected type, or the
 // Telegram API returns an error.
-func (c *Client) GetStoryViews(ctx context.Context, chatID int64, storyIDs []int32) ([]*tg.StoryViews, error) {
+func (c *StoryMethods) GetStoryViews(ctx context.Context, chatID int64, storyIDs []int32) ([]*tg.StoryViews, error) {
 	c.Log.Debugf("GetStoryViews chat_id=%d count=%d", chatID, len(storyIDs))
 	if len(storyIDs) == 0 {
 		return nil, ErrStoryIDsRequired
 	}
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -349,14 +349,14 @@ func (c *Client) GetStoryViews(ctx context.Context, chatID int64, storyIDs []int
 //
 // Returns the resulting Message on success, or an error if either peer cannot
 // be resolved or the Telegram API returns an error.
-func (c *Client) ForwardStory(ctx context.Context, targetChatID int64, sourceChatID int64, storyID int32) (*types.Message, error) {
+func (c *StoryMethods) ForwardStory(ctx context.Context, targetChatID int64, sourceChatID int64, storyID int32) (*types.Message, error) {
 	c.Log.Debugf("ForwardStory to=%d from=%d", targetChatID, sourceChatID)
-	targetPeer, err := resolvePeer(ctx, c, targetChatID)
+	targetPeer, err := resolvePeer(ctx, c.Client, targetChatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve target peer: %w", err)
 	}
 
-	sourcePeer, err := resolvePeer(ctx, c, sourceChatID)
+	sourcePeer, err := resolvePeer(ctx, c.Client, sourceChatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve source peer: %w", err)
 	}
@@ -380,8 +380,8 @@ func (c *Client) ForwardStory(ctx context.Context, targetChatID int64, sourceCha
 // The storyIDs parameter specifies which stories to pin.
 //
 // Returns an error if the peer cannot be resolved or the Telegram API returns an error.
-func (c *Client) PinChatStories(ctx context.Context, chatID int64, storyIDs []int32) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *StoryMethods) PinChatStories(ctx context.Context, chatID int64, storyIDs []int32) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -400,8 +400,8 @@ func (c *Client) PinChatStories(ctx context.Context, chatID int64, storyIDs []in
 // for the given chat.
 //
 // Returns an error if the peer cannot be resolved or the Telegram API returns an error.
-func (c *Client) ReadChatStories(ctx context.Context, chatID int64, storyIDs []int32) error {
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *StoryMethods) ReadChatStories(ctx context.Context, chatID int64, storyIDs []int32) error {
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}

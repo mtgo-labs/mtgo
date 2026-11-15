@@ -89,7 +89,7 @@ func TestNewContext_TODOCtx(t *testing.T) {
 }
 
 func TestContext_Reply_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.Reply("hello", nil)
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -97,7 +97,7 @@ func TestContext_Reply_NilMessage(t *testing.T) {
 }
 
 func TestContext_Reply_MessageNilChat(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}, Message: &types.Message{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{}), Message: &types.Message{}}
 	_, err := c.Reply("hello", nil)
 	if err == nil {
 		t.Fatal("expected error for message with no chat")
@@ -105,7 +105,7 @@ func TestContext_Reply_MessageNilChat(t *testing.T) {
 }
 
 func TestContext_Edit_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.Edit("new text", nil)
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -113,7 +113,7 @@ func TestContext_Edit_NilMessage(t *testing.T) {
 }
 
 func TestContext_Delete_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.Delete(nil)
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -121,7 +121,7 @@ func TestContext_Delete_NilMessage(t *testing.T) {
 }
 
 func TestContext_Forward_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.Forward(123, nil)
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -129,7 +129,7 @@ func TestContext_Forward_NilMessage(t *testing.T) {
 }
 
 func TestContext_Copy_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.Copy(123, nil)
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -145,7 +145,7 @@ func TestContext_Send_NilClient(t *testing.T) {
 }
 
 func TestContext_React_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	err := c.React(types.Reaction{Emoji: "👍"})
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -153,7 +153,7 @@ func TestContext_React_NilMessage(t *testing.T) {
 }
 
 func TestContext_Read_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	err := c.Read()
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -177,7 +177,7 @@ func TestContext_GetChat_NilClient(t *testing.T) {
 }
 
 func TestContext_GetChat_NoChat(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.GetChat()
 	if err == nil {
 		t.Fatal("expected error for no chat in context")
@@ -185,7 +185,7 @@ func TestContext_GetChat_NoChat(t *testing.T) {
 }
 
 func TestContext_AnswerCallback_NilCallback(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	err := c.AnswerCallback("text", false)
 	if err != nil {
 		t.Fatalf("expected nil for nil callback query, got: %v", err)
@@ -193,7 +193,7 @@ func TestContext_AnswerCallback_NilCallback(t *testing.T) {
 }
 
 func TestContext_AnswerInline_NilQuery(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	err := c.AnswerInline(nil, nil)
 	if err != nil {
 		t.Fatalf("expected nil for nil inline query, got: %v", err)
@@ -201,7 +201,7 @@ func TestContext_AnswerInline_NilQuery(t *testing.T) {
 }
 
 func TestContext_Ban_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	err := c.Ban(123)
 	if err == nil {
 		t.Fatal("expected error for no chat")
@@ -209,7 +209,7 @@ func TestContext_Ban_NilMessage(t *testing.T) {
 }
 
 func TestContext_Download_NilMessage(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{})}
 	_, err := c.DownloadMedia()
 	if err == nil {
 		t.Fatal("expected error for nil message")
@@ -217,7 +217,7 @@ func TestContext_Download_NilMessage(t *testing.T) {
 }
 
 func TestContext_Download_NilMedia(t *testing.T) {
-	c := &Context{Ctx: context.Background(), Client: &Client{}, Message: &types.Message{}}
+	c := &Context{Ctx: context.Background(), Client: initClient(&Client{}), Message: &types.Message{}}
 	_, err := c.DownloadMedia()
 	if err == nil {
 		t.Fatal("expected error for message with no media")

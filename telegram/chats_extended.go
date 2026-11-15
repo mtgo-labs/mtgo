@@ -8,9 +8,9 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func (c *Client) GetChatOnlineCount(ctx context.Context, chatID int64) (int, error) {
+func (c *ChatMethods) GetChatOnlineCount(ctx context.Context, chatID int64) (int, error) {
 	c.Log.Debugf("GetChatOnlineCount chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -25,9 +25,9 @@ func (c *Client) GetChatOnlineCount(ctx context.Context, chatID int64) (int, err
 	return int(result.Onlines), nil
 }
 
-func (c *Client) GetSendAsChats(ctx context.Context, chatID int64) ([]*types.Chat, error) {
+func (c *ChatMethods) GetSendAsChats(ctx context.Context, chatID int64) ([]*types.Chat, error) {
 	c.Log.Debugf("GetSendAsChats chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -50,13 +50,13 @@ func (c *Client) GetSendAsChats(ctx context.Context, chatID int64) ([]*types.Cha
 	return chats, nil
 }
 
-func (c *Client) SetSendAsChat(ctx context.Context, chatID int64, sendAs int64) error {
+func (c *ChatMethods) SetSendAsChat(ctx context.Context, chatID int64, sendAs int64) error {
 	c.Log.Debugf("SetSendAsChat chat_id=%d send_as=%d", chatID, sendAs)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
-	sendAsPeer, err := resolvePeer(ctx, c, sendAs)
+	sendAsPeer, err := resolvePeer(ctx, c.Client, sendAs)
 	if err != nil {
 		return fmt.Errorf("resolve send_as peer: %w", err)
 	}
@@ -69,13 +69,13 @@ func (c *Client) SetSendAsChat(ctx context.Context, chatID int64, sendAs int64) 
 	return err
 }
 
-func (c *Client) TransferChatOwnership(ctx context.Context, chatID int64, userID int64, password string) error {
+func (c *ChatMethods) TransferChatOwnership(ctx context.Context, chatID int64, userID int64, password string) error {
 	c.Log.Debugf("TransferChatOwnership chat_id=%d user_id=%d", chatID, userID)
-	ch, err := resolveChannelID(ctx, c, chatID)
+	ch, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return err
 	}
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -97,7 +97,7 @@ func (c *Client) TransferChatOwnership(ctx context.Context, chatID int64, userID
 	return nil
 }
 
-func (c *Client) GetSuitableDiscussionChats(ctx context.Context) ([]*types.Chat, error) {
+func (c *ChatMethods) GetSuitableDiscussionChats(ctx context.Context) ([]*types.Chat, error) {
 	c.Log.Debug("GetSuitableDiscussionChats")
 	rpc := c.Raw()
 	result, err := rpc.ChannelsGetGroupsForDiscussion(ctx)
@@ -125,13 +125,13 @@ func (c *Client) GetSuitableDiscussionChats(ctx context.Context) ([]*types.Chat,
 	return chats, nil
 }
 
-func (c *Client) SetChatDiscussionGroup(ctx context.Context, broadcastChatID int64, groupChatID int64) error {
+func (c *ChatMethods) SetChatDiscussionGroup(ctx context.Context, broadcastChatID int64, groupChatID int64) error {
 	c.Log.Debugf("SetChatDiscussionGroup broadcast=%d group=%d", broadcastChatID, groupChatID)
-	broadcast, err := resolveChannelID(ctx, c, broadcastChatID)
+	broadcast, err := resolveChannelID(ctx, c.Client, broadcastChatID)
 	if err != nil {
 		return fmt.Errorf("resolve broadcast channel: %w", err)
 	}
-	group, err := resolveChannelID(ctx, c, groupChatID)
+	group, err := resolveChannelID(ctx, c.Client, groupChatID)
 	if err != nil {
 		return fmt.Errorf("resolve group channel: %w", err)
 	}

@@ -21,7 +21,7 @@ func (c *Client) initSecretChats() {
 	c.mu.Unlock()
 }
 
-func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass) (*SecretChat, error) {
+func (c *SecretChatMethods) RequestSecretChat(ctx context.Context, userID tg.InputUserClass) (*SecretChat, error) {
 	if c.secretChats == nil {
 		c.mu.Lock()
 		c.secretChats = NewSecretChatManager()
@@ -110,7 +110,7 @@ func (c *Client) RequestSecretChat(ctx context.Context, userID tg.InputUserClass
 	return chat, nil
 }
 
-func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretChat, error) {
+func (c *SecretChatMethods) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretChat, error) {
 	if c.secretChats == nil {
 		return nil, ErrNoSecretChats
 	}
@@ -187,7 +187,7 @@ func (c *Client) AcceptSecretChat(ctx context.Context, chatID int32) (*SecretCha
 	return chat, nil
 }
 
-func (c *Client) SendSecretMessage(ctx context.Context, chatID int32, text string) (int64, error) {
+func (c *SecretChatMethods) SendSecretMessage(ctx context.Context, chatID int32, text string) (int64, error) {
 	if c.secretChats == nil {
 		return 0, ErrNoSecretChats
 	}
@@ -286,7 +286,7 @@ func (c *Client) notifyLayer(ctx context.Context, chat *SecretChat) error {
 	return nil
 }
 
-func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.DecryptedMessageLayer, error) {
+func (c *SecretChatMethods) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.DecryptedMessageLayer, error) {
 	if c.secretChats == nil {
 		return nil, ErrNoSecretChats
 	}
@@ -343,7 +343,7 @@ func (c *Client) DecryptSecretMessage(chatID int32, ciphertext []byte) (*e2e.Dec
 	return layer, nil
 }
 
-func (c *Client) DiscardSecretChat(ctx context.Context, chatID int32, deleteHistory bool) error {
+func (c *SecretChatMethods) DiscardSecretChat(ctx context.Context, chatID int32, deleteHistory bool) error {
 	_, err := c.RPC().MessagesDiscardEncryption(ctx, &tg.MessagesDiscardEncryptionRequest{
 		ChatID:        chatID,
 		DeleteHistory: deleteHistory,
@@ -361,14 +361,14 @@ func (c *Client) DiscardSecretChat(ctx context.Context, chatID int32, deleteHist
 	return nil
 }
 
-func (c *Client) GetSecretChat(chatID int32) (*SecretChat, bool) {
+func (c *SecretChatMethods) GetSecretChat(chatID int32) (*SecretChat, bool) {
 	if c.secretChats == nil {
 		return nil, false
 	}
 	return c.secretChats.Get(chatID)
 }
 
-func (c *Client) SecretChatVisualization(chatID int32) []string {
+func (c *SecretChatMethods) SecretChatVisualization(chatID int32) []string {
 	chat, ok := c.GetSecretChat(chatID)
 	if !ok {
 		return nil
@@ -386,7 +386,7 @@ func (c *Client) SecretChatVisualization(chatID int32) []string {
 //	})
 type SecretMessageHandler func(chat *SecretChat, layer *e2e.DecryptedMessageLayer)
 
-func (c *Client) OnSecretMessage(handler SecretMessageHandler) {
+func (c *SecretChatMethods) OnSecretMessage(handler SecretMessageHandler) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.secretMsgHandlers == nil {
@@ -416,7 +416,7 @@ func (c *Client) fireSecretMessage(chat *SecretChat, layer *e2e.DecryptedMessage
 //	})
 type SecretChatRequestHandler func(chat *SecretChat) bool
 
-func (c *Client) OnSecretChatRequest(handler SecretChatRequestHandler) {
+func (c *SecretChatMethods) OnSecretChatRequest(handler SecretChatRequestHandler) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.secretChatReqHandlers == nil {
@@ -587,7 +587,7 @@ func (h *encryptionUpdateHandler) handleEncryptedMessage(c *Client, ctx *Context
 	ctx.SecretMessage = layer
 }
 
-func (c *Client) SendLayerNotification(ctx context.Context, chatID int32) error {
+func (c *SecretChatMethods) SendLayerNotification(ctx context.Context, chatID int32) error {
 	if c.secretChats == nil {
 		return ErrNoSecretChats
 	}
@@ -658,7 +658,7 @@ type SecretFileOptions struct {
 	FileIV   []byte
 }
 
-func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Reader, fileName string, fileSize int64, opts *SecretFileOptions) error {
+func (c *SecretChatMethods) SendSecretFile(ctx context.Context, chatID int32, reader io.Reader, fileName string, fileSize int64, opts *SecretFileOptions) error {
 	if c.secretChats == nil {
 		return ErrNoSecretChats
 	}
@@ -761,7 +761,7 @@ func (c *Client) SendSecretFile(ctx context.Context, chatID int32, reader io.Rea
 	return nil
 }
 
-func (c *Client) DecryptSecretFile(ctx context.Context, file *tg.EncryptedFile, fileKey, fileIV []byte) ([]byte, error) {
+func (c *SecretChatMethods) DecryptSecretFile(ctx context.Context, file *tg.EncryptedFile, fileKey, fileIV []byte) ([]byte, error) {
 	location := &tg.InputEncryptedFileLocation{
 		ID:         file.ID,
 		AccessHash: file.AccessHash,

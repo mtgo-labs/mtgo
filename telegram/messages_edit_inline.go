@@ -15,7 +15,7 @@ import (
 //	ok, err := client.EditInlineText(ctx, inlineMsgID, "updated text",
 //		&telegram.EditInlineOpts{NoWebpage: true},
 //	)
-func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineText(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineText")
 	opt := getEditInlineOpts(opts...)
 
@@ -84,7 +84,7 @@ func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBot
 // Example:
 //
 //	ok, err := client.EditInlineCaption(ctx, inlineMsgID, "new caption")
-func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineCaption(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineCaption")
 	opt := getEditInlineOpts(opts...)
 
@@ -148,7 +148,7 @@ func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.Input
 //
 //	media := &tg.InputMediaPhoto{ID: &tg.InputPhoto{ID: photoID}}
 //	ok, err := client.EditInlineMedia(ctx, inlineMsgID, media)
-func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineMedia")
 	opt := getEditInlineOpts(opts...)
 
@@ -186,7 +186,7 @@ func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBo
 //
 //	keyboard := &tg.ReplyInlineMarkup{Rows: rows}
 //	ok, err := client.EditInlineReplyMarkup(ctx, inlineMsgID, keyboard)
-func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, replyMarkup tg.ReplyMarkupClass) (bool, error) {
+func (c *MessageMethods) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, replyMarkup tg.ReplyMarkupClass) (bool, error) {
 	c.Log.Debugf("EditInlineReplyMarkup")
 
 	var flags tg.Fields
@@ -216,7 +216,7 @@ func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.I
 //
 //	ok, err := client.EditInlineRichMessage(ctx, inlineMsgID,
 //		telegram.RichMessageMarkdown("**updated**", false))
-func (c *Client) EditInlineRichMessage(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineRichMessage(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineRichMessage")
 	if rm == nil {
 		return false, fmt.Errorf("edit inline rich message: rich message is nil")

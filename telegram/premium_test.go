@@ -9,7 +9,7 @@ import (
 )
 
 func TestApplyBoost_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.ApplyBoost(context.Background(), 999)
 	if err == nil {
 		t.Fatal("expected error for unresolvable peer")
@@ -69,7 +69,7 @@ func TestApplyBoost_RPCError(t *testing.T) {
 }
 
 func TestGetBoostsStatus_PeerResolveError(t *testing.T) {
-	c := &Client{testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{testResolver: &mockPeerResolver{}})
 	_, err := c.GetBoostsStatus(context.Background(), 999)
 	if err == nil {
 		t.Fatal("expected error for unresolvable peer")

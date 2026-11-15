@@ -9,9 +9,9 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-func (c *Client) SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *PaymentMethods) SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*types.Message, error) {
 	c.Log.Debugf("SendInvoice chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -67,7 +67,7 @@ func (c *Client) SendInvoice(ctx context.Context, chatID int64, invoice *tg.Inpu
 	return extractSingleMessage(result, c)
 }
 
-func (c *Client) CreateInvoiceLink(ctx context.Context, invoice *tg.InputMediaInvoice) (string, error) {
+func (c *PaymentMethods) CreateInvoiceLink(ctx context.Context, invoice *tg.InputMediaInvoice) (string, error) {
 	c.Log.Debug("CreateInvoiceLink")
 	rpc := c.Raw()
 	result, err := rpc.PaymentsExportInvoice(ctx, &tg.PaymentsExportInvoiceRequest{

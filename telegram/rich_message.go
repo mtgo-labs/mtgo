@@ -57,7 +57,7 @@ func RichMessageBlocks(blocks []tg.PageBlockClass, photos []tg.InputPhotoClass, 
 //	    telegram.RichMessageMarkdown("# Title\n**bold** text", false),
 //	    &params.SendMessage{ReplyToMessageID: 42},
 //	)
-func (c *Client) SendRichMessage(ctx context.Context, chatID int64, rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendRichMessage(ctx context.Context, chatID int64, rm tg.InputRichMessageClass, opts ...*params.SendMessage) (*types.Message, error) {
 	if rm == nil {
 		return nil, errors.New("send rich message: rich message is nil")
 	}
@@ -67,20 +67,20 @@ func (c *Client) SendRichMessage(ctx context.Context, chatID int64, rm tg.InputR
 }
 
 // SendRichMessageHTML sends a rich message built from Telegram HTML markup.
-func (c *Client) SendRichMessageHTML(ctx context.Context, chatID int64, html string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendRichMessageHTML(ctx context.Context, chatID int64, html string, opts ...*params.SendMessage) (*types.Message, error) {
 	return c.SendRichMessage(ctx, chatID, RichMessageHTML(html, false), opts...)
 }
 
 // SendRichMessageMarkdown sends a rich message built from Telegram Markdown
 // markup.
-func (c *Client) SendRichMessageMarkdown(ctx context.Context, chatID int64, markdown string, opts ...*params.SendMessage) (*types.Message, error) {
+func (c *MessageMethods) SendRichMessageMarkdown(ctx context.Context, chatID int64, markdown string, opts ...*params.SendMessage) (*types.Message, error) {
 	return c.SendRichMessage(ctx, chatID, RichMessageMarkdown(markdown, false), opts...)
 }
 
 // GetRichMessage fetches the rendered rich message content of an existing
 // message via messages.getRichMessage. Partial rich messages (delivered with
 // part=true in updates) are completed by this call.
-func (c *Client) GetRichMessage(ctx context.Context, chatID int64, messageID int32) (*tg.RichMessage, error) {
+func (c *MessageMethods) GetRichMessage(ctx context.Context, chatID int64, messageID int32) (*tg.RichMessage, error) {
 	c.Log.Debugf("GetRichMessage chat_id=%d msg_id=%d", chatID, messageID)
 	peer, err := c.draftPeer(ctx, chatID)
 	if err != nil {
@@ -191,13 +191,13 @@ func (d *RichMessageDraft) Stop(ctx context.Context) error {
 
 // StartRichMessageDraft resolves the target chat and returns a streaming rich
 // message draft bound to it.
-func (c *Client) StartRichMessageDraft(ctx context.Context, chatID int64, opts ...*DraftOpts) (*RichMessageDraft, error) {
+func (c *MessageMethods) StartRichMessageDraft(ctx context.Context, chatID int64, opts ...*DraftOpts) (*RichMessageDraft, error) {
 	c.Log.Debugf("StartRichMessageDraft chat_id=%d", chatID)
 	peer, err := c.draftPeer(ctx, chatID)
 	if err != nil {
 		return nil, err
 	}
-	return &RichMessageDraft{c: c, peer: peer, randomID: c.RandomID(), opts: getDraftOpts(opts...)}, nil
+	return &RichMessageDraft{c: c.Client, peer: peer, randomID: c.RandomID(), opts: getDraftOpts(opts...)}, nil
 }
 
 // MessageDraft streams plain formatted text into a chat chunk by chunk (Bot
@@ -248,13 +248,13 @@ func (d *MessageDraft) Stop(ctx context.Context) error {
 
 // StartMessageDraft resolves the target chat and returns a streaming plain
 // text draft bound to it.
-func (c *Client) StartMessageDraft(ctx context.Context, chatID int64, opts ...*DraftOpts) (*MessageDraft, error) {
+func (c *MessageMethods) StartMessageDraft(ctx context.Context, chatID int64, opts ...*DraftOpts) (*MessageDraft, error) {
 	c.Log.Debugf("StartMessageDraft chat_id=%d", chatID)
 	peer, err := c.draftPeer(ctx, chatID)
 	if err != nil {
 		return nil, err
 	}
-	return &MessageDraft{c: c, peer: peer, randomID: c.RandomID(), opts: getDraftOpts(opts...)}, nil
+	return &MessageDraft{c: c.Client, peer: peer, randomID: c.RandomID(), opts: getDraftOpts(opts...)}, nil
 }
 
 func (c *Client) draftPeer(ctx context.Context, chatID int64) (tg.InputPeerClass, error) {
