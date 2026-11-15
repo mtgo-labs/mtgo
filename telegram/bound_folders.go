@@ -134,31 +134,3 @@ func (c *Client) BoundRemoveChatFromFolder(ctx context.Context, folderID int32, 
 	}
 	return fmt.Errorf("%w: %d", ErrFolderNotFound, folderID)
 }
-
-func removePeerFromSlice(peers []tg.InputPeerClass, target tg.InputPeerClass) []tg.InputPeerClass {
-	result := make([]tg.InputPeerClass, 0, len(peers))
-	for _, p := range peers {
-		if !peersEqual(p, target) {
-			result = append(result, p)
-		}
-	}
-	return result
-}
-
-func peersEqual(a, b tg.InputPeerClass) bool {
-	switch av := a.(type) {
-	case *tg.InputPeerUser:
-		if bv, ok := b.(*tg.InputPeerUser); ok {
-			return av.UserID == bv.UserID
-		}
-	case *tg.InputPeerChat:
-		if bv, ok := b.(*tg.InputPeerChat); ok {
-			return av.ChatID == bv.ChatID
-		}
-	case *tg.InputPeerChannel:
-		if bv, ok := b.(*tg.InputPeerChannel); ok {
-			return av.ChannelID == bv.ChannelID
-		}
-	}
-	return false
-}

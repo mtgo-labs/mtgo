@@ -280,6 +280,15 @@ func EditStoryMedia[T PeerInput, C Caller](c C, chat T, storyID int32, media tg.
 	return client.EditStoryMedia(ctx, chatID, storyID, media)
 }
 
+func ExcludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ExcludeChat(ctx, folderID, chatID)
+}
+
 func ExportChatInviteLink[T PeerInput, C Caller](c C, chat T) (string, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -631,6 +640,15 @@ func GetUser[T PeerInput, C Caller](c C, user T) (*types.User, error) {
 	return client.GetUser(ctx, userID)
 }
 
+func IncludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.IncludeChat(ctx, folderID, chatID)
+}
+
 func LeaveChat[T PeerInput, C Caller](c C, chat T) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -674,6 +692,15 @@ func NewCallReader[T PeerInput, C Caller](c C, chat T) (*telegram.CallReader, er
 		return nil, err
 	}
 	return client.NewCallReader(ctx, chatID)
+}
+
+func PinChatInFolder[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.PinChatInFolder(ctx, folderID, chatID)
 }
 
 func PinChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error {
@@ -755,6 +782,15 @@ func RefundStarsCharge[T PeerInput, C Caller](c C, user T, chargeID string) erro
 		return err
 	}
 	return client.RefundStarsCharge(ctx, userID, chargeID)
+}
+
+func RemoveChatFromFolder[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.RemoveChatFromFolder(ctx, folderID, chatID)
 }
 
 func ReopenForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {

@@ -79,6 +79,7 @@ var groupTypes = map[string]bool{
 	"BusinessMethods":   true,
 	"ChatMethods":       true,
 	"ContactsMethods":   true,
+	"FolderMethods":     true,
 	"InviteLinkMethods": true,
 	"MessageMethods":    true,
 	"PasswordMethods":   true,

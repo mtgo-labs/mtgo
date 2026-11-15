@@ -107,6 +107,7 @@ type Client struct {
 	*BusinessMethods
 	*ChatMethods
 	*ContactsMethods
+	*FolderMethods
 	*InviteLinkMethods
 	*MessageMethods
 	*PasswordMethods

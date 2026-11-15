@@ -61,6 +61,10 @@ type PaymentMethods struct{ *Client }
 // StickerMethods groups sticker and custom-emoji operations.
 type StickerMethods struct{ *Client }
 
+// FolderMethods groups chat-folder (dialog filter) operations: folder CRUD,
+// folder membership, and shareable folder invite links.
+type FolderMethods struct{ *Client }
+
 // InviteLinkMethods groups chat invite-link management and join-request
 // handling.
 type InviteLinkMethods struct{ *Client }
@@ -101,6 +105,7 @@ func (c *Client) initMethodGroups() {
 	c.StoryMethods = &StoryMethods{Client: c}
 	c.PaymentMethods = &PaymentMethods{Client: c}
 	c.StickerMethods = &StickerMethods{Client: c}
+	c.FolderMethods = &FolderMethods{Client: c}
 	c.InviteLinkMethods = &InviteLinkMethods{Client: c}
 	c.UtilityMethods = &UtilityMethods{Client: c}
 	c.AdvancedMethods = &AdvancedMethods{Client: c}
