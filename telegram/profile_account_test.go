@@ -157,3 +157,23 @@ func TestAcceptTermsOfService(t *testing.T) {
 		t.Errorf("RPC calls = %d, want 1 (nil guard makes no call)", inv.callCount())
 	}
 }
+
+func TestSetContactNote(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerUser{UserID: 10, AccessHash: 20})
+	inv.setResult(tg.ContactsUpdateContactNoteTypeID, &tg.BoolTrue{})
+
+	if err := c.SetContactNote(context.Background(), 10, "met at conf"); err != nil {
+		t.Fatalf("SetContactNote() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.ContactsUpdateContactNoteRequest)
+	if !ok {
+		t.Fatalf("expected ContactsUpdateContactNoteRequest, got %T", inv.lastCall())
+	}
+	if req.Note == nil || req.Note.Text != "met at conf" {
+		t.Errorf("note = %#v, want 'met at conf'", req.Note)
+	}
+	if u, ok := req.ID.(*tg.InputUser); !ok || u.UserID != 10 {
+		t.Errorf("id = %#v, want user 10", req.ID)
+	}
+}

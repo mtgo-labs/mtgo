@@ -128,3 +128,22 @@ func (c *UserMethods) GetBlocked(ctx context.Context, limit, offset int) (tg.Blo
 		Limit:  int32(limit),
 	})
 }
+
+// SetContactNote attaches a short private note to a contact, visible only to
+// the logged-in user. An empty note removes it.
+func (c *ContactsMethods) SetContactNote(ctx context.Context, userID int64, note string) error {
+	c.Log.Debugf("SetContactNote user_id=%d", userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
+	if err != nil {
+		return fmt.Errorf("resolve user: %w", err)
+	}
+
+	_, err = c.Raw().ContactsUpdateContactNote(ctx, &tg.ContactsUpdateContactNoteRequest{
+		ID:   user,
+		Note: &tg.TextWithEntities{Text: note},
+	})
+	if err != nil {
+		return fmt.Errorf("set contact note: %w", err)
+	}
+	return nil
+}
