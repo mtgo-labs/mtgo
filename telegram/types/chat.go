@@ -11,7 +11,7 @@ import (
 
 // Chat represents any Telegram chat (private, bot, group, supergroup, channel, or forum).
 // It merges fields from the base TL object (User/Chat/Channel) and the corresponding Full
-// object (UserFull/ChatFull/ChannelFull) into a single flat struct following the Kurigram pattern.
+// object (UserFull/ChatFull/ChannelFull) into a single flat struct following a single flat-struct model.
 //
 // Base fields are populated by ParseChatFromUser, ParseChatFromChat, or ParseChatFromPeer.
 // Full fields are merged in by EnrichChatFull.

@@ -33,7 +33,7 @@ func toParserMode(mode params.ParseMode) (parser.ParseMode, bool, error) {
 }
 
 // buildReplyTo constructs the reply-to parameter for message sending,
-// handling forum topic routing. Mirrors PyrogramMod's get_reply_head_fm:
+// handling forum topic routing. mirrors the reply-head resolution used by the reference layout:
 //   - Explicit ReplyTo takes precedence.
 //   - ReplyToMessageID only: simple reply to that message.
 //   - MessageThreadID only: send to topic (reply_to_msg_id = top_msg_id = thread).

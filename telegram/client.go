@@ -3797,7 +3797,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 // session carries the fields it requires (API hash and user ID), making the
 // string fully self-contained. When those fields are missing — for example
 // right after connecting, before the account is loaded — it falls back to the
-// legacy Pyrogram string so export never fails on partial state.
+// legacy external string so export never fails on partial state.
 //
 // Returns ("", nil) when the session has no auth key yet (not authorized),
 // and ErrNotConnected if the client has no active storage.

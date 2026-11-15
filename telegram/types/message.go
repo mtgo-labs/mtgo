@@ -34,7 +34,7 @@ type Message struct {
 	// Sender is the resolved user who sent the message, or nil if the sender
 	// was not available in the peer map (e.g. anonymous channel admin).
 	Sender *User
-	// FromUser is an alias for Sender matching Pyrogram naming.
+	// FromUser is an alias for Sender kept for callers migrating from other client libraries.
 	FromUser *User
 	// SenderChat is the resolved chat that sent the message on behalf of itself.
 	SenderChat *Chat
@@ -56,7 +56,7 @@ type Message struct {
 	FromOffline bool
 	// ReplyToID is the ID of the message this message replies to, or 0 if none.
 	ReplyToID int32
-	// ReplyToMessageID is an alias for ReplyToID matching Pyrogram naming.
+	// ReplyToMessageID is an alias for ReplyToID kept for callers migrating from other client libraries.
 	ReplyToMessageID int32
 	// ReplyToTopMessageID is the first message that started the thread.
 	ReplyToTopMessageID int32
@@ -76,7 +76,7 @@ type Message struct {
 	ReplyMarkup *ReplyMarkup
 	// Out is true when the message was sent by the current user.
 	Out bool
-	// Outgoing is an alias for Out matching Pyrogram naming.
+	// Outgoing is an alias for Out kept for callers migrating from other client libraries.
 	Outgoing bool
 	// Empty is true for messageEmpty objects.
 	Empty bool
@@ -97,12 +97,12 @@ type Message struct {
 	// PostAuthor is the author name displayed on channel posts when signatures
 	// are enabled.
 	PostAuthor string
-	// AuthorSignature is an alias for PostAuthor matching Pyrogram naming.
+	// AuthorSignature is an alias for PostAuthor kept for callers migrating from other client libraries.
 	AuthorSignature string
 	// GroupedID identifies messages that belong to the same album (grouped media).
 	// 0 when not part of a group.
 	GroupedID int64
-	// MediaGroupID is an alias for GroupedID matching Pyrogram naming.
+	// MediaGroupID is an alias for GroupedID kept for callers migrating from other client libraries.
 	MediaGroupID int64
 	// ViaBotID is the user ID of the inline bot that generated this message, or 0
 	// if not from a bot.
@@ -112,7 +112,7 @@ type Message struct {
 	// FwdFrom contains information about the original source when the message was
 	// forwarded.
 	FwdFrom *ForwardHeader
-	// ForwardOrigin describes the Pyrogram-style origin of a forwarded message.
+	// ForwardOrigin describes the forward origin of a forwarded message.
 	ForwardOrigin *MessageOrigin
 	// Reactions lists the emoji reactions currently attached to the message.
 	Reactions []Reaction
