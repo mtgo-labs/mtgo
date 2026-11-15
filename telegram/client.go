@@ -151,8 +151,12 @@ type Client struct {
 	connectedHooks      []ConnectedHook
 	reconnectHooks      []ReconnectHook
 
-	peerMgr      *peers.Manager
-	peerMgrOnce  sync.Once
+	peerMgr     *peers.Manager
+	peerMgrOnce sync.Once
+	// updateRec recovers updates missed across gaps, reconnects, and
+	// restarts (getDifference / getChannelDifference), backed by the
+	// persistent update-state store.
+	updateRec    *updateRecovery
 	floodRegVal  *floodRegistry
 	floodRegOnce sync.Once
 
@@ -338,11 +342,16 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	client.initSecretChats()
 	client.reconnectMgr = newReconnectManager(client, client.backoffConfig())
 
+	// Update gap recovery: tracks pts/seq/qts of every batch and fetches
+	// anything missed via getDifference / getChannelDifference.
+	client.initUpdateRecovery()
+
 	// Peer resolution: stale access hashes self-heal via invalidate+replay,
 	// and entities from every RPC response feed the cache.
 	client.invokerMiddlewares = append(client.invokerMiddlewares,
 		client.peersManager().InvalidateOnStaleHash(),
 		client.peersManager().IngestResponses(),
+		client.updateRec.trackAffectedResponses(),
 	)
 
 	// Production hardening: enable RSA key rotation watchdog when configured.
@@ -2505,8 +2514,9 @@ func (c *Client) postConnect(sess *session.Session) error {
 
 	if !c.config().NoUpdates {
 		c.Log.Debug("fetching updates state")
+		c.updateRec.loadPersisted()
 		rpc := c.Raw()
-		_, err := rpc.UpdatesGetState(context.Background())
+		state, err := rpc.UpdatesGetState(context.Background())
 		if err != nil {
 			if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 401 {
 				c.Log.Debug("updates state fetch skipped: not authorized (", rpcErr.Type, ")")
@@ -2518,7 +2528,13 @@ func (c *Client) postConnect(sess *session.Session) error {
 			}
 		} else {
 			c.Log.Info("updates state fetched")
+			// Seed the gap-recovery engine; when a persisted state exists
+			// it wins and the recovery pass fetches everything missed while
+			// the client was stopped.
+			c.updateRec.seedFromServer(state)
 		}
+		c.updateRec.start()
+		c.updateRec.Schedule()
 		if err := c.authLossError(); err != nil {
 			return err
 		}
@@ -2649,6 +2665,7 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if len(closeStorage) > 0 {
 		shouldCloseStorage = closeStorage[0]
 	}
+	c.stopUpdateRecovery()
 	if c.reconnectMgr != nil {
 		c.reconnectMgr.Stop()
 	}
