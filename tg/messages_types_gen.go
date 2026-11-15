@@ -2596,6 +2596,9 @@ const MessageMediaToDoTypeID = 0x8a53b014
 // MessageMediaVideoStreamTypeID is the constructor ID for TL type messageMediaVideoStream.
 const MessageMediaVideoStreamTypeID = 0xca5cab89
 
+// MessageMediaWidgetTypeID is the constructor ID for TL type messageMediaWidget.
+const MessageMediaWidgetTypeID = 0x2238f214
+
 // isMessageMedia marks MessageMediaEmpty as implementing the MessageMediaClass interface.
 func (*MessageMediaEmpty) isMessageMedia() {}
 
@@ -2652,6 +2655,9 @@ func (*MessageMediaToDo) isMessageMedia() {}
 
 // isMessageMedia marks MessageMediaVideoStream as implementing the MessageMediaClass interface.
 func (*MessageMediaVideoStream) isMessageMedia() {}
+
+// isMessageMedia marks MessageMediaWidget as implementing the MessageMediaClass interface.
+func (*MessageMediaWidget) isMessageMedia() {}
 
 // MessageMediaEmpty represents the TL constructor messageMediaEmpty (0x3ded6320).
 //
@@ -4322,6 +4328,142 @@ func DecodeMessageMediaVideoStream(r *Reader) (*MessageMediaVideoStream, error) 
 func init() {
 	Registry[MessageMediaVideoStreamTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeMessageMediaVideoStream(r)
+	}
+}
+
+// MessageMediaWidget represents the TL constructor messageMediaWidget (0x2238f214).
+//
+// See https://core.telegram.org/constructor/messageMediaWidget for reference.
+type MessageMediaWidget struct {
+	Flags           Fields `json:"-"`
+	IsCopy          bool   `json:"is_copy,omitempty"`
+	CanQuery        bool   `json:"can_query,omitempty"`
+	BackgroundQuery bool   `json:"background_query,omitempty"`
+	Width           int32  `json:"width,omitempty"`
+	Height          int32  `json:"height,omitempty"`
+	Payload         []byte `json:"payload,omitempty"`
+	PublicData      string `json:"public_data,omitempty"`
+	PublicDataHash  int64  `json:"public_data_hash,omitempty"`
+	ChatData        string `json:"chat_data,omitempty"`
+	WidgetID        int64  `json:"widget_id,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessageMediaWidget) SetFlags() {
+	if v.IsCopy {
+		v.Flags.Set(0)
+	}
+	if v.CanQuery {
+		v.Flags.Set(1)
+	}
+	if v.BackgroundQuery {
+		v.Flags.Set(2)
+	}
+	if v.PublicData != "" {
+		v.Flags.Set(3)
+	}
+	if v.PublicDataHash != 0 {
+		v.Flags.Set(3)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(4)
+	}
+	if v.WidgetID != 0 {
+		v.Flags.Set(5)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x2238f214.
+func (v *MessageMediaWidget) ConstructorID() uint32 {
+	return MessageMediaWidgetTypeID
+}
+
+// Encode serializes MessageMediaWidget to a bytes.Buffer using the TL binary protocol.
+func (v *MessageMediaWidget) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessageMediaWidgetTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Width))
+	WriteInt(b, uint32(v.Height))
+	WriteBytes(b, v.Payload)
+	if v.Flags.Has(3) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(3) {
+		WriteLong(b, v.PublicDataHash)
+	}
+	if v.Flags.Has(4) {
+		WriteString(b, v.ChatData)
+	}
+	if v.Flags.Has(5) {
+		WriteLong(b, v.WidgetID)
+	}
+	return nil
+}
+
+// DecodeMessageMediaWidget deserializes a MessageMediaWidget from a reader using the TL binary protocol.
+func DecodeMessageMediaWidget(r *Reader) (*MessageMediaWidget, error) {
+	v := &MessageMediaWidget{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.IsCopy = v.Flags.Has(0)
+	v.CanQuery = v.Flags.Has(1)
+	v.BackgroundQuery = v.Flags.Has(2)
+	_rWidth, _eWidth := r.ReadInt32()
+	if _eWidth != nil {
+		return nil, _eWidth
+	}
+	v.Width = _rWidth
+	_rHeight, _eHeight := r.ReadInt32()
+	if _eHeight != nil {
+		return nil, _eHeight
+	}
+	v.Height = _rHeight
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	if v.Flags.Has(3) {
+		_rPublicData, _ePublicData := r.ReadString()
+		if _ePublicData != nil {
+			return nil, _ePublicData
+		}
+		v.PublicData = _rPublicData
+	}
+	if v.Flags.Has(3) {
+		_rPublicDataHash, _ePublicDataHash := r.ReadInt64()
+		if _ePublicDataHash != nil {
+			return nil, _ePublicDataHash
+		}
+		v.PublicDataHash = _rPublicDataHash
+	}
+	if v.Flags.Has(4) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	if v.Flags.Has(5) {
+		_rWidgetID, _eWidgetID := r.ReadInt64()
+		if _eWidgetID != nil {
+			return nil, _eWidgetID
+		}
+		v.WidgetID = _rWidgetID
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[MessageMediaWidgetTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessageMediaWidget(r)
 	}
 }
 
@@ -18119,6 +18261,12 @@ const InputBotInlineMessageMediaWebPageTypeID = 0xbddcc510
 // InputBotInlineMessageRichMessageTypeID is the constructor ID for TL type inputBotInlineMessageRichMessage.
 const InputBotInlineMessageRichMessageTypeID = 0xb43df56c
 
+// InputBotInlineMessageWidgetTypeID is the constructor ID for TL type inputBotInlineMessageWidget.
+const InputBotInlineMessageWidgetTypeID = 0xf597a3f0
+
+// InputBotInlineMessageWidgetIDTypeID is the constructor ID for TL type inputBotInlineMessageWidgetId.
+const InputBotInlineMessageWidgetIDTypeID = 0xfe8b792b
+
 // isInputBotInlineMessage marks InputBotInlineMessageMediaAuto as implementing the InputBotInlineMessageClass interface.
 func (*InputBotInlineMessageMediaAuto) isInputBotInlineMessage() {}
 
@@ -18145,6 +18293,12 @@ func (*InputBotInlineMessageMediaWebPage) isInputBotInlineMessage() {}
 
 // isInputBotInlineMessage marks InputBotInlineMessageRichMessage as implementing the InputBotInlineMessageClass interface.
 func (*InputBotInlineMessageRichMessage) isInputBotInlineMessage() {}
+
+// isInputBotInlineMessage marks InputBotInlineMessageWidget as implementing the InputBotInlineMessageClass interface.
+func (*InputBotInlineMessageWidget) isInputBotInlineMessage() {}
+
+// isInputBotInlineMessage marks InputBotInlineMessageWidgetID as implementing the InputBotInlineMessageClass interface.
+func (*InputBotInlineMessageWidgetID) isInputBotInlineMessage() {}
 
 // InputBotInlineMessageMediaAuto represents the TL constructor inputBotInlineMessageMediaAuto (0x3380c786).
 //
@@ -19126,6 +19280,320 @@ func init() {
 	}
 }
 
+// InputBotInlineMessageWidget represents the TL constructor inputBotInlineMessageWidget (0xf597a3f0).
+//
+// See https://core.telegram.org/constructor/inputBotInlineMessageWidget for reference.
+type InputBotInlineMessageWidget struct {
+	Flags        Fields               `json:"-"`
+	AllowQueries bool                 `json:"allow_queries,omitempty"`
+	SharedWidget bool                 `json:"shared_widget,omitempty"`
+	InvertMedia  bool                 `json:"invert_media,omitempty"`
+	Width        int32                `json:"width,omitempty"`
+	Height       int32                `json:"height,omitempty"`
+	HTML         string               `json:"html,omitempty"`
+	PublicData   string               `json:"public_data,omitempty"`
+	ChatData     string               `json:"chat_data,omitempty"`
+	ReplyMarkup  ReplyMarkupClass     `json:"reply_markup,omitempty"`
+	Message      string               `json:"message,omitempty"`
+	Entities     []MessageEntityClass `json:"entities,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputBotInlineMessageWidget) SetFlags() {
+	if v.AllowQueries {
+		v.Flags.Set(0)
+	}
+	if v.SharedWidget {
+		v.Flags.Set(1)
+	}
+	if v.InvertMedia {
+		v.Flags.Set(6)
+	}
+	if v.PublicData != "" {
+		v.Flags.Set(2)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(3)
+	}
+	if v.ReplyMarkup != nil {
+		v.Flags.Set(4)
+	}
+	if v.Entities != nil {
+		v.Flags.Set(5)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xf597a3f0.
+func (v *InputBotInlineMessageWidget) ConstructorID() uint32 {
+	return InputBotInlineMessageWidgetTypeID
+}
+
+// Encode serializes InputBotInlineMessageWidget to a bytes.Buffer using the TL binary protocol.
+func (v *InputBotInlineMessageWidget) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputBotInlineMessageWidgetTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Width))
+	WriteInt(b, uint32(v.Height))
+	WriteString(b, v.HTML)
+	if v.Flags.Has(2) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(3) {
+		WriteString(b, v.ChatData)
+	}
+	if v.Flags.Has(4) {
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
+	}
+	WriteString(b, v.Message)
+	if v.Flags.Has(5) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Entities)))
+		for _, _item := range v.Entities {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
+		}
+	}
+	return nil
+}
+
+// DecodeInputBotInlineMessageWidget deserializes a InputBotInlineMessageWidget from a reader using the TL binary protocol.
+func DecodeInputBotInlineMessageWidget(r *Reader) (*InputBotInlineMessageWidget, error) {
+	v := &InputBotInlineMessageWidget{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.AllowQueries = v.Flags.Has(0)
+	v.SharedWidget = v.Flags.Has(1)
+	v.InvertMedia = v.Flags.Has(6)
+	_rWidth, _eWidth := r.ReadInt32()
+	if _eWidth != nil {
+		return nil, _eWidth
+	}
+	v.Width = _rWidth
+	_rHeight, _eHeight := r.ReadInt32()
+	if _eHeight != nil {
+		return nil, _eHeight
+	}
+	v.Height = _rHeight
+	_rHTML, _eHTML := r.ReadString()
+	if _eHTML != nil {
+		return nil, _eHTML
+	}
+	v.HTML = _rHTML
+	if v.Flags.Has(2) {
+		_rPublicData, _ePublicData := r.ReadString()
+		if _ePublicData != nil {
+			return nil, _ePublicData
+		}
+		v.PublicData = _rPublicData
+	}
+	if v.Flags.Has(3) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	if v.Flags.Has(4) {
+		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
+		if _errReplyMarkup != nil {
+			return nil, _errReplyMarkup
+		}
+		_cReplyMarkup, _okReplyMarkup := _objReplyMarkup.(ReplyMarkupClass)
+		if !_okReplyMarkup {
+			return nil, fmt.Errorf("decode: field reply_markup: unexpected type %T", _objReplyMarkup)
+		}
+		v.ReplyMarkup = _cReplyMarkup
+	}
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	if v.Flags.Has(5) {
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		v.Entities = make([]MessageEntityClass, _cntEntities)
+		for _iEntities := range v.Entities {
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
+		}
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputBotInlineMessageWidgetTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputBotInlineMessageWidget(r)
+	}
+}
+
+// InputBotInlineMessageWidgetID represents the TL constructor inputBotInlineMessageWidgetId (0xfe8b792b).
+//
+// See https://core.telegram.org/constructor/inputBotInlineMessageWidgetId for reference.
+type InputBotInlineMessageWidgetID struct {
+	Flags       Fields               `json:"-"`
+	InvertMedia bool                 `json:"invert_media,omitempty"`
+	WidgetID    int64                `json:"widget_id,omitempty"`
+	ChatData    string               `json:"chat_data,omitempty"`
+	ReplyMarkup ReplyMarkupClass     `json:"reply_markup,omitempty"`
+	Message     string               `json:"message,omitempty"`
+	Entities    []MessageEntityClass `json:"entities,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *InputBotInlineMessageWidgetID) SetFlags() {
+	if v.InvertMedia {
+		v.Flags.Set(3)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(0)
+	}
+	if v.ReplyMarkup != nil {
+		v.Flags.Set(1)
+	}
+	if v.Entities != nil {
+		v.Flags.Set(2)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xfe8b792b.
+func (v *InputBotInlineMessageWidgetID) ConstructorID() uint32 {
+	return InputBotInlineMessageWidgetIDTypeID
+}
+
+// Encode serializes InputBotInlineMessageWidgetID to a bytes.Buffer using the TL binary protocol.
+func (v *InputBotInlineMessageWidgetID) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, InputBotInlineMessageWidgetIDTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteLong(b, v.WidgetID)
+	if v.Flags.Has(0) {
+		WriteString(b, v.ChatData)
+	}
+	if v.Flags.Has(1) {
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
+	}
+	WriteString(b, v.Message)
+	if v.Flags.Has(2) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Entities)))
+		for _, _item := range v.Entities {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
+		}
+	}
+	return nil
+}
+
+// DecodeInputBotInlineMessageWidgetID deserializes a InputBotInlineMessageWidgetID from a reader using the TL binary protocol.
+func DecodeInputBotInlineMessageWidgetID(r *Reader) (*InputBotInlineMessageWidgetID, error) {
+	v := &InputBotInlineMessageWidgetID{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.InvertMedia = v.Flags.Has(3)
+	_rWidgetID, _eWidgetID := r.ReadInt64()
+	if _eWidgetID != nil {
+		return nil, _eWidgetID
+	}
+	v.WidgetID = _rWidgetID
+	if v.Flags.Has(0) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	if v.Flags.Has(1) {
+		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
+		if _errReplyMarkup != nil {
+			return nil, _errReplyMarkup
+		}
+		_cReplyMarkup, _okReplyMarkup := _objReplyMarkup.(ReplyMarkupClass)
+		if !_okReplyMarkup {
+			return nil, fmt.Errorf("decode: field reply_markup: unexpected type %T", _objReplyMarkup)
+		}
+		v.ReplyMarkup = _cReplyMarkup
+	}
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	if v.Flags.Has(2) {
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		v.Entities = make([]MessageEntityClass, _cntEntities)
+		for _iEntities := range v.Entities {
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
+		}
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[InputBotInlineMessageWidgetIDTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeInputBotInlineMessageWidgetID(r)
+	}
+}
+
 // BotInlineMessageClass is the interface for TL type BotInlineMessage.
 // Implementations must satisfy TLObject and are used to represent
 // any constructor of the BotInlineMessage TL type.
@@ -19158,6 +19626,9 @@ const BotInlineMessageMediaWebPageTypeID = 0x809ad9a6
 // BotInlineMessageRichMessageTypeID is the constructor ID for TL type botInlineMessageRichMessage.
 const BotInlineMessageRichMessageTypeID = 0x0a617e7b
 
+// BotInlineMessageWidgetTypeID is the constructor ID for TL type botInlineMessageWidget.
+const BotInlineMessageWidgetTypeID = 0xbaa17834
+
 // isBotInlineMessage marks BotInlineMessageMediaAuto as implementing the BotInlineMessageClass interface.
 func (*BotInlineMessageMediaAuto) isBotInlineMessage() {}
 
@@ -19181,6 +19652,9 @@ func (*BotInlineMessageMediaWebPage) isBotInlineMessage() {}
 
 // isBotInlineMessage marks BotInlineMessageRichMessage as implementing the BotInlineMessageClass interface.
 func (*BotInlineMessageRichMessage) isBotInlineMessage() {}
+
+// isBotInlineMessage marks BotInlineMessageWidget as implementing the BotInlineMessageClass interface.
+func (*BotInlineMessageWidget) isBotInlineMessage() {}
 
 // BotInlineMessageMediaAuto represents the TL constructor botInlineMessageMediaAuto (0x764cf810).
 //
@@ -20084,6 +20558,200 @@ func DecodeBotInlineMessageRichMessage(r *Reader) (*BotInlineMessageRichMessage,
 func init() {
 	Registry[BotInlineMessageRichMessageTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeBotInlineMessageRichMessage(r)
+	}
+}
+
+// BotInlineMessageWidget represents the TL constructor botInlineMessageWidget (0xbaa17834).
+//
+// See https://core.telegram.org/constructor/botInlineMessageWidget for reference.
+type BotInlineMessageWidget struct {
+	Flags          Fields               `json:"-"`
+	InvertMedia    bool                 `json:"invert_media,omitempty"`
+	Width          int32                `json:"width,omitempty"`
+	Height         int32                `json:"height,omitempty"`
+	Payload        []byte               `json:"payload,omitempty"`
+	PublicData     string               `json:"public_data,omitempty"`
+	PublicDataHash int64                `json:"public_data_hash,omitempty"`
+	ChatData       string               `json:"chat_data,omitempty"`
+	ReplyMarkup    ReplyMarkupClass     `json:"reply_markup,omitempty"`
+	WidgetID       int64                `json:"widget_id,omitempty"`
+	Message        string               `json:"message,omitempty"`
+	Entities       []MessageEntityClass `json:"entities,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *BotInlineMessageWidget) SetFlags() {
+	if v.InvertMedia {
+		v.Flags.Set(5)
+	}
+	if v.PublicData != "" {
+		v.Flags.Set(0)
+	}
+	if v.PublicDataHash != 0 {
+		v.Flags.Set(0)
+	}
+	if v.ChatData != "" {
+		v.Flags.Set(1)
+	}
+	if v.ReplyMarkup != nil {
+		v.Flags.Set(2)
+	}
+	if v.WidgetID != 0 {
+		v.Flags.Set(3)
+	}
+	if v.Entities != nil {
+		v.Flags.Set(4)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0xbaa17834.
+func (v *BotInlineMessageWidget) ConstructorID() uint32 {
+	return BotInlineMessageWidgetTypeID
+}
+
+// Encode serializes BotInlineMessageWidget to a bytes.Buffer using the TL binary protocol.
+func (v *BotInlineMessageWidget) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, BotInlineMessageWidgetTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteInt(b, uint32(v.Width))
+	WriteInt(b, uint32(v.Height))
+	WriteBytes(b, v.Payload)
+	if v.Flags.Has(0) {
+		WriteString(b, v.PublicData)
+	}
+	if v.Flags.Has(0) {
+		WriteLong(b, v.PublicDataHash)
+	}
+	if v.Flags.Has(1) {
+		WriteString(b, v.ChatData)
+	}
+	if v.Flags.Has(2) {
+		if _err := EncodeTLObject(b, v.ReplyMarkup); _err != nil {
+			return fmt.Errorf("encode field reply_markup: %w", _err)
+		}
+	}
+	if v.Flags.Has(3) {
+		WriteLong(b, v.WidgetID)
+	}
+	WriteString(b, v.Message)
+	if v.Flags.Has(4) {
+		WriteInt(b, 0x1cb5c415)
+		WriteInt(b, uint32(len(v.Entities)))
+		for _, _item := range v.Entities {
+			if _err := EncodeTLObject(b, _item); _err != nil {
+				return fmt.Errorf("encode field entities: %w", _err)
+			}
+		}
+	}
+	return nil
+}
+
+// DecodeBotInlineMessageWidget deserializes a BotInlineMessageWidget from a reader using the TL binary protocol.
+func DecodeBotInlineMessageWidget(r *Reader) (*BotInlineMessageWidget, error) {
+	v := &BotInlineMessageWidget{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	v.InvertMedia = v.Flags.Has(5)
+	_rWidth, _eWidth := r.ReadInt32()
+	if _eWidth != nil {
+		return nil, _eWidth
+	}
+	v.Width = _rWidth
+	_rHeight, _eHeight := r.ReadInt32()
+	if _eHeight != nil {
+		return nil, _eHeight
+	}
+	v.Height = _rHeight
+	_rPayload, _ePayload := r.ReadBytes()
+	if _ePayload != nil {
+		return nil, _ePayload
+	}
+	v.Payload = _rPayload
+	if v.Flags.Has(0) {
+		_rPublicData, _ePublicData := r.ReadString()
+		if _ePublicData != nil {
+			return nil, _ePublicData
+		}
+		v.PublicData = _rPublicData
+	}
+	if v.Flags.Has(0) {
+		_rPublicDataHash, _ePublicDataHash := r.ReadInt64()
+		if _ePublicDataHash != nil {
+			return nil, _ePublicDataHash
+		}
+		v.PublicDataHash = _rPublicDataHash
+	}
+	if v.Flags.Has(1) {
+		_rChatData, _eChatData := r.ReadString()
+		if _eChatData != nil {
+			return nil, _eChatData
+		}
+		v.ChatData = _rChatData
+	}
+	if v.Flags.Has(2) {
+		_objReplyMarkup, _errReplyMarkup := ReadTLObject(r)
+		if _errReplyMarkup != nil {
+			return nil, _errReplyMarkup
+		}
+		_cReplyMarkup, _okReplyMarkup := _objReplyMarkup.(ReplyMarkupClass)
+		if !_okReplyMarkup {
+			return nil, fmt.Errorf("decode: field reply_markup: unexpected type %T", _objReplyMarkup)
+		}
+		v.ReplyMarkup = _cReplyMarkup
+	}
+	if v.Flags.Has(3) {
+		_rWidgetID, _eWidgetID := r.ReadInt64()
+		if _eWidgetID != nil {
+			return nil, _eWidgetID
+		}
+		v.WidgetID = _rWidgetID
+	}
+	_rMessage, _eMessage := r.ReadString()
+	if _eMessage != nil {
+		return nil, _eMessage
+	}
+	v.Message = _rMessage
+	if v.Flags.Has(4) {
+		_vhdrEntities, _ehdrEntities := r.ReadUint32()
+		if _ehdrEntities != nil {
+			return nil, _ehdrEntities
+		}
+		if _errEntities := checkVectorConstructor(_vhdrEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		_cntEntities, _ecntEntities := r.ReadUint32()
+		if _ecntEntities != nil {
+			return nil, _ecntEntities
+		}
+		if _errEntities := checkVectorCount(_cntEntities); _errEntities != nil {
+			return nil, _errEntities
+		}
+		v.Entities = make([]MessageEntityClass, _cntEntities)
+		for _iEntities := range v.Entities {
+			_objEntities, _errEntities := ReadTLObject(r)
+			if _errEntities != nil {
+				return nil, _errEntities
+			}
+			_cEntities, _okEntities := _objEntities.(MessageEntityClass)
+			if !_okEntities {
+				return nil, fmt.Errorf("decode: field entities: unexpected type %T", _objEntities)
+			}
+			v.Entities[_iEntities] = _cEntities
+		}
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[BotInlineMessageWidgetTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeBotInlineMessageWidget(r)
 	}
 }
 
@@ -35395,5 +36063,178 @@ func DecodeInputWalletCardSticker(r *Reader) (*InputWalletCardSticker, error) {
 func init() {
 	Registry[InputWalletCardStickerTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeInputWalletCardSticker(r)
+	}
+}
+
+// MessagesBotWidgetQueryAnswerTypeID is the constructor ID for TL type messages.botWidgetQueryAnswer.
+const MessagesBotWidgetQueryAnswerTypeID = 0x95b73023
+
+// MessagesBotWidgetQueryAnswer represents the TL constructor messages.botWidgetQueryAnswer (0x95b73023).
+//
+// See https://core.telegram.org/constructor/messages.botWidgetQueryAnswer for reference.
+type MessagesBotWidgetQueryAnswer struct {
+	Flags  Fields `json:"-"`
+	Result string `json:"result,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *MessagesBotWidgetQueryAnswer) SetFlags() {
+	if v.Result != "" {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x95b73023.
+func (v *MessagesBotWidgetQueryAnswer) ConstructorID() uint32 {
+	return MessagesBotWidgetQueryAnswerTypeID
+}
+
+// Encode serializes MessagesBotWidgetQueryAnswer to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesBotWidgetQueryAnswer) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesBotWidgetQueryAnswerTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	if v.Flags.Has(0) {
+		WriteString(b, v.Result)
+	}
+	return nil
+}
+
+// DecodeMessagesBotWidgetQueryAnswer deserializes a MessagesBotWidgetQueryAnswer from a reader using the TL binary protocol.
+func DecodeMessagesBotWidgetQueryAnswer(r *Reader) (*MessagesBotWidgetQueryAnswer, error) {
+	v := &MessagesBotWidgetQueryAnswer{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	if v.Flags.Has(0) {
+		_rResult, _eResult := r.ReadString()
+		if _eResult != nil {
+			return nil, _eResult
+		}
+		v.Result = _rResult
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[MessagesBotWidgetQueryAnswerTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessagesBotWidgetQueryAnswer(r)
+	}
+}
+
+// WidgetPublicDataClass is the interface for TL type WidgetPublicData.
+// Implementations must satisfy TLObject and are used to represent
+// any constructor of the WidgetPublicData TL type.
+type WidgetPublicDataClass interface {
+	TLObject
+	isWidgetPublicData()
+}
+
+// MessagesWidgetPublicDataNotModifiedTypeID is the constructor ID for TL type messages.widgetPublicDataNotModified.
+const MessagesWidgetPublicDataNotModifiedTypeID = 0xb9196e57
+
+// MessagesWidgetPublicDataTypeID is the constructor ID for TL type messages.widgetPublicData.
+const MessagesWidgetPublicDataTypeID = 0x04493bff
+
+// isWidgetPublicData marks MessagesWidgetPublicDataNotModified as implementing the WidgetPublicDataClass interface.
+func (*MessagesWidgetPublicDataNotModified) isWidgetPublicData() {}
+
+// isWidgetPublicData marks MessagesWidgetPublicData as implementing the WidgetPublicDataClass interface.
+func (*MessagesWidgetPublicData) isWidgetPublicData() {}
+
+// MessagesWidgetPublicDataNotModified represents the TL constructor messages.widgetPublicDataNotModified (0xb9196e57).
+//
+// See https://core.telegram.org/constructor/messages.widgetPublicDataNotModified for reference.
+type MessagesWidgetPublicDataNotModified struct {
+	Period int32 `json:"period,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0xb9196e57.
+func (v *MessagesWidgetPublicDataNotModified) ConstructorID() uint32 {
+	return MessagesWidgetPublicDataNotModifiedTypeID
+}
+
+// Encode serializes MessagesWidgetPublicDataNotModified to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesWidgetPublicDataNotModified) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesWidgetPublicDataNotModifiedTypeID)
+	WriteInt(b, uint32(v.Period))
+	return nil
+}
+
+// DecodeMessagesWidgetPublicDataNotModified deserializes a MessagesWidgetPublicDataNotModified from a reader using the TL binary protocol.
+func DecodeMessagesWidgetPublicDataNotModified(r *Reader) (*MessagesWidgetPublicDataNotModified, error) {
+	v := &MessagesWidgetPublicDataNotModified{}
+	_rPeriod, _ePeriod := r.ReadInt32()
+	if _ePeriod != nil {
+		return nil, _ePeriod
+	}
+	v.Period = _rPeriod
+	return v, nil
+}
+
+func init() {
+	Registry[MessagesWidgetPublicDataNotModifiedTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessagesWidgetPublicDataNotModified(r)
+	}
+}
+
+// MessagesWidgetPublicData represents the TL constructor messages.widgetPublicData (0x04493bff).
+//
+// See https://core.telegram.org/constructor/messages.widgetPublicData for reference.
+type MessagesWidgetPublicData struct {
+	Hash   int64  `json:"hash,omitempty"`
+	Data   string `json:"data,omitempty"`
+	Period int32  `json:"period,omitempty"`
+}
+
+// ConstructorID returns the TL constructor identifier 0x04493bff.
+func (v *MessagesWidgetPublicData) ConstructorID() uint32 {
+	return MessagesWidgetPublicDataTypeID
+}
+
+// Encode serializes MessagesWidgetPublicData to a bytes.Buffer using the TL binary protocol.
+func (v *MessagesWidgetPublicData) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, MessagesWidgetPublicDataTypeID)
+	WriteLong(b, v.Hash)
+	WriteString(b, v.Data)
+	WriteInt(b, uint32(v.Period))
+	return nil
+}
+
+// DecodeMessagesWidgetPublicData deserializes a MessagesWidgetPublicData from a reader using the TL binary protocol.
+func DecodeMessagesWidgetPublicData(r *Reader) (*MessagesWidgetPublicData, error) {
+	v := &MessagesWidgetPublicData{}
+	_rHash, _eHash := r.ReadInt64()
+	if _eHash != nil {
+		return nil, _eHash
+	}
+	v.Hash = _rHash
+	_rData, _eData := r.ReadString()
+	if _eData != nil {
+		return nil, _eData
+	}
+	v.Data = _rData
+	_rPeriod, _ePeriod := r.ReadInt32()
+	if _ePeriod != nil {
+		return nil, _ePeriod
+	}
+	v.Period = _rPeriod
+	return v, nil
+}
+
+func init() {
+	Registry[MessagesWidgetPublicDataTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeMessagesWidgetPublicData(r)
 	}
 }

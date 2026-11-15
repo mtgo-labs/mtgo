@@ -1125,6 +1125,7 @@ type User struct {
 	BotCanManageBots        bool                  `json:"bot_can_manage_bots,omitempty"`
 	BotGuestchat            bool                  `json:"bot_guestchat,omitempty"`
 	BotGuard                bool                  `json:"bot_guard,omitempty"`
+	BotForumSidebar         bool                  `json:"bot_forum_sidebar,omitempty"`
 	ID                      int64                 `json:"id,omitempty"`
 	AccessHash              int64                 `json:"access_hash,omitempty"`
 	FirstName               string                `json:"first_name,omitempty"`
@@ -1239,6 +1240,9 @@ func (v *User) SetFlags() {
 	}
 	if v.BotGuard {
 		v.Flags2.Set(20)
+	}
+	if v.BotForumSidebar {
+		v.Flags2.Set(22)
 	}
 	if v.AccessHash != 0 {
 		v.Flags.Set(0)
@@ -1447,6 +1451,7 @@ func DecodeUser(r *Reader) (*User, error) {
 	v.BotCanManageBots = v.Flags2.Has(18)
 	v.BotGuestchat = v.Flags2.Has(19)
 	v.BotGuard = v.Flags2.Has(20)
+	v.BotForumSidebar = v.Flags2.Has(22)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -2454,6 +2459,7 @@ type Channel struct {
 	Monoforum                bool                 `json:"monoforum,omitempty"`
 	ForumTabs                bool                 `json:"forum_tabs,omitempty"`
 	InNews                   bool                 `json:"in_news,omitempty"`
+	ForumSidebar             bool                 `json:"forum_sidebar,omitempty"`
 	ID                       int64                `json:"id,omitempty"`
 	AccessHash               int64                `json:"access_hash,omitempty"`
 	Title                    string               `json:"title,omitempty"`
@@ -2567,6 +2573,9 @@ func (v *Channel) SetFlags() {
 	}
 	if v.InNews {
 		v.Flags2.Set(21)
+	}
+	if v.ForumSidebar {
+		v.Flags2.Set(23)
 	}
 	if v.AccessHash != 0 {
 		v.Flags.Set(13)
@@ -2775,6 +2784,7 @@ func DecodeChannel(r *Reader) (*Channel, error) {
 	v.Monoforum = v.Flags2.Has(17)
 	v.ForumTabs = v.Flags2.Has(19)
 	v.InNews = v.Flags2.Has(21)
+	v.ForumSidebar = v.Flags2.Has(23)
 	_rID, _eID := r.ReadInt64()
 	if _eID != nil {
 		return nil, _eID
@@ -15438,5 +15448,94 @@ func DecodeWalletTransactionPeerTelegramGift(r *Reader) (*WalletTransactionPeerT
 func init() {
 	Registry[WalletTransactionPeerTelegramGiftTypeID] = func(r *Reader) (TLObject, error) {
 		return DecodeWalletTransactionPeerTelegramGift(r)
+	}
+}
+
+// UserWalletTypeID is the constructor ID for TL type userWallet.
+const UserWalletTypeID = 0x454d2737
+
+// UserWallet represents the TL constructor userWallet (0x454d2737).
+//
+// See https://core.telegram.org/constructor/userWallet for reference.
+type UserWallet struct {
+	Flags     Fields `json:"-"`
+	Address   string `json:"address,omitempty"`
+	Balance   int64  `json:"balance,omitempty"`
+	PublicKey []byte `json:"public_key,omitempty"`
+	StateInit []byte `json:"state_init,omitempty"`
+}
+
+// SetFlags computes flags from non-zero optional fields.
+func (v *UserWallet) SetFlags() {
+	if v.PublicKey != nil {
+		v.Flags.Set(0)
+	}
+	if v.StateInit != nil {
+		v.Flags.Set(0)
+	}
+}
+
+// ConstructorID returns the TL constructor identifier 0x454d2737.
+func (v *UserWallet) ConstructorID() uint32 {
+	return UserWalletTypeID
+}
+
+// Encode serializes UserWallet to a bytes.Buffer using the TL binary protocol.
+func (v *UserWallet) Encode(b *bytes.Buffer) error {
+	if v == nil {
+		return ErrNilTLObject
+	}
+	WriteInt(b, UserWalletTypeID)
+	v.SetFlags()
+	WriteInt(b, uint32(v.Flags))
+	WriteString(b, v.Address)
+	WriteLong(b, v.Balance)
+	if v.Flags.Has(0) {
+		WriteBytes(b, v.PublicKey)
+	}
+	if v.Flags.Has(0) {
+		WriteBytes(b, v.StateInit)
+	}
+	return nil
+}
+
+// DecodeUserWallet deserializes a UserWallet from a reader using the TL binary protocol.
+func DecodeUserWallet(r *Reader) (*UserWallet, error) {
+	v := &UserWallet{}
+	_rFlags, _eFlags := r.ReadUint32()
+	if _eFlags != nil {
+		return nil, _eFlags
+	}
+	v.Flags = Fields(_rFlags)
+	_rAddress, _eAddress := r.ReadString()
+	if _eAddress != nil {
+		return nil, _eAddress
+	}
+	v.Address = _rAddress
+	_rBalance, _eBalance := r.ReadInt64()
+	if _eBalance != nil {
+		return nil, _eBalance
+	}
+	v.Balance = _rBalance
+	if v.Flags.Has(0) {
+		_rPublicKey, _ePublicKey := r.ReadBytes()
+		if _ePublicKey != nil {
+			return nil, _ePublicKey
+		}
+		v.PublicKey = _rPublicKey
+	}
+	if v.Flags.Has(0) {
+		_rStateInit, _eStateInit := r.ReadBytes()
+		if _eStateInit != nil {
+			return nil, _eStateInit
+		}
+		v.StateInit = _rStateInit
+	}
+	return v, nil
+}
+
+func init() {
+	Registry[UserWalletTypeID] = func(r *Reader) (TLObject, error) {
+		return DecodeUserWallet(r)
 	}
 }
