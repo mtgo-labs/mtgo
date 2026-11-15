@@ -72,6 +72,16 @@ earlier reports (`SendPoll.CorrectAnswers` generator bug, `Message.Pay`,
 `messages.getAttachedStickers`, wallet internals and Ton Connect, star-ref
 suite, story albums).
 
+### Addendum — final verification fix
+
+The closing `-count=1` verification caught two regressions the widget commit
+introduced and a cached test run had masked: `Update.WidgetQuery` was not
+carried into `Context` (now wired in `populateContext`, asserted by the
+context-coverage gate), and the widget recording fields the mock binder's new
+methods referenced were never applied (pattern matched pre-format alignment).
+Fixed and re-verified with forced-uncached full-module runs — the lesson,
+recorded for future phases: never trust a cached gate after test-file edits.
+
 ## Commits
 
 - `ddd4911` feat(docs): generated API inventory and reference; docs refresh
