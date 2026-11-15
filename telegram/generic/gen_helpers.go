@@ -433,6 +433,15 @@ func GetChatMenuButton[T PeerInput, C Caller](c C, user T) (tg.BotMenuButtonClas
 	return client.GetChatMenuButton(ctx, userID)
 }
 
+func GetChatNotificationSettings[T PeerInput, C Caller](c C, chat T) (*tg.PeerNotifySettings, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetChatNotificationSettings(ctx, chatID)
+}
+
 func GetChatOnlineCount[T PeerInput, C Caller](c C, chat T) (int, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -593,6 +602,15 @@ func GetSendAsChats[T PeerInput, C Caller](c C, chat T) ([]*types.Chat, error) {
 		return nil, err
 	}
 	return client.GetSendAsChats(ctx, chatID)
+}
+
+func GetSimilarChannels[T PeerInput, C Caller](c C, chat T) ([]*types.Chat, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetSimilarChannels(ctx, chatID)
 }
 
 func GetStarsBalance[T PeerInput, C Caller](c C, chat T) (int64, error) {
@@ -1153,6 +1171,15 @@ func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, tit
 	return client.SetAdministratorTitle(ctx, chatID, userID, title)
 }
 
+func SetChatAccentColor[T PeerInput, C Caller](c C, chat T, color int32, backgroundEmojiID int64, forProfile bool) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatAccentColor(ctx, chatID, color, backgroundEmojiID, forProfile)
+}
+
 func SetChatDescription[T PeerInput, C Caller](c C, chat T, about string) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1169,6 +1196,15 @@ func SetChatMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButt
 		return err
 	}
 	return client.SetChatMenuButton(ctx, userID, button)
+}
+
+func SetChatNotificationSettings[T PeerInput, C Caller](c C, chat T, settings *tg.InputPeerNotifySettings) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatNotificationSettings(ctx, chatID, settings)
 }
 
 func SetChatPermissions[T PeerInput, C Caller](c C, chat T, permissions *tg.ChatBannedRights) error {
