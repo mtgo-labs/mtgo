@@ -38,7 +38,7 @@ func TestAPISurface_Premium(t *testing.T) {
 
 	_, _ = c.ApplyBoost(context.Background(), peer)
 	_, _ = c.GetBoostsStatus(context.Background(), peer)
-	_, _ = c.GetBoosts(context.Background())
+	_, _ = c.GetMyBoosts(context.Background())
 }
 
 func TestAPISurface_Payments(t *testing.T) {

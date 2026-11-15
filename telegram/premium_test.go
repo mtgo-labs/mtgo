@@ -105,21 +105,21 @@ func TestGetBoostsStatus_RPCError(t *testing.T) {
 	}
 }
 
-func TestGetBoosts_BasicOption(t *testing.T) {
+func TestGetMyBoosts_BasicOption(t *testing.T) {
 	cfg := &GetBoostsOption{Offset: "abc"}
 	if cfg.Offset != "abc" {
 		t.Errorf("Offset = %q, want %q", cfg.Offset, "abc")
 	}
 }
 
-func TestGetBoosts_LimitOption(t *testing.T) {
+func TestGetMyBoosts_LimitOption(t *testing.T) {
 	cfg := &GetBoostsOption{Limit: 50}
 	if cfg.Limit != 50 {
 		t.Errorf("Limit = %d, want 50", cfg.Limit)
 	}
 }
 
-func TestGetBoosts_Success(t *testing.T) {
+func TestGetMyBoosts_Success(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
 	mock.setResult(tg.PremiumGetMyBoostsTypeID, &tg.PremiumMyBoosts{
@@ -128,22 +128,72 @@ func TestGetBoosts_Success(t *testing.T) {
 		},
 	})
 
-	boosts, err := c.GetBoosts(context.Background())
+	boosts, err := c.GetMyBoosts(context.Background())
 	if err != nil {
-		t.Fatalf("GetBoosts() error: %v", err)
+		t.Fatalf("GetMyBoosts() error: %v", err)
 	}
 	if len(boosts) != 1 {
 		t.Fatalf("expected 1 boost, got %d", len(boosts))
 	}
 }
 
-func TestGetBoosts_RPCError(t *testing.T) {
+func TestGetMyBoosts_RPCError(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 
 	mock.setError(tg.PremiumGetMyBoostsTypeID, errors.New("rpc error"))
 
-	_, err := c.GetBoosts(context.Background())
+	_, err := c.GetMyBoosts(context.Background())
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestGetChatBoosts(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(-1000000000200, &tg.InputPeerChannel{ChannelID: 200, AccessHash: 7})
+	inv.setResult(tg.PremiumGetBoostsListTypeID, &tg.PremiumBoostsList{
+		Count:      12,
+		Boosts:     []*tg.Boost{{UserID: 10, Multiplier: 3}},
+		NextOffset: "page2",
+		Users:      []tg.UserClass{&tg.User{ID: 10, FirstName: "Booster"}},
+	})
+
+	res, err := c.GetChatBoosts(context.Background(), -1000000000200, "", 0, true)
+	if err != nil {
+		t.Fatalf("GetChatBoosts() error: %v", err)
+	}
+	if res.Count != 12 || len(res.Boosts) != 1 || res.NextOffset != "page2" {
+		t.Fatalf("result = %#v, want page with one boost", res)
+	}
+	req, ok := inv.lastCall().(*tg.PremiumGetBoostsListRequest)
+	if !ok {
+		t.Fatalf("expected PremiumGetBoostsListRequest, got %T", inv.lastCall())
+	}
+	if !req.Gifts || req.Limit != 10 {
+		t.Errorf("request = %#v, want default limit with gifts flag passthrough", req)
+	}
+}
+
+func TestGetUserBoosts(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(-1000000000200, &tg.InputPeerChannel{ChannelID: 200, AccessHash: 7})
+	c.CachePeer(10, &tg.InputPeerUser{UserID: 10, AccessHash: 20})
+	inv.setResult(tg.PremiumGetUserBoostsTypeID, &tg.PremiumBoostsList{
+		Boosts: []*tg.Boost{{UserID: 10, Multiplier: 2}},
+	})
+
+	boosts, err := c.GetUserBoosts(context.Background(), -1000000000200, 10)
+	if err != nil {
+		t.Fatalf("GetUserBoosts() error: %v", err)
+	}
+	if len(boosts) != 1 || boosts[0].Multiplier != 2 {
+		t.Fatalf("boosts = %#v, want one x2 boost", boosts)
+	}
+	req, ok := inv.lastCall().(*tg.PremiumGetUserBoostsRequest)
+	if !ok {
+		t.Fatalf("expected PremiumGetUserBoostsRequest, got %T", inv.lastCall())
+	}
+	if u, ok := req.UserID.(*tg.InputUser); !ok || u.UserID != 10 {
+		t.Errorf("user = %#v, want user 10", req.UserID)
 	}
 }

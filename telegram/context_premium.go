@@ -45,9 +45,9 @@ func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error)
 // Returns:
 //   - []*tg.MyBoost: the list of the user's active boosts
 //   - error: non-nil if the context has no client or the request fails
-func (c *Context) GetBoosts(opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
+func (c *Context) GetMyBoosts(opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
 	if c.Client == nil {
 		return nil, ErrContextNoClient
 	}
-	return c.Client.GetBoosts(c.Ctx, opts...)
+	return c.Client.GetMyBoosts(c.Ctx, opts...)
 }

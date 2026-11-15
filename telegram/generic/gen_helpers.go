@@ -334,6 +334,15 @@ func GetBoostsStatus[T PeerInput, C Caller](c C, chat T) (*tg.PremiumBoostsStatu
 	return client.GetBoostsStatus(ctx, chatID)
 }
 
+func GetBotUserMenuButton[T PeerInput, C Caller](c C, user T) (tg.BotMenuButtonClass, error) {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetBotUserMenuButton(ctx, userID)
+}
+
 func GetChat[T PeerInput, C Caller](c C, chat T) (*types.Chat, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -350,6 +359,15 @@ func GetChatAdminInviteLinks[T PeerInput, C Caller](c C, chat T, adminID int64, 
 		return nil, err
 	}
 	return client.GetChatAdminInviteLinks(ctx, chatID, adminID, limit)
+}
+
+func GetChatBoosts[T PeerInput, C Caller](c C, chat T, offset string, limit int, giftsOnly bool) (*telegram.ChatBoosts, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetChatBoosts(ctx, chatID, offset, limit, giftsOnly)
 }
 
 func GetChatEventLog[T PeerInput, C Caller](c C, chat T, query string, limit int) ([]*types.ChatEvent, error) {
@@ -656,6 +674,15 @@ func GetUser[T PeerInput, C Caller](c C, user T) (*types.User, error) {
 		return nil, err
 	}
 	return client.GetUser(ctx, userID)
+}
+
+func GetUserBoosts[T PeerInput, C Caller](c C, chat T, userID int64) ([]*tg.Boost, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetUserBoosts(ctx, chatID, userID)
 }
 
 func IncludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
@@ -1171,6 +1198,15 @@ func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, tit
 	return client.SetAdministratorTitle(ctx, chatID, userID, title)
 }
 
+func SetBotUserMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButtonClass) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SetBotUserMenuButton(ctx, userID, button)
+}
+
 func SetChatAccentColor[T PeerInput, C Caller](c C, chat T, color int32, backgroundEmojiID int64, forProfile bool) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1259,6 +1295,15 @@ func SetChatUsername[T PeerInput, C Caller](c C, chat T, username string) error 
 		return err
 	}
 	return client.SetChatUsername(ctx, chatID, username)
+}
+
+func SetContactNote[T PeerInput, C Caller](c C, user T, note string) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SetContactNote(ctx, userID, note)
 }
 
 func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID int64, score int, force bool) (*types.Message, error) {

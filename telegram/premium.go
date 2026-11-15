@@ -16,7 +16,7 @@ type ApplyBoostOption struct {
 }
 
 // GetBoostsOption configures optional parameters when retrieving the current
-// user's boosts using [Client.GetBoosts].
+// user's boosts using [Client.GetMyBoosts].
 type GetBoostsOption struct {
 	// Offset is the pagination offset string for fetching the next batch of
 	// boosts.
@@ -101,7 +101,7 @@ func (c *PremiumMethods) GetBoostsStatus(ctx context.Context, chatID int64) (*tg
 	})
 }
 
-// GetBoosts retrieves all active boosts applied by the current user across all
+// GetMyBoosts retrieves all active boosts applied by the current user across all
 // chats.
 //
 // Parameters:
@@ -113,14 +113,14 @@ func (c *PremiumMethods) GetBoostsStatus(ctx context.Context, chatID int64) (*tg
 // Example:
 //
 //	ctx := context.Background()
-//	boosts, err := client.GetBoosts(ctx)
+//	boosts, err := client.GetMyBoosts(ctx)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	for _, b := range boosts {
 //	    fmt.Printf("Boost in chat %d, slot %d\n", b.Peer.PeerID, b.Slot)
 //	}
-func (c *PremiumMethods) GetBoosts(ctx context.Context, opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
+func (c *PremiumMethods) GetMyBoosts(ctx context.Context, opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
 	c.Log.Debug("GetBoosts")
 
 	rpc := c.Raw()
@@ -129,4 +129,67 @@ func (c *PremiumMethods) GetBoosts(ctx context.Context, opts ...*GetBoostsOption
 		return nil, fmt.Errorf("premium get my boosts: %w", err)
 	}
 	return result.MyBoosts, nil
+}
+
+// ChatBoosts is one page of the boosters of a chat.
+type ChatBoosts struct {
+	// Count is the total number of boosts applied to the chat.
+	Count int32
+	// Boosts are the boosts on this page, most recent first.
+	Boosts []*tg.Boost
+	// NextOffset fetches the next page; empty on the last page.
+	NextOffset string
+	// Users maps the boosters referenced by Boosts.
+	Users []tg.UserClass
+}
+
+// GetChatBoosts lists the boosts applied to a chat, most recent first. Pass
+// the previous page's next offset to continue; giftsOnly lists only gift and
+// giveaway boosts.
+func (c *PremiumMethods) GetChatBoosts(ctx context.Context, chatID int64, offset string, limit int, giftsOnly bool) (*ChatBoosts, error) {
+	c.Log.Debugf("GetChatBoosts chat_id=%d offset=%q limit=%d gifts=%v", chatID, offset, limit, giftsOnly)
+	if limit <= 0 || limit > 100 {
+		limit = 10
+	}
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	req := &tg.PremiumGetBoostsListRequest{
+		Peer:   peer,
+		Offset: offset,
+		Limit:  int32(limit),
+		Gifts:  giftsOnly,
+	}
+	result, err := c.Raw().PremiumGetBoostsList(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("get chat boosts: %w", err)
+	}
+	return &ChatBoosts{
+		Count:      result.Count,
+		Boosts:     result.Boosts,
+		NextOffset: result.NextOffset,
+		Users:      result.Users,
+	}, nil
+}
+
+// GetUserBoosts lists the boosts a specific user has applied to a chat.
+func (c *PremiumMethods) GetUserBoosts(ctx context.Context, chatID, userID int64) ([]*tg.Boost, error) {
+	c.Log.Debugf("GetUserBoosts chat_id=%d user_id=%d", chatID, userID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	user, err := resolveUserID(ctx, c.Client, userID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve user: %w", err)
+	}
+	result, err := c.Raw().PremiumGetUserBoosts(ctx, &tg.PremiumGetUserBoostsRequest{
+		Peer:   peer,
+		UserID: user,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get user boosts: %w", err)
+	}
+	return result.Boosts, nil
 }
