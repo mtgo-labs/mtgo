@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/peerid"
@@ -38,7 +39,7 @@ func (m *Manager) Cached(id int64) (tg.InputPeerClass, error) {
 						ch.ChannelID = raw
 					}
 				}
-				m.Cache(lookupID, peer)
+				m.cacheMem(lookupID, peer)
 				if p.Username != "" {
 					m.CacheUsername(p.Username, p.ID)
 				}
@@ -57,6 +58,37 @@ func (m *Manager) Cached(id int64) (tg.InputPeerClass, error) {
 // non-zero one; the FIFO eviction limit is enforced; and the peer is
 // persisted when configured.
 func (m *Manager) Cache(id int64, peer tg.InputPeerClass) {
+	m.cacheMem(id, peer)
+
+	if !m.savePeers() {
+		return
+	}
+	ps := m.store()
+	if ps == nil {
+		return
+	}
+	entry := &storage.Peer{ID: id, LastUpdated: time.Now().Unix()}
+	switch p := peer.(type) {
+	case *tg.InputPeerUser:
+		entry.Type = storage.PeerTypeUser
+		entry.AccessHash = p.AccessHash
+	case *tg.InputPeerChat:
+		entry.Type = storage.PeerTypeChat
+	case *tg.InputPeerChannel:
+		entry.Type = storage.PeerTypeChannel
+		entry.ID = p.ChannelID
+		entry.AccessHash = p.AccessHash
+	default:
+		return
+	}
+	_ = ps.SavePeer(entry)
+}
+
+// cacheMem inserts peer into the in-memory maps only. It backs Cache and the
+// store-promotion paths (load-at-connect, miss-then-hit lookups), where the
+// entry already lives in the store and reading it must not rewrite the table
+// or refresh its last-update stamp.
+func (m *Manager) cacheMem(id int64, peer tg.InputPeerClass) {
 	id = canonicalPeerID(id, peer)
 	m.mu.Lock()
 
@@ -70,29 +102,7 @@ func (m *Manager) Cache(id int64, peer tg.InputPeerClass) {
 	}
 	m.byID[id] = peer
 	m.evictOldestLocked()
-
-	save := m.savePeers()
 	m.mu.Unlock()
-
-	if save {
-		if ps := m.store(); ps != nil {
-			entry := &storage.Peer{ID: id}
-			switch p := peer.(type) {
-			case *tg.InputPeerUser:
-				entry.Type = storage.PeerTypeUser
-				entry.AccessHash = p.AccessHash
-			case *tg.InputPeerChat:
-				entry.Type = storage.PeerTypeChat
-			case *tg.InputPeerChannel:
-				entry.Type = storage.PeerTypeChannel
-				entry.ID = p.ChannelID
-				entry.AccessHash = p.AccessHash
-			default:
-				return
-			}
-			_ = ps.SavePeer(entry)
-		}
-	}
 }
 
 // CacheUsername records a username→ID mapping for cache-only lookups.
@@ -170,6 +180,15 @@ func (m *Manager) CachePhone(phone string, id int64) {
 	}
 }
 
+// SetAliases records the collectible-username set of a peer, replacing any
+// previously recorded aliases so removed or re-sold names stop resolving.
+// Empty names in the slice are ignored.
+func (m *Manager) SetAliases(id int64, aliases []string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.setAliasesLocked(id, aliases)
+}
+
 // LookupUsername returns the cached username for a peer ID, or "".
 func (m *Manager) LookupUsername(peerID int64) string {
 	m.mu.RLock()
@@ -196,7 +215,104 @@ func (m *Manager) cachedByUsername(username string) (tg.InputPeerClass, bool) {
 		// Stale mapping (past TTL): drop it and re-resolve.
 		m.deleteUsernameLocked(username)
 	}
+	if cachedID, ok := m.aliasToID[username]; ok {
+		if m.freshLocked(m.aliasSeen[username]) {
+			if p, ok2 := m.byID[cachedID]; ok2 {
+				return p, true
+			}
+		}
+		m.deleteAliasLocked(username)
+	}
 	return nil, false
+}
+
+// setAliasesLocked replaces the collectible-username set of a peer. Old
+// aliases are dropped first so a name that was re-sold or removed never
+// keeps resolving to this peer. Caller must hold m.mu.
+func (m *Manager) setAliasesLocked(id int64, aliases []string) {
+	for _, old := range m.idToAliases[id] {
+		delete(m.aliasToID, old)
+		delete(m.aliasSeen, old)
+	}
+	delete(m.idToAliases, id)
+	for _, alias := range aliases {
+		if alias == "" {
+			continue
+		}
+		m.aliasToID[alias] = id
+		m.aliasSeen[alias] = time.Now()
+		m.idToAliases[id] = append(m.idToAliases[id], alias)
+	}
+}
+
+func (m *Manager) deleteAliasLocked(alias string) {
+	if id, ok := m.aliasToID[alias]; ok {
+		remaining := m.idToAliases[id][:0]
+		for _, a := range m.idToAliases[id] {
+			if a != alias {
+				remaining = append(remaining, a)
+			}
+		}
+		if len(remaining) > 0 {
+			m.idToAliases[id] = remaining
+		} else {
+			delete(m.idToAliases, id)
+		}
+	}
+	delete(m.aliasToID, alias)
+	delete(m.aliasSeen, alias)
+}
+
+// cachedByUsernameOrStore resolves a username from the in-memory index or,
+// on a miss, from the persistent store (mirroring the store fallback of
+// Cached for IDs and of InputPeerByPhone for phones). Store hits honor the
+// index TTL via the record's last-update stamp, and zero-hash user/channel
+// records are skipped: they cannot yield a usable input peer.
+func (m *Manager) cachedByUsernameOrStore(username string) (tg.InputPeerClass, bool) {
+	if p, ok := m.cachedByUsername(username); ok {
+		return p, true
+	}
+	if !m.savePeers() {
+		return nil, false
+	}
+	ps := m.store()
+	if ps == nil {
+		return nil, false
+	}
+	entry, err := ps.GetPeerByUsername(username)
+	if err != nil || entry == nil {
+		return nil, false
+	}
+	if !m.entryFresh(entry) {
+		return nil, false
+	}
+	peer, err := peerFromStorageEntry(entry)
+	if err != nil || !hasAccessHash(peer) {
+		return nil, false
+	}
+	m.cacheMem(entry.ID, peer)
+	m.CacheUsername(username, entry.ID)
+	if entry.Usernames != "" {
+		m.SetAliases(entry.ID, strings.Split(entry.Usernames, ","))
+	}
+	if entry.PhoneNumber != "" {
+		m.CachePhone(entry.PhoneNumber, entry.ID)
+	}
+	return peer, true
+}
+
+// entryFresh reports whether a persisted peer record is still within the
+// index TTL window. Records without a stamp (written before stamps existed,
+// or by external backends that never set one) are treated as fresh.
+func (m *Manager) entryFresh(entry *storage.Peer) bool {
+	if entry.LastUpdated == 0 {
+		return true
+	}
+	ttl := m.indexTTL()
+	if ttl <= 0 {
+		return true
+	}
+	return time.Since(time.Unix(entry.LastUpdated, 0)) <= ttl
 }
 
 // cachedByPhone returns the cached peer for a normalized phone number.
@@ -240,6 +356,7 @@ func (m *Manager) evictOldestLocked() {
 		if cachedUsername, ok := m.idToUsername[oldest]; ok {
 			m.deleteUsernameLocked(cachedUsername)
 		}
+		m.setAliasesLocked(oldest, nil)
 		copy(m.idOrder, m.idOrder[1:])
 		m.idOrder[len(m.idOrder)-1] = 0
 		m.idOrder = m.idOrder[:len(m.idOrder)-1]

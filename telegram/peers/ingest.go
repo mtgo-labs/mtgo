@@ -1,14 +1,19 @@
 package peers
 
 import (
+	"strings"
+	"time"
+
 	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
 // Ingest caches every entity found in an update batch (or any RPC response
 // carrying users/chats). Min entities are cached with a zeroed access hash
-// so they never shadow a known full hash (see preserveAccessHash), and full
-// metadata is persisted when SavePeers is enabled.
+// so they never shadow a known full hash (see preserveAccessHash), forbidden
+// variants are cached too (the channel one still carries a usable access
+// hash), collectible usernames feed the username index, and full metadata is
+// persisted when SavePeers is enabled.
 //
 // This is the funnel for every User/Chat/Channel the client ever observes;
 // there must be no other path writing the cache from entities.
@@ -32,6 +37,7 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 		if username != "" {
 			m.CacheUsername(username, user.ID)
 		}
+		m.cacheCollectibleUsernames(user.Usernames, user.ID)
 		if user.Phone != "" {
 			m.CachePhone(user.Phone, user.ID)
 		}
@@ -40,6 +46,7 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 			Type:        storage.PeerTypeUser,
 			AccessHash:  hash,
 			Username:    username,
+			Usernames:   joinUsernames(user.Usernames),
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
 			PhoneNumber: user.Phone,
@@ -55,6 +62,14 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 				ID:   v.ID,
 				Type: storage.PeerTypeChat,
 			})
+		case *tg.ChatForbidden:
+			// Basic groups need no access hash, so even the forbidden view
+			// of a left group keeps resolving.
+			m.Cache(v.ID, &tg.InputPeerChat{ChatID: v.ID})
+			entries = append(entries, &storage.Peer{
+				ID:   v.ID,
+				Type: storage.PeerTypeChat,
+			})
 		case *tg.Channel:
 			accessHash := v.AccessHash
 			if v.Min {
@@ -65,15 +80,55 @@ func (m *Manager) Ingest(users []tg.UserClass, chats []tg.ChatClass) {
 			if username != "" {
 				m.CacheUsername(username, v.ID)
 			}
+			m.cacheCollectibleUsernames(v.Usernames, v.ID)
 			entries = append(entries, &storage.Peer{
 				ID:         v.ID,
 				Type:       storage.PeerTypeChannel,
 				AccessHash: accessHash,
 				Username:   username,
+				Usernames:  joinUsernames(v.Usernames),
+			})
+		case *tg.ChannelForbidden:
+			// The forbidden variant still carries a usable access hash.
+			m.Cache(v.ID, &tg.InputPeerChannel{ChannelID: v.ID, AccessHash: v.AccessHash})
+			entries = append(entries, &storage.Peer{
+				ID:         v.ID,
+				Type:       storage.PeerTypeChannel,
+				AccessHash: v.AccessHash,
 			})
 		}
 	}
 	m.persist(entries)
+}
+
+// cacheCollectibleUsernames replaces the collectible-username set of a peer
+// with the active aliases of the entity, so t.me links using an alias
+// resolve without a server round-trip and dropped aliases stop resolving.
+func (m *Manager) cacheCollectibleUsernames(collectibles []*tg.Username, id int64) {
+	var aliases []string
+	for _, un := range collectibles {
+		if un != nil && un.Active && un.Username != "" {
+			aliases = append(aliases, un.Username)
+		}
+	}
+	m.SetAliases(id, aliases)
+}
+
+// joinUsernames renders the active collectible usernames as a comma-separated
+// list for the storage record. Inactive (already re-sold or dropped) aliases
+// are dropped so a persisted index never resolves to a new owner.
+func joinUsernames(collectibles []*tg.Username) string {
+	var b strings.Builder
+	for _, un := range collectibles {
+		if un == nil || !un.Active || un.Username == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(un.Username)
+	}
+	return b.String()
 }
 
 // IngestUsers is Ingest for a users-only batch.
@@ -139,9 +194,12 @@ func (m *Manager) ingestResolved(result *tg.ContactsResolvedPeer) {
 	m.persist(entries)
 }
 
-// LoadFromStore promotes every persisted peer into the in-memory cache.
+// LoadFromStore promotes every persisted peer into the in-memory cache,
+// including its username, collectible-username, and phone index entries.
 // Called at connect time; a no-op when persistence is disabled or no store
-// is configured.
+// is configured. Promotion is read-only: the records came from the store
+// itself, so they are not written back (that would rewrite the whole table
+// and refresh every TTL stamp on each connect).
 func (m *Manager) LoadFromStore() {
 	if !m.savePeers() {
 		return
@@ -159,21 +217,31 @@ func (m *Manager) LoadFromStore() {
 		if err != nil {
 			continue
 		}
-		m.Cache(p.ID, peer)
+		m.cacheMem(p.ID, peer)
 		if p.Username != "" {
 			m.CacheUsername(p.Username, p.ID)
+		}
+		if p.Usernames != "" {
+			m.SetAliases(p.ID, strings.Split(p.Usernames, ","))
+		}
+		if p.PhoneNumber != "" {
+			m.CachePhone(p.PhoneNumber, p.ID)
 		}
 	}
 }
 
-// persist writes storage entries when persistence is enabled. Failures are
-// deliberately ignored: the cache is the source of truth for this session.
+// persist writes storage entries when persistence is enabled. Each record is
+// stamped with the current time so username lookups served from the store
+// can honor the index TTL. Failures are deliberately ignored: the cache is
+// the source of truth for this session.
 func (m *Manager) persist(entries []*storage.Peer) {
 	if !m.savePeers() || len(entries) == 0 {
 		return
 	}
 	if ps := m.store(); ps != nil {
+		now := time.Now().Unix()
 		for _, entry := range entries {
+			entry.LastUpdated = now
 			_ = ps.SavePeer(entry)
 		}
 	}

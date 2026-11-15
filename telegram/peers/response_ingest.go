@@ -11,6 +11,8 @@ import (
 // IngestResponses returns an invoker middleware that funnels users and chats
 // found in successful RPC responses into the cache. Every entity the client
 // ever observes — not just updates and dialogs — becomes a future cache hit.
+// Struct responses are walked by their cached field layout; bare vector
+// results (e.g. users.getUsers) are scanned item by item.
 //
 // The walk uses reflection, but the field layout of each response type is
 // computed once and cached, so steady-state cost per response is a cached
@@ -125,6 +127,10 @@ func (m *Manager) ingestResult(result tg.TLObject) {
 	if result == nil {
 		return
 	}
+	if vec, ok := result.(*tg.GenericVector); ok {
+		m.ingestVectorItems(vec.Items)
+		return
+	}
 	v := reflect.ValueOf(result)
 	if v.Kind() != reflect.Pointer || v.IsNil() {
 		return
@@ -149,6 +155,25 @@ func (m *Manager) ingestResult(result tg.TLObject) {
 			if ok && len(slice) > 0 {
 				chats = append(chats, slice...)
 			}
+		}
+	}
+	if len(users) > 0 || len(chats) > 0 {
+		m.Ingest(users, chats)
+	}
+}
+
+// ingestVectorItems caches entities carried by bare Vector<User> and
+// Vector<Chat> results, which have no struct envelope for the layout walk
+// to find.
+func (m *Manager) ingestVectorItems(items []tg.TLObject) {
+	var users []tg.UserClass
+	var chats []tg.ChatClass
+	for _, item := range items {
+		switch v := item.(type) {
+		case tg.UserClass:
+			users = append(users, v)
+		case tg.ChatClass:
+			chats = append(chats, v)
 		}
 	}
 	if len(users) > 0 || len(chats) > 0 {

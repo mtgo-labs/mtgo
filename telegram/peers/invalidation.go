@@ -179,6 +179,7 @@ func (m *Manager) Invalidate(id int64) {
 			delete(m.usernameToID, username)
 			delete(m.idToUsername, key)
 		}
+		m.setAliasesLocked(key, nil)
 		if phone, ok := m.idToPhone[key]; ok {
 			delete(m.phoneToID, phone)
 			delete(m.idToPhone, key)
