@@ -193,13 +193,13 @@ type UserBinder interface {
 // FolderBinder is the minimal set of client operations required by Folder
 // bound methods. It is satisfied automatically by *telegram.Client.
 type FolderBinder interface {
-	BoundDeleteFolder(ctx context.Context, folderID int32) error
-	BoundEditFolder(ctx context.Context, filter *tg.DialogFilter) error
-	BoundExcludeChat(ctx context.Context, folderID int32, chatID int64) error
-	BoundIncludeChat(ctx context.Context, folderID int32, chatID int64) error
-	BoundPinChatInFolder(ctx context.Context, folderID int32, chatID int64) error
-	BoundRemoveChatFromFolder(ctx context.Context, folderID int32, chatID int64) error
-	BoundUpdateFolderColor(ctx context.Context, folderID int32, color int32) error
+	DeleteFolder(ctx context.Context, folderID int32) error
+	EditFolder(ctx context.Context, filter *tg.DialogFilter) error
+	ExcludeChat(ctx context.Context, folderID int32, chatID int64) error
+	IncludeChat(ctx context.Context, folderID int32, chatID int64) error
+	PinChatInFolder(ctx context.Context, folderID int32, chatID int64) error
+	RemoveChatFromFolder(ctx context.Context, folderID int32, chatID int64) error
+	UpdateFolderColor(ctx context.Context, folderID int32, color int32) error
 }
 
 // editInlineOptsFromParams converts edit-message option structs into the

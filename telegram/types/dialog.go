@@ -85,7 +85,7 @@ func (f *Folder) DeleteContext(ctx context.Context) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundDeleteFolder(ctx, f.ID)
+	return f.binder.DeleteFolder(ctx, f.ID)
 }
 
 func (f *Folder) Edit(name string, icon string) error {
@@ -110,7 +110,7 @@ func (f *Folder) EditContext(ctx context.Context, name string, icon string) erro
 	if f.Icon != "" {
 		raw.Emoticon = f.Icon
 	}
-	return f.binder.BoundEditFolder(ctx, raw)
+	return f.binder.EditFolder(ctx, raw)
 }
 
 func (f *Folder) IncludeChat(chatID int64) error {
@@ -121,7 +121,7 @@ func (f *Folder) IncludeChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundIncludeChat(ctx, f.ID, chatID)
+	return f.binder.IncludeChat(ctx, f.ID, chatID)
 }
 
 func (f *Folder) ExcludeChat(chatID int64) error {
@@ -132,7 +132,7 @@ func (f *Folder) ExcludeChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundExcludeChat(ctx, f.ID, chatID)
+	return f.binder.ExcludeChat(ctx, f.ID, chatID)
 }
 
 func (f *Folder) UpdateColor(color int32) error {
@@ -143,7 +143,7 @@ func (f *Folder) UpdateColorContext(ctx context.Context, color int32) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundUpdateFolderColor(ctx, f.ID, color)
+	return f.binder.UpdateFolderColor(ctx, f.ID, color)
 }
 
 func (f *Folder) PinChat(chatID int64) error {
@@ -154,7 +154,7 @@ func (f *Folder) PinChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundPinChatInFolder(ctx, f.ID, chatID)
+	return f.binder.PinChatInFolder(ctx, f.ID, chatID)
 }
 
 func (f *Folder) RemoveChat(chatID int64) error {
@@ -165,7 +165,7 @@ func (f *Folder) RemoveChatContext(ctx context.Context, chatID int64) error {
 	if f.binder == nil {
 		return ErrNoBinder
 	}
-	return f.binder.BoundRemoveChatFromFolder(ctx, f.ID, chatID)
+	return f.binder.RemoveChatFromFolder(ctx, f.ID, chatID)
 }
 
 func (f *Folder) toDialogFilter() (*tg.DialogFilter, error) {
