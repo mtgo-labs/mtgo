@@ -30,11 +30,16 @@ func (c *MessageMethods) SendWidget(ctx context.Context, chatID int64, width, he
 		ChatData:     opt.ChatData,
 	}
 
-	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
+	return c.sendMediaInternal(ctx, peer, media, opt.Caption, opt.ToSendMsg())
 }
 
 // EditMessageWidgetData updates the public or per-chat data of a widget
 // message in place and returns the updated message.
+//
+// The edit response carries only updateMessageWidgetData (the new data and
+// pts, no message object), so the updated message is fetched right after the
+// edit; when that fetch fails the edit still landed, and a minimal message
+// carrying the ID is returned.
 func (c *MessageMethods) EditMessageWidgetData(ctx context.Context, chatID int64, messageID int32, publicData, chatData string) (*types.Message, error) {
 	c.Log.Debugf("EditMessageWidgetData chat_id=%d msg=%d", chatID, messageID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)
@@ -50,7 +55,13 @@ func (c *MessageMethods) EditMessageWidgetData(ctx context.Context, chatID int64
 	if err != nil {
 		return nil, fmt.Errorf("edit message widget data: %w", err)
 	}
-	return extractSingleMessage(result, c)
+	if msg, err := extractSingleMessage(result, c); err == nil && msg != nil {
+		return msg, nil
+	}
+	if msgs, err := c.GetMessages(ctx, chatID, []int32{messageID}); err == nil && len(msgs) > 0 && msgs[0] != nil {
+		return msgs[0], nil
+	}
+	return &types.Message{ID: messageID}, nil
 }
 
 // EditWidgetData updates the public data of a shared widget by its widget ID.
@@ -83,6 +94,8 @@ type WidgetPublicData struct {
 
 // GetWidgetPublicData fetches the public data of a widget message. Pass the
 // previous hash to receive the NotModified short form.
+// Bots cannot call this method (the server answers BOT_METHOD_INVALID);
+// it serves client sessions polling a widget's shared data.
 func (c *MessageMethods) GetWidgetPublicData(ctx context.Context, chatID int64, messageID int32, hash int64) (*WidgetPublicData, error) {
 	c.Log.Debugf("GetWidgetPublicData chat_id=%d msg=%d", chatID, messageID)
 	peer, err := resolvePeer(ctx, c.Client, chatID)

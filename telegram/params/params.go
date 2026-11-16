@@ -1370,6 +1370,9 @@ type GetStarsTransactionsOption struct {
 type SendWidget struct {
 	// AllowQueries lets the widget issue widget queries back to the bot.
 	AllowQueries bool
+	// Caption shows under (or above, with ShowCaptionAboveMedia) the widget;
+	// it doubles as the chat-list and notification preview text.
+	Caption string
 	// SharedWidget marks the widget as shared: one instance per chat, whose
 	// state is updated in place via its widget ID.
 	SharedWidget bool
