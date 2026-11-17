@@ -288,9 +288,9 @@ func (c *MessageMethods) SendPoll(ctx context.Context, chatID int64, question st
 	if opt.DescriptionMedia != nil {
 		media.AttachedMedia = opt.DescriptionMedia
 	}
-	// Note: SendPoll.CorrectAnswers is not mapped — the pinned TL generator
-	// encodes the wire field as Vector<int> instead of Vector<bytes>, so quiz
-	// answer keys cannot be sent correctly until the compiler handles it.
+	if len(opt.CorrectAnswers) > 0 {
+		media.CorrectAnswers = opt.CorrectAnswers
+	}
 
 	return c.sendMediaInternal(ctx, peer, media, "", opt.ToSendMsg())
 }

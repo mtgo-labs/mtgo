@@ -1191,6 +1191,32 @@ func TestEditInlineFlags(t *testing.T) {
 	}
 }
 
+func TestSendPollQuizCorrectAnswers(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
+
+	_, err := c.SendPoll(context.Background(), 10, "Capital of France?", []string{"Paris", "London", "Berlin"},
+		&params.SendPoll{Quiz: true, CorrectAnswers: []int32{0}})
+	if err != nil {
+		t.Fatalf("SendPoll() error: %v", err)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesSendMediaRequest)
+	if !ok {
+		t.Fatalf("expected MessagesSendMediaRequest, got %T", inv.lastCall())
+	}
+	media, ok := req.Media.(*tg.InputMediaPoll)
+	if !ok {
+		t.Fatalf("expected InputMediaPoll, got %T", req.Media)
+	}
+	if len(media.CorrectAnswers) != 1 || media.CorrectAnswers[0] != 0 {
+		t.Fatalf("correct answers = %v, want [0] (option indices)", media.CorrectAnswers)
+	}
+	media.SetFlags() // the encoder computes flags at wire time
+	if !media.Flags.Has(0) {
+		t.Fatal("correct_answers flag bit 0 not set")
+	}
+}
+
 func TestSendPollPeerError(t *testing.T) {
 	c, _ := newClientWithMock(t)
 	_, err := c.SendPoll(context.Background(), 999, "Q?", []string{"A"})

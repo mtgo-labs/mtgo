@@ -406,16 +406,19 @@ type SendPoll struct {
 	AllowAddingOptions    bool
 	ClosePeriod           *int32
 	CloseDate             *int32
-	CorrectAnswers        [][]byte
-	Solution              *string
-	SolutionEntities      []tl.MessageEntityClass
-	Description           string
-	DescriptionMedia      tl.InputMediaClass
-	BusinessConnectionID  string
-	AllowPaidBroadcast    bool
-	PaidMessageStarCount  *int64
-	MessageThreadID       int32
-	RepeatPeriod          *int32
+	// CorrectAnswers lists the indices of the correct answers for quiz
+	// polls (the wire field carries option indices, matching the official
+	// clients).
+	CorrectAnswers       []int32
+	Solution             *string
+	SolutionEntities     []tl.MessageEntityClass
+	Description          string
+	DescriptionMedia     tl.InputMediaClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+	RepeatPeriod         *int32
 }
 
 // SendVenue holds all configurable options for the send-venue Telegram API call.
