@@ -120,6 +120,38 @@ func (c *StickerMethods) GetStickerSet(ctx context.Context, set tg.InputStickerS
 	return unwrapStickerSet(result)
 }
 
+// GetAttachedStickers returns the sticker sets attached to a photo or a
+// document: the dice sets, animated emoji, animated profile photos, and
+// similar sticker-backed media. The input references the media by its file
+// ID (InputDocument/InputPhoto), as carried by message media of the
+// corresponding kind.
+//
+// Example:
+//
+//	sets, err := client.GetAttachedStickers(ctx, &tg.InputStickeredMediaDocument{
+//	    ID: &tg.InputDocument{ID: docID, AccessHash: hash},
+//	})
+func (c *StickerMethods) GetAttachedStickers(ctx context.Context, media tg.InputStickeredMediaClass) ([]tg.StickerSetCoveredClass, error) {
+	c.Log.Debug("GetAttachedStickers")
+	result, err := c.Raw().MessagesGetAttachedStickers(ctx, &tg.MessagesGetAttachedStickersRequest{
+		Media: media,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get attached stickers: %w", err)
+	}
+	vector, ok := result.(*tg.GenericVector)
+	if !ok {
+		return nil, fmt.Errorf("get attached stickers: unexpected result %T", result)
+	}
+	sets := make([]tg.StickerSetCoveredClass, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if set, ok := item.(tg.StickerSetCoveredClass); ok {
+			sets = append(sets, set)
+		}
+	}
+	return sets, nil
+}
+
 // CheckStickerSetShortName reports whether the short name is available for a
 // new sticker set.
 func (c *StickerMethods) CheckStickerSetShortName(ctx context.Context, shortName string) (bool, error) {

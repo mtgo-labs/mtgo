@@ -235,3 +235,43 @@ func TestRecentAndFavoriteStickers(t *testing.T) {
 		t.Fatalf("request = %#v, want unfave set", inv.lastCall())
 	}
 }
+
+func TestGetAttachedStickers(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.MessagesGetAttachedStickersTypeID, &tg.GenericVector{
+		Items: []tg.TLObject{
+			&tg.StickerSetCovered{
+				Set:   &tg.StickerSet{ID: 9, Title: "Animated Dice"},
+				Cover: &tg.Document{ID: 100},
+			},
+		},
+	})
+
+	sets, err := c.GetAttachedStickers(t.Context(), &tg.InputStickeredMediaDocument{
+		ID: &tg.InputDocument{ID: 42, AccessHash: 7},
+	})
+	if err != nil {
+		t.Fatalf("GetAttachedStickers() error: %v", err)
+	}
+	if len(sets) != 1 {
+		t.Fatalf("sets = %d, want 1", len(sets))
+	}
+	covered, ok := sets[0].(*tg.StickerSetCovered)
+	if !ok {
+		t.Fatalf("set[0] = %T, want *tg.StickerSetCovered", sets[0])
+	}
+	if set, ok := covered.Set.(*tg.StickerSet); !ok || set.ID != 9 {
+		t.Fatalf("covered set = %#v, want sticker set 9", covered.Set)
+	}
+	req, ok := inv.lastCall().(*tg.MessagesGetAttachedStickersRequest)
+	if !ok {
+		t.Fatalf("last call = %T", inv.lastCall())
+	}
+	doc, ok := req.Media.(*tg.InputStickeredMediaDocument)
+	if !ok {
+		t.Fatalf("media = %T", req.Media)
+	}
+	if id, ok := doc.ID.(*tg.InputDocument); !ok || id.ID != 42 || id.AccessHash != 7 {
+		t.Fatalf("document ref = %#v", doc.ID)
+	}
+}
