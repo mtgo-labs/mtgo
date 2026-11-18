@@ -1197,3 +1197,28 @@ func TestHandlerAliasesMatchUpdateNames(t *testing.T) {
 		t.Fatal("join request handler did not match its update")
 	}
 }
+
+func TestOnWidgetQuerySugar(t *testing.T) {
+	c, _ := newClientWithMock(t)
+	called := false
+	h := c.OnWidgetQuery(func(ctx *Context, q *types.WidgetQuery) {
+		called = true
+		if q.ID != 3 {
+			t.Errorf("query id = %d", q.ID)
+		}
+	})
+	if h == nil {
+		t.Fatal("OnWidgetQuery returned nil")
+	}
+	upd := &Update{WidgetQuery: &types.WidgetQuery{ID: 3}}
+	if !h.Check(upd) {
+		t.Fatal("OnWidgetQuery handler did not match a widget query update")
+	}
+	ctx := &Context{Client: c}
+	ctx.Update = upd
+	ctx.WidgetQuery = upd.WidgetQuery
+	h.Handle(ctx)
+	if !called {
+		t.Fatal("callback not invoked")
+	}
+}
