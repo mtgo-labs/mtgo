@@ -180,6 +180,18 @@ type DeletedMessagesHandler = typedHandler[*types.DeletedMessages]
 // See NewDeletedBusinessMessagesHandler for construction and callback signatures.
 type DeletedBusinessMessagesHandler = typedHandler[*types.DeletedMessages]
 
+// WidgetQueryHandler is a generic typedHandler parameterized by *types.WidgetQuery.
+// See NewWidgetQueryHandler for construction and callback signatures.
+type WidgetQueryHandler = typedHandler[*types.WidgetQuery]
+
+// ChatMemberUpdatedHandler matches the update name: an alias of
+// [ChatMemberHandler]. See NewChatMemberHandler.
+type ChatMemberUpdatedHandler = ChatMemberHandler
+
+// ManagedBotUpdatedHandler matches the update name: an alias of
+// [ManagedBotHandler]. See NewManagedBotHandler.
+type ManagedBotUpdatedHandler = ManagedBotHandler
+
 // ── Constructors ────────────────────────────────────────────────────────────
 
 // NewMessageHandler creates a handler for incoming new messages.
@@ -598,4 +610,30 @@ func NewDeletedBusinessMessagesHandler(callback any, filters ...Filter) *Deleted
 		func(c *Context, u *Update) { c.DeletedBusinessMessages = u.DeletedBusinessMessages },
 		filters,
 	)
+}
+
+// NewWidgetQueryHandler creates a handler for widget queries: a widget the
+// bot sent with allow_queries asking the bot for live data
+// (window.TelegramWidget.request in the widget's JavaScript). Answer with
+// [BotsMethods.AnswerWidgetQuery].
+func NewWidgetQueryHandler(callback any, filters ...Filter) *WidgetQueryHandler {
+	return newTypedHandler(
+		callback,
+		func(u *Update) bool { return u.WidgetQuery == nil },
+		func(c *Context) *types.WidgetQuery { return c.WidgetQuery },
+		func(c *Context, u *Update) { c.WidgetQuery = u.WidgetQuery },
+		filters,
+	)
+}
+
+// NewChatMemberUpdatedHandler is [NewChatMemberHandler] under the update's
+// name.
+func NewChatMemberUpdatedHandler(callback any, filters ...Filter) *ChatMemberUpdatedHandler {
+	return NewChatMemberHandler(callback, filters...)
+}
+
+// NewManagedBotUpdatedHandler is [NewManagedBotHandler] under the update's
+// name.
+func NewManagedBotUpdatedHandler(callback any, filters ...Filter) *ManagedBotUpdatedHandler {
+	return NewManagedBotHandler(callback, filters...)
 }

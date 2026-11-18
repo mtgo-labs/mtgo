@@ -141,6 +141,26 @@ client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
 
 ## Handlers and Filters
 
+Every update category has a typed handler, constructed with `New<Type>Handler`
+(and registered through `client.AddHandler` or the `client.On<Type>` sugar):
+
+| Handler | Fires on |
+|---|---|
+| `NewMessageHandler` / `NewEditedMessageHandler` / `NewDeletedMessagesHandler` | new, edited, and deleted messages |
+| `NewBusinessMessageHandler` / `NewEditedBusinessMessageHandler` / `NewDeletedBusinessMessagesHandler` | the same for business-connection chats |
+| `NewGuestMessageHandler` | guest messages |
+| `NewCallbackQueryHandler` / `NewInlineQueryHandler` / `NewChosenInlineResultHandler` | inline interaction |
+| `NewWidgetQueryHandler` | widget queries (HTML widgets calling back to the bot) |
+| `NewChatJoinRequestHandler` / `NewChatMemberHandler` (alias `ChatMemberUpdatedHandler`) | membership |
+| `NewChatBoostHandler` / `NewStoryHandler` / `NewPollHandler` | boosts, stories, polls |
+| `NewMessageReactionHandler` / `NewMessageReactionCountHandler` | reactions |
+| `NewUserStatusHandler` | user presence |
+| `NewShippingQueryHandler` / `NewPreCheckoutQueryHandler` / `NewPurchasedPaidMediaHandler` | payments |
+| `NewBusinessConnectionHandler` / `NewManagedBotHandler` (alias `ManagedBotUpdatedHandler`) | business and managed-bot links |
+| `NewConnectHandler` / `NewDisconnectHandler` / `NewStartHandler` / `NewStopHandler` / `NewErrorHandler` | client lifecycle |
+| `NewRawUpdateHandler` | raw `tg.UpdateXxx` values, typed or catch-all |
+
+
 ```go
 // Command handler
 client.OnMessage(func(client *telegram.Client, msg *types.Message) {

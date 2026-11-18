@@ -1166,3 +1166,34 @@ func TestPopulateContextCoverage(t *testing.T) {
 		}
 	}
 }
+
+func TestWidgetQueryHandler(t *testing.T) {
+	h := NewWidgetQueryHandler(func(ctx *Context, q *types.WidgetQuery) {
+		if q.Data == nil || string(q.Data) != "inc" {
+			t.Errorf("widget query data = %v", q.Data)
+		}
+	})
+	upd := &Update{WidgetQuery: &types.WidgetQuery{ID: 1, Data: []byte("inc")}}
+	if !h.Check(upd) {
+		t.Fatal("Check failed for widget query update")
+	}
+	c := &Context{}
+	c.Update = upd
+	h.setCtx(c, upd)
+	h.Handle(c)
+}
+
+func TestHandlerAliasesMatchUpdateNames(t *testing.T) {
+	// The aliases exist so both the update name and the short name compile.
+	var member *ChatMemberUpdatedHandler = NewChatMemberUpdatedHandler(nil)
+	if member == nil {
+		t.Fatal("NewChatMemberUpdatedHandler returned nil")
+	}
+	var managed *ManagedBotUpdatedHandler = NewManagedBotUpdatedHandler(nil)
+	if managed == nil {
+		t.Fatal("NewManagedBotUpdatedHandler returned nil")
+	}
+	if !NewChatJoinRequestHandler(nil).Check(&Update{ChatJoinRequest: &types.ChatJoinRequest{}}) {
+		t.Fatal("join request handler did not match its update")
+	}
+}
