@@ -1185,11 +1185,11 @@ func TestWidgetQueryHandler(t *testing.T) {
 
 func TestHandlerAliasesMatchUpdateNames(t *testing.T) {
 	// The aliases exist so both the update name and the short name compile.
-	var member *ChatMemberUpdatedHandler = NewChatMemberUpdatedHandler(nil)
+	member := NewChatMemberUpdatedHandler(nil)
 	if member == nil {
 		t.Fatal("NewChatMemberUpdatedHandler returned nil")
 	}
-	var managed *ManagedBotUpdatedHandler = NewManagedBotUpdatedHandler(nil)
+	managed := NewManagedBotUpdatedHandler(nil)
 	if managed == nil {
 		t.Fatal("NewManagedBotUpdatedHandler returned nil")
 	}

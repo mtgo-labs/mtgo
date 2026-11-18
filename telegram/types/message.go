@@ -2318,7 +2318,6 @@ func (m *Message) ReplyInvoiceContext(ctx context.Context, invoice *tg.InputMedi
 	return m.binder.SendInvoice(ctx, m.ChatID, invoice, caption, opt)
 }
 
-// AnswerInvoice sends an invoice without replying.
 // Pay completes the interactive checkout for this invoice message using the
 // caller-supplied credentials and shipping choices, returning the receipt
 // message. A *telegram.PaymentVerificationNeededError (surfaced verbatim from
@@ -2334,6 +2333,7 @@ func (m *Message) PayContext(ctx context.Context, opts ...*params.Pay) (*Message
 	return m.binder.PayMessage(ctx, m.ChatID, m.ID, opts...)
 }
 
+// AnswerInvoice sends an invoice without replying.
 func (m *Message) AnswerInvoice(invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
 	return m.AnswerInvoiceContext(context.Background(), invoice, caption, opts...)
 }
