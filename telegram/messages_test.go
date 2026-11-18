@@ -1318,3 +1318,21 @@ func TestSendPollFlags(t *testing.T) {
 		t.Errorf("solution = %q", media.Solution)
 	}
 }
+
+func TestSortEntities(t *testing.T) {
+	entities := []tg.MessageEntityClass{
+		&tg.MessageEntityBold{Offset: 5, Length: 2},
+		&tg.MessageEntityItalic{Offset: 0, Length: 3},
+		&tg.MessageEntityBold{Offset: 0, Length: 3},
+		&tg.MessageEntityCode{Offset: 0, Length: 3},
+	}
+	SortEntities(entities)
+	// (offset, length, constructor id): the three offset-0/length-3 entities
+	// order by id, then the offset-5 one lands last.
+	if _, ok := entities[0].(*tg.MessageEntityCode); !ok {
+		t.Fatalf("first = %#v, want the lowest constructor id first", entities[0])
+	}
+	if off := entityOffset(entities[3]); off != 5 {
+		t.Fatalf("last offset = %d, want 5", off)
+	}
+}

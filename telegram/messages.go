@@ -3,6 +3,8 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/mtgo-labs/mtgo/telegram/params"
@@ -72,7 +74,44 @@ func (c *Client) parseText(text string, optParseMode params.ParseMode) (string, 
 	if !ok {
 		return text, nil, nil
 	}
-	return parser.Parse(pm, text)
+	parsed, entities, err := parser.Parse(pm, text)
+	if err != nil {
+		return "", nil, err
+	}
+	SortEntities(entities)
+	return parsed, entities, nil
+}
+
+// SortEntities orders entities by (offset, length, constructor id) — the
+// order official clients send them in. Servers accept any order, but
+// identical bytes make wire comparisons and deduplication reliable.
+func SortEntities(entities []tg.MessageEntityClass) {
+	sort.SliceStable(entities, func(i, j int) bool {
+		a, b := entities[i], entities[j]
+		if entityOffset(a) != entityOffset(b) {
+			return entityOffset(a) < entityOffset(b)
+		}
+		if entityLength(a) != entityLength(b) {
+			return entityLength(a) < entityLength(b)
+		}
+		return a.ConstructorID() < b.ConstructorID()
+	})
+}
+
+func entityOffset(e tg.MessageEntityClass) int32 {
+	v := reflect.Indirect(reflect.ValueOf(e))
+	if f := v.FieldByName("Offset"); f.IsValid() && f.Kind() == reflect.Int32 {
+		return int32(f.Int())
+	}
+	return 0
+}
+
+func entityLength(e tg.MessageEntityClass) int32 {
+	v := reflect.Indirect(reflect.ValueOf(e))
+	if f := v.FieldByName("Length"); f.IsValid() && f.Kind() == reflect.Int32 {
+		return int32(f.Int())
+	}
+	return 0
 }
 
 // SendMessage sends a plain text message to the specified chat. It is the primary
@@ -163,6 +202,7 @@ func (c *MessageMethods) SendMessage(ctx context.Context, chatID int64, text str
 		entities = parsedEntities
 	}
 	if len(entities) > 0 {
+		SortEntities(entities)
 		flags.Set(3)
 	}
 	if opt.SendAs != nil {
@@ -384,6 +424,7 @@ func (c *MessageMethods) EditMessageText(ctx context.Context, chatID int64, mess
 		entities = parsedEntities
 	}
 	if len(entities) > 0 {
+		SortEntities(entities)
 		flags.Set(3)
 	}
 	if sendText != "" {
@@ -610,6 +651,7 @@ func (c *Client) sendMediaInternal(ctx context.Context, peer tg.InputPeerClass, 
 		entities = parsedEntities
 	}
 	if len(entities) > 0 {
+		SortEntities(entities)
 		flags |= (1 << 3)
 	}
 

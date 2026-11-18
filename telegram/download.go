@@ -639,6 +639,10 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 			Location: location,
 			Offset:   offset,
 			Limit:    chunkSize,
+			// Precise asks the CDN/web bridges to return exactly this range.
+			// Aligned ranges are served precisely anyway; asking everywhere
+			// costs the bridge an extra request per part.
+			Precise: offset%4096 != 0 || fileSize > 0 && offset+int64(chunkSize) < fileSize && (offset+int64(chunkSize))%4096 != 0,
 		}
 
 		result, err := rpc.UploadGetFile(ctx, req)
@@ -1014,6 +1018,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 							Location: location,
 							Offset:   j.offset,
 							Limit:    j.limit,
+							Precise:  j.offset%4096 != 0 || fileSize > 0 && j.offset+int64(j.limit) < fileSize && (j.offset+int64(j.limit))%4096 != 0,
 						})
 						chunkElapsed := time.Since(reqStart)
 						if chunkDebug {
@@ -2288,4 +2293,43 @@ func (c *MessageMethods) StreamMedia(ctx context.Context, input any, opts *param
 	}()
 
 	return ch, nil
+}
+
+// GetFileHashes fetches the SHA-256 range hashes of a file location
+// (upload.getFileHashes). Telegram hashes large files in aligned ranges, so
+// a full verification compares every returned range.
+func (c *Client) GetFileHashes(ctx context.Context, location tg.InputFileLocationClass) ([]*tg.FileHash, error) {
+	res, err := c.Raw().Invoke(ctx, &tg.UploadGetFileHashesRequest{Location: location}, decodeFileHashVector)
+	if err != nil {
+		return nil, fmt.Errorf("download: get file hashes: %w", err)
+	}
+	vr, ok := res.(*fileHashResult)
+	if !ok {
+		return nil, fmt.Errorf("download: get file hashes: unexpected result %T", res)
+	}
+	return vr.items, nil
+}
+
+// VerifyFileHashes checks downloaded bytes against the location's SHA-256
+// ranges. An empty hash list fails: the caller asked for verification, and
+// silently passing without ranges would be a false guarantee.
+func (c *Client) VerifyFileHashes(ctx context.Context, location tg.InputFileLocationClass, data []byte) error {
+	hashes, err := c.GetFileHashes(ctx, location)
+	if err != nil {
+		return err
+	}
+	if len(hashes) == 0 {
+		return fmt.Errorf("download: verify: server returned no hashes")
+	}
+	for _, h := range hashes {
+		if h.Offset < 0 || h.Offset+int64(h.Limit) > int64(len(data)) {
+			return fmt.Errorf("download: verify: hash range %d..%d exceeds downloaded size %d",
+				h.Offset, h.Offset+int64(h.Limit), len(data))
+		}
+		computed := sha256.Sum256(data[h.Offset : h.Offset+int64(h.Limit)])
+		if !bytes.Equal(computed[:], h.Hash) {
+			return fmt.Errorf("download: verify: range %d..%d mismatch", h.Offset, h.Offset+int64(h.Limit))
+		}
+	}
+	return nil
 }
