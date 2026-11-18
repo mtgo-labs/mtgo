@@ -471,3 +471,30 @@ func (c *Client) registerHandler(h Handler) {
 		c.handlerDispatcher.AddHandler(h)
 	}
 }
+
+// OnWidgetQuery registers a handler for widget queries: a widget the bot sent
+// with allow_queries requesting live data from the bot
+// (window.TelegramWidget.request in the widget's JavaScript). Answer with
+// [BotsMethods.AnswerWidgetQuery]. The callback must be one of:
+//   - func(*Context)
+//   - func(*Client, *types.WidgetQuery)
+//   - func(*Context, *types.WidgetQuery)
+//   - func(*Context, *Client, *types.WidgetQuery)
+//
+// Optional filters restrict which queries trigger the handler. Returns the
+// registered Handler for later removal.
+func (c *Client) OnWidgetQuery(callback any, filters ...Filter) Handler {
+	h := NewWidgetQueryHandler(callback, filters...)
+	c.registerHandler(h)
+	return h
+}
+
+// OnChatMemberUpdated is [OnChatMember] under the update's name.
+func (c *Client) OnChatMemberUpdated(callback any, filters ...Filter) Handler {
+	return c.OnChatMember(callback, filters...)
+}
+
+// OnManagedBotUpdated is [OnManagedBot] under the update's name.
+func (c *Client) OnManagedBotUpdated(callback any, filters ...Filter) Handler {
+	return c.OnManagedBot(callback, filters...)
+}
