@@ -137,3 +137,50 @@ func TestGetWalletNFTs(t *testing.T) {
 		t.Fatalf("nfts = %#v, want one item", nfts)
 	}
 }
+
+func TestExportSecretPhraseAndPart(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.WalletExportSecretPhraseTypeID, &tg.WalletSecretPhraseParts{
+		Token: "tok",
+		Dcs:   []int32{1, 2},
+	})
+	inv.setResult(tg.WalletFetchEncryptedSecretPhrasePartTypeID, &tg.WalletEncryptedSecretPhrasePart{
+		Data: []byte("share"),
+	})
+
+	parts, err := c.ExportSecretPhrase(t.Context(), "")
+	if err != nil || parts.Token != "tok" || len(parts.Dcs) != 2 {
+		t.Fatalf("ExportSecretPhrase = %+v, %v", parts, err)
+	}
+	// Without a password the request carries no SRP input.
+	req, ok := inv.lastCall().(*tg.WalletExportSecretPhraseRequest)
+	if !ok || req.Password != nil {
+		t.Fatalf("request = %#v", inv.lastCall())
+	}
+
+	part, err := c.FetchEncryptedSecretPhrasePart(t.Context(), parts.Token, []byte("pk"))
+	if err != nil || string(part.Data) != "share" {
+		t.Fatalf("FetchEncryptedSecretPhrasePart = %+v, %v", part, err)
+	}
+}
+
+func TestTonConnectSessionLifecycle(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.WalletTonConnectCreateSessionTypeID, &tg.TonConnectSession{ID: 5})
+	session, err := c.TonConnectCreateSession(t.Context(), "dapp-1", "https://dapp/manifest.json")
+	if err != nil || session.ID != 5 {
+		t.Fatalf("TonConnectCreateSession = %+v, %v", session, err)
+	}
+	req, ok := inv.lastCall().(*tg.WalletTonConnectCreateSessionRequest)
+	if !ok || req.DappClientID != "dapp-1" {
+		t.Fatalf("request = %#v", inv.lastCall())
+	}
+
+	inv.setResult(tg.WalletTonConnectGetSessionsTypeID, &tg.WalletTonConnectSessions{
+		Sessions: []*tg.TonConnectSession{{ID: 5}},
+	})
+	sessions, err := c.TonConnectGetSessions(t.Context())
+	if err != nil || len(sessions) != 1 {
+		t.Fatalf("TonConnectGetSessions = %+v, %v", sessions, err)
+	}
+}

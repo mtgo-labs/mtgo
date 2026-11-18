@@ -172,3 +172,283 @@ func (c *WalletMethods) GetExistingWalletBalance(ctx context.Context) (*tg.Walle
 	}
 	return result, nil
 }
+
+// ExportSecretPhrase begins exporting the wallet's recovery phrase. The
+// cloud password (when set) unlocks it; the returned token addresses the
+// phrase parts held by the listed DCs, each fetched and decrypted separately
+// with [WalletMethods.FetchEncryptedSecretPhrasePart]. The caller performs
+// the decryption: parts are sealed to a key only the holder knows.
+func (c *WalletMethods) ExportSecretPhrase(ctx context.Context, password string) (*tg.WalletSecretPhraseParts, error) {
+	c.Log.Debug("ExportSecretPhrase")
+	req := &tg.WalletExportSecretPhraseRequest{}
+	if password != "" {
+		srp, err := c.computeSRP(ctx, password)
+		if err != nil {
+			return nil, fmt.Errorf("compute password check: %w", err)
+		}
+		req.Password = srp
+	}
+	result, err := c.Raw().WalletExportSecretPhrase(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("export secret phrase: %w", err)
+	}
+	return result, nil
+}
+
+// FetchEncryptedSecretPhrasePart fetches one encrypted share of the recovery
+// phrase from its holder DC, sealed to publicKey. Decrypting the share is
+// the caller's job.
+func (c *WalletMethods) FetchEncryptedSecretPhrasePart(ctx context.Context, token string, publicKey []byte) (*tg.WalletEncryptedSecretPhrasePart, error) {
+	c.Log.Debug("FetchEncryptedSecretPhrasePart")
+	result, err := c.Raw().WalletFetchEncryptedSecretPhrasePart(ctx, &tg.WalletFetchEncryptedSecretPhrasePartRequest{
+		Token:     token,
+		PublicKey: publicKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fetch encrypted secret phrase part: %w", err)
+	}
+	return result, nil
+}
+
+// ReplaceWallet replaces the wallet with a new one (for example when
+// importing an external wallet). The cloud password, when set, must unlock
+// the current wallet.
+func (c *WalletMethods) ReplaceWallet(ctx context.Context, wallet tg.InputWalletReplacementClass, password string) (*tg.WalletState, error) {
+	c.Log.Debug("ReplaceWallet")
+	req := &tg.WalletReplaceWalletRequest{Wallet: wallet}
+	if password != "" {
+		srp, err := c.computeSRP(ctx, password)
+		if err != nil {
+			return nil, fmt.Errorf("compute password check: %w", err)
+		}
+		req.Password = srp
+	}
+	result, err := c.Raw().WalletReplaceWallet(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("replace wallet: %w", err)
+	}
+	state, ok := result.(*tg.WalletState)
+	if !ok {
+		return nil, fmt.Errorf("replace wallet: unexpected result %T", result)
+	}
+	return state, nil
+}
+
+// GetBackupHolderDcs lists the DCs holding encrypted wallet-backup shares.
+func (c *WalletMethods) GetBackupHolderDcs(ctx context.Context) ([]*tg.WalletHolderDC, error) {
+	c.Log.Debug("GetBackupHolderDcs")
+	raw, err := c.Raw().WalletGetBackupHolderDcs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get backup holder dcs: %w", err)
+	}
+	vector, ok := raw.(*tg.GenericVector)
+	if !ok {
+		return nil, fmt.Errorf("get backup holder dcs: unexpected result %T", raw)
+	}
+	dcs := make([]*tg.WalletHolderDC, 0, len(vector.Items))
+	for _, item := range vector.Items {
+		if dc, ok := item.(*tg.WalletHolderDC); ok {
+			dcs = append(dcs, dc)
+		}
+	}
+	return dcs, nil
+}
+
+// EnableBackup turns on distributed wallet backup with the caller-encrypted
+// shares; newPublicKey and proof re-bind the backup when rotating keys.
+func (c *WalletMethods) EnableBackup(ctx context.Context, parts [][]byte, newPublicKey []byte, proof *tg.WalletOwnershipProof) (*tg.WalletState, error) {
+	c.Log.Debug("EnableBackup")
+	result, err := c.Raw().WalletEnableBackup(ctx, &tg.WalletEnableBackupRequest{
+		Parts:        parts,
+		NewPublicKey: newPublicKey,
+		Proof:        proof,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("enable backup: %w", err)
+	}
+	state, ok := result.(*tg.WalletState)
+	if !ok {
+		return nil, fmt.Errorf("enable backup: unexpected result %T", result)
+	}
+	return state, nil
+}
+
+// DisableBackup turns off distributed wallet backup. The cloud password,
+// when set, must unlock the wallet.
+func (c *WalletMethods) DisableBackup(ctx context.Context, password string, newPublicKey []byte, proof *tg.WalletOwnershipProof) (*tg.WalletState, error) {
+	c.Log.Debug("DisableBackup")
+	req := &tg.WalletDisableBackupRequest{
+		NewPublicKey: newPublicKey,
+		Proof:        proof,
+	}
+	if password != "" {
+		srp, err := c.computeSRP(ctx, password)
+		if err != nil {
+			return nil, fmt.Errorf("compute password check: %w", err)
+		}
+		req.Password = srp
+	}
+	result, err := c.Raw().WalletDisableBackup(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("disable backup: %w", err)
+	}
+	state, ok := result.(*tg.WalletState)
+	if !ok {
+		return nil, fmt.Errorf("disable backup: unexpected result %T", result)
+	}
+	return state, nil
+}
+
+// GetProofChallenge fetches the challenge to sign when a wallet operation
+// demands proof of ownership.
+func (c *WalletMethods) GetProofChallenge(ctx context.Context) (*tg.WalletProofChallenge, error) {
+	c.Log.Debug("GetProofChallenge")
+	result, err := c.Raw().WalletGetProofChallenge(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get proof challenge: %w", err)
+	}
+	return result, nil
+}
+
+// GetGaslessInfo fetches the current gasless-transfer parameters.
+func (c *WalletMethods) GetGaslessInfo(ctx context.Context) (tg.UpdatesClass, error) {
+	c.Log.Debug("GetGaslessInfo")
+	result, err := c.Raw().WalletGetGaslessInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get gasless info: %w", err)
+	}
+	return result, nil
+}
+
+// TonConnectCreateSession opens a Ton Connect session for a dApp, identified
+// by its client id and manifest URL. Signatures and request bodies for the
+// session are produced by the dApp protocol; mtgo transports them.
+func (c *WalletMethods) TonConnectCreateSession(ctx context.Context, dappClientID, manifestURL string) (*tg.TonConnectSession, error) {
+	c.Log.Debug("TonConnectCreateSession")
+	result, err := c.Raw().WalletTonConnectCreateSession(ctx, &tg.WalletTonConnectCreateSessionRequest{
+		DappClientID: dappClientID,
+		ManifestURL:  manifestURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ton connect create session: %w", err)
+	}
+	return result, nil
+}
+
+// TonConnectRegisterKey registers a signing key with a session; the returned
+// challenge must be signed by that key for the connect result.
+func (c *WalletMethods) TonConnectRegisterKey(ctx context.Context, sessionID int64, clientID string) (*tg.WalletTonConnectChallenge, error) {
+	c.Log.Debug("TonConnectRegisterKey")
+	result, err := c.Raw().WalletTonConnectRegisterKey(ctx, &tg.WalletTonConnectRegisterKeyRequest{
+		SessionID: sessionID,
+		ClientID:  clientID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ton connect register key: %w", err)
+	}
+	return result, nil
+}
+
+// TonConnectSubmitConnectResult completes a connect with the signed
+// challenge answer and the protocol body; submitErr reports a dApp-side
+// failure instead.
+func (c *WalletMethods) TonConnectSubmitConnectResult(ctx context.Context, sessionID int64, challengeAnswer, body []byte, traceID string, submitErr bool) error {
+	c.Log.Debug("TonConnectSubmitConnectResult")
+	req := &tg.WalletTonConnectSubmitConnectResultRequest{
+		SessionID:       sessionID,
+		ChallengeAnswer: challengeAnswer,
+		Body:            body,
+		TraceID:         traceID,
+	}
+	req.Error = submitErr
+	_, err := c.Raw().WalletTonConnectSubmitConnectResult(ctx, req)
+	if err != nil {
+		return fmt.Errorf("ton connect submit connect result: %w", err)
+	}
+	return nil
+}
+
+// TonConnectGetPending lists pending dApp requests, optionally filtered by
+// dApp or session.
+func (c *WalletMethods) TonConnectGetPending(ctx context.Context, dappClientID string, sessionID int64) (*tg.WalletTonConnectPending, error) {
+	c.Log.Debug("TonConnectGetPending")
+	req := &tg.WalletTonConnectGetPendingRequest{
+		DappClientID: dappClientID,
+		SessionID:    sessionID,
+	}
+	result, err := c.Raw().WalletTonConnectGetPending(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("ton connect get pending: %w", err)
+	}
+	return result, nil
+}
+
+// TonConnectClaimRequest claims a dApp request for answering; declined
+// rejects it instead.
+func (c *WalletMethods) TonConnectClaimRequest(ctx context.Context, sessionID int64, msgID int32, appRequestID string, challengeAnswer []byte, declined bool) error {
+	c.Log.Debug("TonConnectClaimRequest")
+	req := &tg.WalletTonConnectClaimRequestRequest{
+		SessionID:       sessionID,
+		MsgID:           msgID,
+		AppRequestID:    appRequestID,
+		ChallengeAnswer: challengeAnswer,
+	}
+	req.Declined = declined
+	_, err := c.Raw().WalletTonConnectClaimRequest(ctx, req)
+	if err != nil {
+		return fmt.Errorf("ton connect claim request: %w", err)
+	}
+	return nil
+}
+
+// TonConnectSubmitResponse answers a claimed request with the protocol body.
+func (c *WalletMethods) TonConnectSubmitResponse(ctx context.Context, sessionID int64, msgID int32, body []byte, traceID string) error {
+	c.Log.Debug("TonConnectSubmitResponse")
+	_, err := c.Raw().WalletTonConnectSubmitResponse(ctx, &tg.WalletTonConnectSubmitResponseRequest{
+		SessionID: sessionID,
+		MsgID:     msgID,
+		Body:      body,
+		TraceID:   traceID,
+	})
+	if err != nil {
+		return fmt.Errorf("ton connect submit response: %w", err)
+	}
+	return nil
+}
+
+// TonConnectNextEventID returns the next event id to observe for a session.
+func (c *WalletMethods) TonConnectNextEventID(ctx context.Context, sessionID int64) (*tg.TonConnectNextEventID, error) {
+	c.Log.Debug("TonConnectNextEventID")
+	result, err := c.Raw().WalletTonConnectNextEventID(ctx, &tg.WalletTonConnectNextEventIDRequest{
+		SessionID: sessionID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ton connect next event id: %w", err)
+	}
+	return result, nil
+}
+
+// TonConnectCloseSession closes a session, optionally sending a protocol
+// goodbye body.
+func (c *WalletMethods) TonConnectCloseSession(ctx context.Context, sessionID int64, body []byte) error {
+	c.Log.Debug("TonConnectCloseSession")
+	req := &tg.WalletTonConnectCloseSessionRequest{SessionID: sessionID}
+	if body != nil {
+		req.Body = body
+	}
+	_, err := c.Raw().WalletTonConnectCloseSession(ctx, req)
+	if err != nil {
+		return fmt.Errorf("ton connect close session: %w", err)
+	}
+	return nil
+}
+
+// TonConnectGetSessions lists the active Ton Connect sessions.
+func (c *WalletMethods) TonConnectGetSessions(ctx context.Context) ([]*tg.TonConnectSession, error) {
+	c.Log.Debug("TonConnectGetSessions")
+	result, err := c.Raw().WalletTonConnectGetSessions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("ton connect get sessions: %w", err)
+	}
+	return result.Sessions, nil
+}
