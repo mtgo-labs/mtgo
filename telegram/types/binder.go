@@ -154,6 +154,7 @@ type MessageBinder interface {
 	ResolveStarGiftOffer(ctx context.Context, offerMessageID int32, decline bool) (*Message, error)
 	SendInvoice(ctx context.Context, chatID int64, invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error)
 	EditMessageWidgetData(ctx context.Context, chatID int64, messageID int32, publicData, chatData string) (*Message, error)
+	PayMessage(ctx context.Context, chatID int64, messageID int32, opts ...*params.Pay) (*Message, error)
 	UnpinMessage(ctx context.Context, chatID int64, messageID int32) (*Message, error)
 	VotePoll(ctx context.Context, chatID int64, messageID int32, options [][]byte) error
 }

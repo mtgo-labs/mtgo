@@ -2273,19 +2273,6 @@ func (m *Message) callbackButtonData(buttonIndex int) ([]byte, error) {
 	return nil, fmt.Errorf("button index %d out of range", buttonIndex)
 }
 
-// Pay initiates a payment for this invoice message. Not yet implemented:
-// completing a checkout requires the interactive payment form flow.
-func (m *Message) Pay() error {
-	return m.PayContext(context.Background())
-}
-
-func (m *Message) PayContext(ctx context.Context) error {
-	if m.binder == nil {
-		return ErrNoBinder
-	}
-	return errNotImplemented
-}
-
 // ReplyPaidMedia sends paid media as a reply to this message.
 func (m *Message) ReplyPaidMedia(media *tg.InputMediaPaidMedia, caption string, opts ...*params.SendMessage) (*Message, error) {
 	return m.ReplyPaidMediaContext(context.Background(), media, caption, opts...)
@@ -2332,6 +2319,21 @@ func (m *Message) ReplyInvoiceContext(ctx context.Context, invoice *tg.InputMedi
 }
 
 // AnswerInvoice sends an invoice without replying.
+// Pay completes the interactive checkout for this invoice message using the
+// caller-supplied credentials and shipping choices, returning the receipt
+// message. A *telegram.PaymentVerificationNeededError (surfaced verbatim from
+// the binder) means the provider wants 3-D Secure confirmation first.
+func (m *Message) Pay(opts ...*params.Pay) (*Message, error) {
+	return m.PayContext(context.Background(), opts...)
+}
+
+func (m *Message) PayContext(ctx context.Context, opts ...*params.Pay) (*Message, error) {
+	if m.binder == nil {
+		return nil, ErrNoBinder
+	}
+	return m.binder.PayMessage(ctx, m.ChatID, m.ID, opts...)
+}
+
 func (m *Message) AnswerInvoice(invoice *tg.InputMediaInvoice, caption string, opts ...*params.SendMessage) (*Message, error) {
 	return m.AnswerInvoiceContext(context.Background(), invoice, caption, opts...)
 }

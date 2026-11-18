@@ -1406,3 +1406,33 @@ func (s *SendWidget) getFlatSendFields() (bool, bool, bool, bool, bool, int32, t
 	return s.DisableNotification, s.Silent, s.Background, s.ClearDraft, s.NoForwards, s.ReplyToMessageID, s.ReplyTo, s.ReplyMarkup, s.ScheduleDate, s.EffectID, s.SendAs, s.MessageThreadID
 }
 func (s *SendWidget) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
+
+// Pay holds the caller-supplied pieces of an interactive checkout for an
+// invoice message: shipping details, the payment credential, and an optional
+// tip. Fields left at zero values are omitted; the payment form's own
+// defaults (saved info, saved credentials) then apply.
+//
+// Example:
+//
+//	receipt, err := client.PayMessage(ctx, chatID, msgID, &params.Pay{
+//	    SavedCredentialID: "card-x",
+//	    ShippingOptionID:  "express",
+//	})
+type Pay struct {
+	// RequestedInfo supplies or updates the order information (name, phone,
+	// shipping address); SaveInfo stores it with the provider for reuse.
+	RequestedInfo *tl.PaymentRequestedInfo
+	SaveInfo      bool
+	// ShippingOptionID selects one of the invoice's shipping options.
+	ShippingOptionID string
+	// SavedCredentialID pays with a stored card; TmpPassword refreshes an
+	// expired one (payments.getTemporaryPassword).
+	SavedCredentialID string
+	TmpPassword       []byte
+	// CardData carries provider-specific JSON for a fresh payment (for
+	// example a Stripe token); SaveCard stores it with the provider.
+	CardData *tl.DataJSON
+	SaveCard bool
+	// TipAmount adds a tip to the total when the invoice allows one.
+	TipAmount int64
+}

@@ -12,6 +12,9 @@ import (
 // mockBinder implements the binder interfaces with recording for the flows the
 // tests observe.
 type mockBinder struct {
+	payChatID            int64
+	payMsgID             int32
+	payOpts              []*params.Pay
 	sendChatID           int64
 	sendText             string
 	sendReplyTo          int32
@@ -668,6 +671,12 @@ func (m *mockBinder) SendInvoice(ctx context.Context, chatID int64, invoice *tg.
 
 func (m *mockBinder) EditMessageWidgetData(ctx context.Context, chatID int64, messageID int32, publicData, chatData string) (*Message, error) {
 	m.widgetPublicData, m.widgetChatData = publicData, chatData
+	return &Message{ID: messageID, ChatID: chatID}, nil
+}
+
+func (m *mockBinder) PayMessage(ctx context.Context, chatID int64, messageID int32, opts ...*params.Pay) (*Message, error) {
+	m.payChatID, m.payMsgID = chatID, messageID
+	m.payOpts = append(m.payOpts, opts...)
 	return &Message{ID: messageID, ChatID: chatID}, nil
 }
 
