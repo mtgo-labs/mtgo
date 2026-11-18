@@ -232,3 +232,87 @@ func TestReportStory(t *testing.T) {
 		t.Errorf("request = %#v, want story 9 with option and message", req)
 	}
 }
+
+func TestStoryAlbumSuite(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerUser{UserID: 10, AccessHash: 20})
+
+	inv.setResult(tg.StoriesGetAlbumsTypeID, &tg.StoriesAlbums{
+		Albums: []*tg.StoryAlbum{{AlbumID: 4, Title: "Trip"}},
+	})
+	albums, err := c.GetAlbums(t.Context(), 10, 0)
+	if err != nil || len(albums) != 1 || albums[0].AlbumID != 4 {
+		t.Fatalf("GetAlbums = %v, %v", albums, err)
+	}
+
+	inv.setResult(tg.StoriesUpdateAlbumTypeID, &tg.StoryAlbum{AlbumID: 4, Title: "Renamed"})
+	updated, err := c.UpdateAlbum(t.Context(), 10, 4, &UpdateAlbumOption{
+		Title:      "Renamed",
+		AddStories: []int32{7},
+	})
+	if err != nil || updated.Title != "Renamed" {
+		t.Fatalf("UpdateAlbum = %+v, %v", updated, err)
+	}
+	req, ok := inv.lastCall().(*tg.StoriesUpdateAlbumRequest)
+	if !ok || len(req.AddStories) != 1 || req.AddStories[0] != 7 {
+		t.Fatalf("update request = %#v", inv.lastCall())
+	}
+
+	inv.setResult(tg.StoriesGetAlbumStoriesTypeID, &tg.StoriesStories{
+		Stories: []tg.StoryItemClass{&tg.StoryItem{ID: 7}},
+	})
+	stories, err := c.GetAlbumStories(t.Context(), 10, 4, 0, 10)
+	if err != nil || len(stories) != 1 || stories[0].ID != 7 {
+		t.Fatalf("GetAlbumStories = %+v, %v", stories, err)
+	}
+
+	inv.setResult(tg.StoriesDeleteAlbumTypeID, &tg.BoolTrue{})
+	deleted, err := c.DeleteAlbum(t.Context(), 10, 4)
+	if err != nil || !deleted {
+		t.Fatalf("DeleteAlbum = %v, %v", deleted, err)
+	}
+}
+
+func TestSearchStories(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	inv.setResult(tg.StoriesSearchPostsTypeID, &tg.StoriesFoundStories{
+		Count:      2,
+		Stories:    []*tg.FoundStory{{Story: &tg.StoryItem{ID: 9}}},
+		NextOffset: "next",
+	})
+
+	res, err := c.SearchStories(t.Context(), "sunset", &SearchStoriesOption{Limit: 10})
+	if err != nil {
+		t.Fatalf("SearchStories: %v", err)
+	}
+	if res.Count != 2 || len(res.Stories) != 1 || res.NextOffset != "next" {
+		t.Fatalf("result = %+v", res)
+	}
+	req, ok := inv.lastCall().(*tg.StoriesSearchPostsRequest)
+	if !ok || req.Hashtag != "sunset" || req.Limit != 10 {
+		t.Fatalf("request = %#v", inv.lastCall())
+	}
+}
+
+func TestStartLiveStory(t *testing.T) {
+	c, inv := newClientWithMock(t)
+	c.CachePeer(10, &tg.InputPeerUser{UserID: 10, AccessHash: 20})
+	inv.setResult(tg.StoriesStartLiveTypeID, &tg.Updates{
+		Updates: []tg.UpdateClass{&tg.UpdateStory{
+			Peer:  &tg.PeerUser{UserID: 10},
+			Story: &tg.StoryItem{ID: 5},
+		}},
+	})
+
+	story, err := c.StartLiveStory(t.Context(), 10, &StartLiveStoryOption{Pinned: true, RTMPStream: true})
+	if err != nil {
+		t.Fatalf("StartLiveStory: %v", err)
+	}
+	if story == nil || story.ID != 5 {
+		t.Fatalf("story = %+v", story)
+	}
+	req, ok := inv.lastCall().(*tg.StoriesStartLiveRequest)
+	if !ok || !req.Pinned || !req.RtmpStream {
+		t.Fatalf("request = %#v", inv.lastCall())
+	}
+}

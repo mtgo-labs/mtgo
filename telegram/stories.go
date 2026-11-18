@@ -22,6 +22,10 @@ type SendStoryOption struct {
 	// PrivacyRules specifies who can view the story. If empty, the default
 	// privacy settings are used.
 	PrivacyRules []tg.InputPrivacyRuleClass
+	// Albums places the new story into each of these story albums.
+	Albums []int32
+	// Music attaches a licensed music track to the story.
+	Music tg.InputDocumentClass
 }
 
 // SendStory posts a new story to the specified peer's story feed. The media
@@ -74,8 +78,10 @@ func (c *StoryMethods) SendStory(ctx context.Context, chatID int64, media tg.Inp
 		PrivacyRules: opt.PrivacyRules,
 	}
 	if opt.Period != nil {
-		req.Period = *opt.Period // flags.3, derived by SetFlags (bit 8 is albums)
+		req.Period = *opt.Period
 	}
+	req.Albums = opt.Albums
+	req.Music = opt.Music
 	req.SetFlags()
 
 	rpc := c.Raw()
@@ -822,4 +828,209 @@ func (c *StoryMethods) ReportStory(ctx context.Context, chatID int64, storyIDs [
 		return fmt.Errorf("report story: %w", err)
 	}
 	return nil
+}
+
+// UpdateAlbumOption configures [StoryMethods.UpdateAlbum].
+type UpdateAlbumOption struct {
+	// Title renames the album.
+	Title string
+	// DeleteStories removes the given story IDs from the album.
+	DeleteStories []int32
+	// AddStories adds the given story IDs to the album.
+	AddStories []int32
+	// Order re-orders the album's stories to exactly this sequence of IDs.
+	Order []int32
+}
+
+// GetAlbums lists a peer's story albums; nil means nothing changed since the
+// given hash.
+func (c *StoryMethods) GetAlbums(ctx context.Context, chatID, hash int64) ([]*tg.StoryAlbum, error) {
+	c.Log.Debugf("GetAlbums chat_id=%d", chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetAlbums(ctx, &tg.StoriesGetAlbumsRequest{
+		Peer: peer,
+		Hash: hash,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get albums: %w", err)
+	}
+	switch v := result.(type) {
+	case *tg.StoriesAlbums:
+		return v.Albums, nil
+	case *tg.StoriesAlbumsNotModified:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("get albums: unexpected result %T", result)
+	}
+}
+
+// UpdateAlbum renames an album and/or rewrites its story membership (add,
+// delete, full reorder) in one call, returning the updated album.
+func (c *StoryMethods) UpdateAlbum(ctx context.Context, chatID, albumID int64, opts ...*UpdateAlbumOption) (*tg.StoryAlbum, error) {
+	c.Log.Debugf("UpdateAlbum chat_id=%d album_id=%d", chatID, albumID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	opt := getOptDef(&UpdateAlbumOption{}, opts...)
+	result, err := c.Raw().StoriesUpdateAlbum(ctx, &tg.StoriesUpdateAlbumRequest{
+		Peer:          peer,
+		AlbumID:       int32(albumID),
+		Title:         opt.Title,
+		DeleteStories: opt.DeleteStories,
+		AddStories:    opt.AddStories,
+		Order:         opt.Order,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("update album: %w", err)
+	}
+	return result, nil
+}
+
+// DeleteAlbum removes an album. Its stories are not deleted, only ungrouped.
+func (c *StoryMethods) DeleteAlbum(ctx context.Context, chatID, albumID int64) (bool, error) {
+	c.Log.Debugf("DeleteAlbum chat_id=%d album_id=%d", chatID, albumID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return false, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesDeleteAlbum(ctx, &tg.StoriesDeleteAlbumRequest{
+		Peer:    peer,
+		AlbumID: int32(albumID),
+	})
+	if err != nil {
+		return false, fmt.Errorf("delete album: %w", err)
+	}
+	return result, nil
+}
+
+// GetAlbumStories pages through the stories of one album.
+func (c *StoryMethods) GetAlbumStories(ctx context.Context, chatID, albumID int64, offset, limit int) ([]*types.Story, error) {
+	c.Log.Debugf("GetAlbumStories chat_id=%d album_id=%d", chatID, albumID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	result, err := c.Raw().StoriesGetAlbumStories(ctx, &tg.StoriesGetAlbumStoriesRequest{
+		Peer:    peer,
+		AlbumID: int32(albumID),
+		Offset:  int32(offset),
+		Limit:   int32(limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get album stories: %w", err)
+	}
+	stories := make([]*types.Story, 0, len(result.Stories))
+	for _, s := range result.Stories {
+		if parsed := types.ParseStory(s, nil); parsed != nil {
+			stories = append(stories, parsed)
+		}
+	}
+	return stories, nil
+}
+
+// StoriesSearchResult is one page of [StoryMethods.SearchStories] results.
+type StoriesSearchResult struct {
+	// Count is the total number of matching stories.
+	Count int32
+	// Stories are the found stories of this page, with their peers.
+	Stories []*tg.FoundStory
+	// NextOffset pages the search; empty at the end.
+	NextOffset string
+}
+
+// SearchStoriesOption configures [StoryMethods.SearchStories].
+type SearchStoriesOption struct {
+	// Area narrows the search to stories carrying this media area.
+	Area tg.MediaAreaClass
+	// Peer narrows the search to one peer's stories.
+	Peer int64
+	// Limit caps the page size; the server clamps it.
+	Limit int32
+	// Offset continues from a previous NextOffset.
+	Offset string
+}
+
+// SearchStories finds public stories by hashtag, optionally narrowed by a
+// media area and a peer.
+func (c *StoryMethods) SearchStories(ctx context.Context, hashtag string, opts ...*SearchStoriesOption) (*StoriesSearchResult, error) {
+	c.Log.Debugf("SearchStories #%s", hashtag)
+	opt := getOptDef(&SearchStoriesOption{}, opts...)
+	req := &tg.StoriesSearchPostsRequest{
+		Hashtag: hashtag,
+		Area:    opt.Area,
+		Offset:  opt.Offset,
+		Limit:   opt.Limit,
+	}
+	if opt.Peer != 0 {
+		peer, err := resolvePeer(ctx, c.Client, opt.Peer)
+		if err != nil {
+			return nil, fmt.Errorf("resolve peer: %w", err)
+		}
+		req.Peer = peer
+	}
+	result, err := c.Raw().StoriesSearchPosts(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("search stories: %w", err)
+	}
+	return &StoriesSearchResult{
+		Count:      result.Count,
+		Stories:    result.Stories,
+		NextOffset: result.NextOffset,
+	}, nil
+}
+
+// StartLiveStoryOption configures [StoryMethods.StartLiveStory].
+type StartLiveStoryOption struct {
+	// Pinned pins the live story to the top of the profile.
+	Pinned bool
+	// NoForwards disables forwarding of the live story.
+	NoForwards bool
+	// RTMPStream streams via RTMP instead of the in-app pipeline; the URL
+	// arrives through the story's media.
+	RTMPStream bool
+	// Caption and Entities describe the live story.
+	Caption      string
+	Entities     []tg.MessageEntityClass
+	PrivacyRules []tg.InputPrivacyRuleClass
+	// MessagesEnabled toggles the chat attached to the live story. The
+	// generated request field is a plain bool, so only the explicit
+	// true/false states can be expressed; leave unset for the server
+	// default.
+	MessagesEnabled bool
+	// SendPaidMessagesStars sets the per-message price for the attached
+	// paid-messages chat.
+	SendPaidMessagesStars int64
+}
+
+// StartLiveStory starts a live story on the peer's feed, returning the
+// created story.
+func (c *StoryMethods) StartLiveStory(ctx context.Context, chatID int64, opts ...*StartLiveStoryOption) (*types.Story, error) {
+	c.Log.Debugf("StartLiveStory chat_id=%d", chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
+	if err != nil {
+		return nil, fmt.Errorf("resolve peer: %w", err)
+	}
+	opt := getOptDef(&StartLiveStoryOption{}, opts...)
+	req := &tg.StoriesStartLiveRequest{
+		Pinned:       opt.Pinned,
+		Noforwards:   opt.NoForwards,
+		RtmpStream:   opt.RTMPStream,
+		Peer:         peer,
+		Caption:      opt.Caption,
+		Entities:     opt.Entities,
+		PrivacyRules: opt.PrivacyRules,
+		RandomID:     c.RandomID(),
+	}
+	req.MessagesEnabled = opt.MessagesEnabled
+	req.SendPaidMessagesStars = opt.SendPaidMessagesStars
+
+	result, err := c.Raw().StoriesStartLive(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("start live story: %w", err)
+	}
+	return extractStoryFromUpdates(result)
 }
