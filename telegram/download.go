@@ -184,7 +184,7 @@ type FileChunk struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Downloaded %d bytes\n", len(data))
-func (c *Client) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
+func (c *UtilityMethods) DownloadFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) ([]byte, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ serialDownload:
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
+func (c *UtilityMethods) DownloadToFile(ctx context.Context, location tg.InputFileLocationClass, filePath string, fileSize int64, opts *params.Download) error {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
@@ -331,7 +331,7 @@ serialFileDownload:
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos (e.g. "m", "x"). Pass an empty string to
 //     download the full-resolution media. Ignored for documents.
 //   - opts: optional download settings (chunk size, progress callback). May be nil for defaults.
@@ -351,7 +351,7 @@ serialFileDownload:
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Downloaded photo thumbnail: %d bytes\n", len(data))
-func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize string, opts *params.Download) ([]byte, error) {
+func (c *MessageMethods) DownloadMedia(ctx context.Context, media types.Media, thumbSize string, opts *params.Download) ([]byte, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos. Pass an empty string for full media.
 //   - filePath: destination path on the local filesystem.
 //   - fileSize: total expected file size in bytes. Used for progress reporting; pass 0 if unknown.
@@ -399,7 +399,7 @@ func (c *Client) DownloadMedia(ctx context.Context, media types.Media, thumbSize
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thumbSize string, filePath string, fileSize int64, opts *params.Download) error {
+func (c *MessageMethods) DownloadMediaToFile(ctx context.Context, media types.Media, thumbSize string, filePath string, fileSize int64, opts *params.Download) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -436,7 +436,7 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 //
 // Parameters:
 //   - ctx: context for cancellation and timeout.
-//   - media: the media object to download (PhotoMedia or DocumentMedia).
+//   - media: the media object to download (PhotoMedia or Document).
 //   - thumbSize: thumbnail size to download for photos. Pass an empty string for full media.
 //   - w: destination writer. Must not be nil.
 //   - opts: optional download settings (chunk size, progress callback). May be nil for defaults.
@@ -456,7 +456,7 @@ func (c *Client) DownloadMediaToFile(ctx context.Context, media types.Media, thu
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("streamed %d bytes\n", n)
-func (c *Client) DownloadMediaToWriter(ctx context.Context, media types.Media, thumbSize string, w io.Writer, opts *params.Download) (int64, error) {
+func (c *MessageMethods) DownloadMediaToWriter(ctx context.Context, media types.Media, thumbSize string, w io.Writer, opts *params.Download) (int64, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return 0, err
@@ -536,7 +536,7 @@ serialWriterDownload:
 //	    }
 //	    _, _ = os.Stdout.Write(chunk.Data)
 //	}
-func (c *Client) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
+func (c *UtilityMethods) StreamFile(ctx context.Context, location tg.InputFileLocationClass, fileSize int64, opts *params.Download) (<-chan FileChunk, error) {
 	ctx = withTransferRetry(ctx)
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
@@ -639,6 +639,10 @@ func downloadToFileRPC(ctx context.Context, rpc *tg.RPCClient, location tg.Input
 			Location: location,
 			Offset:   offset,
 			Limit:    chunkSize,
+			// Precise asks the CDN/web bridges to return exactly this range.
+			// Aligned ranges are served precisely anyway; asking everywhere
+			// costs the bridge an extra request per part.
+			Precise: offset%4096 != 0 || fileSize > 0 && offset+int64(chunkSize) < fileSize && (offset+int64(chunkSize))%4096 != 0,
 		}
 
 		result, err := rpc.UploadGetFile(ctx, req)
@@ -1014,6 +1018,7 @@ func (c *Client) downloadToWriterAt(ctx context.Context, rpcs []*tg.RPCClient, d
 							Location: location,
 							Offset:   j.offset,
 							Limit:    j.limit,
+							Precise:  j.offset%4096 != 0 || fileSize > 0 && j.offset+int64(j.limit) < fileSize && (j.offset+int64(j.limit))%4096 != 0,
 						})
 						chunkElapsed := time.Since(reqStart)
 						if chunkDebug {
@@ -1520,7 +1525,7 @@ func streamFileRPCWithMigration(ctx context.Context, rpc *tg.RPCClient, location
 
 func getMediaFileSize(media types.Media) int64 {
 	switch m := media.(type) {
-	case *types.DocumentMedia:
+	case *types.Document:
 		return m.FileSize
 	default:
 		return 0
@@ -2043,7 +2048,7 @@ func resolveMediaInput(media types.Media) (*downloadInput, error) {
 			fileSize: 0,
 			mimeType: "image/jpeg",
 		}, nil
-	case *types.DocumentMedia:
+	case *types.Document:
 		return &downloadInput{
 			media:    m,
 			fileName: m.FileName,
@@ -2197,7 +2202,7 @@ func (c *Client) downloadBytes(ctx context.Context, input any, progress params.P
 // the absolute file path.
 //
 // The input parameter accepts either a *types.Message (extracts media automatically)
-// or a types.Media value (PhotoMedia, DocumentMedia, etc.).
+// or a types.Media value (PhotoMedia, Document, etc.).
 //
 // If fileName is empty, files are saved in the "downloads" directory with an
 // auto-generated name based on the media type and timestamp. Paths ending with "/"
@@ -2210,7 +2215,7 @@ func (c *Client) downloadBytes(ctx context.Context, input any, progress params.P
 //   - progress: optional progress callback
 //
 // Returns the absolute path of the downloaded file.
-func (c *Client) Download(ctx context.Context, input any, fileName string, progress params.ProgressFunc) (string, error) {
+func (c *UtilityMethods) Download(ctx context.Context, input any, fileName string, progress params.ProgressFunc) (string, error) {
 	return c.downloadToPath(ctx, input, fileName, progress)
 }
 
@@ -2223,7 +2228,7 @@ func (c *Client) Download(ctx context.Context, input any, fileName string, progr
 //   - progress: optional progress callback
 //
 // Returns the raw file contents as a byte slice.
-func (c *Client) DownloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
+func (c *UtilityMethods) DownloadBytes(ctx context.Context, input any, progress params.ProgressFunc) ([]byte, error) {
 	return c.downloadBytes(ctx, input, progress)
 }
 
@@ -2244,7 +2249,7 @@ type StreamChunk struct {
 //   - ctx: context for cancellation and timeout
 //   - input: *types.Message or types.Media to stream
 //   - opts: optional download settings (chunk size). May be nil for defaults.
-func (c *Client) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
+func (c *MessageMethods) StreamMedia(ctx context.Context, input any, opts *params.Download) (<-chan StreamChunk, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -2288,4 +2293,43 @@ func (c *Client) StreamMedia(ctx context.Context, input any, opts *params.Downlo
 	}()
 
 	return ch, nil
+}
+
+// GetFileHashes fetches the SHA-256 range hashes of a file location
+// (upload.getFileHashes). Telegram hashes large files in aligned ranges, so
+// a full verification compares every returned range.
+func (c *Client) GetFileHashes(ctx context.Context, location tg.InputFileLocationClass) ([]*tg.FileHash, error) {
+	res, err := c.Raw().Invoke(ctx, &tg.UploadGetFileHashesRequest{Location: location}, decodeFileHashVector)
+	if err != nil {
+		return nil, fmt.Errorf("download: get file hashes: %w", err)
+	}
+	vr, ok := res.(*fileHashResult)
+	if !ok {
+		return nil, fmt.Errorf("download: get file hashes: unexpected result %T", res)
+	}
+	return vr.items, nil
+}
+
+// VerifyFileHashes checks downloaded bytes against the location's SHA-256
+// ranges. An empty hash list fails: the caller asked for verification, and
+// silently passing without ranges would be a false guarantee.
+func (c *Client) VerifyFileHashes(ctx context.Context, location tg.InputFileLocationClass, data []byte) error {
+	hashes, err := c.GetFileHashes(ctx, location)
+	if err != nil {
+		return err
+	}
+	if len(hashes) == 0 {
+		return fmt.Errorf("download: verify: server returned no hashes")
+	}
+	for _, h := range hashes {
+		if h.Offset < 0 || h.Offset+int64(h.Limit) > int64(len(data)) {
+			return fmt.Errorf("download: verify: hash range %d..%d exceeds downloaded size %d",
+				h.Offset, h.Offset+int64(h.Limit), len(data))
+		}
+		computed := sha256.Sum256(data[h.Offset : h.Offset+int64(h.Limit)])
+		if !bytes.Equal(computed[:], h.Hash) {
+			return fmt.Errorf("download: verify: range %d..%d mismatch", h.Offset, h.Offset+int64(h.Limit))
+		}
+	}
+	return nil
 }

@@ -19,9 +19,9 @@ import (
 //     [*tg.SendMessageUploadPhotoAction])
 //
 // Returns an error if the peer cannot be resolved or the RPC call fails.
-func (c *Client) SendChatAction(ctx context.Context, chatID int64, action tg.SendMessageActionClass) error {
+func (c *MessageMethods) SendChatAction(ctx context.Context, chatID int64, action tg.SendMessageActionClass) error {
 	c.Log.Debugf("SendChatAction chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}

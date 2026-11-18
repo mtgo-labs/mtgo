@@ -75,6 +75,10 @@ type Context struct {
 	// types.
 	InlineQuery *types.InlineQuery
 
+	// WidgetQuery is populated when a widget message of the logged-in bot
+	// issues a widget query. Nil for all other update types.
+	WidgetQuery *types.WidgetQuery
+
 	// ChosenInlineResult is populated when a user selects a result from an
 	// inline query. Useful for tracking which inline result was picked. Nil
 	// for all other update types.

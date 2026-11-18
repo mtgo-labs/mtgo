@@ -12,7 +12,7 @@ import (
 // less defaults to 100. offsetDate can be used for pagination by passing the date of
 // the last received dialog. Returns nil (no error) when the dialog list has not been
 // modified since the last call.
-func (c *Client) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([]*types.Chat, error) {
+func (c *UtilityMethods) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([]*types.Chat, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -58,4 +58,24 @@ func (c *Client) GetDialogs(ctx context.Context, limit int, offsetDate int32) ([
 		}
 	}
 	return dialogs, nil
+}
+
+// GetAppConfig returns the server-side application configuration used for
+// feature flags and UI limits. Pass the previous hash to receive nil when
+// unchanged.
+func (c *UtilityMethods) GetAppConfig(ctx context.Context, hash int32) (*tg.HelpAppConfig, error) {
+	result, err := c.Raw().HelpGetAppConfig(ctx, &tg.HelpGetAppConfigRequest{
+		Hash: hash,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get app config: %w", err)
+	}
+	switch v := result.(type) {
+	case *tg.HelpAppConfig:
+		return v, nil
+	case *tg.HelpAppConfigNotModified:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("get app config: unexpected result %T", result)
+	}
 }

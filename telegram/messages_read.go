@@ -7,7 +7,7 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// ReadHistory marks the chat history of the specified chat as read up to and
+// ReadChatHistory marks the chat history of the specified chat as read up to and
 // including maxID. After this call, the chat will no longer show unread badges
 // for messages with IDs at or below maxID.
 //
@@ -19,9 +19,9 @@ import (
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) error {
-	c.Log.Debugf("ReadHistory chat_id=%d max_id=%d", chatID, maxID)
-	peer, err := resolvePeer(ctx, c, chatID)
+func (c *MessageMethods) ReadChatHistory(ctx context.Context, chatID int64, maxID int32) error {
+	c.Log.Debugf("ReadChatHistory chat_id=%d max_id=%d", chatID, maxID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -54,9 +54,9 @@ func (c *Client) ReadHistory(ctx context.Context, chatID int64, maxID int32) err
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
+func (c *MessageMethods) ReadMentions(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("ReadMentions chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -78,9 +78,9 @@ func (c *Client) ReadMentions(ctx context.Context, chatID int64) error {
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
+func (c *MessageMethods) ReadReactions(ctx context.Context, chatID int64) error {
 	c.Log.Debugf("ReadReactions chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -105,9 +105,9 @@ func (c *Client) ReadReactions(ctx context.Context, chatID int64) error {
 // Returns an error if:
 //   - the peer cannot be resolved as a channel
 //   - the RPC call fails
-func (c *Client) ReadChannelHistory(ctx context.Context, chatID int64, maxID int32) error {
+func (c *MessageMethods) ReadChannelHistory(ctx context.Context, chatID int64, maxID int32) error {
 	c.Log.Debugf("ReadChannelHistory chat_id=%d max_id=%d", chatID, maxID)
-	channel, err := resolveChannelID(ctx, c, chatID)
+	channel, err := resolveChannelID(ctx, c.Client, chatID)
 	if err != nil {
 		return fmt.Errorf("resolve channel: %w", err)
 	}

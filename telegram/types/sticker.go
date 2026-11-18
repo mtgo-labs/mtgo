@@ -29,7 +29,7 @@ type Sticker struct {
 	Date             time.Time
 	Emoji            string
 	SetName          string
-	PremiumAnimation *DocumentMedia
+	PremiumAnimation *Document
 	MaskPosition     *MaskPosition
 	CustomEmojiID    string
 	NeedsRepainting  bool
@@ -100,7 +100,7 @@ func ParseSticker(doc *tg.Document) *Sticker {
 	}
 	for _, vt := range doc.VideoThumbs {
 		if vs, ok := vt.(*tg.VideoSize); ok {
-			s.PremiumAnimation = &DocumentMedia{
+			s.PremiumAnimation = &Document{
 				FileSize:    int64(vs.Size),
 				RawDocument: doc,
 			}

@@ -80,7 +80,7 @@ func (*blockingTerminalAuthInvoker) RPCInvokeRaw(context.Context, tg.TLObject) (
 
 func TestSendCode_NotConnected(t *testing.T) {
 	c, _ := NewClient(1, "h", nil)
-	_, err := c.SendCode(context.Background(), "+1234567890")
+	_, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if !errors.Is(err, ErrNotConnected) {
 		t.Errorf("expected ErrNotConnected, got %v", err)
 	}
@@ -95,9 +95,9 @@ func TestSendCode_Success(t *testing.T) {
 		Timeout:       60,
 	})
 
-	result, err := c.SendCode(context.Background(), "+1234567890")
+	result, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if err != nil {
-		t.Fatalf("SendCode() error: %v", err)
+		t.Fatalf("SendPhoneNumberCode() error: %v", err)
 	}
 	if result.PhoneCodeHash != "abc123" {
 		t.Errorf("PhoneCodeHash = %q, want %q", result.PhoneCodeHash, "abc123")
@@ -125,7 +125,7 @@ func TestSendCode_AlreadyAuthed(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	mock.setResult(tg.AuthSendCodeTypeID, &tg.AuthSentCodeSuccess{})
 
-	_, err := c.SendCode(context.Background(), "+1234567890")
+	_, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if !errors.Is(err, ErrAlreadyAuthed) {
 		t.Errorf("expected ErrAlreadyAuthed, got %v", err)
 	}
@@ -135,7 +135,7 @@ func TestSendCode_RPCError(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	mock.setError(tg.AuthSendCodeTypeID, errors.New("rpc error"))
 
-	_, err := c.SendCode(context.Background(), "+1234567890")
+	_, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if err == nil {
 		t.Fatal("expected error from RPC")
 	}
@@ -148,9 +148,9 @@ func TestSendCode_ZeroTimeout(t *testing.T) {
 		Type:          &tg.AuthSentCodeTypeSms{Length: 5},
 	})
 
-	result, err := c.SendCode(context.Background(), "+1234567890")
+	result, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if err != nil {
-		t.Fatalf("SendCode() error: %v", err)
+		t.Fatalf("SendPhoneNumberCode() error: %v", err)
 	}
 	if result.Timeout != 0 {
 		t.Errorf("Timeout = %d, want 0 for zero timeout", result.Timeout)

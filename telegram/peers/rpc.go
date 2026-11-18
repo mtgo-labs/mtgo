@@ -12,14 +12,15 @@ import (
 )
 
 // InputPeerByUsername resolves a Telegram username (with or without the
-// leading "@") to an input peer. The local username cache is checked first;
-// on a miss, contacts.resolveUsername is invoked under a single-flight
-// coalescer and every entity in the response is cached.
+// leading "@") to an input peer. The local username cache is checked first,
+// then the persistent store (when enabled); on both misses,
+// contacts.resolveUsername is invoked under a single-flight coalescer and
+// every entity in the response is cached.
 func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.InputPeerClass, error) {
 	username = strings.TrimPrefix(username, "@")
 	m.debugf("ResolveUsername @%s", username)
 
-	if p, ok := m.cachedByUsername(username); ok {
+	if p, ok := m.cachedByUsernameOrStore(username); ok {
 		m.debugf("ResolveUsername cache hit @%s", username)
 		return p, nil
 	}
@@ -41,13 +42,13 @@ func (m *Manager) InputPeerByUsername(ctx context.Context, username string) (tg.
 // need rich entity data, not just the input peer.
 func (m *Manager) ResolveUsernameFull(ctx context.Context, username string) (*tg.ContactsResolvedPeer, error) {
 	username = strings.TrimPrefix(username, "@")
-	if p, ok := m.cachedByUsername(username); ok {
+	if p, ok := m.cachedByUsernameOrStore(username); ok {
 		return resolvedFromCached(p), nil
 	}
 	result, err := coalesce(m, ctx, "username:"+username, func() (*tg.ContactsResolvedPeer, error) {
 		// Double-check cache inside the coalescer — another goroutine
 		// may have resolved it while we were waiting for the lock.
-		if p, ok := m.cachedByUsername(username); ok {
+		if p, ok := m.cachedByUsernameOrStore(username); ok {
 			return resolvedFromCached(p), nil
 		}
 		result, err := m.invoker().ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{

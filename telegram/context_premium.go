@@ -37,7 +37,7 @@ func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error)
 	return c.Client.GetBoostsStatus(c.Ctx, chatID)
 }
 
-// GetBoosts retrieves the list of boosts that the current user has applied across all chats.
+// GetMyBoosts retrieves the list of boosts that the current user has applied across all chats.
 //
 // Parameters:
 //   - opts: optional [GetBoostsOption] parameters for filtering and pagination
@@ -45,9 +45,9 @@ func (c *Context) GetBoostsStatus(chatID int64) (*tg.PremiumBoostsStatus, error)
 // Returns:
 //   - []*tg.MyBoost: the list of the user's active boosts
 //   - error: non-nil if the context has no client or the request fails
-func (c *Context) GetBoosts(opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
+func (c *Context) GetMyBoosts(opts ...*GetBoostsOption) ([]*tg.MyBoost, error) {
 	if c.Client == nil {
 		return nil, ErrContextNoClient
 	}
-	return c.Client.GetBoosts(c.Ctx, opts...)
+	return c.Client.GetMyBoosts(c.Ctx, opts...)
 }

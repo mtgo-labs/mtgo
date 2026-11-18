@@ -511,7 +511,7 @@ func TestPhotoFilter(t *testing.T) {
 	if !f(&Context{Message: &types.Message{Media: &types.PhotoMedia{}}}) {
 		t.Error("expected true for photo media")
 	}
-	if f(&Context{Message: &types.Message{Media: &types.DocumentMedia{}}}) {
+	if f(&Context{Message: &types.Message{Media: &types.Document{}}}) {
 		t.Error("expected false for document media")
 	}
 	if f(&Context{Message: &types.Message{}}) {
@@ -521,7 +521,7 @@ func TestPhotoFilter(t *testing.T) {
 
 func TestDocumentFilter(t *testing.T) {
 	f := Document
-	if !f(&Context{Message: &types.Message{Media: &types.DocumentMedia{}}}) {
+	if !f(&Context{Message: &types.Message{Media: &types.Document{}}}) {
 		t.Error("expected true for document media")
 	}
 	if f(&Context{Message: &types.Message{Media: &types.PhotoMedia{}}}) {
@@ -1089,6 +1089,7 @@ func TestPopulateContextCoverage(t *testing.T) {
 		"DeletedBusinessMessages": "DeletedBusinessMessages",
 		"CallbackQuery":           "CallbackQuery",
 		"InlineQuery":             "InlineQuery",
+		"WidgetQuery":             "WidgetQuery",
 		"ChosenInlineResult":      "ChosenInlineResult",
 		"UserStatus":              "UserStatus",
 		"ChatMember":              "ChatMember",
@@ -1163,5 +1164,36 @@ func TestPopulateContextCoverage(t *testing.T) {
 			t.Errorf("knownPairs[%q] = %q but Context has no field %q — update knownPairs",
 				updName, ctxName, ctxName)
 		}
+	}
+}
+
+func TestWidgetQueryHandler(t *testing.T) {
+	h := NewWidgetQueryHandler(func(ctx *Context, q *types.WidgetQuery) {
+		if q.Data == nil || string(q.Data) != "inc" {
+			t.Errorf("widget query data = %v", q.Data)
+		}
+	})
+	upd := &Update{WidgetQuery: &types.WidgetQuery{ID: 1, Data: []byte("inc")}}
+	if !h.Check(upd) {
+		t.Fatal("Check failed for widget query update")
+	}
+	c := &Context{}
+	c.Update = upd
+	h.setCtx(c, upd)
+	h.Handle(c)
+}
+
+func TestHandlerAliasesMatchUpdateNames(t *testing.T) {
+	// The aliases exist so both the update name and the short name compile.
+	member := NewChatMemberUpdatedHandler(nil)
+	if member == nil {
+		t.Fatal("NewChatMemberUpdatedHandler returned nil")
+	}
+	managed := NewManagedBotUpdatedHandler(nil)
+	if managed == nil {
+		t.Fatal("NewManagedBotUpdatedHandler returned nil")
+	}
+	if !NewChatJoinRequestHandler(nil).Check(&Update{ChatJoinRequest: &types.ChatJoinRequest{}}) {
+		t.Fatal("join request handler did not match its update")
 	}
 }

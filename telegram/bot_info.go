@@ -18,7 +18,7 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetBotInfoDescription(ctx context.Context, langCode, description string) error {
+func (c *BotsMethods) SetBotInfoDescription(ctx context.Context, langCode, description string) error {
 	c.Log.Debug("SetBotInfoDescription")
 	rpc := c.Raw()
 	_, err := rpc.BotsSetBotInfo(ctx, &tg.BotsSetBotInfoRequest{
@@ -40,7 +40,7 @@ func (c *Client) SetBotInfoDescription(ctx context.Context, langCode, descriptio
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Bot description: %s\n", desc)
-func (c *Client) GetBotInfoDescription(ctx context.Context, langCode string) (string, error) {
+func (c *BotsMethods) GetBotInfoDescription(ctx context.Context, langCode string) (string, error) {
 	c.Log.Debug("GetBotInfoDescription")
 	rpc := c.Raw()
 	result, err := rpc.BotsGetBotInfo(ctx, &tg.BotsGetBotInfoRequest{
@@ -62,7 +62,7 @@ func (c *Client) GetBotInfoDescription(ctx context.Context, langCode string) (st
 // SetBotInfoShortDescription sets the bot's short "about" text for the specified language
 // code. This text appears below the bot's name in chat lists. Returns an error if the
 // RPC call fails.
-func (c *Client) SetBotInfoShortDescription(ctx context.Context, langCode, description string) error {
+func (c *BotsMethods) SetBotInfoShortDescription(ctx context.Context, langCode, description string) error {
 	c.Log.Debug("SetBotInfoShortDescription")
 	rpc := c.Raw()
 	_, err := rpc.BotsSetBotInfo(ctx, &tg.BotsSetBotInfoRequest{
@@ -75,7 +75,7 @@ func (c *Client) SetBotInfoShortDescription(ctx context.Context, langCode, descr
 // GetBotInfoShortDescription retrieves the bot's short "about" text for the specified
 // language code. Returns the short description string, or an error if the RPC call fails
 // or an unexpected response type is received.
-func (c *Client) GetBotInfoShortDescription(ctx context.Context, langCode string) (string, error) {
+func (c *BotsMethods) GetBotInfoShortDescription(ctx context.Context, langCode string) (string, error) {
 	c.Log.Debug("GetBotInfoShortDescription")
 	rpc := c.Raw()
 	result, err := rpc.BotsGetBotInfo(ctx, &tg.BotsGetBotInfoRequest{
@@ -96,7 +96,7 @@ func (c *Client) GetBotInfoShortDescription(ctx context.Context, langCode string
 
 // SetBotName sets the bot's display name for the specified language code. Returns an
 // error if the RPC call fails.
-func (c *Client) SetBotName(ctx context.Context, langCode, name string) error {
+func (c *BotsMethods) SetBotName(ctx context.Context, langCode, name string) error {
 	c.Log.Debug("SetBotName")
 	rpc := c.Raw()
 	_, err := rpc.BotsSetBotInfo(ctx, &tg.BotsSetBotInfoRequest{
@@ -109,7 +109,7 @@ func (c *Client) SetBotName(ctx context.Context, langCode, name string) error {
 // GetBotName retrieves the bot's display name for the specified language code. Returns
 // the name string, or an error if the RPC call fails or an unexpected response type is
 // received.
-func (c *Client) GetBotName(ctx context.Context, langCode string) (string, error) {
+func (c *BotsMethods) GetBotName(ctx context.Context, langCode string) (string, error) {
 	c.Log.Debug("GetBotName")
 	rpc := c.Raw()
 	result, err := rpc.BotsGetBotInfo(ctx, &tg.BotsGetBotInfoRequest{

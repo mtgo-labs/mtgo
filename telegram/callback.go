@@ -19,7 +19,7 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) AnswerCallbackQuery(ctx context.Context, callbackQueryID int64, text string, showAlert bool, url string, cacheTime int) error {
+func (c *BotsMethods) AnswerCallbackQuery(ctx context.Context, callbackQueryID int64, text string, showAlert bool, url string, cacheTime int) error {
 	c.Log.Debugf("AnswerCallbackQuery query_id=%d", callbackQueryID)
 	req := &tg.MessagesSetBotCallbackAnswerRequest{
 		Alert:     showAlert,
@@ -45,7 +45,7 @@ func (c *Client) AnswerCallbackQuery(ctx context.Context, callbackQueryID int64,
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Web app message sent: %v\n", sent)
-func (c *Client) AnswerWebAppQuery(ctx context.Context, queryID string, result tg.InputBotInlineResultClass) (*tg.WebViewMessageSent, error) {
+func (c *BotsMethods) AnswerWebAppQuery(ctx context.Context, queryID string, result tg.InputBotInlineResultClass) (*tg.WebViewMessageSent, error) {
 	c.Log.Debugf("AnswerWebAppQuery query_id=%s", queryID)
 	rpc := c.Raw()
 	return rpc.MessagesSendWebViewResultMessage(ctx, &tg.MessagesSendWebViewResultMessageRequest{
@@ -58,9 +58,9 @@ func (c *Client) AnswerWebAppQuery(ctx context.Context, queryID string, result t
 // chat. chatID identifies the chat, messageID is the target message, and data is
 // the callback payload bytes. Returns the bot callback answer or an error if the
 // chat cannot be resolved or the RPC call fails.
-func (c *Client) RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
+func (c *BotsMethods) RequestCallbackAnswer(ctx context.Context, chatID int64, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
 	c.Log.Debugf("RequestCallbackAnswer chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}

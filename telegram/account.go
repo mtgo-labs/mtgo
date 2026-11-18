@@ -21,7 +21,7 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, rules []tg.InputPrivacyRuleClass) error {
+func (c *AccountMethods) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, rules []tg.InputPrivacyRuleClass) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (c *Client) SetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass, ru
 //	for _, r := range rules {
 //	    fmt.Printf("Rule: %T\n", r)
 //	}
-func (c *Client) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([]tg.PrivacyRuleClass, error) {
+func (c *AccountMethods) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([]tg.PrivacyRuleClass, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *Client) GetPrivacy(ctx context.Context, key tg.InputPrivacyKeyClass) ([
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.GlobalPrivacySettings) error {
+func (c *AccountMethods) SetGlobalPrivacySettings(ctx context.Context, settings *tg.GlobalPrivacySettings) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (c *Client) SetGlobalPrivacySettings(ctx context.Context, settings *tg.Glob
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Archive and mute: %v\n", settings.ArchiveAndMuteNewNoncontactPeers)
-func (c *Client) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivacySettings, error) {
+func (c *AccountMethods) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivacySettings, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (c *Client) GetGlobalPrivacySettings(ctx context.Context) (*tg.GlobalPrivac
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetAccountTTL(ctx context.Context, days int32) error {
+func (c *AccountMethods) SetAccountTTL(ctx context.Context, days int32) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (c *Client) SetAccountTTL(ctx context.Context, days int32) error {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Account TTL: %d days\n", days)
-func (c *Client) GetAccountTTL(ctx context.Context) (int32, error) {
+func (c *AccountMethods) GetAccountTTL(ctx context.Context) (int32, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return 0, err
 	}
@@ -179,4 +179,45 @@ func (c *Client) GetAccountTTL(ctx context.Context) (int32, error) {
 		return 0, fmt.Errorf("get account ttl: %w", err)
 	}
 	return result.Days, nil
+}
+
+// GetTermsOfServiceUpdate returns the pending terms-of-service revision the
+// logged-in user has not accepted yet, or nil when the current terms are
+// already accepted.
+func (c *AccountMethods) GetTermsOfServiceUpdate(ctx context.Context) (*tg.HelpTermsOfService, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+
+	c.Log.Debug("GetTermsOfServiceUpdate")
+
+	result, err := c.Raw().HelpGetTermsOfServiceUpdate(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get terms of service update: %w", err)
+	}
+	if update, ok := result.(*tg.HelpTermsOfServiceUpdate); ok {
+		return update.TermsOfService, nil
+	}
+	return nil, nil
+}
+
+// AcceptTermsOfService accepts a pending terms-of-service revision, as
+// returned by GetTermsOfServiceUpdate.
+func (c *AccountMethods) AcceptTermsOfService(ctx context.Context, terms *tg.HelpTermsOfService) error {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return err
+	}
+	if terms == nil || terms.ID == nil {
+		return fmt.Errorf("terms of service revision is required")
+	}
+
+	c.Log.Debug("AcceptTermsOfService")
+
+	_, err := c.Raw().HelpAcceptTermsOfService(ctx, &tg.HelpAcceptTermsOfServiceRequest{
+		ID: terms.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("accept terms of service: %w", err)
+	}
+	return nil
 }

@@ -113,15 +113,15 @@ func TestBoundEditInlineForwardsOpts(t *testing.T) {
 	client, mock := newClientWithMock(t)
 	inlineID := &tg.InputBotInlineMessageID{DCID: 0, ID: 7, AccessHash: 99}
 
-	ok, err := client.BoundEditInline(inlineID, "<i>it</i>", &params.EditMessage{
-		ParseMode:             params.ParseModeHTML,
-		DisableWebPagePreview: true,
+	ok, err := client.EditInlineText(context.Background(), inlineID, "<i>it</i>", &params.EditInlineOpts{
+		ParseMode: params.ParseModeHTML,
+		NoWebpage: true,
 	})
 	if err != nil {
-		t.Fatalf("BoundEditInline() error: %v", err)
+		t.Fatalf("EditInlineText() error: %v", err)
 	}
 	if !ok {
-		t.Fatal("BoundEditInline() = false, want true")
+		t.Fatal("EditInlineText() = false, want true")
 	}
 	req, ok := mock.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
 	if !ok {
@@ -139,8 +139,8 @@ func TestBoundEditInlineForwardsOpts(t *testing.T) {
 
 	// Rich message forwarding through the bound path.
 	rm := RichMessageMarkdown("m", false)
-	if _, err := client.BoundEditInline(inlineID, "", &params.EditMessage{RichMessage: rm}); err != nil {
-		t.Fatalf("BoundEditInline(rich) error: %v", err)
+	if _, err := client.EditInlineRichMessage(context.Background(), inlineID, rm); err != nil {
+		t.Fatalf("EditInlineRichMessage(rich) error: %v", err)
 	}
 	req, ok = mock.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
 	if !ok || !req.Flags.Has(23) || req.RichMessage != rm {
@@ -152,14 +152,14 @@ func TestBoundEditInlineCaptionForwardsOpts(t *testing.T) {
 	client, mock := newClientWithMock(t)
 	inlineID := &tg.InputBotInlineMessageID{DCID: 0, ID: 7, AccessHash: 99}
 
-	ok, err := client.BoundEditInlineCaption(inlineID, "*c*", &params.EditMessage{
+	ok, err := client.EditInlineCaption(context.Background(), inlineID, "*c*", &params.EditInlineOpts{
 		ParseMode: params.MarkdownV2,
 	})
 	if err != nil {
-		t.Fatalf("BoundEditInlineCaption() error: %v", err)
+		t.Fatalf("EditInlineCaption() error: %v", err)
 	}
 	if !ok {
-		t.Fatal("BoundEditInlineCaption() = false, want true")
+		t.Fatal("EditInlineCaption() = false, want true")
 	}
 	req, ok := mock.lastCall().(*tg.MessagesEditInlineBotMessageRequest)
 	if !ok {

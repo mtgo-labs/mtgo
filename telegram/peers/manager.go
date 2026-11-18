@@ -60,6 +60,9 @@ type Manager struct {
 	usernameToID  map[string]int64
 	idToUsername  map[int64]string
 	usernameOrder []string
+	aliasToID     map[string]int64 // collectible usernames → peer ID
+	idToAliases   map[int64][]string
+	aliasSeen     map[string]time.Time
 	phoneToID     map[string]int64
 	idToPhone     map[int64]string
 	phoneOrder    []string
@@ -76,6 +79,9 @@ func NewManager(deps Deps) *Manager {
 		byID:         make(map[int64]tg.InputPeerClass),
 		usernameToID: make(map[string]int64),
 		idToUsername: make(map[int64]string),
+		aliasToID:    make(map[string]int64),
+		idToAliases:  make(map[int64][]string),
+		aliasSeen:    make(map[string]time.Time),
 		phoneToID:    make(map[string]int64),
 		idToPhone:    make(map[int64]string),
 		usernameSeen: make(map[string]time.Time),
@@ -139,6 +145,9 @@ func (m *Manager) Reset() {
 	m.usernameToID = make(map[string]int64)
 	m.idToUsername = make(map[int64]string)
 	m.usernameOrder = nil
+	m.aliasToID = make(map[string]int64)
+	m.idToAliases = make(map[int64][]string)
+	m.aliasSeen = make(map[string]time.Time)
 	m.phoneToID = make(map[string]int64)
 	m.idToPhone = make(map[int64]string)
 	m.phoneOrder = nil

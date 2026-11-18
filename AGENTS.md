@@ -49,12 +49,13 @@ CI (`.github/workflows/ci.yml`) runs only: `go mod tidy` diff check, build, vet,
 
 ## Code Generation — Never Edit Generated Files
 
-Three generators; never hand-edit their outputs (`*_gen.go`, `telegram/generic/gen_helpers.go`):
+Four generators; never hand-edit their outputs (`*_gen.go`, `telegram/generic/gen_helpers.go`, `docs/api-coverage.md`, `docs/API_REFERENCE.md`):
 
 ```bash
 go run ./cmd/tlgen        # tg/ TL types from schema (layer pinned in tg/layer_gen.go)
 go run ./cmd/errgen       # tgerr/ error types
 go run ./cmd/genhelpers   # telegram/generic/gen_helpers.go (int|int64|string peer wrappers)
+go run ./cmd/apicoverage  # docs/api-coverage.md + docs/API_REFERENCE.md (also: make apicoverage)
 ```
 
 If a TL type is missing or wrong, fix the schema/compiler (`compiler/`, `cmd/`) and regenerate.
@@ -87,7 +88,7 @@ If a TL type is missing or wrong, fix the schema/compiler (`compiler/`, `cmd/`) 
 - **Commit style:** Conventional Commits with scope: `feat(telegram):`, `fix(session):`, `chore(tg):`, etc.
 - **Branch prefixes:** `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, `chore/`
 - **errcheck disabled** in golangci-lint — intentional project choice
-- **MTProto client focus:** mtgo is a protocol-layer library. Features MUST improve connection, auth, encryption, or RPC lifecycle. Application-layer features (UI, stickers, stories, payments) are out of scope. See `ARCHITECTURE.md`.
+- **Scope:** mtgo is a protocol-first MTProto library with a full high-level Telegram API on top. The `telegram/` package is composed of domain method groups (messages, chats, folders, users, contacts, account, auth, bots, business, premium, stories, payments, stickers, invite links, utilities, phone, wallet, widgets, secret chats) whose methods promote onto `Client`; the promoted-method collision test forbids duplicate names. New client operations belong on the matching group, with constructor-ID-keyed mock tests; per-type convenience methods live in `telegram/types` behind minimal binder interfaces with Name/NameContext pairs. Protocol work (connection, auth, encryption, RPC lifecycle) keeps the engineering priority order in `ARCHITECTURE.md`; the API inventory is generated, never hand-maintained (`make apicoverage`).
 - **Engineering priority order** (details in `ARCHITECTURE.md`): (1) security and correctness, (2) maximum measured performance, (3) lowest real-world latency, (4) minimal raw MTProto overhead. Every hot-path abstraction must justify copies, allocations, queues, locks, and goroutines with correctness or benchmark evidence.
 
 ## CI & Performance Gates

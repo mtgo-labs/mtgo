@@ -37,9 +37,9 @@ import (
 //	for _, m := range msgs {
 //	    fmt.Println(m.ID, m.Text)
 //	}
-func (c *Client) SearchMessages(ctx context.Context, chatID int64, query string, opts ...*SearchMessagesOption) ([]*types.Message, error) {
+func (c *MessageMethods) SearchMessages(ctx context.Context, chatID int64, query string, opts ...*SearchMessagesOption) ([]*types.Message, error) {
 	c.Log.Debugf("SearchMessages chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -114,7 +114,7 @@ func (c *Client) SearchMessages(ctx context.Context, chatID int64, query string,
 //	for _, m := range msgs {
 //	    fmt.Println(m.ID, m.Text)
 //	}
-func (c *Client) SearchGlobal(ctx context.Context, query string, opts ...*SearchGlobalOption) ([]*types.Message, error) {
+func (c *MessageMethods) SearchGlobal(ctx context.Context, query string, opts ...*SearchGlobalOption) ([]*types.Message, error) {
 	c.Log.Debug("SearchGlobal")
 	opt := getOptDef(&SearchGlobalOption{}, opts...)
 
@@ -178,9 +178,9 @@ func (c *Client) SearchGlobal(ctx context.Context, query string, opts ...*Search
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) SearchMessagesCount(ctx context.Context, chatID int64, query string) (int32, error) {
+func (c *MessageMethods) SearchMessagesCount(ctx context.Context, chatID int64, query string) (int32, error) {
 	c.Log.Debugf("SearchMessagesCount chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -212,7 +212,7 @@ func (c *Client) SearchMessagesCount(ctx context.Context, chatID int64, query st
 //
 // Returns an error if:
 //   - the RPC call fails
-func (c *Client) SearchGlobalCount(ctx context.Context, query string) (int32, error) {
+func (c *MessageMethods) SearchGlobalCount(ctx context.Context, query string) (int32, error) {
 	c.Log.Debug("SearchGlobalCount")
 	req := &tg.MessagesSearchGlobalRequest{
 		Q:          query,

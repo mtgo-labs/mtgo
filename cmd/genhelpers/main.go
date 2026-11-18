@@ -82,6 +82,11 @@ func main() {
 				if !ast.IsExported(fn.Name.Name) {
 					continue
 				}
+				// Bound* implementations are transitional binder members, not
+				// part of the generic wrapper surface.
+				if strings.HasPrefix(fn.Name.Name, "Bound") {
+					continue
+				}
 				mi, ok := analyzeMethod(fn, fset)
 				if !ok {
 					continue
@@ -121,7 +126,12 @@ func isClientReceiver(field *ast.Field) bool {
 		return false
 	}
 	ident, ok := star.X.(*ast.Ident)
-	return ok && ident.Name == "Client"
+	if !ok {
+		return false
+	}
+	// Methods live on the domain method groups embedded in Client; their
+	// promoted selectors on *Client are what the wrappers call.
+	return ident.Name == "Client" || strings.HasSuffix(ident.Name, "Methods")
 }
 
 func analyzeMethod(fn *ast.FuncDecl, fset *token.FileSet) (methodInfo, bool) {

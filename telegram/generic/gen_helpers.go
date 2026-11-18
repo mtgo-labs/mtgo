@@ -19,6 +19,15 @@ func AddChatMember[T PeerInput, C Caller](c C, chat T, userID int64) error {
 	return client.AddChatMember(ctx, chatID, userID)
 }
 
+func AddChecklistTasks[T PeerInput, C Caller](c C, chat T, messageID int32, tasks []*tg.TodoItem) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.AddChecklistTasks(ctx, chatID, messageID, tasks)
+}
+
 func AddContact[T PeerInput, C Caller](c C, user T, firstName string, lastName string, phone string, share bool) error {
 	client, ctx := extractClient(c)
 	userID, err := resolveID[T](ctx, client, user)
@@ -73,6 +82,15 @@ func BlockUser[T PeerInput, C Caller](c C, user T) error {
 	return client.BlockUser(ctx, userID)
 }
 
+func CancelStarsSubscriptionByBot[T PeerInput, C Caller](c C, user T, chargeID string, restore bool) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.CancelStarsSubscriptionByBot(ctx, userID, chargeID, restore)
+}
+
 func CloseForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -116,6 +134,24 @@ func CreateForumTopic[T PeerInput, C Caller](c C, chat T, title string, iconColo
 		return nil, err
 	}
 	return client.CreateForumTopic(ctx, chatID, title, iconColor, iconEmojiID)
+}
+
+func CreateGiftCollection[T PeerInput, C Caller](c C, chat T, title string, gifts []tg.InputSavedStarGiftClass) (*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.CreateGiftCollection(ctx, chatID, title, gifts)
+}
+
+func CreateStickerSet[T PeerInput, C Caller](c C, user T, title string, shortName string, stickers []*tg.InputStickerSetItem, opts ...*telegram.CreateStickerSetOption) (*tg.MessagesStickerSet, error) {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return nil, err
+	}
+	return client.CreateStickerSet(ctx, userID, title, shortName, stickers, opts...)
 }
 
 func DeclineChatJoinRequest[T PeerInput, C Caller](c C, chat T, userID int64) error {
@@ -172,6 +208,15 @@ func DeleteForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 	return client.DeleteForumTopic(ctx, chatID, topicID)
 }
 
+func DeleteGiftCollection[T PeerInput, C Caller](c C, chat T, collectionID int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.DeleteGiftCollection(ctx, chatID, collectionID)
+}
+
 func DeleteMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32, opts ...*params.DeleteMessages) (int, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -206,6 +251,15 @@ func EditForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32, title *st
 		return err
 	}
 	return client.EditForumTopic(ctx, chatID, topicID, title, iconEmojiID)
+}
+
+func EditLiveLocation[T PeerInput, C Caller](c C, chat T, messageID int32, lat float64, lng float64) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.EditLiveLocation(ctx, chatID, messageID, lat, lng)
 }
 
 func EditMessageCaption[T PeerInput, C Caller](c C, chat T, messageID int32, caption string, opts ...*params.EditMessage) (*types.Message, error) {
@@ -244,6 +298,15 @@ func EditMessageText[T PeerInput, C Caller](c C, chat T, messageID int32, text s
 	return client.EditMessageText(ctx, chatID, messageID, text, opts...)
 }
 
+func EditMessageWidgetData[T PeerInput, C Caller](c C, chat T, messageID int32, publicData string, chatData string) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.EditMessageWidgetData(ctx, chatID, messageID, publicData, chatData)
+}
+
 func EditStoryCaption[T PeerInput, C Caller](c C, chat T, storyID int32, caption string) (*types.Story, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -262,6 +325,15 @@ func EditStoryMedia[T PeerInput, C Caller](c C, chat T, storyID int32, media tg.
 	return client.EditStoryMedia(ctx, chatID, storyID, media)
 }
 
+func ExcludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ExcludeChat(ctx, folderID, chatID)
+}
+
 func ExportChatInviteLink[T PeerInput, C Caller](c C, chat T) (string, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -269,6 +341,15 @@ func ExportChatInviteLink[T PeerInput, C Caller](c C, chat T) (string, error) {
 		return "", err
 	}
 	return client.ExportChatInviteLink(ctx, chatID)
+}
+
+func ExportStoryLink[T PeerInput, C Caller](c C, chat T, storyID int32) (string, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return "", err
+	}
+	return client.ExportStoryLink(ctx, chatID, storyID)
 }
 
 func ForwardMediaGroup[T PeerInput, C Caller](c C, chat T, fromChatID int64, messageIDs []int32, opts ...*params.ForwardMessages) ([]*types.Message, error) {
@@ -298,6 +379,15 @@ func GetActiveCall[T PeerInput, C Caller](c C, chat T) (tg.InputGroupCallClass, 
 	return client.GetActiveCall(ctx, chatID)
 }
 
+func GetArchivedStories[T PeerInput, C Caller](c C, chat T, offsetID int32, limit int) ([]*types.Story, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetArchivedStories(ctx, chatID, offsetID, limit)
+}
+
 func GetBoostsStatus[T PeerInput, C Caller](c C, chat T) (*tg.PremiumBoostsStatus, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -305,6 +395,15 @@ func GetBoostsStatus[T PeerInput, C Caller](c C, chat T) (*tg.PremiumBoostsStatu
 		return nil, err
 	}
 	return client.GetBoostsStatus(ctx, chatID)
+}
+
+func GetBotUserMenuButton[T PeerInput, C Caller](c C, user T) (tg.BotMenuButtonClass, error) {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetBotUserMenuButton(ctx, userID)
 }
 
 func GetChat[T PeerInput, C Caller](c C, chat T) (*types.Chat, error) {
@@ -323,6 +422,15 @@ func GetChatAdminInviteLinks[T PeerInput, C Caller](c C, chat T, adminID int64, 
 		return nil, err
 	}
 	return client.GetChatAdminInviteLinks(ctx, chatID, adminID, limit)
+}
+
+func GetChatBoosts[T PeerInput, C Caller](c C, chat T, offset string, limit int, giftsOnly bool) (*telegram.ChatBoosts, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetChatBoosts(ctx, chatID, offset, limit, giftsOnly)
 }
 
 func GetChatEventLog[T PeerInput, C Caller](c C, chat T, query string, limit int) ([]*types.ChatEvent, error) {
@@ -406,6 +514,15 @@ func GetChatMenuButton[T PeerInput, C Caller](c C, user T) (tg.BotMenuButtonClas
 	return client.GetChatMenuButton(ctx, userID)
 }
 
+func GetChatNotificationSettings[T PeerInput, C Caller](c C, chat T) (*tg.PeerNotifySettings, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetChatNotificationSettings(ctx, chatID)
+}
+
 func GetChatOnlineCount[T PeerInput, C Caller](c C, chat T) (int, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -487,6 +604,24 @@ func GetGameHighScores[T PeerInput, C Caller](c C, chat T, messageID int64, user
 	return client.GetGameHighScores(ctx, chatID, messageID, userID)
 }
 
+func GetGiftCollections[T PeerInput, C Caller](c C, chat T, hash int64) ([]*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetGiftCollections(ctx, chatID, hash)
+}
+
+func GetGiveawayInfo[T PeerInput, C Caller](c C, chat T, messageID int32) (tg.GiveawayInfoClass, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetGiveawayInfo(ctx, chatID, messageID)
+}
+
 func GetInlineBotResults[T PeerInput, C Caller](c C, bot int64, chat T, query string, offset string) (*tg.MessagesBotResults, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -523,15 +658,6 @@ func GetMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32) ([]*typ
 	return client.GetMessages(ctx, chatID, messageIDs)
 }
 
-func GetMessagesViews[T PeerInput, C Caller](c C, chat T, messageIDs []int32, increment bool) ([]int32, error) {
-	client, ctx := extractClient(c)
-	chatID, err := resolveID[T](ctx, client, chat)
-	if err != nil {
-		return nil, err
-	}
-	return client.GetMessagesViews(ctx, chatID, messageIDs, increment)
-}
-
 func GetPaymentForm[T PeerInput, C Caller](c C, chat T, messageID int32, opts ...*telegram.GetPaymentFormOption) (*types.PaymentForm, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -539,6 +665,24 @@ func GetPaymentForm[T PeerInput, C Caller](c C, chat T, messageID int32, opts ..
 		return nil, err
 	}
 	return client.GetPaymentForm(ctx, chatID, messageID, opts...)
+}
+
+func GetPaymentReceipt[T PeerInput, C Caller](c C, chat T, messageID int32) (tg.PaymentReceiptClass, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetPaymentReceipt(ctx, chatID, messageID)
+}
+
+func GetPinnedStories[T PeerInput, C Caller](c C, chat T, offsetID int32, limit int) ([]*types.Story, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetPinnedStories(ctx, chatID, offsetID, limit)
 }
 
 func GetProfilePhotos[T PeerInput, C Caller](c C, user T, opts ...*telegram.GetProfilePhotosOption) ([]*types.ChatPhoto, error) {
@@ -559,6 +703,15 @@ func GetRichMessage[T PeerInput, C Caller](c C, chat T, messageID int32) (*tg.Ri
 	return client.GetRichMessage(ctx, chatID, messageID)
 }
 
+func GetScheduledMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32) ([]*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetScheduledMessages(ctx, chatID, messageIDs)
+}
+
 func GetSendAsChats[T PeerInput, C Caller](c C, chat T) ([]*types.Chat, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -568,6 +721,15 @@ func GetSendAsChats[T PeerInput, C Caller](c C, chat T) ([]*types.Chat, error) {
 	return client.GetSendAsChats(ctx, chatID)
 }
 
+func GetSimilarChannels[T PeerInput, C Caller](c C, chat T) ([]*types.Chat, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetSimilarChannels(ctx, chatID)
+}
+
 func GetStarsBalance[T PeerInput, C Caller](c C, chat T) (int64, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -575,6 +737,24 @@ func GetStarsBalance[T PeerInput, C Caller](c C, chat T) (int64, error) {
 		return 0, err
 	}
 	return client.GetStarsBalance(ctx, chatID)
+}
+
+func GetStarsRevenueAdsAccountURL[T PeerInput, C Caller](c C, chat T) (string, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return "", err
+	}
+	return client.GetStarsRevenueAdsAccountURL(ctx, chatID)
+}
+
+func GetStarsRevenueStats[T PeerInput, C Caller](c C, chat T, dark bool) (*tg.PaymentsStarsRevenueStats, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetStarsRevenueStats(ctx, chatID, dark)
 }
 
 func GetStarsTransactions[T PeerInput, C Caller](c C, chat T, inbound bool, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
@@ -595,6 +775,24 @@ func GetStories[T PeerInput, C Caller](c C, user T, storyIDs []int32) ([]*types.
 	return client.GetStories(ctx, userID, storyIDs)
 }
 
+func GetStoryReactions[T PeerInput, C Caller](c C, chat T, storyID int64, reaction tg.ReactionClass, offset string, limit int, forwardsFirst bool) (*telegram.StoryReactionsPage, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetStoryReactions(ctx, chatID, storyID, reaction, offset, limit, forwardsFirst)
+}
+
+func GetStoryViewers[T PeerInput, C Caller](c C, chat T, storyID int64, q string, justContacts bool, reactionsFirst bool, forwardsFirst bool, offset string, limit int) (*telegram.StoryViewersPage, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetStoryViewers(ctx, chatID, storyID, q, justContacts, reactionsFirst, forwardsFirst, offset, limit)
+}
+
 func GetStoryViews[T PeerInput, C Caller](c C, chat T, storyIDs []int32) ([]*tg.StoryViews, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -611,6 +809,42 @@ func GetUser[T PeerInput, C Caller](c C, user T) (*types.User, error) {
 		return nil, err
 	}
 	return client.GetUser(ctx, userID)
+}
+
+func GetUserBoosts[T PeerInput, C Caller](c C, chat T, userID int64) ([]*tg.Boost, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetUserBoosts(ctx, chatID, userID)
+}
+
+func GetWidgetPublicData[T PeerInput, C Caller](c C, chat T, messageID int32, hash int64) (*telegram.WidgetPublicData, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.GetWidgetPublicData(ctx, chatID, messageID, hash)
+}
+
+func IncludeChat[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.IncludeChat(ctx, folderID, chatID)
+}
+
+func LaunchPrepaidGiveaway[T PeerInput, C Caller](c C, chat T, giveawayID int64, purpose tg.InputStorePaymentPurposeClass) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.LaunchPrepaidGiveaway(ctx, chatID, giveawayID, purpose)
 }
 
 func LeaveChat[T PeerInput, C Caller](c C, chat T) error {
@@ -631,6 +865,15 @@ func MarkChatUnread[T PeerInput, C Caller](c C, chat T, unread bool) error {
 	return client.MarkChatUnread(ctx, chatID, unread)
 }
 
+func MarkChecklistTasksAsDone[T PeerInput, C Caller](c C, chat T, messageID int32, done []int32, undone []int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.MarkChecklistTasksAsDone(ctx, chatID, messageID, done, undone)
+}
+
 func MuteChat[T PeerInput, C Caller](c C, chat T) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -647,6 +890,15 @@ func NewCallReader[T PeerInput, C Caller](c C, chat T) (*telegram.CallReader, er
 		return nil, err
 	}
 	return client.NewCallReader(ctx, chatID)
+}
+
+func PinChatInFolder[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.PinChatInFolder(ctx, folderID, chatID)
 }
 
 func PinChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error {
@@ -685,6 +937,15 @@ func ReadChannelHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
 	return client.ReadChannelHistory(ctx, chatID, maxID)
 }
 
+func ReadChatHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ReadChatHistory(ctx, chatID, maxID)
+}
+
 func ReadChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -692,15 +953,6 @@ func ReadChatStories[T PeerInput, C Caller](c C, chat T, storyIDs []int32) error
 		return err
 	}
 	return client.ReadChatStories(ctx, chatID, storyIDs)
-}
-
-func ReadHistory[T PeerInput, C Caller](c C, chat T, maxID int32) error {
-	client, ctx := extractClient(c)
-	chatID, err := resolveID[T](ctx, client, chat)
-	if err != nil {
-		return err
-	}
-	return client.ReadHistory(ctx, chatID, maxID)
 }
 
 func ReadMentions[T PeerInput, C Caller](c C, chat T) error {
@@ -730,6 +982,15 @@ func RefundStarsCharge[T PeerInput, C Caller](c C, user T, chargeID string) erro
 	return client.RefundStarsCharge(ctx, userID, chargeID)
 }
 
+func RemoveChatFromFolder[T PeerInput, C Caller](c C, folderID int32, chat T) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.RemoveChatFromFolder(ctx, folderID, chatID)
+}
+
 func ReopenForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -737,6 +998,24 @@ func ReopenForumTopic[T PeerInput, C Caller](c C, chat T, topicID int32) error {
 		return err
 	}
 	return client.ReopenForumTopic(ctx, chatID, topicID)
+}
+
+func ReorderGiftCollections[T PeerInput, C Caller](c C, chat T, order []int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ReorderGiftCollections(ctx, chatID, order)
+}
+
+func ReportStory[T PeerInput, C Caller](c C, chat T, storyIDs []int32, option []byte, message string) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ReportStory(ctx, chatID, storyIDs, option, message)
 }
 
 func RequestCallbackAnswer[T PeerInput, C Caller](c C, chat T, messageID int64, data []byte) (*tg.MessagesBotCallbackAnswer, error) {
@@ -829,22 +1108,22 @@ func SendChatAction[T PeerInput, C Caller](c C, chat T, action tg.SendMessageAct
 	return client.SendChatAction(ctx, chatID, action)
 }
 
-func SendContact[T PeerInput, C Caller](c C, chat T, phoneNumber string, firstName string, lastName string, opts *params.SendMessage) (*types.Message, error) {
+func SendContact[T PeerInput, C Caller](c C, chat T, phoneNumber string, firstName string, lastName string, opts ...*params.SendContact) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendContact(ctx, chatID, phoneNumber, firstName, lastName, opts)
+	return client.SendContact(ctx, chatID, phoneNumber, firstName, lastName, opts...)
 }
 
-func SendDice[T PeerInput, C Caller](c C, chat T, opts *telegram.SendDiceOption) (*types.Message, error) {
+func SendDice[T PeerInput, C Caller](c C, chat T, opts ...*params.SendDice) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendDice(ctx, chatID, opts)
+	return client.SendDice(ctx, chatID, opts...)
 }
 
 func SendDocument[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, caption string, opts ...*params.SendDocument) (*types.Message, error) {
@@ -892,13 +1171,22 @@ func SendInvoice[T PeerInput, C Caller](c C, chat T, invoice *tg.InputMediaInvoi
 	return client.SendInvoice(ctx, chatID, invoice, caption, opts...)
 }
 
-func SendLocation[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, opts *params.SendMessage) (*types.Message, error) {
+func SendLivePhoto[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, ttlSeconds int32, caption string, opts ...*params.SendPhoto) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendLocation(ctx, chatID, lat, lng, opts)
+	return client.SendLivePhoto(ctx, chatID, file, ttlSeconds, caption, opts...)
+}
+
+func SendLocation[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, opts ...*params.SendLocation) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.SendLocation(ctx, chatID, lat, lng, opts...)
 }
 
 func SendMedia[T PeerInput, C Caller](c C, chat T, media tg.InputMediaClass, caption string, opts ...*params.SendMessage) (*types.Message, error) {
@@ -964,13 +1252,13 @@ func SendPhoto[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, cap
 	return client.SendPhoto(ctx, chatID, file, caption, opts...)
 }
 
-func SendPoll[T PeerInput, C Caller](c C, chat T, question string, options []string, opts *params.SendMessage) (*types.Message, error) {
+func SendPoll[T PeerInput, C Caller](c C, chat T, question string, options []string, opts ...*params.SendPoll) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendPoll(ctx, chatID, question, options, opts)
+	return client.SendPoll(ctx, chatID, question, options, opts...)
 }
 
 func SendReaction[T PeerInput, C Caller](c C, chat T, messageID int32, reactions []types.Reaction, opts ...*params.SendReactionOption) error {
@@ -1009,6 +1297,15 @@ func SendRichMessageMarkdown[T PeerInput, C Caller](c C, chat T, markdown string
 	return client.SendRichMessageMarkdown(ctx, chatID, markdown, opts...)
 }
 
+func SendScreenshotNotification[T PeerInput, C Caller](c C, chat T, replyToMessageID int32) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SendScreenshotNotification(ctx, chatID, replyToMessageID)
+}
+
 func SendSticker[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, opts ...*params.SendSticker) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1027,13 +1324,13 @@ func SendStory[T PeerInput, C Caller](c C, chat T, media tg.InputMediaClass, opt
 	return client.SendStory(ctx, chatID, media, opts...)
 }
 
-func SendVenue[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, title string, address string, opts *params.SendMessage) (*types.Message, error) {
+func SendVenue[T PeerInput, C Caller](c C, chat T, lat float64, lng float64, title string, address string, opts ...*params.SendVenue) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
 	if err != nil {
 		return nil, err
 	}
-	return client.SendVenue(ctx, chatID, lat, lng, title, address, opts)
+	return client.SendVenue(ctx, chatID, lat, lng, title, address, opts...)
 }
 
 func SendVideo[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, caption string, opts ...*params.SendVideo) (*types.Message, error) {
@@ -1063,6 +1360,24 @@ func SendVoice[T PeerInput, C Caller](c C, chat T, file *telegram.InputFile, cap
 	return client.SendVoice(ctx, chatID, file, caption, opts...)
 }
 
+func SendWalletTransfer[T PeerInput, C Caller](c C, user T, dataNormal []byte, dataGasless []byte) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SendWalletTransfer(ctx, userID, dataNormal, dataGasless)
+}
+
+func SendWidget[T PeerInput, C Caller](c C, chat T, width int32, height int32, html string, opts ...*params.SendWidget) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.SendWidget(ctx, chatID, width, height, html, opts...)
+}
+
 func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, title string) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1070,6 +1385,24 @@ func SetAdministratorTitle[T PeerInput, C Caller](c C, chat T, userID int64, tit
 		return err
 	}
 	return client.SetAdministratorTitle(ctx, chatID, userID, title)
+}
+
+func SetBotUserMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButtonClass) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SetBotUserMenuButton(ctx, userID, button)
+}
+
+func SetChatAccentColor[T PeerInput, C Caller](c C, chat T, color int32, backgroundEmojiID int64, forProfile bool) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatAccentColor(ctx, chatID, color, backgroundEmojiID, forProfile)
 }
 
 func SetChatDescription[T PeerInput, C Caller](c C, chat T, about string) error {
@@ -1081,6 +1414,15 @@ func SetChatDescription[T PeerInput, C Caller](c C, chat T, about string) error 
 	return client.SetChatDescription(ctx, chatID, about)
 }
 
+func SetChatEmojiStatus[T PeerInput, C Caller](c C, chat T, customEmojiID int64) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatEmojiStatus(ctx, chatID, customEmojiID)
+}
+
 func SetChatMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButtonClass) error {
 	client, ctx := extractClient(c)
 	userID, err := resolveID[T](ctx, client, user)
@@ -1088,6 +1430,15 @@ func SetChatMenuButton[T PeerInput, C Caller](c C, user T, button tg.BotMenuButt
 		return err
 	}
 	return client.SetChatMenuButton(ctx, userID, button)
+}
+
+func SetChatNotificationSettings[T PeerInput, C Caller](c C, chat T, settings *tg.InputPeerNotifySettings) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetChatNotificationSettings(ctx, chatID, settings)
 }
 
 func SetChatPermissions[T PeerInput, C Caller](c C, chat T, permissions *tg.ChatBannedRights) error {
@@ -1135,6 +1486,15 @@ func SetChatUsername[T PeerInput, C Caller](c C, chat T, username string) error 
 	return client.SetChatUsername(ctx, chatID, username)
 }
 
+func SetContactNote[T PeerInput, C Caller](c C, user T, note string) error {
+	client, ctx := extractClient(c)
+	userID, err := resolveID[T](ctx, client, user)
+	if err != nil {
+		return err
+	}
+	return client.SetContactNote(ctx, userID, note)
+}
+
 func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID int64, score int, force bool) (*types.Message, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1142,6 +1502,15 @@ func SetGameScore[T PeerInput, C Caller](c C, chat T, messageID int64, userID in
 		return nil, err
 	}
 	return client.SetGameScore(ctx, chatID, messageID, userID, score, force)
+}
+
+func SetGiftChatNotifications[T PeerInput, C Caller](c C, chat T, enabled bool) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.SetGiftChatNotifications(ctx, chatID, enabled)
 }
 
 func SetProtectedContent[T PeerInput, C Caller](c C, chat T, enabled bool) error {
@@ -1171,6 +1540,15 @@ func SetSlowMode[T PeerInput, C Caller](c C, chat T, seconds int) error {
 	return client.SetSlowMode(ctx, chatID, seconds)
 }
 
+func StartBot[T PeerInput, C Caller](c C, botID int64, chat T, startParam string) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.StartBot(ctx, botID, chatID, startParam)
+}
+
 func StartMessageDraft[T PeerInput, C Caller](c C, chat T, opts ...*telegram.DraftOpts) (*telegram.MessageDraft, error) {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1189,6 +1567,15 @@ func StartRichMessageDraft[T PeerInput, C Caller](c C, chat T, opts ...*telegram
 	return client.StartRichMessageDraft(ctx, chatID, opts...)
 }
 
+func StopLiveLocation[T PeerInput, C Caller](c C, chat T, messageID int32) (*types.Message, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.StopLiveLocation(ctx, chatID, messageID)
+}
+
 func StopPoll[T PeerInput, C Caller](c C, chat T, messageID int32) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1198,6 +1585,24 @@ func StopPoll[T PeerInput, C Caller](c C, chat T, messageID int32) error {
 	return client.StopPoll(ctx, chatID, messageID)
 }
 
+func SummarizeMessage[T PeerInput, C Caller](c C, chat T, messageID int32) (*tg.TextWithEntities, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.SummarizeMessage(ctx, chatID, messageID)
+}
+
+func ToggleStoriesHidden[T PeerInput, C Caller](c C, chat T, hidden bool) error {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return err
+	}
+	return client.ToggleStoriesHidden(ctx, chatID, hidden)
+}
+
 func TransferChatOwnership[T PeerInput, C Caller](c C, chat T, userID int64, password string) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1205,6 +1610,15 @@ func TransferChatOwnership[T PeerInput, C Caller](c C, chat T, userID int64, pas
 		return err
 	}
 	return client.TransferChatOwnership(ctx, chatID, userID, password)
+}
+
+func TranslateMessageText[T PeerInput, C Caller](c C, chat T, messageIDs []int32, toLang string) ([]*tg.TextWithEntities, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.TranslateMessageText(ctx, chatID, messageIDs, toLang)
 }
 
 func UnarchiveChat[T PeerInput, C Caller](c C, chat T) error {
@@ -1261,6 +1675,24 @@ func UnpinMessage[T PeerInput, C Caller](c C, chat T, messageID int32) (*types.M
 	return client.UnpinMessage(ctx, chatID, messageID)
 }
 
+func UpdateGiftCollection[T PeerInput, C Caller](c C, chat T, collectionID int32, title string, remove []tg.InputSavedStarGiftClass, add []tg.InputSavedStarGiftClass, order []tg.InputSavedStarGiftClass) (*tg.StarGiftCollection, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.UpdateGiftCollection(ctx, chatID, collectionID, title, remove, add, order)
+}
+
+func ViewMessages[T PeerInput, C Caller](c C, chat T, messageIDs []int32, increment bool) ([]int32, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return nil, err
+	}
+	return client.ViewMessages(ctx, chatID, messageIDs, increment)
+}
+
 func VotePoll[T PeerInput, C Caller](c C, chat T, messageID int32, options [][]byte) error {
 	client, ctx := extractClient(c)
 	chatID, err := resolveID[T](ctx, client, chat)
@@ -1268,4 +1700,13 @@ func VotePoll[T PeerInput, C Caller](c C, chat T, messageID int32, options [][]b
 		return err
 	}
 	return client.VotePoll(ctx, chatID, messageID, options)
+}
+
+func WithdrawStarsRevenue[T PeerInput, C Caller](c C, chat T, amount int64, password string) (string, error) {
+	client, ctx := extractClient(c)
+	chatID, err := resolveID[T](ctx, client, chat)
+	if err != nil {
+		return "", err
+	}
+	return client.WithdrawStarsRevenue(ctx, chatID, amount, password)
 }

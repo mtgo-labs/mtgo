@@ -142,6 +142,7 @@ type memoryAdapter struct {
 
 	peers          map[int64]*Peer
 	peerByUsername map[string]int64
+	dcAuths        map[int]DCAuthEntry
 
 	updateStates   map[string]*UpdateState
 	channelStates  map[string]map[int64]*ChannelUpdateState
@@ -160,6 +161,7 @@ var (
 	_ Adapter           = (*memoryAdapter)(nil)
 	_ ConversationStore = (*memoryAdapter)(nil)
 	_ UpdateStateStore  = (*memoryAdapter)(nil)
+	_ DCAuthStore       = (*memoryAdapter)(nil)
 	_ SessionIDAware    = (*memoryAdapter)(nil)
 )
 
@@ -167,6 +169,7 @@ func newMemoryAdapter() *memoryAdapter {
 	return &memoryAdapter{
 		peers:          make(map[int64]*Peer),
 		peerByUsername: make(map[string]int64),
+		dcAuths:        make(map[int]DCAuthEntry),
 		updateStates:   make(map[string]*UpdateState),
 		channelStates:  make(map[string]map[int64]*ChannelUpdateState),
 		updateDedup:    make(map[string]map[string]struct{}),
@@ -257,6 +260,25 @@ func (m *memoryAdapter) DeletePeer(id int64) error {
 		delete(m.peers, id)
 	}
 	return nil
+}
+
+func (m *memoryAdapter) SaveDCAuth(entry DCAuthEntry) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cp := entry
+	m.dcAuths[entry.DCID] = cp
+	return nil
+}
+
+func (m *memoryAdapter) LoadDCAuth(dcID int) (DCAuthEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	entry, ok := m.dcAuths[dcID]
+	if !ok {
+		return DCAuthEntry{}, fmt.Errorf("dc auth not found: %d", dcID)
+	}
+	cp := entry
+	return cp, nil
 }
 
 func (m *memoryAdapter) SaveConversation(c *Conversation) error {
@@ -892,4 +914,29 @@ func (a *adapterWrapper) MarkDurableUpdateFailed(sid, key string, attempts int, 
 		return s.MarkDurableUpdateFailed(sid, key, attempts, lastErr)
 	}
 	return nil
+}
+
+// dcs returns the external adapter's DC-auth extension, or nil.
+func (a *adapterWrapper) dcs() DCAuthStore {
+	if s, ok := a.ext.(DCAuthStore); ok {
+		return s
+	}
+	return nil
+}
+
+// SaveDCAuth persists a per-DC auth key when the backend supports it.
+func (a *adapterWrapper) SaveDCAuth(entry DCAuthEntry) error {
+	if s := a.dcs(); s != nil {
+		return s.SaveDCAuth(entry)
+	}
+	return nil
+}
+
+// LoadDCAuth loads a persisted per-DC auth key. Absent keys are reported as
+// errors, matching the backend convention.
+func (a *adapterWrapper) LoadDCAuth(dcID int) (DCAuthEntry, error) {
+	if s := a.dcs(); s != nil {
+		return s.LoadDCAuth(dcID)
+	}
+	return DCAuthEntry{}, fmt.Errorf("dc auth not available: %d", dcID)
 }

@@ -45,7 +45,7 @@ type SearchResult struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Found %d users, %d chats\n", len(result.Users), len(result.Chats))
-func (c *Client) SearchContacts(ctx context.Context, query string, limit int) (*SearchResult, error) {
+func (c *ContactsMethods) SearchContacts(ctx context.Context, query string, limit int) (*SearchResult, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -118,14 +118,14 @@ func (c *Client) SearchContacts(ctx context.Context, query string, limit int) (*
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("User: %s %s\n", user.FirstName, user.LastName)
-func (c *Client) GetUser(ctx context.Context, userID int64) (*types.User, error) {
+func (c *UserMethods) GetUser(ctx context.Context, userID int64) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
 
 	c.Log.Debugf("GetUser user_id=%d", userID)
 
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve user: %w", err)
 	}

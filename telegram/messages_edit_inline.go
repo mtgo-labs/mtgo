@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -15,7 +14,7 @@ import (
 //	ok, err := client.EditInlineText(ctx, inlineMsgID, "updated text",
 //		&telegram.EditInlineOpts{NoWebpage: true},
 //	)
-func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineText(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, text string, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineText")
 	opt := getEditInlineOpts(opts...)
 
@@ -84,7 +83,7 @@ func (c *Client) EditInlineText(ctx context.Context, inlineMessageID tg.InputBot
 // Example:
 //
 //	ok, err := client.EditInlineCaption(ctx, inlineMsgID, "new caption")
-func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineCaption(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, caption string, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineCaption")
 	opt := getEditInlineOpts(opts...)
 
@@ -148,7 +147,7 @@ func (c *Client) EditInlineCaption(ctx context.Context, inlineMessageID tg.Input
 //
 //	media := &tg.InputMediaPhoto{ID: &tg.InputPhoto{ID: photoID}}
 //	ok, err := client.EditInlineMedia(ctx, inlineMsgID, media)
-func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, media tg.InputMediaClass, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineMedia")
 	opt := getEditInlineOpts(opts...)
 
@@ -186,7 +185,7 @@ func (c *Client) EditInlineMedia(ctx context.Context, inlineMessageID tg.InputBo
 //
 //	keyboard := &tg.ReplyInlineMarkup{Rows: rows}
 //	ok, err := client.EditInlineReplyMarkup(ctx, inlineMsgID, keyboard)
-func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, replyMarkup tg.ReplyMarkupClass) (bool, error) {
+func (c *MessageMethods) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, replyMarkup tg.ReplyMarkupClass) (bool, error) {
 	c.Log.Debugf("EditInlineReplyMarkup")
 
 	var flags tg.Fields
@@ -216,7 +215,7 @@ func (c *Client) EditInlineReplyMarkup(ctx context.Context, inlineMessageID tg.I
 //
 //	ok, err := client.EditInlineRichMessage(ctx, inlineMsgID,
 //		telegram.RichMessageMarkdown("**updated**", false))
-func (c *Client) EditInlineRichMessage(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass, opts ...*EditInlineOpts) (bool, error) {
+func (c *MessageMethods) EditInlineRichMessage(ctx context.Context, inlineMessageID tg.InputBotInlineMessageIDClass, rm tg.InputRichMessageClass, opts ...*EditInlineOpts) (bool, error) {
 	c.Log.Debugf("EditInlineRichMessage")
 	if rm == nil {
 		return false, fmt.Errorf("edit inline rich message: rich message is nil")
@@ -245,28 +244,6 @@ func (c *Client) EditInlineRichMessage(ctx context.Context, inlineMessageID tg.I
 		return false, err
 	}
 	return result, nil
-}
-
-// EditInlineOpts provides optional parameters for inline message editing operations.
-//
-// Example:
-//
-//	opts := &telegram.EditInlineOpts{
-//		NoWebpage:   true,
-//		InvertMedia: false,
-//		Entities:    nil,
-//	}
-//	ok, err := client.EditInlineText(ctx, msgID, "hello", opts)
-type EditInlineOpts struct {
-	NoWebpage   bool
-	InvertMedia bool
-	ReplyMarkup tg.ReplyMarkupClass
-	Entities    []tg.MessageEntityClass
-	// ParseMode parses the text/caption into entities when Entities is empty.
-	ParseMode params.ParseMode
-	// RichMessage replaces the inline message content with a rich message
-	// (flag 23).
-	RichMessage tg.InputRichMessageClass
 }
 
 func getEditInlineOpts(opts ...*EditInlineOpts) *EditInlineOpts {

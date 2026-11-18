@@ -9,18 +9,6 @@ import (
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
-// GetPaymentFormOption holds optional parameters for GetPaymentForm.
-type GetPaymentFormOption struct {
-	ThemeParams *string
-}
-
-// SendPaymentFormOption holds optional parameters for SendPaymentForm.
-type SendPaymentFormOption struct {
-	RequestedInfoID  string
-	ShippingOptionID string
-	TipAmount        *int64
-}
-
 // GetPaymentForm retrieves the payment form for an invoice message in the specified chat.
 // The payment form contains the invoice details, available payment methods, and form ID
 // needed for SendPaymentForm.
@@ -32,11 +20,11 @@ type SendPaymentFormOption struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Form ID: %d, title: %s\n", form.GetFormID(), form.GetTitle())
-func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int32, opts ...*GetPaymentFormOption) (*types.PaymentForm, error) {
+func (c *PaymentMethods) GetPaymentForm(ctx context.Context, chatID int64, messageID int32, opts ...*GetPaymentFormOption) (*types.PaymentForm, error) {
 	c.Log.Debugf("GetPaymentForm chat_id=%d msg_id=%d", chatID, messageID)
 	opt := params.GetOptDef(&GetPaymentFormOption{}, opts...)
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -68,14 +56,14 @@ func (c *Client) GetPaymentForm(ctx context.Context, chatID int64, messageID int
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SendPaymentForm(ctx context.Context, formID int64, chatID int64, messageID int32, creds tg.InputPaymentCredentialsClass, opts ...*SendPaymentFormOption) (tg.PaymentResultClass, error) {
+func (c *PaymentMethods) SendPaymentForm(ctx context.Context, formID int64, chatID int64, messageID int32, creds tg.InputPaymentCredentialsClass, opts ...*SendPaymentFormOption) (tg.PaymentResultClass, error) {
 	c.Log.Debugf("SendPaymentForm form_id=%d chat_id=%d msg_id=%d", formID, chatID, messageID)
 	if creds == nil {
 		return nil, ErrPaymentsCredentialsRequired
 	}
 	opt := params.GetOptDef(&SendPaymentFormOption{}, opts...)
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -109,9 +97,9 @@ func (c *Client) SendPaymentForm(ctx context.Context, formID int64, chatID int64
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Stars balance: %d\n", balance)
-func (c *Client) GetStarsBalance(ctx context.Context, chatID int64) (int64, error) {
+func (c *PaymentMethods) GetStarsBalance(ctx context.Context, chatID int64) (int64, error) {
 	c.Log.Debugf("GetStarsBalance chat_id=%d", chatID)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return 0, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -144,7 +132,7 @@ func (c *Client) GetStarsBalance(ctx context.Context, chatID int64) (int64, erro
 //	        log.Printf("pre-checkout error: %v", err)
 //	    }
 //	})
-func (c *Client) AnswerPreCheckoutQuery(ctx context.Context, queryID int64, ok bool, errorMessage string) error {
+func (c *PaymentMethods) AnswerPreCheckoutQuery(ctx context.Context, queryID int64, ok bool, errorMessage string) error {
 	c.Log.Debugf("AnswerPreCheckoutQuery query_id=%d ok=%v", queryID, ok)
 	rpc := c.Raw()
 
@@ -173,7 +161,7 @@ func (c *Client) AnswerPreCheckoutQuery(ctx context.Context, queryID int64, ok b
 //	    }
 //	    client.AnswerShippingQuery(ctx.Ctx, query.ID, true, options)
 //	})
-func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool, options []*tg.ShippingOption) error {
+func (c *PaymentMethods) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool, options []*tg.ShippingOption) error {
 	c.Log.Debugf("AnswerShippingQuery query_id=%d ok=%v", queryID, ok)
 	rpc := c.Raw()
 
@@ -203,9 +191,9 @@ func (c *Client) AnswerShippingQuery(ctx context.Context, queryID int64, ok bool
 // Returns an error if:
 //   - the peer cannot be resolved
 //   - the RPC call fails
-func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
+func (c *PaymentMethods) GetStarsTransactions(ctx context.Context, chatID int64, inbound, outbound bool, offset string, limit int32, opts ...*params.GetStarsTransactionsOption) (*types.StarsStatus, error) {
 	c.Log.Debugf("GetStarsTransactions chat_id=%d inbound=%v outbound=%v limit=%d", chatID, inbound, outbound, limit)
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -246,9 +234,9 @@ func (c *Client) GetStarsTransactions(ctx context.Context, chatID int64, inbound
 //   - the user cannot be resolved
 //   - the charge_id is invalid or already refunded
 //   - the RPC call fails
-func (c *Client) RefundStarsCharge(ctx context.Context, userID int64, chargeID string) error {
+func (c *PaymentMethods) RefundStarsCharge(ctx context.Context, userID int64, chargeID string) error {
 	c.Log.Debugf("RefundStarsCharge user_id=%d charge_id=%s", userID, chargeID)
-	user, err := resolveUserID(ctx, c, userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}

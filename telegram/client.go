@@ -95,6 +95,32 @@ type Dispatcher interface {
 // Use the accessor methods (Me, Session, Storage, Config) to inspect client state,
 // and the RPC methods (Invoke, Raw) to make arbitrary API calls.
 type Client struct {
+	// Domain method groups. Every client-facing operation lives on exactly one
+	// group; the groups are embedded so their methods are promoted onto
+	// *Client (client.SendMessage == client.MessageMethods.SendMessage). The
+	// promoted-method collision test guarantees no group method collides with
+	// another group or a direct Client method.
+	*AccountMethods
+	*AdvancedMethods
+	*AuthMethods
+	*BotsMethods
+	*BusinessMethods
+	*ChatMethods
+	*ContactsMethods
+	*FolderMethods
+	*InviteLinkMethods
+	*MessageMethods
+	*PasswordMethods
+	*PaymentMethods
+	*PhoneMethods
+	*PremiumMethods
+	*SecretChatMethods
+	*StickerMethods
+	*StoryMethods
+	*UserMethods
+	*UtilityMethods
+	*WalletMethods
+
 	cfg     Config
 	cfgMu   sync.RWMutex
 	mu      sync.RWMutex
@@ -125,8 +151,12 @@ type Client struct {
 	connectedHooks      []ConnectedHook
 	reconnectHooks      []ReconnectHook
 
-	peerMgr      *peers.Manager
-	peerMgrOnce  sync.Once
+	peerMgr     *peers.Manager
+	peerMgrOnce sync.Once
+	// updateRec recovers updates missed across gaps, reconnects, and
+	// restarts (getDifference / getChannelDifference), backed by the
+	// persistent update-state store.
+	updateRec    *updateRecovery
 	floodRegVal  *floodRegistry
 	floodRegOnce sync.Once
 
@@ -310,6 +340,7 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 		Log:               logger,
 		rng:               rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), uint64(time.Now().UnixNano())^0x9E3779B97F4A7C15)),
 	}
+	client.initMethodGroups()
 
 	client.dcAuthManager = session.NewDcAuthManager(2, func(ctx context.Context, fromDC, toDC int) (*tg.AuthExportedAuthorization, error) {
 		return client.Raw().AuthExportAuthorization(ctx, &tg.AuthExportAuthorizationRequest{
@@ -320,11 +351,16 @@ func NewClient(apiID int32, apiHash string, cfg *Config) (*Client, error) {
 	client.initSecretChats()
 	client.reconnectMgr = newReconnectManager(client, client.backoffConfig())
 
+	// Update gap recovery: tracks pts/seq/qts of every batch and fetches
+	// anything missed via getDifference / getChannelDifference.
+	client.initUpdateRecovery()
+
 	// Peer resolution: stale access hashes self-heal via invalidate+replay,
 	// and entities from every RPC response feed the cache.
 	client.invokerMiddlewares = append(client.invokerMiddlewares,
 		client.peersManager().InvalidateOnStaleHash(),
 		client.peersManager().IngestResponses(),
+		client.updateRec.trackAffectedResponses(),
 	)
 
 	// Production hardening: enable RSA key rotation watchdog when configured.
@@ -2494,8 +2530,9 @@ func (c *Client) postConnect(sess *session.Session) error {
 
 	if !c.config().NoUpdates {
 		c.Log.Debug("fetching updates state")
+		c.updateRec.loadPersisted()
 		rpc := c.Raw()
-		_, err := rpc.UpdatesGetState(context.Background())
+		state, err := rpc.UpdatesGetState(context.Background())
 		if err != nil {
 			if rpcErr, ok := tgerr.As(err); ok && rpcErr.Code == 401 {
 				c.Log.Debug("updates state fetch skipped: not authorized (", rpcErr.Type, ")")
@@ -2507,7 +2544,13 @@ func (c *Client) postConnect(sess *session.Session) error {
 			}
 		} else {
 			c.Log.Info("updates state fetched")
+			// Seed the gap-recovery engine; when a persisted state exists
+			// it wins and the recovery pass fetches everything missed while
+			// the client was stopped.
+			c.updateRec.seedFromServer(state)
 		}
+		c.updateRec.start()
+		c.updateRec.Schedule()
 		if err := c.authLossError(); err != nil {
 			return err
 		}
@@ -2639,6 +2682,7 @@ func (c *Client) cleanupSessions(closeStorage ...bool) {
 	if len(closeStorage) > 0 {
 		shouldCloseStorage = closeStorage[0]
 	}
+	c.stopUpdateRecovery()
 	if c.reconnectMgr != nil {
 		c.reconnectMgr.Stop()
 	}
@@ -3516,6 +3560,11 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 		if upd.CallbackQuery != nil {
 			upd.CallbackQuery.SetBinder(c)
 		}
+	case *tg.UpdateBotWidgetQuery:
+		upd.WidgetQuery = types.ParseWidgetQuery(v)
+		if upd.WidgetQuery != nil {
+			upd.WidgetQuery.SetBinder(c)
+		}
 	case *tg.UpdateBotInlineQuery:
 		upd.InlineQuery = &types.InlineQuery{ID: v.QueryID, UserID: v.UserID, Query: v.Query, Offset: v.Offset}
 	case *tg.UpdateBotInlineSend:
@@ -3644,7 +3693,7 @@ func (c *Client) toUpdate(raw tg.UpdateClass, users map[int64]*types.User, chats
 	return upd
 }
 
-func bindMessage(msg *types.Message, binder types.Binder) {
+func bindMessage(msg *types.Message, binder types.MessageBinder) {
 	if msg != nil {
 		msg.SetBinder(binder)
 	}
@@ -3791,7 +3840,7 @@ func (c *Client) GetSession(ctx context.Context, dcID int, isMedia bool, isCDN b
 // session carries the fields it requires (API hash and user ID), making the
 // string fully self-contained. When those fields are missing — for example
 // right after connecting, before the account is loaded — it falls back to the
-// legacy Pyrogram string so export never fails on partial state.
+// legacy external string so export never fails on partial state.
 //
 // Returns ("", nil) when the session has no auth key yet (not authorized),
 // and ErrNotConnected if the client has no active storage.
@@ -3847,17 +3896,6 @@ func (c *Client) ExportSessionString() (string, error) {
 		return encoded, nil
 	}
 	return st.ExportSessionString()
-}
-
-// LogOut disconnects the client. It does not revoke the session on the server;
-// for full server-side logout use the auth.SignOut method.
-//
-// Returns ErrNotConnected if the client is not connected.
-func (c *Client) LogOut() error {
-	if !c.IsConnected() {
-		return ErrNotConnected
-	}
-	return c.Disconnect()
 }
 
 // SetMe sets the authenticated user on the client. This is typically called internally

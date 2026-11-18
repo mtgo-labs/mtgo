@@ -30,6 +30,10 @@ fmt-check:
 tidy:
 	go mod tidy
 
+## apicoverage: regenerate docs/api-coverage.md and docs/API_REFERENCE.md
+apicoverage:
+	go run ./cmd/apicoverage
+
 ## vet: go vet ./...
 vet:
 	go vet ./...

@@ -406,16 +406,19 @@ type SendPoll struct {
 	AllowAddingOptions    bool
 	ClosePeriod           *int32
 	CloseDate             *int32
-	CorrectAnswers        [][]byte
-	Solution              *string
-	SolutionEntities      []tl.MessageEntityClass
-	Description           string
-	DescriptionMedia      tl.InputMediaClass
-	BusinessConnectionID  string
-	AllowPaidBroadcast    bool
-	PaidMessageStarCount  *int64
-	MessageThreadID       int32
-	RepeatPeriod          *int32
+	// CorrectAnswers lists the indices of the correct answers for quiz
+	// polls (the wire field carries option indices, matching the official
+	// clients).
+	CorrectAnswers       []int32
+	Solution             *string
+	SolutionEntities     []tl.MessageEntityClass
+	Description          string
+	DescriptionMedia     tl.InputMediaClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+	RepeatPeriod         *int32
 }
 
 // SendVenue holds all configurable options for the send-venue Telegram API call.
@@ -1363,4 +1366,73 @@ type GetStarsTransactionsOption struct {
 	Ascending      bool
 	SubscriptionID string
 	Ton            bool
+}
+
+// SendWidget holds all configurable options for the send-widget Telegram API
+// call. Widgets are interactive HTML surfaces rendered inside a message.
+type SendWidget struct {
+	// AllowQueries lets the widget issue widget queries back to the bot.
+	AllowQueries bool
+	// Caption shows under (or above, with ShowCaptionAboveMedia) the widget;
+	// it doubles as the chat-list and notification preview text.
+	Caption string
+	// SharedWidget marks the widget as shared: one instance per chat, whose
+	// state is updated in place via its widget ID.
+	SharedWidget bool
+	// PublicData is data visible to every chat member.
+	PublicData string
+	// ChatData is per-chat private state for the widget.
+	ChatData string
+	// Shared send fields.
+	DisableNotification  bool
+	Silent               bool
+	Background           bool
+	ClearDraft           bool
+	NoForwards           bool
+	ProtectContent       bool
+	ReplyToMessageID     int32
+	ReplyTo              tl.InputReplyToClass
+	ReplyMarkup          tl.ReplyMarkupClass
+	ScheduleDate         *int32
+	EffectID             *int64
+	SendAs               tl.InputPeerClass
+	BusinessConnectionID string
+	AllowPaidBroadcast   bool
+	PaidMessageStarCount *int64
+	MessageThreadID      int32
+}
+
+func (s *SendWidget) getFlatSendFields() (bool, bool, bool, bool, bool, int32, tl.InputReplyToClass, tl.ReplyMarkupClass, *int32, *int64, tl.InputPeerClass, int32) {
+	return s.DisableNotification, s.Silent, s.Background, s.ClearDraft, s.NoForwards, s.ReplyToMessageID, s.ReplyTo, s.ReplyMarkup, s.ScheduleDate, s.EffectID, s.SendAs, s.MessageThreadID
+}
+func (s *SendWidget) ToSendMsg() *SendMessage { return flatToSendMsg(s) }
+
+// Pay holds the caller-supplied pieces of an interactive checkout for an
+// invoice message: shipping details, the payment credential, and an optional
+// tip. Fields left at zero values are omitted; the payment form's own
+// defaults (saved info, saved credentials) then apply.
+//
+// Example:
+//
+//	receipt, err := client.PayMessage(ctx, chatID, msgID, &params.Pay{
+//	    SavedCredentialID: "card-x",
+//	    ShippingOptionID:  "express",
+//	})
+type Pay struct {
+	// RequestedInfo supplies or updates the order information (name, phone,
+	// shipping address); SaveInfo stores it with the provider for reuse.
+	RequestedInfo *tl.PaymentRequestedInfo
+	SaveInfo      bool
+	// ShippingOptionID selects one of the invoice's shipping options.
+	ShippingOptionID string
+	// SavedCredentialID pays with a stored card; TmpPassword refreshes an
+	// expired one (payments.getTemporaryPassword).
+	SavedCredentialID string
+	TmpPassword       []byte
+	// CardData carries provider-specific JSON for a fresh payment (for
+	// example a Stripe token); SaveCard stores it with the provider.
+	CardData *tl.DataJSON
+	SaveCard bool
+	// TipAmount adds a tip to the total when the invoice allows one.
+	TipAmount int64
 }

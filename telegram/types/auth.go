@@ -1,16 +1,11 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
-
-// SessionBinder provides the ability to terminate an active session through
-// a bound client. Injected into ActiveSession instances so they can self-reset.
-type SessionBinder interface {
-	BoundResetSession(hash int64) error
-}
 
 // ActiveSession represents an authenticated session on a specific device,
 // including device model, platform, app version, IP, and location info.
@@ -42,10 +37,14 @@ func (s *ActiveSession) SetBinder(b SessionBinder) {
 }
 
 func (s *ActiveSession) Reset() error {
+	return s.ResetContext(context.Background())
+}
+
+func (s *ActiveSession) ResetContext(ctx context.Context) error {
 	if s.binder == nil {
 		return ErrNoBinder
 	}
-	return s.binder.BoundResetSession(s.Hash)
+	return s.binder.ResetSession(ctx, s.Hash)
 }
 
 // ParseActiveSession converts an MTProto AuthorizationTL into an ActiveSession.
@@ -87,7 +86,7 @@ type ActiveSessions struct {
 //
 // Example:
 //
-//	info, err := client.SendCode(ctx, "+1234567890")
+//	info, err := client.SendPhoneNumberCode(ctx, "+1234567890")
 //	fmt.Printf("Code type: %s, hash: %s\n", info.Type, info.PhoneCodeHash)
 type SentCodeInfo struct {
 	// Type indicates how the code was delivered (e.g., SMS, call, Telegram app).

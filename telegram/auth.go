@@ -30,7 +30,7 @@ type RecaptchaSolver interface {
 //
 // Example:
 //
-//	result, err := client.SendCode(ctx, "+1234567890")
+//	result, err := client.SendPhoneNumberCode(ctx, "+1234567890")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
@@ -45,14 +45,14 @@ type SendCodeResult struct {
 	// call, flash call, fragment). Use this to inform the user how the code was sent.
 	Type tg.SentCodeTypeClass
 	// NextType indicates an alternative code delivery method the user may request
-	// via another SendCode call. It is nil when no alternative method is available.
+	// via another SendPhoneNumberCode call. It is nil when no alternative method is available.
 	NextType tg.CodeTypeClass
 	// Timeout is the number of seconds the user should wait before requesting
 	// a new code. A value of 0 means no timeout was specified by the server.
 	Timeout int
 }
 
-// SendCode requests Telegram to send a verification code to the given phone number.
+// SendPhoneNumberCode requests Telegram to send a verification code to the given phone number.
 // This is the first step in the authentication flow and must be called before SignIn
 // or SignUp.
 //
@@ -64,16 +64,16 @@ type SendCodeResult struct {
 // Example:
 //
 //	ctx := context.Background()
-//	result, err := client.SendCode(ctx, "+1234567890")
+//	result, err := client.SendPhoneNumberCode(ctx, "+1234567890")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("phone code hash:", result.PhoneCodeHash)
-func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
+func (c *AuthMethods) SendPhoneNumberCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
-	c.Log.Debug("auth: SendCode")
+	c.Log.Debug("auth: SendPhoneNumberCode")
 	rpc := c.Raw()
 	cfg := c.config()
 	req := &tg.AuthSendCodeRequest{
@@ -112,6 +112,11 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 			return nil, err
 		}
 	}
+	return parseSentCode(result)
+}
+
+// parseSentCode converts a raw sent-code result into a SendCodeResult.
+func parseSentCode(result tg.SentCodeClass) (*SendCodeResult, error) {
 	switch v := result.(type) {
 	case *tg.AuthSentCode:
 		scr := &SendCodeResult{
@@ -130,6 +135,63 @@ func (c *Client) SendCode(ctx context.Context, phoneNumber string) (*SendCodeRes
 	default:
 		return nil, fmt.Errorf("unexpected send code result type %T", result)
 	}
+}
+
+// ResendPhoneNumberCode re-requests the verification code for an ongoing
+// sign-in, typically to deliver it through the next code type (for example
+// from SMS to a phone call). reason is an optional free-form description for
+// server-side abuse tracking and may be empty.
+func (c *AuthMethods) ResendPhoneNumberCode(ctx context.Context, phoneNumber, phoneCodeHash, reason string) (*SendCodeResult, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+	c.Log.Debug("auth: ResendPhoneNumberCode")
+	result, err := c.Raw().AuthResendCode(ctx, &tg.AuthResendCodeRequest{
+		PhoneNumber:   phoneNumber,
+		PhoneCodeHash: phoneCodeHash,
+		Reason:        reason,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("resend phone number code: %w", err)
+	}
+	return parseSentCode(result)
+}
+
+// SendChangePhoneNumberCode starts a phone-number change by requesting a
+// verification code for the new number. Complete the change with
+// ChangePhoneNumber using the returned phone code hash.
+func (c *AuthMethods) SendChangePhoneNumberCode(ctx context.Context, phoneNumber string) (*SendCodeResult, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+	c.Log.Debug("auth: SendChangePhoneNumberCode")
+	result, err := c.Raw().AccountSendChangePhoneCode(ctx, &tg.AccountSendChangePhoneCodeRequest{
+		PhoneNumber: phoneNumber,
+		Settings:    &tg.CodeSettings{},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("send change phone number code: %w", err)
+	}
+	return parseSentCode(result)
+}
+
+// ChangePhoneNumber completes a phone-number change with the code delivered
+// to the new number and returns the updated user. The new number becomes the
+// sign-in number for the account.
+func (c *AuthMethods) ChangePhoneNumber(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return nil, err
+	}
+	c.Log.Debug("auth: ChangePhoneNumber")
+	result, err := c.Raw().AccountChangePhone(ctx, &tg.AccountChangePhoneRequest{
+		PhoneNumber:   phoneNumber,
+		PhoneCodeHash: phoneCodeHash,
+		PhoneCode:     phoneCode,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("change phone number: %w", err)
+	}
+	return types.ParseUser(result), nil
 }
 
 func parseRecaptchaChallenge(err error) (action, key string, ok bool) {
@@ -152,7 +214,7 @@ func parseRecaptchaChallenge(err error) (action, key string, ok bool) {
 }
 
 // SignIn authenticates a user with the phone number, verification code, and the
-// phone code hash returned by SendCode. Call this after the user receives and enters
+// phone code hash returned by SendPhoneNumberCode. Call this after the user receives and enters
 // the code delivered to their device.
 //
 // Returns the authenticated User on success.
@@ -169,7 +231,7 @@ func parseRecaptchaChallenge(err error) (action, key string, ok bool) {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("signed in as:", user.FirstName)
-func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
+func (c *AuthMethods) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCode string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -206,7 +268,7 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 // SignUp registers a new Telegram account for a phone number that is not yet
 // associated with any account. This must be called only after SignIn returns a
 // "sign up required" error, reusing the same phoneCodeHash from the original
-// SendCode call.
+// SendPhoneNumberCode call.
 //
 // lastName is optional; only the first element is used if provided.
 //
@@ -221,7 +283,7 @@ func (c *Client) SignIn(ctx context.Context, phoneNumber, phoneCodeHash, phoneCo
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("registered as:", user.FirstName, user.LastName)
-func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
+func (c *AuthMethods) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstName string, lastName ...string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -271,7 +333,7 @@ func (c *Client) SignUp(ctx context.Context, phoneNumber, phoneCodeHash, firstNa
 //	    return
 //	}
 //	fmt.Println("signed out:", ok)
-func (c *Client) SignOut(ctx context.Context) (bool, error) {
+func (c *AuthMethods) SignOut(ctx context.Context) (bool, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return false, err
 	}
@@ -333,7 +395,7 @@ func (c *Client) SignOut(ctx context.Context) (bool, error) {
 //
 // Returns an empty string when no hint has been set by the user.
 // Returns an error if the server request fails or the session is not authorized.
-func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
+func (c *AuthMethods) GetPasswordHint(ctx context.Context) (string, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return "", err
 	}
@@ -363,7 +425,7 @@ func (c *Client) GetPasswordHint(ctx context.Context) (string, error) {
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("authenticated as:", user.FirstName)
-func (c *Client) CheckPassword(ctx context.Context, password string) (*types.User, error) {
+func (c *AuthMethods) CheckPassword(ctx context.Context, password string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -403,7 +465,7 @@ func (c *Client) CheckPassword(ctx context.Context, password string) (*types.Use
 // Returns the authenticated User on success.
 // Returns an error if the recovery code is invalid or expired, or if the
 // server rejects the request.
-func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
+func (c *AuthMethods) RecoverPassword(ctx context.Context, code string) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -427,6 +489,32 @@ func (c *Client) RecoverPassword(ctx context.Context, code string) (*types.User,
 	default:
 		return nil, fmt.Errorf("unexpected recover password result type %T", result)
 	}
+}
+
+// RequestPasswordRecovery asks Telegram to email a recovery code for an
+// account whose cloud password is unknown. It is the first half of the 2FA
+// recovery flow: the code it triggers is completed with RecoverPassword.
+//
+// Returns a masked email pattern (for example "sm***@gmail.com") describing
+// where the code was sent.
+//
+// Example:
+//
+//	pattern, err := client.RequestPasswordRecovery(ctx)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Println("recovery code sent to:", pattern)
+func (c *AuthMethods) RequestPasswordRecovery(ctx context.Context) (string, error) {
+	if err := c.ensureConnectedContext(ctx); err != nil {
+		return "", err
+	}
+	c.Log.Debug("auth: RequestPasswordRecovery")
+	result, err := c.Raw().AuthRequestPasswordRecovery(ctx)
+	if err != nil {
+		return "", err
+	}
+	return result.EmailPattern, nil
 }
 
 // commitAuthorizedUser serializes successful authorization with terminal auth
@@ -538,7 +626,7 @@ type ActiveSessions struct {
 //	for _, s := range sessions.Sessions {
 //	    fmt.Printf("%s (%s) - IP: %s\n", s.DeviceModel, s.Platform, s.IP)
 //	}
-func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
+func (c *AuthMethods) GetActiveSessions(ctx context.Context) (*ActiveSessions, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -588,7 +676,7 @@ func (c *Client) GetActiveSessions(ctx context.Context) (*ActiveSessions, error)
 //	        client.ResetSession(ctx, s.Hash)
 //	    }
 //	}
-func (c *Client) ResetSession(ctx context.Context, hash int64) error {
+func (c *AuthMethods) ResetSession(ctx context.Context, hash int64) error {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return err
 	}

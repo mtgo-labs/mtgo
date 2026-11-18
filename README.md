@@ -24,7 +24,7 @@ low latency, and minimal raw-protocol overhead.
 ## Features
 
 - **Full MTProto 2.0** — encryption, key generation, CDNs, file transfers
-- **High-level client API** — messages, chats, media, inline, stories, payments, business connections
+- **High-level client API** — twenty domain groups covering messages, chats, folders, users, contacts, account, auth, bots, business, premium, stories, payments and gifts, stickers, invite links, the TON wallet, and interactive widgets
 - **Handler-based updates** — register handlers with filters, priorities, and handler groups
 - **Middleware** — invoker-level (RPC calls) and handler-level (update dispatch) middleware chains
 - **Plugin system** — lifecycle plugins with `Start`/`Stop` hooks
@@ -37,6 +37,7 @@ low latency, and minimal raw-protocol overhead.
 - **Auto-reconnect** — exponential backoff with jitter and configurable max attempts
 - **Health checks** — periodic ping/pong keepalive with configurable timeout
 - **Generated TL layer** — auto-generated from Telegram schemas; update with one command
+- **Generated API inventory** — `make apicoverage` regenerates the per-domain reference and coverage report from source
 - **Pure Go** — no CGO required (SQLite via modernc.org/sqlite)
 
 ## Quick Start
@@ -139,6 +140,26 @@ client, _ := telegram.NewClient(apiID, apiHash, &telegram.Config{
 ```
 
 ## Handlers and Filters
+
+Every update category has a typed handler, constructed with `New<Type>Handler`
+(and registered through `client.AddHandler` or the `client.On<Type>` sugar):
+
+| Handler | Fires on |
+|---|---|
+| `NewMessageHandler` / `NewEditedMessageHandler` / `NewDeletedMessagesHandler` | new, edited, and deleted messages |
+| `NewBusinessMessageHandler` / `NewEditedBusinessMessageHandler` / `NewDeletedBusinessMessagesHandler` | the same for business-connection chats |
+| `NewGuestMessageHandler` | guest messages |
+| `NewCallbackQueryHandler` / `NewInlineQueryHandler` / `NewChosenInlineResultHandler` | inline interaction |
+| `NewWidgetQueryHandler` | widget queries (HTML widgets calling back to the bot) |
+| `NewChatJoinRequestHandler` / `NewChatMemberHandler` (alias `ChatMemberUpdatedHandler`) | membership |
+| `NewChatBoostHandler` / `NewStoryHandler` / `NewPollHandler` | boosts, stories, polls |
+| `NewMessageReactionHandler` / `NewMessageReactionCountHandler` | reactions |
+| `NewUserStatusHandler` | user presence |
+| `NewShippingQueryHandler` / `NewPreCheckoutQueryHandler` / `NewPurchasedPaidMediaHandler` | payments |
+| `NewBusinessConnectionHandler` / `NewManagedBotHandler` (alias `ManagedBotUpdatedHandler`) | business and managed-bot links |
+| `NewConnectHandler` / `NewDisconnectHandler` / `NewStartHandler` / `NewStopHandler` / `NewErrorHandler` | client lifecycle |
+| `NewRawUpdateHandler` | raw `tg.UpdateXxx` values, typed or catch-all |
+
 
 ```go
 // Command handler
@@ -388,9 +409,9 @@ if err := telegram.Compose(bot1, bot2); err != nil {
 ## Project Structure
 
 ```
-cmd/            Code generators (TL schema, error types)
+cmd/            Code generators (TL schema, error types, API coverage)
 compiler/       TL compiler and templates
-docs/           API reference
+docs/           API reference and generated coverage inventory
 examples/       Working examples
 internal/       MTProto internals (crypto, session, transport)
 session/        Session string import/export
@@ -403,6 +424,9 @@ mtproxy/        MTProxy obfuscated2/fake-TLS transport
 ## Code Generation
 
 ```bash
+# Regenerate the API coverage inventory and reference
+go run ./cmd/apicoverage
+
 # Regenerate TL types from schema
 go run cmd/tlgen/main.go
 

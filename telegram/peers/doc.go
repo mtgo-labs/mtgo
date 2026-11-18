@@ -35,6 +35,17 @@
 // of [Deps] at call time, so lazily-created storage and runtime configuration
 // changes are honored without re-construction.
 //
+// # Persistence
+//
+// When Deps.SavePeers is enabled and a Store is configured, every entity
+// the ingest funnel observes is written through: ID, kind, access hash,
+// primary username, collectible aliases, and phone number, each record
+// stamped with its last update. At connect, LoadFromStore promotes the
+// records into the memory indexes read-only. Resolution consults the store
+// on memory misses — by ID, by username (freshness checked against the
+// record's stamp within the index TTL), and by phone — so peers resolved in
+// a previous run keep resolving without a server round-trip.
+//
 // # Provenance
 //
 // The design is grounded in a source-level survey of the other MTProto

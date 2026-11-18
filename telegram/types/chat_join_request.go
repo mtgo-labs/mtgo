@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
@@ -21,25 +22,33 @@ type ChatJoinRequest struct {
 	Date       time.Time
 	Bio        string
 	InviteLink *ChatInviteLink
-	binder     Binder
+	binder     ChatJoinRequestBinder
 }
 
-func (r *ChatJoinRequest) SetBinder(b Binder) {
+func (r *ChatJoinRequest) SetBinder(b ChatJoinRequestBinder) {
 	r.binder = b
 }
 
 func (r *ChatJoinRequest) Approve() error {
+	return r.ApproveContext(context.Background())
+}
+
+func (r *ChatJoinRequest) ApproveContext(ctx context.Context) error {
 	if r.binder == nil {
 		return ErrNoBinder
 	}
-	return r.binder.BoundApproveJoinRequest(r.Chat.ID, r.FromUser.ID)
+	return r.binder.ApproveChatJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
 }
 
 func (r *ChatJoinRequest) Decline() error {
+	return r.DeclineContext(context.Background())
+}
+
+func (r *ChatJoinRequest) DeclineContext(ctx context.Context) error {
 	if r.binder == nil {
 		return ErrNoBinder
 	}
-	return r.binder.BoundDeclineJoinRequest(r.Chat.ID, r.FromUser.ID)
+	return r.binder.DeclineChatJoinRequest(ctx, r.Chat.ID, r.FromUser.ID)
 }
 
 // ParseChatJoinRequest converts a TL UpdateBotChatInviteRequester into a ChatJoinRequest.

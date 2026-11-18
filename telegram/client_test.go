@@ -1007,14 +1007,6 @@ func TestInitialDCID(t *testing.T) {
 	}
 }
 
-func TestLogOutNotConnected(t *testing.T) {
-	c, _ := NewClient(12345, "hash", nil)
-	err := c.LogOut()
-	if !errors.Is(err, ErrNotConnected) {
-		t.Errorf("LogOut() = %v, want ErrNotConnected", err)
-	}
-}
-
 func TestSetMe(t *testing.T) {
 	c, _ := NewClient(12345, "hash", nil)
 
@@ -1278,9 +1270,9 @@ func TestAllMethodsGuardNotConnected(t *testing.T) {
 		t.Errorf("ExportSessionString: %v", err)
 	}
 
-	err = c.LogOut()
+	err = c.Disconnect()
 	if !errors.Is(err, ErrNotConnected) {
-		t.Errorf("LogOut: %v", err)
+		t.Errorf("Disconnect: %v", err)
 	}
 
 	_, err = c.GetSession(context.Background(), 2, false, false)

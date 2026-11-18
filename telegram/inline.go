@@ -5,45 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/mtgo-labs/mtgo/telegram/params"
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
 )
-
-// AnswerInlineQueryOption configures how inline query results are presented to
-// the user. Use these options to control gallery mode, caching, pagination, and
-// deep-link prompts.
-type AnswerInlineQueryOption struct {
-	// Gallery displays results as a gallery (grid) instead of a vertical list.
-	Gallery bool
-	// Private restricts results to the bot's private chats only.
-	Private bool
-	// CacheTime is the maximum number of seconds the client should cache the
-	// results.
-	CacheTime int32
-	// NextOffset is the pagination offset string for the next batch of results.
-	// Set this to enable result pagination.
-	NextOffset string
-	// SwitchPM provides a "Switch to PM" button that opens a private chat with
-	// the bot, passing the given start parameter.
-	SwitchPM *tg.InlineBotSwitchPm
-	// SwitchWebview provides a button to open a web view with the bot.
-	SwitchWebview *tg.InlineBotWebView
-}
-
-// SendInlineBotResultOption configures optional parameters when sending an
-// inline bot result to a chat.
-type SendInlineBotResultOption struct {
-	// Silent sends the message without triggering a notification.
-	Silent bool
-	// HideVia hides the "via @bot" label on the sent message.
-	HideVia bool
-	// ReplyTo is the message ID to reply to (0 for no reply).
-	ReplyTo int64
-	// ScheduleDate schedules the message to be sent at the given Unix timestamp.
-	ScheduleDate *int32
-	// ClearDraft clears the chat's draft message after sending.
-	ClearDraft bool
-}
 
 // AnswerInlineQuery sends results for an inline query originated from the @bot
 // search box. Use this when a bot receives an inline query update.
@@ -65,7 +30,7 @@ type SendInlineBotResultOption struct {
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) AnswerInlineQuery(ctx context.Context, queryID int64, results []tg.InputBotInlineResultClass, opts ...*AnswerInlineQueryOption) error {
+func (c *BotsMethods) AnswerInlineQuery(ctx context.Context, queryID int64, results []tg.InputBotInlineResultClass, opts ...*AnswerInlineQueryOption) error {
 	c.Log.Debugf("AnswerInlineQuery query_id=%d", queryID)
 	opt := getOptDef(&AnswerInlineQueryOption{}, opts...)
 
@@ -107,7 +72,7 @@ func (c *Client) AnswerInlineQuery(ctx context.Context, queryID int64, results [
 //
 // Returns the sent guest message or an error if the query ID is invalid, the
 // RPC call fails, or Telegram returns an unexpected result type.
-func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, result tg.InputBotInlineResultClass) (*types.SentGuestMessage, error) {
+func (c *BotsMethods) AnswerGuestQuery(ctx context.Context, guestQueryID string, result tg.InputBotInlineResultClass) (*types.SentGuestMessage, error) {
 	c.Log.Debugf("AnswerGuestQuery query_id=%s", guestQueryID)
 
 	queryID, err := strconv.ParseInt(guestQueryID, 10, 64)
@@ -153,13 +118,13 @@ func (c *Client) AnswerGuestQuery(ctx context.Context, guestQueryID string, resu
 //	for _, r := range results.Results {
 //	    fmt.Printf("Result: %T\n", r)
 //	}
-func (c *Client) GetInlineBotResults(ctx context.Context, bot int64, chatID int64, query, offset string) (*tg.MessagesBotResults, error) {
+func (c *BotsMethods) GetInlineBotResults(ctx context.Context, bot int64, chatID int64, query, offset string) (*tg.MessagesBotResults, error) {
 	c.Log.Debug("GetInlineBotResults")
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}
-	user, err := resolveUserID(ctx, c, bot)
+	user, err := resolveUserID(ctx, c.Client, bot)
 	if err != nil {
 		return nil, fmt.Errorf("resolve bot: %w", err)
 	}
@@ -199,11 +164,11 @@ func (c *Client) GetInlineBotResults(ctx context.Context, bot int64, chatID int6
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("Sent message ID: %d\n", msg.ID)
-func (c *Client) SendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, opts ...*SendInlineBotResultOption) (*types.Message, error) {
+func (c *BotsMethods) SendInlineBotResult(ctx context.Context, chatID int64, queryID int64, resultID string, opts ...*SendInlineBotResultOption) (*types.Message, error) {
 	c.Log.Debugf("SendInlineBotResult chat_id=%d", chatID)
 	opt := getOptDef(&SendInlineBotResultOption{}, opts...)
 
-	peer, err := resolvePeer(ctx, c, chatID)
+	peer, err := resolvePeer(ctx, c.Client, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve chat: %w", err)
 	}
@@ -246,3 +211,11 @@ func (c *Client) SendInlineBotResult(ctx context.Context, chatID int64, queryID 
 
 	return extractSingleMessage(result, c)
 }
+
+// Compatibility aliases: these option structs live in params so that the
+// types-package binder interfaces can reference them.
+type (
+	EditInlineOpts            = params.EditInlineOpts
+	AnswerInlineQueryOption   = params.AnswerInlineQueryOption
+	SendInlineBotResultOption = params.SendInlineBotResultOption
+)

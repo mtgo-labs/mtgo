@@ -63,7 +63,7 @@ func main() {
 			}
 			fmt.Printf("  saved: %s (%d bytes)\n", destPath+".jpg", len(data))
 
-		case *types.DocumentMedia:
+		case *types.Document:
 			fmt.Printf("Downloading document %q (msg_id=%d, %d bytes)...\n", m.FileName, msg.ID, m.FileSize)
 
 			err := client.DownloadMediaToFile(context.Background(), m, "", destPath, m.FileSize, &params.Download{
@@ -92,7 +92,7 @@ func main() {
 
 func resolveFileName(msg *types.Message) string {
 	switch m := msg.Media.(type) {
-	case *types.DocumentMedia:
+	case *types.Document:
 		if m.FileName != "" {
 			return m.FileName
 		}

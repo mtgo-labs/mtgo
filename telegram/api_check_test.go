@@ -12,7 +12,7 @@ func TestAPISurface_Stories(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	c := &Client{state: newConnectionState(), testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{state: newConnectionState(), testResolver: &mockPeerResolver{}})
 	var peer int64
 	var user int64
 	var media tg.InputMediaClass
@@ -33,19 +33,19 @@ func TestAPISurface_Premium(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	c := &Client{state: newConnectionState(), testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{state: newConnectionState(), testResolver: &mockPeerResolver{}})
 	var peer int64
 
 	_, _ = c.ApplyBoost(context.Background(), peer)
 	_, _ = c.GetBoostsStatus(context.Background(), peer)
-	_, _ = c.GetBoosts(context.Background())
+	_, _ = c.GetMyBoosts(context.Background())
 }
 
 func TestAPISurface_Payments(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	c := &Client{state: newConnectionState(), testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{state: newConnectionState(), testResolver: &mockPeerResolver{}})
 	var peer int64
 	var user int64
 	var creds tg.InputPaymentCredentialsClass
@@ -60,7 +60,7 @@ func TestAPISurface_Business(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	c := &Client{state: newConnectionState(), testResolver: &mockPeerResolver{}}
+	c := initClient(&Client{state: newConnectionState(), testResolver: &mockPeerResolver{}})
 
 	_, _ = c.GetBusinessConnection(context.Background(), "conn_123")
 }

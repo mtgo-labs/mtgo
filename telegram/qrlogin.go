@@ -6,6 +6,7 @@ import (
 
 	"github.com/mtgo-labs/mtgo/telegram/types"
 	"github.com/mtgo-labs/mtgo/tg"
+	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
 // QRLoginToken holds the raw token bytes and expiration time for a QR code login session.
@@ -42,7 +43,7 @@ type QRLoginToken struct {
 //	    log.Fatal(err)
 //	}
 //	fmt.Printf("QR token expires at unix %d\n", token.Expires)
-func (c *Client) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error) {
+func (c *AuthMethods) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func (c *Client) GetQRCodeLoginToken(ctx context.Context) (*QRLoginToken, error)
 //	    return
 //	}
 //	fmt.Printf("Logged in as %s\n", user.FirstName)
-func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*types.User, error) {
+func (c *AuthMethods) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*types.User, error) {
 	if err := c.ensureConnectedContext(ctx); err != nil {
 		return nil, err
 	}
@@ -101,6 +102,12 @@ func (c *Client) CheckQRCodeLoginToken(ctx context.Context, token []byte) (*type
 		Token: token,
 	})
 	if err != nil {
+		if tgerr.Is(err, tgerr.ErrSessionPasswordNeeded) {
+			// The scanned account has 2FA enabled; the cloud password
+			// completes the login on the same session (see CheckPassword).
+			c.Log.Debug("auth: QR login requires cloud password")
+			return nil, Err2FARequired
+		}
 		return nil, fmt.Errorf("import login token: %w", err)
 	}
 
@@ -154,6 +161,9 @@ func (c *Client) qrLoginMigrateToDC(ctx context.Context, targetDC int, token []b
 		attemptCtx, authAttempt := c.withAuthAttempt(ctx)
 		result, err := c.Raw().AuthImportLoginToken(attemptCtx, &tg.AuthImportLoginTokenRequest{Token: token})
 		if err != nil {
+			if tgerr.Is(err, tgerr.ErrSessionPasswordNeeded) {
+				return Err2FARequired
+			}
 			return fmt.Errorf("import login token on DC %d: %w", targetDC, err)
 		}
 		migrated, err = c.qrLoginResult(result, authAttempt.generation.Load())

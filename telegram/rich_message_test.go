@@ -223,7 +223,7 @@ func TestBoundSendRich_ForwardsReplyTo(t *testing.T) {
 	c.CachePeer(10, &tg.InputPeerChannel{ChannelID: 10, AccessHash: 20})
 
 	rm := RichMessageMarkdown("m", false)
-	_, err := c.BoundSendRich(10, rm, 42)
+	_, err := c.SendRichMessage(context.Background(), 10, rm, &params.SendMessage{ReplyToMessageID: 42})
 	if err != nil {
 		t.Fatalf("BoundSendRich() error: %v", err)
 	}
@@ -235,6 +235,6 @@ func TestBoundSendRich_ForwardsReplyTo(t *testing.T) {
 		t.Fatal("reply_to should be set from replyTo argument")
 	}
 	if !req.Flags.Has(23) || req.RichMessage != rm {
-		t.Fatal("rich message not propagated through BoundSendRich")
+		t.Fatal("rich message not propagated through SendRichMessage")
 	}
 }

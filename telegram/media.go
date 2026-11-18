@@ -14,10 +14,10 @@ import (
 //
 // This function is the primary entry point for resolving download coordinates from the
 // high-level types.Media interface. Use it when you already hold a PhotoMedia or
-// DocumentMedia and need the low-level InputFileLocationClass required by download methods.
+// Document and need the low-level InputFileLocationClass required by download methods.
 //
 // Parameters:
-//   - media: the media object to resolve (PhotoMedia or DocumentMedia).
+//   - media: the media object to resolve (PhotoMedia or Document).
 //   - thumbSize: requested thumbnail size for photos (e.g. "m", "x"). Ignored for documents.
 //     If empty, the largest available photo size is selected.
 //
@@ -28,10 +28,10 @@ import (
 //
 // Errors:
 //   - "media: nil media" — when media is nil.
-//   - "media: unsupported type %T" — when the media is neither *PhotoMedia nor *DocumentMedia.
+//   - "media: unsupported type %T" — when the media is neither *PhotoMedia nor *Document.
 //   - "media: photo has no photo data" — when PhotoMedia.Photo is nil.
 //   - "media: no photo sizes available" — when the photo has zero sizes.
-//   - "media: cannot parse document file_id" — when DocumentMedia.FileID cannot be parsed.
+//   - "media: cannot parse document file_id" — when Document.FileID cannot be parsed.
 //
 // Example:
 //
@@ -49,7 +49,7 @@ func GetFileLocation(media types.Media, thumbSize string) (tg.InputFileLocationC
 	switch m := media.(type) {
 	case *types.PhotoMedia:
 		return getPhotoFileLocation(m, thumbSize)
-	case *types.DocumentMedia:
+	case *types.Document:
 		return getDocumentFileLocation(m, thumbSize)
 	default:
 		return nil, 0, fmt.Errorf("media: unsupported type %T", media)
@@ -74,7 +74,7 @@ func getPhotoFileLocation(m *types.PhotoMedia, thumbSize string) (tg.InputFileLo
 	}, m.Photo.DCID, nil
 }
 
-func getDocumentFileLocation(m *types.DocumentMedia, thumbSize string) (tg.InputFileLocationClass, int32, error) {
+func getDocumentFileLocation(m *types.Document, thumbSize string) (tg.InputFileLocationClass, int32, error) {
 	var id, accessHash int64
 	var fileRef []byte
 	var dcID int32

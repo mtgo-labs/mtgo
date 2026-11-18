@@ -10,12 +10,12 @@ import (
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
 
-func (c *Client) GetStarGiftCatalog(ctx context.Context, hash int32) (tg.StarGiftsClass, error) {
+func (c *PaymentMethods) GetStarGiftCatalog(ctx context.Context, hash int32) (tg.StarGiftsClass, error) {
 	c.Log.Debug("GetStarGiftCatalog")
 	return c.Raw().PaymentsGetStarGifts(ctx, &tg.PaymentsGetStarGiftsRequest{Hash: hash})
 }
 
-func (c *Client) GetStarGiftOptions(ctx context.Context) ([]*types.Gift, error) {
+func (c *PaymentMethods) GetStarGiftOptions(ctx context.Context) ([]*types.Gift, error) {
 	c.Log.Debug("GetStarGiftOptions")
 	res, err := c.Raw().PaymentsGetStarGifts(ctx, &tg.PaymentsGetStarGiftsRequest{Hash: 0})
 	if err != nil {
@@ -36,7 +36,7 @@ func (c *Client) GetStarGiftOptions(ctx context.Context) ([]*types.Gift, error) 
 	return out, nil
 }
 
-func (c *Client) ResolveGiftOffer(ctx context.Context, messageID int32, accept bool) (*types.Message, error) {
+func (c *PaymentMethods) ResolveGiftOffer(ctx context.Context, messageID int32, accept bool) (*types.Message, error) {
 	c.Log.Debugf("ResolveGiftOffer msg_id=%d accept=%v", messageID, accept)
 	result, err := c.Raw().PaymentsResolveStarGiftOffer(ctx, &tg.PaymentsResolveStarGiftOfferRequest{
 		OfferMsgID: messageID,
@@ -48,17 +48,17 @@ func (c *Client) ResolveGiftOffer(ctx context.Context, messageID int32, accept b
 	return extractSingleMessage(result, c)
 }
 
-func (c *Client) GetStarGiftUpgradeOptions(ctx context.Context, giftID int64) (*tg.PaymentsStarGiftUpgradeAttributes, error) {
+func (c *PaymentMethods) GetStarGiftUpgradeOptions(ctx context.Context, giftID int64) (*tg.PaymentsStarGiftUpgradeAttributes, error) {
 	c.Log.Debugf("GetStarGiftUpgradeOptions gift_id=%d", giftID)
 	return c.Raw().PaymentsGetStarGiftUpgradeAttributes(ctx, &tg.PaymentsGetStarGiftUpgradeAttributesRequest{
 		GiftID: giftID,
 	})
 }
 
-func (c *Client) GetSavedGifts(ctx context.Context, peerID int64, opts ...*params.GetGifts) (*tg.PaymentsSavedStarGifts, error) {
+func (c *PaymentMethods) GetSavedGifts(ctx context.Context, peerID int64, opts ...*params.GetGifts) (*tg.PaymentsSavedStarGifts, error) {
 	c.Log.Debugf("GetSavedGifts peer_id=%d", peerID)
 	opt := params.GetOptDef(&params.GetGifts{Limit: 100}, opts...)
-	peer, err := resolvePeer(ctx, c, peerID)
+	peer, err := resolvePeer(ctx, c.Client, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -82,24 +82,24 @@ func (c *Client) GetSavedGifts(ctx context.Context, peerID int64, opts ...*param
 	return c.Raw().PaymentsGetSavedStarGifts(ctx, req)
 }
 
-func (c *Client) GetSavedGiftByID(ctx context.Context, gifts ...tg.InputSavedStarGiftClass) (*tg.PaymentsSavedStarGifts, error) {
+func (c *PaymentMethods) GetSavedGiftByID(ctx context.Context, gifts ...tg.InputSavedStarGiftClass) (*tg.PaymentsSavedStarGifts, error) {
 	c.Log.Debug("GetSavedGiftByID")
 	return c.Raw().PaymentsGetSavedStarGift(ctx, &tg.PaymentsGetSavedStarGiftRequest{
 		Stargift: gifts,
 	})
 }
 
-func (c *Client) GetUniqueGift(ctx context.Context, slug string) (*tg.PaymentsUniqueStarGift, error) {
+func (c *PaymentMethods) GetUniqueGift(ctx context.Context, slug string) (*tg.PaymentsUniqueStarGift, error) {
 	c.Log.Debugf("GetUniqueGift slug=%s", slug)
 	return c.Raw().PaymentsGetUniqueStarGift(ctx, &tg.PaymentsGetUniqueStarGiftRequest{Slug: slug})
 }
 
-func (c *Client) GetGiftValue(ctx context.Context, slug string) (*tg.PaymentsUniqueStarGiftValueInfo, error) {
+func (c *PaymentMethods) GetGiftValue(ctx context.Context, slug string) (*tg.PaymentsUniqueStarGiftValueInfo, error) {
 	c.Log.Debugf("GetGiftValue slug=%s", slug)
 	return c.Raw().PaymentsGetUniqueStarGiftValueInfo(ctx, &tg.PaymentsGetUniqueStarGiftValueInfoRequest{Slug: slug})
 }
 
-func (c *Client) GetResaleGifts(ctx context.Context, giftID int64, opts ...*params.GetGifts) (*tg.PaymentsResaleStarGifts, error) {
+func (c *PaymentMethods) GetResaleGifts(ctx context.Context, giftID int64, opts ...*params.GetGifts) (*tg.PaymentsResaleStarGifts, error) {
 	c.Log.Debugf("GetResaleGifts gift_id=%d", giftID)
 	opt := params.GetOptDef(&params.GetGifts{Limit: 100}, opts...)
 	req := &tg.PaymentsGetResaleStarGiftsRequest{
@@ -110,10 +110,10 @@ func (c *Client) GetResaleGifts(ctx context.Context, giftID int64, opts ...*para
 	return c.Raw().PaymentsGetResaleStarGifts(ctx, req)
 }
 
-func (c *Client) SendGift(ctx context.Context, userID int64, giftID int64, message string, opts ...*params.GiftSend) (*types.Message, error) {
+func (c *PaymentMethods) SendGift(ctx context.Context, userID int64, giftID int64, message string, opts ...*params.GiftSend) (*types.Message, error) {
 	c.Log.Debugf("SendGift user_id=%d gift_id=%d", userID, giftID)
 	opt := params.GetOptDef(&params.GiftSend{}, opts...)
-	peer, err := resolvePeer(ctx, c, userID)
+	peer, err := resolvePeer(ctx, c.Client, userID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -139,9 +139,9 @@ func (c *Client) SendGift(ctx context.Context, userID int64, giftID int64, messa
 	return c.payForUpdates(ctx, formID, invoice)
 }
 
-func (c *Client) TransferGift(ctx context.Context, gift tg.InputSavedStarGiftClass, recipientID int64) (*types.Message, error) {
+func (c *PaymentMethods) TransferGift(ctx context.Context, gift tg.InputSavedStarGiftClass, recipientID int64) (*types.Message, error) {
 	c.Log.Debugf("TransferGift recipient_id=%d", recipientID)
-	peer, err := resolvePeer(ctx, c, recipientID)
+	peer, err := resolvePeer(ctx, c.Client, recipientID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -166,7 +166,7 @@ func (c *Client) TransferGift(ctx context.Context, gift tg.InputSavedStarGiftCla
 	return extractSingleMessage(updates, c)
 }
 
-func (c *Client) UpgradeGift(ctx context.Context, gift tg.InputSavedStarGiftClass, keepOriginalDetails bool) (*types.Message, error) {
+func (c *PaymentMethods) UpgradeGift(ctx context.Context, gift tg.InputSavedStarGiftClass, keepOriginalDetails bool) (*types.Message, error) {
 	c.Log.Debug("UpgradeGift")
 
 	invoice := &tg.InputInvoiceStarGiftUpgrade{
@@ -189,9 +189,9 @@ func (c *Client) UpgradeGift(ctx context.Context, gift tg.InputSavedStarGiftClas
 	return extractSingleMessage(updates, c)
 }
 
-func (c *Client) PrepayGiftUpgrade(ctx context.Context, peerID int64, hash string) (*types.Message, error) {
+func (c *PaymentMethods) PrepayGiftUpgrade(ctx context.Context, peerID int64, hash string) (*types.Message, error) {
 	c.Log.Debugf("PrepayGiftUpgrade peer_id=%d", peerID)
-	peer, err := resolvePeer(ctx, c, peerID)
+	peer, err := resolvePeer(ctx, c.Client, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -208,10 +208,10 @@ func (c *Client) PrepayGiftUpgrade(ctx context.Context, peerID int64, hash strin
 	return c.payForUpdates(ctx, formID, invoice)
 }
 
-func (c *Client) BuyResaleGift(ctx context.Context, slug string, recipientID int64, opts ...*params.BuyGift) (*types.Message, error) {
+func (c *PaymentMethods) BuyResaleGift(ctx context.Context, slug string, recipientID int64, opts ...*params.BuyGift) (*types.Message, error) {
 	c.Log.Debugf("BuyResaleGift slug=%s", slug)
 	opt := params.GetOptDef(&params.BuyGift{}, opts...)
-	peer, err := resolvePeer(ctx, c, recipientID)
+	peer, err := resolvePeer(ctx, c.Client, recipientID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -229,7 +229,7 @@ func (c *Client) BuyResaleGift(ctx context.Context, slug string, recipientID int
 	return c.payForUpdates(ctx, formID, invoice)
 }
 
-func (c *Client) SetGiftResalePrice(ctx context.Context, gift tg.InputSavedStarGiftClass, stars int64) error {
+func (c *PaymentMethods) SetGiftResalePrice(ctx context.Context, gift tg.InputSavedStarGiftClass, stars int64) error {
 	c.Log.Debugf("SetGiftResalePrice stars=%d", stars)
 	var amount tg.StarsAmount
 	if stars <= 0 {
@@ -244,7 +244,7 @@ func (c *Client) SetGiftResalePrice(ctx context.Context, gift tg.InputSavedStarG
 	return err
 }
 
-func (c *Client) ShowGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
+func (c *PaymentMethods) ShowGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
 	c.Log.Debug("ShowGift")
 	_, err := c.Raw().PaymentsSaveStarGift(ctx, &tg.PaymentsSaveStarGiftRequest{
 		Unsave:   false,
@@ -253,7 +253,7 @@ func (c *Client) ShowGift(ctx context.Context, gift tg.InputSavedStarGiftClass) 
 	return err
 }
 
-func (c *Client) HideGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
+func (c *PaymentMethods) HideGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
 	c.Log.Debug("HideGift")
 	_, err := c.Raw().PaymentsSaveStarGift(ctx, &tg.PaymentsSaveStarGiftRequest{
 		Unsave:   true,
@@ -262,7 +262,7 @@ func (c *Client) HideGift(ctx context.Context, gift tg.InputSavedStarGiftClass) 
 	return err
 }
 
-func (c *Client) ConvertGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
+func (c *PaymentMethods) ConvertGift(ctx context.Context, gift tg.InputSavedStarGiftClass) error {
 	c.Log.Debug("ConvertGift")
 	_, err := c.Raw().PaymentsConvertStarGift(ctx, &tg.PaymentsConvertStarGiftRequest{
 		Stargift: gift,
@@ -270,9 +270,9 @@ func (c *Client) ConvertGift(ctx context.Context, gift tg.InputSavedStarGiftClas
 	return err
 }
 
-func (c *Client) PinGifts(ctx context.Context, gifts []tg.InputSavedStarGiftClass, peerID int64) error {
+func (c *PaymentMethods) PinGifts(ctx context.Context, gifts []tg.InputSavedStarGiftClass, peerID int64) error {
 	c.Log.Debugf("PinGifts peer_id=%d count=%d", peerID, len(gifts))
-	peer, err := resolvePeer(ctx, c, peerID)
+	peer, err := resolvePeer(ctx, c.Client, peerID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -283,9 +283,9 @@ func (c *Client) PinGifts(ctx context.Context, gifts []tg.InputSavedStarGiftClas
 	return err
 }
 
-func (c *Client) SendGiftOffer(ctx context.Context, peerID int64, slug string, price int64, duration int32) (*types.Message, error) {
+func (c *PaymentMethods) SendGiftOffer(ctx context.Context, peerID int64, slug string, price int64, duration int32) (*types.Message, error) {
 	c.Log.Debugf("SendGiftOffer peer_id=%d slug=%s", peerID, slug)
-	peer, err := resolvePeer(ctx, c, peerID)
+	peer, err := resolvePeer(ctx, c.Client, peerID)
 	if err != nil {
 		return nil, fmt.Errorf("resolve peer: %w", err)
 	}
@@ -302,7 +302,7 @@ func (c *Client) SendGiftOffer(ctx context.Context, peerID int64, slug string, p
 	return extractSingleMessage(result, c)
 }
 
-func (c *Client) GetGiftWithdrawalURL(ctx context.Context, gift tg.InputSavedStarGiftClass, password string) (string, error) {
+func (c *PaymentMethods) GetGiftWithdrawalURL(ctx context.Context, gift tg.InputSavedStarGiftClass, password string) (string, error) {
 	c.Log.Debug("GetGiftWithdrawalURL")
 	srp, err := c.computeSRP(ctx, password)
 	if err != nil {

@@ -22,7 +22,7 @@ import (
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-func (c *Client) SetBotCommands(ctx context.Context, scope tg.BotCommandScopeClass, langCode string, commands []*tg.BotCommand) error {
+func (c *BotsMethods) SetBotCommands(ctx context.Context, scope tg.BotCommandScopeClass, langCode string, commands []*tg.BotCommand) error {
 	c.Log.Debugf("SetBotCommands count=%d", len(commands))
 	rpc := c.Raw()
 	_, err := rpc.BotsSetBotCommands(ctx, &tg.BotsSetBotCommandsRequest{
@@ -47,7 +47,7 @@ func (c *Client) SetBotCommands(ctx context.Context, scope tg.BotCommandScopeCla
 //	for _, cmd := range commands {
 //	    fmt.Printf("/%s — %s\n", cmd.Command, cmd.Description)
 //	}
-func (c *Client) GetBotCommands(ctx context.Context, langCode string) ([]*tg.BotCommand, error) {
+func (c *BotsMethods) GetBotCommands(ctx context.Context, langCode string) ([]*tg.BotCommand, error) {
 	c.Log.Debug("GetBotCommands")
 	rpc := c.Raw()
 	result, err := rpc.BotsGetBotInfo(ctx, &tg.BotsGetBotInfoRequest{
@@ -68,7 +68,7 @@ func (c *Client) GetBotCommands(ctx context.Context, langCode string) ([]*tg.Bot
 
 // DeleteBotCommands resets (deletes) all bot commands for the given scope and language
 // code. Returns an error if the RPC call fails.
-func (c *Client) DeleteBotCommands(ctx context.Context, scope tg.BotCommandScopeClass, langCode string) error {
+func (c *BotsMethods) DeleteBotCommands(ctx context.Context, scope tg.BotCommandScopeClass, langCode string) error {
 	c.Log.Debug("DeleteBotCommands")
 	rpc := c.Raw()
 	_, err := rpc.BotsResetBotCommands(ctx, &tg.BotsResetBotCommandsRequest{

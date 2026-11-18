@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -98,7 +99,7 @@ type User struct {
 	PersonalChannelID    int64
 	PersonalChannelMsg   int32
 
-	binder Binder
+	binder UserBinder
 }
 
 // ErrNoUserBinder is returned when a bound convenience method (Archive,
@@ -113,43 +114,63 @@ type User struct {
 var ErrNoUserBinder = errors.New("types: bound methods not available (user was not created by a client)")
 
 // SetBinder injects the Binder that backs bound convenience methods on this User.
-func (u *User) SetBinder(b Binder) {
+func (u *User) SetBinder(b UserBinder) {
 	u.binder = b
 }
 
 func (u *User) Archive() error {
+	return u.ArchiveContext(context.Background())
+}
+
+func (u *User) ArchiveContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundArchiveUser(u.ID)
+	return u.binder.ArchiveChat(ctx, u.ID)
 }
 
 func (u *User) Unarchive() error {
+	return u.UnarchiveContext(context.Background())
+}
+
+func (u *User) UnarchiveContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundUnarchiveUser(u.ID)
+	return u.binder.UnarchiveChat(ctx, u.ID)
 }
 
 func (u *User) Block() error {
+	return u.BlockContext(context.Background())
+}
+
+func (u *User) BlockContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundBlock(u.ID)
+	return u.binder.BlockUser(ctx, u.ID)
 }
 
 func (u *User) Unblock() error {
+	return u.UnblockContext(context.Background())
+}
+
+func (u *User) UnblockContext(ctx context.Context) error {
 	if u.binder == nil {
 		return ErrNoUserBinder
 	}
-	return u.binder.BoundUnblock(u.ID)
+	return u.binder.UnblockUser(ctx, u.ID)
 }
 
 func (u *User) GetCommonChats(limit int) ([]*Chat, error) {
+	return u.GetCommonChatsContext(context.Background(), limit)
+}
+
+func (u *User) GetCommonChatsContext(ctx context.Context, limit int) ([]*Chat, error) {
 	if u.binder == nil {
 		return nil, ErrNoUserBinder
 	}
-	return u.binder.BoundGetCommonChats(u.ID, limit)
+	return u.binder.GetCommonChats(ctx, u.ID, limit)
 }
 
 // String returns the user's username, full name, or a fallback "user_<id>" string.

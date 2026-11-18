@@ -310,9 +310,9 @@ func (c *Context) Read() error {
 	}
 	msgID, err := c.messageID()
 	if err != nil {
-		return c.Client.ReadHistory(c.Ctx, chatID, 0)
+		return c.Client.ReadChatHistory(c.Ctx, chatID, 0)
 	}
-	return c.Client.ReadHistory(c.Ctx, chatID, msgID)
+	return c.Client.ReadChatHistory(c.Ctx, chatID, msgID)
 }
 
 // DownloadMedia downloads the media attached to the current context message and returns

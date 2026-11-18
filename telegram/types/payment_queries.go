@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/mtgo-labs/mtgo/telegram/params"
+	"context"
 )
 
 // PreCheckoutQuery is sent to the bot when a user confirms a payment but before
@@ -17,18 +17,22 @@ type PreCheckoutQuery struct {
 	InvoiceSlug      string
 	ShippingOptionID string
 	OrderInfo        *OrderInfo
-	binder           Binder
+	binder           PreCheckoutQueryBinder
 }
 
-func (q *PreCheckoutQuery) SetBinder(b Binder) {
+func (q *PreCheckoutQuery) SetBinder(b PreCheckoutQueryBinder) {
 	q.binder = b
 }
 
 func (q *PreCheckoutQuery) Answer(ok bool, errorMsg string) error {
+	return q.AnswerContext(context.Background(), ok, errorMsg)
+}
+
+func (q *PreCheckoutQuery) AnswerContext(ctx context.Context, ok bool, errorMsg string) error {
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerPreCheckout(q.ID, &params.AnswerPreCheckout{Ok: ok, ErrorMsg: errorMsg})
+	return q.binder.AnswerPreCheckoutQuery(ctx, q.ID, ok, errorMsg)
 }
 
 // ShippingQuery is sent to the bot when a user selects a shipping address during
@@ -40,18 +44,22 @@ type ShippingQuery struct {
 	InvoicePayload string
 	InvoiceSlug    string
 	Address        *ShippingAddress
-	binder         Binder
+	binder         ShippingQueryBinder
 }
 
-func (q *ShippingQuery) SetBinder(b Binder) {
+func (q *ShippingQuery) SetBinder(b ShippingQueryBinder) {
 	q.binder = b
 }
 
 func (q *ShippingQuery) Answer(ok bool, errorMsg string) error {
+	return q.AnswerContext(context.Background(), ok, errorMsg)
+}
+
+func (q *ShippingQuery) AnswerContext(ctx context.Context, ok bool, errorMsg string) error {
 	if q.binder == nil {
 		return ErrNoBinder
 	}
-	return q.binder.BoundAnswerShipping(q.ID, &params.AnswerShipping{Ok: ok, ErrorMsg: errorMsg})
+	return q.binder.AnswerShippingQuery(ctx, q.ID, ok, nil)
 }
 
 // OrderInfo contains the contact and shipping details provided by the buyer

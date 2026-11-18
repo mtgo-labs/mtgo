@@ -51,7 +51,7 @@ func TestParseRecaptchaChallenge(t *testing.T) {
 	}
 }
 
-func TestSendCodeSolvesRecaptcha(t *testing.T) {
+func TestSendPhoneNumberCodeSolvesRecaptcha(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	mock.setError(tg.AuthSendCodeTypeID, tgerr.New(403, "RECAPTCHA_CHECK_signup__site-key"))
 	mock.setResult(tg.InvokeWithReCaptchaTypeID, &tg.AuthSentCode{
@@ -65,7 +65,7 @@ func TestSendCodeSolvesRecaptcha(t *testing.T) {
 		cfg.Device.PackageID = "org.telegram.messenger"
 		cfg.RecaptchaSolver = recaptchaSolverFunc(func(solveCtx context.Context, packageID, action, key string) (string, error) {
 			if solveCtx.Value(contextKey{}) != "value" {
-				t.Fatal("solver did not receive the SendCode context")
+				t.Fatal("solver did not receive the SendPhoneNumberCode context")
 			}
 			if packageID != "org.telegram.messenger" {
 				t.Fatalf("package ID = %q, want %q", packageID, "org.telegram.messenger")
@@ -77,9 +77,9 @@ func TestSendCodeSolvesRecaptcha(t *testing.T) {
 		})
 	})
 
-	result, err := c.SendCode(ctx, "+1234567890")
+	result, err := c.SendPhoneNumberCode(ctx, "+1234567890")
 	if err != nil {
-		t.Fatalf("SendCode() error: %v", err)
+		t.Fatalf("SendPhoneNumberCode() error: %v", err)
 	}
 	if result.PhoneCodeHash != "hash" {
 		t.Fatalf("PhoneCodeHash = %q, want %q", result.PhoneCodeHash, "hash")
@@ -100,21 +100,21 @@ func TestSendCodeSolvesRecaptcha(t *testing.T) {
 	}
 }
 
-func TestSendCodeReturnsRecaptchaWithoutSolver(t *testing.T) {
+func TestSendPhoneNumberCodeReturnsRecaptchaWithoutSolver(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	challengeErr := tgerr.New(403, "RECAPTCHA_CHECK_signup__site-key")
 	mock.setError(tg.AuthSendCodeTypeID, challengeErr)
 
-	_, err := c.SendCode(context.Background(), "+1234567890")
+	_, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if !errors.Is(err, challengeErr) {
-		t.Fatalf("SendCode() error = %v, want original challenge", err)
+		t.Fatalf("SendPhoneNumberCode() error = %v, want original challenge", err)
 	}
 	if mock.callCount() != 1 {
 		t.Fatalf("RPC call count = %d, want 1", mock.callCount())
 	}
 }
 
-func TestSendCodeReturnsRecaptchaSolverError(t *testing.T) {
+func TestSendPhoneNumberCodeReturnsRecaptchaSolverError(t *testing.T) {
 	c, mock := newClientWithBotRPCMock(t)
 	mock.setError(tg.AuthSendCodeTypeID, tgerr.New(403, "RECAPTCHA_CHECK_signup__site-key"))
 	solverErr := errors.New("solver unavailable")
@@ -124,9 +124,9 @@ func TestSendCodeReturnsRecaptchaSolverError(t *testing.T) {
 		})
 	})
 
-	_, err := c.SendCode(context.Background(), "+1234567890")
+	_, err := c.SendPhoneNumberCode(context.Background(), "+1234567890")
 	if !errors.Is(err, solverErr) {
-		t.Fatalf("SendCode() error = %v, want solver error", err)
+		t.Fatalf("SendPhoneNumberCode() error = %v, want solver error", err)
 	}
 	if mock.callCount() != 1 {
 		t.Fatalf("RPC call count = %d, want 1", mock.callCount())

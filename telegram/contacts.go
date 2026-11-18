@@ -18,9 +18,9 @@ import (
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("Contact added")
-func (c *Client) AddContact(ctx context.Context, userID int64, firstName, lastName, phone string, share bool) error {
+func (c *ContactsMethods) AddContact(ctx context.Context, userID int64, firstName, lastName, phone string, share bool) error {
 	c.Log.Debugf("AddContact user_id=%d", userID)
-	_, err := resolveUserID(ctx, c, userID)
+	_, err := resolveUserID(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve user: %w", err)
 	}
@@ -49,11 +49,11 @@ func (c *Client) AddContact(ctx context.Context, userID int64, firstName, lastNa
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("Contacts deleted")
-func (c *Client) DeleteContacts(ctx context.Context, userIDs []int64) error {
+func (c *ContactsMethods) DeleteContacts(ctx context.Context, userIDs []int64) error {
 	c.Log.Debugf("DeleteContacts count=%d", len(userIDs))
 	inputs := make([]tg.InputUserClass, len(userIDs))
 	for i, id := range userIDs {
-		u, err := resolveUserID(ctx, c, id)
+		u, err := resolveUserID(ctx, c.Client, id)
 		if err != nil {
 			return fmt.Errorf("resolve user %v: %w", id, err)
 		}
@@ -76,7 +76,7 @@ func (c *Client) DeleteContacts(ctx context.Context, userIDs []int64) error {
 //	    log.Fatal(err)
 //	}
 //	_ = contacts
-func (c *Client) GetContacts(ctx context.Context, hash int64) (tg.ContactsClass, error) {
+func (c *ContactsMethods) GetContacts(ctx context.Context, hash int64) (tg.ContactsClass, error) {
 	rpc := c.Raw()
 	return rpc.ContactsGetContacts(ctx, &tg.ContactsGetContactsRequest{Hash: hash})
 }
@@ -91,9 +91,9 @@ func (c *Client) GetContacts(ctx context.Context, hash int64) (tg.ContactsClass,
 //	    log.Fatal(err)
 //	}
 //	fmt.Println("User blocked")
-func (c *Client) BlockUser(ctx context.Context, userID int64) error {
+func (c *UserMethods) BlockUser(ctx context.Context, userID int64) error {
 	c.Log.Debugf("BlockUser user_id=%d", userID)
-	peer, err := resolvePeer(ctx, c, userID)
+	peer, err := resolvePeer(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -106,9 +106,9 @@ func (c *Client) BlockUser(ctx context.Context, userID int64) error {
 // UnblockUser removes the specified user from the blocked list, allowing them to
 // interact with the current account again. Returns an error if the peer cannot be
 // resolved or the RPC call fails.
-func (c *Client) UnblockUser(ctx context.Context, userID int64) error {
+func (c *UserMethods) UnblockUser(ctx context.Context, userID int64) error {
 	c.Log.Debugf("UnblockUser user_id=%d", userID)
-	peer, err := resolvePeer(ctx, c, userID)
+	peer, err := resolvePeer(ctx, c.Client, userID)
 	if err != nil {
 		return fmt.Errorf("resolve peer: %w", err)
 	}
@@ -121,10 +121,29 @@ func (c *Client) UnblockUser(ctx context.Context, userID int64) error {
 // GetBlocked retrieves a paginated list of blocked users. The offset parameter
 // specifies the starting position, and limit controls the maximum number of entries
 // returned. Returns the blocked peers result on success.
-func (c *Client) GetBlocked(ctx context.Context, limit, offset int) (tg.BlockedClass, error) {
+func (c *UserMethods) GetBlocked(ctx context.Context, limit, offset int) (tg.BlockedClass, error) {
 	rpc := c.Raw()
 	return rpc.ContactsGetBlocked(ctx, &tg.ContactsGetBlockedRequest{
 		Offset: int32(offset),
 		Limit:  int32(limit),
 	})
+}
+
+// SetContactNote attaches a short private note to a contact, visible only to
+// the logged-in user. An empty note removes it.
+func (c *ContactsMethods) SetContactNote(ctx context.Context, userID int64, note string) error {
+	c.Log.Debugf("SetContactNote user_id=%d", userID)
+	user, err := resolveUserID(ctx, c.Client, userID)
+	if err != nil {
+		return fmt.Errorf("resolve user: %w", err)
+	}
+
+	_, err = c.Raw().ContactsUpdateContactNote(ctx, &tg.ContactsUpdateContactNoteRequest{
+		ID:   user,
+		Note: &tg.TextWithEntities{Text: note},
+	})
+	if err != nil {
+		return fmt.Errorf("set contact note: %w", err)
+	}
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/storage"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -139,6 +140,14 @@ func (d *dcSessions) dcAuthKey(dcID int) *dcAuthKeyInfo {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	return d.dcAuthKeys[dcID]
+}
+
+// forgetDCAuthKey drops a DC's recorded key after the server rejected it,
+// so the next session creation re-authorizes from scratch.
+func (d *dcSessions) forgetDCAuthKey(dcID int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	delete(d.dcAuthKeys, dcID)
 }
 
 func (d *dcSessions) beginCreation(parent context.Context, generation uint64) (*dcSessionCreation, context.Context, bool) {
@@ -832,9 +841,30 @@ func (c *Client) createDCSession(
 	// Reuse the first authorized key on this DC (bot or user). Only the
 	// first session per DC performs authorization (heavily rate-limited by
 	// the server); every additional session is a shifted session sharing
-	// that key with a unique session ID.
-	if info := c.dcSessions.dcAuthKey(dcID); info != nil {
-		return c.createShiftedDCSession(ctx, dc, dcID, sessionTp, info)
+	// that key with a unique session ID. A key persisted from a previous
+	// run counts as the first authorized key: skipping the DH exchange and
+	// the export/import transfer after a restart avoids the rate-limited
+	// authorization entirely.
+	info := c.dcSessions.dcAuthKey(dcID)
+	if info == nil {
+		if persisted := c.loadPersistedDCAuthKey(dcID); persisted != nil {
+			c.dcSessions.setDCAuthKey(dcID, persisted.key, persisted.salt, generation)
+			info = persisted
+		}
+	}
+	if info != nil {
+		entry, shiftErr := c.createShiftedDCSession(ctx, dc, dcID, sessionTp, info)
+		if shiftErr == nil {
+			return entry, nil
+		}
+		if isAuthLostError(shiftErr) {
+			// The shared key was revoked server-side. Drop it everywhere so
+			// the next attempt performs a fresh DH exchange and transfer
+			// instead of retrying the dead key forever.
+			c.dcSessions.forgetDCAuthKey(dcID)
+			c.forgetPersistedDCAuthKey(dcID)
+		}
+		return nil, shiftErr
 	}
 
 	dcStorage := NewMemoryStorage()
@@ -909,6 +939,7 @@ func (c *Client) createDCSession(
 			return nil, fmt.Errorf("download: %w", err)
 		}
 		c.dcSessions.setDCAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
+		c.persistDCAuthKey(dcID, result.AuthKey, sess.ServerSalt())
 		c.Log.Infof("Bot auth complete for DC %d", dcID)
 		return entry, nil
 	}
@@ -921,12 +952,56 @@ func (c *Client) createDCSession(
 
 	// Record the user key so additional pool sessions on this DC (and
 	// replacements for dead ones) skip the DH + export/import dance and
-	// connect as shifted sessions sharing this key.
+	// connect as shifted sessions sharing this key. Persisted, the same key
+	// survives restarts.
 	c.dcSessions.setDCAuthKey(dcID, result.AuthKey, sess.ServerSalt(), generation)
+	c.persistDCAuthKey(dcID, result.AuthKey, sess.ServerSalt())
 
 	c.Log.Infof("Auth transfer complete for DC %d", dcID)
 
 	return entry, nil
+}
+
+// dcAuthStore returns the storage backend's per-DC auth-key extension, or
+// nil when persistence is unavailable.
+func (c *Client) dcAuthStore() storage.DCAuthStore {
+	if ds, ok := c.storage.(storage.DCAuthStore); ok {
+		return ds
+	}
+	return nil
+}
+
+// persistDCAuthKey records a freshly authorized DC key so the next run
+// skips the DH exchange and the rate-limited authorization transfer.
+func (c *Client) persistDCAuthKey(dcID int, key []byte, salt int64) {
+	if ds := c.dcAuthStore(); ds != nil {
+		if err := ds.SaveDCAuth(storage.DCAuthEntry{DCID: dcID, AuthKey: key, ServerSalt: salt}); err != nil {
+			c.Log.Warnf("persist DC %d auth key: %v", dcID, err)
+		}
+	}
+}
+
+// loadPersistedDCAuthKey returns the persisted key of a DC, or nil when
+// none is stored.
+func (c *Client) loadPersistedDCAuthKey(dcID int) *dcAuthKeyInfo {
+	ds := c.dcAuthStore()
+	if ds == nil {
+		return nil
+	}
+	entry, err := ds.LoadDCAuth(dcID)
+	if err != nil || len(entry.AuthKey) == 0 {
+		return nil
+	}
+	return &dcAuthKeyInfo{key: entry.AuthKey, salt: entry.ServerSalt}
+}
+
+// forgetPersistedDCAuthKey tombstones a persisted DC key after the server
+// rejected it. Backends without a delete API keep the row; the empty key
+// makes the loader treat it as absent.
+func (c *Client) forgetPersistedDCAuthKey(dcID int) {
+	if ds := c.dcAuthStore(); ds != nil {
+		_ = ds.SaveDCAuth(storage.DCAuthEntry{DCID: dcID})
+	}
 }
 
 // authorizeBotDCSession authorizes a freshly connected auxiliary-DC session

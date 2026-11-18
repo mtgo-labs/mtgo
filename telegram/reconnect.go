@@ -32,8 +32,11 @@ type authLossState struct {
 }
 
 // isAuthLostError reports whether err indicates the auth key has been
-// permanently invalidated (revoked, unregistered, duplicated, or invalid).
-// Reconnect attempts stop when this returns true.
+// permanently invalidated (revoked, unregistered, duplicated, or invalid),
+// or the account itself is gone (deactivated or banned). Reconnect attempts
+// stop when this returns true; the terminal result carries the cause, and
+// AuthKeyInvalidatedError.AccountTerminated distinguishes account loss from
+// key revocation.
 func isAuthLostError(err error) bool {
 	if errors.Is(err, errTemporaryAuthKeyRejected) {
 		return false
@@ -46,6 +49,8 @@ func isAuthLostError(err error) bool {
 		tgerr.ErrAuthKeyDuplicated,
 		tgerr.ErrSessionRevoked,
 		tgerr.ErrSessionExpired,
+		tgerr.ErrUserDeactivated,
+		tgerr.ErrUserDeactivatedBan,
 	)
 }
 
@@ -79,6 +84,8 @@ func (c *Client) shouldInvalidateMainAuthFrom(sess *session.Session, err error) 
 		tgerr.ErrAuthKeyInvalid,
 		tgerr.ErrSessionRevoked,
 		tgerr.ErrSessionExpired,
+		tgerr.ErrUserDeactivated,
+		tgerr.ErrUserDeactivatedBan,
 	) {
 		return true
 	}

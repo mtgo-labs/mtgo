@@ -1,28 +1,12 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/mtgo-labs/mtgo/tg"
 )
-
-// GiftBinder defines the interface for gift-related bound methods that control
-// visibility, conversion, upgrading, and transferring of gifts.
-//
-// Example:
-//
-//	type MyBinder struct{}
-//	func (b *MyBinder) BoundShowGift(msgID int32) error { return nil }
-//	// ... implement remaining methods
-//	gift.SetBinder(&MyBinder{})
-type GiftBinder interface {
-	BoundShowGift(msgID int32) error
-	BoundHideGift(msgID int32) error
-	BoundConvertGift(msgID int32) error
-	BoundUpgradeGift(msgID int32, keepOriginalDetails bool) error
-	BoundTransferGift(msgID int32, toID int64) error
-}
 
 // Gift represents a Telegram star gift with its metadata including unique
 // ID, rarity, model, and upgrade information.
@@ -122,38 +106,60 @@ func (g *Gift) SetBinder(b GiftBinder) {
 }
 
 func (g *Gift) Show() error {
+	return g.ShowContext(context.Background())
+}
+
+func (g *Gift) ShowContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundShowGift(g.MsgID)
+	return g.binder.ShowGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Hide() error {
+	return g.HideContext(context.Background())
+}
+
+func (g *Gift) HideContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundHideGift(g.MsgID)
+	return g.binder.HideGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Convert() error {
+	return g.ConvertContext(context.Background())
+}
+
+func (g *Gift) ConvertContext(ctx context.Context) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundConvertGift(g.MsgID)
+	return g.binder.ConvertGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID})
 }
 
 func (g *Gift) Upgrade(keepOriginalDetails bool) error {
+	return g.UpgradeContext(context.Background(), keepOriginalDetails)
+}
+
+func (g *Gift) UpgradeContext(ctx context.Context, keepOriginalDetails bool) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundUpgradeGift(g.MsgID, keepOriginalDetails)
+	_, err := g.binder.UpgradeGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID}, keepOriginalDetails)
+	return err
 }
 
 func (g *Gift) Transfer(toID int64) error {
+	return g.TransferContext(context.Background(), toID)
+}
+
+func (g *Gift) TransferContext(ctx context.Context, toID int64) error {
 	if g.binder == nil {
 		return ErrNoBinder
 	}
-	return g.binder.BoundTransferGift(g.MsgID, toID)
+	_, err := g.binder.TransferGift(ctx, &tg.InputSavedStarGiftUser{MsgID: g.MsgID}, toID)
+	return err
 }
 
 // ParseGift parses a star gift from a TL StarGiftClass, handling both regular

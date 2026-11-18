@@ -34,7 +34,7 @@ func (s *legacyStorageStub) DeletePeer(id int64) error {
 }
 
 func TestPeerStoreSupportsLegacyPeerCache(t *testing.T) {
-	c := &Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}}
+	c := initClient(&Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}})
 	ps := c.peerStore()
 	if ps == nil {
 		t.Fatal("peerStore returned nil")
@@ -68,7 +68,7 @@ func TestPeerStoreSupportsLegacyPeerCache(t *testing.T) {
 }
 
 func TestPublicPeerMethodsSupportLegacyPeerCache(t *testing.T) {
-	c := &Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}}
+	c := initClient(&Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}})
 	peer := &storage.Peer{
 		ID:         456,
 		Type:       storage.PeerTypeUser,
@@ -97,7 +97,7 @@ func TestPublicPeerMethodsSupportLegacyPeerCache(t *testing.T) {
 }
 
 func TestLegacyPeerCachePreservesMetadataOnMinimalSave(t *testing.T) {
-	c := &Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}}
+	c := initClient(&Client{storage: &legacyStorageStub{MemoryStorage: NewMemoryStorage()}})
 	full := &storage.Peer{
 		ID:         789,
 		Type:       storage.PeerTypeUser,
