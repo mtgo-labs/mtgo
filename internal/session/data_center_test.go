@@ -48,3 +48,27 @@ func TestDataCenterString(t *testing.T) {
 		t.Errorf("String() = %q, want %q", dc.String(), "DC1")
 	}
 }
+
+func TestDataCenterTransferPrefersMediaEndpoint(t *testing.T) {
+	dc := DataCenter{ID: 2}
+	transfer := dc.TransferDataCenter()
+	if transfer.Address() != "149.154.167.222" {
+		t.Errorf("DC2 transfer address = %q, want media %q", transfer.Address(), "149.154.167.222")
+	}
+	// DCs without a known media endpoint transfer over the main address.
+	plain := DataCenter{ID: 1}.TransferDataCenter()
+	if plain.Address() != "149.154.175.53" {
+		t.Errorf("DC1 transfer address = %q, want main %q", plain.Address(), "149.154.175.53")
+	}
+}
+
+// TestDataCenterTransferKeepsRuntimeAddress verifies that an address learned
+// from a live help.getConfig is never overridden by the static media
+// snapshot (issue #110: the static media IPs went stale server-side).
+func TestDataCenterTransferKeepsRuntimeAddress(t *testing.T) {
+	dc := DataCenter{ID: 2, IPAddress: "203.0.113.7", PortValue: 443}
+	transfer := dc.TransferDataCenter()
+	if transfer.Address() != "203.0.113.7" {
+		t.Errorf("transfer address = %q, want runtime address %q", transfer.Address(), "203.0.113.7")
+	}
+}

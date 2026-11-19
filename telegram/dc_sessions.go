@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mtgo-labs/mtgo/internal/session"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/tg"
 	"github.com/mtgo-labs/mtgo/tgerr"
 )
@@ -105,6 +106,13 @@ type dcSessions struct {
 	// every additional transfer session on that DC is a shifted session
 	// sharing this key with a fresh session ID (tdesktop pattern).
 	dcAuthKeys map[int]*dcAuthKeyInfo
+
+	// transferKeygenRejected records DCs whose media-only transfer endpoint
+	// answered the DH key exchange with transport error -444: the endpoint
+	// no longer considers itself part of that DC (observed server-side on
+	// the static prodMediaIPv4 addresses; issue #110). Key generation for
+	// such DCs goes straight to the main endpoint for the client's lifetime.
+	transferKeygenRejected map[int]bool
 }
 
 type dcAuthKeyInfo struct {
@@ -114,11 +122,12 @@ type dcAuthKeyInfo struct {
 
 func newDCSessions() *dcSessions {
 	return &dcSessions{
-		entries:    make(map[int]*dcSessionEntry),
-		pools:      make(map[int]*dcSessionPool),
-		initLocks:  make(map[int]*sync.Mutex),
-		creations:  make(map[*dcSessionCreation]uint64),
-		dcAuthKeys: make(map[int]*dcAuthKeyInfo),
+		entries:                make(map[int]*dcSessionEntry),
+		pools:                  make(map[int]*dcSessionPool),
+		initLocks:              make(map[int]*sync.Mutex),
+		creations:              make(map[*dcSessionCreation]uint64),
+		dcAuthKeys:             make(map[int]*dcAuthKeyInfo),
+		transferKeygenRejected: make(map[int]bool),
 	}
 }
 
@@ -139,6 +148,22 @@ func (d *dcSessions) dcAuthKey(dcID int) *dcAuthKeyInfo {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	return d.dcAuthKeys[dcID]
+}
+
+// markTransferKeygenRejected records that the media-only endpoint of dcID
+// rejected DH key generation with -444.
+func (d *dcSessions) markTransferKeygenRejected(dcID int) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.transferKeygenRejected[dcID] = true
+}
+
+// isTransferKeygenRejected reports whether the media-only endpoint of dcID
+// is known to reject DH key generation for that DC.
+func (d *dcSessions) isTransferKeygenRejected(dcID int) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.transferKeygenRejected[dcID]
 }
 
 func (d *dcSessions) beginCreation(parent context.Context, generation uint64) (*dcSessionCreation, context.Context, bool) {
@@ -781,6 +806,14 @@ func (c *Client) createShiftedDCSession(
 	return newDCSessionEntry(sess, sessionTp, c), nil
 }
 
+// createDCSession establishes an authorized auxiliary session on a foreign
+// DC. Endpoints are tried best-first: the media-only transfer endpoint,
+// then the DC's main endpoint. The static media addresses are snapshots and
+// Telegram has stopped serving DH key generation on some of them — such
+// endpoints answer req_pq_multi but reject req_DH_params with transport
+// error -444 (issue #110). A -444 marks the media endpoint unusable for the
+// client's lifetime and retries immediately on the main endpoint, which
+// accepts the identical handshake.
 func (c *Client) createDCSession(
 	ctx context.Context,
 	dcID int,
@@ -788,15 +821,61 @@ func (c *Client) createDCSession(
 	mainSess *session.Session,
 	creation *dcSessionCreation,
 ) (*dcSessionEntry, error) {
-	dc := session.DataCenter{
+	base := session.DataCenter{
 		ID:       dcID,
 		TestMode: c.config().TestMode,
 		IPv6:     c.config().IPv6,
-	}.TransferDataCenter()
-	addr := dc.Address()
-	if addr == "" {
+	}
+	candidates := c.dcTransferCandidates(dcID, base)
+	if len(candidates) == 0 {
 		return nil, fmt.Errorf("download: %w: %d", ErrUnknownDC, dcID)
 	}
+
+	var err error
+	for i, dc := range candidates {
+		var entry *dcSessionEntry
+		entry, err = c.createDCSessionEndpoint(ctx, dc, dcID, generation, mainSess, creation)
+		if err == nil {
+			return entry, nil
+		}
+		if i == len(candidates)-1 || !transport.IsTransportError(err, transport.ErrCodeInvalidDC) {
+			return nil, err
+		}
+		if dc.Address() != base.Address() {
+			c.dcSessions.markTransferKeygenRejected(dcID)
+			c.dcOptionPool.RecordFailure(dc)
+			c.Log.Warnf("DC %d endpoint %s rejected DH key generation (-444); retrying on %s",
+				dcID, dc.Address(), candidates[i+1].Address())
+		}
+	}
+	return nil, err
+}
+
+// dcTransferCandidates returns the endpoints to try for an auxiliary
+// session on dcID, best first: the media-only transfer endpoint (skipped
+// once it is known to reject key generation for this DC) followed by the
+// main endpoint.
+func (c *Client) dcTransferCandidates(dcID int, base session.DataCenter) []session.DataCenter {
+	candidates := make([]session.DataCenter, 0, 2)
+	if transfer := base.TransferDataCenter(); transfer.Address() != "" &&
+		transfer.Address() != base.Address() && !c.dcSessions.isTransferKeygenRejected(dcID) {
+		candidates = append(candidates, transfer)
+	}
+	if base.Address() != "" {
+		candidates = append(candidates, base)
+	}
+	return candidates
+}
+
+func (c *Client) createDCSessionEndpoint(
+	ctx context.Context,
+	dc session.DataCenter,
+	dcID int,
+	generation uint64,
+	mainSess *session.Session,
+	creation *dcSessionCreation,
+) (*dcSessionEntry, error) {
+	addr := dc.Address()
 	port := dc.Port()
 
 	sessionTp, err := c.dialTransportContext(ctx, dc, 15*time.Second, c.testDialer)
