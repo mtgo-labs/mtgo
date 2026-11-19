@@ -10,6 +10,7 @@ import (
 	"math/big"
 
 	"github.com/mtgo-labs/mtgo/internal/crypto"
+	"github.com/mtgo-labs/mtgo/internal/transport"
 	"github.com/mtgo-labs/mtgo/tg"
 )
 
@@ -114,6 +115,11 @@ func (a *Auth) recvUnencrypted(conn authTransport) (tg.TLObject, error) {
 	}
 
 	if len(data) == 4 {
+		// Typed so callers can branch on the code (e.g. -444 from endpoints
+		// that refuse DH key generation for the declared DC).
+		if te := transport.DetectTransportError(data); te != nil {
+			return nil, te
+		}
 		code := int32(uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24)
 		return nil, fmt.Errorf("server error code: %d", -code)
 	}

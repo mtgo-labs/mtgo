@@ -50,8 +50,13 @@ func (dc DataCenter) MediaAddress() string {
 }
 
 // TransferDataCenter returns the DataCenter to use for file transfers: the
-// media-only endpoint when known, otherwise the main endpoint.
+// media-only endpoint when known, otherwise the main endpoint. A runtime
+// address learned from help.getConfig (IPAddress) is never overridden — the
+// static table is a snapshot and can go stale (issue #110).
 func (dc DataCenter) TransferDataCenter() DataCenter {
+	if dc.IPAddress != "" {
+		return dc
+	}
 	if addr := dc.MediaAddress(); addr != "" {
 		t := dc
 		t.IPAddress = addr
@@ -94,7 +99,14 @@ var (
 		// Media-only endpoints from help.getConfig (production). Telegram
 		// exposes dedicated file-transfer IPs only for some DCs; transfers
 		// on the main API endpoints get throttled and culled.
-		2: "149.154.167.223",
+		//
+		// Snapshot 2026-11-19 (harvested via cmd/dcprobe -config): DC1/3/5
+		// publish no IPv4 media_only options. DC2's media endpoint moved
+		// .223 -> .222; the old address kept answering req_pq but rejected
+		// req_DH with -444 (issue #110). Media endpoints may refuse DH key
+		// generation entirely; TransferDataCenter callers must fall back to
+		// the main endpoint on -444.
+		2: "149.154.167.222",
 		4: "149.154.165.96",
 	}
 	testMediaIPv4 = map[int]string{}
